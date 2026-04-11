@@ -4,29 +4,26 @@
 
 ---
 
-## M0 — Repo Activation (Week 0)
+## M0 — Repo Activation (Week 0) ✅
 
 - [x] Harness bootstrapped (CI, agent profiles, skills, rules)
 - [x] Design reference screens collected in `frontend/stitch_complete_coach_ui/`
 - [x] BUILD_SPEC.md written
 - [x] ROADMAP.md written
-- [ ] README.md with project overview, setup instructions, and architecture summary
-- [ ] Verify CI pipeline passes (`make bootstrap`, `make test`)
-- [ ] Create GitHub milestone labels (m0, m1, m2, m3, m4, m5, m6)
+- [x] README.md with project overview, setup instructions, and architecture summary
+- [x] Verify CI pipeline passes (`make bootstrap`, `make test`)
+- [x] Create GitHub milestone labels (m0, m1, m2, m3, m4, m5, m6)
 
-### M0 Verification Gate (Mandatory)
-> **This gate MUST be completed and passed before proceeding to M1. It cannot be bypassed.**
->
-> Read the codebase for the current phase and verify against the relevant spec that all functionality has been correctly built, tested and is verified to be working. If you identify any gaps or non-working functionality, then go back and fix all defects. This verification gate is mandatory and cannot be bypassed before the whole phase is called complete.
+### M0 Verification Gate (Mandatory) ✅
 
-- [ ] Verify all harness files exist and are syntactically valid (agents, skills, rules, scripts)
-- [ ] Verify CI pipeline passes green on main
-- [ ] Verify design reference screens are present and readable in `frontend/stitch_complete_coach_ui/`
-- [ ] Verify BUILD_SPEC.md, ROADMAP.md, and DESIGN_SYSTEM.md are complete and consistent
-- [ ] Verify README.md exists with project overview, setup instructions, and architecture summary
-- [ ] Verify GitHub milestone labels are created
-- [ ] Verify all M0 checklist items are complete with no gaps
-- [ ] Fix any defects found during verification before marking M0 complete
+- [x] Verify all harness files exist and are syntactically valid (agents, skills, rules, scripts)
+- [x] Verify CI pipeline passes green on main
+- [x] Verify design reference screens are present and readable in `frontend/stitch_complete_coach_ui/`
+- [x] Verify BUILD_SPEC.md, ROADMAP.md, and DESIGN_SYSTEM.md are complete and consistent
+- [x] Verify README.md exists with project overview, setup instructions, and architecture summary
+- [x] Verify GitHub milestone labels are created
+- [x] Verify all M0 checklist items are complete with no gaps
+- [x] Fix any defects found during verification before marking M0 complete
 
 ---
 
