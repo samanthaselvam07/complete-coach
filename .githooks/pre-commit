@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf 'pre-commit: go test ./...\n'
+go test ./... >/dev/null
+
+printf 'pre-commit: frontend check\n'
+pnpm --dir apps/web check >/dev/null
+
+printf 'pre-commit: import boundaries\n'
+./scripts/check-import-boundaries.sh >/dev/null
+
+printf 'pre-commit: ok\n'

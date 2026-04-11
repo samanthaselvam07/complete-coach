@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  harness-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify shell scripts
+        run: bash -n scripts/*.sh
+      - name: Pre-commit hooks check
+        run: |
+          test -x .githooks/pre-commit && .githooks/pre-commit || true
+      - name: Docs templates exist
+        run: |
+          for f in docs/templates/*.md; do
+            [ -f "$f" ] || { echo "Missing template: $f"; exit 1; }
+          done
+      - name: Agent profiles exist
+        run: |
+          [ -d .agents/profiles ] && [ "$(ls .agents/profiles)" ] || { echo "No agent profiles"; exit 1; }
+      - name: Codex rules exist
+        run: |
+          [ -d .codex/rules ] && [ "$(ls .codex/rules)" ] || { echo "No codex rules"; exit 1; }
