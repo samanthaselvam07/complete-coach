@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCP Coach - Client Roster</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-low": "#f5f3f3",
+              "secondary": "#9a4600",
+              "outline": "#787586",
+              "tertiary": "#414141",
+              "on-secondary-fixed-variant": "#753400",
+              "surface-container-highest": "#e4e2e2",
+              "error": "#ba1a1a",
+              "tertiary-fixed": "#e2e2e2",
+              "surface-variant": "#e4e2e2",
+              "secondary-fixed": "#ffdbc9",
+              "primary": "#3620b8",
+              "on-secondary-fixed": "#321200",
+              "on-primary-fixed-variant": "#3c29bd",
+              "background": "#fbf9f8",
+              "tertiary-container": "#585858",
+              "on-secondary-container": "#562500",
+              "on-error": "#ffffff",
+              "outline-variant": "#c8c4d7",
+              "on-error-container": "#93000a",
+              "on-tertiary-fixed": "#1b1b1b",
+              "secondary-fixed-dim": "#ffb68c",
+              "primary-fixed-dim": "#c5c0ff",
+              "primary-fixed": "#e3dfff",
+              "on-surface-variant": "#474554",
+              "surface-tint": "#5547d5",
+              "surface-bright": "#fbf9f8",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface-container": "#efeded",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "surface": "#fbf9f8",
+              "secondary-container": "#f87600",
+              "on-tertiary-container": "#cfcfcf",
+              "on-background": "#1b1c1c",
+              "inverse-surface": "#303031",
+              "on-secondary": "#ffffff",
+              "on-primary-container": "#cfcaff",
+              "on-primary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "primary-container": "#4f40cf",
+              "surface-dim": "#dbdad9",
+              "on-surface": "#1b1c1c",
+              "inverse-primary": "#c5c0ff",
+              "inverse-on-surface": "#f2f0f0",
+              "on-tertiary": "#ffffff",
+              "surface-container-high": "#e9e8e7",
+              "on-primary-fixed": "#140067",
+              "error-container": "#ffdad6"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .font-plus-jakarta-sans { font-family: 'Plus Jakarta Sans', sans-serif; }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-surface antialiased min-h-screen">
+<!-- TopNavBar -->
+<header class="bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] sticky top-0 z-50 flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<span class="text-xl font-black text-indigo-700 dark:text-indigo-400 tracking-tighter font-plus-jakarta-sans">MCP</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/10">
+<img alt="Coach Profile" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional athletic coach with a confident expression in a bright modern gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpyOWqBWjr7qBhU0UXhYOglQ9-rbsw7qQZEgLwpx_r-8XSqKjuBZzRpZ6Ie5Oz4xlTE_7CBOHNlDuXruHhKGXQ--NZyegia8nNfmn_Q6jA6DLkBP2zJZSQ08oKsl5UjqcRTSu3nksaxCC_jr8-F9QRiRtypYZaOedukhoDZO3W9MRlT9sPbrUhq6edfF2bIs59UbeU3ijUJjizvQ-xNXgwcdqd4ce3b-nzub6XQCIyDqeHgTeVoq9UiIvl-nveKOTp-nC7_M12c4w"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-6 py-8 pb-32 max-w-2xl mx-auto">
+<!-- Search & Filter Section -->
+<section class="mb-10 space-y-6">
+<div class="flex flex-col gap-2">
+<h1 class="text-4xl font-extrabold font-headline tracking-tight text-on-surface">Client Roster</h1>
+<p class="text-on-surface-variant font-medium">Manage your elite performance athletes</p>
+</div>
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</div>
+<input class="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-primary/20 transition-all text-on-surface placeholder-outline-variant" placeholder="Search athletes..." type="text"/>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+<button class="bg-secondary-container text-white px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap shadow-lg shadow-secondary-container/20">All Athletes</button>
+<button class="bg-surface-container-high text-on-surface-variant px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap">Active</button>
+<button class="bg-surface-container-high text-on-surface-variant px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap">Pending</button>
+<button class="bg-surface-container-high text-on-surface-variant px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap">Onboarding</button>
+</div>
+</section>
+<!-- Client List -->
+<section class="space-y-4">
+<!-- Client Card 1 -->
+<div class="glass-card p-5 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex items-center justify-between group active:scale-[0.98] transition-all duration-200">
+<div class="flex items-center gap-5">
+<div class="relative">
+<div class="w-16 h-16 rounded-full overflow-hidden">
+<img alt="Athlete" class="w-full h-full object-cover" data-alt="Athletic woman in her 20s posing in athletic gear, soft studio lighting with high-end editorial feel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgfTWwEz0SAgdgy8_Wrk2qtLdOwvKnjszdBEH3MSv-4vFvuP9cTZxMwdfbyC_KjH_PwvsN1qah4B-a7Nazo9B3yzJeZerWJHKQcYzGmyrJzH0VBWNNqa5mVFFLNMZzSy3slW3hp0K1VwrINPQBkb_xTdA5pInWnXuSeyJtrr6i8XSWTkaERyaOh4-6y5kTAKhF5j6hyxUjzExI-nhZKIIRHsvSpWQJsr21iLGm8qjpEEktXwijueRJziCi0-15cRij-VTDxOmWISk"/>
+</div>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-lg font-bold font-headline text-on-surface">Serena Williams</span>
+<span class="text-xs font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full w-fit mt-1">PRO ATHLETE</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="text-xs font-bold text-outline uppercase tracking-widest">Active</span>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Client Card 2 -->
+<div class="glass-card p-5 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex items-center justify-between group active:scale-[0.98] transition-all duration-200">
+<div class="flex items-center gap-5">
+<div class="relative">
+<div class="w-16 h-16 rounded-full overflow-hidden">
+<img alt="Athlete" class="w-full h-full object-cover" data-alt="Professional male athlete with intense gaze, natural outdoor lighting, shallow depth of field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBC7ZHkIosxL_wrL88G7usDGy3BhRhH9ZmHcs8Htz3pYADi5hYm0EcTAt5-6Y-EHhz3BxOGy0W_0KL--FQtpWGtwWMWtuPPAbs0M_T71y7s-cjWs6i0v3HbVpD9luaBrQp-PUr54AvddJdwGouB5Ck4Aah7DRYoSSfW_HUs7H75Q5cigkzfvXp4qyfxQMyNJDeR4FnM1ndecqmFOLjv3eQDmECC08SjP_olg0Alq-qk2ER4e-lD3pkRcnm0V1O7C6q-JPrmXYmrM6M"/>
+</div>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-zinc-300 border-4 border-white rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-lg font-bold font-headline text-on-surface">Marcus Thorne</span>
+<span class="text-xs font-bold text-secondary bg-secondary/5 px-2 py-0.5 rounded-full w-fit mt-1">POWERLIFTING</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="text-xs font-bold text-outline uppercase tracking-widest">Offline</span>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Client Card 3 -->
+<div class="glass-card p-5 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex items-center justify-between group active:scale-[0.98] transition-all duration-200">
+<div class="flex items-center gap-5">
+<div class="relative">
+<div class="w-16 h-16 rounded-full overflow-hidden">
+<img alt="Athlete" class="w-full h-full object-cover" data-alt="Portrait of a female runner with sweat on her face after a workout, evening golden hour lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBw3_S8InhDFuFQy8Gm14sqfPQAMehK-qCmI26VTNlfJmNzIad18MZvMQxytHibOMURT4UcAC_peyJHBOOmzrV-4vWH_qgmLoLZzrZzoCDCMUW3GDd719HCAQpv2aEQHqr6mebyisEbBYSmix4BSXklYmmLVjhf6SKRJryxf26CwAfTq32iz6pdi54P6YkIvZO44njZZUcmFARmzXVk16GMLxbA0I_YsVlSfnYcdPJrwl2GhiB5tjvbooygAByxVM-YNvzh-nX3jfE"/>
+</div>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-lg font-bold font-headline text-on-surface">Elena Rodriguez</span>
+<span class="text-xs font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full w-fit mt-1">ENDURANCE</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="text-xs font-bold text-outline uppercase tracking-widest">Active</span>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+<!-- Client Card 4 -->
+<div class="glass-card p-5 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex items-center justify-between group active:scale-[0.98] transition-all duration-200">
+<div class="flex items-center gap-5">
+<div class="relative">
+<div class="w-16 h-16 rounded-full overflow-hidden">
+<img alt="Athlete" class="w-full h-full object-cover" data-alt="Man in high-performance sportswear standing in a modern architectural gym, cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWxUJN-a13XHbneS31A9Kr-1wiPCZDXTSOYOESOb25fFfNbHwh26_jTnkCxBGgwyxPOce0nq7IYSVuIFayIkhSON0Dj0QUWpvWXAC2ay4Xqpahquk6nCutb3pLGOrSTJO0QWxMazR8Td-AoVVJ5qoskGD4BJtX-jFMiAcIqJbbxRvWlIB_1gF5CaCJuXJrOswiX7asFNhhW_1C80afeOq-Sic-pXA9tZ2P-yGoWfFJC5lMZCxlKg9GSJVUvq4-VjnnW5l_P06qecg"/>
+</div>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-secondary-container border-4 border-white rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-lg font-bold font-headline text-on-surface">David Chen</span>
+<span class="text-xs font-bold text-secondary bg-secondary/5 px-2 py-0.5 rounded-full w-fit mt-1">HYPERTROPHY</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="text-xs font-bold text-secondary-container uppercase tracking-widest">Onboarding</span>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-end px-6 pb-8 pt-4 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl shadow-[0px_-10px_40px_rgba(0,0,0,0.04)] rounded-t-[2.5rem]">
+<!-- Active Tab: Clients -->
+<a class="flex flex-col items-center justify-center bg-indigo-600 text-white rounded-full p-3 mb-2 transform -translate-y-2 shadow-lg shadow-indigo-500/40 active:scale-90 duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-plus-jakarta-sans text-[10px] font-bold uppercase tracking-widest mt-1">Clients</span>
+</a>
+<!-- Inactive Tab: Library -->
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 p-2 active:bg-zinc-100 dark:active:bg-zinc-800 active:scale-90 duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+<span class="font-plus-jakarta-sans text-[10px] font-bold uppercase tracking-widest mt-1">Library</span>
+</a>
+<!-- Inactive Tab: Messages -->
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 p-2 active:bg-zinc-100 dark:active:bg-zinc-800 active:scale-90 duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="font-plus-jakarta-sans text-[10px] font-bold uppercase tracking-widest mt-1">Messages</span>
+</a>
+</nav>
+<!-- Floating Action Button (FAB) - For Client Roster Screen -->
+<button class="fixed right-6 bottom-28 bg-gradient-to-tr from-primary to-primary-container text-white w-14 h-14 rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center z-40 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="person_add">person_add</span>
+</button>
+</body></html>

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-highest": "#e4e2e2",
+                        "outline-variant": "#c8c4d7",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface-container-low": "#f5f3f3",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "on-secondary-fixed": "#321200",
+                        "outline": "#787586",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "secondary-container": "#f87600",
+                        "surface-container": "#efeded",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#753400",
+                        "surface-dim": "#dbdad9",
+                        "surface-bright": "#fbf9f8",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "surface-container-high": "#e9e8e7",
+                        "tertiary-container": "#585858",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f2f0f0",
+                        "surface-tint": "#5547d5",
+                        "on-secondary-container": "#562500",
+                        "on-primary-fixed": "#140067",
+                        "surface-variant": "#e4e2e2",
+                        "secondary": "#9a4600",
+                        "inverse-primary": "#c5c0ff",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "surface": "#fbf9f8",
+                        "primary-container": "#4f40cf",
+                        "on-surface": "#1b1c1c",
+                        "inverse-surface": "#303031",
+                        "secondary-fixed": "#ffdbc9",
+                        "primary": "#3620b8",
+                        "on-background": "#1b1c1c",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#cfcfcf",
+                        "on-primary-container": "#cfcaff",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#414141",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "background": "#fbf9f8",
+                        "primary-fixed": "#e3dfff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#474554",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#e2e2e2"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+        }
+        .premium-shadow {
+            box-shadow: 0px 10px 30px rgba(27, 28, 28, 0.06);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #3620b8 0%, #4f40cf 100%);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface antialiased">
+<div class="flex min-h-screen">
+<!-- SideNavBar Component -->
+<aside class="hidden md:flex flex-col h-screen w-64 border-r border-zinc-200/20 dark:border-zinc-800/20 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl sticky top-0 p-4 gap-2 z-50">
+<div class="mb-8 px-2">
+<h1 class="text-xl font-black text-zinc-900 dark:text-zinc-50 tracking-tighter">MCP Coaching</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-bold">Premium Performance</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Training -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span>Training</span>
+</a>
+<!-- Nutrition -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+<span>Nutrition</span>
+</a>
+<!-- Education -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span>Education</span>
+</a>
+<!-- Supplementation -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="pill">pill</span>
+<span>Supplementation</span>
+</a>
+<!-- Clients (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#4F40CF] dark:text-[#4F40CF] font-bold bg-zinc-100/50 dark:bg-zinc-800/50 rounded-xl font-['Plus_Jakarta_Sans'] tracking-tight text-sm transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
+<span>Clients</span>
+</a>
+<!-- Forms -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Forms</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-zinc-200/10">
+<button class="w-full primary-gradient text-white py-3 px-4 rounded-xl font-bold text-sm tracking-tight active:scale-95 transition-all">
+                    + New Client
+                </button>
+<div class="flex items-center gap-3 mt-6 px-2">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover outline outline-2 outline-primary/10" data-alt="professional headshot of a fit female athletic coach with a confident smile in soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAakOlBUtIJjtYbrIOl16otBr0ZV5w1_99dUuANguNeUTEFtDNufSYcCd1FQwRRSGFdPeH6OZ8ESHrdU1xpeM8dwZCteyxP9cUstx53QHzRLWGZ24LNIpUx7nQO7yy7mZ8JISPH6KtFlTMGc9TzUL7oW99ybEk7Q6w3TM5g1K4uqvuEOk33BDn2-XP5Fedt6hJfgJIDswiNQ1iELeJxZKfwSJ7X5zuiE9_5hS2e1ibC4PmdJWQqMRQjuS7-7e7DJApMOxHmFzD0alM"/>
+<div class="flex flex-col">
+<span class="text-xs font-bold">Coach Sarah</span>
+<span class="text-[10px] text-zinc-500 font-medium">Head Curator</span>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopAppBar -->
+<header class="w-full h-16 sticky top-0 z-40 bg-[#fbf9f8]/80 dark:bg-zinc-950/80 backdrop-blur-md flex items-center justify-between px-8">
+<div class="flex items-center gap-4">
+<h2 class="text-lg font-bold text-zinc-900 dark:text-zinc-50 font-['Plus_Jakarta_Sans']">Client Roster</h2>
+<div class="hidden md:flex h-8 w-[1px] bg-zinc-200"></div>
+<div class="hidden md:flex items-center gap-1 text-xs font-medium text-zinc-400">
+<span>Organization</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="chevron_right">chevron_right</span>
+<span class="text-on-surface">Athletes</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm" data-icon="search">search</span>
+<input class="bg-surface-container-high border-none rounded-full py-1.5 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search athletes..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-zinc-500 hover:opacity-80 transition-all scale-98">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-zinc-500 hover:opacity-80 transition-all scale-98">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<div class="p-8 space-y-10 max-w-7xl mx-auto w-full">
+<!-- Stats Overview (Editorial Style) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden group">
+<div class="relative z-10">
+<p class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Athletes</p>
+<h3 class="text-4xl font-black font-headline">42</h3>
+<div class="mt-4 flex items-center gap-2 text-green-600 text-sm font-bold">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+<span>+4 this month</span>
+</div>
+</div>
+<span class="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl text-zinc-200/50 rotate-12 group-hover:rotate-0 transition-transform duration-500" data-icon="group">group</span>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden group">
+<div class="relative z-10">
+<p class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Avg Compliance</p>
+<h3 class="text-4xl font-black font-headline">92%</h3>
+<div class="mt-4 flex items-center gap-2 text-primary text-sm font-bold">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+<span>Peak Performance</span>
+</div>
+</div>
+<span class="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl text-zinc-200/50 rotate-12 group-hover:rotate-0 transition-transform duration-500" data-icon="verified">verified</span>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden group">
+<div class="relative z-10">
+<p class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Check-ins Due</p>
+<h3 class="text-4xl font-black font-headline">07</h3>
+<div class="mt-4 flex items-center gap-2 text-secondary-container text-sm font-bold">
+<span class="material-symbols-outlined" data-icon="schedule">schedule</span>
+<span>Action required</span>
+</div>
+</div>
+<span class="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl text-zinc-200/50 rotate-12 group-hover:rotate-0 transition-transform duration-500" data-icon="assignment_late">assignment_late</span>
+</div>
+</div>
+<!-- Filters & Action Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+<button class="px-6 py-2 rounded-full bg-secondary-container text-white text-sm font-bold whitespace-nowrap">Active</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-zinc-600 hover:bg-zinc-200 text-sm font-semibold transition-all whitespace-nowrap">Onboarding</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-zinc-600 hover:bg-zinc-200 text-sm font-semibold transition-all whitespace-nowrap">Post-Cycle</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-zinc-600 hover:bg-zinc-200 text-sm font-semibold transition-all whitespace-nowrap">Dormant</button>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest premium-shadow rounded-xl text-sm font-bold text-zinc-700 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+                            Sort by Compliance
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest premium-shadow rounded-xl text-sm font-bold text-zinc-700 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span>
+</button>
+</div>
+</div>
+<!-- Premium Editorial List -->
+<div class="space-y-4">
+<!-- List Header -->
+<div class="hidden md:grid grid-cols-12 px-8 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">
+<div class="col-span-4">Athlete</div>
+<div class="col-span-2">Current Phase</div>
+<div class="col-span-3">Compliance Score</div>
+<div class="col-span-2">Last Check-In</div>
+<div class="col-span-1 text-right">Action</div>
+</div>
+<!-- Client Row 1 -->
+<div class="bg-surface-container-lowest p-6 md:px-8 rounded-2xl premium-shadow grid grid-cols-1 md:grid-cols-12 items-center gap-4 hover:translate-y-[-2px] transition-all duration-300 group">
+<div class="col-span-4 flex items-center gap-4">
+<div class="relative">
+<img alt="Athlete Profile" class="w-14 h-14 rounded-xl object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="portrait of a muscular male athlete in gym apparel with a focused expression and cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzBdr8_UhUyvV95SYe6WUC6a7NRjLamSXq95EFyQDuohHiVNhkYHudiRRtpumKhU7jsoF6RtyUkaWzJSSg8gcaBJgU6FKt2j06WW8LuBc8pgtC7J9Q5iDPjdkejdWUop1VHNZb_aJdqd0Hdq-8OC1H77071xbM4b4kEIH6v6Cn1iNq5yDCtVLKOtAbGXFt6qhp5KU2yIkKIm4MoRaXLdVdVBOCt4gn0dC5GuF_ed3mE1CCLykZhVJAbDVfeaBFhvlkUBUJqJFrKec"/>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<h4 class="font-bold text-lg font-headline leading-tight">Marcus Thorne</h4>
+<p class="text-xs text-zinc-400 font-medium">marcus.t@performance.co</p>
+</div>
+</div>
+<div class="col-span-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-fixed text-primary text-[11px] font-bold">
+<span class="w-1 h-1 rounded-full bg-primary"></span> Hypertrophy III
+                            </span>
+</div>
+<div class="col-span-3 pr-8">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold">98%</span>
+<span class="text-[10px] font-bold text-green-500">OPTIMAL</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full primary-gradient" style="width: 98%"></div>
+</div>
+</div>
+<div class="col-span-2">
+<p class="text-sm font-bold">Today, 08:45 AM</p>
+<p class="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Weight: 88.4kg</p>
+</div>
+<div class="col-span-1 flex justify-end">
+<button class="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-zinc-400" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Client Row 2 -->
+<div class="bg-surface-container-lowest p-6 md:px-8 rounded-2xl premium-shadow grid grid-cols-1 md:grid-cols-12 items-center gap-4 hover:translate-y-[-2px] transition-all duration-300 group">
+<div class="col-span-4 flex items-center gap-4">
+<div class="relative">
+<img alt="Athlete Profile" class="w-14 h-14 rounded-xl object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="fitness woman athlete in yoga gear looking thoughtfully into the distance in high-key lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBcxzd5C5u8IILGR7la1aTCy9j6Dk4WKqMwe6iRUU81-0M8qsVqGZQnzfZvy3WzzLdVwVDQMRnAWk3uhTsecabDbfT5qguC1TJoCMZl9YQtVgQH6gbEcay681Z10CnLA8ppVdTl9ybKG1QYT_ADEWbi1gHCcC8aKJUGL6yGUJi8EKEp8aCXnbPlQFT-PoCFMYF-keN_VhZqYhEyNu_U5bFWGDC20mbB0oeuk6sX67Ggpmcb37DGeo82Y3xNg24mqmCQKCjNaI9RSw"/>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<h4 class="font-bold text-lg font-headline leading-tight">Elena Rodriguez</h4>
+<p class="text-xs text-zinc-400 font-medium">elena.fit@cloud.com</p>
+</div>
+</div>
+<div class="col-span-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed text-secondary text-[11px] font-bold">
+<span class="w-1 h-1 rounded-full bg-secondary"></span> Metabolic Shift
+                            </span>
+</div>
+<div class="col-span-3 pr-8">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold">84%</span>
+<span class="text-[10px] font-bold text-zinc-500">STABLE</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container" style="width: 84%"></div>
+</div>
+</div>
+<div class="col-span-2">
+<p class="text-sm font-bold">Yesterday</p>
+<p class="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Weight: 62.1kg</p>
+</div>
+<div class="col-span-1 flex justify-end">
+<button class="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-zinc-400" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Client Row 3 (Alert State) -->
+<div class="bg-surface-container-lowest p-6 md:px-8 rounded-2xl premium-shadow grid grid-cols-1 md:grid-cols-12 items-center gap-4 hover:translate-y-[-2px] transition-all duration-300 group border-l-4 border-error">
+<div class="col-span-4 flex items-center gap-4">
+<div class="relative">
+<img alt="Athlete Profile" class="w-14 h-14 rounded-xl object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="close up of a determined man with short hair and athletic build in soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSOBfweO3_TrY6v7_DX1sCiJJYux3afu895EKJjjffobQU3Q5rQGIiTAtwrnZPUlnktetdre3PDJaTFc14B-fHfqOa9Rhyg81q3G5vKmfLb-3brMZDqtta92DV90lmx2hA9ynZ1hScllJatlmqYJg0byX8fXIg6PozmAsXliiMUT4RFftT4sZGCRu0XJNKaxYa26-39-2SjsElvLAFR1S2Uwo4pQ8vf5OltEe_T2PH7j5NMIyNHq9R0cizg7sNTPKHn4L1z3oQKXU"/>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-zinc-300 border-4 border-white rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h4 class="font-bold text-lg font-headline leading-tight">Julian S.</h4>
+<span class="material-symbols-outlined text-error text-lg" data-icon="error">error</span>
+</div>
+<p class="text-xs text-zinc-400 font-medium">julian.peak@outlook.com</p>
+</div>
+</div>
+<div class="col-span-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-zinc-500 text-[11px] font-bold">
+<span class="w-1 h-1 rounded-full bg-zinc-400"></span> Deload Week
+                            </span>
+</div>
+<div class="col-span-3 pr-8">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold text-error">62%</span>
+<span class="text-[10px] font-bold text-error">ACTION REQ.</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-error" style="width: 62%"></div>
+</div>
+</div>
+<div class="col-span-2">
+<p class="text-sm font-bold text-error">4 days ago</p>
+<p class="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Weight: 94.2kg</p>
+</div>
+<div class="col-span-1 flex justify-end">
+<button class="p-2 hover:bg-zinc-100 rounded-lg transition-colors text-error">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+</button>
+</div>
+</div>
+<!-- Client Row 4 -->
+<div class="bg-surface-container-lowest p-6 md:px-8 rounded-2xl premium-shadow grid grid-cols-1 md:grid-cols-12 items-center gap-4 hover:translate-y-[-2px] transition-all duration-300 group">
+<div class="col-span-4 flex items-center gap-4">
+<div class="relative">
+<img alt="Athlete Profile" class="w-14 h-14 rounded-xl object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="stylish athletic man with tattoos and a casual athletic stance in a bright urban setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAO18FQx8G94AM8fvktZbmsUHK_gDGhPy10uB95-b_yZpZkgHXAooeuXjhSdHyDdfmgIwHfD5_eRA06lFaPsRTftxJhn_LcrG2cusc4l3q5AROP29V5XGy_AktF4lStGG3O6XbIVRLj914vDLSDqWraG-LAwieMFstRRef-W4zTm5Vv9ZzcSQJD2ybd6arDAtF5I4baXFNlQwXTRdmusmMbGMRqnTUcC-BqikRyoj6B-LcosPl3ca_5YelfpLKn0_Fy3na9thsOWUQ"/>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<h4 class="font-bold text-lg font-headline leading-tight">David Chen</h4>
+<p class="text-xs text-zinc-400 font-medium">d.chen@global.me</p>
+</div>
+</div>
+<div class="col-span-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-fixed text-primary text-[11px] font-bold">
+<span class="w-1 h-1 rounded-full bg-primary"></span> Strength Block
+                            </span>
+</div>
+<div class="col-span-3 pr-8">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold">91%</span>
+<span class="text-[10px] font-bold text-green-500">EXCELLENT</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full primary-gradient" style="width: 91%"></div>
+</div>
+</div>
+<div class="col-span-2">
+<p class="text-sm font-bold">Today, 06:12 AM</p>
+<p class="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Weight: 81.7kg</p>
+</div>
+<div class="col-span-1 flex justify-end">
+<button class="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-zinc-400" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Pagination/Load More Footer -->
+<div class="flex flex-col md:flex-row items-center justify-between gap-4 pt-4 border-t border-zinc-200/40">
+<p class="text-xs font-semibold text-zinc-400">Showing 1-12 of 42 Athletes</p>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-surface-container-high text-zinc-400 rounded-lg text-sm font-bold cursor-not-allowed">Previous</button>
+<button class="px-4 py-2 bg-surface-container-lowest premium-shadow text-on-surface rounded-lg text-sm font-bold active:scale-95 transition-all">Next Page</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Mobile Navigation (BottomNavBar) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#fbf9f8]/90 backdrop-blur-xl border-t border-zinc-100 flex items-center justify-around px-4 z-50">
+<button class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined text-xl" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#4F40CF]">
+<span class="material-symbols-outlined text-xl" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="text-[10px] font-bold">Clients</span>
+</button>
+<button class="w-12 h-12 primary-gradient text-white rounded-full flex items-center justify-center -translate-y-4 shadow-lg shadow-primary/40">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined text-xl" data-icon="description">description</span>
+<span class="text-[10px] font-bold">Forms</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined text-xl" data-icon="account_circle">account_circle</span>
+<span class="text-[10px] font-bold">Profile</span>
+</button>
+</nav>
+</body></html>

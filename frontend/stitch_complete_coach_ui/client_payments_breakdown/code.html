@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#cfcaff",
+                        "secondary": "#9a4600",
+                        "on-surface-variant": "#474554",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#fbf9f8",
+                        "inverse-primary": "#c5c0ff",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#303031",
+                        "outline": "#787586",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "on-primary-fixed": "#140067",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e9e8e7",
+                        "surface-dim": "#dbdad9",
+                        "surface-tint": "#5547d5",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "surface-container": "#efeded",
+                        "primary-fixed": "#e3dfff",
+                        "on-secondary-fixed-variant": "#753400",
+                        "inverse-on-surface": "#f2f0f0",
+                        "primary": "#3620b8",
+                        "on-error": "#ffffff",
+                        "on-background": "#1b1c1c",
+                        "secondary-container": "#f87600",
+                        "primary-container": "#4f40cf",
+                        "tertiary-container": "#585858",
+                        "secondary-fixed": "#ffdbc9",
+                        "tertiary": "#414141",
+                        "surface-container-low": "#f5f3f3",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e4e2e2",
+                        "outline-variant": "#c8c4d7",
+                        "on-tertiary-container": "#cfcfcf",
+                        "surface": "#fbf9f8",
+                        "background": "#fbf9f8",
+                        "on-secondary-container": "#562500",
+                        "surface-variant": "#e4e2e2",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "on-surface": "#1b1c1c",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#321200"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .ghost-border {
+            outline: 1px solid rgba(120, 117, 134, 0.15);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e4e2e2;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar Anchor -->
+<aside class="h-screen w-80 fixed left-0 top-0 z-40 bg-[#fbf9f8] flex flex-col h-full p-8 gap-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-2xl font-black text-zinc-900 tracking-tighter font-headline">MCP Coaching</h1>
+<p class="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Premium Performance</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1 flex-grow overflow-y-auto">
+<a class="flex items-center gap-4 px-6 py-4 text-zinc-500 hover:bg-[#f5f3f3] rounded-2xl transition-all font-headline font-bold tracking-tight" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-4 px-6 py-4 text-zinc-500 hover:bg-[#f5f3f3] rounded-2xl transition-all font-headline font-bold tracking-tight" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+                Training
+            </a>
+<a class="flex items-center gap-4 px-6 py-4 text-zinc-500 hover:bg-[#f5f3f3] rounded-2xl transition-all font-headline font-bold tracking-tight" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+                Nutrition
+            </a>
+<a class="flex items-center gap-4 px-6 py-4 text-zinc-500 hover:bg-[#f5f3f3] rounded-2xl transition-all font-headline font-bold tracking-tight" href="#">
+<span class="material-symbols-outlined">school</span>
+                Education
+            </a>
+<a class="flex items-center gap-4 px-6 py-4 text-zinc-500 hover:bg-[#f5f3f3] rounded-2xl transition-all font-headline font-bold tracking-tight" href="#">
+<span class="material-symbols-outlined">pill</span>
+                Supplementation
+            </a>
+<a class="flex items-center gap-4 px-6 py-4 bg-white text-[#4f40cf] rounded-2xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] font-headline font-bold tracking-tight" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+                Clients
+            </a>
+<a class="flex items-center gap-4 px-6 py-4 text-zinc-500 hover:bg-[#f5f3f3] rounded-2xl transition-all font-headline font-bold tracking-tight" href="#">
+<span class="material-symbols-outlined">description</span>
+                Forms
+            </a>
+</nav>
+<div class="flex flex-col gap-4 mt-auto">
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-white py-4 rounded-2xl font-headline font-bold text-sm shadow-[0px_10px_30px_rgba(54,32,184,0.2)] active:scale-[0.98] transition-transform duration-200">
+                + New Client
+            </button>
+<div class="pt-6 flex flex-col gap-1 border-t border-zinc-100">
+<a class="flex items-center gap-4 px-6 py-3 text-zinc-500 hover:bg-[#f5f3f3] rounded-2xl transition-all font-headline font-bold tracking-tight" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+                    Coach Profile
+                </a>
+<a class="flex items-center gap-4 px-6 py-3 text-zinc-500 hover:bg-[#f5f3f3] rounded-2xl transition-all font-headline font-bold tracking-tight" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-80 min-h-screen p-12">
+<!-- TopAppBar Anchor -->
+<header class="flex items-center justify-between mb-12">
+<div>
+<h2 class="text-4xl font-headline font-extrabold tracking-tight text-on-surface">Financial Breakdown</h2>
+<p class="text-zinc-500 mt-1 font-medium">Tracking performance &amp; revenue streams</p>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">search</span>
+<input class="pl-12 pr-6 py-3 bg-surface-container border-none rounded-2xl w-64 focus:ring-2 focus:ring-primary-container/20 text-sm font-medium transition-all" placeholder="Search clients..." type="text"/>
+</div>
+<div class="flex gap-2">
+<button class="p-3 bg-white rounded-xl shadow-sm text-zinc-500 hover:text-primary transition-colors active:opacity-70">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-3 bg-white rounded-xl shadow-sm text-zinc-500 hover:text-primary transition-colors active:opacity-70">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Financial Summary Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+<!-- Total Outstanding -->
+<div class="bg-surface-container-lowest p-8 rounded-[2rem] shadow-[0px_10px_30px_rgba(27,28,28,0.04)] relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-8">
+<span class="material-symbols-outlined text-error opacity-10 text-6xl">pending_actions</span>
+</div>
+<div class="flex flex-col gap-4 relative z-10">
+<span class="text-zinc-500 font-headline font-bold text-xs uppercase tracking-widest">Total Outstanding</span>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline font-extrabold tracking-tighter">$4,280.00</span>
+</div>
+<div class="flex items-center gap-2 text-xs font-bold text-error bg-error-container/30 px-3 py-1 rounded-full w-fit">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span>12% FROM LAST MONTH</span>
+</div>
+</div>
+</div>
+<!-- Monthly Projected -->
+<div class="bg-surface-container-lowest p-8 rounded-[2rem] shadow-[0px_10px_30px_rgba(27,28,28,0.04)] relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-8">
+<span class="material-symbols-outlined text-primary opacity-10 text-6xl">analytics</span>
+</div>
+<div class="flex flex-col gap-4 relative z-10">
+<span class="text-zinc-500 font-headline font-bold text-xs uppercase tracking-widest">Monthly Projected</span>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline font-extrabold tracking-tighter text-primary">$18,450.00</span>
+</div>
+<div class="flex items-center gap-2 text-xs font-bold text-primary-container bg-primary-fixed/50 px-3 py-1 rounded-full w-fit">
+<span class="material-symbols-outlined text-sm">auto_graph</span>
+<span>ON TRACK</span>
+</div>
+</div>
+</div>
+<!-- Recently Collected -->
+<div class="bg-primary p-8 rounded-[2rem] shadow-[0px_20px_40px_rgba(54,32,184,0.15)] relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-8">
+<span class="material-symbols-outlined text-white opacity-10 text-6xl">payments</span>
+</div>
+<div class="flex flex-col gap-4 relative z-10">
+<span class="text-primary-fixed/60 font-headline font-bold text-xs uppercase tracking-widest">Recently Collected</span>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline font-extrabold tracking-tighter text-white">$2,100.00</span>
+</div>
+<div class="flex items-center gap-2 text-xs font-bold text-white bg-white/10 px-3 py-1 rounded-full w-fit">
+<span class="material-symbols-outlined text-sm">history</span>
+<span>LAST 48 HOURS</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Detailed Payment List (Bento-style List) -->
+<section class="bg-surface-container-low p-1 rounded-[2.5rem]">
+<div class="bg-surface-container-lowest rounded-[2.25rem] overflow-hidden">
+<div class="px-10 py-8 border-b border-zinc-50 flex items-center justify-between">
+<h3 class="text-xl font-headline font-extrabold tracking-tight">Recent Activity</h3>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-surface-container-high rounded-full text-xs font-bold text-on-surface-variant hover:bg-surface-variant transition-colors">Filter By Status</button>
+<button class="px-4 py-2 bg-surface-container-high rounded-full text-xs font-bold text-on-surface-variant hover:bg-surface-variant transition-colors">Export CSV</button>
+</div>
+</div>
+<div class="divide-y divide-zinc-50">
+<!-- Row 1 -->
+<div class="px-10 py-8 flex items-center justify-between hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-6 w-1/4">
+<div class="w-14 h-14 rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="portrait of a young athletic man with a friendly smile wearing athletic gear against a clean studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDW1ca2Ljb9rJWEwqV2pfzKTEWxymb7WipNGMCW07fBRXIXDEz9QfyeW7pBUAFuuTw0LfTsJ85A4hlN-MIy1GZWmWTo9K3VIH5QRLBv0p3MpzfInOXXp14IJDR6LojNtYcbhaybTQ39O6Oe7aVno2XMAMYQLChrkLd8kfh5xmigOKmDtistRHhEEPi1Y3q5GwJEtzdoT5Kq35Lt2_ctX_wyDu_SZyG21HbZWelnS-4ZfWrQgXCRt0gM936KDPwu6t7ytksP_x8MNhw"/>
+</div>
+<div>
+<p class="text-lg font-headline font-extrabold tracking-tight">Alex Rivers</p>
+<p class="text-zinc-400 text-xs font-medium">Fortnightly Billing</p>
+</div>
+</div>
+<div class="w-1/6">
+<span class="px-4 py-1.5 bg-green-50 text-green-600 text-[11px] font-black uppercase tracking-wider rounded-full flex items-center gap-2 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                Paid
+                            </span>
+</div>
+<div class="w-1/6">
+<p class="text-xl font-headline font-extrabold tracking-tighter text-on-surface">$250.00</p>
+<p class="text-zinc-400 text-xs font-medium">Oct 12, 2024</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-3 rounded-xl bg-surface-container-low text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all active:scale-95" title="Edit Billing">
+<span class="material-symbols-outlined text-[20px]">edit_calendar</span>
+</button>
+<button class="px-6 py-3 rounded-xl bg-surface-container-low text-zinc-500 font-bold text-xs hover:bg-surface-container-highest transition-all">
+                                View Profile
+                            </button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="px-10 py-8 flex items-center justify-between hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-6 w-1/4">
+<div class="w-14 h-14 rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a woman in activewear with a determined expression in a bright gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXxERASxjTgHeXHX7vEbw4MnudE-YI0ehaBLEOlT8zCuuTOiB69tkucjxJ2Aw6XSa71epNVxBkvHpRwiA0M_IbXKVb92A5FqRAiHAam3EXK1mVmfdnXUcUUPd3uM1hz39UHCe87HX_W1e5SSzz28O9IvqpV0zbEZKR1iR8UlNUUkSxtI9ZNnMeyyMqNA0Yh-Dou5Ky-jz2WCaWMGGSOaM64WSavjDq4rvOCws0rS-X1ApqdgpoeDPbUMJsHzqlK81LUjSHwldgGwk"/>
+</div>
+<div>
+<p class="text-lg font-headline font-extrabold tracking-tight">Sarah Jenkins</p>
+<p class="text-zinc-400 text-xs font-medium">Monthly Billing</p>
+</div>
+</div>
+<div class="w-1/6">
+<span class="px-4 py-1.5 bg-red-50 text-red-600 text-[11px] font-black uppercase tracking-wider rounded-full flex items-center gap-2 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                Overdue
+                            </span>
+</div>
+<div class="w-1/6">
+<p class="text-xl font-headline font-extrabold tracking-tighter text-on-surface">$420.00</p>
+<p class="text-error text-xs font-bold">Oct 01, 2024</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-6 py-3 rounded-xl bg-primary text-white font-bold text-xs shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95">
+                                Send Reminder
+                            </button>
+<button class="p-3 rounded-xl bg-surface-container-low text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="px-10 py-8 flex items-center justify-between hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-6 w-1/4">
+<div class="w-14 h-14 rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="headshot of a middle-aged man with short beard and graying hair, wearing a navy blue polo shirt, outdoor sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsHcebT9GCQzXTl7v2AYoYJPbGsL5hIHgP9JOnZZaoNfx27WMLMn0f7dcAsEFqU71FUp-p7R5x5pniF9Mg8zyzYsZt12JnLvKMhXE-M5md15afmUhpjyS6GP46PNG27nAdvX6ft8M834f-4ObiFyeZK9nWJJqQ3LUPpXoXvzJaNSSPxnHbSDYUrPG4k4jP3fiI6ETaPyMa_zNWJlm1fEneLWNkYzFiAsrkE-RiGPz34J5T1H-VUlMaHdNx4Y3ZtmX0bsfHNSNDE3I"/>
+</div>
+<div>
+<p class="text-lg font-headline font-extrabold tracking-tight">Marcus Thorne</p>
+<p class="text-zinc-400 text-xs font-medium">Monthly Billing</p>
+</div>
+</div>
+<div class="w-1/6">
+<span class="px-4 py-1.5 bg-orange-50 text-orange-600 text-[11px] font-black uppercase tracking-wider rounded-full flex items-center gap-2 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                Pending
+                            </span>
+</div>
+<div class="w-1/6">
+<p class="text-xl font-headline font-extrabold tracking-tighter text-on-surface">$385.00</p>
+<p class="text-zinc-400 text-xs font-medium">Processing...</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-3 rounded-xl bg-surface-container-low text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all" title="Edit Billing">
+<span class="material-symbols-outlined text-[20px]">edit_calendar</span>
+</button>
+<button class="px-6 py-3 rounded-xl bg-surface-container-low text-zinc-500 font-bold text-xs hover:bg-surface-container-highest transition-all">
+                                View Profile
+                            </button>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="px-10 py-8 flex items-center justify-between hover:bg-surface-bright transition-colors group">
+<div class="flex items-center gap-6 w-1/4">
+<div class="w-14 h-14 rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="vibrant portrait of a smiling young woman with dark hair, studio lighting with a warm subtle glow" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0lhIpcy_duj_S6ix0cr8qkpKiPTpCxbZCII4NEqSqBl_qaU8NM1HQbSS0Bh0w4WBg3QqaKSC2lq7FISn4HcvaaCCjvFVT5P3dOQZqCBGbkIjTjLo_-iI9OXnEfKQ6TLRhFlz9bXHb1Zuwk14NlK18FQJ-OYLPFaGTSB9r0YlqUB12dBqddYdjI2alvjY9S7jJsMWPRbe6PMeX73URnaOqhU_HMlHZ6m9jvR22MjrDCP2dYp8ZRcRGypC8xDuI-P5Ts8-2BceUJuA"/>
+</div>
+<div>
+<p class="text-lg font-headline font-extrabold tracking-tight">Elena Vance</p>
+<p class="text-zinc-400 text-xs font-medium">Fortnightly Billing</p>
+</div>
+</div>
+<div class="w-1/6">
+<span class="px-4 py-1.5 bg-green-50 text-green-600 text-[11px] font-black uppercase tracking-wider rounded-full flex items-center gap-2 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                Paid
+                            </span>
+</div>
+<div class="w-1/6">
+<p class="text-xl font-headline font-extrabold tracking-tighter text-on-surface">$250.00</p>
+<p class="text-zinc-400 text-xs font-medium">Oct 11, 2024</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-3 rounded-xl bg-surface-container-low text-zinc-500 hover:text-primary hover:bg-primary/5 transition-all" title="Edit Billing">
+<span class="material-symbols-outlined text-[20px]">edit_calendar</span>
+</button>
+<button class="px-6 py-3 rounded-xl bg-surface-container-low text-zinc-500 font-bold text-xs hover:bg-surface-container-highest transition-all">
+                                View Profile
+                            </button>
+</div>
+</div>
+</div>
+<div class="px-10 py-6 bg-surface-container-low flex items-center justify-center">
+<button class="text-zinc-500 font-headline font-bold text-sm flex items-center gap-2 hover:text-primary transition-colors">
+                        Load More Activity
+                        <span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Insights Footer Section (Extra Polish) -->
+<section class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="kinetic-glass p-8 rounded-[2rem] ghost-border flex items-center gap-8">
+<div class="w-20 h-20 rounded-full border-[6px] border-primary-container border-t-transparent flex items-center justify-center relative">
+<span class="text-sm font-black font-headline">88%</span>
+</div>
+<div>
+<h4 class="font-headline font-extrabold tracking-tight">Retention Rate</h4>
+<p class="text-zinc-500 text-sm mt-1">Clients on active billing cycles are up 4% this month.</p>
+</div>
+</div>
+<div class="kinetic-glass p-8 rounded-[2rem] ghost-border flex items-center gap-8">
+<div class="w-16 h-16 rounded-2xl bg-secondary-container/10 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">insights</span>
+</div>
+<div>
+<h4 class="font-headline font-extrabold tracking-tight">Revenue Forecast</h4>
+<p class="text-zinc-500 text-sm mt-1">Projecting a $2.5k increase by Q4 based on new signups.</p>
+</div>
+</div>
+</section>
+</main>
+</body></html>

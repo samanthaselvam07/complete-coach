@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-fixed-variant": "#3c29bd",
+              "surface-container": "#efeded",
+              "surface-container-highest": "#e4e2e2",
+              "tertiary": "#414141",
+              "surface-container-high": "#e9e8e7",
+              "on-error": "#ffffff",
+              "on-secondary-fixed-variant": "#753400",
+              "on-primary-fixed": "#140067",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "on-secondary-fixed": "#321200",
+              "error": "#ba1a1a",
+              "primary-container": "#4f40cf",
+              "surface-tint": "#5547d5",
+              "surface-dim": "#dbdad9",
+              "tertiary-container": "#585858",
+              "surface-bright": "#fbf9f8",
+              "primary-fixed": "#e3dfff",
+              "inverse-surface": "#303031",
+              "on-primary": "#ffffff",
+              "on-tertiary-fixed": "#1b1b1b",
+              "on-primary-container": "#cfcaff",
+              "inverse-primary": "#c5c0ff",
+              "surface-variant": "#e4e2e2",
+              "outline": "#787586",
+              "on-surface-variant": "#474554",
+              "on-surface": "#1b1c1c",
+              "inverse-on-surface": "#f2f0f0",
+              "secondary-fixed": "#ffdbc9",
+              "surface": "#fbf9f8",
+              "outline-variant": "#c8c4d7",
+              "on-tertiary": "#ffffff",
+              "background": "#fbf9f8",
+              "secondary-container": "#f87600",
+              "on-background": "#1b1c1c",
+              "surface-container-lowest": "#ffffff",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-tertiary-fixed-variant": "#474747",
+              "primary": "#3620b8",
+              "on-secondary-container": "#562500",
+              "on-error-container": "#93000a",
+              "tertiary-fixed": "#e2e2e2",
+              "on-secondary": "#ffffff",
+              "primary-fixed-dim": "#c5c0ff",
+              "secondary": "#9a4600",
+              "on-tertiary-container": "#cfcfcf",
+              "surface-container-low": "#f5f3f3",
+              "error-container": "#ffdad6"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-effect {
+        backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.7);
+      }
+      .kinetic-gradient {
+        background: linear-gradient(135deg, #3620b8 0%, #4f40cf 100%);
+      }
+      .orange-glow {
+        background: linear-gradient(135deg, #9a4600 0%, #f87600 100%);
+      }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-white">
+<div class="flex min-h-screen">
+<!-- Side Navigation Bar (Shared Component) -->
+<aside class="h-screen w-64 fixed left-0 top-0 z-50 flex flex-col p-6 justify-between bg-slate-50 border-r-0 font-['Plus_Jakarta_Sans'] tracking-tight">
+<div class="space-y-8">
+<!-- Brand Header -->
+<div>
+<h1 class="text-xl font-bold tracking-tighter text-zinc-900">MCP Coaching</h1>
+<p class="text-xs font-medium text-zinc-500 tracking-normal">Coach Portal</p>
+</div>
+<!-- CTA -->
+<!-- Navigation Tabs -->
+<nav class="space-y-1">
+<a class="flex items-center gap-3 p-3 text-[#4F40CF] font-bold bg-white rounded-xl shadow-sm active:scale-[0.98] transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-zinc-500 font-medium hover:text-zinc-900 hover:bg-zinc-200/50 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span>Training</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-zinc-500 font-medium hover:text-zinc-900 hover:bg-zinc-200/50 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+<span>Nutrition</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-zinc-500 font-medium hover:text-zinc-900 hover:bg-zinc-200/50 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span>Education</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-zinc-500 font-medium hover:text-zinc-900 hover:bg-zinc-200/50 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="pill">pill</span>
+<span>Supplementation</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-zinc-500 font-medium hover:text-zinc-900 hover:bg-zinc-200/50 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Clients</span>
+</a>
+</nav><button class="w-full kinetic-gradient text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-sm mt-4">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>+ New Client</span>
+</button>
+</div>
+<!-- Footer Navigation -->
+<div class="pt-6 border-t border-zinc-200/50">
+<a class="flex items-center gap-3 p-3 text-zinc-500 font-medium hover:text-zinc-900 hover:bg-zinc-200/50 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span>Coach Profile</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 p-10 bg-background overflow-y-auto">
+<!-- Header Section -->
+<header class="flex justify-between items-end mb-12">
+<div class="max-w-xl">
+<h2 class="text-5xl font-extrabold font-headline tracking-tighter text-on-surface mb-2">Financial Insights</h2>
+<p class="text-on-surface-variant font-medium text-lg">Performance overview for the Q3 fiscal period.</p>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-full">
+<span class="w-2 h-2 rounded-full bg-secondary-container"></span>
+<span class="text-sm font-bold text-on-surface-variant">LIVE UPDATES</span>
+</div>
+</div>
+</header>
+<!-- Bento Grid - Key Metrics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<!-- Total Monthly Revenue -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)] relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-on-surface-variant font-bold text-sm tracking-widest uppercase mb-4">Total Monthly Revenue</p>
+<h3 class="text-4xl font-extrabold font-headline text-on-surface mb-2 tracking-tighter">$24,850</h3>
+<div class="flex items-center gap-1 text-primary font-bold">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span>+12.5% vs last month</span>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-5">
+<span class="material-symbols-outlined text-9xl">payments</span>
+</div>
+</div>
+<!-- Subscription Retention -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<p class="text-on-surface-variant font-bold text-sm tracking-widest uppercase mb-4">Subscription Retention</p>
+<div class="flex items-baseline gap-2 mb-4">
+<h3 class="text-4xl font-extrabold font-headline text-on-surface tracking-tighter">92%</h3>
+<span class="text-on-surface-variant text-sm font-medium">Target: 90%</span>
+</div>
+<!-- Custom Progress Glass -->
+<div class="h-3 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full kinetic-gradient" style="width: 92%"></div>
+</div>
+</div>
+<!-- ARPU -->
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<p class="text-on-surface-variant font-bold text-sm tracking-widest uppercase mb-4">Avg Revenue Per User</p>
+<h3 class="text-4xl font-extrabold font-headline text-on-surface mb-2 tracking-tighter">$182</h3>
+<div class="flex items-center gap-1 text-secondary font-bold">
+<span class="material-symbols-outlined text-sm">stars</span>
+<span>Premium tier growth</span>
+</div>
+</div>
+</div>
+<!-- Major Insights Row -->
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-12">
+<!-- Revenue Growth Chart (Simulated) -->
+<div class="lg:col-span-3 bg-surface-container-lowest p-8 rounded-xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex justify-between items-center mb-8">
+<h4 class="text-xl font-bold font-headline">Revenue Growth</h4>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold text-on-surface-variant">6 MONTHS</span>
+<span class="px-3 py-1 bg-primary text-white rounded-full text-xs font-bold">YEARLY</span>
+</div>
+</div>
+<div class="h-64 flex items-end justify-between gap-2 px-2">
+<!-- Simplified Bar Representation for Visuals -->
+<div class="w-full bg-surface-container-high rounded-t-lg h-2/5 hover:bg-primary/20 transition-colors"></div>
+<div class="w-full bg-surface-container-high rounded-t-lg h-3/5 hover:bg-primary/20 transition-colors"></div>
+<div class="w-full bg-surface-container-high rounded-t-lg h-2/3 hover:bg-primary/20 transition-colors"></div>
+<div class="w-full bg-surface-container-high rounded-t-lg h-4/5 hover:bg-primary/20 transition-colors"></div>
+<div class="w-full kinetic-gradient rounded-t-lg h-full relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-inverse-surface text-white text-[10px] px-2 py-1 rounded-lg font-bold">CURRENT</div>
+</div>
+<div class="w-full bg-surface-container-high rounded-t-lg h-5/6 hover:bg-primary/20 transition-colors"></div>
+<div class="w-full bg-surface-container-high rounded-t-lg h-3/4 hover:bg-primary/20 transition-colors"></div>
+</div>
+<div class="flex justify-between mt-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">
+<span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span>
+</div>
+</div>
+<!-- Plan Distribution (Donut Chart Simulated) -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-8 rounded-xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)] flex flex-col items-center justify-center relative">
+<h4 class="text-xl font-bold font-headline self-start mb-8">Plan Distribution</h4>
+<div class="relative w-48 h-48 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="24"></circle>
+<circle class="text-primary" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-dasharray="502" stroke-dashoffset="150" stroke-width="24"></circle>
+<circle class="text-secondary-container" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-dasharray="502" stroke-dashoffset="400" stroke-width="24"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-3xl font-extrabold font-headline">782</span>
+<span class="text-xs font-bold text-on-surface-variant">TOTAL USERS</span>
+</div>
+</div>
+<div class="mt-8 grid grid-cols-2 gap-4 w-full">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-sm font-bold">Elite (65%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-secondary-container"></div>
+<span class="text-sm font-bold">Pro (20%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-surface-container"></div>
+<span class="text-sm font-bold">Basic (15%)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Transactions -->
+<section class="bg-surface-container-low rounded-xl p-10">
+<div class="flex justify-between items-center mb-10">
+<h4 class="text-2xl font-extrabold font-headline tracking-tight">Recent Transactions</h4>
+<button class="text-primary font-bold text-sm hover:underline">View All History</button>
+</div>
+<div class="space-y-4">
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-6 bg-surface-container-lowest rounded-xl shadow-[0px_4px_12px_rgba(27,28,28,0.02)]">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 rounded-full bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a male athlete in gym setting with natural lighting and professional studio look" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCi_VpBkksN69dCkXin4PmrHWvkOWJxK7R-9sBdhgjmDidUyDlzeC7DQkKTw-CmyKApof7zwql5kc51CWMbyAHpezgSfn-Zki2gbLIph3wc3J4EaStA80WLPmpjlcf3Rr2ohnpVH48M7tz4YWqs7HTaHlZF9zMbme-c5Lt966h2umZA4zDj5OOeLehA6ohISsBmP3y21Q8x00PA6FAhPU_A2WZmRXil5tWVEaxu1aekeuoIJS8VcZVAx8GsKGLUfd2_xVS6ieizE08"/>
+</div>
+<div>
+<h5 class="text-lg font-bold">Marcus Chen</h5>
+<p class="text-sm text-on-surface-variant">Elite Performance Annual Plan</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-lg font-extrabold text-on-surface">+$1,850.00</p>
+<p class="text-xs font-bold text-on-surface-variant">OCT 12, 2023</p>
+</div>
+</div>
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-6 bg-surface-container-lowest rounded-xl shadow-[0px_4px_12px_rgba(27,28,28,0.02)]">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 rounded-full bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="profile photo of woman fitness instructor smiling in bright airy gym background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-bj1LQ6BdicNSz9vjEFhbnbvBnHt4JpK0g6jv9xhnp6DE5RY5Eap3lM3UBdUBEl-Nr0tcM_BCb9JHJtFY3Jcp2_4-KN7yCUXISvi4npT-k4YnJ8FGzdTJWfEUNN-EAbDIOvogT--XCD6cWF8UcgldfP8ZXeZLDeB9livOGTz5ohJJ2N694rJLbi6eOtWoyMBEH97W1KUxtSx2HbnZOajqpTAQDfK1CEKV5wuDU44PJ7gAzqOzglQbYXpFlsnjmgJhO4Z2IzxOGm4"/>
+</div>
+<div>
+<h5 class="text-lg font-bold">Sarah Williams</h5>
+<p class="text-sm text-on-surface-variant">Nutrition Coaching Add-on</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-lg font-extrabold text-on-surface">+$420.00</p>
+<p class="text-xs font-bold text-on-surface-variant">OCT 11, 2023</p>
+</div>
+</div>
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-6 bg-surface-container-lowest rounded-xl shadow-[0px_4px_12px_rgba(27,28,28,0.02)]">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 rounded-full bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="headshot of muscular man in activewear with dramatic soft side lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmqI2dZEWNM1afA-4t19xnUIfQscPpzkqMF4xf3VGk01OEakFM-oDfP4uFV3NZZE7PvytOsgcvxN5BhgjImlM06JUKeZGmlZshwML7rfaspC6Lfg0p8mic337_wRghQY9df_0WDnlzLQgbzvJQGLzwlimnt2JiC7_xCE11XaM31SiIqRWTOrt9JQR3aL4qrgukpp6Kzp0EmCPd4z7-hBhoA50WJWTX-xZsosIa4oRFjMNAQU_NolPjh3PySPclQ92ODhosPqNBPaM"/>
+</div>
+<div>
+<h5 class="text-lg font-bold">David Miller</h5>
+<p class="text-sm text-on-surface-variant">Supplement Bundle Purchase</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-lg font-extrabold text-on-surface">+$285.50</p>
+<p class="text-xs font-bold text-on-surface-variant">OCT 10, 2023</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>

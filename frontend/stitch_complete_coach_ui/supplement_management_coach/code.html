@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kinetic Curator | Supplement Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface-variant": "#474554",
+                        "inverse-on-surface": "#f2f0f0",
+                        "tertiary-container": "#585858",
+                        "surface-tint": "#5547d5",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "primary": "#3620b8",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e9e8e7",
+                        "secondary": "#9a4600",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#140067",
+                        "on-primary-container": "#cfcaff",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface": "#fbf9f8",
+                        "surface-variant": "#e4e2e2",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "on-secondary-fixed": "#321200",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#562500",
+                        "surface-container-highest": "#e4e2e2",
+                        "background": "#fbf9f8",
+                        "on-secondary-fixed-variant": "#753400",
+                        "outline": "#787586",
+                        "secondary-container": "#f87600",
+                        "outline-variant": "#c8c4d7",
+                        "surface-bright": "#fbf9f8",
+                        "secondary-fixed": "#ffdbc9",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "primary-container": "#4f40cf",
+                        "tertiary": "#414141",
+                        "surface-dim": "#dbdad9",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "primary-fixed": "#e3dfff",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#303031",
+                        "surface-container": "#efeded",
+                        "on-tertiary-container": "#cfcfcf",
+                        "surface-container-low": "#f5f3f3",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "on-background": "#1b1c1c",
+                        "inverse-primary": "#c5c0ff",
+                        "on-surface": "#1b1c1c"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .font-plus-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-background font-body text-on-background antialiased selection:bg-primary-fixed selection:text-primary">
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 sticky top-0 flex flex-col p-6 space-y-2 bg-[#f5f3f3] dark:bg-slate-900 font-plus-jakarta font-medium text-[14px]">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+</div>
+<span class="text-lg font-black text-[#1b1c1c] dark:text-white">Kinetic Curator</span>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-[#4F40CF] dark:text-[#4F40CF] rounded-xl shadow-sm transition-transform duration-200 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="pill">pill</span>
+<span>Supplements</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+<span>Education</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+<span>Resources</span>
+</a>
+</nav>
+<button class="w-full bg-primary-container text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 mb-6 hover:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                New Resource
+            </button>
+<div class="pt-6 border-t border-outline-variant/20 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Logout</span>
+</a>
+</div>
+<div class="mt-auto flex items-center gap-3 px-2 py-4">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover" data-alt="Close-up portrait of a professional athletic coach with a confident expression in a bright modern gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBF83LG8xvRTe_KF-AV752vpi_VjolxlAL-ZMN0CfFxktw2lTauak9cTV2cN0GAiVeRsseupyPdg0C3_LQu0trTRm-fOjRl6Q6X-08RkbFCv1gyHsCClKATEk4Ba71OC7_Z6Ky0QPn0q_a1Yif6xs3Njh0Lgr7mtKaQ7PYaN8L-ePoURW6LB5qTTAgJKKCH_Lvr2AONw6g8JpLxF4BXqQ2LjjgjQ35q_UQQEgoHV7gwzCZPIQmvJl6z6qNFAKAX_p6plt4T3-RQIKY"/>
+<div>
+<p class="font-bold text-on-surface">Coach Alex</p>
+<p class="text-xs text-on-surface-variant">Head Performance</p>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 min-w-0 bg-background overflow-y-auto">
+<!-- TopNavBar -->
+<header class="w-full sticky top-0 z-40 bg-[#fbf9f8]/80 dark:bg-slate-950/80 backdrop-blur-2xl flex justify-between items-center px-8 py-4 w-full">
+<div class="flex items-center gap-6">
+<h1 class="font-headline text-2xl font-extrabold tracking-tighter text-[#1b1c1c] dark:text-white">Supplementation Hub</h1>
+<div class="hidden md:flex items-center bg-surface-container-high px-4 py-2 rounded-full min-w-[320px]">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full font-body" placeholder="Search supplement database..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-[#f5f3f3] rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-[#f5f3f3] rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<div class="p-8 space-y-10">
+<!-- Hero Section / Metrics Bento -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="md:col-span-2 relative overflow-hidden rounded-[2rem] bg-primary p-8 text-white flex flex-col justify-between aspect-[2/1]">
+<div class="relative z-10">
+<span class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-widest">Global Status</span>
+<h2 class="text-4xl font-headline font-extrabold mt-4 leading-none">Compliance <br/>is Peak Performance</h2>
+</div>
+<div class="flex items-end justify-between relative z-10">
+<div>
+<p class="text-6xl font-headline font-black">94%</p>
+<p class="text-sm opacity-80">Overall Team Adherence</p>
+</div>
+<div class="flex -space-x-3">
+<img class="w-10 h-10 rounded-full border-2 border-primary object-cover" data-alt="Female athlete headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjVuviVYwGvWyDLPcbBc15D7fyT34RYUCRKLGYbTDR5fOlIUkdsX1RraoD9IPl6dtcb3zcC-trTfHkcOdUugUcIppC4H72v1ethfFvJbraRi5fwR8x4gMedfQ-G1H2vucXhrXaytChIBioYVWMrpJNleZb-WDwU3fEd3Rk1SeyZgr2i5HIlj4M4Ywo1Wgi0_CMTmmBvhXqsJcdwJ8T60reIIB7_nYaCKr05r_A2fZEweCScZIxDdjqS0l0UHFmQF_jtNJnmc9F5yA"/>
+<img class="w-10 h-10 rounded-full border-2 border-primary object-cover" data-alt="Male athlete headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuClimBl3ld8jTjod455rjKTdbxGsciW-uWjt9pqCXU3fKrPelOh06Yx-fyi00KOkam4zthp1LHHfapr9bVFEm0Lmfko_J9DV3mFyoTISBEfRGyfqbibAHByqaXaIWyUeTb59R5zellEghUy1BjIX6mtCHM0IdevsBu6Co9EGCcFbOX7v7h3mKPHCwjU49130jAHrOTr4dukLfE05HVQ3IbP7BjoPkfq6sokqgMQupS5vlGp9kuXiG8rfoKPloU9C18EUVzQM_e8xQQ"/>
+<img class="w-10 h-10 rounded-full border-2 border-primary object-cover" data-alt="Professional sports person headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3el0gel1TUvyA1A2GVcXgG4wgz9t8QHg-bsCmdBzL6E3M5SUZ0Ku4LjmfS_7qh3SzbifXmhSfbJpXDfMZsS5fhg_hvNlwJ_qQyitfzsmkv0kPQybwb5dGEW1Mkn3OmJlyF-CmNit9L8wO5HXUBhxh_2qn3aBnlt5lN86g0_wTryKqVVzTnmQXUhVsZDQJJKWxF33-EVSnUosnj2FwWv1ADZqT0WapGeCaDTIA6KfC9W7pp5p-smgsD-zfXlWRQg7_anE5VIe-FDU"/>
+<div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border-2 border-primary flex items-center justify-center text-xs">+12</div>
+</div>
+</div>
+<div class="absolute top-0 right-0 w-full h-full opacity-20 pointer-events-none">
+<img class="w-full h-full object-cover" data-alt="Abstract vibrant supplement powders in macro shot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCNgpQ2SFQkA2aSP0fINOPNTCArJswt5bL8x59GCUJh0DQhRfKqDwDvgTnGfUF44iBDcZn30t3DsMFQ674E3x4cqqCZr5V-DaxMEdFcFq5_UxZwAJ7iGp-Loj6U8m4T_vD_Wuwyv5gGkHR98onKECeaH6JQ7y_pqoaM2piAk_tLc71Bwklpu2uTab7rmELKfEXJ6HuDB1DvHR7Ii_4PK-Ty4jIlsO8XXJ0mOgItAIxfTGcwJ1qEXnb-sT4Vun2gjEezEflie96lBk"/>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-[2rem] p-8 flex flex-col justify-between shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-2xl bg-secondary-container/10 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+</div>
+<span class="text-xs font-bold text-secondary">Active Stacks</span>
+</div>
+<div>
+<p class="text-4xl font-headline font-extrabold text-on-surface">42</p>
+<p class="text-sm text-on-surface-variant">Custom formulations</p>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full w-[65%] bg-secondary-container"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-[2rem] p-8 flex flex-col justify-between shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+</div>
+<span class="text-xs font-bold text-primary">Efficiency</span>
+</div>
+<div>
+<p class="text-4xl font-headline font-extrabold text-on-surface">+18%</p>
+<p class="text-sm text-on-surface-variant">vs. Last Quarter</p>
+</div>
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+<span class="text-xs font-bold">Optimal tracking</span>
+</div>
+</div>
+</section>
+<!-- Category Management -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-headline font-bold text-on-surface">Category Management</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span> Manage Schema
+                        </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Vitamins -->
+<div class="bg-surface-container-low rounded-3xl p-6 hover:bg-surface-container transition-colors group">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#fbf9f8] flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined" data-icon="nutrition">nutrition</span>
+</div>
+<span class="font-bold">Vitamins</span>
+</div>
+<span class="text-xs text-on-surface-variant bg-surface-container-highest px-2 py-1 rounded-full">12 Items</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed mb-4">Foundational micronutrients for metabolic health and immune resilience.</p>
+<div class="flex gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-xs font-bold">D3</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-xs font-bold">K2</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-xs font-bold">Mg</div>
+<div class="w-8 h-8 rounded-lg bg-white/60 flex items-center justify-center text-xs font-bold">+4</div>
+</div>
+</div>
+<!-- Performance -->
+<div class="bg-surface-container-low rounded-3xl p-6 hover:bg-surface-container transition-colors group">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#fbf9f8] flex items-center justify-center text-secondary-container shadow-sm">
+<span class="material-symbols-outlined" data-icon="speed">speed</span>
+</div>
+<span class="font-bold">Performance</span>
+</div>
+<span class="text-xs text-on-surface-variant bg-surface-container-highest px-2 py-1 rounded-full">8 Items</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed mb-4">Pre-workout and intra-workout agents designed for maximal output.</p>
+<div class="flex gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-xs font-bold">Cr</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-xs font-bold">Ba</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-xs font-bold">Ci</div>
+<div class="w-8 h-8 rounded-lg bg-white/60 flex items-center justify-center text-xs font-bold">+5</div>
+</div>
+</div>
+<!-- Recovery -->
+<div class="bg-surface-container-low rounded-3xl p-6 hover:bg-surface-container transition-colors group">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#fbf9f8] flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined" data-icon="bedtime">bedtime</span>
+</div>
+<span class="font-bold">Recovery</span>
+</div>
+<span class="text-xs text-on-surface-variant bg-surface-container-highest px-2 py-1 rounded-full">15 Items</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed mb-4">Post-session protocols focused on muscle repair and nervous system downregulation.</p>
+<div class="flex gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-xs font-bold">Gl</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-xs font-bold">Om</div>
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-xs font-bold">Wh</div>
+<div class="w-8 h-8 rounded-lg bg-white/60 flex items-center justify-center text-xs font-bold">+12</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Supplement Library & Compliance Table -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Global Database -->
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-xl font-headline font-bold text-on-surface">Supplement Library</h3>
+<p class="text-sm text-on-surface-variant">Validated clinical-grade formulations</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-surface-container rounded-xl text-xs font-bold">Export</button>
+<button class="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold">+ Add New</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-separate border-spacing-y-4">
+<thead>
+<tr class="text-on-surface-variant text-xs uppercase tracking-widest font-bold">
+<th class="px-4 py-2">Supplement Name</th>
+<th class="px-4 py-2">Category</th>
+<th class="px-4 py-2">Standard Dose</th>
+<th class="px-4 py-2">Inventory</th>
+<th class="px-4 py-2"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="bg-surface rounded-xl overflow-hidden hover:scale-[1.01] transition-transform group cursor-pointer">
+<td class="px-4 py-4 rounded-l-xl">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-white overflow-hidden p-1 shadow-sm border border-outline-variant/10">
+<img class="w-full h-full object-contain" data-alt="Vitamin bottle icon placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnXSxFGnl7zfNriHuKlslGSZBQ4sbktODpYDi8NC9J3-DjkMiGB4iqcQLBpsYYTIZFSM6flXQ6LDogKALkkO0VFgiOOJOT-QLHls-42-npN8KnGbTAGPSg3q3_xRH7GwjN1oalk-7IqYWaQmAaRBiIEpW354iDj-YPCEg3Mj5xCsu7jv8GqgTV_kNrGDB2aX85JNT3Z5O9ScY-x4jzNRVg3eAGBHKPtuF7AUk9W8GrEQIJylf7xNF67NzlnctEz-5sQDl7TuhWEU8"/>
+</div>
+<span class="font-bold text-sm">Omega-3 Ultra High Potency</span>
+</div>
+</td>
+<td class="px-4 py-4"><span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase">Recovery</span></td>
+<td class="px-4 py-4 text-sm font-medium">2000mg / Day</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+<span class="text-xs">In Stock</span>
+</div>
+</td>
+<td class="px-4 py-4 rounded-r-xl text-right">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</td>
+</tr>
+<tr class="bg-surface rounded-xl overflow-hidden hover:scale-[1.01] transition-transform group cursor-pointer">
+<td class="px-4 py-4 rounded-l-xl">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-white overflow-hidden p-1 shadow-sm border border-outline-variant/10">
+<img class="w-full h-full object-contain" data-alt="Whey protein container aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCr8bdCRU-QNwcXr7-ASPAHxZg1r0KUxk9FBjuEub6TBG3ZlPcjPHhzKHOuHPLEbbCZU9W3KIFn97mepIROJwyWkjFLUDr4rggLZzL_lGrFSufZ2RowaakZgHJlYoCYV3OTA6z7k8AFUuzVK4glWVsmBZ2WATMnjG20IgLmIV5t_i7QBQWnY4kdcuv1HFb0885hss-wTVQ9nmRWo5aTM7C3e_Ey7AQYw08LGS6LPdYkaVJTJDPfOZxNVIUyhazCsF_z26EKTqtRNcM"/>
+</div>
+<span class="font-bold text-sm">Isolate Whey - Grass Fed</span>
+</div>
+</td>
+<td class="px-4 py-4"><span class="bg-secondary-container/10 text-secondary-container text-[10px] font-bold px-2 py-1 rounded-full uppercase">Nutrition</span></td>
+<td class="px-4 py-4 text-sm font-medium">30g Post-Work</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+<span class="text-xs">In Stock</span>
+</div>
+</td>
+<td class="px-4 py-4 rounded-r-xl text-right">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</td>
+</tr>
+<tr class="bg-surface rounded-xl overflow-hidden hover:scale-[1.01] transition-transform group cursor-pointer">
+<td class="px-4 py-4 rounded-l-xl">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-white overflow-hidden p-1 shadow-sm border border-outline-variant/10">
+<img class="w-full h-full object-contain" data-alt="Modern medicine capsule pill" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXJFWFjtn7zUkMe5VHkVntZDSM5RDDwYt0QByrOKQk4lXjPUpFWgddFpdFfyQlXitjO7E312BZihjWCTkYZip4D9nGIV6KvCY_dh_JOYLCtvPkT0ZSoHQMfW6Bk0N1tvDvkMidjfcz_0ZjQOvoIqJPTMpMa3fXxRSJuYDtFxkclME1BJEXx_VDQ4_Os-E37DDgCMJYotKv7tbhGAnyZE0ugrsE4p8zbomRrbYBNi77yInC5xkRNktnJy4ebg6JG_ZCVq8eUrb9A4A"/>
+</div>
+<span class="font-bold text-sm">Creapure® Creatine Mono</span>
+</div>
+</td>
+<td class="px-4 py-4"><span class="bg-primary-container text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase">Performance</span></td>
+<td class="px-4 py-4 text-sm font-medium">5g / Daily</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
+<span class="text-xs">Low Stock</span>
+</div>
+</td>
+<td class="px-4 py-4 rounded-r-xl text-right">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Client Compliance -->
+<div class="bg-surface-container-low rounded-[2rem] p-8">
+<h3 class="text-xl font-headline font-bold text-on-surface mb-6">Client Adherence</h3>
+<div class="space-y-6">
+<div class="bg-surface-container-lowest p-4 rounded-2xl flex items-center gap-4">
+<img class="w-12 h-12 rounded-xl object-cover" data-alt="Male professional athlete" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5jPcKJ6jm5xfBy0dR2xlgp0j1M0R74IGYLkBYI5twwy4rE9V3s2Z5d1Hw-UFq8RQRw_hW8pJSWhJCozKdhbyRSh7Jxb-fkpxZ8mVOlJjscgx_eEBpvZZXfNbp8vZjzucZDmEsA7hVszBXUybu2-LmjQnWAg1lv16qbuuohgKGYShfMnd0HHBBskksYZswLeItsl05xPeZpBKUDQwl-C1ZFtRH2cE_BYGQWGoBWmAFMoUf4d9DhiI6NUC_xotubKjbT3_5sXTkLOM"/>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-sm">Marcus Vane</span>
+<span class="text-xs font-bold text-green-600">98%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full w-[98%] bg-green-500"></div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-2xl flex items-center gap-4">
+<img class="w-12 h-12 rounded-xl object-cover" data-alt="Female professional athlete" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAudpuquARXk7o9mi6rC1RL4SN36KpBqxWaaVfyOQ89Ezyt9IXh35fpDBv18K6R12KL0sZ9BFZz7rylrSbK3QecUOwLkMQkpEAvwgjzrEKn-RsLb2vJNRzOiUHHYF5AJCHLhd3Ks7jvtvPgUFxNDDoH0iX_EAFBXqiBJWKNaFO81u3EgZ3upKS01w0NalgM7fbgSvVPWgd76_5MVJu_bjPSeU9e4dhQn2fiEbC59Q8JbSiozzBZXhjHK6nhuBMwsq1m9sxLik7KSpE"/>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<span class="font-bold text-sm">Sloane Stephens</span>
+<span class="text-xs font-bold text-secondary-container">82%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full w-[82%] bg-secondary-container"></div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-2xl flex items-center gap-4 border-2 border-primary/10">
+<div class="flex-1 text-center py-2">
+<p class="text-xs font-bold text-on-surface-variant mb-2">Needs Intervention</p>
+<div class="flex justify-center -space-x-2">
+<img class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="Athlete headshot 1" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ3DgWOqoL8EqY2_uxyMafHVYES3YfGN5Qu3SpXgjDs3ZbI9L191Q2LGDVkxZOMSm62JL1afSrF9Q-ZcCHS4e4-f_yWO2TiRCX5o-E8_fkF39mKgZX9ENlSCsk7Bl4fqx_HUiLFX1z_nyZ8_BacAk-Sa3HEwgntu5ua4hFfADpWuVTfxEf2OoNXc7aN0Z3iDqLCDDYKEPaVVNrm4LhA_OA0N-eQ_dH0vU9XdeiMTrGX467sDOFSYTBMsFvM3bdFOADTa5S9xbBaog"/>
+<img class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="Athlete headshot 2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyCseF9Rd7QlKGPA5aS4c9BCS73AmYpk-zWqI1P_2MrEVG5COfQayJYmwOyr6Ql1MooLIPXy-JnbDhG1zLAKw45j8Y-5Fdm0ujOaXyjKUPCIIUB4sAcRATG-CscqV0zGBW422zcF5Woq3FhxBMeDsr6ONNJAIcjyt1pZ89rwm-sUIq952u0BmxE9nKioGWvVHxvpRsJv918BwB07Q6SmVLzIp0gGCWxueIp_TtO8oLwH53Fm9-BL-GjaEWJx4gG2AfM5A80_y3Sts"/>
+</div>
+<button class="mt-4 w-full py-2 bg-primary/10 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-colors">Notify All</button>
+</div>
+</div>
+</div>
+<!-- Mini Promotion Card -->
+<div class="mt-8 relative overflow-hidden rounded-2xl bg-inverse-surface p-6 text-white group cursor-pointer">
+<div class="relative z-10">
+<p class="text-xs font-bold text-primary-fixed-dim uppercase mb-2">Expert Tip</p>
+<p class="text-sm font-medium leading-snug">Creatine saturation protocols can improve cognition by 15% in sleep-deprived athletes.</p>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-8xl" data-icon="lightbulb">lightbulb</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+<!-- Floating Action for Mobile / Quick Access -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-[0px_10px_30px_rgba(54,32,184,0.3)] flex items-center justify-center hover:scale-110 active:scale-95 transition-transform md:hidden">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+</body></html>

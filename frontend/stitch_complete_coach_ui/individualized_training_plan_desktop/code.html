@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#9a4600",
+                        "on-background": "#1b1c1c",
+                        "on-primary-container": "#cfcaff",
+                        "surface-container": "#efeded",
+                        "surface-bright": "#fbf9f8",
+                        "on-secondary-fixed-variant": "#753400",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e4e2e2",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "primary": "#3620b8",
+                        "on-primary-fixed": "#140067",
+                        "inverse-surface": "#303031",
+                        "on-surface-variant": "#474554",
+                        "surface-dim": "#dbdad9",
+                        "surface-container-highest": "#e4e2e2",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface": "#fbf9f8",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#cfcfcf",
+                        "outline": "#787586",
+                        "tertiary-container": "#585858",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-secondary-fixed": "#321200",
+                        "background": "#fbf9f8",
+                        "secondary-container": "#f87600",
+                        "inverse-on-surface": "#f2f0f0",
+                        "on-secondary-container": "#562500",
+                        "surface-tint": "#5547d5",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "tertiary": "#414141",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "secondary-fixed": "#ffdbc9",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f5f3f3",
+                        "primary-fixed": "#e3dfff",
+                        "inverse-primary": "#c5c0ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#4f40cf",
+                        "on-surface": "#1b1c1c",
+                        "surface-container-high": "#e9e8e7",
+                        "outline-variant": "#c8c4d7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-effect {
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .tonal-transition {
+            background: linear-gradient(180deg, #fbf9f8 0%, #f5f3f3 100%);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fbf9f8;
+            color: #1b1c1c;
+        }
+        h1, h2, h3, .brand-font {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen text-on-surface">
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 w-full bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-[0_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black italic tracking-tighter text-zinc-900 dark:text-white">MCP</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-indigo-600 dark:text-indigo-400 font-bold tracking-tight text-sm hover:opacity-80 transition-opacity" href="#">Training</a>
+<a class="text-zinc-500 dark:text-zinc-400 font-bold tracking-tight text-sm hover:opacity-80 transition-opacity" href="#">Nutrition</a>
+<a class="text-zinc-500 dark:text-zinc-400 font-bold tracking-tight text-sm hover:opacity-80 transition-opacity" href="#">Analytics</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-zinc-500 hover:opacity-80 transition-opacity p-2 rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/20">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a professional fitness athlete with a focused expression in a bright studio environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7Y3-PaHtvdgH8FRNEjxpXltAGR51Eoy8t3AUchPjDLf7MMxazw0DJB0kM8jD6QRTocSJtI_IJvWNp_pNXTLS7CFonLPKQpoMzDFdOlWyDni3L5ETBml3HKRwUh7OQE98H-XmOXw8lzxD5kKn4TUvIKGfrKdNgF3wVI-6hHJTn3YJUFmtPCG6cNRROLHAkptWymnbV9EDMPDi2bAqunv954_7UwMLFg0OigFpyaFxodwjRDnBXCTUHTWijW-PgHvZPrIX0EE9cU1o"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 max-w-[1440px] mx-auto px-6 md:px-12">
+<!-- Header: Program Overview & Progress -->
+<section class="mb-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+<div class="lg:col-span-8">
+<h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Hypertrophy Phase II</h1>
+<p class="text-on-surface-variant max-w-2xl leading-relaxed text-lg">Focusing on high-volume mechanical tension and metabolic stress. This 4-week block aims to maximize cross-sectional muscle area through controlled eccentrics.</p>
+</div>
+<div class="lg:col-span-4">
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_10px_30px_rgba(27,28,28,0.06)] flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<span class="text-sm font-semibold uppercase tracking-wider text-on-surface-variant">Block Progress</span>
+<span class="text-primary font-bold">Week 3 of 4</span>
+</div>
+<div class="relative w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary-container w-[75%] rounded-full shadow-[0_0_15px_rgba(79,64,207,0.3)]"></div>
+</div>
+<div class="flex justify-between text-xs text-on-surface-variant">
+<span>12/16 Sessions Completed</span>
+<span class="text-secondary font-bold">Next: Push A</span>
+</div>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+<!-- Left Column: Day Selector -->
+<aside class="lg:col-span-3 space-y-3">
+<h3 class="text-xs font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-4 pl-2">Training Split</h3>
+<button class="w-full text-left p-4 rounded-xl flex items-center gap-4 transition-all duration-200 bg-white shadow-sm ring-1 ring-primary/10">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-primary">DAY 1</span>
+<span class="text-base font-bold text-on-surface">Lower Body Focus</span>
+<span class="text-xs text-on-surface-variant mt-1">Quad &amp; Calf emphasis</span>
+</div>
+</button>
+<button class="w-full text-left p-4 rounded-xl flex items-center gap-4 transition-all duration-200 hover:bg-surface-container-low group">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface-variant group-hover:text-primary transition-colors">DAY 2</span>
+<span class="text-base font-semibold text-on-surface">Upper Body Push</span>
+<span class="text-xs text-on-surface-variant mt-1">Chest, Shoulders, Tris</span>
+</div>
+</button>
+<button class="w-full text-left p-4 rounded-xl flex items-center gap-4 transition-all duration-200 hover:bg-surface-container-low group">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface-variant">DAY 3</span>
+<span class="text-base font-semibold text-on-surface">Active Recovery</span>
+<span class="text-xs text-on-surface-variant mt-1">Mobility &amp; LISS</span>
+</div>
+</button>
+<button class="w-full text-left p-4 rounded-xl flex items-center gap-4 transition-all duration-200 hover:bg-surface-container-low group">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface-variant">DAY 4</span>
+<span class="text-base font-semibold text-on-surface">Lower Body Pull</span>
+<span class="text-xs text-on-surface-variant mt-1">Hams &amp; Glute emphasis</span>
+</div>
+</button>
+<button class="w-full text-left p-4 rounded-xl flex items-center gap-4 transition-all duration-200 hover:bg-surface-container-low group">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface-variant">DAY 5</span>
+<span class="text-base font-semibold text-on-surface">Upper Body Pull</span>
+<span class="text-xs text-on-surface-variant mt-1">Back, Rear Delts, Bis</span>
+</div>
+</button>
+<button class="w-full text-left p-4 rounded-xl flex items-center gap-4 transition-all duration-200 hover:bg-surface-container-low group">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface-variant">DAY 6</span>
+<span class="text-base font-semibold text-on-surface">Hypertrophy Mixed</span>
+<span class="text-xs text-on-surface-variant mt-1">Weak-point volume</span>
+</div>
+</button>
+<button class="w-full text-left p-4 rounded-xl flex items-center gap-4 transition-all duration-200 hover:bg-surface-container-low group">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface-variant">DAY 7</span>
+<span class="text-base font-semibold text-on-surface">Full Rest</span>
+<span class="text-xs text-on-surface-variant mt-1">Complete decompression</span>
+</div>
+</button>
+</aside>
+<!-- Right Column: Daily Detail -->
+<section class="lg:col-span-9 space-y-8">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div>
+<h2 class="text-3xl font-bold tracking-tight">Day 1: Lower Body Focus</h2>
+<div class="flex gap-4 mt-2">
+<span class="flex items-center gap-1.5 text-sm font-medium text-on-surface-variant">
+<span class="material-symbols-outlined text-base" data-icon="schedule">schedule</span>
+                        75 Minutes
+                            </span>
+<span class="flex items-center gap-1.5 text-sm font-medium text-on-surface-variant">
+<span class="material-symbols-outlined text-base" data-icon="fitness_center">fitness_center</span>
+                        6 Exercises
+                            </span>
+</div>
+</div>
+<button class="bg-gradient-to-br from-primary to-primary-container text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg shadow-indigo-500/30 flex items-center gap-3 active:scale-95 transition-transform">
+                        Start Training Session
+                        <span class="material-symbols-outlined" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+<!-- Exercise List -->
+<div class="space-y-6">
+<!-- Exercise Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl shadow-[0_10px_30px_rgba(27,28,28,0.06)] flex flex-col md:flex-row gap-8">
+<div class="w-full md:w-48 h-32 rounded-xl overflow-hidden flex-shrink-0 relative group">
+<img class="w-full h-full object-cover" data-alt="professional bodybuilder performing a barbell back squat in a modern gym with soft dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCci3vAAgJv0qvR4N0ewhz3Z63A4yAXDKDkME16v5pfg9QV-l2LeTppqVnZLO0AN7ymPb6tZZNIGArLi3Mi-_XF7AjskaWjjLyl99o-lNqKacaPH_VKBk2ccdHMyRir1rOOYhGvsk4P_WXFZdDWUywLCsZ8C58Jh0KmCyjJoA5X8kstaAcLGT1lR6l7ZfwFeSn2FH6CKNLbzy6yJAfI7OyRehGcsLfdx4DOJRENpJ8-2AA51f8n961LHL0s9uqZJHedWUKendLfFk"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white text-4xl" data-icon="play_circle">play_circle</span>
+</div>
+</div>
+<div class="flex-grow space-y-4">
+<div class="flex justify-between items-start">
+<h4 class="text-xl font-bold">1. Barbell High Bar Squat</h4>
+<span class="bg-surface-container-high px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Compound</span>
+</div>
+<div class="grid grid-cols-3 gap-4 py-2">
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-tighter">Sets</span>
+<span class="text-lg font-black">4</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-tighter">Reps</span>
+<span class="text-lg font-black">8-10</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-tighter">RPE</span>
+<span class="text-lg font-black text-secondary">8</span>
+</div>
+</div>
+<div class="bg-primary/5 p-4 rounded-xl border-l-4 border-primary/20">
+<span class="block text-xs font-bold text-primary mb-1">COACH'S NOTES</span>
+<p class="text-sm leading-relaxed text-on-surface-variant">Focus on vertical torso positioning. Controlled 3-second eccentric. Explode from the bottom without bouncing. Drive knees out.</p>
+</div>
+</div>
+</div>
+<!-- Exercise Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl shadow-[0_10px_30px_rgba(27,28,28,0.06)] flex flex-col md:flex-row gap-8">
+<div class="w-full md:w-48 h-32 rounded-xl overflow-hidden flex-shrink-0 relative group">
+<img class="w-full h-full object-cover" data-alt="fitness athlete using a leg press machine in a high-end gym focusing on quadriceps execution" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5HEf59yOF05GVijR1fxgHPxV_eL_rvAHX_sVPPmFJKvQHAiOfiqJjP8HkOyrT8d3uydRPhFp7jCHWrlwv6MQ3TcKaYq7TvTcZ0tHdQTlXJBepN0_-9bZcDIOfYZd-T0g47p5i5gFcydyCiCpO1ZjuLHcd8DUEVp90jJIc8ii2BMTvaWPyX6EqOd5Rivo1bq6Zf6XAEhodPB4aeOHjtl03YcovljpQxo6MA4uOyhJYDFG3uS1_UGcGb5TvPlfXlxhNGTEsilWZE5I"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white text-4xl" data-icon="play_circle">play_circle</span>
+</div>
+</div>
+<div class="flex-grow space-y-4">
+<div class="flex justify-between items-start">
+<h4 class="text-xl font-bold">2. Leg Press (Feet Low &amp; Tight)</h4>
+<span class="bg-surface-container-high px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Accessory</span>
+</div>
+<div class="grid grid-cols-3 gap-4 py-2">
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-tighter">Sets</span>
+<span class="text-lg font-black">3</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-tighter">Reps</span>
+<span class="text-lg font-black">12-15</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-tighter">RPE</span>
+<span class="text-lg font-black text-secondary">9</span>
+</div>
+</div>
+<div class="bg-primary/5 p-4 rounded-xl border-l-4 border-primary/20">
+<span class="block text-xs font-bold text-primary mb-1">COACH'S NOTES</span>
+<p class="text-sm leading-relaxed text-on-surface-variant">Place feet low on the platform to maximize knee flexion. Keep lower back glued to the pad. Do not lock out knees at the top.</p>
+</div>
+</div>
+</div>
+<!-- Exercise Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl shadow-[0_10px_30px_rgba(27,28,28,0.06)] flex flex-col md:flex-row gap-8">
+<div class="w-full md:w-48 h-32 rounded-xl overflow-hidden flex-shrink-0 relative group">
+<img class="w-full h-full object-cover" data-alt="close up of a person performing seated leg extensions with focused muscular tension in the quadriceps" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnJ8fHBfdGue5tEQmkAGwliOwoEe_FAwguj2CEIg-QwACkjaaVJfGB_Po6Z84unCCT6blYwbbW0gx4nmUhPECnzmceSV1h4-Znb5_a6Ug8Nkar3kRznnIqIECabRsy5XGpyLU6t2wt3hq3YRtUiiAhtpZ6DQEILKj0tgGt1RXPTiLwbTQ0Bk2eXJeFwnxJQzafJsLBUuH8v58RJ_fNjahZU4qsLjqTsROo-7w8n0IUP5aLJt_Plh7wLLcLMmXfUee0Z9u1IWekDYs"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white text-4xl" data-icon="play_circle">play_circle</span>
+</div>
+</div>
+<div class="flex-grow space-y-4">
+<div class="flex justify-between items-start">
+<h4 class="text-xl font-bold">3. Seated Leg Extension</h4>
+<span class="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Isolation</span>
+</div>
+<div class="grid grid-cols-3 gap-4 py-2">
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-tighter">Sets</span>
+<span class="text-lg font-black">3</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-tighter">Reps</span>
+<span class="text-lg font-black">15-20</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-tighter">RPE</span>
+<span class="text-lg font-black text-secondary">10</span>
+</div>
+</div>
+<div class="bg-primary/5 p-4 rounded-xl border-l-4 border-primary/20">
+<span class="block text-xs font-bold text-primary mb-1">COACH'S NOTES</span>
+<p class="text-sm leading-relaxed text-on-surface-variant">Pause for 1 second at full extension. Controlled descent. On the final set, perform a 15-second partial rep burnout.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-lg rounded-[2rem] border border-white/20 dark:border-zinc-800/20 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-50 flex justify-around items-center px-4 h-20">
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-500 text-white rounded-full w-12 h-12 shadow-lg shadow-indigo-500/30 scale-110 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+</a>
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+</a>
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+</a>
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+</a>
+</nav>
+</body></html>

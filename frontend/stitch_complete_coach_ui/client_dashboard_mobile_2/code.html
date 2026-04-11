@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Complete Physique - Dashboard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed-variant": "#753400",
+              "primary-container": "#4f40cf",
+              "tertiary": "#414141",
+              "secondary-fixed-dim": "#ffb68c",
+              "tertiary-fixed": "#e2e2e2",
+              "on-primary-container": "#cfcaff",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-container": "#cfcfcf",
+              "on-background": "#1b1c1c",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface-tint": "#5547d5",
+              "surface-container-lowest": "#ffffff",
+              "on-surface": "#1b1c1c",
+              "surface-container-highest": "#e4e2e2",
+              "on-tertiary-fixed": "#1b1b1b",
+              "primary-fixed-dim": "#c5c0ff",
+              "primary-fixed": "#e3dfff",
+              "secondary-fixed": "#ffdbc9",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#3c29bd",
+              "surface-container-low": "#f5f3f3",
+              "on-primary-fixed": "#140067",
+              "on-surface-variant": "#474554",
+              "on-error-container": "#93000a",
+              "on-tertiary": "#ffffff",
+              "inverse-surface": "#303031",
+              "outline-variant": "#c8c4d7",
+              "primary": "#3620b8",
+              "on-error": "#ffffff",
+              "surface-variant": "#e4e2e2",
+              "surface-bright": "#fbf9f8",
+              "surface": "#fbf9f8",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "on-secondary-fixed": "#321200",
+              "tertiary-container": "#585858",
+              "surface-container": "#efeded",
+              "on-primary": "#ffffff",
+              "error-container": "#ffdad6",
+              "surface-container-high": "#e9e8e7",
+              "secondary-container": "#f87600",
+              "outline": "#787586",
+              "on-secondary-container": "#562500",
+              "inverse-primary": "#c5c0ff",
+              "background": "#fbf9f8",
+              "on-secondary": "#ffffff",
+              "inverse-on-surface": "#f2f0f0",
+              "secondary": "#9a4600"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-white pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-background/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex items-center justify-between px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Close up portrait of a fit athlete with determined expression, high-end studio lighting, soft gray background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcg1OsiaBakE0pWooTYs-AJHOtxGVTSUAYrssJSK3Eu88HcJLm-_nBBYKgfcUY7E2uR585nE4RraS0KKZw5QXsZbkk_Zo0YYDgTHLkFUoDnFsxTegEYrafV4piFqscoD_ikSJqZzfm45UtLEwE3YyBFnYfcO9ua7SSTA3npleVkv7tdHLVfJJZHyUxwFimnVlerLXRNJvG0bxqhUBTokjcH-20VAUfUbuUJvNHiTeHYwDbOK_QDo3CJjmeoogXf_3p7a9PbQy3xro"/>
+</div>
+<span class="font-headline font-bold tracking-tight text-xl text-on-surface">My Complete Physique</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low hover:opacity-80 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+</header>
+<main class="pt-24 px-6 max-w-2xl mx-auto space-y-10">
+<!-- Welcome Section -->
+<section class="space-y-1">
+<h1 class="font-headline text-3xl font-extrabold tracking-tight text-on-surface">Hello, Marcus</h1>
+<p class="text-on-surface-variant font-medium">Your kinetic evolution continues today.</p>
+</section>
+<!-- Daily Check-in (Prominent Hero) -->
+<section>
+<div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary-container p-8 shadow-[0px_20px_40px_rgba(54,32,184,0.2)]">
+<div class="relative z-10 space-y-6">
+<div class="space-y-2">
+<span class="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold tracking-widest uppercase">Daily Goal</span>
+<h2 class="font-headline text-3xl font-bold text-white leading-tight">Daily Check-in</h2>
+<p class="text-primary-fixed opacity-90 max-w-[240px]">Align your habits and log your morning vitals to maintain peak momentum.</p>
+</div>
+<button class="bg-white text-primary font-bold px-8 py-4 rounded-3xl flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all w-full justify-center">
+                        Start Ritual
+                        <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+<!-- Decorative Element -->
+<div class="absolute -right-12 -bottom-12 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+</div>
+</section>
+<!-- Hydration Tracker (Glassmorphism) -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<h3 class="font-headline text-xl font-bold">Hydration</h3>
+<span class="text-secondary font-bold text-sm">1.8L / 3.0L</span>
+</div>
+<div class="glass-card rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] space-y-4">
+<div class="relative h-4 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-gradient-to-r from-secondary to-secondary-container rounded-full" style="width: 60%;"></div>
+</div>
+<div class="flex justify-between gap-3">
+<button class="flex-1 py-3 rounded-2xl bg-surface-container-lowest border border-outline-variant/10 font-bold text-sm active:scale-95 transition-all text-on-surface">+ 250ml</button>
+<button class="flex-1 py-3 rounded-2xl bg-surface-container-lowest border border-outline-variant/10 font-bold text-sm active:scale-95 transition-all text-on-surface">+ 500ml</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary-fixed text-primary active:scale-95 transition-all">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Weekly Check-in Section -->
+<section class="space-y-4">
+<h3 class="font-headline text-xl font-bold">Weekly Performance</h3>
+<div class="surface-container-low rounded-3xl p-6 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Weekly Check-in</h4>
+<p class="text-sm text-on-surface-variant">Due in 2 days</p>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Member Resources (Bento Grid) -->
+<section class="space-y-6">
+<div class="flex justify-between items-center">
+<h3 class="font-headline text-xl font-bold">Member Resources</h3>
+<span class="text-primary font-semibold text-sm">View All</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<!-- Row 1: 2x1 -->
+<div class="surface-container-lowest rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col justify-between h-44 group cursor-pointer hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+<div>
+<h4 class="font-bold text-lg leading-tight">Nutrition Library</h4>
+<p class="text-xs text-on-surface-variant mt-1">Macro Guides &amp; Recipes</p>
+</div>
+</div>
+<div class="surface-container-lowest rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col justify-between h-44 group cursor-pointer hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<div>
+<h4 class="font-bold text-lg leading-tight">Training Portal</h4>
+<p class="text-xs text-on-surface-variant mt-1">Form &amp; Technique</p>
+</div>
+</div>
+<!-- Row 2: Full Width -->
+<div class="col-span-2 relative overflow-hidden rounded-3xl h-32 group cursor-pointer">
+<img alt="Supplements" class="absolute inset-0 w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-500" data-alt="Professional flat lay of clean supplement bottles and vitamins on a minimalist marble surface, high-end commercial aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZUc3oP_t_caP21vTWTa6Nk3991N7NzaHbDRDt_hIlHefkRfesIKLAE_3rbb8jYJn_3b4OX5JZEzmiXMSEHtlaNKztCKipgi4DY7tjZ2XxE1S-bUL2CqWTJknKsJTOpKeTf3eKAGe4Zema72a6EgoOD0bdjdmLAoQFwQJzlu6AZ2L5ctT_oMY99O3LZQQ9NbSc9-nS894EzFfj1CqzeOl3vYthltEjHXH9b2kI897fKcMEZ7ouyvPxNvCcelcNwKyA1mphijMJ4DY"/>
+<div class="absolute inset-0 p-6 flex items-center justify-between">
+<div>
+<h4 class="font-headline text-xl font-bold text-white">Supplementation</h4>
+<p class="text-white/80 text-sm">Optimized protocol</p>
+</div>
+<span class="material-symbols-outlined text-white">arrow_forward</span>
+</div>
+</div>
+<!-- Row 3: 2x1 -->
+<div class="surface-container-lowest rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex items-center gap-4 col-span-1 group cursor-pointer">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">event</span>
+</div>
+<span class="font-bold text-sm">Calendar</span>
+</div>
+<div class="surface-container-lowest rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex items-center gap-4 col-span-1 group cursor-pointer">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">monitoring</span>
+</div>
+<span class="font-bold text-sm">Results</span>
+</div>
+</div>
+</section>
+<!-- Extra spacing for nav -->
+<div class="h-10"></div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-8 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-t-[2rem] z-50 shadow-[0px_-10px_40px_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center text-[#4F40CF] scale-110 group transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 opacity-60 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase mt-1">Workouts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 opacity-60 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">pie_chart</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase mt-1">Nutrition</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 opacity-60 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">subscriptions</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase mt-1">Vault</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 opacity-60 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">assignment_turned_in</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase mt-1">Check-in</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nutrition Planning - The Kinetic Curator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#c8c4d7",
+                        "on-tertiary-container": "#cfcfcf",
+                        "primary-container": "#4f40cf",
+                        "on-secondary-container": "#562500",
+                        "secondary": "#9a4600",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#f2f0f0",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "secondary-fixed": "#ffdbc9",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "on-primary-fixed": "#140067",
+                        "on-primary": "#ffffff",
+                        "background": "#fbf9f8",
+                        "surface-container": "#efeded",
+                        "on-surface": "#1b1c1c",
+                        "on-secondary-fixed-variant": "#753400",
+                        "tertiary": "#414141",
+                        "on-primary-container": "#cfcaff",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#c5c0ff",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#303031",
+                        "surface-container-highest": "#e4e2e2",
+                        "surface-bright": "#fbf9f8",
+                        "primary": "#3620b8",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "primary-fixed": "#e3dfff",
+                        "surface-dim": "#dbdad9",
+                        "outline": "#787586",
+                        "surface-variant": "#e4e2e2",
+                        "tertiary-container": "#585858",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface": "#fbf9f8",
+                        "on-error": "#ffffff",
+                        "on-background": "#1b1c1c",
+                        "on-secondary-fixed": "#321200",
+                        "on-surface-variant": "#474554",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "surface-tint": "#5547d5",
+                        "secondary-container": "#f87600",
+                        "surface-container-low": "#f5f3f3",
+                        "surface-container-high": "#e9e8e7"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 bg-zinc-50 dark:bg-zinc-900 flex flex-col p-4 gap-2 font-['Plus_Jakarta_Sans'] font-semibold z-50">
+<div class="mb-8 px-2">
+<h1 class="text-lg font-bold text-zinc-900 dark:text-zinc-50">Coach Dashboard</h1>
+<p class="text-xs text-zinc-500 font-medium">Nutrition Specialist</p>
+</div>
+<nav class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-200/50 rounded-xl transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Roster</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white text-indigo-600 rounded-xl shadow-sm shadow-[0px_10px_30px_rgba(27,28,28,0.06)] active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant_menu">restaurant_menu</span>
+<span>Nutrition Plans</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-200/50 rounded-xl transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span>Training</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-200/50 rounded-xl transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:bg-zinc-200/50 rounded-xl transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span>Messages</span>
+</a>
+</nav>
+<button class="mt-auto bg-gradient-to-r from-primary to-primary-container text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+            New Plan
+        </button>
+</aside>
+<main class="ml-64 min-h-screen pb-12">
+<!-- TopNavBar -->
+<header class="w-full sticky top-0 bg-white/70 backdrop-blur-xl z-40 px-8 py-4 flex justify-between items-center shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black text-zinc-900 tracking-tight font-['Plus_Jakarta_Sans']">The Kinetic Curator</span>
+<div class="relative group">
+<span class="absolute inset-y-0 left-3 flex items-center text-zinc-400">
+<span class="material-symbols-outlined text-lg" data-icon="search">search</span>
+</span>
+<input class="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all" placeholder="Search clients..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4">
+<button class="text-zinc-500 hover:opacity-80 transition-opacity active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-zinc-500 hover:opacity-80 transition-opacity active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-sm font-bold text-zinc-900">Coach Alexander</p>
+<p class="text-[10px] text-zinc-500 uppercase tracking-widest">Elite Trainer</p>
+</div>
+<img alt="Coach Profile" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" data-alt="Professional fitness coach headshot with warm lighting and a minimalist studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBz2XoRJcQM9J9j-Xrb9ozpJr2pIkghhG3CHqE-FLNXC1A9l0_2XleAp2W8N-zG61O6g9RyJ6-RXxWM4mV0WP8Z-QxHOCm8kN-6pFZAqRtIRZhDoHEWxPQVUCMiAXZeCoIWbX5OEpnfolf12-bWq6uSLMsPPBOENz5jsmj1l206AzF1f8wd6-vX7t-SCH9Qr8f-1LoSJTc-6IkoRfQ73W66TY5i4UeI6dm25AggS93-4_rHsk8ufM5fv8eG_GSBJzIoetZcwt_hGLs"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<div class="max-w-7xl mx-auto px-8 pt-8">
+<!-- Client Header -->
+<div class="flex justify-between items-end mb-10">
+<div>
+<nav class="flex gap-2 text-xs font-bold text-primary mb-2">
+<span>ROSTER</span>
+<span class="text-zinc-300">/</span>
+<span class="text-zinc-500">CLIENT FILE</span>
+</nav>
+<h2 class="text-5xl font-['Plus_Jakarta_Sans'] font-extrabold tracking-tight text-zinc-900 mb-1">Marcus Thorne</h2>
+<p class="text-zinc-500 font-medium">Goal: Hypertrophy &amp; Fat Loss Phase • Week 12 of 16</p>
+</div>
+<div class="flex bg-surface-container-low p-1.5 rounded-2xl">
+<button class="px-6 py-2 rounded-xl text-sm font-bold bg-white text-primary shadow-sm">Macro Targets</button>
+<button class="px-6 py-2 rounded-xl text-sm font-bold text-zinc-500 hover:text-zinc-900 transition-colors">Meal Plan</button>
+</div>
+</div>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Macro Targets Card (Hero Section) -->
+<div class="col-span-12 lg:col-span-8">
+<div class="bg-surface-container-lowest rounded-[2rem] p-10 shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center mb-10">
+<h3 class="text-2xl font-['Plus_Jakarta_Sans'] font-bold">Daily Macro Composition</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+                                View History
+                            </button>
+</div>
+<div class="flex flex-col md:flex-row gap-12 items-center">
+<!-- Visual Ring Progress -->
+<div class="relative w-64 h-64 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90">
+<circle class="text-zinc-100" cx="128" cy="128" fill="none" r="110" stroke="currentColor" stroke-width="20"></circle>
+<circle cx="128" cy="128" fill="none" r="110" stroke="url(#primaryGradient)" stroke-dasharray="691" stroke-dashoffset="172" stroke-linecap="round" stroke-width="20"></circle>
+</svg>
+<defs>
+<lineargradient id="primaryGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" style="stop-color:#3620b8"></stop>
+<stop offset="100%" style="stop-color:#4f40cf"></stop>
+</lineargradient>
+</defs>
+<div class="absolute flex flex-col items-center">
+<span class="text-4xl font-black text-zinc-900 tracking-tighter">2,850</span>
+<span class="text-[10px] uppercase font-bold text-zinc-400 tracking-widest">Kcal Limit</span>
+</div>
+</div>
+<!-- Macro Breakdown -->
+<div class="flex-1 w-full space-y-8">
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm font-bold text-zinc-900">Protein</span>
+<span class="text-sm font-medium text-zinc-500">220g / 31%</span>
+</div>
+<div class="h-3 bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%] rounded-full"></div>
+</div>
+<input class="w-full h-1 bg-zinc-100 rounded-lg appearance-none cursor-pointer accent-primary" type="range"/>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm font-bold text-zinc-900">Carbohydrates</span>
+<span class="text-sm font-medium text-zinc-500">350g / 49%</span>
+</div>
+<div class="h-3 bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[60%] rounded-full"></div>
+</div>
+<input class="w-full h-1 bg-zinc-100 rounded-lg appearance-none cursor-pointer accent-secondary-container" type="range"/>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm font-bold text-zinc-900">Fats</span>
+<span class="text-sm font-medium text-zinc-500">65g / 20%</span>
+</div>
+<div class="h-3 bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-zinc-900 w-[45%] rounded-full"></div>
+</div>
+<input class="w-full h-1 bg-zinc-100 rounded-lg appearance-none cursor-pointer accent-zinc-900" type="range"/>
+</div>
+</div>
+</div>
+<div class="mt-12 flex justify-end gap-4">
+<button class="px-8 py-4 rounded-xl border border-zinc-200 text-sm font-bold text-zinc-600 hover:bg-zinc-50 transition-colors">Discard</button>
+<button class="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">Assign New Target</button>
+</div>
+</div>
+</div>
+<!-- Summary Sidebar -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Energy Distribution Card -->
+<div class="bg-surface-container-low rounded-[2rem] p-8">
+<h4 class="text-xl font-bold mb-6">Metabolic Focus</h4>
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+</div>
+<div>
+<p class="text-xs text-zinc-500 font-bold uppercase tracking-widest">Base Metabolism</p>
+<p class="text-lg font-black text-zinc-900">1,920 kcal</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+</div>
+<div>
+<p class="text-xs text-zinc-500 font-bold uppercase tracking-widest">Training Output</p>
+<p class="text-lg font-black text-zinc-900">+650 kcal</p>
+</div>
+</div>
+</div>
+<div class="mt-8 p-6 bg-white/40 border border-white/50 rounded-2xl backdrop-blur-md">
+<p class="text-sm font-medium text-zinc-600 leading-relaxed italic">"Optimizing for glycogen replenishment post-workout while maintaining a slight 300kcal deficit."</p>
+</div>
+</div>
+<!-- Client Recent Habits -->
+<div class="bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<h4 class="text-xl font-bold mb-6">Compliance Rate</h4>
+<div class="flex justify-between mb-4">
+<span class="text-sm font-bold text-zinc-900">Last 7 Days</span>
+<span class="text-sm font-bold text-green-600">92%</span>
+</div>
+<div class="flex gap-2">
+<div class="flex-1 h-2 bg-green-500 rounded-full"></div>
+<div class="flex-1 h-2 bg-green-500 rounded-full"></div>
+<div class="flex-1 h-2 bg-green-500 rounded-full"></div>
+<div class="flex-1 h-2 bg-zinc-200 rounded-full"></div>
+<div class="flex-1 h-2 bg-green-500 rounded-full"></div>
+<div class="flex-1 h-2 bg-green-500 rounded-full"></div>
+<div class="flex-1 h-2 bg-green-500 rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Editorial Meal Plan Builder -->
+<div class="col-span-12">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-3xl font-['Plus_Jakarta_Sans'] font-extrabold tracking-tight">Active Meal Plan</h3>
+<div class="flex gap-4">
+<button class="flex items-center gap-2 px-6 py-3 rounded-full bg-zinc-900 text-white text-sm font-bold hover:bg-zinc-800 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="auto_awesome">auto_awesome</span>
+                                AI Suggestions
+                            </button>
+<button class="flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-white text-sm font-bold shadow-lg active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="save">save</span>
+                                Publish Plan
+                            </button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Breakfast -->
+<div class="space-y-4">
+<div class="relative rounded-[2rem] overflow-hidden aspect-[4/5] group cursor-pointer shadow-xl">
+<img alt="Breakfast" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Modern high-angle shot of avocado toast with poached eggs and microgreens on a white ceramic plate, minimalist aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFSFWq3Sp1MvYlfS-ZBp2ODakOZtxqSRQUkjosTgtgFeweHTljujtr6GJAPYlKYQG8klrw40g8LeouyZqqQ11RZugbU4DwZfnDqn3dHqXSJ6Kt2lQuVP3r0YZkEZ-0SQyVfqxYLENnbzh1ezbs8AfFJ0O-E7mgfCTOlcA4ipvC73mZVoxF9BkVUL6Y886HyIR5KgtoNKt12m_khGk2M4oLY0xxFylSBYAP_DZISC06ff6qsnKYBy8Nllvj13I_TwkguubshRw7fnk"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute top-6 left-6 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full">
+<span class="text-[10px] text-white font-black uppercase tracking-widest">07:30 AM</span>
+</div>
+<div class="absolute bottom-8 left-8 right-8">
+<h4 class="text-white text-2xl font-black leading-tight mb-2">Protein Power Bowl</h4>
+<p class="text-white/70 text-xs font-medium">Greek yogurt, flaxseeds, organic berries, and whey isolate.</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] flex items-center justify-between group hover:bg-surface-container-high transition-colors">
+<div>
+<p class="text-sm font-bold text-zinc-900">Breakfast</p>
+<p class="text-xs text-zinc-500 font-medium">540 kcal • 45g P</p>
+</div>
+<button class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</div>
+<!-- Lunch -->
+<div class="space-y-4">
+<div class="relative rounded-[2rem] overflow-hidden aspect-[4/5] group cursor-pointer shadow-xl">
+<img alt="Lunch" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Macro photography of a fresh salmon salad bowl with kale, quinoa, and vibrantly colored vegetables, bright lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCu0mU42dpcsVmcVWisyE3mLG_6ayaTDS-4TrjAAeCFqjUSf37OxHQv8MgwAxBy6K7SJH5GytKjVcKyEgWhJDEAz5iNVXkbMlzp8yujNVWjZHGO-ukggbBjY8yJkWb3LnvImI1snAJHRZMrnhubRMqgdaIe4SHNF7PtogdyydQDObi6x-436fpWS14lN6ua073P3gj6bkRzlr_mXZuhqQaiI6GFxu8N1-biVgO3iD_Ff66fJX6sI54q2WuNy2AA2xs29tu5BtT4L_M"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute top-6 left-6 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full">
+<span class="text-[10px] text-white font-black uppercase tracking-widest">12:30 PM</span>
+</div>
+<div class="absolute bottom-8 left-8 right-8">
+<h4 class="text-white text-2xl font-black leading-tight mb-2">Atlantic Salmon Filet</h4>
+<p class="text-white/70 text-xs font-medium">Wild salmon, steamed asparagus, and sweet potato mash.</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] flex items-center justify-between group hover:bg-surface-container-high transition-colors">
+<div>
+<p class="text-sm font-bold text-zinc-900">Lunch</p>
+<p class="text-xs text-zinc-500 font-medium">720 kcal • 52g P</p>
+</div>
+<button class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</div>
+<!-- Dinner -->
+<div class="space-y-4">
+<div class="relative rounded-[2rem] overflow-hidden aspect-[4/5] group cursor-pointer shadow-xl">
+<img alt="Dinner" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Gourmet presentation of a sliced lean beef steak with roasted peppers and a side of green beans, dramatic shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxvW2N16WHflCNUmAdSpDnzVhghvVEQaq1bNFHydQYYk1hmHF5Ed0TpvrCjYgYPu0YDW7XoNBgJZvw_UhnK1fy9gT17coXd475nEPDPvFMiy4UItBP-HAARK6II3XQg2Z9D9tybdZe8kb1N1p3JN-BXF37owwkDtxPCQO-9-QAMR5766Pq3m3GLJi9rFwPZA2_XyD_Ng_Tu3ZpcKLWwuftUMh6sA2gIJLbGabMd63iYOr7Nsn0Gw7TZCMnkLQojc7je9k9ee8Xxeg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute top-6 left-6 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full">
+<span class="text-[10px] text-white font-black uppercase tracking-widest">07:00 PM</span>
+</div>
+<div class="absolute bottom-8 left-8 right-8">
+<h4 class="text-white text-2xl font-black leading-tight mb-2">Grass-Fed Sirloin</h4>
+<p class="text-white/70 text-xs font-medium">Lean sirloin steak with garlic spinach and jasmine rice.</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] flex items-center justify-between group hover:bg-surface-container-high transition-colors">
+<div>
+<p class="text-sm font-bold text-zinc-900">Dinner</p>
+<p class="text-xs text-zinc-500 font-medium">850 kcal • 65g P</p>
+</div>
+<button class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-zinc-400 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</div>
+<!-- Add Snack Placeholder -->
+<div class="space-y-4">
+<div class="border-2 border-dashed border-zinc-200 rounded-[2rem] aspect-[4/5] flex flex-col items-center justify-center gap-4 group hover:border-primary/40 hover:bg-primary/[0.02] transition-all cursor-pointer">
+<div class="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center text-zinc-400 group-hover:text-primary group-hover:scale-110 transition-all">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</div>
+<span class="text-sm font-bold text-zinc-400 group-hover:text-primary transition-colors tracking-tight">Add Snack/Extra Meal</span>
+</div>
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] flex items-center justify-between opacity-50">
+<div>
+<p class="text-sm font-bold text-zinc-400">Not Assigned</p>
+<p class="text-xs text-zinc-400 font-medium">-- kcal • --g P</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-zinc-200">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Daily Nutrient Summary Bar -->
+<div class="col-span-12 mt-4">
+<div class="bg-zinc-900 rounded-[2.5rem] p-8 text-white flex flex-col lg:flex-row justify-between items-center gap-8">
+<div class="flex items-center gap-6">
+<div class="bg-primary p-4 rounded-2xl">
+<span class="material-symbols-outlined text-3xl" data-icon="fact_check">fact_check</span>
+</div>
+<div>
+<h4 class="text-2xl font-black tracking-tight">Plan Total Summary</h4>
+<p class="text-zinc-400 text-sm font-medium">Comparison against targets for Monday</p>
+</div>
+</div>
+<div class="flex flex-wrap justify-center gap-10">
+<div class="text-center">
+<p class="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Calories</p>
+<p class="text-2xl font-black">2,110 <span class="text-xs font-medium text-zinc-500">/ 2,850</span></p>
+</div>
+<div class="text-center border-l border-zinc-800 pl-10">
+<p class="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Protein</p>
+<p class="text-2xl font-black text-primary-container">162g <span class="text-xs font-medium text-zinc-500">/ 220g</span></p>
+</div>
+<div class="text-center border-l border-zinc-800 pl-10">
+<p class="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Carbs</p>
+<p class="text-2xl font-black text-secondary-container">215g <span class="text-xs font-medium text-zinc-500">/ 350g</span></p>
+</div>
+<div class="text-center border-l border-zinc-800 pl-10">
+<p class="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-1">Fats</p>
+<p class="text-2xl font-black text-white">52g <span class="text-xs font-medium text-zinc-500">/ 65g</span></p>
+</div>
+</div>
+<button class="bg-white text-zinc-900 px-8 py-4 rounded-2xl font-black text-sm hover:scale-105 active:scale-95 transition-all">
+                            Export PDF
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button (FAB) - Suppression Logic: Included because this is the primary dashboard context -->
+<button class="fixed bottom-10 right-10 w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined text-3xl" data-icon="chat">chat</span>
+</button>
+</body></html>

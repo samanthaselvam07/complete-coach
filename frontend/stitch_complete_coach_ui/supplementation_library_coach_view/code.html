@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Supplementation Library | MCP Coaching</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "surface": "#fbf9f8",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#f87600",
+                        "on-primary-fixed": "#140067",
+                        "tertiary": "#414141",
+                        "surface-bright": "#fbf9f8",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "outline-variant": "#c8c4d7",
+                        "on-surface-variant": "#474554",
+                        "on-secondary-container": "#562500",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#321200",
+                        "inverse-on-surface": "#f2f0f0",
+                        "primary-fixed": "#e3dfff",
+                        "primary-container": "#4f40cf",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface-container": "#efeded",
+                        "on-primary-container": "#cfcaff",
+                        "tertiary-container": "#585858",
+                        "surface-container-high": "#e9e8e7",
+                        "surface-dim": "#dbdad9",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f5f3f3",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "inverse-surface": "#303031",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#ffdbc9",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-container-highest": "#e4e2e2",
+                        "primary": "#3620b8",
+                        "background": "#fbf9f8",
+                        "on-tertiary-container": "#cfcfcf",
+                        "inverse-primary": "#c5c0ff",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "surface-tint": "#5547d5",
+                        "secondary": "#9a4600",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "on-background": "#1b1c1c",
+                        "outline": "#787586",
+                        "on-secondary-fixed-variant": "#753400",
+                        "on-surface": "#1b1c1c",
+                        "surface-variant": "#e4e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            background: rgba(251, 249, 248, 0.8);
+        }
+        .ghost-border {
+            outline: 1px solid rgba(200, 196, 215, 0.15);
+        }
+        .premium-gradient {
+            background: linear-gradient(135deg, #3620b8 0%, #4f40cf 100%);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e4e2e2;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-50 dark:bg-slate-900 shadow-sm dark:shadow-none z-50">
+<div class="flex flex-col h-full py-6 px-4 gap-2">
+<!-- Brand Header -->
+<div class="px-3 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl premium-gradient flex items-center justify-center text-white shadow-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tighter text-slate-900 dark:text-white leading-none">MCP Coaching</h1>
+<p class="text-[10px] uppercase tracking-widest text-indigo-600 font-bold mt-1">Elite Performance</p>
+</div>
+</div>
+</div>
+<!-- Primary Navigation Tabs -->
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 font-['Plus_Jakarta_Sans'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 font-['Plus_Jakarta_Sans'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span>Training</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 font-['Plus_Jakarta_Sans'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span>Nutrition</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 font-['Plus_Jakarta_Sans'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">school</span>
+<span>Education</span>
+</a>
+<!-- Active Tab: Supplementation -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-indigo-700 dark:text-indigo-300 font-bold border-r-4 border-indigo-600 dark:border-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 font-['Plus_Jakarta_Sans'] tracking-tight" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pill</span>
+<span>Supplementation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 font-['Plus_Jakarta_Sans'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 font-['Plus_Jakarta_Sans'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Forms</span>
+</a>
+</nav>
+<!-- CTA & Footer -->
+<div class="mt-auto flex flex-col gap-4">
+<button class="w-full premium-gradient text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all duration-150 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg">add</span>
+<span>+ New Client</span>
+</button>
+<div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-['Plus_Jakarta_Sans'] font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span>Coach Profile</span>
+</a>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen p-8 lg:p-12">
+<!-- Editorial Header -->
+<header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="max-w-2xl">
+<span class="text-primary font-bold tracking-[0.2em] uppercase text-xs mb-3 block">Master Compendium</span>
+<h2 class="text-5xl font-extrabold font-headline tracking-tighter text-on-surface mb-4">Supplementation Library</h2>
+<p class="text-on-surface-variant text-lg leading-relaxed font-medium opacity-80">
+                    Manage the elite protocol for performance and recovery. Curate a precise methodology for bio-optimized client results.
+                </p>
+</div>
+<div class="flex gap-4">
+<button class="bg-surface-container-highest px-6 py-3 rounded-full font-bold text-sm hover:bg-outline-variant transition-colors flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+<span>Filters</span>
+</button>
+<button class="premium-gradient text-white px-8 py-3 rounded-full font-bold text-sm shadow-xl hover:shadow-primary/20 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+<span>Add Supplement</span>
+</button>
+</div>
+</header>
+<!-- Stats Overview Row -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<div class="bg-surface-container-lowest p-6 rounded-3xl ghost-border flex items-center gap-5">
+<div class="w-14 h-14 rounded-2xl bg-primary/5 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</div>
+<div>
+<p class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">Total Entries</p>
+<p class="text-3xl font-extrabold font-headline">142</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-3xl ghost-border flex items-center gap-5">
+<div class="w-14 h-14 rounded-2xl bg-secondary-container/10 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<div>
+<p class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">Elite Protocols</p>
+<p class="text-3xl font-extrabold font-headline">18</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-3xl ghost-border flex items-center gap-5">
+<div class="w-14 h-14 rounded-2xl bg-tertiary/5 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">update</span>
+</div>
+<div>
+<p class="text-on-surface-variant text-xs font-bold tracking-widest uppercase">Last Verified</p>
+<p class="text-3xl font-extrabold font-headline">Today</p>
+</div>
+</div>
+</div>
+<!-- Library List (Editorial Pattern) -->
+<div class="space-y-6">
+<!-- Table Header (Non-Standard) -->
+<div class="grid grid-cols-12 gap-4 px-8 text-[10px] font-bold text-on-surface-variant tracking-[0.2em] uppercase">
+<div class="col-span-4">Supplement &amp; Category</div>
+<div class="col-span-2">Optimal Timing</div>
+<div class="col-span-3">Bioavailability Optimization</div>
+<div class="col-span-2">Status</div>
+<div class="col-span-1 text-right">Actions</div>
+</div>
+<!-- List Entries -->
+<!-- Item 1 -->
+<div class="group bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-300 rounded-[2rem] p-4 pr-8 ghost-border relative overflow-hidden">
+<div class="grid grid-cols-12 items-center gap-4">
+<div class="col-span-4 flex items-center gap-6">
+<div class="w-16 h-16 rounded-2xl overflow-hidden bg-surface-container-high flex-shrink-0">
+<img alt="Supplement bottle" class="w-full h-full object-cover" data-alt="Close-up of a premium minimalist white supplement bottle with elegant typography on a neutral textured background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZKy2Xu_yRShAOQAyxHEKpGo-SXtcpo-2WHHq83HIOjapTLh367a1_r_Zt0JTvQS2iRtbhDp38Aoutgt1SddjdWOBlLH1g4HFh8PSDsu5D1dE8nct0p26Cgn5FAQrfoy7LNB7e3FIrN44VQQ9tjyvADg5UB1iGtT0fvcqCRf-VnLPoMY39LqKznZGYnsgd1o21EB4gRxFC0sZqyEsmsQEwolZsMi5B61DjV-iFkkSJbkn3fCOFwN_iViJlMYkLn7QYtuODW7qEfMA"/>
+</div>
+<div>
+<h4 class="text-xl font-bold font-headline tracking-tight">Magnesium Glycinate</h4>
+<div class="flex gap-2 mt-1">
+<span class="bg-surface-container-high text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-on-surface-variant">Recovery</span>
+<span class="bg-surface-container-high text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-on-surface-variant">Sleep</span>
+</div>
+</div>
+</div>
+<div class="col-span-2">
+<div class="flex items-center gap-2 text-on-surface font-semibold">
+<span class="material-symbols-outlined text-primary">bedtime</span>
+<span>Evening</span>
+</div>
+<p class="text-xs text-on-surface-variant font-medium mt-1">60 mins pre-sleep</p>
+</div>
+<div class="col-span-3">
+<div class="bg-secondary-container/5 border-l-4 border-secondary-container p-3 rounded-r-xl">
+<p class="text-xs font-bold text-secondary-container mb-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">tips_and_updates</span> PRO TIP
+                            </p>
+<p class="text-xs text-on-surface-variant leading-snug">Take with a carbohydrate-based snack to improve uptake via insulin modulation.</p>
+</div>
+</div>
+<div class="col-span-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Verified Elite
+                        </span>
+</div>
+<div class="col-span-1 text-right">
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-highest flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Expanded Detail Preview (Visible on hover concept) -->
+<div class="max-h-0 group-hover:max-h-40 overflow-hidden transition-all duration-500 ease-in-out">
+<div class="pt-6 mt-4 border-t border-surface-container border-dashed">
+<p class="text-sm text-on-surface-variant leading-relaxed font-medium">
+                            Highly bioavailable form of Magnesium chelated with glycine. Essential for nervous system regulation, muscle relaxation, and protein synthesis. Glycine serves as a calming neurotransmitter, synergizing with magnesium to lower cortisol levels before nocturnal rest.
+                        </p>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="group bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-300 rounded-[2rem] p-4 pr-8 ghost-border relative overflow-hidden">
+<div class="grid grid-cols-12 items-center gap-4">
+<div class="col-span-4 flex items-center gap-6">
+<div class="w-16 h-16 rounded-2xl overflow-hidden bg-surface-container-high flex-shrink-0">
+<img alt="Supplement powder" class="w-full h-full object-cover" data-alt="Micro-crystalline pure white powder being scooped with a black measuring spoon, high-key lighting, pharmaceutical aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfy0TvcUjY-lthTx_adnrigXZfMpDZPmlTP4N-5lU9Xnuk4RceI8NBSk-Fzw9lcGL9MlHxU5QzH-q4Fs6mOoJMWQLfH_sux6felQJQaeF-DfxDgCb6dMTBFrtcaN5AeDK8kStuMiFgwBtanQlq0RNSnGVvFVvM8f31-x8tGUoKpRUTCN-HPTXY532f69EBowNSbuQJGUrGRoFYqVppzCaXnPIvodqSUr0wPmYvEnbjk-E4Lv8yhjpA5nHTxJWzM2TgCWZw1UVT4o8"/>
+</div>
+<div>
+<h4 class="text-xl font-bold font-headline tracking-tight">Creatine Monohydrate</h4>
+<div class="flex gap-2 mt-1">
+<span class="bg-surface-container-high text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-on-surface-variant">Performance</span>
+<span class="bg-surface-container-high text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-on-surface-variant">Cognitive</span>
+</div>
+</div>
+</div>
+<div class="col-span-2">
+<div class="flex items-center gap-2 text-on-surface font-semibold">
+<span class="material-symbols-outlined text-primary">schedule</span>
+<span>Anytime</span>
+</div>
+<p class="text-xs text-on-surface-variant font-medium mt-1">Daily saturation (5g)</p>
+</div>
+<div class="col-span-3">
+<div class="bg-secondary-container/5 border-l-4 border-secondary-container p-3 rounded-r-xl">
+<p class="text-xs font-bold text-secondary-container mb-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">tips_and_updates</span> PRO TIP
+                            </p>
+<p class="text-xs text-on-surface-variant leading-snug">Ensure adequate hydration; creatine pulls water into the sarcoplasm for increased torque.</p>
+</div>
+</div>
+<div class="col-span-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Verified Elite
+                        </span>
+</div>
+<div class="col-span-1 text-right">
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-highest flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="group bg-surface-container-lowest hover:bg-surface-container-low transition-all duration-300 rounded-[2rem] p-4 pr-8 ghost-border relative overflow-hidden">
+<div class="grid grid-cols-12 items-center gap-4">
+<div class="col-span-4 flex items-center gap-6">
+<div class="w-16 h-16 rounded-2xl overflow-hidden bg-surface-container-high flex-shrink-0">
+<img alt="Oil capsules" class="w-full h-full object-cover" data-alt="Golden translucent softgel capsules of fish oil arranged in a perfect geometric pattern on a light grey background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuClCFGpC_yjwG0296g6e2EcNAQbwrYBfkAxnK175Di-RLRzDdtrBEUx6MXzRAYpyJrc_0J-7eKyB1X8oNWT_3dz-W2bXajte0JfRcG360KRKlqGb3trj_uj1KT28JWTdr6x0l7LDx8abT1LL31XCG00LB5vq8cXtwCHcRIhj3PQE_bsYpSQqEYALVDu6VnIPUVmk0fX3M6GXsRXUZfIuCqYNsmZbuUClykG5wji-GchjrN3A18S_PnClJe920LtuCekbtNmKH8MNXk"/>
+</div>
+<div>
+<h4 class="text-xl font-bold font-headline tracking-tight">Omega-3 (High EPA)</h4>
+<div class="flex gap-2 mt-1">
+<span class="bg-surface-container-high text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-on-surface-variant">Inflammation</span>
+</div>
+</div>
+</div>
+<div class="col-span-2">
+<div class="flex items-center gap-2 text-on-surface font-semibold">
+<span class="material-symbols-outlined text-primary">light_mode</span>
+<span>Morning</span>
+</div>
+<p class="text-xs text-on-surface-variant font-medium mt-1">With first meal</p>
+</div>
+<div class="col-span-3">
+<div class="bg-secondary-container/5 border-l-4 border-secondary-container p-3 rounded-r-xl">
+<p class="text-xs font-bold text-secondary-container mb-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">tips_and_updates</span> PRO TIP
+                            </p>
+<p class="text-xs text-on-surface-variant leading-snug">MUST take with a fat-soluble meal to trigger gallbladder bile release for digestion.</p>
+</div>
+</div>
+<div class="col-span-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                            Standard
+                        </span>
+</div>
+<div class="col-span-1 text-right">
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-highest flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination or Load More (Editorial Style) -->
+<div class="mt-16 text-center">
+<button class="group relative inline-flex flex-col items-center gap-2">
+<span class="text-[10px] font-bold tracking-[0.3em] uppercase text-primary">Explore More Protocols</span>
+<div class="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</button>
+</div>
+</main>
+<!-- Sidebar Modal: Add New Supplement (Hidden on canvas but styled for inclusion) -->
+<!-- Note: We'll place it as a fixed element on the right side -->
+<div class="fixed inset-y-0 right-0 w-[450px] bg-surface-container-lowest shadow-2xl z-[60] flex flex-col translate-x-full lg:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] border-l ghost-border">
+<div class="p-8 flex flex-col h-full">
+<div class="flex items-center justify-between mb-10">
+<h3 class="text-2xl font-extrabold font-headline tracking-tight">New Protocol</h3>
+<button class="w-10 h-10 rounded-full hover:bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="space-y-8 flex-1 overflow-y-auto pr-4 -mr-4">
+<!-- Name -->
+<div class="space-y-2">
+<label class="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant">Supplement Name</label>
+<input class="w-full bg-surface-container-low border-0 rounded-2xl p-4 focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium placeholder:text-outline/50" placeholder="e.g. Ashwagandha KSM-66" type="text"/>
+</div>
+<!-- Timing Selection -->
+<div class="space-y-3">
+<label class="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant">Recommended Timing</label>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center gap-3 p-4 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-xl">light_mode</span>
+<span>Morning</span>
+</button>
+<button class="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-xl">wb_sunny</span>
+<span>Mid-day</span>
+</button>
+<button class="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-xl">bedtime</span>
+<span>Evening</span>
+</button>
+<button class="flex items-center gap-3 p-4 rounded-2xl bg-surface-container-low text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-xl">schedule</span>
+<span>Anytime</span>
+</button>
+</div>
+</div>
+<!-- Bioavailability -->
+<div class="space-y-2">
+<label class="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant">Bioavailability Pro Tip</label>
+<textarea class="w-full bg-surface-container-low border-0 rounded-2xl p-4 focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium placeholder:text-outline/50" placeholder="e.g. Consume with dietary fats for maximum absorption..." rows="3"></textarea>
+</div>
+<!-- Description -->
+<div class="space-y-2">
+<label class="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant">Clinical Description</label>
+<textarea class="w-full bg-surface-container-low border-0 rounded-2xl p-4 focus:ring-2 focus:ring-primary/20 transition-all text-on-surface font-medium placeholder:text-outline/50" placeholder="Detailed scientific breakdown of mechanism of action..." rows="4"></textarea>
+</div>
+<!-- Category Chips -->
+<div class="space-y-3">
+<label class="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant">Tags &amp; Categories</label>
+<div class="flex flex-wrap gap-2">
+<span class="bg-secondary-container text-white px-4 py-1.5 rounded-full text-xs font-bold">Endurance</span>
+<span class="bg-surface-container-high text-on-surface-variant px-4 py-1.5 rounded-full text-xs font-bold hover:bg-secondary-container hover:text-white cursor-pointer transition-colors">Hypertrophy</span>
+<span class="bg-surface-container-high text-on-surface-variant px-4 py-1.5 rounded-full text-xs font-bold hover:bg-secondary-container hover:text-white cursor-pointer transition-colors">Nootropic</span>
+<span class="bg-surface-container-high text-on-surface-variant px-4 py-1.5 rounded-full text-xs font-bold hover:bg-secondary-container hover:text-white cursor-pointer transition-colors">Fat Loss</span>
+</div>
+</div>
+</div>
+<!-- Modal Actions -->
+<div class="pt-8 border-t border-surface-container flex flex-col gap-3">
+<button class="w-full premium-gradient text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 active:scale-[0.98] transition-all">
+                    Create Protocol
+                </button>
+<button class="w-full py-4 text-on-surface-variant font-bold text-sm hover:text-on-surface transition-colors">
+                    Save as Draft
+                </button>
+</div>
+</div>
+</div>
+<!-- Overlay for mobile/sidebar modal focus -->
+<div class="fixed inset-0 bg-on-surface/5 backdrop-blur-sm z-50 pointer-events-none opacity-0 transition-opacity"></div>
+</body></html>

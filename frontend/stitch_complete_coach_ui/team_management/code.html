@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#dbdad9",
+                    "tertiary-fixed-dim": "#c6c6c6",
+                    "on-secondary-container": "#562500",
+                    "on-primary-fixed": "#140067",
+                    "inverse-surface": "#303031",
+                    "surface": "#fbf9f8",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#f87600",
+                    "secondary": "#9a4600",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#ffdbc9",
+                    "on-background": "#1b1c1c",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "surface-container-high": "#e9e8e7",
+                    "secondary-fixed-dim": "#ffb68c",
+                    "on-tertiary-fixed": "#1b1b1b",
+                    "inverse-primary": "#c5c0ff",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#fbf9f8",
+                    "primary-container": "#4f40cf",
+                    "primary-fixed": "#e3dfff",
+                    "inverse-on-surface": "#f2f0f0",
+                    "on-surface-variant": "#474554",
+                    "on-secondary-fixed-variant": "#753400",
+                    "outline": "#787586",
+                    "on-surface": "#1b1c1c",
+                    "on-tertiary-container": "#cfcfcf",
+                    "on-secondary-fixed": "#321200",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "on-primary-container": "#cfcaff",
+                    "tertiary": "#414141",
+                    "primary": "#3620b8",
+                    "outline-variant": "#c8c4d7",
+                    "on-error": "#ffffff",
+                    "background": "#fbf9f8",
+                    "tertiary-container": "#585858",
+                    "surface-container-low": "#f5f3f3",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed": "#e2e2e2",
+                    "on-tertiary-fixed-variant": "#474747",
+                    "on-primary-fixed-variant": "#3c29bd",
+                    "surface-variant": "#e4e2e2",
+                    "surface-tint": "#5547d5",
+                    "surface-container": "#efeded"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased overflow-x-hidden">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-72 fixed left-0 top-0 border-r-0 bg-slate-50/80 backdrop-blur-2xl shadow-[inset_-1px_0_0_0_rgba(0,0,0,0.05)] flex flex-col h-full p-6 justify-between z-50">
+<div>
+<!-- Brand Section -->
+<div class="mb-10 px-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center">
+<span class="text-white font-black text-xl italic">K</span>
+</div>
+<div>
+<h1 class="text-2xl font-black tracking-tighter text-zinc-900 font-headline leading-tight">KINETIC</h1>
+<p class="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Coach Portal</p>
+</div>
+</div>
+</div>
+<!-- Main Navigation -->
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 font-medium hover:bg-white/50 transition-all duration-300 rounded-xl active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 font-medium hover:bg-white/50 transition-all duration-300 rounded-xl active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span>Training</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 font-medium hover:bg-white/50 transition-all duration-300 rounded-xl active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+<span>Nutrition</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 font-medium hover:bg-white/50 transition-all duration-300 rounded-xl active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span>Education</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 font-medium hover:bg-white/50 transition-all duration-300 rounded-xl active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="pill">pill</span>
+<span>Supplementation</span>
+</a>
+<!-- Active Item: Clients / Team context -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#4F40CF] bg-white rounded-xl shadow-sm font-bold active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
+<span>Clients</span>
+</a>
+</nav>
+</div>
+<!-- Footer Actions -->
+<div class="space-y-4">
+<button class="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:shadow-xl transition-all active:scale-95">
+<span class="material-symbols-outlined text-lg" data-icon="add">add</span>
+<span>+ New Client</span>
+</button>
+<div class="flex items-center gap-3 px-4 py-3 text-zinc-500 font-medium hover:bg-white/50 transition-all duration-300 rounded-xl cursor-pointer">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of a professional athletic coach with a focused and confident expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBg9_dOKUplvoew1JOCY1zetI0EZKAdS_fvzu6CyZyU0fkUPDD8UFB5rne5p6s112wElh5zVA6uHlNXc5qZDroqGc-EWqHtwFb8FXXJlJVJVBJVLEZr2N3ycFGK87bRPByMdk6WfgfV80eXPMY-m2Rrn2Mieh9Kj8qd293KoizPXLPaFPfrNUL1yukvCseT1XFwao7cJbeXKfhBoMqJZ7k3Japa4UlCwNrLDsmOJ8BjQ9xGJG0ztIc9cy73h6LpTSiTFuSj3QlUHh8"/>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-zinc-900">Coach Profile</span>
+<span class="text-[10px] text-zinc-400 uppercase tracking-wider">Managing Director</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-72 min-h-screen pb-12">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-18rem)] z-40 bg-transparent flex justify-between items-center px-8 py-6 w-full backdrop-blur-md">
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-zinc-400" data-icon="search">search</span>
+<input class="bg-surface-container-high border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search team or clients..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hover:bg-slate-100 rounded-full p-2 text-zinc-400 transition-all active:scale-95 relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-secondary-container rounded-full ring-2 ring-white"></span>
+</button>
+<button class="hover:bg-slate-100 rounded-full p-2 text-zinc-400 transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-[1px] bg-zinc-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<span class="text-sm font-semibold text-zinc-900 font-headline">Management Dashboard</span>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="pt-24 px-10 max-w-7xl mx-auto">
+<!-- Hero Header -->
+<div class="flex justify-between items-end mb-10">
+<div>
+<h2 class="text-4xl font-extrabold font-headline tracking-tighter text-on-surface">Team Management</h2>
+<p class="text-zinc-500 font-medium mt-1">Orchestrate your coaching roster and client distribution.</p>
+</div>
+<button class="px-6 py-3 bg-white text-primary border border-primary/10 rounded-xl font-bold flex items-center gap-2 shadow-sm hover:bg-primary hover:text-white transition-all duration-300 active:scale-95">
+<span class="material-symbols-outlined text-lg" data-icon="person_add">person_add</span>
+<span>+ Add Team Member</span>
+</button>
+</div>
+<!-- Stats Overview - Bento Layout -->
+<div class="grid grid-cols-12 gap-6 mb-12">
+<div class="col-span-4 glass-card p-8 rounded-[2rem] border border-white/40 shadow-[0_10px_30px_rgba(27,28,28,0.04)] relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+<div class="relative z-10">
+<span class="material-symbols-outlined text-primary mb-4 p-3 bg-primary/10 rounded-2xl" data-icon="badge">badge</span>
+<h4 class="text-zinc-500 font-bold text-xs uppercase tracking-widest">Total Staff</h4>
+<div class="text-5xl font-black font-headline text-on-surface mt-2 tracking-tighter">18</div>
+<div class="flex items-center gap-1 text-emerald-600 text-xs font-bold mt-4">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span>+2 this month</span>
+</div>
+</div>
+</div>
+<div class="col-span-4 glass-card p-8 rounded-[2rem] border border-white/40 shadow-[0_10px_30px_rgba(27,28,28,0.04)] relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-secondary-container/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+<div class="relative z-10">
+<span class="material-symbols-outlined text-secondary-container mb-4 p-3 bg-secondary-container/10 rounded-2xl" data-icon="bolt">bolt</span>
+<h4 class="text-zinc-500 font-bold text-xs uppercase tracking-widest">Active Coaches</h4>
+<div class="text-5xl font-black font-headline text-on-surface mt-2 tracking-tighter">14</div>
+<div class="flex items-center gap-1 text-zinc-400 text-xs font-bold mt-4">
+<span class="material-symbols-outlined text-sm" data-icon="pause_circle">pause_circle</span>
+<span>4 currently on leave</span>
+</div>
+</div>
+</div>
+<div class="col-span-4 glass-card p-8 rounded-[2rem] border border-white/40 shadow-[0_10px_30px_rgba(27,28,28,0.04)] relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+<div class="relative z-10">
+<span class="material-symbols-outlined text-primary-container mb-4 p-3 bg-primary-container/10 rounded-2xl" data-icon="diversity_3">diversity_3</span>
+<h4 class="text-zinc-500 font-bold text-xs uppercase tracking-widest">Clients Managed</h4>
+<div class="text-5xl font-black font-headline text-on-surface mt-2 tracking-tighter">342</div>
+<div class="flex items-center gap-1 text-primary text-xs font-bold mt-4">
+<span>24.4 average/coach</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Team Member List - Table Area -->
+<div class="glass-card rounded-[2rem] border border-white/40 shadow-[0_10px_30px_rgba(27,28,28,0.06)] overflow-hidden">
+<div class="px-8 py-6 border-b border-zinc-100 flex justify-between items-center bg-white/20">
+<h3 class="font-bold text-xl font-headline tracking-tight">Active Roster</h3>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-zinc-100 rounded-lg transition-colors"><span class="material-symbols-outlined text-zinc-400" data-icon="filter_list">filter_list</span></button>
+<button class="p-2 hover:bg-zinc-100 rounded-lg transition-colors"><span class="material-symbols-outlined text-zinc-400" data-icon="more_vert">more_vert</span></button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="text-zinc-400 text-[10px] uppercase tracking-widest font-bold">
+<th class="px-8 py-5">Team Member</th>
+<th class="px-8 py-5">Role</th>
+<th class="px-8 py-5">Capacity</th>
+<th class="px-8 py-5">Status</th>
+<th class="px-8 py-5 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-zinc-50">
+<!-- Member Row 1 -->
+<tr class="group hover:bg-slate-50/50 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Portrait of a friendly female head coach with a radiant smile in a professional athletic setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUzlxSDUcbyfbbtm6yvHHoLwi5ovMwLvJw_yfZr6un51ABJvFqwl3V-eo5WyVpIzxnv3xrp3mFRLFz-Pzi-DeT53_NI-nLEJ3u3ctJMkumSRe-q8MOO5u7JYr3eLanJNuPoIGwb17Ut0MMgZk7sUU9fq6UHQ1oZ7LuS8effxCLLvVovyPjCD5_BYYcjLswLtVDNHvvK9q08VghyWIixCz4p3aoW9-_veEWUn_9lyCYtyYwwD_ifmevxhuaz2B62dg0TTdDzOmW5j0"/>
+</div>
+<div>
+<div class="font-bold text-on-surface font-headline">Sarah Jenkins</div>
+<div class="text-xs text-zinc-400">sarah.j@kinetic.com</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-tighter rounded-full">Head Coach</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex flex-col gap-2">
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-white object-cover" data-alt="User avatar of a young athletic male client" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD49Qrh4FHPzfdr0pWNfvVp9Wa_CI1U8IEpk3mF_xGT0CAjASkvynHzLUG9UqqAI1O6Nfj7Ui915IOXBpMUNywjGQexKKSAZXsFT42YuSDLf_2AVH1BG1Ouy6tygdzPPFtQIrqA5ysT_6x3Xl0gAhCWamWs-xUCw2jtd3-vFI1mFK88ZY_b3rFOpDK77WW96q-QN8sXiZyOYatFIHabmfOLsDQ7vZ21EwAePBcIiXtNCLvrzaH3WKQ0AwoOYsevmeNM6bhd1FYJpMQ"/>
+<img class="w-6 h-6 rounded-full border-2 border-white object-cover" data-alt="User avatar of a fit man in gym attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbYw7ubU2ZWcdvrENCDp-WjuoGeHK-KTTeDMwzRJGw3qxgie6HzGHtMS60qHNd6kkxPFmdlSuY4S7K1GaJgjhtiSsLDbWqPTXcJkmv0gw38bHpJaqu8jn2AptSpFmTAC3j-zhFqaJZYZ9l6Kv5lfbNg62_GxBd3PU8Mzvj0Jz4di9zdZWrocrK4KxpzS5tbAy9hxKFx_l1B-BSOoDxxGPdyqxuBtypSNxkfbRjYIiyKmXx-nGyQCa-K5mfRcz_FPeUEOJqGE3It7E"/>
+<img class="w-6 h-6 rounded-full border-2 border-white object-cover" data-alt="User avatar of a young active woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB397vBf5k2AeDFdUlCkdaDukEP5HPb2dzaWVIpgYTQMEw25rD7IUWT3OuDJBy7FhWBimmInDMkeGpb3Jwx49ZgGYNlXhG0jwOU-crFpGW0dag3E6NT_M9y7NJn7n9JvIJrxTR2KTeaytS27i-mXNRnXEXLxjCNRpLFcSKQ3JR_DacwVk4twp-I31tOtTNvMvwZoyeJuHelx_8dAdtfYNmG-QSkNkhd8RnzGNsQtB9GDeA7W6B77UMk7aezK5rJSw-7e4_R-ozqFuI"/>
+<div class="w-6 h-6 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[8px] font-bold text-zinc-500">+21</div>
+</div>
+<span class="text-xs font-semibold text-zinc-500">24 Clients</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-1.5 text-emerald-600 font-bold text-xs">
+<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                        Active
+                                    </div>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all" title="Edit Account">
+<span class="material-symbols-outlined text-lg" data-icon="edit">edit</span>
+</button>
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all" title="View Clients">
+<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
+</button>
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all" title="Permissions">
+<span class="material-symbols-outlined text-lg" data-icon="lock_open">lock_open</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Member Row 2 -->
+<tr class="group hover:bg-slate-50/50 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Portrait of a young male nutritionist with a clean, professional appearance" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8Kp6JUOo5iCuXdsPbvWtTth7In46TSGYZ5hyJLNZ66OMEAeM0AxN4bu4E2fv4fbSbQNsULL0ULd4O4MNf87mClWNz2sfV3YKjLflD2Pqm6zOMLe1D1wwWh4nhpRtOLgmpz47eLFLtwWVMSMpQpxwPbpK-jOlrw91a2da0mAr7wDFaVAPXUdDc9O6gyReN6G0BOOe_yTJA6wff90xst6f_UKaNop-c3dm1gTUmJeMMYNe0UbTi4k9-mQL4saTJAgBekPrjn3WwkvI"/>
+</div>
+<div>
+<div class="font-bold text-on-surface font-headline">Marcus Chen</div>
+<div class="text-xs text-zinc-400">m.chen@kinetic.com</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-secondary-container/10 text-secondary-container text-[10px] font-black uppercase tracking-tighter rounded-full">Nutritionist</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex flex-col gap-2">
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-white object-cover" data-alt="Client avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3upguJx593KhqCy96lON2uydAJucrxRyXDwdRklXbjKAq0Pkbb4Ppa22MZs0UybVb0H-tY0E84zIdnyKdXa3qsDITPmxXS2skqEcyUqCCByitLB-stv1ChdjJabEOxrv8pqpOG5DowUQq4j55UCffYgv02ItAq72cn1PKmPPrQ4G9otgcozbDHdAjHEtNw3ZdxvCtkHykvyhrlANWX46CDu8YkPk4ZwZGSvVaQVMiq46NRXm7DkX_ExmZYSZKqSmjATeUcAKnUlA"/>
+<img class="w-6 h-6 rounded-full border-2 border-white object-cover" data-alt="Client avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDReTlbTkbarzPtlFJK7uEkTtQodaA1F7o-oBABlks6GB_HGqUjvjo5HYKdemszbY_olBGtKKw5qtJ4elnECVWQLRwUXnppHrxMwyd0O-oWn_eXUFypB8NdBz9-7jG-U__f1e167Bp3Fal4lisqbor9L02yztuJplhgtvFoqm98hvyJlGRks_rDlZkkXAu3Y1BtZJOtqhBKHFkwTY69UYUHtVehpqHOembKrR_kF7w9Hr8oXPrtJt29EGFld1JWFDmnk3DvM_1z0HU"/>
+<div class="w-6 h-6 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[8px] font-bold text-zinc-500">+38</div>
+</div>
+<span class="text-xs font-semibold text-zinc-500">40 Clients</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-1.5 text-emerald-600 font-bold text-xs">
+<span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                                        Active
+                                    </div>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="edit">edit</span>
+</button>
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
+</button>
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="lock_open">lock_open</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Member Row 3 -->
+<tr class="group hover:bg-slate-50/50 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl overflow-hidden shadow-sm grayscale opacity-70">
+<img class="w-full h-full object-cover" data-alt="Portrait of a fitness coach with a professional and calm demeanor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHy9rcXXzzX7TimI_p8LmPZIm6cw8w4PvTeykwLK42GZ_Gwt1hoj7P_e1A3ZrRFDAV2VHAF-P_Y9SaNfMK-LsjHYjvsDNe_fXalZorTwgB5arTxEvIad4MM9DFSHuUez0xd1vBCi4s5HWTA2FHM9dvXX4ViSkjiTPs2l4x1yhYDvUMQpYbZH149pBxIjlBlDxg71op55JqkXGDGSK35mkxpsBrZzWaxqaYX4ZZszKKpOqW_blRM4aLuaxt8tMj2XkF7D6PDnyxiHc"/>
+</div>
+<div>
+<div class="font-bold text-on-surface/50 font-headline">Derek Vance</div>
+<div class="text-xs text-zinc-300">d.vance@kinetic.com</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-zinc-100 text-zinc-400 text-[10px] font-black uppercase tracking-tighter rounded-full">Specialist</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex flex-col gap-2">
+<span class="text-xs font-semibold text-zinc-300">0 Clients (Paused)</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-1.5 text-zinc-400 font-bold text-xs">
+<span class="w-2 h-2 bg-zinc-300 rounded-full"></span>
+                                        On Leave
+                                    </div>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="edit">edit</span>
+</button>
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
+</button>
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="lock_open">lock_open</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Member Row 4 -->
+<tr class="group hover:bg-slate-50/50 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A focused female fitness professional posing for a headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCX49-PPhoJzTfE0WQtD7ajqxf-CpzikaV-BRSAW9GhqZPzng4HudJvbteyLzpj98kmoD5Ag9efeEl2vAslhjTJt9dgno0bcG_P7J2n5w8Q-XpdKwPnVvKYlIwWX0mh0njJYNIh8HhhroAxCrWwp5I_7an3rzLhfYl92Z8UFsztLU3OPeO67ZayTq3pyAYM4aMUQI6wZPjHe6GnegI18JIKwIBjxjq2fmPosBtOgYjbm3R-VMqNhuhV0wQG0Ju7rsd8YebPdY0n7kg"/>
+</div>
+<div>
+<div class="font-bold text-on-surface font-headline">Elena Rodriguez</div>
+<div class="text-xs text-zinc-400">e.rodriguez@kinetic.com</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-primary-container/10 text-primary-container text-[10px] font-black uppercase tracking-tighter rounded-full">Training Specialist</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex flex-col gap-2">
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-white object-cover" data-alt="Client avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjKErXC0h1KHk7y4GokNPcH-EGLoXq_57JYfRZfrENhb9lywdLPPdUJwk0tfFN1mao_MQOz-zklLuV3dmVDcEobhpsNuj5ksTk6QO-4jY5TgyNQdVHeM5ztQDkMuTRdl27wPbck68P-mi-qT_l0N19WDRH2Fyb_n5huVPOCOCEU9TzpmIxksLM13Jly-bna97yyIzuprLZJa15qy6jW734CK5emKdDIupwE7d7IGH4RHuaqXN9adfIxZnsfOjfELO7l0DbxPx0ItU"/>
+<img class="w-6 h-6 rounded-full border-2 border-white object-cover" data-alt="Client avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfT7W7fFSn4C_rR8gHi69yriZmbKpp65o1vUuyKWIJqK6l3pHzBDQbShs2BRH3GSKOKxD-6SNZ6remzfVSRfQbVcXSpT8N_fhM-bFjb5nSp5VvLkWNg03heQ8zTLF4vyepDj3hbWOUDKUAiDCagIzByOARuJh1bULOcx0xVFN5Jevirr1gwMdr_duwqlI-PGk2Xho5of3lskv-RoL-f_FVsBNpmFo4VYn1D0AsloRERt4RcnccfolhW5nVmSZp7WcwEdUTKfNa2Zk"/>
+<div class="w-6 h-6 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[8px] font-bold text-zinc-500">+16</div>
+</div>
+<span class="text-xs font-semibold text-zinc-500">18 Clients</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-1.5 text-emerald-600 font-bold text-xs">
+<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                        Active
+                                    </div>
+</td>
+<td class="px-8 py-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="edit">edit</span>
+</button>
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
+</button>
+<button class="p-2 text-zinc-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="lock_open">lock_open</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-8 py-5 border-t border-zinc-50 flex justify-between items-center text-xs font-bold text-zinc-400">
+<div>Showing 4 of 18 team members</div>
+<div class="flex gap-4">
+<button class="hover:text-primary transition-colors">Previous</button>
+<div class="flex gap-2">
+<span class="text-primary bg-primary/5 px-2 py-0.5 rounded">1</span>
+<span class="hover:text-primary cursor-pointer px-2 py-0.5">2</span>
+<span class="hover:text-primary cursor-pointer px-2 py-0.5">3</span>
+</div>
+<button class="hover:text-primary transition-colors">Next</button>
+</div>
+</div>
+</div>
+<!-- Distribution Insight Card -->
+<div class="mt-12 p-10 rounded-[2.5rem] bg-gradient-to-br from-zinc-900 to-zinc-950 text-white relative overflow-hidden">
+<div class="absolute inset-0 opacity-20 pointer-events-none">
+<div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_120%,#4F40CF,transparent_70%)]"></div>
+</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="max-w-md">
+<h3 class="text-3xl font-black font-headline tracking-tight mb-4">Client Load Distribution</h3>
+<p class="text-zinc-400 leading-relaxed">
+                            Marcus Chen is currently at 95% capacity. We recommend re-routing new nutrition requests to the upcoming specialist or opening a new junior position.
+                        </p>
+<div class="mt-8 flex gap-4">
+<button class="px-6 py-3 bg-white text-zinc-950 rounded-xl font-bold active:scale-95 transition-all">Optimize Roster</button>
+<button class="px-6 py-3 bg-white/10 text-white border border-white/10 rounded-xl font-bold backdrop-blur-md active:scale-95 transition-all">View Analytics</button>
+</div>
+</div>
+<div class="hidden md:flex gap-4 items-end">
+<div class="w-12 bg-white/10 rounded-full h-32 relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-primary h-[85%] rounded-full"></div>
+</div>
+<div class="w-12 bg-white/10 rounded-full h-48 relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-secondary-container h-[95%] rounded-full"></div>
+</div>
+<div class="w-12 bg-white/10 rounded-full h-40 relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-primary-container h-[60%] rounded-full"></div>
+</div>
+<div class="w-12 bg-white/10 rounded-full h-36 relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-white h-[45%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

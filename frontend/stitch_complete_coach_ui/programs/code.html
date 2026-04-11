@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Programs | Kahunas Digital Architect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary": "#575f67",
+                        "surface-dim": "#d5d8f6",
+                        "primary-container": "#3699ff",
+                        "on-tertiary-fixed-variant": "#3f484f",
+                        "secondary-fixed": "#dee1ff",
+                        "surface-bright": "#fbf8ff",
+                        "outline-variant": "#c0c7d5",
+                        "secondary-container": "#dbdefc",
+                        "outline": "#707784",
+                        "on-secondary-fixed-variant": "#42455e",
+                        "background": "#fbf8ff",
+                        "surface-container-highest": "#dee1ff",
+                        "on-surface": "#161a30",
+                        "inverse-primary": "#a3c9ff",
+                        "on-background": "#161a30",
+                        "secondary-fixed-dim": "#c2c5e2",
+                        "surface-container-low": "#f4f2ff",
+                        "on-tertiary-container": "#283037",
+                        "surface-container": "#ececff",
+                        "inverse-surface": "#2b2f46",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#d3e3ff",
+                        "tertiary-fixed-dim": "#bfc8d0",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#595d76",
+                        "surface-container-high": "#e5e6ff",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#0060ab",
+                        "surface-tint": "#0060ab",
+                        "tertiary-container": "#8f98a0",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#404753",
+                        "inverse-on-surface": "#f0efff",
+                        "on-secondary-container": "#5d617b",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed": "#161a30",
+                        "primary-fixed-dim": "#a3c9ff",
+                        "surface-variant": "#dee1ff",
+                        "surface": "#fbf8ff",
+                        "tertiary-fixed": "#dbe4ed",
+                        "on-tertiary-fixed": "#141d23",
+                        "on-primary-container": "#00305b",
+                        "on-primary-fixed": "#001c39",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#004883"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-header {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .editorial-shadow {
+            box-shadow: 0 20px 40px -10px rgba(22, 26, 48, 0.04);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #0060ab 0%, #3699ff 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col p-6 h-screen w-64 border-r-0 bg-slate-50 dark:bg-slate-900 border-r border-slate-200/15 dark:border-slate-800/15 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400 font-headline">Kahunas</h1>
+<p class="text-xs text-slate-500 font-medium tracking-wide uppercase mt-1">Digital Architect</p>
+</div>
+<nav class="flex-1 space-y-1.5">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-['Plus_Jakarta_Sans'] font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Clients -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-['Plus_Jakarta_Sans'] font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Clients</span>
+</a>
+<!-- Programs (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors bg-blue-100/50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold font-['Plus_Jakarta_Sans']" href="#">
+<span class="material-symbols-outlined" data-icon="exercise">exercise</span>
+<span>Programs</span>
+</a>
+<!-- Messages -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-['Plus_Jakarta_Sans'] font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+<span>Messages</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-['Plus_Jakarta_Sans'] font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/20">
+<div class="flex items-center gap-3 px-2">
+<img alt="User Profile" class="w-10 h-10 rounded-full object-cover" data-alt="professional portrait of a fitness architect in a minimalist studio setting, soft lighting, high resolution" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAY4_NW0diohSoTPvWD9OLCxCV5lbp12S1IIecA8zQ5hzSaH0FAaEjsV_6pgRilgwc-ez81P4T92-7E6OIkOHxb8uEl5baI4ClKIBhPtjYcVfSVRfZO6dbXyXDbLAqcWRSI6P6KmmpqtG11uDXgdd95jNGKiQXJ2yccu_V0y7z50rp_4O69ubTy3H6b4DVbbGp-eh_3Kv1UUVkffbYjjhXXIXfAncY2zgJUJUUiK1Er64P-C3QdiDniZx6a7_j0EprbZec2vhZKR50"/>
+<div class="overflow-hidden">
+<p class="text-sm font-semibold truncate text-on-surface">John Doe</p>
+<p class="text-xs text-slate-500 truncate">Pro Architect</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="sticky top-0 z-40 flex justify-between items-center px-8 py-4 ml-64 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl font-['Inter'] text-sm">
+<div class="flex items-center gap-6">
+<h2 class="text-lg font-bold font-headline text-on-surface tracking-tight">Programs</h2>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-outline text-lg" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 w-64 text-sm transition-all placeholder:text-outline/60" placeholder="Search programs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant/30 mx-2"></div>
+<img alt="John Doe" class="w-8 h-8 rounded-full object-cover" data-alt="close up profile photo of a smiling professional man with short hair and clean look" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoXAiwwm1blzRst10iYLltKERS6fciMOyBXtfE0Pn5fdnoaF8rnVYt9g1MKMz78BujjyktDcpWSIwvduSl7MXFYl7skHlI-V2PBVpNi6axjtGWkj6i7wAB5wmt7zTI1J3t8oSDo07HocoxXnot70ELg2APX741wH-U41D3q6SObDoUlTLnL8lXYGMm2rvg4QL42q_jmqRKlJTnAhMptTc49uJm6gKWWjUiKgjcznGfq4qxyEw5TTlkK5AaoJ7_QKUvwXbB-m7cZ0Y"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-10 min-h-screen">
+<!-- Hero Section / Header -->
+<div class="flex justify-between items-end mb-12">
+<div>
+<h3 class="text-4xl font-extrabold font-headline tracking-tighter text-on-surface mb-2">Program Library</h3>
+<p class="text-on-surface-variant max-w-lg leading-relaxed">Design and deploy sophisticated training protocols and nutrition architectures for your elite client base.</p>
+</div>
+<button class="primary-gradient text-on-primary px-6 py-3 rounded-xl font-semibold flex items-center gap-2 editorial-shadow transition-transform active:scale-95">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                Create New Program
+            </button>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-3 mb-10 overflow-x-auto pb-2">
+<span class="px-5 py-2 bg-primary-fixed text-on-primary-fixed font-semibold rounded-full text-xs whitespace-nowrap cursor-pointer">All Programs</span>
+<span class="px-5 py-2 bg-secondary-fixed text-on-secondary-fixed font-medium rounded-full text-xs whitespace-nowrap cursor-pointer hover:bg-secondary-container transition-colors">Hypertrophy</span>
+<span class="px-5 py-2 bg-secondary-fixed text-on-secondary-fixed font-medium rounded-full text-xs whitespace-nowrap cursor-pointer hover:bg-secondary-container transition-colors">Nutrition Plans</span>
+<span class="px-5 py-2 bg-secondary-fixed text-on-secondary-fixed font-medium rounded-full text-xs whitespace-nowrap cursor-pointer hover:bg-secondary-container transition-colors">Performance</span>
+<span class="px-5 py-2 bg-secondary-fixed text-on-secondary-fixed font-medium rounded-full text-xs whitespace-nowrap cursor-pointer hover:bg-secondary-container transition-colors">Drafts</span>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="group bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow transition-all hover:-translate-y-1">
+<div class="relative h-56 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="professional gym interior with modern equipment, moody lighting, dark aesthetic with blue neon accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCj55_8IWMQ87uHeT6rfeZwRR5pQPo0bhAm7llo18Bro9aSF5TLtt3HJV_p3IAnh8xQF6mtK3RdiDuiMDy_RerHmiDaEZLwGIGsXqBTqReCyY2GbJemsRoyV2e9GZlDtTjwx7t4Ur5GMgWT65XpPvH-GU50iXNqQM0jLf1xC9WqB4opO1ctn1Nv7R0QKK6zk5BK0Bf5J0eRXcel_O2BmIhQAsGYofSjr-bQTlzSRR29KuSXn8K17iGS8klBOwL888oEF5sDNCwEWV0"/>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-widest">Strength</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="text-xl font-bold font-headline text-on-surface mb-1">Titan Protocol V2</h4>
+<p class="text-xs text-on-surface-variant/70 font-medium">Last updated 2 days ago</p>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="group">group</span>
+<span class="text-xs font-bold text-on-surface">42</span>
+</div>
+</div>
+<div class="flex items-center gap-6 mb-8">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-wider text-outline font-bold">Duration</span>
+<span class="text-sm font-semibold">12 Weeks</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-wider text-outline font-bold">Difficulty</span>
+<span class="text-sm font-semibold">Advanced</span>
+</div>
+</div>
+<button class="w-full py-4 bg-surface-container-high text-on-surface font-bold rounded-2xl transition-all hover:bg-primary hover:text-on-primary">
+                        View Details
+                    </button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow transition-all hover:-translate-y-1">
+<div class="relative h-56 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="vibrant healthy food bowl with salmon, avocado, and greens on a clean white marble background with natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWAczYBYwWnbQjdg8Us6wOgvrPtjUAT7rA1wnp1RXUkZCLfhfcbdsU2B_KEosLVTunWQiYJyX5-cdwyABwJZjU4Dr6MgeDJGoU5aO9tOklwPqPmTU4aXeW8m27Y7yscTKp8obhX2jF5kqARAYHQxlCCrdMsmal2nhetKgUqWVSv6ARZUaYL5SmbeoTVj7fxrX5en9_64J4WWFVX1Urk7UATv1JZGsCvTXuvnsHzyi-ETkF-PH2P5A3Tx8ko-AIEDXd5SsJpQRs8to"/>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-widest">Nutrition</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="text-xl font-bold font-headline text-on-surface mb-1">Metabolic Fueling</h4>
+<p class="text-xs text-on-surface-variant/70 font-medium">Last updated 1 week ago</p>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="group">group</span>
+<span class="text-xs font-bold text-on-surface">128</span>
+</div>
+</div>
+<div class="flex items-center gap-6 mb-8">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-wider text-outline font-bold">Type</span>
+<span class="text-sm font-semibold">Macro-Based</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-wider text-outline font-bold">Category</span>
+<span class="text-sm font-semibold">Weight Management</span>
+</div>
+</div>
+<button class="w-full py-4 bg-surface-container-high text-on-surface font-bold rounded-2xl transition-all hover:bg-primary hover:text-on-primary">
+                        View Details
+                    </button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow transition-all hover:-translate-y-1">
+<div class="relative h-56 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="close up of a person's hands gripping a barbell with chalk dust in a dark warehouse gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzOmS-IOqes5DUeD5-r0o7T2Fu0ava_MP3THSspDsJokUZ_kft_jnZe1ACIju1rxaLZqGcUxQHOmJ1aIQZJXHkDwGN4KA2rzzqnWwGlSfE2iD_SQAgEQjQOSyEIqc4SHJcrmPqEOnWx8ZTkCGTyljc1ulhu7n5MfLYWCPaKlZIs_P_Fpq38jPmnL1eKg9sPoySJ30qxZXwgIJxhjzqC5KF_bBy0X0dLXlJZKuTyJa_Lmin_ICjMvtSrJopYpMXMwI3cXx1I_MWSuk"/>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-widest">Olympic</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="text-xl font-bold font-headline text-on-surface mb-1">Elite Power Peak</h4>
+<p class="text-xs text-on-surface-variant/70 font-medium">Last updated 5 days ago</p>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="group">group</span>
+<span class="text-xs font-bold text-on-surface">15</span>
+</div>
+</div>
+<div class="flex items-center gap-6 mb-8">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-wider text-outline font-bold">Duration</span>
+<span class="text-sm font-semibold">8 Weeks</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-wider text-outline font-bold">Focus</span>
+<span class="text-sm font-semibold">Strength/Speed</span>
+</div>
+</div>
+<button class="w-full py-4 bg-surface-container-high text-on-surface font-bold rounded-2xl transition-all hover:bg-primary hover:text-on-primary">
+                        View Details
+                    </button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow transition-all hover:-translate-y-1">
+<div class="relative h-56 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="abstract artistic shot of a runner's legs on a track at sunrise, long shadows, athletic focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuWOhnqtPAO_ethpxvoU6N2AQ2GARUiAY-Bk5tqaHt3qtTGs6g3EXLSWwnI1dO5juXN-1-W2jBcLz9dH1qA5dL-biXcitdbZ1F6pbnoGaptPdiBWs2dW617DL9ieoFs_3LevkSREy12yyCF5v-jVx9ebHRBCQtcgU2SQE1MMXlQ-JPqamFhaFu9RFKtvYUTtLLLU1cko1e4YsFJZGnms7_-PlmU0sVRWiw4OJEVwAoey30b4wP7VCtgef3HV2rpE9J6mjjXJ8xWXc"/>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-widest">Endurance</div>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="text-xl font-bold font-headline text-on-surface mb-1">Marathon Masterclass</h4>
+<p class="text-xs text-on-surface-variant/70 font-medium">Last updated 3 weeks ago</p>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="group">group</span>
+<span class="text-xs font-bold text-on-surface">89</span>
+</div>
+</div>
+<div class="flex items-center gap-6 mb-8">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-wider text-outline font-bold">Phase</span>
+<span class="text-sm font-semibold">Pre-Season</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-wider text-outline font-bold">Intensity</span>
+<span class="text-sm font-semibold">Variable</span>
+</div>
+</div>
+<button class="w-full py-4 bg-surface-container-high text-on-surface font-bold rounded-2xl transition-all hover:bg-primary hover:text-on-primary">
+                        View Details
+                    </button>
+</div>
+</div>
+<!-- Card 5 (Draft State Example) -->
+<div class="group bg-surface-container-low border border-dashed border-outline-variant/50 rounded-[2rem] overflow-hidden transition-all flex flex-col items-center justify-center p-8 min-h-[480px]">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="add_circle">add_circle</span>
+</div>
+<h4 class="text-lg font-bold font-headline text-on-surface mb-2 text-center">New Architectural Concept</h4>
+<p class="text-sm text-on-surface-variant text-center max-w-[200px]">Start drafting a new training or nutrition system.</p>
+<button class="mt-8 px-8 py-3 bg-white text-on-surface font-bold rounded-xl text-sm editorial-shadow hover:bg-primary hover:text-on-primary transition-colors">
+                    Start Designing
+                </button>
+</div>
+</div>
+<!-- Pagination / Footer Info -->
+<div class="mt-16 flex justify-between items-center text-on-surface-variant border-t border-outline-variant/15 pt-8">
+<p class="text-xs font-medium uppercase tracking-widest">Showing 4 of 28 programs</p>
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center font-bold">1</button>
+<button class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center hover:bg-surface-container-highest transition-colors font-bold">2</button>
+<button class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</main>
+</body></html>

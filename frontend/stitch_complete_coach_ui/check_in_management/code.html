@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Review Center | The Kinetic Curator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#303031",
+                    "surface-dim": "#dbdad9",
+                    "tertiary-container": "#585858",
+                    "on-surface": "#1b1c1c",
+                    "on-background": "#1b1c1c",
+                    "surface": "#fbf9f8",
+                    "secondary": "#9a4600",
+                    "primary": "#3620b8",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#5547d5",
+                    "surface-bright": "#fbf9f8",
+                    "tertiary-fixed-dim": "#c6c6c6",
+                    "on-primary-fixed": "#140067",
+                    "on-secondary-fixed": "#321200",
+                    "on-tertiary-container": "#cfcfcf",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#414141",
+                    "primary-container": "#4f40cf",
+                    "inverse-on-surface": "#f2f0f0",
+                    "on-tertiary-fixed": "#1b1b1b",
+                    "on-primary-fixed-variant": "#3c29bd",
+                    "on-secondary-fixed-variant": "#753400",
+                    "inverse-primary": "#c5c0ff",
+                    "on-surface-variant": "#474554",
+                    "on-primary": "#ffffff",
+                    "surface-container-high": "#e9e8e7",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c8c4d7",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed": "#e2e2e2",
+                    "secondary-container": "#f87600",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed": "#ffdbc9",
+                    "on-secondary-container": "#562500",
+                    "background": "#fbf9f8",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "surface-variant": "#e4e2e2",
+                    "secondary-fixed-dim": "#ffb68c",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-error-container": "#93000a",
+                    "surface-container-low": "#f5f3f3",
+                    "on-tertiary-fixed-variant": "#474747",
+                    "outline": "#787586",
+                    "on-secondary": "#ffffff",
+                    "on-primary-container": "#cfcaff",
+                    "surface-container": "#efeded",
+                    "primary-fixed": "#e3dfff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .surface-shift { background-color: #f5f3f3; }
+        .tonal-layering { position: relative; z-index: 10; }
+        .ghost-border { outline: 1px solid rgba(120, 117, 134, 0.15); }
+        .glass-nav { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface">
+<!-- SideNavBar (Authority: JSON + Design System) -->
+<aside class="h-screen w-72 flex-col fixed left-0 top-0 bg-[#f5f3f3] dark:bg-slate-900 flex flex-col py-8 px-6 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight border-none z-50">
+<!-- Logo & Header -->
+<div class="mb-10 px-2">
+<h1 class="text-xl font-black text-[#1b1c1c] dark:text-[#fbf9f8] mb-1">The Kinetic Curator</h1>
+<p class="text-xs uppercase tracking-[0.2em] opacity-50">Elite Coaching Hub</p>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 space-y-1">
+<!-- Forms is active for "Submitted Check-ins" / Review Center -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors text-[#1b1c1c]/60 dark:text-[#fbf9f8]/60 hover:bg-[#ffffff]/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors text-[#1b1c1c]/60 dark:text-[#fbf9f8]/60 hover:bg-[#ffffff]/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span>Training</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors text-[#1b1c1c]/60 dark:text-[#fbf9f8]/60 hover:bg-[#ffffff]/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+<span>Nutrition</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors text-[#1b1c1c]/60 dark:text-[#fbf9f8]/60 hover:bg-[#ffffff]/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span>Education</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors text-[#1b1c1c]/60 dark:text-[#fbf9f8]/60 hover:bg-[#ffffff]/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="pill">pill</span>
+<span>Supplementation</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors text-[#1b1c1c]/60 dark:text-[#fbf9f8]/60 hover:bg-[#ffffff]/50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span>Clients</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-all text-[#4F40CF] font-bold border-r-4 border-[#4F40CF] bg-white/40" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Forms</span>
+</a>
+</nav>
+<!-- Footer Actions -->
+<div class="mt-auto space-y-6">
+<button class="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined text-lg" data-icon="add">add</span>
+                + New Client
+            </button>
+<div class="pt-6 border-t border-black/5 space-y-1">
+<a class="flex items-center gap-4 px-4 py-2 text-[#1b1c1c]/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="settings">settings</span>
+<span class="text-sm">Settings</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-2 text-[#1b1c1c]/60 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="help">help</span>
+<span class="text-sm">Support</span>
+</a>
+</div>
+<div class="flex items-center gap-3 px-2 pt-2">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of a professional athletic coach with a confident expression in a high-end gym environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACwCBWHluTlijlpy7AwPcUhxcG04DoDJX2P0JlKFMZwgYGvpPq3zCp_LruyaVA4pyY2OEcIp5VIlK1ndEmViCtEpNdlgtrCL1uwrZlqaIw70ziCw_qgn9-N24wYnnhF4leNi8Gq0gMHwYmj2hQg9mCmyvRfYl3dhxHhRU-weUx51K6ytwJNGHpRSIxq8Nt6apayhFshJ9ZnPDtOcdq8nid53JMBV0flIEIOPJ1Gme1lkTTwUocx8pkeqZAnOzAYmy9zYWDlUCX7Vs"/>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Coach Marcus</p>
+<p class="text-[10px] text-on-surface/40 uppercase tracking-widest">Head Curator</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar (Authority: JSON + Design System) -->
+<header class="flex justify-between items-center h-16 px-10 ml-72 bg-[#fbf9f8]/80 dark:bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40 border-b border-[#1b1c1c]/5 dark:border-[#fbf9f8]/5 shadow-sm dark:shadow-none">
+<div class="flex items-center gap-4">
+<span class="text-primary font-bold font-headline">Check-in Management</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface/40" data-icon="search">search</span>
+<input class="bg-surface-container-high border-none rounded-full pl-10 pr-4 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 w-64 transition-all" placeholder="Search clients..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface/60 hover:opacity-80 transition-opacity" data-icon="notifications">notifications</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary/10">
+<img class="w-full h-full object-cover" data-alt="Coach profile avatar small version" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6UHgk0HqK6Jeye1XN43a-GsILza5ZyzqERctT7VsEDBmlsyGZTgNofkcBnvywPVtlhRVk874092ZsfH35g8k6Xy-NSGwerNk5-iLM7RbLgLz2qsXdSZkHc8SFaZ3J0CH0mX5evJ_x80IKFf7QGomQZggIuo_8G43fXjBmY-9WpwHyCkMSMfhvUHCZxHxSyyRt7-jsPIkpELqIqZ9P96UfUAQlMaX1F7cpdTw3n0AONEEQVeWe3uJR7XjcCgqtKq5ZIYMEyjPL9hQ"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-72 p-10 min-h-screen">
+<div class="max-w-6xl mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+<div class="space-y-2">
+<h2 class="text-4xl font-extrabold font-headline tracking-tight text-on-surface">Review Center</h2>
+<p class="text-on-surface-variant text-lg font-medium opacity-70">Manage and prioritize your athlete check-ins.</p>
+</div>
+<!-- Filter Tabs & Sort -->
+<div class="flex items-center gap-4 bg-surface-container-low p-1.5 rounded-2xl">
+<button class="px-6 py-2.5 rounded-xl text-sm font-bold bg-surface-container-lowest text-primary shadow-sm">Pending Review</button>
+<button class="px-6 py-2.5 rounded-xl text-sm font-semibold text-on-surface/60 hover:text-on-surface transition-colors">Completed</button>
+</div>
+</div>
+<!-- Controls Row -->
+<div class="flex justify-between items-center mb-8">
+<div class="flex items-center gap-2 text-sm font-semibold text-on-surface/40">
+<span>Showing 12 pending check-ins</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface/40">Sort by:</span>
+<select class="bg-transparent border-none text-sm font-bold text-primary focus:ring-0 cursor-pointer">
+<option>Oldest First</option>
+<option>Newest First</option>
+</select>
+</div>
+</div>
+<!-- Check-in List (Editorial Pattern) -->
+<div class="grid grid-cols-1 gap-6">
+<!-- Check-in Card 1 -->
+<div class="group bg-surface-container-lowest rounded-[2rem] p-8 flex flex-col md:flex-row items-center gap-8 hover:shadow-xl transition-all duration-300 relative overflow-hidden ghost-border">
+<!-- Progress Glass Accent -->
+<div class="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-primary to-primary-container opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center gap-6 flex-1">
+<div class="relative">
+<img class="w-20 h-20 rounded-2xl object-cover shadow-lg" data-alt="Athletic young man training in a minimal industrial gym with dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYEq9G2QPVDGOdRW3cGr7D-CxH3hM0R_8Ue_a5GefOeeqh93BgleUsc1bnL2eO9GwjIvHGo8QenCfJ-U3S4gT5apz1o7353gdXyDuVSyFIuDqqoGTKG-jp_d5CVfQz0zpOJv6M7kMPPtWeRfwz_d9QZM6qMwNut-_XrppK2_LvD-byWk06T9USidE9bX2VhUG-6TBEGRsd6xOGnHEQKmmXS_UNglFg25lhHwMYVJnDTZW-TaCWCFGNdIwzUj-6taXAjx8I8msJrZs"/>
+<div class="absolute -bottom-2 -right-2 bg-secondary-container text-white p-1 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+<div class="space-y-1">
+<h3 class="text-2xl font-bold font-headline">Julian Reynolds</h3>
+<div class="flex items-center gap-3">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-tighter rounded-full">Weekly Check-in</span>
+<span class="text-on-surface/40 text-xs font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+                                    2 hours ago
+                                </span>
+</div>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-8">
+<div class="text-center">
+<p class="text-[10px] uppercase font-black text-on-surface/30 tracking-widest mb-1">Status</p>
+<span class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-error-container/30 text-error text-xs font-bold rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                Awaiting Review
+                            </span>
+</div>
+<div class="flex items-center gap-3">
+<a class="px-6 py-3 text-sm font-bold text-on-surface/60 hover:text-primary transition-colors" href="#">View Full Check-in</a>
+<button class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="done_all">done_all</span>
+                                Mark as Complete
+                            </button>
+</div>
+</div>
+</div>
+<!-- Check-in Card 2 -->
+<div class="group bg-surface-container-lowest rounded-[2rem] p-8 flex flex-col md:flex-row items-center gap-8 hover:shadow-xl transition-all duration-300 relative overflow-hidden ghost-border">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative">
+<img class="w-20 h-20 rounded-2xl object-cover shadow-lg" data-alt="Portrait of a female athlete with athletic wear in a brightly lit modern studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCosD8qARvLIchEepxur-0szltRNcrOxtGASoAauai7wEBdaZgrQlWZWOWwWR7xQ-p7N_C_9dKismr8F8gf7RGDQXBj5jydk4hUrE5ijPCIULkfCtK166hiwRrKHZJTV9h4bao8CRn1Ld6OdaFTSu-Qj-zk3LkKUpKd-zElJtQjsAmrrBuTd0N46YAoJJ5zoH9-eH0iP1yhMRGdsknK02ebW-y9bIK0sBxyotDMivOoHeYLFwR7xQl1oIBCOqWY2bkXQ5jKxX6w4As"/>
+</div>
+<div class="space-y-1">
+<h3 class="text-2xl font-bold font-headline">Elena Rodriguez</h3>
+<div class="flex items-center gap-3">
+<span class="px-3 py-1 bg-secondary-container/10 text-secondary-container text-[10px] font-black uppercase tracking-tighter rounded-full">Daily Log</span>
+<span class="text-on-surface/40 text-xs font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+                                    5 hours ago
+                                </span>
+</div>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-8">
+<div class="text-center">
+<p class="text-[10px] uppercase font-black text-on-surface/30 tracking-widest mb-1">Status</p>
+<span class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-error-container/30 text-error text-xs font-bold rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                Awaiting Review
+                            </span>
+</div>
+<div class="flex items-center gap-3">
+<a class="px-6 py-3 text-sm font-bold text-on-surface/60 hover:text-primary transition-colors" href="#">View Full Check-in</a>
+<button class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="done_all">done_all</span>
+                                Mark as Complete
+                            </button>
+</div>
+</div>
+</div>
+<!-- Check-in Card 3 (Bento-style variation for secondary) -->
+<div class="group bg-surface-container-lowest rounded-[2rem] p-8 flex flex-col md:flex-row items-center gap-8 hover:shadow-xl transition-all duration-300 relative overflow-hidden ghost-border">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative">
+<img class="w-20 h-20 rounded-2xl object-cover shadow-lg" data-alt="Close up portrait of a young man with a serious focused expression in natural soft daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDexvqP9qgnJULLCMfVhXOU81WRd0L9Mm74dLeN6iLlcJa9-ts6fUkF5o4zSvncxE85OnxdEjVxnFFPcG1rky9wrMH411oA3Y2q0aGZ3wQebTA28UDw5eWYaJ_rGC8EnCqngn_SRnW5r4vSkiETU_x19rTvxzPaElHVaaPaOSU-5JdddBxsbY3B7q4cTW2TlKBXs7YXIr6uwcNbvFgxp0Zpv3kIZo2pwgPvJGxFgweJ1PRg2Dagil3VIm765Ao5XkqnA65YYZ1sNWM"/>
+</div>
+<div class="space-y-1">
+<h3 class="text-2xl font-bold font-headline">Marcus Chen</h3>
+<div class="flex items-center gap-3">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-tighter rounded-full">Weekly Check-in</span>
+<span class="text-on-surface/40 text-xs font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+                                    Yesterday
+                                </span>
+</div>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-8">
+<div class="text-center">
+<p class="text-[10px] uppercase font-black text-on-surface/30 tracking-widest mb-1">Status</p>
+<span class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-error-container/30 text-error text-xs font-bold rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                Awaiting Review
+                            </span>
+</div>
+<div class="flex items-center gap-3">
+<a class="px-6 py-3 text-sm font-bold text-on-surface/60 hover:text-primary transition-colors" href="#">View Full Check-in</a>
+<button class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="done_all">done_all</span>
+                                Mark as Complete
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty State / Pagination Hint -->
+<div class="mt-12 text-center py-10 border-2 border-dashed border-outline-variant/30 rounded-[2.5rem]">
+<p class="text-on-surface/40 font-semibold italic">End of current priority queue. Good work, Coach.</p>
+</div>
+</div>
+</main>
+<!-- Floating Action Feedback (Imagined Interaction) -->
+<div class="fixed bottom-10 right-10 flex flex-col items-end gap-4">
+<div class="bg-on-surface text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce-subtle">
+<div class="bg-primary p-2 rounded-lg">
+<span class="material-symbols-outlined text-sm" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<p class="text-sm font-bold">You have <span class="text-primary-container">4 new</span> submissions since you logged in.</p>
+</div>
+</div>
+</body></html>

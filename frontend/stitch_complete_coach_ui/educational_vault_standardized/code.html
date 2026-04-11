@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#1b1c1c",
+              "on-primary": "#ffffff",
+              "surface-variant": "#e4e2e2",
+              "primary-container": "#4f40cf",
+              "error-container": "#ffdad6",
+              "surface-container-highest": "#e4e2e2",
+              "on-secondary-fixed": "#321200",
+              "on-primary-fixed": "#140067",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-container": "#562500",
+              "surface-container": "#efeded",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "on-tertiary": "#ffffff",
+              "on-secondary": "#ffffff",
+              "surface-tint": "#5547d5",
+              "secondary-container": "#f87600",
+              "tertiary-container": "#585858",
+              "secondary-fixed": "#ffdbc9",
+              "on-tertiary-fixed": "#1b1b1b",
+              "tertiary-fixed": "#e2e2e2",
+              "surface-container-high": "#e9e8e7",
+              "surface": "#fbf9f8",
+              "on-tertiary-container": "#cfcfcf",
+              "background": "#fbf9f8",
+              "tertiary": "#414141",
+              "surface-container-low": "#f5f3f3",
+              "secondary": "#9a4600",
+              "on-secondary-fixed-variant": "#753400",
+              "on-tertiary-fixed-variant": "#474747",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-surface-variant": "#474554",
+              "on-primary-container": "#cfcaff",
+              "primary-fixed": "#e3dfff",
+              "surface-dim": "#dbdad9",
+              "outline": "#787586",
+              "error": "#ba1a1a",
+              "outline-variant": "#c8c4d7",
+              "primary": "#3620b8",
+              "primary-fixed-dim": "#c5c0ff",
+              "surface-bright": "#fbf9f8",
+              "inverse-surface": "#303031",
+              "surface-container-lowest": "#ffffff",
+              "on-error-container": "#93000a",
+              "inverse-primary": "#c5c0ff",
+              "on-error": "#ffffff",
+              "on-primary-fixed-variant": "#3c29bd",
+              "on-background": "#1b1c1c"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-glass {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #3620b8 0%, #4f40cf 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body antialiased overflow-hidden">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full flex flex-col py-8 px-6 h-screen w-64 border-r-0 bg-[#fbf9f8] dark:bg-zinc-950 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight z-50">
+<div class="mb-10 flex items-center gap-3">
+<div class="w-10 h-10 primary-gradient rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-2xl font-black text-[#4F40CF] dark:text-[#6366f1] tracking-tighter leading-none">MCP Coaching</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-zinc-400 mt-1">Elite Performance</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors duration-200 text-zinc-500 dark:text-zinc-400 font-medium group transition-transform scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Training -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors duration-200 text-zinc-500 dark:text-zinc-400 font-medium group transition-transform scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span>Training</span>
+</a>
+<!-- Nutrition -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors duration-200 text-zinc-500 dark:text-zinc-400 font-medium group transition-transform scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span>Nutrition</span>
+</a>
+<!-- Education (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-[#4F40CF] dark:text-[#6366f1] font-bold border-r-4 border-[#4F40CF] dark:border-[#6366f1] bg-white dark:bg-zinc-900/50 shadow-sm transition-transform scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">school</span>
+<span>Education</span>
+</a>
+<!-- Supplementation -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors duration-200 text-zinc-500 dark:text-zinc-400 font-medium group transition-transform scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined">pill</span>
+<span>Supplementation</span>
+</a>
+<!-- Clients -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors duration-200 text-zinc-500 dark:text-zinc-400 font-medium group transition-transform scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Clients</span>
+</a>
+</nav>
+<div class="mt-auto pt-8 border-t border-zinc-100 dark:border-zinc-800">
+<button class="w-full primary-gradient text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>New Client</span>
+</button>
+<div class="mt-6 flex items-center gap-3 px-2">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Portrait of a professional athletic coach with a confident expression in a bright modern gym environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvfGnBHseg39ekbQ7U2Z7XZ9oLqDDLvMelxIwxeIuaQFpT3TGgUV_EDF2-bJLX1VlOigJAp_QbdTTDqmxKl2PhEnoWtliaiwfo6HdufW1Tx3HUcroyrvDJfn5WK5PsEl-ini4vqUuZbmIzVZQOuwOS41EGj2K0ZvQJVoe5vJkUkTdnoXwC6FCnJgNy-J_N9-5jNz5Nyk9hHL2PuZwAWiTuIjzy-IE78Js4RYl7fU7kK6WE2IWZPB8J5do2WnxqgeVoGNUBV3Gjfl8"/>
+<div class="flex-1 overflow-hidden">
+<p class="text-sm font-bold text-on-surface truncate leading-none">Coach Marcus</p>
+<p class="text-xs text-zinc-400 mt-1 truncate">Elite Tier</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-64 h-20 flex justify-between items-center px-10 z-40 bg-[#fbf9f8]/80 dark:bg-zinc-950/80 backdrop-blur-xl font-['Plus_Jakarta_Sans'] font-bold">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-xl">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2.5 pl-12 pr-6 text-sm focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-zinc-400" placeholder="Search educational resources..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors relative">
+<span class="material-symbols-outlined text-zinc-600">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-secondary-container rounded-full border-2 border-surface"></span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-zinc-600">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 pt-20 h-screen overflow-y-auto scroll-smooth">
+<div class="p-10 space-y-10">
+<!-- Hero Editorial Section -->
+<section class="relative h-[400px] rounded-[2rem] overflow-hidden group">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Dynamic shot of a high-end personal training studio with clean architectural lines and soft natural lighting illuminating premium equipment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwsslSqnui5h_YfaE9IopVkz4xVtb9-rbrLjP1zASEE0vgGXlo_NxPf3TUWL53KTnysn0csXYvfkUFWHPjgNZG-iOHJCnZDLHaGgfR0vrPapg5i2sfNbso2UMzX4hPW4epZvm8Dp841lJ4UIZ3I_LdrdZ21aVI2toffb-c3Xxl1Hs76CsuVHea_--pohQotQPDN4Deabme-S7TOrM1whDMWEEhwVXqu8946RnC0rgdswXshsTvXLtfzj3rQleK6sgGLN5WB9oNYbk"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/80 via-on-surface/20 to-transparent"></div>
+<div class="absolute bottom-12 left-12 right-12 flex justify-between items-end">
+<div class="max-w-2xl">
+<span class="inline-block px-4 py-1.5 rounded-full bg-secondary-container text-white text-[10px] font-black uppercase tracking-widest mb-4">Curated Excellence</span>
+<h2 class="text-5xl font-black text-white font-headline leading-[0.95] tracking-tighter mb-4">Educational<br/>Vault</h2>
+<p class="text-white/80 text-lg font-medium leading-relaxed">Elevate your coaching methodology with our premium library of clinical research, instructional media, and standardized protocols.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-3 bg-white text-on-surface rounded-full font-bold flex items-center gap-2 transition-transform hover:scale-105 active:scale-95">
+<span class="material-symbols-outlined">play_circle</span>
+                            Watch Latest
+                        </button>
+</div>
+</div>
+</section>
+<!-- Library & Tools Bento Grid -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Category Filters (Kinetic Glass) -->
+<div class="col-span-12 flex gap-4 overflow-x-auto pb-2">
+<button class="px-8 py-3 rounded-full primary-gradient text-white font-bold shadow-lg shadow-primary/20 whitespace-nowrap">All Resources</button>
+<button class="px-8 py-3 rounded-full kinetic-glass text-on-surface font-semibold hover:bg-white/60 transition-all whitespace-nowrap">Video Lectures</button>
+<button class="px-8 py-3 rounded-full kinetic-glass text-on-surface font-semibold hover:bg-white/60 transition-all whitespace-nowrap">Clinical PDFs</button>
+<button class="px-8 py-3 rounded-full kinetic-glass text-on-surface font-semibold hover:bg-white/60 transition-all whitespace-nowrap">Case Studies</button>
+<button class="px-8 py-3 rounded-full kinetic-glass text-on-surface font-semibold hover:bg-white/60 transition-all whitespace-nowrap">Certification Paths</button>
+</div>
+<!-- Resource Library Grid -->
+<div class="col-span-8 grid grid-cols-2 gap-6">
+<!-- Resource Card 1: Video -->
+<div class="bg-surface-container-lowest p-6 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.04)] group">
+<div class="relative h-48 rounded-xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Close up of metabolic testing equipment in a high-tech sports science laboratory with blue ambient lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHDaIHYHbX1R4RiG8k_Nk0enFbZwlZdL-3shAoH24KusLMXP9wqSfz_K2gnVpR6fOlLmap3y0d-suNVTcKgbt-3SA5UdYjbmFKqXwEZ56JT1Q7wrLsimDsFiY3rU00s_6d6qXgCMuOMRBAB8WVHgFhZTxr9m-Fuy2lMK9i8WD8CChax7BGT6WWm2X2VsI1Dy9v6oIVTEEEdTSPz61OANcDGQwinUpnpKDa1RwBAhmqvYi-qbOqPnigDV65FlkCSf-AAi8rYJf2FZE"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-on-surface">18:45</div>
+</div>
+<div class="space-y-2">
+<h3 class="text-xl font-black font-headline tracking-tight text-on-surface">Metabolic Pathway Optimization</h3>
+<p class="text-sm text-zinc-500 line-clamp-2">A deep dive into cellular energy production and its impact on hypertrophy and endurance training.</p>
+<div class="pt-4 flex items-center justify-between border-t border-zinc-50 mt-4">
+<span class="text-[10px] font-bold text-primary uppercase">Advanced Theory</span>
+<span class="material-symbols-outlined text-zinc-300 hover:text-primary cursor-pointer transition-colors">bookmark</span>
+</div>
+</div>
+</div>
+<!-- Resource Card 2: PDF -->
+<div class="bg-surface-container-lowest p-6 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.04)] group">
+<div class="relative h-48 rounded-xl overflow-hidden mb-6 bg-surface-container-high flex flex-col items-center justify-center p-8 text-center">
+<span class="material-symbols-outlined text-6xl text-primary mb-4">picture_as_pdf</span>
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-widest">Scientific Whitepaper</p>
+</div>
+<div class="space-y-2">
+<h3 class="text-xl font-black font-headline tracking-tight text-on-surface">Periodization Protocols 2024</h3>
+<p class="text-sm text-zinc-500 line-clamp-2">Comprehensive guide on structuring multi-phase training cycles for elite level athletes.</p>
+<div class="pt-4 flex items-center justify-between border-t border-zinc-50 mt-4">
+<span class="text-[10px] font-bold text-primary uppercase">Reference Manual</span>
+<button class="text-primary font-bold text-xs flex items-center gap-1">
+                                    Download <span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Resource Card 3: Article -->
+<div class="col-span-2 bg-surface-container-lowest p-8 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.04)] flex gap-8 items-center group">
+<img class="w-48 h-48 rounded-2xl object-cover" data-alt="Artistic flat-lay of professional athletic supplements and vitamins arranged on a textured stone surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhhI42CU1TPtWuJRIPpVXSF1NRZz2lS6qoDnTVxyDROtP-8044rkNl7KPWIOvyG57jYPqFjm9pJkzrrGqYXiAxARrRG7zLRNBmIaHObnjXlX0qjGSlPbkTVkSwBXBKAOaQvhqi62f8u7xt5dNS8I4YLaV6DcitQttL4M8obFJrjUMaHUyX40cES33pudbs3RPCRUUAbMIgQKzgi5SRHNZ6e5s3aj1aiSwZYSkJjxicSz1a9C4w_cbNpe7X-0Mu5mP-j-jXkUZA_58"/>
+<div class="flex-1 space-y-4">
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-low rounded-full text-[10px] font-bold text-zinc-600">Nutritional Science</span>
+<span class="px-3 py-1 bg-surface-container-low rounded-full text-[10px] font-bold text-zinc-600">Supplementation</span>
+</div>
+<h3 class="text-3xl font-black font-headline tracking-tighter text-on-surface">Bioavailability in Sports Nutrition</h3>
+<p class="text-zinc-500 leading-relaxed">Understanding the pharmacological kinetics of micronutrients for peak physical performance and recovery speed.</p>
+<button class="flex items-center gap-2 text-primary font-bold transition-transform group-hover:translate-x-2">
+                                Read Full Article <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Assignment & Progress Tools (Sidebar of Main Content) -->
+<div class="col-span-4 space-y-8">
+<!-- Assignment Tool -->
+<div class="kinetic-glass p-8 rounded-[2rem] space-y-6">
+<div class="flex justify-between items-center">
+<h3 class="text-xl font-black font-headline tracking-tight">Assign Content</h3>
+<span class="material-symbols-outlined text-primary">assignment_add</span>
+</div>
+<div class="space-y-4">
+<div class="space-y-2">
+<label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Select Client</label>
+<select class="w-full bg-white border-none rounded-xl py-3 px-4 text-sm font-semibold focus:ring-primary/20">
+<option>Alex Rivera</option>
+<option>Sarah Jenkins</option>
+<option>James Wilson</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Deadline</label>
+<div class="relative">
+<input class="w-full bg-white border-none rounded-xl py-3 px-4 text-sm font-semibold focus:ring-primary/20" type="date"/>
+</div>
+</div>
+<button class="w-full primary-gradient text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-transform active:scale-95 shadow-xl shadow-primary/30">
+                                Send Assignment
+                            </button>
+</div>
+</div>
+<!-- Coach Mastery Progress (Progress Glass) -->
+<div class="bg-surface-container-lowest p-8 rounded-[2rem] shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="mb-6">
+<h3 class="text-xl font-black font-headline tracking-tight">Mastery Path</h3>
+<p class="text-xs text-zinc-400 font-medium">Certification Level 4</p>
+</div>
+<div class="space-y-8">
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-bold">
+<span class="text-zinc-500 uppercase tracking-wider">Biomechanics</span>
+<span class="text-primary">82%</span>
+</div>
+<div class="h-2.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full w-[82%] primary-gradient rounded-full"></div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-bold">
+<span class="text-zinc-500 uppercase tracking-wider">Metabolism</span>
+<span class="text-secondary-container">45%</span>
+</div>
+<div class="h-2.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full w-[45%] bg-secondary-container rounded-full"></div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-bold">
+<span class="text-zinc-500 uppercase tracking-wider">Sports Psych</span>
+<span class="text-zinc-400">12%</span>
+</div>
+<div class="h-2.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full w-[12%] bg-zinc-300 rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="mt-8 p-4 rounded-2xl bg-primary/5 border border-primary/10">
+<div class="flex gap-3 items-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<p class="text-[10px] font-bold text-primary leading-tight">Next milestone: Master Coach Tier unlocking in 12 credits.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

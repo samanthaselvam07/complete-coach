@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Workout Library | My Complete Physique</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#1b1b1b",
+              "primary-container": "#4f40cf",
+              "tertiary-container": "#585858",
+              "surface-container-lowest": "#ffffff",
+              "secondary": "#9a4600",
+              "inverse-primary": "#c5c0ff",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed-variant": "#474747",
+              "on-primary-fixed": "#140067",
+              "on-surface-variant": "#474554",
+              "on-background": "#1b1c1c",
+              "tertiary-fixed": "#e2e2e2",
+              "on-primary-fixed-variant": "#3c29bd",
+              "primary": "#3620b8",
+              "on-error": "#ffffff",
+              "error-container": "#ffdad6",
+              "outline-variant": "#c8c4d7",
+              "on-primary": "#ffffff",
+              "surface-variant": "#e4e2e2",
+              "on-surface": "#1b1c1c",
+              "secondary-fixed-dim": "#ffb68c",
+              "inverse-on-surface": "#f2f0f0",
+              "secondary-fixed": "#ffdbc9",
+              "on-secondary-fixed-variant": "#753400",
+              "on-error-container": "#93000a",
+              "surface-container-low": "#f5f3f3",
+              "on-tertiary": "#ffffff",
+              "outline": "#787586",
+              "primary-fixed-dim": "#c5c0ff",
+              "inverse-surface": "#303031",
+              "surface-container": "#efeded",
+              "background": "#fbf9f8",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#cfcfcf",
+              "on-secondary-fixed": "#321200",
+              "surface-tint": "#5547d5",
+              "surface-container-high": "#e9e8e7",
+              "surface-container-highest": "#e4e2e2",
+              "on-primary-container": "#cfcaff",
+              "surface-dim": "#dbdad9",
+              "secondary-container": "#f87600",
+              "surface": "#fbf9f8",
+              "primary-fixed": "#e3dfff",
+              "tertiary": "#414141",
+              "on-secondary-container": "#562500",
+              "surface-bright": "#fbf9f8"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      h1, h2, h3, .font-headline {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center px-6 py-4 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-extrabold tracking-tight text-zinc-900">My Complete Physique</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-zinc-500 font-medium hover:bg-zinc-100/50 transition-all duration-200 px-3 py-1 rounded-lg" href="#">Dashboard</a>
+<a class="text-indigo-700 font-bold border-b-2 border-indigo-600 px-3 py-1" href="#">Workouts</a>
+<a class="text-zinc-500 font-medium hover:bg-zinc-100/50 transition-all duration-200 px-3 py-1 rounded-lg" href="#">Nutrition</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-zinc-100/50 transition-all active:scale-90">
+<span class="material-symbols-outlined text-zinc-600">notifications</span>
+</button>
+<div class="h-10 w-10 rounded-full overflow-hidden border-2 border-primary/10">
+<img alt="User profile" data-alt="professional portrait of a fit woman with a confident expression in athletic wear against a soft neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHCYeFFkO6K-iFGssOTI7tCK20HmtbaCPtuhBdVHK3A-Z7ZORtdYVMCSwnXCNfsm0HQhcjoTsh8JMijt3TYiL5CvQx0fzt52AORIBi-Ul7pHD22JkDSQFVU7U2zSUbGEECPsrsQJ_SUoqB1d07Mfdt6oslzSvtHaBMeyUGre4KT-UgoEmhCswVhBEp-6_T-bzkh2rnTNYs0XpHPr6L1LAC2pPjSRSFmfFkQgQktS2uW4k3j8d0EwAbC7RjtySIg36ZhvGCCxT5-nE"/>
+</div>
+</div>
+</div>
+</nav>
+<div class="flex pt-20">
+<!-- SideNavBar (Desktop Only) -->
+<aside class="hidden lg:flex flex-col gap-2 p-4 h-screen fixed left-0 top-20 w-64 bg-zinc-50">
+<div class="mb-8 px-4 py-6">
+<p class="text-lg font-bold text-zinc-900">Client Portal</p>
+<p class="text-xs font-semibold text-indigo-600 uppercase tracking-widest">Premium Tier</p>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 bg-white text-indigo-600 rounded-xl shadow-sm px-4 py-3 scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-bold">Workouts</span>
+</a>
+<a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span class="font-medium">Nutrition</span>
+</a>
+<a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-medium">Progress</span>
+</a>
+<a class="flex items-center gap-3 text-zinc-500 px-4 py-3 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-medium">Community</span>
+</a>
+</nav>
+<div class="mt-auto p-4">
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-white rounded-xl py-4 font-bold shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">play_circle</span>
+                    Start Workout
+                </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 lg:ml-64 px-6 md:px-12 py-12 max-w-7xl">
+<!-- Header Section -->
+<header class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<span class="text-sm font-bold text-secondary uppercase tracking-[0.2em] mb-2 block">Training Archive</span>
+<h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-4 leading-tight">Workout Library</h1>
+<p class="text-on-surface-variant max-w-xl text-lg leading-relaxed">Curated high-performance programming designed to sculpt your physique with clinical precision and editorial elegance.</p>
+</div>
+</div>
+</header>
+<!-- Filter Section -->
+<section class="mb-10 flex flex-wrap items-center gap-3">
+<button class="px-6 py-2.5 rounded-full bg-secondary-container text-on-secondary-container font-semibold shadow-sm transition-all">All Programs</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all">Strength</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all">Hypertrophy</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all">Mobility</button>
+<div class="ml-auto hidden md:flex items-center bg-surface-container-low rounded-full px-4 py-2">
+<span class="material-symbols-outlined text-outline mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 placeholder:text-outline" placeholder="Find a session..." type="text"/>
+</div>
+</section>
+<!-- Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Program Card 1: Featured -->
+<div class="md:col-span-2 group relative overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col md:flex-row h-[500px]">
+<div class="w-full md:w-1/2 relative overflow-hidden">
+<img alt="Heavy Lifting" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="dramatic wide shot of a powerful athlete performing a barbell back squat in a moody industrial gym setting with cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABUUcCGYx4oQivGcg9iWrPcwZyY29JqvQ82TnPvxRiSlhprgR_EnOKSmeLsGzxyjfyArjheu8_P9tpcurUfQoZFqxhw7fnjL5J4t7i5OtOspNhJk-6ElI3ikwKNmA2MXICLyDNZVDO7eEjTlcRg6bwIj_M5H0DgRq_Nn5pzRK89TPjXf7XrPMZSGJSphiUaMC-S2Efo-l9eeIDLDAw_xx-OQ7OciIbkbWERVdXDHbUROwLIbeQBaZtN1XeXw_e5P-UP_EvD6Ronm0"/>
+<div class="absolute top-6 left-6">
+<span class="glass-card px-4 py-1.5 rounded-full text-xs font-bold text-primary tracking-widest uppercase">Featured Program</span>
+</div>
+</div>
+<div class="w-full md:w-1/2 p-10 flex flex-col justify-center">
+<div class="flex items-center gap-2 text-secondary mb-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="text-sm font-bold uppercase tracking-widest">Strength &amp; Power</span>
+</div>
+<h3 class="text-3xl font-extrabold mb-4 leading-tight">The Apex Protocol: Phase I</h3>
+<p class="text-on-surface-variant mb-8 text-lg leading-relaxed">A 12-week intensive designed for elite force production. Master the foundational lifts with a focus on progressive overload and CNS adaptation.</p>
+<div class="flex items-center gap-6 mb-8 text-sm text-outline font-medium">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-base">schedule</span> 60-75m</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-base">bar_chart</span> Advanced</span>
+</div>
+<button class="self-start px-8 py-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl font-bold shadow-xl hover:shadow-primary/20 active:scale-95 transition-all">Enroll In Program</button>
+</div>
+</div>
+<!-- Regular Card 2 -->
+<div class="group rounded-[2rem] bg-surface-container-lowest p-4 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col">
+<div class="relative h-64 rounded-[1.5rem] overflow-hidden mb-6">
+<img alt="Hypertrophy Session" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="close-up of a muscular man doing bicep curls with dumbbells, sweat on skin, focused expression, high contrast lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvn2a4mqMOGIyIC1JDjkJvys0KQ2Zo5YKNo5gUUVyyg1LwexBQhgER9Pp_iiTvmRWe3-6KdGMJJ1Ys-_gTE6h88ZALlQwjMEHrcncJa2MV3RMQfG3Vd6UuTVGOHf7qgySD-UixreHQIRXq3f_OmKoNUAnOAtMhwTqnQjhLqvX2AIWbVHk4Qv2kt-qfeOiR18NFOU8rBDJ04wmgVY7msbWbhLPsSNFQ76-cgy5aVohVravXs_5RwmuFwMGhqDYMkL6-uoH9-o8_4aw"/>
+<div class="absolute bottom-4 right-4">
+<span class="bg-black/50 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">45 mins</span>
+</div>
+</div>
+<div class="px-4 pb-4 flex-1 flex flex-col">
+<span class="text-indigo-600 font-bold text-xs uppercase tracking-widest mb-2">Hypertrophy</span>
+<h4 class="text-xl font-bold mb-3">V-Taper Mastery: Upper Body</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">High-volume isolation work targeting lateral delts and lats for the perfect aesthetic silhouette.</p>
+<div class="mt-auto flex justify-between items-center">
+<span class="text-xs font-bold text-outline">Level: Intermediate</span>
+<button class="h-10 w-10 flex items-center justify-center bg-surface-container-high rounded-full hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Regular Card 3 -->
+<div class="group rounded-[2rem] bg-surface-container-lowest p-4 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col">
+<div class="relative h-64 rounded-[1.5rem] overflow-hidden mb-6">
+<img alt="Mobility Flow" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="woman performing a deep yoga stretch in a bright minimal studio with morning sunlight streaming through windows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1ADT7ubQclOJGt5yjnCDaz_f8z8Geas1Lxeb8rhkBXfiLl7HCgmgKyMMqyghxI1Jv9_ct_YlPs15KZ6V9VI1HYQVurfFb_cHPj0YitN1hgRJ-bouoouD6wlZHXOSDKry5qMSeYDAVtQoUpmyTWKH7AwzsRw5d1T3cMl7PhELOvk-W7KA1k2SDPBTHv8YIlzRPDxK9vFmqUzvRgLWd9iuIlD4j3WYpZ3jqxEbsgHNQquR0ihHlDLbqtE95HkGie26s5MfpLeI7uW0"/>
+<div class="absolute bottom-4 right-4">
+<span class="bg-black/50 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">20 mins</span>
+</div>
+</div>
+<div class="px-4 pb-4 flex-1 flex flex-col">
+<span class="text-indigo-600 font-bold text-xs uppercase tracking-widest mb-2">Mobility</span>
+<h4 class="text-xl font-bold mb-3">Restore &amp; Realign Flow</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">Active recovery sequence to improve joint health and muscular elasticity between heavy days.</p>
+<div class="mt-auto flex justify-between items-center">
+<span class="text-xs font-bold text-outline">Level: All Levels</span>
+<button class="h-10 w-10 flex items-center justify-center bg-surface-container-high rounded-full hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Regular Card 4 -->
+<div class="group rounded-[2rem] bg-surface-container-lowest p-4 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col">
+<div class="relative h-64 rounded-[1.5rem] overflow-hidden mb-6">
+<img alt="Core Session" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="mid-section of an athlete performing a dynamic core movement with a medicine ball in a professional athletic facility" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYxKATPx5pmU1gRuKQaeP8c0ZGW_SRRM4ml601IkjJLzC3lRTULT_6AhXiTAD6O0F-Rc8Cie1odIS-7-vmITcImtLYju-Elzn16yBo6Zg_tV5xSOB9WTjlyqug51z4-xOWO-3JB2TBmJRhYYNz0Tg-e2sRQgDRhzToNylj7nZwOI_Px3r38aItgga2ZkbmcsvNSvfhNOQz9WyZ-zzxi3d99KCFd5m8ea48_Q1tsDU9WUK7wx5gUdVMOWThiqo9WeCu2nA490y1V08"/>
+<div class="absolute bottom-4 right-4">
+<span class="bg-black/50 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">30 mins</span>
+</div>
+</div>
+<div class="px-4 pb-4 flex-1 flex flex-col">
+<span class="text-indigo-600 font-bold text-xs uppercase tracking-widest mb-2">Strength</span>
+<h4 class="text-xl font-bold mb-3">Steel Core Foundations</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">Anti-rotation and stabilization drills for a bulletproof trunk and functional power transfer.</p>
+<div class="mt-auto flex justify-between items-center">
+<span class="text-xs font-bold text-outline">Level: Beginner</span>
+<button class="h-10 w-10 flex items-center justify-center bg-surface-container-high rounded-full hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Program Card 5: Horizontal Asymmetry -->
+<div class="lg:col-span-3 group relative overflow-hidden rounded-[2rem] bg-surface-container-low p-8 flex flex-col md:flex-row items-center gap-8 border border-outline-variant/10">
+<div class="flex-1">
+<h3 class="text-2xl font-extrabold mb-2">Coming Soon: Nutrition Unleashed</h3>
+<p class="text-on-surface-variant mb-6">A deep dive into macros, micros, and metabolic timing to fuel your library workouts. Get notified when we launch our nutrition pillars.</p>
+<div class="flex gap-4">
+<input class="flex-1 bg-white border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20" placeholder="Enter your email" type="email"/>
+<button class="px-6 py-3 bg-on-surface text-white rounded-xl font-bold active:scale-95 transition-transform">Notify Me</button>
+</div>
+</div>
+<div class="w-full md:w-1/3 aspect-video md:aspect-square overflow-hidden rounded-2xl">
+<img alt="Healthy Food" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="artistic top-down view of a colorful macro-balanced meal with grilled salmon, quinoa, and vibrant vegetables on a textured ceramic plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGXm1_5uY2USHhMlG9TRhsQPGK_5tKOQmmJwItZ72350r7B8fXZvRNm9NRXcnyIiAGxzfga0NEdzl-JMT8Oa4j8qL_WS7Q6eW4Xtrd19xD-YgTVEWwL9h1Aj6SlWMjYc9PlMh4z18Zx4vdMkI0kNBjmBMRhzHxyT6vztKN-e2TQGXeLrg_I8BMEFffUB_JUdSO5NgQT2fA_ISVLxnPQTbnMb1PpGLh8hItLhvBhi-0Xhnm-ENkiylb2h5vWeII_mrRq_qPQ35VbSk"/>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Mobile Navigation Bar -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 glass-card shadow-[0px_-10px_30px_rgba(27,28,28,0.06)] px-6 py-4 flex justify-between items-center z-50">
+<a class="flex flex-col items-center gap-1 text-zinc-500" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-indigo-600" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="text-[10px] font-bold">Workouts</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-500" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span class="text-[10px] font-medium">Diet</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-500" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="text-[10px] font-medium">Stats</span>
+</a>
+</nav>
+</body></html>

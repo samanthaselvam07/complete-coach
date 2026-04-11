@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Program Library | Complete Physique</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "on-tertiary-fixed": "#1b1b1b",
+                "surface-variant": "#e4e2e2",
+                "on-secondary-fixed": "#321200",
+                "tertiary-fixed": "#e2e2e2",
+                "on-primary-fixed": "#140067",
+                "outline-variant": "#c8c4d7",
+                "primary-container": "#4f40cf",
+                "outline": "#787586",
+                "inverse-surface": "#303031",
+                "on-error-container": "#93000a",
+                "surface-tint": "#5547d5",
+                "on-primary-fixed-variant": "#3c29bd",
+                "surface-container": "#efeded",
+                "on-error": "#ffffff",
+                "error": "#ba1a1a",
+                "inverse-primary": "#c5c0ff",
+                "inverse-on-surface": "#f2f0f0",
+                "on-secondary-container": "#562500",
+                "surface-bright": "#fbf9f8",
+                "surface": "#fbf9f8",
+                "surface-container-highest": "#e4e2e2",
+                "on-surface": "#1b1c1c",
+                "on-tertiary-fixed-variant": "#474747",
+                "primary": "#3620b8",
+                "on-surface-variant": "#474554",
+                "secondary-fixed-dim": "#ffb68c",
+                "on-primary-container": "#cfcaff",
+                "tertiary-fixed-dim": "#c6c6c6",
+                "error-container": "#ffdad6",
+                "primary-fixed-dim": "#c5c0ff",
+                "surface-container-high": "#e9e8e7",
+                "on-secondary-fixed-variant": "#753400",
+                "surface-container-low": "#f5f3f3",
+                "secondary": "#9a4600",
+                "on-background": "#1b1c1c",
+                "surface-dim": "#dbdad9",
+                "secondary-container": "#f87600",
+                "primary-fixed": "#e3dfff",
+                "tertiary": "#414141",
+                "on-tertiary-container": "#cfcfcf",
+                "on-secondary": "#ffffff",
+                "tertiary-container": "#585858",
+                "on-tertiary": "#ffffff",
+                "background": "#fbf9f8",
+                "surface-container-lowest": "#ffffff",
+                "on-primary": "#ffffff",
+                "secondary-fixed": "#ffdbc9"
+              },
+              fontFamily: {
+                "headline": ["Plus Jakarta Sans"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+      </script>
+<style>
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        .kinetic-gradient {
+            background: linear-gradient(135deg, #3620b8 0%, #4f40cf 100%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface antialiased">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 hidden md:flex h-screen w-64 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-r border-zinc-200/20 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex-col py-8 px-4 z-50">
+<div class="mb-12 px-2">
+<h1 class="text-xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-50 font-headline">Complete Physique</h1>
+<p class="text-xs text-zinc-500 font-medium tracking-wide uppercase">Elite Performance</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 font-medium transition-colors hover:bg-zinc-100/50 rounded-xl group duration-200" href="#">
+<span class="material-symbols-outlined group-active:scale-95">dashboard</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 font-medium transition-colors hover:bg-zinc-100/50 rounded-xl group duration-200" href="#">
+<span class="material-symbols-outlined group-active:scale-95">group</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#4F40CF] font-bold border-r-2 border-[#4F40CF] transition-colors bg-zinc-100/50 rounded-l-xl group duration-200" href="#">
+<span class="material-symbols-outlined group-active:scale-95 fill-icon" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight">Programs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 font-medium transition-colors hover:bg-zinc-100/50 rounded-xl group duration-200" href="#">
+<span class="material-symbols-outlined group-active:scale-95">chat_bubble</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight">Messages</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 font-medium transition-colors hover:bg-zinc-100/50 rounded-xl group duration-200" href="#">
+<span class="material-symbols-outlined group-active:scale-95">settings</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight">Settings</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-zinc-100 pt-6 px-2">
+<div class="flex items-center gap-3 mb-6">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover shadow-sm" data-alt="Professional fitness coach headshot with a confident smile, clean gym studio background with soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUx0uxb7NmofCd3H0LpHweAsDjs81xseK4yn5ASHHRnrcw6hrfFpcRbwb7KBE7R7CCPYtIWcdY5YRHVN9iC1nyjwZjjWT0rfVm0VIKz-Inw6cUHUceJ2S1eUapaIAiUHceAzPsEoia6P7bcy-bs2X4RxsLEL2ji9Yq_ZPJES5YgHGR8lykyovvykREnpd6qn2SaNB9z4sFF5T2qP-rGT9vQhwSmcuHz1RdksiBX0Hp7M1vTM8eBLOkLvkXmv2UaP83kAjTib5A3dg"/>
+<div>
+<p class="text-sm font-bold text-on-surface leading-none">Marcus Thorne</p>
+<p class="text-xs text-on-surface-variant">Head Coach</p>
+</div>
+</div>
+<a class="flex items-center gap-3 px-2 py-2 text-zinc-500 font-medium hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">help</span>
+<span class="text-sm">Support</span>
+</a>
+</div>
+</aside>
+<!-- Top Navigation (Web) -->
+<header class="fixed top-0 right-0 hidden md:flex w-[calc(100%-16rem)] h-16 bg-[#fbf9f8]/80 backdrop-blur-md items-center justify-between px-10 z-40">
+<h2 class="font-headline font-bold text-2xl text-on-surface tracking-tight">Program Library</h2>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="bg-surface-container-high border-none rounded-full py-2 pl-10 pr-6 text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search protocols..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-zinc-400 hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-zinc-400 hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 pt-24 pb-20 px-6 md:px-10 min-h-screen">
+<!-- Editorial Header Section -->
+<section class="mb-12 max-w-6xl">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-2">
+<span class="inline-block px-3 py-1 bg-secondary-container/10 text-secondary font-bold text-[10px] tracking-widest uppercase rounded-full">Curated Experience</span>
+<h3 class="font-headline text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface max-w-2xl leading-tight">Transformation Protocols</h3>
+<p class="text-on-surface-variant text-lg max-w-xl">Scientifically structured programs designed for elite physiological adaptation and peak metabolic performance.</p>
+</div>
+<div class="flex gap-2">
+<button class="px-6 py-3 bg-surface-container-lowest rounded-full font-bold text-sm shadow-sm active:scale-95 transition-transform">Filter</button>
+<button class="px-6 py-3 kinetic-gradient text-white rounded-full font-bold text-sm shadow-lg active:scale-95 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                        New Program
+                    </button>
+</div>
+</div>
+</section>
+<!-- Gallery of Programs (Bento/Asymmetric Grid) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 max-w-7xl">
+<!-- Featured Program (Large) -->
+<div class="md:col-span-8 group cursor-pointer">
+<div class="relative overflow-hidden rounded-[2rem] h-[500px] bg-surface-container-low transition-all duration-500 hover:shadow-2xl">
+<img alt="Titan Protocol" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Muscular athlete performing heavy squats in a dark atmospheric gym with dramatic rim lighting and dust particles in the air" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvrs4JG7Khkowj2f9IUZLT2RGAtofEPOp3_m872Q0a3Q8n1ixn9UXwDTAazyeYopgs7EToTKoVIEOAE11k6oWdvncm9Gic31YNrJTepbe1UBb-NuxP2me4huX5biSud7G7UWUC84yQRLYG2HHDUCEmm9c9TEIkv7qOtWPeMSCtggodKTakCTFKshMDJJgTPvjQFy--l6NIC8u8VELaFIIZYyUS4l2Qzfo11vuVxqSH4avysun14l0j-qKV29PFrpUYHyjUR7FXK8Y"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute top-8 left-8">
+<span class="px-4 py-2 glass-nav rounded-full text-xs font-bold text-primary tracking-wider uppercase">Most Popular</span>
+</div>
+<div class="absolute bottom-10 left-10 right-10">
+<div class="flex items-center gap-4 mb-3">
+<span class="text-white/60 text-sm font-medium flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> 12 Weeks</span>
+<span class="text-white/60 text-sm font-medium flex items-center gap-1"><span class="material-symbols-outlined text-sm">fitness_center</span> Advanced</span>
+</div>
+<h4 class="font-headline text-5xl font-extrabold text-white mb-4 tracking-tighter">Titan Protocol v2.0</h4>
+<p class="text-white/80 text-lg max-w-md line-clamp-2 font-medium">The definitive guide to structural hypertrophy and maximal strength gains using periodized load management.</p>
+</div>
+</div>
+</div>
+<!-- Side Card 1 -->
+<div class="md:col-span-4 group cursor-pointer">
+<div class="relative overflow-hidden rounded-[2rem] h-full min-h-[500px] bg-surface-container-low transition-all duration-500 hover:shadow-2xl">
+<img alt="Kinetic Burn" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Woman running fast on a treadmill, motion blur effect, dynamic athletic lighting, high contrast and energetic feel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlU9LFFZxRJnIp6FCh-r7eXrlc4BoSxXxs5FPnNZDLRQhU83Zx-X8B-4YU5sc2k9H8ocJWC-4bY7oJ-8TS5RtjLKKaV5X1NYQjZUaPLwJHUkJlErfA3szielmZwIsRrY8Obs072iHVtRnvremBMirWi2OcFY4I6esfui_gYrGDhOTLFguMPIV3s9DYXsXS3M-zowH-pTp4DCkE6E-Fu6qjYMxyk6D0UL4jIJcwckHXHIoDgyKzPGX87ATWUpjCNz6YKS54MqBNd-g"/>
+<div class="absolute inset-0 bg-gradient-to-t from-secondary/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-8 left-8 right-8">
+<div class="flex items-center gap-3 mb-2">
+<span class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-widest">Metabolic</span>
+</div>
+<h4 class="font-headline text-3xl font-extrabold text-white mb-2 tracking-tight">Kinetic Burn</h4>
+<p class="text-white/90 text-sm line-clamp-2">High-intensity aerobic capacity building with targeted adipose tissue mobilization.</p>
+</div>
+</div>
+</div>
+<!-- Horizontal Row of Cards -->
+<div class="md:col-span-4 group cursor-pointer">
+<div class="bg-surface-container-lowest rounded-[2rem] p-8 flex flex-col h-full transition-all duration-300 hover:translate-y-[-4px] shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="w-16 h-16 bg-surface-container-low rounded-2xl flex items-center justify-center mb-8">
+<span class="material-symbols-outlined text-3xl text-primary" style="font-variation-settings: 'FILL' 1;">spa</span>
+</div>
+<h5 class="font-headline text-2xl font-extrabold mb-3 tracking-tight">Neural Reset</h5>
+<p class="text-on-surface-variant text-sm mb-8 flex-1">A recovery-focused protocol designed to down-regulate the nervous system and optimize sleep quality.</p>
+<div class="flex items-center justify-between pt-6 border-t border-zinc-50">
+<span class="text-xs font-bold text-on-surface-variant tracking-wider uppercase">6 Workouts</span>
+<span class="material-symbols-outlined text-primary">arrow_forward</span>
+</div>
+</div>
+</div>
+<div class="md:col-span-4 group cursor-pointer">
+<div class="relative overflow-hidden rounded-[2rem] h-[340px] bg-surface-container-low">
+<img alt="The Sculptor" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Athletic man flexing muscles in front of a mirror with aesthetic studio lighting, warm tones, high-end editorial fitness photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA047ylPIYw8KSPwmx6f6YCUG8vHfJXfAjtoo7mF55jUCTO0Te2pkh7kPjhIJuLzTlPRrSIT48ujJT-lYWaRc5tTroJsWqd4VUP9cEYHr9qCpuQ-GdQmsbNcKE2tpMPT-iC51itO_5WK7DTGnJM_ZDKQFp-r_4g1sTZZwb8LgtZnZ3niftKurV1tHLfOyU6eK5dtAjw3hqqClAOoTLI8dlgYesOdSITcvWjQrVMWmye45FxVkpevhnYt4Tl6zIqQfwFZ9D3tqXxnbU"/>
+<div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
+<div class="absolute inset-0 flex flex-col justify-end p-8">
+<h4 class="font-headline text-2xl font-extrabold text-white tracking-tight">The Sculptor</h4>
+<p class="text-white/80 text-xs font-medium uppercase tracking-widest mt-1">Hypertrophy • Intermediate</p>
+</div>
+</div>
+</div>
+<div class="md:col-span-4 group cursor-pointer">
+<div class="bg-primary p-1 rounded-[2.2rem] h-full shadow-lg transition-transform hover:scale-[1.02]">
+<div class="bg-surface-container-lowest rounded-[2rem] p-8 h-full flex flex-col">
+<div class="flex justify-between items-start mb-10">
+<span class="px-3 py-1 bg-primary text-white rounded-full text-[10px] font-bold uppercase tracking-widest">New Arrival</span>
+<span class="material-symbols-outlined text-primary/40">bookmark</span>
+</div>
+<h5 class="font-headline text-2xl font-extrabold mb-3 tracking-tight">Olympus Lift</h5>
+<p class="text-on-surface-variant text-sm mb-8 flex-1">Mastering the classic compound movements with elite-level biomechanical precision.</p>
+<button class="w-full py-4 bg-zinc-100 rounded-2xl font-bold text-sm text-on-surface transition-colors hover:bg-primary hover:text-white">View Protocol</button>
+</div>
+</div>
+</div>
+<!-- Final Large Row Element -->
+<div class="md:col-span-12 group cursor-pointer">
+<div class="bg-surface-container-low rounded-[2rem] overflow-hidden flex flex-col md:flex-row items-stretch">
+<div class="md:w-1/2 p-12 flex flex-col justify-center">
+<h4 class="font-headline text-4xl font-extrabold mb-4 tracking-tight">The Hybrid Athlete</h4>
+<p class="text-on-surface-variant text-lg mb-8 max-w-md">Bridging the gap between raw power and cardiovascular endurance. The ultimate protocol for the modern generalist.</p>
+<div class="flex gap-8 mb-8">
+<div>
+<p class="text-2xl font-bold text-primary leading-none">16</p>
+<p class="text-xs text-on-surface-variant font-bold uppercase tracking-widest mt-1">Weeks</p>
+</div>
+<div>
+<p class="text-2xl font-bold text-primary leading-none">5.0</p>
+<p class="text-xs text-on-surface-variant font-bold uppercase tracking-widest mt-1">Rating</p>
+</div>
+<div>
+<p class="text-2xl font-bold text-primary leading-none">12.4k</p>
+<p class="text-xs text-on-surface-variant font-bold uppercase tracking-widest mt-1">Students</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<img alt="Avatar" class="w-8 h-8 rounded-full border-2 border-white" data-alt="Portrait of a female fitness instructor with ponytail, outdoors at a training track during sunset" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIx64w0PUHuYLpkY5rLnAz7NS1VL4qttviGMt1HjMj5bPOFvszmsrFGYmObFMopEYqLlYV7qyNqCy10KY94Ibtqs-sw5HIdQQd_OcDABYyAQrTMnTQ6_vFq5JkpjiF6Bdmwaa7Jj8uK8elXQUhNw2XNTQaALN7xXk9nIzh1dJpSyItUQ_DkLb-1U35ADae1VVVedapb5fY6_2dG1eBOJupnU1MhfNBKbxX1j_nbH_-JtWE3yQjRzb04HklpCJ0Y4zYii_nBvbx3oM"/>
+<p class="text-sm font-bold text-on-surface">Instructed by Sarah Connor</p>
+</div>
+</div>
+<div class="md:w-1/2 min-h-[300px] relative overflow-hidden">
+<img alt="Hybrid training" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Close-up of a person tieing running shoes on a gym floor with kettlebells and barbells in the background, sharp focus, vibrant colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqDxR2UesM3C-W9A17dK2TiIAct9uCfr_UMPOnn0r-N6u2RfxH6Hh8_bc1WLSAHC_m_38SS3Ls4e7Sq2Nsm0c6ipFRcm2SmD7LKNrFww5cUOsezXjSetLTLVHN3NmFf1NHmsDqLK2k9DZn-FaWi95tbXGsI-ZXcdB3uX7kpmOGWnXxEqY-n4tNPKigmSv_Ra8WsddFdBGwj_IF8IH9nsCFz6_YRT-V-0J-ulwCfa8f8BTIeQKcXrUvMqV3xQWoqUDOp8nuXOVcYdU"/>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-zinc-100 flex items-center justify-around py-4 px-6 z-50">
+<a class="flex flex-col items-center gap-1 text-zinc-400" href="#">
+<span class="material-symbols-outlined text-2xl">dashboard</span>
+<span class="text-[10px] font-bold tracking-tight">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined text-2xl fill-icon" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="text-[10px] font-bold tracking-tight">Programs</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-400" href="#">
+<span class="material-symbols-outlined text-2xl">chat_bubble</span>
+<span class="text-[10px] font-bold tracking-tight">Messages</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-400" href="#">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+<span class="text-[10px] font-bold tracking-tight">Profile</span>
+</a>
+</nav>
+</body></html>

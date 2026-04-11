@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;1,800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "surface-bright": "#fbf9f8",
+                  "secondary": "#9a4600",
+                  "surface-variant": "#e4e2e2",
+                  "tertiary-container": "#585858",
+                  "error": "#ba1a1a",
+                  "surface-container-lowest": "#ffffff",
+                  "background": "#fbf9f8",
+                  "on-secondary-fixed": "#321200",
+                  "on-secondary": "#ffffff",
+                  "on-error": "#ffffff",
+                  "error-container": "#ffdad6",
+                  "surface-dim": "#dbdad9",
+                  "outline-variant": "#c8c4d7",
+                  "inverse-surface": "#303031",
+                  "on-secondary-fixed-variant": "#753400",
+                  "surface-tint": "#5547d5",
+                  "surface-container-high": "#e9e8e7",
+                  "on-surface": "#1b1c1c",
+                  "surface-container-highest": "#e4e2e2",
+                  "on-secondary-container": "#562500",
+                  "primary": "#3620b8",
+                  "inverse-on-surface": "#f2f0f0",
+                  "tertiary": "#414141",
+                  "on-tertiary-fixed-variant": "#474747",
+                  "on-tertiary-container": "#cfcfcf",
+                  "secondary-fixed": "#ffdbc9",
+                  "tertiary-fixed-dim": "#c6c6c6",
+                  "on-primary-container": "#cfcaff",
+                  "inverse-primary": "#c5c0ff",
+                  "secondary-container": "#f87600",
+                  "on-primary-fixed": "#140067",
+                  "surface-container-low": "#f5f3f3",
+                  "on-surface-variant": "#474554",
+                  "on-error-container": "#93000a",
+                  "primary-fixed-dim": "#c5c0ff",
+                  "secondary-fixed-dim": "#ffb68c",
+                  "primary-fixed": "#e3dfff",
+                  "on-primary-fixed-variant": "#3c29bd",
+                  "primary-container": "#4f40cf",
+                  "on-tertiary-fixed": "#1b1b1b",
+                  "on-background": "#1b1c1c",
+                  "surface": "#fbf9f8",
+                  "on-tertiary": "#ffffff",
+                  "surface-container": "#efeded",
+                  "tertiary-fixed": "#e2e2e2",
+                  "outline": "#787586",
+                  "on-primary": "#ffffff"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "fontFamily": {
+                  "headline": ["Plus Jakarta Sans"],
+                  "body": ["Inter"],
+                  "label": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .tonal-shift {
+      background: linear-gradient(180deg, #fbf9f8 0%, #f5f3f3 100%);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-white">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<button class="hover:opacity-80 transition-opacity scale-95 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<span class="text-xl font-black italic text-[#1b1c1c] dark:text-white font-headline tracking-tight">MCP</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="hover:opacity-80 transition-opacity scale-95 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined text-zinc-500" data-icon="notifications">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden bg-surface-variant ring-2 ring-white/50">
+<img alt="Profile" class="h-full w-full object-cover" data-alt="Close-up portrait of a fit athlete in athletic wear, minimalist background, soft professional lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnKTYI6dh7YDoQB4KzQzb9yLu--_tfZ2Xo9VS4P1wHERuPuqEmKnE0ElYBxdAKk9GplgrmvSXrvJiaU_4_JS0ZZzkdPMgM1O328s8SR8d4aVze8jjqE32tQtMKv67Wo7HmMI_-wfLZl0-of8-vwWpYjEE_xu2Yw5zjZo2RBOvmM9k95NJixpZl5Qg4pkSlEADxEtU_uhqNm3fAv15hIxuIKXbqfi9js_TVhQnpzdtxUe1UkLmOLbfVLs-zpAON-QOhk0X395503IU"/>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-md mx-auto">
+<!-- Hero Section -->
+<section class="relative mb-8">
+<div class="aspect-square rounded-[2rem] overflow-hidden glass-effect border border-white/40 shadow-2xl relative flex items-center justify-center p-8">
+<img alt="Foundation Multi Supplement" class="w-full h-full object-contain drop-shadow-2xl" data-alt="Premium white supplement bottle with minimalist black branding on a clean marble surface, soft natural light, editorial aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASonm3xAYsMMh4N-FeM3eq3sy5-zY3BS65oZhdAdn1SdY1TfT8mODsL4VTWS8uAhynzO_Zok28gZ2pmCYIVsfx35dSDNiF5TIWre43nwcIugTT9mbeLXW7e87hbEL9SyNEAdft-GIxwAxrxXoRxoUuM8wZTTXAouOGJOgdkDn6H4AR0r0Av2fhRvDaJ6_jjNzoUH5K8JUagjkjNkbTyXQoXOlcTRaKTQkS36AOxG4YPviIZIneGyspLhdqb0QwEEamyXVy3TfWsYo"/>
+<div class="absolute top-6 right-6">
+<span class="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Premium Protocol</span>
+</div>
+</div>
+</section>
+<!-- Title & Summary -->
+<section class="mb-10 text-center">
+<p class="text-secondary-container font-headline font-extrabold tracking-widest text-xs uppercase mb-2">MCP Series • Vitality</p>
+<h1 class="text-4xl font-headline font-extrabold text-on-surface tracking-tight mb-3">Foundation Multi</h1>
+<p class="text-on-surface-variant text-lg font-medium leading-relaxed">Cellular Foundation for Elite Performance</p>
+</section>
+<!-- Protocol Grid (Dosage, Timing, Bioavailability) -->
+<section class="grid grid-cols-1 gap-4 mb-10">
+<div class="bg-surface-container-lowest p-6 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex items-start gap-5">
+<div class="bg-primary/10 p-3 rounded-xl">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">pill</span>
+</div>
+<div>
+<h3 class="text-xs font-headline font-bold text-outline uppercase tracking-wider mb-1">Recommended Dosage</h3>
+<p class="text-xl font-bold text-on-surface">2 Capsules</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex items-start gap-5">
+<div class="bg-secondary-container/10 p-3 rounded-xl">
+<span class="material-symbols-outlined text-secondary-container" style="font-variation-settings: 'FILL' 1;">schedule</span>
+</div>
+<div>
+<h3 class="text-xs font-headline font-bold text-outline uppercase tracking-wider mb-1">When to Take</h3>
+<p class="text-xl font-bold text-on-surface">Morning with Food</p>
+</div>
+</div>
+<div class="bg-primary-container text-white p-6 rounded-[1.5rem] shadow-xl shadow-indigo-500/20 relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-sm">tips_and_updates</span>
+<h3 class="text-xs font-headline font-bold uppercase tracking-wider">Bioavailability Tip</h3>
+</div>
+<p class="text-sm font-medium leading-relaxed opacity-90">Take with dietary fats (avocado, nuts, or fish oil) for optimal absorption of fat-soluble vitamins A, D, E, and K.</p>
+</div>
+<div class="absolute -right-8 -bottom-8 opacity-10">
+<span class="material-symbols-outlined text-[120px]">science</span>
+</div>
+</div>
+</section>
+<!-- Key Benefits -->
+<section class="mb-12">
+<h2 class="text-xl font-headline font-bold text-on-surface mb-6 flex items-center gap-2">
+        Key Benefits
+        <span class="h-[2px] flex-grow bg-surface-container-high rounded-full ml-2"></span>
+</h2>
+<div class="grid gap-4">
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-2xl">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<p class="font-semibold text-on-surface">Immune System Support</p>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-2xl">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<p class="font-semibold text-on-surface">Energy Metabolism Boost</p>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-2xl">
+<span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<p class="font-semibold text-on-surface">Cardiovascular Health</p>
+</div>
+</div>
+</section>
+<!-- Ingredients Bento -->
+<section class="mb-12">
+<div class="flex justify-between items-end mb-6">
+<h2 class="text-xl font-headline font-bold text-on-surface">Ingredients</h2>
+<span class="text-xs font-bold text-primary px-3 py-1 bg-primary/10 rounded-full">Per Serving</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center p-5 bg-surface-container-lowest rounded-2xl border border-transparent hover:border-primary/20 transition-all">
+<div>
+<p class="font-bold text-on-surface">Vitamin D3 (Cholecalciferol)</p>
+<p class="text-xs text-on-surface-variant font-medium">Sourced from wild-caught lichen</p>
+</div>
+<p class="font-headline font-extrabold text-primary">5000 IU</p>
+</div>
+<div class="flex justify-between items-center p-5 bg-surface-container-lowest rounded-2xl border border-transparent hover:border-primary/20 transition-all">
+<div>
+<p class="font-bold text-on-surface">Magnesium Bisglycinate</p>
+<p class="text-xs text-on-surface-variant font-medium">High absorption chelated form</p>
+</div>
+<p class="font-headline font-extrabold text-primary">400 mg</p>
+</div>
+<div class="flex justify-between items-center p-5 bg-surface-container-lowest rounded-2xl border border-transparent hover:border-primary/20 transition-all">
+<div>
+<p class="font-bold text-on-surface">Zinc Picolinate</p>
+<p class="text-xs text-on-surface-variant font-medium">Essential mineral support</p>
+</div>
+<p class="font-headline font-extrabold text-primary">30 mg</p>
+</div>
+<div class="flex justify-between items-center p-5 bg-surface-container-lowest rounded-2xl border border-transparent hover:border-primary/20 transition-all">
+<div>
+<p class="font-bold text-on-surface">Methylcobalamin (B12)</p>
+<p class="text-xs text-on-surface-variant font-medium">Active methylated form</p>
+</div>
+<p class="font-headline font-extrabold text-primary">1000 mcg</p>
+</div>
+</div>
+</section>
+<!-- Description -->
+<section class="mb-12 bg-surface-container-high p-8 rounded-[2rem]">
+<h2 class="text-lg font-headline font-bold text-on-surface mb-3">Protocol Strategy</h2>
+<p class="text-on-surface-variant leading-relaxed text-sm">
+        Foundation Multi is specifically engineered for high-performance athletes whose metabolic demands exceed standard RDAs. This micronutrient profile focuses on neuro-protection and hormonal precursors, ensuring your biological machinery remains resilient under heavy training volume.
+      </p>
+</section>
+<!-- Action Button -->
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-white font-headline font-bold py-5 rounded-[1.5rem] shadow-2xl shadow-indigo-500/40 scale-98 active:scale-95 transition-all duration-300 mb-8">
+      Mark as Taken Today
+    </button>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] z-50">
+<div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl rounded-[2rem] border border-white/20 shadow-2xl flex justify-around items-center px-4 py-3">
+<button class="flex items-center justify-center text-zinc-400 hover:scale-110 transition-transform p-3">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</button>
+<button class="flex items-center justify-center text-zinc-400 hover:scale-110 transition-transform p-3">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+</button>
+<button class="flex items-center justify-center text-zinc-400 hover:scale-110 transition-transform p-3">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+</button>
+<button class="flex items-center justify-center bg-gradient-to-br from-[#3620b8] to-[#4F40CF] text-white rounded-full p-3 shadow-lg shadow-indigo-500/30 scale-110">
+<span class="material-symbols-outlined" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</button>
+<button class="flex items-center justify-center text-zinc-400 hover:scale-110 transition-transform p-3">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+</button>
+</div>
+</nav>
+</body></html>

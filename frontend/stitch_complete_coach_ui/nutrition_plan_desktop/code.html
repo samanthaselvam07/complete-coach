@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Complete Physique - Nutrition Plan</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "on-tertiary-fixed": "#1b1b1b",
+                "primary-container": "#4f40cf",
+                "tertiary-container": "#585858",
+                "surface-container-lowest": "#ffffff",
+                "secondary": "#9a4600",
+                "inverse-primary": "#c5c0ff",
+                "on-secondary": "#ffffff",
+                "on-tertiary-fixed-variant": "#474747",
+                "on-primary-fixed": "#140067",
+                "on-surface-variant": "#474554",
+                "on-background": "#1b1c1c",
+                "tertiary-fixed": "#e2e2e2",
+                "on-primary-fixed-variant": "#3c29bd",
+                "primary": "#3620b8",
+                "on-error": "#ffffff",
+                "error-container": "#ffdad6",
+                "outline-variant": "#c8c4d7",
+                "on-primary": "#ffffff",
+                "surface-variant": "#e4e2e2",
+                "on-surface": "#1b1c1c",
+                "secondary-fixed-dim": "#ffb68c",
+                "inverse-on-surface": "#f2f0f0",
+                "secondary-fixed": "#ffdbc9",
+                "on-secondary-fixed-variant": "#753400",
+                "on-error-container": "#93000a",
+                "surface-container-low": "#f5f3f3",
+                "on-tertiary": "#ffffff",
+                "outline": "#787586",
+                "primary-fixed-dim": "#c5c0ff",
+                "inverse-surface": "#303031",
+                "surface-container": "#efeded",
+                "background": "#fbf9f8",
+                "tertiary-fixed-dim": "#c6c6c6",
+                "error": "#ba1a1a",
+                "on-tertiary-container": "#cfcfcf",
+                "on-secondary-fixed": "#321200",
+                "surface-tint": "#5547d5",
+                "surface-container-high": "#e9e8e7",
+                "surface-container-highest": "#e4e2e2",
+                "on-primary-container": "#cfcaff",
+                "surface-dim": "#dbdad9",
+                "secondary-container": "#f87600",
+                "surface": "#fbf9f8",
+                "primary-fixed": "#e3dfff",
+                "tertiary": "#414141",
+                "on-secondary-container": "#562500",
+                "surface-bright": "#fbf9f8"
+              },
+              fontFamily: {
+                "headline": ["Plus Jakarta Sans"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center px-6 py-4 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">My Complete Physique</span>
+<div class="hidden md:flex gap-6">
+<a class="text-zinc-500 dark:text-zinc-400 font-medium hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 transition-all duration-200" href="#">Dashboard</a>
+<a class="text-zinc-500 dark:text-zinc-400 font-medium hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 transition-all duration-200" href="#">Workouts</a>
+<a class="text-indigo-700 dark:text-indigo-300 font-bold border-b-2 border-indigo-600 transition-all duration-200" href="#">Nutrition</a>
+<a class="text-zinc-500 dark:text-zinc-400 font-medium hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 transition-all duration-200" href="#">Progress</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-zinc-500 hover:bg-zinc-100/50 rounded-full transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<img alt="User profile" class="w-10 h-10 rounded-full object-cover border-2 border-surface-container-high" data-alt="Close up portrait of a professional athletic coach with a confident expression and clean grooming" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6UAjHLYBlgF50Gx8nzOSIob6A7eUt-v6ohTbi4xrAPjK3KFMFAQ2IzOdT1uQ154Vb0WUZNUwF2vPrVe4w7Dae3Q_NG7us4CGK0wfpD4UfdpEhJUCO163NuBtXZtnlH_Nh5q84LJ6oSYmg5XB8Uf43lgiymmMNhNUHOLb2-niwQ5tHef6an5mcbDNc40C37y9dwgq_2uO-lGubS9cKwvMRSatKJV5WgQ_JktQiFzptNsxOguTPK08XFSP2YYLMOlMnGckUl-ozt6w"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Desktop) -->
+<aside class="hidden lg:flex flex-col gap-2 p-4 h-screen fixed left-0 top-0 pt-24 w-64 bg-zinc-50 dark:bg-zinc-950">
+<div class="mb-8 px-4">
+<h2 class="text-lg font-bold text-zinc-900 dark:text-zinc-50">Client Portal</h2>
+<p class="text-xs font-semibold uppercase tracking-wider text-primary">Premium Tier</p>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 px-4 py-3 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 px-4 py-3 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-medium">Workouts</span>
+</a>
+<a class="flex items-center gap-3 bg-white dark:bg-zinc-900 text-indigo-600 dark:text-indigo-400 rounded-xl shadow-sm px-4 py-3 active:scale-[0.98] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+<span class="font-medium">Nutrition</span>
+</a>
+<a class="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 px-4 py-3 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-medium">Progress</span>
+</a>
+<a class="flex items-center gap-3 text-zinc-500 dark:text-zinc-400 px-4 py-3 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-medium">Community</span>
+</a>
+</nav>
+<div class="mt-auto p-4">
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                Start Workout
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="lg:ml-64 pt-24 pb-20 px-4 md:px-10 max-w-7xl mx-auto">
+<!-- Editorial Header -->
+<header class="mb-12">
+<h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-2">Fuel Your Potential.</h1>
+<p class="text-on-surface-variant font-medium text-lg">Daily Nutritional Performance Plan for Optimal Recovery.</p>
+</header>
+<!-- Bento Grid for Macros -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
+<!-- Calorie Glass Card -->
+<div class="lg:col-span-4 bg-surface-container-lowest p-8 rounded-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] relative overflow-hidden group">
+<div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/5 rounded-full blur-3xl group-hover:bg-secondary/10 transition-all duration-700"></div>
+<h3 class="text-on-surface-variant text-sm font-bold uppercase tracking-widest mb-6">Total Calories</h3>
+<div class="flex items-baseline gap-2 mb-1">
+<span class="text-5xl font-extrabold text-on-surface">2,450</span>
+<span class="text-zinc-400 font-bold">/ 2,800 kcal</span>
+</div>
+<div class="w-full h-3 bg-surface-container-high rounded-full mt-6 relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-gradient-to-r from-secondary to-secondary-container w-[87%] rounded-full shadow-[0_0_12px_rgba(248,118,0,0.4)]"></div>
+</div>
+<p class="mt-4 text-sm font-medium text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="bolt">bolt</span>
+                    350 kcal remaining for optimal deficit
+                </p>
+</div>
+<!-- Macro Distribution Bento -->
+<div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Protein -->
+<div class="bg-surface-container-low p-6 rounded-xl flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="egg">egg</span>
+</div>
+<h4 class="font-headline font-bold text-lg mb-1">Protein</h4>
+<p class="text-on-surface-variant text-sm mb-4">Muscle Synthesis</p>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold mb-2">
+<span>185g / 210g</span>
+<span class="text-primary">88%</span>
+</div>
+<div class="w-full h-2 bg-white/50 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Carbs -->
+<div class="bg-surface-container-low p-6 rounded-xl flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-secondary" data-icon="bakery_dining">bakery_dining</span>
+</div>
+<h4 class="font-headline font-bold text-lg mb-1">Carbs</h4>
+<p class="text-on-surface-variant text-sm mb-4">Glycogen Recovery</p>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold mb-2">
+<span>240g / 320g</span>
+<span class="text-secondary">75%</span>
+</div>
+<div class="w-full h-2 bg-white/50 rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[75%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Fats -->
+<div class="bg-surface-container-low p-6 rounded-xl flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded-full bg-tertiary-container/10 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-tertiary" data-icon="water_drop">water_drop</span>
+</div>
+<h4 class="font-headline font-bold text-lg mb-1">Fats</h4>
+<p class="text-on-surface-variant text-sm mb-4">Hormonal Health</p>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold mb-2">
+<span>62g / 85g</span>
+<span class="text-tertiary">73%</span>
+</div>
+<div class="w-full h-2 bg-white/50 rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-[73%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Meal Plan Editorial List -->
+<section class="space-y-8">
+<div class="flex justify-between items-end border-b border-outline-variant/15 pb-4">
+<h2 class="text-3xl font-extrabold tracking-tight">Today's Protocol</h2>
+<button class="text-primary font-bold flex items-center gap-1 group">
+                    View Recipe Book
+                    <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<!-- Meal Items -->
+<div class="grid grid-cols-1 gap-12">
+<!-- Breakfast -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+<div class="md:col-span-4 lg:col-span-3">
+<img alt="Breakfast bowl" class="w-full aspect-[4/5] object-cover rounded-xl shadow-xl" data-alt="A gourmet breakfast bowl with avocado, poached eggs, and smoked salmon on a rustic ceramic plate with overhead morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6xq8d8qpSc8ag3TnPzfFEWoyYR-l1ZZb618b-h-oboF4YfXCO60_y3eJOrFPKeN_fljWo3IIViL17ZEncrC731QTYeBTHnYBhiH91Da1D6ua2U-9aJ60aq_nr-IkaAbaz-zK3UN4WZ8R9eN_l9L8qcXq4gQbae12g0yXiLSg9EhiyzObuhk21u2WDVnGEVSIjywGDA7qfaHtHnKElXrt-iOFo57q5UojnKYKgVhL2eSXLPnux4Uuu7BuY1yiISqaiztIp0Fv57uk"/>
+</div>
+<div class="md:col-span-8 lg:col-span-9 flex flex-col h-full justify-center">
+<div class="flex items-center gap-3 mb-4">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold uppercase tracking-wider text-on-surface-variant">07:30 AM</span>
+<span class="px-3 py-1 bg-secondary-container/10 text-on-secondary-container rounded-full text-xs font-bold">High Protein</span>
+</div>
+<h3 class="text-3xl font-bold mb-4">Smoked Salmon &amp; Avocado Poached Eggs</h3>
+<p class="text-on-surface-variant text-lg max-w-2xl mb-8 leading-relaxed">A nutrient-dense start focused on high-quality fats and proteins to stabilize insulin levels and provide sustained energy throughout your morning training window.</p>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Protein</p>
+<p class="text-xl font-extrabold">34g</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Carbs</p>
+<p class="text-xl font-extrabold">12g</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Fats</p>
+<p class="text-xl font-extrabold">22g</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Calories</p>
+<p class="text-xl font-extrabold">410</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-surface-container-lowest outline outline-1 outline-outline-variant/20 rounded-full text-sm font-medium">2 Organic Eggs</span>
+<span class="px-4 py-2 bg-surface-container-lowest outline outline-1 outline-outline-variant/20 rounded-full text-sm font-medium">100g Wild Salmon</span>
+<span class="px-4 py-2 bg-surface-container-lowest outline outline-1 outline-outline-variant/20 rounded-full text-sm font-medium">1/2 Large Avocado</span>
+<span class="px-4 py-2 bg-surface-container-lowest outline outline-1 outline-outline-variant/20 rounded-full text-sm font-medium">Handful Baby Spinach</span>
+</div>
+</div>
+</div>
+<!-- Lunch (Asymmetric Shift) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start md:flex-row-reverse">
+<div class="md:col-span-8 lg:col-span-9 flex flex-col h-full justify-center md:order-2">
+<div class="flex items-center gap-3 mb-4">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold uppercase tracking-wider text-on-surface-variant">01:00 PM</span>
+<span class="px-3 py-1 bg-primary-container/10 text-primary rounded-full text-xs font-bold">Post-Workout</span>
+</div>
+<h3 class="text-3xl font-bold mb-4">Grilled Lemon Herb Chicken &amp; Quinoa Power Bowl</h3>
+<p class="text-on-surface-variant text-lg max-w-2xl mb-8 leading-relaxed">Optimized for glycogen replenishment. Lean poultry paired with complex carbohydrates and micronutrient-rich roasted vegetables.</p>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Protein</p>
+<p class="text-xl font-extrabold">48g</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Carbs</p>
+<p class="text-xl font-extrabold">65g</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Fats</p>
+<p class="text-xl font-extrabold">12g</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Calories</p>
+<p class="text-xl font-extrabold">560</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-surface-container-lowest outline outline-1 outline-outline-variant/20 rounded-full text-sm font-medium">180g Chicken Breast</span>
+<span class="px-4 py-2 bg-surface-container-lowest outline outline-1 outline-outline-variant/20 rounded-full text-sm font-medium">1 Cup Quinoa</span>
+<span class="px-4 py-2 bg-surface-container-lowest outline outline-1 outline-outline-variant/20 rounded-full text-sm font-medium">Roasted Asparagus</span>
+</div>
+</div>
+<div class="md:col-span-4 lg:col-span-3 md:order-1">
+<img alt="Lunch bowl" class="w-full aspect-[4/5] object-cover rounded-xl shadow-xl" data-alt="Healthy bowl with grilled chicken, bright green vegetables, and fluffy quinoa on a clean white background with soft shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdwslzX5T-pAqEd9D5ZXOgsffMPAU9s3bJ7EAP4xrk9J0C7ND1YFgrsqbR44CJdWOHd9jaljyME7C0pOhezQIdFqOo_XTHch-3hGbsXzeMWKpGGDgG--7p3OB2TSmueQbKi-KlZdXrFSfBQVRdDN9bv5I4WgTVVM3ZGTJgG7j2l6dgSNIZEwjja_yrREnIyZ23IEbobFscjn8xpaIi8_iUAR3WktPVTYCQVBi5ZeFrFw6ZCrUqm-Z7DxFSsBIxZSeFnO4eYwGaLwE"/>
+</div>
+</div>
+<!-- Dinner -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+<div class="md:col-span-4 lg:col-span-3">
+<img alt="Dinner steak" class="w-full aspect-[4/5] object-cover rounded-xl shadow-xl" data-alt="Perfectly seared medium-rare grass-fed steak with roasted sweet potatoes and deep green broccolini on a dark slate plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaQLYeM4PMftyL8NPNSXpUmSNnkQWE_vcFWY6gzlweoyIdnPoVc-4mX_MeK7sTv-lpyh5BhCr6hqBxdFTnnpo16uUcUW0eSzqaoqPRz7X9RNatpOtnsGRI3u1996dGsb400RZb11SYxZtf6Jud9p2L9sr-syDrsD5A5BS9xvaSe-hu3qt-dWsmTRJS5VD6xdqd9wCEg87rOGpypGyyqjhr0C1IcqvNHN31XwxFrog8hDL9vDqQ88iZy_uyMyg3fq6ME4tz_o_3Syg"/>
+</div>
+<div class="md:col-span-8 lg:col-span-9 flex flex-col h-full justify-center">
+<div class="flex items-center gap-3 mb-4">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold uppercase tracking-wider text-on-surface-variant">07:00 PM</span>
+<span class="px-3 py-1 bg-zinc-900 text-white rounded-full text-xs font-bold">Deep Recovery</span>
+</div>
+<h3 class="text-3xl font-bold mb-4">Grass-Fed Ribeye &amp; Sweet Potato Mash</h3>
+<p class="text-on-surface-variant text-lg max-w-2xl mb-8 leading-relaxed">A heavy-hitting dinner designed for overnight muscle repair. High in zinc, iron, and slow-digesting carbohydrates to promote deep sleep and growth hormone release.</p>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Protein</p>
+<p class="text-xl font-extrabold">52g</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Carbs</p>
+<p class="text-xl font-extrabold">45g</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Fats</p>
+<p class="text-xl font-extrabold">28g</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl">
+<p class="text-xs font-bold text-zinc-400 uppercase tracking-tighter">Calories</p>
+<p class="text-xl font-extrabold">640</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-surface-container-lowest outline outline-1 outline-outline-variant/20 rounded-full text-sm font-medium">200g Ribeye</span>
+<span class="px-4 py-2 bg-surface-container-lowest outline outline-1 outline-outline-variant/20 rounded-full text-sm font-medium">1 Large Sweet Potato</span>
+<span class="px-4 py-2 bg-surface-container-lowest outline outline-1 outline-outline-variant/20 rounded-full text-sm font-medium">Broccolini w/ Garlic</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Hydration Progress Floating Action -->
+<div class="mt-16 bg-gradient-to-br from-indigo-900 to-indigo-700 rounded-2xl p-8 text-white relative overflow-hidden shadow-2xl">
+<div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+<div>
+<h3 class="text-2xl font-bold mb-2">Hydration Protocol</h3>
+<p class="text-indigo-100 opacity-80 max-w-md">Maintaining intracellular hydration is critical for protein synthesis and cognitive performance.</p>
+</div>
+<div class="flex items-center gap-6">
+<div class="text-right">
+<p class="text-sm font-bold opacity-60 uppercase tracking-widest mb-1">Current Intake</p>
+<p class="text-4xl font-extrabold">3.2L <span class="text-xl opacity-50">/ 4.5L</span></p>
+</div>
+<button class="bg-white text-indigo-600 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined font-bold" data-icon="add">add</span>
+</button>
+</div>
+</div>
+<!-- Decorative fluid background -->
+<div class="absolute -bottom-10 -left-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+<div class="absolute -top-10 -right-10 w-64 h-64 bg-primary-container/20 rounded-full blur-3xl"></div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl px-6 py-3 flex justify-between items-center z-50">
+<a class="flex flex-col items-center gap-1 text-zinc-500" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-bold uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-500" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="text-[10px] font-bold uppercase">Train</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-indigo-600" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+<span class="text-[10px] font-bold uppercase">Fuel</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-500" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="text-[10px] font-bold uppercase">Data</span>
+</a>
+</nav>
+</body></html>

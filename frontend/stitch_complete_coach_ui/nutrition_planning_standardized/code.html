@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCP Coaching - Nutrition Planning</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#1b1c1c",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e4e2e2",
+                        "primary-container": "#4f40cf",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e4e2e2",
+                        "on-secondary-fixed": "#321200",
+                        "on-primary-fixed": "#140067",
+                        "inverse-on-surface": "#f2f0f0",
+                        "on-secondary-container": "#562500",
+                        "surface-container": "#efeded",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#5547d5",
+                        "secondary-container": "#f87600",
+                        "tertiary-container": "#585858",
+                        "secondary-fixed": "#ffdbc9",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-container-high": "#e9e8e7",
+                        "surface": "#fbf9f8",
+                        "on-tertiary-container": "#cfcfcf",
+                        "background": "#fbf9f8",
+                        "tertiary": "#414141",
+                        "surface-container-low": "#f5f3f3",
+                        "secondary": "#9a4600",
+                        "on-secondary-fixed-variant": "#753400",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "on-surface-variant": "#474554",
+                        "on-primary-container": "#cfcaff",
+                        "primary-fixed": "#e3dfff",
+                        "surface-dim": "#dbdad9",
+                        "outline": "#787586",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c8c4d7",
+                        "primary": "#3620b8",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "surface-bright": "#fbf9f8",
+                        "inverse-surface": "#303031",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#c5c0ff",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "on-background": "#1b1c1c"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-glass {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body antialiased">
+<!-- SideNavBar (Execution from JSON) -->
+<aside class="fixed left-0 top-0 h-full flex flex-col py-8 px-6 bg-[#fbf9f8] dark:bg-zinc-950 w-64 border-r-0 z-50">
+<div class="mb-12">
+<h1 class="text-2xl font-black text-[#4F40CF] dark:text-[#6366f1] tracking-tighter font-headline">MCP Coaching</h1>
+<p class="text-xs uppercase tracking-widest text-zinc-400 font-bold mt-1">Elite Performance</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 text-zinc-500 font-medium scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-headline font-semibold tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 text-zinc-500 font-medium scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-headline font-semibold tracking-tight">Training</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl text-[#4F40CF] font-bold border-r-4 border-[#4F40CF] bg-zinc-100/50 scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+<span class="font-headline font-semibold tracking-tight">Nutrition</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 text-zinc-500 font-medium scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span class="font-headline font-semibold tracking-tight">Education</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 text-zinc-500 font-medium scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="pill">pill</span>
+<span class="font-headline font-semibold tracking-tight">Supplementation</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-zinc-100 transition-colors duration-200 text-zinc-500 font-medium scale-98 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-headline font-semibold tracking-tight">Clients</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-4">
+<button class="bg-gradient-to-r from-primary to-primary-container text-white py-3 px-6 rounded-xl font-bold font-headline scale-98 active:scale-95 transition-all shadow-lg shadow-primary/10">
+                New Client
+            </button>
+<div class="flex items-center gap-3 pt-6 border-t border-zinc-100">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover" data-alt="professional male fitness coach headshot with confident expression in high-performance gym environment with soft bokeh background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2f9HkpppPfbDLcmRUu8ciGk6mP9FcpPrQqQ1d4UjljlDXNYldPOkdmCXQLw3azrhC4ZtJLpuaw4TP3V08udV9c5dblT7w7SyZ828PoJPMPwqwi19l7Kvi1S7TuQsPzXksIxHU8e5vHEDy1LSnNyZ6ZVABeiOlHb2InPeVbNPfC_yCioSNiOWJ3C0Vj2Wi-UzJCRRqZUzK0Gh7G1OaqHJV2TOa1ntzqfTggM8j2nqguq5eDAtADiD7Iy4okxByik08hcsvoxYW2Ao"/>
+<div>
+<p class="text-sm font-bold font-headline leading-tight">Coach Marcus</p>
+<p class="text-xs text-zinc-500">Head of Performance</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen relative pb-20">
+<!-- TopNavBar (Execution from JSON) -->
+<header class="fixed top-0 right-0 left-64 h-20 flex justify-between items-center px-10 z-40 bg-[#fbf9f8]/80 backdrop-blur-xl">
+<div class="flex items-center gap-6">
+<div class="relative w-80 group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2.5 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search clients or food database..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition-colors">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<div class="mt-20 px-10 py-10 space-y-10">
+<!-- Hero Header Section -->
+<section class="relative overflow-hidden rounded-[2rem] bg-zinc-900 p-12 text-white shadow-2xl">
+<div class="absolute inset-0 opacity-40">
+<img alt="Nutrition Concept" class="w-full h-full object-cover" data-alt="vibrant top-down view of healthy meal prep containers with salmon, quinoa, and green vegetables on dark textured stone background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpTnrXXmcw5a-jI5IlvqBSEsEa5OdwlsHsFODbfV9bic_cvxhQJVuc736RjvhvkLXasE7iFEO-JBEEmjYMqI5Bcehwk4sHXacwDnyyDvVQqMtaDuHgEFeLBr43B2l4t3Rd5OwTTYPLkgdI1FxJzeeX3TW3cJ5Khrr0wGZy1wwtLWTlnXrn_oQfHF29X0kbwQrkO1Gp3UTTA4iRkF1-F4ql_HT4iNKKB6eju9ZHZcwbAE9d8dpeUTpagno6VFmJOjETqPe-gVlNhb8"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-900/60 to-transparent"></div>
+<div class="relative z-10 max-w-2xl">
+<span class="inline-block px-4 py-1.5 bg-secondary-container text-white text-xs font-black tracking-widest uppercase rounded-full mb-6">Active Protocol</span>
+<h2 class="text-5xl font-black font-headline tracking-tighter leading-[1.1] mb-4">Precision Nutrition <br/>Architecture</h2>
+<p class="text-zinc-300 text-lg font-medium leading-relaxed max-w-lg mb-8">Deploying advanced macronutrient targeting for metabolic optimization and performance longevity.</p>
+<div class="flex gap-4">
+<button class="bg-white text-zinc-900 px-8 py-3.5 rounded-xl font-bold font-headline text-sm hover:bg-zinc-100 transition-all active:scale-95">Load Template</button>
+<button class="kinetic-glass px-8 py-3.5 rounded-xl font-bold font-headline text-sm text-white transition-all active:scale-95">Export Plan</button>
+</div>
+</div>
+</section>
+<!-- Macro Targeting Bento Grid -->
+<section class="grid grid-cols-12 gap-8">
+<!-- Primary Macro Dial -->
+<div class="col-span-8 surface-container-lowest rounded-[2rem] p-8 shadow-sm border border-zinc-100/50">
+<div class="flex justify-between items-start mb-10">
+<div>
+<h3 class="text-2xl font-black font-headline tracking-tight">Daily Macro Thresholds</h3>
+<p class="text-zinc-500 font-medium">Training Day: Hypertrophy Phase 2</p>
+</div>
+<div class="flex gap-2">
+<span class="px-4 py-1.5 bg-zinc-100 rounded-full text-xs font-bold text-zinc-600">3,200 kcal</span>
+<span class="px-4 py-1.5 bg-zinc-100 rounded-full text-xs font-bold text-zinc-600">Surplus +15%</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-8 mb-12">
+<!-- Protein -->
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm font-black font-headline tracking-widest uppercase text-primary">Protein</span>
+<span class="text-2xl font-black font-headline tracking-tighter text-zinc-900">240g</span>
+</div>
+<div class="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full w-[85%]"></div>
+</div>
+<div class="flex justify-between text-xs font-bold text-zinc-400 uppercase tracking-tighter">
+<span>30% Cal</span>
+<span>Target: 250g</span>
+</div>
+</div>
+<!-- Carbs -->
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm font-black font-headline tracking-widest uppercase text-secondary-container">Carbs</span>
+<span class="text-2xl font-black font-headline tracking-tighter text-zinc-900">400g</span>
+</div>
+<div class="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container rounded-full w-[92%]"></div>
+</div>
+<div class="flex justify-between text-xs font-bold text-zinc-400 uppercase tracking-tighter">
+<span>50% Cal</span>
+<span>Target: 410g</span>
+</div>
+</div>
+<!-- Fats -->
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm font-black font-headline tracking-widest uppercase text-zinc-400">Fats</span>
+<span class="text-2xl font-black font-headline tracking-tighter text-zinc-900">71g</span>
+</div>
+<div class="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-zinc-400 rounded-full w-[70%]"></div>
+</div>
+<div class="flex justify-between text-xs font-bold text-zinc-400 uppercase tracking-tighter">
+<span>20% Cal</span>
+<span>Target: 80g</span>
+</div>
+</div>
+</div>
+<div class="kinetic-glass rounded-2xl p-6 flex items-center justify-between border-primary/10">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="auto_fix_high" style="font-variation-settings: 'FILL' 1;">auto_fix_high</span>
+</div>
+<div>
+<p class="font-bold font-headline">Smart Macro Redistribution</p>
+<p class="text-xs text-zinc-500 font-medium">Auto-adjust macros based on previous 24h expenditure.</p>
+</div>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">Configure Settings</button>
+</div>
+</div>
+<!-- Micronutrient Focus -->
+<div class="col-span-4 bg-primary text-white rounded-[2rem] p-8 relative overflow-hidden">
+<div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+<div class="relative z-10 h-full flex flex-col">
+<h3 class="text-xl font-black font-headline tracking-tight mb-8">Micronutrient Bio-Markers</h3>
+<div class="space-y-6 flex-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-container" data-icon="water_drop">water_drop</span>
+<span class="text-sm font-bold">Hydration Level</span>
+</div>
+<span class="text-sm font-black">3.8L / 4L</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-container" data-icon="bolt">bolt</span>
+<span class="text-sm font-bold">Electrolyte Balance</span>
+</div>
+<span class="text-sm font-black">Optimal</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-container" data-icon="energy_savings_leaf">energy_savings_leaf</span>
+<span class="text-sm font-bold">Fiber Density</span>
+</div>
+<span class="text-sm font-black">34g</span>
+</div>
+</div>
+<div class="mt-8 pt-8 border-t border-white/10">
+<p class="text-[10px] uppercase font-black tracking-widest text-white/60 mb-2">Next Milestone</p>
+<p class="text-sm font-bold">Magnesium optimization protocol starts Monday.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Meal Plan Builder (Editorial View) -->
+<section class="space-y-6">
+<div class="flex justify-between items-center">
+<h3 class="text-3xl font-black font-headline tracking-tighter">Meal Architecture Builder</h3>
+<div class="flex items-center gap-4">
+<button class="bg-surface-container-high px-6 py-2 rounded-full text-sm font-bold text-zinc-600 hover:bg-zinc-200 transition-colors">Week View</button>
+<button class="bg-zinc-900 text-white px-6 py-2 rounded-full text-sm font-bold hover:opacity-90 transition-opacity">Add Custom Entry</button>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-8">
+<!-- Breakfast Card -->
+<div class="group surface-container-lowest rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500">
+<div class="h-48 relative overflow-hidden">
+<img alt="Breakfast" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="high-protein avocado toast with poached eggs and microgreens on a white ceramic plate in bright morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJlOiNB4L05NJupAqjl4y3MnK4ucUvtPf2QbIj35mge_FfbPft7cpcUTwFU-PLZGe21YDdVsy5qZA67tOC4ysNOi1b_b-g-9tcjTKH_Bo-LXckKu8zJoqbp9dnP-42COlmrhwB8fb9vt3DmZGQ0EK1XAuRMNSGYmJDnfFd5ROamxWRlV0nLF5R138OTVVc9pwOUg0QNjGMUEjiF3C689ShV1fr-9VMmX_u4NbUQHzzjw2fAM4gZQxuT1wgG36YTu7mbS2wwH9Bwl0"/>
+<div class="absolute top-4 left-4">
+<span class="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-primary">Meal 01 - 08:00</span>
+</div>
+</div>
+<div class="p-8 space-y-4">
+<div>
+<h4 class="text-xl font-black font-headline tracking-tight">Anabolic Awakening</h4>
+<p class="text-zinc-500 text-sm font-medium">Whey Isolate, Oats, Blueberries &amp; Walnuts</p>
+</div>
+<div class="flex gap-4 pt-4 border-t border-zinc-100">
+<div class="flex flex-col">
+<span class="text-[10px] font-black text-zinc-400 uppercase">Prot</span>
+<span class="font-bold">45g</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-black text-zinc-400 uppercase">Carb</span>
+<span class="font-bold">60g</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-black text-zinc-400 uppercase">Fat</span>
+<span class="font-bold">12g</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Lunch Card (Kinetic Glass Highlight) -->
+<div class="group relative surface-container-lowest rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500">
+<div class="h-48 relative overflow-hidden">
+<img alt="Lunch" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="seared chicken breast with roasted sweet potatoes and asparagus garnish on premium stoneware" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnjCqHGGBrnaDW3NHhlXAPGY_FEK-NN4b-H7W7LgyCpVee7s49ObsiTDrYXKr4d1Lz9XZF7_bd2wuVb5cz2rSbaPc8ZZHpIyIoAEPVVQALErNpnKqB3wajqClckvO4BfmRTi_TwjXa_2eXvRA3ksqcyCQ82KBWbmUYTh98j70GL_Xdk-GRHFGMmlMbubLah7EvGsmFYCHSD0Y-Hrz5ZFcQUQyikLO6PdkO-RiTdnOBtdHViNObdeQDymOUIyUQRWz1OZPvdNIFITY"/>
+<div class="absolute top-4 left-4">
+<span class="bg-secondary-container px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white">Meal 02 - 13:00</span>
+</div>
+</div>
+<div class="p-8 space-y-4">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="text-xl font-black font-headline tracking-tight">Lean Fuel Engine</h4>
+<p class="text-zinc-500 text-sm font-medium">Grilled Chicken, Basmati, Seasonal Greens</p>
+</div>
+<span class="material-symbols-outlined text-zinc-300" data-icon="star">star</span>
+</div>
+<div class="flex gap-4 pt-4 border-t border-zinc-100">
+<div class="flex flex-col">
+<span class="text-[10px] font-black text-zinc-400 uppercase">Prot</span>
+<span class="font-bold">52g</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-black text-zinc-400 uppercase">Carb</span>
+<span class="font-bold">85g</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-black text-zinc-400 uppercase">Fat</span>
+<span class="font-bold">8g</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Post-Workout Card -->
+<div class="group surface-container-lowest rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border-2 border-primary/5">
+<div class="h-48 relative overflow-hidden">
+<img alt="Dinner" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="grilled wild-caught salmon with lemon slices and mixed garden salad in a soft daylight setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSvHsuWyaW7AWA4WY6k44MCOTMH_5I59m3nXEgIpVpMdfLG4hI9IHcahDqDq4vgqR-cN3qTWsG7oQq3w6w4UmIb0vqaZIYg_7pFwtbH6pYfvZ9zG4M7KhIQ9xwofMRCa5lFWRZZV5ABKyaamrsqytvmOdHjZn2qIiHJTvmxtt39iIcEkaafs_35b2WE-dw7fxJ0lEixNdGLbqx8j0woJypAPi8vjjHAieX1_2XT4Fv9QKwpQp-v6TvKKzhRG1n2_N0-7qW-Z5_-9o"/>
+<div class="absolute top-4 left-4">
+<span class="bg-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white">Meal 03 - 19:00</span>
+</div>
+</div>
+<div class="p-8 space-y-4">
+<div>
+<h4 class="text-xl font-black font-headline tracking-tight">Performance Repair</h4>
+<p class="text-zinc-500 text-sm font-medium">Salmon, Quinoa, Spinach, Olive Oil</p>
+</div>
+<div class="flex gap-4 pt-4 border-t border-zinc-100">
+<div class="flex flex-col">
+<span class="text-[10px] font-black text-zinc-400 uppercase">Prot</span>
+<span class="font-bold">38g</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-black text-zinc-400 uppercase">Carb</span>
+<span class="font-bold">40g</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-black text-zinc-400 uppercase">Fat</span>
+<span class="font-bold">22g</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Food Database / Search Context -->
+<section class="grid grid-cols-2 gap-8">
+<div class="surface-container-low rounded-[2rem] p-8">
+<h4 class="text-xl font-black font-headline tracking-tight mb-6">Recent Ingredients</h4>
+<div class="space-y-3">
+<div class="bg-white p-4 rounded-2xl flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-400">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+</div>
+<div>
+<p class="font-bold text-sm">Grass-Fed Ground Beef (93/7)</p>
+<p class="text-xs text-zinc-500">250g | 480 kcal</p>
+</div>
+</div>
+<button class="text-primary-container"><span class="material-symbols-outlined" data-icon="add_circle">add_circle</span></button>
+</div>
+<div class="bg-white p-4 rounded-2xl flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-400">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+</div>
+<div>
+<p class="font-bold text-sm">Organic Sweet Potato</p>
+<p class="text-xs text-zinc-500">300g | 258 kcal</p>
+</div>
+</div>
+<button class="text-primary-container"><span class="material-symbols-outlined" data-icon="add_circle">add_circle</span></button>
+</div>
+<div class="bg-white p-4 rounded-2xl flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-400">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+</div>
+<div>
+<p class="font-bold text-sm">Greek Yogurt (Plain 0%)</p>
+<p class="text-xs text-zinc-500">170g | 100 kcal</p>
+</div>
+</div>
+<button class="text-primary-container"><span class="material-symbols-outlined" data-icon="add_circle">add_circle</span></button>
+</div>
+</div>
+</div>
+<div class="kinetic-glass rounded-[2rem] p-8 border-primary/20 flex flex-col justify-center text-center">
+<div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white mx-auto mb-6">
+<span class="material-symbols-outlined text-3xl" data-icon="insights">insights</span>
+</div>
+<h4 class="text-2xl font-black font-headline tracking-tighter mb-2">Automated Macro Analysis</h4>
+<p class="text-zinc-600 font-medium max-w-xs mx-auto mb-8">AI-driven engine that scans your current meal plan for nutrient gaps and bio-availability efficiency.</p>
+<button class="bg-zinc-900 text-white px-10 py-3.5 rounded-xl font-bold font-headline text-sm mx-auto hover:opacity-90 transition-all active:scale-95">Run Diagnostics</button>
+</div>
+</section>
+</div>
+<!-- FAB for Quick Actions -->
+<div class="fixed bottom-10 right-10 flex flex-col gap-4">
+<button class="w-16 h-16 bg-secondary-container text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+</div>
+</main>
+</body></html>

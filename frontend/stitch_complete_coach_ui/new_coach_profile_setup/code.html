@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>New Coach Profile Setup | MCP Coaching</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed-dim": "#c6c6c6",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-error": "#ffffff",
+                    "on-secondary-fixed-variant": "#753400",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "outline-variant": "#c8c4d7",
+                    "primary": "#3620b8",
+                    "on-surface-variant": "#474554",
+                    "surface-container-high": "#e9e8e7",
+                    "secondary-fixed-dim": "#ffb68c",
+                    "tertiary": "#414141",
+                    "secondary": "#9a4600",
+                    "on-primary-fixed-variant": "#3c29bd",
+                    "surface-bright": "#fbf9f8",
+                    "on-primary-container": "#cfcaff",
+                    "outline": "#787586",
+                    "surface-container": "#efeded",
+                    "on-secondary-container": "#562500",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#474747",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#e2e2e2",
+                    "primary-container": "#4f40cf",
+                    "surface-variant": "#e4e2e2",
+                    "tertiary-container": "#585858",
+                    "on-tertiary-container": "#cfcfcf",
+                    "surface-tint": "#5547d5",
+                    "secondary-container": "#f87600",
+                    "surface": "#fbf9f8",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed": "#140067",
+                    "inverse-on-surface": "#f2f0f0",
+                    "on-tertiary-fixed": "#1b1b1b",
+                    "error-container": "#ffdad6",
+                    "inverse-primary": "#c5c0ff",
+                    "surface-dim": "#dbdad9",
+                    "on-secondary-fixed": "#321200",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#e3dfff",
+                    "on-surface": "#1b1c1c",
+                    "on-background": "#1b1c1c",
+                    "surface-container-low": "#f5f3f3",
+                    "inverse-surface": "#303031",
+                    "secondary-fixed": "#ffdbc9",
+                    "on-secondary": "#ffffff",
+                    "background": "#fbf9f8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scale-98:active { transform: scale(0.98); }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- Sidebar Navigation Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-neutral-50 dark:bg-neutral-950 flex flex-col py-8 px-4 justify-between z-50">
+<div class="flex flex-col gap-8">
+<!-- Brand Identity -->
+<div class="flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-white shadow-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-400 font-headline">Kinetic</h1>
+<p class="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Coach Portal</p>
+</div>
+</div>
+<!-- Primary Navigation -->
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/50" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/50" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="text-sm font-medium">Training</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/50" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span class="text-sm font-medium">Nutrition</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/50" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="text-sm font-medium">Education</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/50" href="#">
+<span class="material-symbols-outlined">pill</span>
+<span class="text-sm font-medium">Supplementation</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/50" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/50" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="text-sm font-medium">Forms</span>
+</a>
+</nav>
+</div>
+<div class="flex flex-col gap-4">
+<!-- CTA Button -->
+<button class="w-full py-3 bg-primary-container text-white rounded-xl font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all scale-98">
+<span class="material-symbols-outlined text-lg">add</span>
+<span class="text-sm">+ New Client</span>
+</button>
+<!-- Footer Navigation (Active State) -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 text-indigo-700 dark:text-indigo-300 font-semibold border-r-4 border-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+<span class="text-sm">Coach Profile</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen p-8 lg:p-12 max-w-7xl mx-auto">
+<!-- Header Section -->
+<header class="mb-12 flex justify-between items-end">
+<div class="max-w-2xl">
+<span class="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Administration</span>
+<h2 class="text-5xl font-extrabold tracking-tight font-headline text-on-surface">New Coach Profile</h2>
+<p class="text-on-surface-variant mt-4 text-lg leading-relaxed">Configure the credentials, professional identity, and system access levels for the new curator in the Kinetic ecosystem.</p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-3 rounded-full font-semibold text-on-surface-variant hover:bg-surface-container-high transition-colors">Discard Draft</button>
+<button class="px-8 py-3 bg-gradient-to-r from-primary to-primary-container text-white rounded-full font-bold shadow-xl shadow-primary/20 scale-98 transition-transform">Create Profile</button>
+</div>
+</header>
+<!-- Bento Layout Form -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Left Column: Identity & Bio -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
+<!-- Section: Professional Identity -->
+<section class="glass-card rounded-[2rem] p-8 border border-white/20 shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex items-center gap-4 mb-8">
+<div class="w-12 h-12 rounded-full bg-secondary-container/10 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined">badge</span>
+</div>
+<h3 class="text-2xl font-bold font-headline">Professional Identity</h3>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="col-span-2 md:col-span-1 space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1">Full Legal Name</label>
+<input class="w-full bg-surface-container-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary/20 transition-all text-on-surface" placeholder="e.g. Julian Vascov" type="text"/>
+</div>
+<div class="col-span-2 md:col-span-1 space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1">Professional Title</label>
+<input class="w-full bg-surface-container-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary/20 transition-all text-on-surface" placeholder="e.g. Senior Kinetic Curator" type="text"/>
+</div>
+<div class="col-span-2 space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1">Coaching Specialty</label>
+<div class="flex flex-wrap gap-2 pt-1">
+<button class="px-4 py-2 rounded-full bg-secondary-container text-white text-xs font-bold transition-all shadow-md shadow-secondary-container/20">Hypertrophy</button>
+<button class="px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all">Endurance</button>
+<button class="px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all">Functional</button>
+<button class="px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all">Rehabilitation</button>
+<button class="px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container-highest transition-all">+ Add Other</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Bio & Experience -->
+<section class="glass-card rounded-[2rem] p-8 border border-white/20 shadow-[0px_10px_30px_rgba(27,28,28,0.04)] flex-grow">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">auto_stories</span>
+</div>
+<h3 class="text-2xl font-bold font-headline">Bio &amp; Experience</h3>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1">Professional Narrative</label>
+<textarea class="w-full bg-surface-container-low border-none rounded-2xl px-6 py-6 focus:ring-2 focus:ring-primary/20 transition-all text-on-surface resize-none" placeholder="Craft a compelling bio that will be visible to clients. Highlight certifications, philosophies, and career milestones..." rows="8"></textarea>
+</div>
+</section>
+</div>
+<!-- Right Column: Credentials & Permissions -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<!-- Profile Image Component -->
+<div class="glass-card rounded-[2rem] p-8 border border-white/20 shadow-[0px_10px_30px_rgba(27,28,28,0.04)] flex flex-col items-center text-center">
+<div class="relative group cursor-pointer mb-4">
+<div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl transition-transform group-hover:scale-105">
+<img alt="Coach Avatar Placeholder" class="w-full h-full object-cover" data-alt="professional studio portrait of a fitness coach with a friendly confident expression soft cinematic lighting neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYsnt4jzVNMbwTKFlzw_GxpbqWR0wu0f643PPtF9kW6Yp1XjVqDKnZeyfgIQyWAq1yAvd_x3iSpQUZ5eyjYEOwFdSKzOsKQ3bJAN4lBl6cwVLgmwiI98YaPaqg41oKPKG_FfN9fT8KxIeTqVmwEfIzvr4svUHQTqfcU3k1J2zQqKcm0ofiThlhYLb0tXukwETcZRu1Wl6eJScehvgnJ6iANcBZzX5GdJVlziwvrBN1T6LBWXkyd6MXEI1euxVBREA1jnMMB16iIzw"/>
+</div>
+<div class="absolute bottom-0 right-0 w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white border-4 border-white shadow-lg">
+<span class="material-symbols-outlined text-sm">photo_camera</span>
+</div>
+</div>
+<h4 class="font-bold font-headline">Upload Photo</h4>
+<p class="text-xs text-on-surface-variant mt-1">Recommended 800x800px JPG/PNG</p>
+</div>
+<!-- Section: Account Credentials -->
+<section class="glass-card rounded-[2rem] p-8 border border-white/20 shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-10 h-10 rounded-full bg-tertiary-container/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">lock_open</span>
+</div>
+<h3 class="text-xl font-bold font-headline">Credentials</h3>
+</div>
+<div class="space-y-4">
+<div class="space-y-1">
+<label class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant ml-1">Email Address</label>
+<input class="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-sm" placeholder="coach@kinetic.com" type="email"/>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant ml-1">Temp Password</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-sm" type="password" value="••••••••"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Permissions -->
+<section class="glass-card rounded-[2rem] p-8 border border-white/20 shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-10 h-10 rounded-full bg-error-container/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined">shield_person</span>
+</div>
+<h3 class="text-xl font-bold font-headline">Permissions</h3>
+</div>
+<div class="space-y-4">
+<!-- Toggle Row 1 -->
+<div class="flex items-center justify-between group">
+<div>
+<p class="text-sm font-bold">Client Management</p>
+<p class="text-[10px] text-on-surface-variant">Ability to add/remove clients</p>
+</div>
+<div class="w-10 h-6 bg-primary-container rounded-full relative flex items-center px-1 cursor-pointer">
+<div class="w-4 h-4 bg-white rounded-full translate-x-4"></div>
+</div>
+</div>
+<!-- Toggle Row 2 -->
+<div class="flex items-center justify-between group">
+<div>
+<p class="text-sm font-bold">Revenue Access</p>
+<p class="text-[10px] text-on-surface-variant">View earnings and billing data</p>
+</div>
+<div class="w-10 h-6 bg-surface-container-highest rounded-full relative flex items-center px-1 cursor-pointer">
+<div class="w-4 h-4 bg-white rounded-full"></div>
+</div>
+</div>
+<!-- Toggle Row 3 -->
+<div class="flex items-center justify-between group">
+<div>
+<p class="text-sm font-bold">Curriculum Edit</p>
+<p class="text-[10px] text-on-surface-variant">Modify global training templates</p>
+</div>
+<div class="w-10 h-6 bg-surface-container-highest rounded-full relative flex items-center px-1 cursor-pointer">
+<div class="w-4 h-4 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Helpful Tip Card -->
+<div class="bg-primary rounded-[2rem] p-8 text-white shadow-xl shadow-primary/30 relative overflow-hidden">
+<div class="relative z-10">
+<span class="material-symbols-outlined mb-2">lightbulb</span>
+<h4 class="font-bold text-lg leading-tight mb-2">Curator Tip</h4>
+<p class="text-xs text-primary-fixed leading-relaxed">Profiles with professional high-resolution photography see 40% higher client conversion rates within the first 30 days.</p>
+</div>
+<!-- Decorative Background element -->
+<div class="absolute -bottom-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+</div>
+</div>
+</div>
+<!-- Footer Visual Hint -->
+<footer class="mt-16 flex items-center justify-center gap-2 text-on-surface-variant/40 py-8 border-t border-surface-container-highest/50">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span class="text-[10px] font-bold uppercase tracking-[0.2em]">Kinetic Security Protocol Enabled</span>
+</footer>
+</main>
+</body></html>

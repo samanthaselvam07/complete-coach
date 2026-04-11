@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kinetic Pro | Coach Planning Calendar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-tertiary-container": "#cfcfcf",
+                        "on-secondary-container": "#562500",
+                        "tertiary": "#414141",
+                        "on-primary-fixed": "#140067",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#e9e8e7",
+                        "surface-container": "#efeded",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface": "#fbf9f8",
+                        "on-surface": "#1b1c1c",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#753400",
+                        "inverse-surface": "#303031",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#c5c0ff",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "on-background": "#1b1c1c",
+                        "inverse-on-surface": "#f2f0f0",
+                        "surface-dim": "#dbdad9",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "on-surface-variant": "#474554",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#4f40cf",
+                        "surface-variant": "#e4e2e2",
+                        "on-secondary-fixed": "#321200",
+                        "on-primary-container": "#cfcaff",
+                        "surface-container-highest": "#e4e2e2",
+                        "background": "#fbf9f8",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "primary": "#3620b8",
+                        "surface-tint": "#5547d5",
+                        "primary-fixed": "#e3dfff",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#fbf9f8",
+                        "outline": "#787586",
+                        "tertiary-container": "#585858",
+                        "secondary-container": "#f87600",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "outline-variant": "#c8c4d7",
+                        "surface-container-low": "#f5f3f3",
+                        "secondary": "#9a4600",
+                        "secondary-fixed": "#ffdbc9",
+                        "on-tertiary-fixed": "#1b1b1b"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .glass-sidebar {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface flex min-h-screen">
+<!-- Updated SideNavBar based on SCREEN_5 style -->
+<aside class="hidden md:flex flex-col h-screen w-64 border-r border-zinc-200/20 glass-sidebar p-4 gap-2 z-50 sticky top-0 shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<!-- 1. Header: Logo + Business Name -->
+<div class="flex items-center gap-3 px-2 py-4 mb-4">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-xl font-black text-zinc-900 tracking-tighter leading-none">MY COMPLETE PHYSIQUE</h1>
+<p class="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Premium Performance</p>
+</div>
+</div>
+<!-- 2. Navigation Tabs -->
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- ACTIVE TAB: Training -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#4F40CF] font-bold bg-zinc-100/50 rounded-xl font-['Plus_Jakarta_Sans'] tracking-tight text-sm transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span>Training</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span>Nutrition</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">school</span>
+<span>Education</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">pill</span>
+<span>Supplementation</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Forms</span>
+</a>
+</nav>
+<!-- Bottom Section -->
+<div class="mt-auto pt-4 border-t border-zinc-100">
+<!-- 3. Primary Action Button -->
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-white py-3 rounded-xl font-bold text-sm mb-4 active:scale-95 transition-transform duration-150 ease-out flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                + New Client
+            </button>
+<!-- 4. Coach Profile Section -->
+<div class="flex items-center gap-3 px-2">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAakOlBUtIJjtYbrIOl16otBr0ZV5w1_99dUuANguNeUTEFtDNufSYcCd1FQwRRSGFdPeH6OZ8ESHrdU1xpeM8dwZCteyxP9cUstx53QHzRLWGZ24LNIpUx7nQO7yy7mZ8JISPH6KtFlTMGc9TzUL7oW99ybEk7Q6w3TM5g1K4uqvuEOk33BDn2-XP5Fedt6hJfgJIDswiNQ1iELeJxZKfwSJ7X5zuiE9_5hS2e1ibC4PmdJWQqMRQjuS7-7e7DJApMOxHmFzD0alM"/>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Coach Sarah</p>
+<p class="text-[10px] text-zinc-400 truncate">Head Curator</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0">
+<!-- Top Header -->
+<header class="sticky top-0 w-full z-30 flex justify-between items-center px-8 py-4 bg-white/70 backdrop-blur-xl border-b border-zinc-200/20">
+<div class="flex items-center gap-8">
+<h1 class="text-xl font-bold tracking-tighter text-zinc-900 font-headline">Training Block</h1>
+<div class="hidden lg:flex items-center bg-surface-container-low px-4 py-2 rounded-full w-96">
+<span class="material-symbols-outlined text-zinc-400 text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-zinc-400" placeholder="Search athletes or blocks..." type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-5">
+<button class="p-2 text-zinc-500 hover:bg-zinc-100 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-zinc-500 hover:bg-zinc-100 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-8 w-[1px] bg-zinc-200"></div>
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full border-2 border-white shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWNYRugh_hF-sBbUwKtAeHfRiVmwJjP5mIeiKtqAxy5Jlm4hiYV7t7nDCOv2bVTQqIGopeWjmvkvIBe6ZgbugT4_WD4NObtqqZT0QizDA5si_YsI7cO2hLOrAAcwVGVj0AHlgb8zGMCiYE9gczwKQ8dZF69-YLgAcpXwUs8VhZplVBehbY-sSQBPGgsxxk3-ZRjdMGJnYdXL1v_yxKsfUSTiZkUadLDn_eaYuAFYT57-lWaySZy1NTZmZHBGNYg91aNsx5U_yoS6o"/>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex flex-1 overflow-hidden p-8 gap-8">
+<!-- Central Calendar (Bento-style Grid) -->
+<section class="flex-[2.5] flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="text-3xl font-bold font-headline tracking-tight text-on-surface">September 2024</h2>
+<p class="text-on-surface-variant font-medium">Training Block Overview</p>
+</div>
+<div class="flex bg-surface-container-low p-1 rounded-xl">
+<button class="px-4 py-2 text-xs font-bold rounded-lg bg-white shadow-sm text-primary">MONTH</button>
+<button class="px-4 py-2 text-xs font-bold text-zinc-500">WEEK</button>
+<button class="px-4 py-2 text-xs font-bold text-zinc-500">LIST</button>
+</div>
+</div>
+<!-- Calendar Grid -->
+<div class="flex-1 bg-surface-container-lowest rounded-[2rem] shadow-sm overflow-hidden flex flex-col border border-white/50 glass-panel">
+<!-- Days Header -->
+<div class="grid grid-cols-7 border-b border-surface-container">
+<div class="py-4 text-center text-[10px] font-bold text-zinc-400 tracking-widest uppercase">Mon</div>
+<div class="py-4 text-center text-[10px] font-bold text-zinc-400 tracking-widest uppercase">Tue</div>
+<div class="py-4 text-center text-[10px] font-bold text-zinc-400 tracking-widest uppercase">Wed</div>
+<div class="py-4 text-center text-[10px] font-bold text-zinc-400 tracking-widest uppercase">Thu</div>
+<div class="py-4 text-center text-[10px] font-bold text-zinc-400 tracking-widest uppercase">Fri</div>
+<div class="py-4 text-center text-[10px] font-bold text-zinc-400 tracking-widest uppercase">Sat</div>
+<div class="py-4 text-center text-[10px] font-bold text-zinc-400 tracking-widest uppercase">Sun</div>
+</div>
+<!-- Calendar Cells -->
+<div class="flex-1 grid grid-cols-7 grid-rows-5 h-full relative">
+<div class="absolute inset-0 grid grid-cols-7 pointer-events-none">
+<div class="border-r border-surface-container/30 h-full"></div>
+<div class="border-r border-surface-container/30 h-full"></div>
+<div class="border-r border-surface-container/30 h-full"></div>
+<div class="border-r border-surface-container/30 h-full"></div>
+<div class="border-r border-surface-container/30 h-full"></div>
+<div class="border-r border-surface-container/30 h-full"></div>
+<div></div>
+</div>
+<!-- Example Row 1 -->
+<div class="p-3 text-sm text-zinc-300 font-medium">26</div>
+<div class="p-3 text-sm text-zinc-300 font-medium">27</div>
+<div class="p-3 text-sm text-zinc-300 font-medium">28</div>
+<div class="p-3 text-sm text-zinc-300 font-medium">29</div>
+<div class="p-3 text-sm text-zinc-300 font-medium">30</div>
+<div class="p-3 text-sm text-zinc-300 font-medium">31</div>
+<div class="p-3 text-sm text-zinc-800 font-bold bg-surface-container-low/30">1</div>
+<!-- Hypertrophy Block A Span -->
+<div class="relative group col-start-1 col-span-5 row-start-2 mt-8 px-2">
+<div class="h-10 bg-primary/10 border border-primary/20 rounded-xl flex items-center px-3 gap-3 backdrop-blur-sm">
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdjk4idNo3xXoE5CnypPu-WFFMNLmEz27OW9ZsnUCfJZhuyw6LPJx2XR8yBq1AQeepZ7O9RK0B9KZ0h4Y-TE02oDAYbyaso5YZMuP8nAqea7ajvQDvvmiy1hjirI337NcYMNcjWPGC_TnwQLmDZc63TOuIbEbLI_riuMm-D25MsVV72Dlr49PBcLsIUZg30DRzuwGhRycqw0oow7Ir9K5Cq_xzg3rdQlEH-sTM3tZqAhY_ydEqIwgmxLVdDqfx4yQY_fS0HOIkNZ8"/>
+<img class="w-6 h-6 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzondfl7pXOqKLFiUqS0CMlQZhTRuENt3ziGmA3uKSmboUvI9qlZDHV80Bx5YlgdfyMBaW_Q_NAaGHam3X6eoD-0Z2ccgRZ-puJ_EAksMySHSlah0GscBGJBQ-Cdvy9QTFQaXM7kzUIfrAAZZsl48ArQp6PHT_BO3GhdaT2tcuNhiQ5gVSkAF68RadllRrk42qVZKOFgh-48RmPqnd7nJGfDo2HcHPG9_Cje0D1ROzidG-AQIUtLOndopK6h5VFAOnmsoPG9z5en0"/>
+</div>
+<span class="text-[11px] font-bold text-primary uppercase tracking-wide">Hypertrophy Block A</span>
+<div class="ml-auto flex items-center gap-1.5 bg-white/50 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px] text-primary">water_drop</span>
+<span class="text-[9px] font-bold text-primary/70">FOLLICULAR</span>
+</div>
+</div>
+</div>
+<!-- Strength Phase Span -->
+<div class="relative group col-start-4 col-span-3 row-start-3 mt-4 px-2">
+<div class="h-10 bg-secondary-container/10 border border-secondary-container/20 rounded-xl flex items-center px-3 gap-3 backdrop-blur-sm">
+<img class="w-6 h-6 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsjPBU56N2gk5tdHNKzWZ16i0_69jwrKfMpRoggXyIaHmRk6xSMgsE38r27uMPeMgD8Z2YWPAJxtvIV7gR4qqKQHQZRYxjHjxkthdSMvk2oJyAOIjOx5Q7IFNtBoApn-36enrcZqCGx0yBFZWpz0-uyAL4yAcIGgqFTyGHTs7MRuhR2h2vTyJLz-rHohCpA0UC9GMN2wPg-8oS-2j-8zjebVp17XNabCsocCUNyDwm89O7qBUBd30MwVoprxYjLpjNVt94sG8WN0M"/>
+<span class="text-[11px] font-bold text-secondary-container uppercase tracking-wide">Strength Phase II</span>
+<div class="ml-auto flex items-center gap-1.5 bg-white/50 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px] text-secondary-container">nights_stay</span>
+<span class="text-[9px] font-bold text-secondary-container/70">LUTEAL</span>
+</div>
+</div>
+</div>
+<!-- Deload Week Span -->
+<div class="relative group col-start-2 col-span-6 row-start-4 mt-8 px-2">
+<div class="h-10 bg-zinc-100/50 border border-zinc-200 rounded-xl flex items-center px-3 gap-3 backdrop-blur-sm">
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQlx1SQG8eL8y4E4ur1xr0g6NrRlNcOCfiZKy_JwRUgeB0_ECZudwodHhz3WKcxbKcweRKH2F8CHEbZ6acMw-uLpn2MWAGXWxUwF9De4DH25Tis-I4PZR8x43UucdN4luGQj2QGtW3QCVDf3QYwmxvMWdvonFGd3KnaBPk4PR6QL7E8PCCcVmgLTxxtcUdjTgAIlQoHIKIylzf96N7OmsWSw8j1clmkv4ukGCeGZN9f6rdR_tQE_94iNgHnysmgEl_I05m7dWdFkI"/>
+<img class="w-6 h-6 rounded-full border border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8zmSgt7WBfdg0AcCoWMFrOcdf23QNnqZ52-afI2xmYaZ5ameG1RIKn_6o2ba-dxM4lQxXvRS7A0NfKCsM-_DcMexTwdMXDV6iqR99RPZwHinBkSiZcjMwBaKAnnTEXZ3AbZTv9Qf5Kf68dkzfPTmOpdeSLNQLeF83_xRqhe5W_JyByRjMXW8ZOYMbirhgJdR7_cz5u96414-5gIJXuZ2iY3mCdJg2Bd8GlWVZqiGtJMXJTgPi0VGPpqryenKrQCgDyM27g357w8g"/>
+<div class="w-6 h-6 rounded-full bg-zinc-200 border border-white flex items-center justify-center text-[8px] font-bold">+10</div>
+</div>
+<span class="text-[11px] font-bold text-zinc-500 uppercase tracking-wide">Standard Deload Protocol</span>
+</div>
+</div>
+<!-- Filler Dates -->
+<div class="p-3 text-sm text-zinc-800 font-bold">2</div>
+<div class="p-3 text-sm text-zinc-800 font-bold">3</div>
+<div class="p-3 text-sm text-zinc-800 font-bold">4</div>
+<div class="p-3 text-sm text-zinc-800 font-bold">5</div>
+<div class="p-3 text-sm text-zinc-800 font-bold">6</div>
+<div class="p-3 text-sm text-zinc-800 font-bold">7</div>
+<div class="p-3 text-sm text-zinc-800 font-bold">8</div>
+</div>
+</div>
+</section>
+<!-- Sidebar Analytics & Planning -->
+<aside class="flex-1 flex flex-col gap-8 min-w-[320px]">
+<!-- Roster Pulse -->
+<div class="space-y-4">
+<h3 class="text-sm font-bold uppercase tracking-widest text-zinc-400">Roster Pulse</h3>
+<div class="grid grid-cols-1 gap-3">
+<div class="p-5 rounded-3xl bg-white/60 border border-white/50 glass-panel shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-zinc-500 font-medium mb-1">Avg Compliance</p>
+<p class="text-2xl font-headline font-bold text-on-surface">94%</p>
+</div>
+<div class="w-12 h-12 rounded-full border-4 border-primary/10 border-t-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+</div>
+<div class="p-5 rounded-3xl bg-white/60 border border-white/50 glass-panel shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-zinc-500 font-medium mb-1">Deload Status</p>
+<p class="text-2xl font-headline font-bold text-on-surface">12 Clients</p>
+</div>
+<span class="material-symbols-outlined text-zinc-300 text-[28px]">bed</span>
+</div>
+</div>
+</div>
+<!-- Pending Updates -->
+<div class="flex-1 flex flex-col min-h-0 bg-white/40 rounded-[2rem] p-6 glass-panel border border-white/40">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-sm font-bold uppercase tracking-widest text-zinc-400">Pending Updates</h3>
+<span class="bg-secondary-container text-white text-[10px] px-2 py-0.5 rounded-full font-bold">3 NEW</span>
+</div>
+<div class="space-y-4 overflow-y-auto pr-2">
+<!-- Update Item -->
+<div class="p-4 rounded-2xl bg-white/80 shadow-sm hover:shadow-md transition-shadow group cursor-pointer border border-white/20">
+<div class="flex items-center gap-3 mb-3">
+<img class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvJXuvb5XpFJxpAGDkKezCvDQsCmAXmFelt-9ceKyww4QZ9ofv196MKKTem964C5I_BIwLN6OnM5CgSzHXNvs85eLVGItJD2cmSbAaT-PFKuQ-iCAcTrSEBd6SVX7P5QuZR-3dW4bWoNTZ5beVqB_-4KYVFbV4wt60d5gJi9MvVDhesy_HpHyV7YZjOhVUjOf9NzW3QVDUCtYwYzlVsrZb6hYkWSgtwYvLzz8tP8nfa40xgIY2nhDjh9s5F0KsydBK7VDrFkzvm4g"/>
+<div>
+<p class="text-sm font-bold text-on-surface">Sarah Jenkins</p>
+<p class="text-[10px] text-zinc-400 font-medium">Nutrition Macro Adjust</p>
+</div>
+<button class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px] text-primary">arrow_forward_ios</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-surface-container-low text-[9px] font-bold rounded-md">P3 D6</span>
+<span class="px-2 py-1 bg-surface-container-low text-[9px] font-bold rounded-md text-secondary">URGENT</span>
+</div>
+</div>
+<!-- Update Item -->
+<div class="p-4 rounded-2xl bg-white/80 shadow-sm hover:shadow-md transition-shadow group cursor-pointer border border-white/20">
+<div class="flex items-center gap-3 mb-3">
+<img class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPpqXO9mvSS7ZxM5_I2ijrLIXwMq9908HiYMmPtFJoRUBUYx-MMxApnBdUapOg3GwTHal-s6PYhqo1bCqnKb_6TdP4YqO4RlEHH3TaX9YSMegauEui5F8uz2wMgdbHmbbcHcxSCF7KcVp7Qy1XgIZWOC6vmBXyBaviEC5aaoK-CZto2p2fNkPGeCzkfupExxG7FnWL0_-GH0f93DrslsSDeLWfhlQsum55foaNHr-oXwZLJ0JLyTLtmcWhy8Wem8z-sqthZjLvM1E"/>
+<div>
+<p class="text-sm font-bold text-on-surface">Marcus Thorne</p>
+<p class="text-[10px] text-zinc-400 font-medium">New Strength Block</p>
+</div>
+<button class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px] text-primary">arrow_forward_ios</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-surface-container-low text-[9px] font-bold rounded-md">BLOCK END</span>
+</div>
+</div>
+</div>
+<button class="mt-auto w-full py-3 bg-white/50 border border-white/20 rounded-xl text-xs font-bold text-on-surface hover:bg-white/80 transition-colors flex items-center justify-center gap-2">
+                        View Assignment Queue
+                        <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+</div>
+</aside>
+</div>
+</main>
+<!-- Contextual FAB -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary-container text-white shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[28px]">edit_calendar</span>
+</button>
+</div>
+</body></html>

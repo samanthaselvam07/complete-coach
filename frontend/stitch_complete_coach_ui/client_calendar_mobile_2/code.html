@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Complete Physique | Calendar</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-dim": "#dbdad9",
+              "outline": "#787586",
+              "surface-variant": "#e4e2e2",
+              "tertiary-container": "#585858",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface": "#fbf9f8",
+              "on-error": "#ffffff",
+              "on-background": "#1b1c1c",
+              "on-secondary-fixed": "#321200",
+              "on-surface-variant": "#474554",
+              "error-container": "#ffdad6",
+              "tertiary-fixed": "#e2e2e2",
+              "on-primary-fixed-variant": "#3c29bd",
+              "surface-tint": "#5547d5",
+              "secondary-container": "#f87600",
+              "surface-container-low": "#f5f3f3",
+              "surface-container-high": "#e9e8e7",
+              "on-secondary": "#ffffff",
+              "outline-variant": "#c8c4d7",
+              "on-tertiary-container": "#cfcfcf",
+              "primary-container": "#4f40cf",
+              "on-secondary-container": "#562500",
+              "secondary": "#9a4600",
+              "error": "#ba1a1a",
+              "inverse-on-surface": "#f2f0f0",
+              "secondary-fixed-dim": "#ffb68c",
+              "secondary-fixed": "#ffdbc9",
+              "on-tertiary": "#ffffff",
+              "on-tertiary-fixed": "#1b1b1b",
+              "primary-fixed-dim": "#c5c0ff",
+              "on-primary-fixed": "#140067",
+              "on-primary": "#ffffff",
+              "background": "#fbf9f8",
+              "surface-container": "#efeded",
+              "on-surface": "#1b1c1c",
+              "on-secondary-fixed-variant": "#753400",
+              "tertiary": "#414141",
+              "on-primary-container": "#cfcaff",
+              "surface-container-lowest": "#ffffff",
+              "inverse-primary": "#c5c0ff",
+              "on-error-container": "#93000a",
+              "inverse-surface": "#303031",
+              "surface-container-highest": "#e4e2e2",
+              "surface-bright": "#fbf9f8",
+              "primary": "#3620b8",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "primary-fixed": "#e3dfff"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .text-gradient-primary {
+            background: linear-gradient(135deg, #3620b8, #4f40cf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .kinetic-shadow {
+            box-shadow: 0px 10px 30px rgba(27, 28, 28, 0.06);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fbf9f8;
+            color: #1b1c1c;
+        }
+        h1, h2, h3 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased selection:bg-primary-fixed pb-32">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-sm dark:shadow-none flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of a fit woman with a confident expression in a bright gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdqOGe5-I8vsR8e6OcK5ze_K9H3nCC3TYzpDxr3wbcK_srLnvK0-hwfKyyzSQWDriZaB-Klsy-eCSYH02rj4J5rlPB8TF2Vm8Kbq3BB4HRmzCPc1-3L5ofsCP3XvE8oRpwNzkvPz-6xr7OyC-S5w3u6BWTbMFdoqIF9-4sX7oYCPSHV4aqDR8OXZX9E5YQnwQYcNGbAJcbBXnfFNyWOwKKZRagPfpGq_cOUrU79JThXoW0981V5O3esx0TBA4Ge1BHeXd-4_K_mFc"/>
+</div>
+<span class="text-lg font-extrabold tracking-tighter text-indigo-700 dark:text-indigo-400">COMPLETE PHYSIQUE</span>
+</div>
+<button class="text-zinc-500 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<main class="pt-24 px-4 space-y-8 max-w-md mx-auto">
+<!-- Month View Header -->
+<section class="flex items-center justify-between">
+<div class="space-y-1">
+<h1 class="text-3xl font-extrabold tracking-tight">October</h1>
+<p class="text-sm font-medium text-outline">Training Block: Hypertrophy 2.0</p>
+</div>
+<div class="flex gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Calendar Month Grid -->
+<section class="surface-container-lowest rounded-[2rem] p-6 kinetic-shadow">
+<div class="grid grid-cols-7 gap-y-6 text-center">
+<!-- Day Names -->
+<div class="text-[10px] font-bold text-outline uppercase tracking-widest">Mo</div>
+<div class="text-[10px] font-bold text-outline uppercase tracking-widest">Tu</div>
+<div class="text-[10px] font-bold text-outline uppercase tracking-widest">We</div>
+<div class="text-[10px] font-bold text-outline uppercase tracking-widest">Th</div>
+<div class="text-[10px] font-bold text-outline uppercase tracking-widest">Fr</div>
+<div class="text-[10px] font-bold text-outline uppercase tracking-widest">Sa</div>
+<div class="text-[10px] font-bold text-outline uppercase tracking-widest">Su</div>
+<!-- Dates (Example Data) -->
+<div class="text-sm font-medium opacity-20 py-2">28</div>
+<div class="text-sm font-medium opacity-20 py-2">29</div>
+<div class="text-sm font-medium opacity-20 py-2">30</div>
+<div class="text-sm font-medium py-2">1</div>
+<div class="text-sm font-medium py-2">2</div>
+<div class="text-sm font-medium py-2">3</div>
+<div class="text-sm font-medium py-2 relative">
+                    4
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-0.5">
+<span class="w-1 h-1 rounded-full bg-primary"></span>
+</div>
+</div>
+<div class="text-sm font-medium py-2">5</div>
+<div class="text-sm font-medium py-2 relative">
+                    6
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-0.5">
+<span class="w-1 h-1 rounded-full bg-secondary"></span>
+</div>
+</div>
+<div class="text-sm font-medium py-2">7</div>
+<div class="text-sm font-medium py-2">8</div>
+<div class="text-sm font-medium py-2">9</div>
+<div class="text-sm font-medium py-2">10</div>
+<div class="text-sm font-medium py-2">11</div>
+<div class="text-sm font-medium py-2 relative">
+                    12
+                    <div class="absolute bottom-[-2px] left-1 w-full px-1">
+<div class="h-1 rounded-full bg-primary/20"></div>
+</div>
+</div>
+<div class="text-sm font-bold bg-primary text-white rounded-full w-8 h-8 mx-auto flex items-center justify-center relative">
+                    13
+                    <div class="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"></div>
+</div>
+<div class="text-sm font-medium py-2">14</div>
+<div class="text-sm font-medium py-2">15</div>
+<div class="text-sm font-medium py-2">16</div>
+<div class="text-sm font-medium py-2 relative">
+                    17
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-0.5">
+<span class="w-1 h-1 rounded-full bg-secondary"></span>
+<span class="w-1 h-1 rounded-full bg-primary"></span>
+</div>
+</div>
+<div class="text-sm font-medium py-2">18</div>
+<div class="text-sm font-medium py-2">19</div>
+<div class="text-sm font-medium py-2">20</div>
+<div class="text-sm font-medium py-2">21</div>
+<div class="text-sm font-medium py-2">22</div>
+<div class="text-sm font-medium py-2">23</div>
+<div class="text-sm font-medium py-2">24</div>
+<div class="text-sm font-medium py-2">25</div>
+</div>
+<!-- Key -->
+<div class="mt-8 flex items-center gap-6 justify-center">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-[11px] font-semibold text-outline tracking-wide uppercase">Training</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-[11px] font-semibold text-outline tracking-wide uppercase">Cycle</span>
+</div>
+</div>
+</section>
+<!-- Cycle Log Trigger (The Floating Action) -->
+<section class="flex justify-center">
+<button class="flex items-center gap-3 px-6 py-3 rounded-full bg-surface-container-high border border-white/50 kinetic-shadow active:scale-95 transition-transform group">
+<span class="material-symbols-outlined text-secondary" data-icon="water_drop" style="font-variation-settings: 'FILL' 1;">water_drop</span>
+<span class="text-sm font-bold text-on-surface">Log Cycle Activity</span>
+<span class="material-symbols-outlined text-zinc-400 group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</button>
+</section>
+<!-- List View: Today's Agenda -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="text-xl font-bold">Today's Agenda</h2>
+<span class="text-xs font-semibold px-3 py-1 bg-primary-fixed text-on-primary-fixed rounded-full">Sun, Oct 13</span>
+</div>
+<!-- Agenda Item 1: Workout -->
+<div class="surface-container-lowest rounded-[1.5rem] p-5 kinetic-shadow border-l-4 border-primary space-y-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest">Strength Session</p>
+<h3 class="text-lg font-bold">Lower Body Power A</h3>
+</div>
+<span class="text-xs font-medium text-outline">10:00 AM</span>
+</div>
+<div class="flex items-center gap-3 py-3 px-4 bg-surface-container-low rounded-xl">
+<span class="material-symbols-outlined text-primary" data-icon="fitness_center">fitness_center</span>
+<span class="text-sm font-medium">4 Exercises • 45 mins</span>
+</div>
+</div>
+<!-- Agenda Item 2: Recovery / Cycle Info -->
+<div class="surface-container-lowest rounded-[1.5rem] p-5 kinetic-shadow border-l-4 border-secondary space-y-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-[10px] font-bold text-secondary uppercase tracking-widest">Luteal Phase</p>
+<h3 class="text-lg font-bold">Cycle Awareness</h3>
+</div>
+<span class="text-xs font-medium text-outline">Day 22</span>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                    Focus on mobility and hydration. Intensity should be moderate today.
+                </p>
+</div>
+</section>
+<!-- Cycle Logging "Kinetic Glass" Drawer Mockup -->
+<section class="mt-12 space-y-4 pb-12">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary" data-icon="edit_calendar">edit_calendar</span>
+<h2 class="text-xl font-bold">Quick Log</h2>
+</div>
+<div class="glass-card rounded-[2rem] p-8 border border-white/40 kinetic-shadow">
+<div class="text-center mb-6">
+<h3 class="text-lg font-bold mb-1">How are you feeling?</h3>
+<p class="text-sm text-outline">Luteal Phase • Expected in 4 days</p>
+</div>
+<!-- Symptom Pills -->
+<div class="flex flex-wrap gap-2 justify-center mb-8">
+<span class="px-4 py-2 rounded-full bg-secondary-fixed text-on-secondary-fixed text-xs font-bold">Energetic</span>
+<span class="px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold">Cramps</span>
+<span class="px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold">Bloated</span>
+<span class="px-4 py-2 rounded-full bg-secondary-fixed text-on-secondary-fixed text-xs font-bold">High Focus</span>
+<span class="px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-bold">Restless</span>
+</div>
+<button class="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-white font-bold tracking-tight active:scale-95 transition-all shadow-lg shadow-primary/20">
+                    Save Daily Log
+                </button>
+</div>
+</section>
+</main>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-8 pt-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl rounded-t-3xl border-t border-white/20 shadow-[0px_-10px_30px_rgba(27,28,28,0.06)] z-50">
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-indigo-500 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide mt-1">Coach</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-indigo-500 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide mt-1">Workouts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-400 scale-110 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide mt-1">Schedule</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-indigo-500 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide mt-1">Nutrition</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-indigo-500 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide mt-1">Progress</span>
+</a>
+</nav>
+</body></html>

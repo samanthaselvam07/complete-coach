@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-dim": "#dbdad9",
+              "outline": "#787586",
+              "surface-variant": "#e4e2e2",
+              "tertiary-container": "#585858",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface": "#fbf9f8",
+              "on-error": "#ffffff",
+              "on-background": "#1b1c1c",
+              "on-secondary-fixed": "#321200",
+              "on-surface-variant": "#474554",
+              "error-container": "#ffdad6",
+              "tertiary-fixed": "#e2e2e2",
+              "on-primary-fixed-variant": "#3c29bd",
+              "surface-tint": "#5547d5",
+              "secondary-container": "#f87600",
+              "surface-container-low": "#f5f3f3",
+              "surface-container-high": "#e9e8e7",
+              "on-secondary": "#ffffff",
+              "outline-variant": "#c8c4d7",
+              "on-tertiary-container": "#cfcfcf",
+              "primary-container": "#4f40cf",
+              "on-secondary-container": "#562500",
+              "secondary": "#9a4600",
+              "error": "#ba1a1a",
+              "inverse-on-surface": "#f2f0f0",
+              "secondary-fixed-dim": "#ffb68c",
+              "secondary-fixed": "#ffdbc9",
+              "on-tertiary": "#ffffff",
+              "on-tertiary-fixed": "#1b1b1b",
+              "primary-fixed-dim": "#c5c0ff",
+              "on-primary-fixed": "#140067",
+              "on-primary": "#ffffff",
+              "background": "#fbf9f8",
+              "surface-container": "#efeded",
+              "on-surface": "#1b1c1c",
+              "on-secondary-fixed-variant": "#753400",
+              "tertiary": "#414141",
+              "on-primary-container": "#cfcaff",
+              "surface-container-lowest": "#ffffff",
+              "inverse-primary": "#c5c0ff",
+              "on-error-container": "#93000a",
+              "inverse-surface": "#303031",
+              "surface-container-highest": "#e4e2e2",
+              "surface-bright": "#fbf9f8",
+              "primary": "#3620b8",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "primary-fixed": "#e3dfff"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/20">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex justify-between items-center px-8 py-4 w-full">
+<div class="flex items-center gap-4">
+<span class="font-['Plus_Jakarta_Sans'] font-black text-xl text-zinc-900 tracking-tight">Kinetic Curator</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-indigo-600 border-b-2 border-indigo-600 py-1" href="#">Calendar</a>
+<a class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-zinc-500 hover:bg-zinc-100/50 transition-all px-3 py-1 rounded-lg" href="#">Training Plan</a>
+<a class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-zinc-500 hover:bg-zinc-100/50 transition-all px-3 py-1 rounded-lg" href="#">Nutrition</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-zinc-500 hover:bg-zinc-100/50 transition-all rounded-full">
+<span class="material-symbols-outlined">calendar_today</span>
+</button>
+<button class="p-2 text-zinc-500 hover:bg-zinc-100/50 transition-all rounded-full relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-secondary-container rounded-full"></span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed shadow-sm">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="close-up portrait of a fitness professional with warm lighting and a clean minimalist background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDy0lpLCFvbN46YBcChNyisA0rJPKcLLoE6IZdxWkSrrLJLbsx-irKhSATCIqaa7M24wx59mMjTQ_fF8WaWwNTZ_6YlhEwf3qh0RgBfCJUoP6AC4Oq1zfnJN1qfhna-OQL3GYdfaPR0EDuOXZjycrQSBwiq81B889sAMG2MqY2_HzRSb3Ur85PaOhtsi7aLoVk1lr1lyVvYMg5T_NUod66XJxhNiTJZnS2fX3zZc-xOx7Xhkf4rvG2rYheqWi7kId1G-kS0LTNdsOo"/>
+</div>
+</div>
+</header>
+<div class="flex pt-20 h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full w-64 py-8 px-6 gap-8 bg-zinc-50/50 backdrop-blur-2xl transition-all">
+<div class="flex flex-col gap-1">
+<span class="text-indigo-700 font-extrabold text-lg font-headline">Kinetic Curator</span>
+<span class="text-xs text-zinc-400 font-semibold tracking-widest uppercase">Elite Performance</span>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-zinc-400 hover:translate-x-1 hover:text-indigo-500 transition-transform font-semibold text-sm" href="#">
+<span class="material-symbols-outlined">grid_view</span> Dashboard
+                </a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-zinc-400 hover:translate-x-1 hover:text-indigo-500 transition-transform font-semibold text-sm" href="#">
+<span class="material-symbols-outlined">fitness_center</span> Training Plan
+                </a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-indigo-600 font-bold bg-white shadow-sm transition-transform text-sm" href="#">
+<span class="material-symbols-outlined">event_note</span> Calendar
+                </a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-zinc-400 hover:translate-x-1 hover:text-indigo-500 transition-transform font-semibold text-sm" href="#">
+<span class="material-symbols-outlined">restaurant</span> Nutrition
+                </a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-zinc-400 hover:translate-x-1 hover:text-indigo-500 transition-transform font-semibold text-sm" href="#">
+<span class="material-symbols-outlined">monitoring</span> Analytics
+                </a>
+</nav>
+<button class="mt-4 bg-gradient-to-r from-primary to-primary-container text-white py-3 px-6 rounded-xl font-bold shadow-lg hover:scale-[0.98] transition-all">
+                Log Cycle
+            </button>
+<div class="mt-auto flex flex-col gap-2 border-t border-outline-variant/10 pt-6">
+<a class="flex items-center gap-3 py-2 text-zinc-400 hover:text-indigo-500 transition-all text-sm font-semibold" href="#">
+<span class="material-symbols-outlined">help_outline</span> Support
+                </a>
+<a class="flex items-center gap-3 py-2 text-zinc-400 hover:text-indigo-500 transition-all text-sm font-semibold" href="#">
+<span class="material-symbols-outlined">person</span> Account
+                </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto no-scrollbar p-8 bg-background">
+<div class="max-w-7xl mx-auto flex flex-col gap-8">
+<!-- Header & Filters -->
+<div class="flex flex-col md:flex-row justify-between items-end gap-4">
+<div class="space-y-1">
+<h1 class="text-4xl font-headline font-extrabold tracking-tight text-on-surface">October 2024</h1>
+<p class="text-on-surface-variant font-medium">Hypertrophy Phase: Week 3 of 6</p>
+</div>
+<div class="flex items-center gap-3 p-1 bg-surface-container-low rounded-full">
+<button class="px-6 py-2 rounded-full bg-surface-container-lowest shadow-sm text-sm font-bold text-primary">Month</button>
+<button class="px-6 py-2 rounded-full text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high transition-all">Week</button>
+<button class="px-6 py-2 rounded-full text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high transition-all">Agenda</button>
+</div>
+</div>
+<!-- Calendar Bento Grid -->
+<div class="grid grid-cols-7 gap-px bg-outline-variant/10 rounded-3xl overflow-hidden shadow-sm border border-outline-variant/10">
+<!-- Day Headers -->
+<div class="bg-surface-container-low p-4 text-center text-xs font-black uppercase tracking-widest text-on-surface-variant">Mon</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-black uppercase tracking-widest text-on-surface-variant">Tue</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-black uppercase tracking-widest text-on-surface-variant">Wed</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-black uppercase tracking-widest text-on-surface-variant">Thu</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-black uppercase tracking-widest text-on-surface-variant">Fri</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-black uppercase tracking-widest text-on-surface-variant">Sat</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-black uppercase tracking-widest text-on-surface-variant">Sun</div>
+<!-- Row 1: Partial previous month -->
+<div class="bg-surface-container-lowest min-h-[140px] p-4 opacity-30">30</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">1</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">2</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">
+<span class="text-sm font-bold">3</span>
+<div class="mt-2 space-y-1">
+<div class="bg-primary/10 text-primary px-2 py-1 rounded-md text-[10px] font-bold border-l-2 border-primary">Legs A</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 relative overflow-hidden">
+<span class="text-sm font-bold">4</span>
+<!-- Multi-day indicator -->
+<div class="absolute bottom-0 left-0 right-[-100%] h-6 bg-secondary-container/10 border-t border-secondary-container/20 px-4 flex items-center">
+<span class="text-[9px] font-bold text-secondary-fixed-variant uppercase tracking-tight">Recovery Protocol</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">5</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">6</div>
+<!-- Row 2 -->
+<div class="bg-surface-container-lowest min-h-[140px] p-4">
+<span class="text-sm font-bold">7</span>
+<div class="mt-2 flex flex-col gap-1">
+<div class="bg-primary/10 text-primary px-2 py-1 rounded-md text-[10px] font-bold border-l-2 border-primary">Push B</div>
+<div class="flex items-center gap-1 text-[10px] text-orange-600 font-bold"><span class="material-symbols-outlined text-xs">assignment_turned_in</span> Check-in Due</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">8</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">9</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">10</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">11</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">12</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">13</div>
+<!-- Row 3: Active Training Block -->
+<div class="bg-surface-container-lowest min-h-[140px] p-4 relative">
+<span class="text-sm font-bold">14</span>
+<div class="absolute top-10 left-0 w-[400%] h-8 bg-primary-container/5 backdrop-blur-sm flex items-center px-4 border-y border-primary-container/10">
+<span class="text-[10px] font-black text-primary-container uppercase tracking-widest">Hypertrophy Block A - Intensification</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">15</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">16</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">17</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 ring-2 ring-primary ring-inset z-10">
+<span class="bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">18</span>
+<div class="mt-4 flex flex-col gap-1">
+<div class="bg-primary/10 text-primary px-2 py-1 rounded-md text-[10px] font-bold border-l-2 border-primary">Full Body Focus</div>
+<div class="flex items-center gap-1 text-[10px] text-zinc-500 font-bold"><span class="material-symbols-outlined text-xs">videocam</span> Coach Call</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">19</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">20</div>
+<!-- Row 4 -->
+<div class="bg-surface-container-lowest min-h-[140px] p-4">21</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">22</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">23</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">
+<span class="text-sm font-bold">24</span>
+<div class="mt-2">
+<div class="bg-emerald-500/10 text-emerald-700 px-2 py-1 rounded-md text-[10px] font-bold border-l-2 border-emerald-500">Rest Day</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">25</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4">26</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 relative">
+<span class="text-sm font-bold">27</span>
+<div class="absolute bottom-4 right-4 flex gap-1">
+<div class="w-2 h-2 rounded-full bg-rose-400"></div>
+<div class="w-2 h-2 rounded-full bg-indigo-400"></div>
+</div>
+</div>
+</div>
+<!-- Footer Summary / Upcoming Events -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-card p-6 rounded-3xl border border-outline-variant/15 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined">upcoming</span>
+</div>
+<h3 class="font-headline font-bold text-lg">Next 48 Hours</h3>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-sm font-bold">PT Session w/ Marcus</p>
+<p class="text-xs text-on-surface-variant">Tomorrow, 08:00 AM</p>
+</div>
+<span class="material-symbols-outlined text-primary text-xl">event</span>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<p class="text-sm font-bold">Monthly Assessment</p>
+<p class="text-xs text-on-surface-variant">Sunday, 10:00 AM</p>
+</div>
+<span class="material-symbols-outlined text-secondary text-xl">analytics</span>
+</div>
+</div>
+</div>
+<div class="glass-card p-6 rounded-3xl border border-outline-variant/15 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-secondary-container/10 text-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined">rocket_launch</span>
+</div>
+<h3 class="font-headline font-bold text-lg">New Program Launch</h3>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                            Your <span class="font-bold text-on-surface">Peak Performance v2.0</span> phase unlocks in 12 days. Prepare for increased volume.
+                        </p>
+<button class="text-primary text-sm font-bold text-left hover:underline">View Phase Blueprint →</button>
+</div>
+<div class="glass-card p-6 rounded-3xl border border-outline-variant/15 flex flex-col justify-center items-center gap-4 group cursor-pointer hover:bg-surface-container-lowest transition-all">
+<div class="w-16 h-16 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-3xl">water_drop</span>
+</div>
+<div class="text-center">
+<h3 class="font-headline font-bold text-lg">Cycle Track</h3>
+<p class="text-xs text-on-surface-variant">Predicted start in 3 days</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Right Side Panel: Menstrual Cycle (Discreet & Elegant) -->
+<aside class="hidden xl:flex w-96 flex-col bg-surface-container-lowest border-l border-outline-variant/10 p-8 overflow-y-auto no-scrollbar">
+<div class="flex items-center justify-between mb-8">
+<h2 class="font-headline font-extrabold text-2xl">Cycle Insights</h2>
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Cycle Status -->
+<div class="bg-gradient-to-br from-rose-50 to-white p-8 rounded-[2rem] border border-rose-100 flex flex-col items-center gap-4 text-center mb-10">
+<div class="relative">
+<svg class="w-32 h-32 transform -rotate-90">
+<circle class="text-rose-100" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-rose-400" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-dasharray="364.4" stroke-dashoffset="100" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-3xl font-black text-rose-600">Day 25</span>
+<span class="text-[10px] font-bold text-rose-400 uppercase tracking-widest">Luteal Phase</span>
+</div>
+</div>
+<div class="space-y-1">
+<p class="font-headline font-bold text-on-surface">Period starting soon</p>
+<p class="text-sm text-on-surface-variant">Intensity adjustment recommended for Week 1.</p>
+</div>
+</div>
+<div class="space-y-8">
+<div>
+<h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant mb-4">Quick Log</h3>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface-container-low hover:bg-rose-50 hover:text-rose-600 transition-all">
+<span class="material-symbols-outlined">opacity</span>
+<span class="text-xs font-bold">Flow</span>
+</button>
+<button class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface-container-low hover:bg-rose-50 hover:text-rose-600 transition-all">
+<span class="material-symbols-outlined">mood</span>
+<span class="text-xs font-bold">Symptoms</span>
+</button>
+<button class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface-container-low hover:bg-rose-50 hover:text-rose-600 transition-all">
+<span class="material-symbols-outlined">biotech</span>
+<span class="text-xs font-bold">Cervical</span>
+</button>
+<button class="flex flex-col items-center gap-2 p-4 rounded-2xl bg-surface-container-low hover:bg-rose-50 hover:text-rose-600 transition-all">
+<span class="material-symbols-outlined">bedtime</span>
+<span class="text-xs font-bold">Sleep</span>
+</button>
+</div>
+</div>
+<div class="p-6 bg-surface-container-low rounded-3xl space-y-4">
+<h3 class="text-xs font-black uppercase tracking-widest text-on-surface-variant">Physiology Tip</h3>
+<p class="text-sm text-on-surface font-medium leading-relaxed italic">
+                        "Your metabolic rate increases slightly during the late luteal phase. Consider adding a 150kcal snack to your training window today."
+                    </p>
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full border border-white" data-alt="professional nutritionist portrait with bright natural lighting and clean hospital background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDafiCjguh2727dGOBQR_HLLP0j_JGvKWhVld48hAZyyo_1cevVT0fvMKM92-2VB0X4Yc0yNFEcZqS2LTh6P64xlsX6FXR1g-XVTPDu90_4Uef8iKkUMj7c9Y5SelroeNxKk2m94PIkPVpR_2Z1MKbrqEpLlnVXq8gZlnoWstBeAD9UZvy5gNH6BLb32rhC8bP9KjEtYsmrg3ULj_S6Y3ILW7TFgivv5FxFh0MUtZDCZmyhsLeOhgCJobtUodOlzrEVUCg5u68qNog"/>
+<span class="text-xs font-bold text-on-surface-variant">Dr. Sarah L., Head of Physiology</span>
+</div>
+</div>
+</div>
+</aside>
+</div>
+<!-- Floating Action Button for Mobile -->
+<button class="fixed bottom-8 right-8 md:hidden w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl z-[60]">
+<span class="material-symbols-outlined">add</span>
+</button>
+</body></html>

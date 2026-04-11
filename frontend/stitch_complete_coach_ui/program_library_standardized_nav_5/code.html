@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Training Library | MCP Coaching</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-highest": "#e4e2e2",
+              "outline-variant": "#c8c4d7",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface-container-low": "#f5f3f3",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-secondary-fixed": "#321200",
+              "outline": "#787586",
+              "on-primary-fixed-variant": "#3c29bd",
+              "secondary-container": "#f87600",
+              "surface-container": "#efeded",
+              "on-error-container": "#93000a",
+              "on-secondary-fixed-variant": "#753400",
+              "surface-dim": "#dbdad9",
+              "surface-bright": "#fbf9f8",
+              "error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "surface-container-high": "#e9e8e7",
+              "tertiary-container": "#585858",
+              "on-secondary": "#ffffff",
+              "inverse-on-surface": "#f2f0f0",
+              "surface-tint": "#5547d5",
+              "on-secondary-container": "#562500",
+              "on-primary-fixed": "#140067",
+              "surface-variant": "#e4e2e2",
+              "secondary": "#9a4600",
+              "inverse-primary": "#c5c0ff",
+              "on-tertiary-fixed": "#1b1b1b",
+              "surface": "#fbf9f8",
+              "primary-container": "#4f40cf",
+              "on-surface": "#1b1c1c",
+              "inverse-surface": "#303031",
+              "secondary-fixed": "#ffdbc9",
+              "primary": "#3620b8",
+              "on-background": "#1b1c1c",
+              "surface-container-lowest": "#ffffff",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#cfcfcf",
+              "on-primary-container": "#cfcaff",
+              "on-primary": "#ffffff",
+              "tertiary": "#414141",
+              "primary-fixed-dim": "#c5c0ff",
+              "background": "#fbf9f8",
+              "primary-fixed": "#e3dfff",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#474554",
+              "on-error": "#ffffff",
+              "tertiary-fixed": "#e2e2e2"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-fixed selection:text-primary min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen w-64 border-r border-zinc-200/20 bg-white/70 backdrop-blur-xl p-4 gap-2 sticky top-0 shrink-0 z-50">
+<div class="flex items-center gap-3 px-2 mb-8">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-xl font-black text-zinc-900 tracking-tighter font-headline">MCP Coaching</h1>
+<p class="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Premium Performance</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 transition-all duration-200 rounded-xl font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Training (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#4F40CF] font-bold bg-zinc-100/50 rounded-xl font-['Plus_Jakarta_Sans'] tracking-tight text-sm active:scale-95 transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span>Training</span>
+</a>
+<!-- Nutrition -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 transition-all duration-200 rounded-xl font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span>Nutrition</span>
+</a>
+<!-- Education -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 transition-all duration-200 rounded-xl font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">school</span>
+<span>Education</span>
+</a>
+<!-- Supplementation -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 transition-all duration-200 rounded-xl font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">pill</span>
+<span>Supplementation</span>
+</a>
+<!-- Clients -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 transition-all duration-200 rounded-xl font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Clients</span>
+</a>
+<!-- Forms -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 transition-all duration-200 rounded-xl font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Forms</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-zinc-100">
+<button class="w-full bg-primary-container text-white py-3 rounded-xl font-bold text-sm mb-4 shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
+                + New Client
+            </button>
+<div class="flex items-center gap-3 px-2">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover" data-alt="professional portrait of a fitness coach with a friendly confident expression in a modern studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDN93b0ag8YI12zwrd8TP5qQaEjdzJT2l1ZRVrZxpS6-f0No5YkTnyn5tzXam_pF_ty768Lwt0TJUh05iHQutPFvKjSDyqArA2lhaXDXCPeSk11WoFCEzEw99tDXEYGoUNmlQ2s9SY44LKKjWz_be0HvJbK3FjhtDam1e-d4tyochOKiogrv7C9n4VXlJjzh00Evqd9PdMzOCcJRIsSP6hUalc81tiDFN76d9CVbYvW407f2691DpwNkotEzmt_ckM9_0jEZAeCibc"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">Coach Marcus</p>
+<p class="text-xs text-zinc-500 truncate">Head of Performance</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-h-screen relative">
+<!-- TopAppBar -->
+<header class="w-full h-16 sticky top-0 z-40 bg-[#fbf9f8]/80 backdrop-blur-md flex items-center justify-between px-6">
+<div class="flex items-center gap-4">
+<button class="md:hidden p-2 text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h2 class="text-lg font-bold text-zinc-900 font-headline">Training Library</h2>
+</div>
+<div class="flex items-center gap-4 flex-1 justify-end">
+<div class="hidden sm:flex items-center bg-surface-container-low px-4 py-2 rounded-full w-full max-w-md group focus-within:ring-2 ring-primary/20 transition-all">
+<span class="material-symbols-outlined text-zinc-400 text-xl">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-zinc-400" placeholder="Search protocols..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-zinc-500 hover:opacity-80 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-zinc-500 hover:opacity-80 transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-zinc-200 overflow-hidden ml-2 ring-2 ring-white">
+<img alt="Coach Avatar" class="w-full h-full object-cover" data-alt="close up headshot of a male athletic coach with clean grooming and professional look" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQXzXS54m1XRLZqcL5-Glz7srOEvT3EVaVbwrg2s3GbdDvvmQ08yB2cNEYGTGFJH93RJU3JD4voduGXBoFBQuYqIh06JqwrSyIdb5iiIGAlB_cw1g0OIeIyBtVyRmIuDsImLBNhcDiOKbPqYGbMmxNJwfOrUHtNeLo9CKiIvDRFjTsSYu1zwsvGQQHO7k7fpkkBqUYva_FkYSYTRd6z7A4e-4gr0ADcZVrZnfE6B-3N5n_Z1Lq7JpFXQL3sfFeywA0Kv4BLbqgOcI"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-6 md:p-10 space-y-12 max-w-7xl mx-auto w-full">
+<!-- Featured Banner (Peak Performance Protocol 2024) -->
+<section class="relative rounded-[2rem] overflow-hidden bg-zinc-900 aspect-[21/9] md:aspect-[3/1] group shadow-2xl shadow-zinc-950/20">
+<img alt="Peak Performance Protocol" class="absolute inset-0 w-full h-full object-cover opacity-60 transition-transform duration-700 group-hover:scale-105" data-alt="dramatic wide shot of a high-end commercial gym at night with moody blue and orange cinematic lighting and industrial equipment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7Gboc7skqLs5vPz0TckvbfSaiNsX3GBIfK6tXf5i3dliNwqyfStE_iMBJlheRMWG23i3RaAE-2thq_N0zeEzj5_Jo64tgXRXM6Plx98jZd71_axu5SdXjpULl84VTbHB6VFEp_Q5u2mIofdWjqi7e8lVwwR-Fpz1HtYHbOVZws3qHQCqn1RgDsLdWcs-OP2oAz6nqTxyHorT7C9WYjaDH9pr_zTFCfL4xp1cOVtpPsd-SBrIhGVFw0MaujPvE4h17ZMFFU4hmDts"/>
+<div class="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-900/40 to-transparent"></div>
+<div class="absolute inset-0 p-8 md:p-12 flex flex-col justify-center max-w-2xl">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-white text-[10px] font-black uppercase tracking-[0.2em] mb-4 w-fit">
+                        Official Release
+                    </span>
+<h3 class="text-4xl md:text-6xl font-black text-white font-headline leading-tight tracking-tighter mb-4">
+                        Peak Performance Protocol 2024
+                    </h3>
+<p class="text-zinc-300 text-lg font-medium mb-8 max-w-md">
+                        The definitive template for elite athletic conditioning and metabolic flexibility.
+                    </p>
+<div class="flex flex-wrap gap-4">
+<button class="px-8 py-3 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-xl shadow-lg shadow-primary/30 active:scale-95 transition-all">
+                            View Protocol
+                        </button>
+<button class="px-8 py-3 bg-white/10 backdrop-blur-md text-white border border-white/20 font-bold rounded-xl hover:bg-white/20 active:scale-95 transition-all">
+                            Clone to Client
+                        </button>
+</div>
+</div>
+</section>
+<!-- Grid Header -->
+<div class="flex items-center justify-between">
+<div>
+<h4 class="text-3xl font-black tracking-tight font-headline">Training Protocols</h4>
+<p class="text-zinc-500 font-medium">Standardized coaching templates for your roster.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 bg-surface-container-lowest text-zinc-900 font-bold rounded-xl shadow-sm hover:shadow-md transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                        Filter
+                    </button>
+<button class="px-5 py-2.5 bg-zinc-900 text-white font-bold rounded-xl hover:bg-zinc-800 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">add</span>
+                        New Template
+                    </button>
+</div>
+</div>
+<!-- Bento Grid of Protocols -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Hypertrophy Main -->
+<div class="md:col-span-8 group cursor-pointer">
+<div class="h-full bg-surface-container-lowest rounded-[2rem] overflow-hidden flex flex-col md:flex-row shadow-sm hover:shadow-xl transition-all duration-300">
+<div class="md:w-1/2 relative h-64 md:h-auto overflow-hidden">
+<img alt="Hypertrophy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="muscular athlete doing heavy bicep curls with dumbbells in a gritty urban gym with sunlight streaming through windows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBb1Fjkfw6v2yI9oAsXbnp8RLBny3tjPWgZGvcF67mrCwYZBv8J0PlC7voNHHT2CQoojTG33iruKiqj_yqU--Hl7wlmoLGDCwB9lJSNNNyGldYgqEtCH8pjUvIedKM_lJB4Ifd5BvuYgUxtW5eSyAOu_hrc-AygB58UohvuQXbLTm-oj1inqoMO1Z1ytM5TnJzbH5_NU4Q-IUSVI7NIOZ463nAVohrXgihKIKQZ7adP8S9KRNmegsxPHQPKHJ7lFmZbZdwAHe4kgvA"/>
+</div>
+<div class="md:w-1/2 p-8 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-6">
+<span class="text-[10px] font-black uppercase tracking-widest text-primary-container bg-primary-fixed px-3 py-1 rounded-full">Volume Phase</span>
+<span class="material-symbols-outlined text-zinc-400">more_horiz</span>
+</div>
+<h5 class="text-2xl font-black font-headline mb-2 leading-tight">Advanced Hypertrophy 2.0</h5>
+<p class="text-zinc-500 text-sm mb-6">Optimized for sarcoplasmic growth with integrated eccentric loading phases and tempo manipulation.</p>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-3 py-1 bg-surface-container-low text-zinc-600 rounded-lg text-xs font-bold">12 Weeks</span>
+<span class="px-3 py-1 bg-surface-container-low text-zinc-600 rounded-lg text-xs font-bold">5 Days/Week</span>
+<span class="px-3 py-1 bg-surface-container-low text-zinc-600 rounded-lg text-xs font-bold">Advanced</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-6 border-t border-zinc-100">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-zinc-200 border-2 border-white overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a fit woman athlete" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMX7v3NUiaYCkT-rsXvCz4mUQbey3pLCFa7scxEM6tmHDKILs0GKWjtkc5cLI9prBptwxF64CIik0FiOwtdHHJPe1pCLkVR1BQHLS8qYU656Pm36qdvrPkJ25mxzllRefhGc8cmdRrjDKs9DRU4Y43Pn8ViLvHXJ0O8sc1dXtuemZSfFTgu3hoSbRIPRLaiolQCXuHr3LiywEDLv976MdIkj-UtxqJS0JLvts4JRua-EOwo9Rjd6bFMDLf9pGUa_H9Bm9E7n8J-DE"/>
+</div>
+<div class="w-8 h-8 rounded-full bg-zinc-300 border-2 border-white overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a fit male athlete" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwNqKSWKfK0gSB472jjPL8zACJPz5CbZsRmk-rwZXmtEbdDaMC0p_Uwnzc9tWKc1Gu1mnNppX9Rsqj2KCdvr1qasQQkjlFf7vGGSDSzC3CDMq_0W7YUuLdwIX6WjqVNepn3AGtEegUIopt7sPxU0eYPZqlEedXCtqScVQkgT2FF9zo249hW3uemeQkLCoT1tM1W5omkT03y3eRUbbCE1pyyj4Oq-NEVphE5DoB27wP2pdYHuPW2TonrQtqMjbsjRzs-SP-d3QWJHY"/>
+</div>
+<div class="w-8 h-8 rounded-full bg-zinc-400 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white">
+                                        +42
+                                    </div>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">Edit Template</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Strength Card -->
+<div class="md:col-span-4 group cursor-pointer">
+<div class="h-full bg-surface-container-lowest rounded-[2rem] overflow-hidden flex flex-col shadow-sm hover:shadow-xl transition-all duration-300">
+<div class="relative h-48 overflow-hidden">
+<img alt="Strength" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="barbell on a squat rack with heavy iron plates in a high-performance strength facility" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbNpdUqiGmjpb221TA4bYdswOUTX6rc1XKsXtp9wbkl-0C5GVnTbukYc1TWTjDmN5cF87s-ctgZMzw4IN1_Sr01ytaOt9LRB6OMy0smk6WeumGZgEuHPk7S_O9WwPeomL6ACryfjy9CE0HDvl3uQyO0wZhO-iOlW16IyLLIaYef7zDDv2_jdTGLxaC_2b1zq-8IosT8firST1z2REbzptWAmuwQvsoP_AQ4RNopQ6lka0hKXMmkKJlLCceSkwQJasVGavQN_0gqGM"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<h5 class="absolute bottom-4 left-6 text-white text-xl font-black font-headline">Absolute Strength</h5>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<p class="text-zinc-500 text-sm mb-6 flex-1">Focus on nervous system adaptation and mechanical tension. Based on classic 5-3-1 methodology.</p>
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-zinc-400">Modified: 2d ago</span>
+<button class="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center hover:bg-zinc-900 hover:text-white transition-colors">
+<span class="material-symbols-outlined">east</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Endurance Card -->
+<div class="md:col-span-4 group cursor-pointer">
+<div class="h-full bg-surface-container-lowest rounded-[2rem] overflow-hidden flex flex-col shadow-sm hover:shadow-xl transition-all duration-300">
+<div class="p-6 pb-2">
+<div class="w-12 h-12 rounded-2xl bg-secondary-fixed flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">timer</span>
+</div>
+<h5 class="text-xl font-black font-headline mb-2 leading-tight">Hybrid Endurance</h5>
+<p class="text-zinc-500 text-sm">Combining zone 2 aerobic base with threshold interval training for cross-functional athletes.</p>
+</div>
+<div class="mt-auto relative h-40 overflow-hidden">
+<img alt="Endurance" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="athlete running on a high-end curved manual treadmill in a modern fitness studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKZpsAyh-kqZkJWkVbtIX-C9qqQzDh7z2nFMXJxX_iujPmz8JL2cR9uSs5cjRQRQSxeiE8CDtcxpqvlnDShi4HOb8BQ-dOOfTI-u0iFYrWdPYBc3F7F0jQKxrErJMIq8Arb0DJ3cFRrqXX_csxy2BriifOVGD8gZLIch_9gjnqkflYD7qYC9fB1wORHJ_kjeNe-DC5anScW9JecNb9mfB5dJ9DXIVJgT839c17G8BM8tVJQCL2gb52WwM72M2bnNx9E1dF1DZ8ca8"/>
+</div>
+</div>
+</div>
+<!-- Functional Card -->
+<div class="md:col-span-8 group cursor-pointer">
+<div class="h-full bg-surface-container-lowest rounded-[2rem] overflow-hidden flex flex-col md:flex-row-reverse shadow-sm hover:shadow-xl transition-all duration-300">
+<div class="md:w-1/2 relative h-64 md:h-auto overflow-hidden">
+<img alt="Functional" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="female athlete doing kettlebell swings in a clean airy studio with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7LhvDoKplR8gSMbieW2daiyi8fzg0J0w2LSo2oTQZ3tbejcw_Ntq65NMdCGJTAX5mV17BHxHe7QscT-_oZLDF5he5iSU6TczwPU1kKu6f5fXA52CSoI2avIC1Jkb5rOwbkt8ZWvyZAPysjEoEtr43g3ur1BY3wzhjDGgAchMBNjyHa23Fhi-9LN_cSeWSG5PjB5oVDcJtsMyIhrPzm3ByXi0eQYCjmeT6ayfDiAM8l-IrTN7PcwCxpND4dnWOfC4kZkUydq63X_I"/>
+</div>
+<div class="md:w-1/2 p-8 flex flex-col justify-between">
+<div>
+<span class="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4 block">Performance Pillar</span>
+<h5 class="text-2xl font-black font-headline mb-4 leading-tight">Functional Re-Integration</h5>
+<p class="text-zinc-500 text-sm mb-6">Addressing kinetic chain imbalances through unilateral movement and core stabilization protocols.</p>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-sm font-semibold text-zinc-700">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                        Mobility Focused
+                                    </li>
+<li class="flex items-center gap-3 text-sm font-semibold text-zinc-700">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                        Joint Longevity
+                                    </li>
+</ul>
+</div>
+<div class="pt-8">
+<button class="w-full py-3 bg-zinc-100 rounded-xl font-bold text-zinc-900 hover:bg-zinc-200 transition-colors">
+                                    Full Details
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation for Mobile -->
+<nav class="md:hidden fixed bottom-6 left-6 right-6 bg-white/90 backdrop-blur-xl rounded-[2rem] p-4 flex justify-between items-center shadow-2xl z-50">
+<a class="p-3 text-primary-container bg-primary-fixed rounded-full" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</a>
+<a class="p-3 text-zinc-400" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+</a>
+<a class="p-3 text-zinc-400" href="#">
+<span class="material-symbols-outlined">group</span>
+</a>
+<a class="p-3 text-zinc-400" href="#">
+<span class="material-symbols-outlined">description</span>
+</a>
+<a class="p-3 text-zinc-400" href="#">
+<span class="material-symbols-outlined">settings</span>
+</a>
+</nav>
+</div>
+</main>
+</body></html>

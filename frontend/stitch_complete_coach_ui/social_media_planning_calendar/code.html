@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCP Coaching - Social Planner</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface": "#1b1c1c",
+                    "inverse-surface": "#303031",
+                    "secondary-fixed": "#ffdbc9",
+                    "surface-tint": "#5547d5",
+                    "surface-container-high": "#e9e8e7",
+                    "secondary-fixed-dim": "#ffb68c",
+                    "primary": "#3620b8",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed-variant": "#3c29bd",
+                    "inverse-primary": "#c5c0ff",
+                    "surface-bright": "#fbf9f8",
+                    "primary-container": "#4f40cf",
+                    "on-secondary": "#ffffff",
+                    "outline-variant": "#c8c4d7",
+                    "surface-variant": "#e4e2e2",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-background": "#1b1c1c",
+                    "on-surface-variant": "#474554",
+                    "surface-container-low": "#f5f3f3",
+                    "inverse-on-surface": "#f2f0f0",
+                    "tertiary-fixed": "#e2e2e2",
+                    "tertiary": "#414141",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#140067",
+                    "on-error-container": "#93000a",
+                    "secondary": "#9a4600",
+                    "on-secondary-fixed": "#321200",
+                    "on-tertiary-container": "#cfcfcf",
+                    "outline": "#787586",
+                    "on-secondary-fixed-variant": "#753400",
+                    "on-primary-container": "#cfcaff",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "primary-fixed": "#e3dfff",
+                    "surface-dim": "#dbdad9",
+                    "on-secondary-container": "#562500",
+                    "on-tertiary-fixed-variant": "#474747",
+                    "tertiary-container": "#585858",
+                    "surface-container": "#efeded",
+                    "tertiary-fixed-dim": "#c6c6c6",
+                    "background": "#fbf9f8",
+                    "secondary-container": "#f87600",
+                    "surface": "#fbf9f8",
+                    "on-tertiary-fixed": "#1b1b1b",
+                    "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #fbf9f8; color: #1b1c1c; }
+        .font-plus-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .tonal-shift { background-color: #f5f3f3; }
+        .glass-panel { backdrop-filter: blur(24px); background-color: rgba(251, 249, 248, 0.8); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 bottom-0 flex flex-col p-6 h-full w-64 border-r-0 tonal-shift surface-container-low z-50">
+<div class="mb-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-xl font-bold text-[#1b1c1c] font-plus-jakarta leading-tight">MCP</h1>
+<p class="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Elite Coaching</p>
+</div>
+</div>
+<button class="mb-8 w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl font-plus-jakarta font-bold text-sm shadow-xl shadow-primary/10 hover:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-base">add</span>
+            New Post
+        </button>
+<nav class="flex-1 space-y-1 overflow-y-auto no-scrollbar">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight rounded-xl" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<!-- Training -->
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight rounded-xl" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+                Training
+            </a>
+<!-- Nutrition -->
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight rounded-xl" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+                Nutrition
+            </a>
+<!-- Education -->
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight rounded-xl" href="#">
+<span class="material-symbols-outlined">school</span>
+                Education
+            </a>
+<!-- Supplementation -->
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight rounded-xl" href="#">
+<span class="material-symbols-outlined">pill</span>
+                Supplementation
+            </a>
+<!-- Clients -->
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight rounded-xl" href="#">
+<span class="material-symbols-outlined">group</span>
+                Clients
+            </a>
+<!-- Forms -->
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight rounded-xl" href="#">
+<span class="material-symbols-outlined">description</span>
+                Forms
+            </a>
+<!-- Social Planner (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c] bg-white rounded-xl shadow-sm font-bold font-plus-jakarta text-sm tracking-tight scale-95 duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+                Social Planner
+            </a>
+</nav>
+<div class="pt-6 mt-auto">
+<div class="bg-white/50 p-4 rounded-2xl flex items-center gap-3">
+<img alt="Coach Profile" class="w-10 h-10 rounded-full bg-surface-container-high" data-alt="professional athletic coach headshot with friendly expression on neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgfxFAQ4IYLsnptreqogFsoE9rzMLav3e_b9aMvmXJ9OyROxgXXiqkWdcn2_XqFv1GNwGizfXzDMWRYdPRPWgDFvzn9EczmfBuFlxDa6M42ATaIMsNF-ZUaI7DImalJTJ80QPQJLUxVoow9aDSsNHdiqf3YzFuimVFRKVsvNLZ0I7YU6O2pgRw3E7gQJAN_D3mU6tDonQbrBokOQf04GCfrnddTy2KqLHYdPWo1tJoOUfgY3GGy0C9Yp2Owj6RJw0ZvFWVaKGuDvs"/>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold truncate">Coach Marcus</p>
+<p class="text-[10px] text-neutral-500 truncate">Elite Tier</p>
+</div>
+<span class="material-symbols-outlined text-neutral-400 text-sm">settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 relative min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-64 z-40 flex justify-between items-center px-8 h-20 bg-[#fbf9f8]/80 backdrop-blur-xl tonal-transition">
+<div class="flex items-center gap-8">
+<h2 class="text-2xl font-extrabold font-plus-jakarta tracking-tight">Social Planner</h2>
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-lg">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm font-medium focus:ring-2 focus:ring-primary/20 w-64" placeholder="Search scheduled content..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 bg-surface-container-low p-1 rounded-full">
+<button class="px-4 py-1.5 rounded-full text-sm font-bold text-primary bg-white shadow-sm">Month</button>
+<button class="px-4 py-1.5 rounded-full text-sm font-medium text-neutral-500 hover:text-primary transition-colors">Week</button>
+</div>
+<div class="h-8 w-[1px] bg-neutral-200 mx-2"></div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-neutral-600 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-neutral-600 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Calendar Container -->
+<div class="pt-24 px-8 pb-8 h-screen flex flex-col">
+<!-- Calendar Header (Days of Week) -->
+<div class="calendar-grid mb-2">
+<div class="text-center py-3 text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">Sunday</div>
+<div class="text-center py-3 text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">Monday</div>
+<div class="text-center py-3 text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">Tuesday</div>
+<div class="text-center py-3 text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">Wednesday</div>
+<div class="text-center py-3 text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">Thursday</div>
+<div class="text-center py-3 text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">Friday</div>
+<div class="text-center py-3 text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">Saturday</div>
+</div>
+<!-- Calendar Body -->
+<div class="flex-1 calendar-grid gap-3 overflow-y-auto no-scrollbar pb-8">
+<!-- Day 1-31 Generation Mock -->
+<!-- Prev Month Buffer -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-low/30 p-3 opacity-30">
+<span class="text-xs font-bold">29</span>
+</div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-low/30 p-3 opacity-30">
+<span class="text-xs font-bold">30</span>
+</div>
+<!-- Current Month -->
+<!-- Day 1 -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+<div class="flex justify-between items-start mb-3">
+<span class="text-xs font-bold text-neutral-400">01</span>
+<span class="material-symbols-outlined text-xs text-neutral-300 group-hover:text-primary transition-colors">add_circle</span>
+</div>
+</div>
+<!-- Day 2 (Post scheduled) -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+<div class="flex justify-between items-start mb-3">
+<span class="text-xs font-bold text-neutral-400">02</span>
+<span class="material-symbols-outlined text-xs text-neutral-300 group-hover:text-primary transition-colors">add_circle</span>
+</div>
+<div class="space-y-2">
+<div class="p-1.5 rounded-lg bg-surface-container-low flex items-center gap-2">
+<div class="w-8 h-8 rounded-md overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="close up of heavy gym dumbbells on a rubber floor in high contrast lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8E9B1bVeMh70kV_6y9ovYavgw81BrgC4ilptf6iRQHQ5YK2AOVonelvGY3ZJktcednD7VkPIRQkzX7ifFBNX5L5B1Us7oH-BS059T2MQ-lySZ3JciZ3UBRA1EPXVBkHjgpGYt9bhYWJ9V3eob7vICdCtKhwBno_fl4pm_rBf3uSip5LU5VYdQdyy8Q-zDE9ZFSMdIC5wDq9WlunG6vlpwO7YLL_4mwixvkJuDV39v6cXmHss6KOyeDA1ugTB7iPsvdBcv0PE1GJc"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-[10px] font-bold truncate">Morning Routine</p>
+<div class="flex gap-1 mt-0.5">
+<div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Day 3 -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm">
+<div class="flex justify-between items-start mb-3">
+<span class="text-xs font-bold text-neutral-400">03</span>
+<span class="material-symbols-outlined text-xs text-neutral-300">add_circle</span>
+</div>
+</div>
+<!-- Day 4 (Video Content) -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm border-2 border-primary/10 ring-4 ring-primary/5">
+<div class="flex justify-between items-start mb-3">
+<span class="text-xs font-bold text-primary">04</span>
+<div class="bg-primary/10 px-1.5 py-0.5 rounded text-[8px] font-black text-primary uppercase">Today</div>
+</div>
+<div class="space-y-2">
+<div class="p-2 rounded-xl bg-primary/5 flex flex-col gap-2">
+<div class="relative w-full aspect-video rounded-lg overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="cinematic shot of athlete running on track during sunrise with flare effects" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRf8VBRhi240e-PRfBLMCPKwXCBVX4PfqyZrI1V6qh8a4qQHp94pAva9Ze42C7fiS3y3gDRe2jNlNjo-kpS4d0zADKyWsOJ6IVmgPi64KUK0Yy6rqI6-dHQ6Ssx3nrSwHPDoYZz010gFbi-reEkBI0s3m_AqkU15xvKqOJFkrY9MOBgeU8mcLELJEls96Z02l6E-hG9PwizWyvjykD8_NSubXvfC0w0f_ia5MoOX0r-BCLRQE3SA1YNglfIPTHeejl8gG8_sVNzzI"/>
+<div class="absolute inset-0 flex items-center justify-center bg-black/20">
+<span class="material-symbols-outlined text-white text-lg">play_circle</span>
+</div>
+</div>
+<p class="text-[10px] font-bold text-primary truncate">Reels: HIIT Circuit</p>
+</div>
+</div>
+</div>
+<!-- Day 5 -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm">
+<div class="flex justify-between items-start mb-3">
+<span class="text-xs font-bold text-neutral-400">05</span>
+<span class="material-symbols-outlined text-xs text-neutral-300">add_circle</span>
+</div>
+</div>
+<!-- Day 6 -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm">
+<div class="flex justify-between items-start mb-3">
+<span class="text-xs font-bold text-neutral-400">06</span>
+<span class="material-symbols-outlined text-xs text-neutral-300">add_circle</span>
+</div>
+</div>
+<!-- Day 7 -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm">
+<div class="flex justify-between items-start mb-3">
+<span class="text-xs font-bold text-neutral-400">07</span>
+<span class="material-symbols-outlined text-xs text-neutral-300">add_circle</span>
+</div>
+</div>
+<!-- Day 8 (Multi-platform Post) -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm">
+<div class="flex justify-between items-start mb-3">
+<span class="text-xs font-bold text-neutral-400">08</span>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center gap-2 p-1.5 rounded-lg bg-surface-container-low">
+<div class="w-6 h-6 rounded bg-[#ff0050] flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[12px]" style="font-variation-settings: 'FILL' 1;">music_note</span>
+</div>
+<span class="text-[9px] font-bold truncate">TikTok Viral...</span>
+</div>
+<div class="flex items-center gap-2 p-1.5 rounded-lg bg-surface-container-low opacity-60">
+<div class="w-6 h-6 rounded bg-[#1877F2] flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[12px]" style="font-variation-settings: 'FILL' 1;">social_leaderboard</span>
+</div>
+<span class="text-[9px] font-bold truncate">Republish: FB</span>
+</div>
+</div>
+</div>
+<!-- Days 9 - 14 Blank placeholders -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">09</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">10</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">11</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm border-dashed border-2 border-neutral-100 flex flex-col items-center justify-center text-neutral-300 hover:text-primary hover:border-primary/20 transition-all">
+<span class="text-xs font-bold text-neutral-400 mb-auto self-start">12</span>
+<span class="material-symbols-outlined text-3xl mb-auto">add</span>
+</div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">13</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">14</span></div>
+<!-- Day 15 (Large Post) -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm">
+<div class="flex justify-between items-start mb-3">
+<span class="text-xs font-bold text-neutral-400">15</span>
+</div>
+<div class="p-2 rounded-xl bg-secondary/5 border border-secondary/10">
+<div class="w-full aspect-square rounded-lg overflow-hidden mb-2">
+<img class="w-full h-full object-cover" data-alt="overhead high end healthy food photography of salmon and avocado bowl with bright natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB_uqMCZIr7L_SsHSRoQg8hvHqyP8qgJVerDU8iiejTIpTDjpRwcTvcAo_dtwytX6C4n6yiwIIfv6CBLylLW0gVbe05su70fK4kX2EApS_DS6y0phcQNLoDshkCLOLWagPNLas817xQ3Myhu-LEwI1pggpMVHDEy3M0aWN80YBj8x5GnQEiYItj1X8juR47HdQRRPqSNQx03x3ShsA4XcRS8-8mCVvtVxvPgI5rZcrOppZuhql_BdQ29UCFCRb5clrm5GF-Z8oVlY"/>
+</div>
+<p class="text-[9px] font-black text-secondary leading-tight uppercase">Nutrition Spotlight</p>
+</div>
+</div>
+<!-- Filler to 31 -->
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">16</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">17</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">18</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">19</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">20</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">21</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">22</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">23</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">24</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">25</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">26</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">27</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">28</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">29</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">30</span></div>
+<div class="min-h-[140px] rounded-2xl bg-surface-container-lowest p-3 shadow-sm"><span class="text-xs font-bold text-neutral-400">31</span></div>
+</div>
+</div>
+<!-- Create Post Button (Floating FAB Suppression check: Contextually relevant here) -->
+<button class="fixed bottom-10 right-10 flex items-center gap-3 px-6 py-4 bg-[#1b1c1c] text-white rounded-full shadow-2xl hover:scale-105 transition-transform z-50">
+<span class="material-symbols-outlined">add</span>
+<span class="font-plus-jakarta font-bold text-sm">Schedule Post</span>
+</button>
+</main>
+<!-- Post Creation Modal Overlay (Mock) -->
+<div class="fixed inset-0 z-[60] bg-on-surface/20 backdrop-blur-md hidden items-center justify-center">
+<div class="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl p-10 mx-4">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-2xl font-extrabold font-plus-jakarta tracking-tight">Schedule New Content</h3>
+<button class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-lg">close</span>
+</button>
+</div>
+<div class="space-y-6">
+<!-- Dropzone -->
+<div class="aspect-video border-2 border-dashed border-neutral-200 rounded-3xl flex flex-col items-center justify-center gap-4 bg-surface-container-low/50">
+<div class="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl">cloud_upload</span>
+</div>
+<div class="text-center">
+<p class="font-bold text-sm">Drag and drop media</p>
+<p class="text-xs text-neutral-400">Supports JPG, PNG, MP4 up to 500MB</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="text-[10px] font-black uppercase text-neutral-400 tracking-widest ml-1">Platform</label>
+<div class="flex gap-2">
+<button class="flex-1 p-3 rounded-2xl border-2 border-primary bg-primary/5 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">camera</span>
+<span class="text-xs font-bold text-primary">Instagram</span>
+</button>
+<button class="flex-1 p-3 rounded-2xl border-2 border-transparent bg-surface-container-low flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-neutral-400 text-sm">music_note</span>
+<span class="text-xs font-bold text-neutral-500">TikTok</span>
+</button>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[10px] font-black uppercase text-neutral-400 tracking-widest ml-1">Scheduled Time</label>
+<div class="p-3 rounded-2xl bg-surface-container-low flex items-center justify-between">
+<span class="text-xs font-bold">Oct 12, 10:00 AM</span>
+<span class="material-symbols-outlined text-sm text-neutral-400">calendar_today</span>
+</div>
+</div>
+</div>
+<button class="w-full py-5 bg-primary text-white rounded-2xl font-bold font-plus-jakarta hover:opacity-90 transition-opacity">
+                    Confirm Schedule
+                </button>
+</div>
+</div>
+</div>
+</body></html>

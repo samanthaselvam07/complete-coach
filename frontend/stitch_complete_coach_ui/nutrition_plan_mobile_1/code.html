@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#efeded",
+                        "on-secondary-container": "#562500",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#e2e2e2",
+                        "primary-container": "#4f40cf",
+                        "surface-variant": "#e4e2e2",
+                        "tertiary-container": "#585858",
+                        "on-tertiary-container": "#cfcfcf",
+                        "surface-tint": "#5547d5",
+                        "secondary-container": "#f87600",
+                        "surface": "#fbf9f8",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed": "#140067",
+                        "inverse-on-surface": "#f2f0f0",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#c5c0ff",
+                        "surface-dim": "#dbdad9",
+                        "on-secondary-fixed": "#321200",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#e3dfff",
+                        "on-surface": "#1b1c1c",
+                        "on-background": "#1b1c1c",
+                        "surface-container-low": "#f5f3f3",
+                        "inverse-surface": "#303031",
+                        "secondary-fixed": "#ffdbc9",
+                        "on-secondary": "#ffffff",
+                        "background": "#fbf9f8",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "surface-container-highest": "#e4e2e2",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#753400",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "outline-variant": "#c8c4d7",
+                        "primary": "#3620b8",
+                        "on-surface-variant": "#474554",
+                        "surface-container-high": "#e9e8e7",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "tertiary": "#414141",
+                        "secondary": "#9a4600",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "surface-bright": "#fbf9f8",
+                        "on-primary-container": "#cfcaff",
+                        "outline": "#787586"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-transition {
+            background: linear-gradient(to bottom, transparent, #f5f3f3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface">
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 w-full z-50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-[0_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
+<img alt="Profile" data-alt="close-up portrait of a fit young woman with athletic glow and soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsy32BtT04tCAMjU7DCJs8qndijMfjtmiN5DQGn9xQM5LTqA8XDaQZe6mp7ogPL75ZpYB9-_3XvD4Z3YerbOqRJx3xu6VJHC-gNdQV5ziBdh_ZP4wl-_IvTd0bGC93WgzsTsVlPT-KDZwvHtzxhu7TwfvsZ0RHYkqpVZFt357n_ZARe9e0MyKnRiHzWhKX7_YN0FZrZ3PoM2vySEi6K-8rtWR8nU8ewPgODmBoh8H0rge0Sor6KqbeF8ozum9eFgBUW_AOry6j68c"/>
+</div>
+<h1 class="text-xl font-black italic tracking-tighter text-zinc-900 dark:text-white">MCP</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-zinc-500 hover:opacity-80 transition-opacity">notifications</button>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="pt-24 pb-32 px-6 max-w-md mx-auto">
+<!-- Editorial Header -->
+<section class="mb-8">
+<p class="text-secondary font-semibold tracking-widest text-[10px] uppercase mb-1">Fueling Performance</p>
+<h2 class="font-headline text-4xl font-extrabold tracking-tight text-on-surface mb-2">Daily Fuel Plan</h2>
+<div class="h-1 w-12 bg-primary rounded-full"></div>
+</section>
+<!-- Calories Glass Card -->
+<div class="relative overflow-hidden mb-10 p-8 rounded-xl bg-surface-container-lowest shadow-[0_10px_30px_rgba(27,28,28,0.06)] group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-8xl" data-icon="restaurant">restaurant</span>
+</div>
+<div class="relative z-10">
+<span class="text-on-surface-variant font-label text-sm font-medium">Calories Remaining</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-headline text-6xl font-black tracking-tighter text-primary">1,240</span>
+<span class="text-on-surface-variant font-bold text-lg">kcal</span>
+</div>
+<div class="mt-6 flex justify-between items-center text-xs font-bold text-on-surface-variant">
+<span>Target: 2,800</span>
+<span class="text-primary">44% consumed</span>
+</div>
+<div class="mt-2 h-3 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full w-[44%]"></div>
+</div>
+</div>
+</div>
+<!-- Macro Grid -->
+<section class="grid grid-cols-1 gap-4 mb-10">
+<!-- Protein -->
+<div class="bg-surface-container-low p-5 rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary-container/10 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-headline font-bold text-sm">Protein</span>
+<span class="text-xs font-semibold text-on-surface-variant">102g / 180g</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[56%] rounded-full shadow-[0_0_8px_rgba(248,118,0,0.4)]"></div>
+</div>
+</div>
+</div>
+<!-- Carbs -->
+<div class="bg-surface-container-low p-5 rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="energy_savings_leaf">energy_savings_leaf</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-headline font-bold text-sm">Carbs</span>
+<span class="text-xs font-semibold text-on-surface-variant">85g / 210g</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[40%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Fats -->
+<div class="bg-surface-container-low p-5 rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-zinc-400/10 flex items-center justify-center text-zinc-500">
+<span class="material-symbols-outlined" data-icon="opacity">opacity</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-headline font-bold text-sm">Fats</span>
+<span class="text-xs font-semibold text-on-surface-variant">28g / 65g</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-zinc-400 w-[43%] rounded-full"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Meal List -->
+<section class="space-y-6 mb-10">
+<h3 class="font-headline text-xl font-bold px-1">Planned Meals</h3>
+<!-- Meal 1 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(27,28,28,0.04)]">
+<div class="h-44 w-full relative">
+<img alt="Pro-Oats" class="w-full h-full object-cover" data-alt="vibrant bowl of protein oatmeal topped with fresh blueberries, raspberries, and a drizzle of almond butter on a minimalist white table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBS4ghEKa11hGgu4YNMswQ4RenM7IuGSdWi5CXE-GpqtCKeehJh0diPl-zUsfG3_N6FT6ask6jVEyXLXFqVNghjemCASiJNkgw9fA3G1--LhI-evzMJvJ6InI5DhVJlcQGv4ItMUgZHYhMdTCogmEG-I_deqgStAoQd0f9-ojuQOk_X6EA9aAy6pki-fFKOnJD478vH4izX8r_abz30AxnWTNfn3NkAIIIF123Zcqg7UUOA8J5swv2lu4f3ugUW7Gs4M0Do-GnzBQY"/>
+<div class="absolute top-4 left-4">
+<span class="bg-primary/90 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">High Protein</span>
+</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="font-headline font-extrabold text-lg">Meal 1: Pro-Oats with Berries</h4>
+<p class="text-on-surface-variant text-sm mt-1">420 kcal • 32g Protein • 54g Carbs</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-gradient-to-br from-primary to-primary-container text-white font-bold text-sm scale-95 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
+                            Log Meal
+                        </button>
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-surface-container-high text-on-surface font-bold text-sm scale-95 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined text-lg" data-icon="swap_horiz">swap_horiz</span>
+                            Swap Meal
+                        </button>
+</div>
+</div>
+</div>
+<!-- Meal 2 -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(27,28,28,0.04)]">
+<div class="h-44 w-full relative">
+<img alt="Salmon &amp; Greens" class="w-full h-full object-cover" data-alt="perfectly seared salmon fillet with crispy skin served over a bed of steamed asparagus and sautéed kale with lemon wedges" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABm5VHoY37V6OgLAtkS2qGsifowe954ItcMEOzf-h_l_-bWiRG1fe3adM56-6d1VcoDwwexFbnlOPB4qFBlNjOgTcMCMPfEYjGpXqztDR6zdXvllt3E_9bxA0hzR6irqHhdTc0-yl17-uspd5LcK1gcHnbxTBaCvtA_f1vqXoz4wA0KndbmajNkT3xfYeglnlDGIfiGPtLjCz98v-m9CipQ2HxDPy0RUXVrVGeFfuS8OmUC9oQid-Qql7Hfaf_CU6Nk1RFJSwK1rs"/>
+<div class="absolute top-4 left-4">
+<span class="bg-secondary-container/90 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Performance</span>
+</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="font-headline font-extrabold text-lg">Meal 2: Grilled Salmon &amp; Greens</h4>
+<p class="text-on-surface-variant text-sm mt-1">580 kcal • 45g Protein • 12g Carbs</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-gradient-to-br from-primary to-primary-container text-white font-bold text-sm scale-95 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined text-lg" data-icon="check_circle">check_circle</span>
+                            Log Meal
+                        </button>
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-surface-container-high text-on-surface font-bold text-sm scale-95 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined text-lg" data-icon="swap_horiz">swap_horiz</span>
+                            Swap Meal
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Pro Tip Card -->
+<section class="bg-primary/5 rounded-xl border border-primary/10 p-6 flex items-start gap-4 mb-8">
+<div class="p-2 rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined" data-icon="lightbulb">lightbulb</span>
+</div>
+<div>
+<h5 class="font-headline font-bold text-on-surface">Pro Tip: Metabolic Window</h5>
+<p class="text-on-surface-variant text-sm mt-1 leading-relaxed">
+                    Consuming high-quality protein within 60 minutes post-workout increases protein synthesis by up to 25%. Prioritize your Pro-Oats right after today's heavy leg session.
+                </p>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-6 left-0 right-0 z-50 flex justify-around items-center px-4 h-20 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl rounded-[2rem] w-[92%] mx-auto border border-white/20 dark:border-zinc-800/20 shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+</a>
+<a class="flex items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-500 text-white rounded-full w-12 h-12 shadow-lg shadow-indigo-500/30 scale-110 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</a>
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+</a>
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+</a>
+</nav>
+</body></html>

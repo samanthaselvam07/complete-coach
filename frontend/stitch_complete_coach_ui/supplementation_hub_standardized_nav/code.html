@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Supplementation Hub | MCP Coaching</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-highest": "#e4e2e2",
+              "outline-variant": "#c8c4d7",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface-container-low": "#f5f3f3",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-secondary-fixed": "#321200",
+              "outline": "#787586",
+              "on-primary-fixed-variant": "#3c29bd",
+              "secondary-container": "#f87600",
+              "surface-container": "#efeded",
+              "on-error-container": "#93000a",
+              "on-secondary-fixed-variant": "#753400",
+              "surface-dim": "#dbdad9",
+              "surface-bright": "#fbf9f8",
+              "error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "surface-container-high": "#e9e8e7",
+              "tertiary-container": "#585858",
+              "on-secondary": "#ffffff",
+              "inverse-on-surface": "#f2f0f0",
+              "surface-tint": "#5547d5",
+              "on-secondary-container": "#562500",
+              "on-primary-fixed": "#140067",
+              "surface-variant": "#e4e2e2",
+              "secondary": "#9a4600",
+              "inverse-primary": "#c5c0ff",
+              "on-tertiary-fixed": "#1b1b1b",
+              "surface": "#fbf9f8",
+              "primary-container": "#4f40cf",
+              "on-surface": "#1b1c1c",
+              "inverse-surface": "#303031",
+              "secondary-fixed": "#ffdbc9",
+              "primary": "#3620b8",
+              "on-background": "#1b1c1c",
+              "surface-container-lowest": "#ffffff",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#cfcfcf",
+              "on-primary-container": "#cfcaff",
+              "on-primary": "#ffffff",
+              "tertiary": "#414141",
+              "primary-fixed-dim": "#c5c0ff",
+              "background": "#fbf9f8",
+              "primary-fixed": "#e3dfff",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#474554",
+              "on-error": "#ffffff",
+              "tertiary-fixed": "#e2e2e2"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen w-64 border-r border-zinc-200/20 dark:border-zinc-800/20 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl p-4 gap-2 sticky top-0 z-50">
+<div class="px-2 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-white">bolt</span>
+</div>
+<div>
+<h1 class="text-xl font-black text-zinc-900 dark:text-zinc-50 tracking-tighter">MCP Coaching</h1>
+<p class="text-xs font-semibold tracking-tight text-zinc-500 uppercase">Premium Performance</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<!-- Navigation Tabs from JSON -->
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+                    Training
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+                    Nutrition
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+                    Education
+                </a>
+<!-- ACTIVE TAB: Supplementation -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#4F40CF] dark:text-[#4F40CF] font-bold bg-zinc-100/50 dark:bg-zinc-800/50 rounded-xl transition-all duration-200 font-['Plus_Jakarta_Sans'] tracking-tight text-sm scale-95 transition-transform duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="pill" style="font-variation-settings: 'FILL' 1;">pill</span>
+                    Supplementation
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+                    Clients
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+                    Forms
+                </a>
+</nav>
+<div class="mt-auto pt-4 border-t border-zinc-200/20">
+<button class="w-full py-3 px-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl font-bold text-sm transition-all hover:scale-98 active:scale-95 shadow-lg shadow-primary/20">
+                    + New Client
+                </button>
+<div class="mt-4 flex items-center gap-3 px-2">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full border-2 border-white shadow-sm" data-alt="professional male fitness coach portrait in clean athletic gear with neutral grey background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTIohH09sZuNNLYAMArGpwDEQx004C9l1z4PNuBgXpTdrbcqN3ePzCNPy3ClKwAdgUk4_X9k1wXqLNqigIx_7wKNsHz-keoxiUNEid4lQoTlQYQ9IyjIJUZOl3Sx3QyQnlCola5anyosqNPG6ZPYGDyzapKiQ_ygMbQvmgEHlBx3jgMV-UJ--BiQcS1h_VOFBi377naVol1xqIAoW4gnYeSwDSfsBCoMDBpgLujReyww55fBy9GlDW-va63BqlAzwxKUGZnVeFxKM"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-zinc-900">Coach Marcus</span>
+<span class="text-xs text-zinc-500">Master Trainer</span>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 min-w-0 bg-background overflow-y-auto h-screen pb-12">
+<!-- TopAppBar -->
+<header class="w-full h-16 sticky top-0 z-40 bg-[#fbf9f8]/80 dark:bg-zinc-950/80 backdrop-blur-md flex items-center justify-between px-6 transition-all">
+<div class="flex items-center gap-4">
+<h2 class="font-headline text-2xl font-extrabold tracking-tight text-on-surface">Supplementation Hub</h2>
+<div class="hidden md:flex gap-2 ml-4">
+<span class="px-3 py-1 bg-secondary-container/10 text-secondary-container text-xs font-bold rounded-full uppercase tracking-widest">Global Hub</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<!-- Search Bar On Right (JSON) -->
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="bg-surface-container-high border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all" placeholder="Search clients or protocols..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</div>
+</header>
+<div class="px-6 mt-8 max-w-7xl mx-auto space-y-10">
+<!-- Compliance Overview - Bento Style -->
+<section>
+<div class="flex items-end justify-between mb-6">
+<div>
+<h3 class="font-headline text-xl font-bold">Protocol Compliance</h3>
+<p class="text-on-surface-variant text-sm">Real-time adherence across your active client roster.</p>
+</div>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+                            View Detailed Reports <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="md:col-span-2 p-8 rounded-xl bg-surface-container-lowest shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<span class="text-3xl font-black text-on-surface font-headline">94.2%</span>
+<p class="text-sm font-medium text-on-surface-variant uppercase tracking-widest">Average Adherence</p>
+</div>
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</div>
+</div>
+<div class="mt-8">
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[94.2%]"></div>
+</div>
+<p class="mt-3 text-xs text-on-surface-variant">+4.2% from last month's average protocol compliance.</p>
+</div>
+</div>
+<div class="p-6 rounded-xl bg-surface-container-low border border-outline-variant/15 flex flex-col justify-between">
+<span class="material-symbols-outlined text-secondary-container" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div>
+<span class="text-2xl font-bold font-headline block mt-2">3 Clients</span>
+<p class="text-sm text-on-surface-variant">Below 70% Adherence</p>
+</div>
+<button class="mt-4 py-2 px-4 bg-white border border-outline-variant/20 rounded-lg text-xs font-bold text-on-surface hover:bg-zinc-50 transition-all">Flagged Clients</button>
+</div>
+<div class="p-6 rounded-xl bg-primary text-white flex flex-col justify-between">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified</span>
+<div>
+<span class="text-2xl font-bold font-headline block mt-2">18 Protocols</span>
+<p class="text-sm text-white/80">Pending Update Review</p>
+</div>
+<button class="mt-4 py-2 px-4 bg-white/20 backdrop-blur-md rounded-lg text-xs font-bold text-white hover:bg-white/30 transition-all">Review Hub</button>
+</div>
+</div>
+</section>
+<!-- Client Supplement Protocols Management -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline text-xl font-bold">Active Protocols</h3>
+<div class="flex gap-2">
+<button class="px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-semibold hover:bg-surface-container-highest transition-all">All Clients</button>
+<button class="px-4 py-2 rounded-full bg-secondary-container text-white text-sm font-semibold transition-all">Critical Only</button>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl overflow-hidden p-1">
+<div class="overflow-x-auto no-scrollbar">
+<table class="w-full border-separate border-spacing-y-2 px-3">
+<thead>
+<tr class="text-left text-xs font-bold text-on-surface-variant uppercase tracking-widest">
+<th class="px-4 py-3">Client</th>
+<th class="px-4 py-3">Primary Protocol</th>
+<th class="px-4 py-3">Pill Count</th>
+<th class="px-4 py-3">Status</th>
+<th class="px-4 py-3">Compliance</th>
+<th class="px-4 py-3 text-right">Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="bg-surface-container-lowest hover:shadow-md transition-all group rounded-xl">
+<td class="px-4 py-4 first:rounded-l-xl">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="professional portrait of a confident woman in fitness apparel with natural daylight lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDV9BFHTSxLIyHDyM2v2MtgDXRCbJc4L-Oe9RNG2lH8Optzv-_LByZV0JgRh12lTL26k2pF2cAk_x31jx-cXn9q4sHokpuCUpZWIpQr2j8nRjvO1UJq4cDW0jCunTBFxlzWxP1uNQtSaUdtf6TpcLcM8RneMRRkNx1PobJHslAOWUD8R7XvLUnvxA10nHtHovQwK6ET8-F5xYJCJV26qVIDAoyMxHClwxsnxTvpQhYN4qO5rjjdwflwEHwNyjtKN8v_-xoisqq5yPM"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold">Alex Rivera</span>
+<span class="text-xs text-on-surface-variant">Endurance Tier</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold rounded uppercase">Vitamin D3</span>
+<span class="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold rounded uppercase">Omega-3</span>
+<span class="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold rounded uppercase">+2 more</span>
+</div>
+</td>
+<td class="px-4 py-4 text-sm font-medium">8 caps/day</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Stable
+                                            </span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[98%]"></div>
+</div>
+<span class="text-xs font-bold">98%</span>
+</div>
+</td>
+<td class="px-4 py-4 last:rounded-r-xl text-right">
+<button class="p-2 rounded-lg hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">edit_note</span>
+</button>
+</td>
+</tr>
+<tr class="bg-surface-container-lowest hover:shadow-md transition-all group rounded-xl">
+<td class="px-4 py-4 first:rounded-l-xl">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="close-up of a smiling man with athletic build outdoors in morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNL-_eDvIJdCc5-dm7wMl-hCKHAH61jHFusIxXZwDWiDX7LFCLzZUEV8mo9X9-mM-bni_3f5hlAEtcNYYROBCAzJHBvAwmqC5MP08Icua18KGC1bNLMlCiDCrGBLQaE_HlFk3fJ2QhTZruoMcfL8A20O92Qg-qWQOkC_vfSltb-naRZSgTtavLcM_JjjDrwJKooyBd_P9mC5ldI33BtdOcjgExjci8VY7GvYhNvgek_lD6cTQCjjVRccwCpUFFSSaPa0R7W6Slhog"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold">James Chen</span>
+<span class="text-xs text-on-surface-variant">Hypertrophy Tier</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-4">
+<div class="flex flex-wrap gap-1">
+<span class="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold rounded uppercase">Creatine</span>
+<span class="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold rounded uppercase">Beta-Alanine</span>
+<span class="px-2 py-0.5 bg-zinc-100 text-[10px] font-bold rounded uppercase">+4 more</span>
+</div>
+</td>
+<td class="px-4 py-4 text-sm font-medium">12 caps/day</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container/10 text-secondary-container text-[10px] font-black uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-container"></span> Update Due
+                                            </span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[62%]"></div>
+</div>
+<span class="text-xs font-bold text-secondary">62%</span>
+</div>
+</td>
+<td class="px-4 py-4 last:rounded-r-xl text-right">
+<button class="p-2 rounded-lg hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">edit_note</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Supplement Library -->
+<section class="pb-12">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="font-headline text-xl font-bold">Protocol Library</h3>
+<p class="text-on-surface-variant text-sm">Approved supplements and dosages from MCP medical board.</p>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center p-1 bg-surface-container-low rounded-lg">
+<button class="px-4 py-1.5 bg-white shadow-sm rounded-md text-xs font-bold">Vitamins</button>
+<button class="px-4 py-1.5 text-xs font-bold text-on-surface-variant">Performance</button>
+<button class="px-4 py-1.5 text-xs font-bold text-on-surface-variant">Recovery</button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 hover:border-primary/20 transition-all flex flex-col justify-between h-[340px]">
+<div>
+<div class="flex justify-between items-start">
+<div class="p-3 rounded-xl bg-orange-50 text-secondary-container">
+<span class="material-symbols-outlined">wb_sunny</span>
+</div>
+<span class="px-2 py-1 bg-surface-container text-[10px] font-bold rounded tracking-widest text-on-surface-variant">ESSENTIAL</span>
+</div>
+<h4 class="mt-4 font-headline text-lg font-bold">Vitamin D3 + K2</h4>
+<p class="mt-2 text-sm text-on-surface-variant leading-relaxed">Liquid dropper form for maximum absorption. Essential for bone density and hormonal support during heavy load cycles.</p>
+</div>
+<div class="mt-6 pt-6 border-t border-surface-container flex items-center justify-between">
+<div>
+<span class="text-xs text-on-surface-variant block uppercase font-bold tracking-tighter">Standard Dose</span>
+<span class="text-sm font-bold">5,000 IU Daily</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 hover:border-primary/20 transition-all flex flex-col justify-between h-[340px]">
+<div>
+<div class="flex justify-between items-start">
+<div class="p-3 rounded-xl bg-blue-50 text-blue-600">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<span class="px-2 py-1 bg-surface-container text-[10px] font-bold rounded tracking-widest text-on-surface-variant">PERFORMANCE</span>
+</div>
+<h4 class="mt-4 font-headline text-lg font-bold">Creatine Monohydrate</h4>
+<p class="mt-2 text-sm text-on-surface-variant leading-relaxed">Creapure® certified. Increases ATP production and cellular hydration. No loading phase required for maintenance protocols.</p>
+</div>
+<div class="mt-6 pt-6 border-t border-surface-container flex items-center justify-between">
+<div>
+<span class="text-xs text-on-surface-variant block uppercase font-bold tracking-tighter">Standard Dose</span>
+<span class="text-sm font-bold">5g Post-Workout</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 hover:border-primary/20 transition-all flex flex-col justify-between h-[340px]">
+<div>
+<div class="flex justify-between items-start">
+<div class="p-3 rounded-xl bg-purple-50 text-purple-600">
+<span class="material-symbols-outlined">nightlight</span>
+</div>
+<span class="px-2 py-1 bg-surface-container text-[10px] font-bold rounded tracking-widest text-on-surface-variant">RECOVERY</span>
+</div>
+<h4 class="mt-4 font-headline text-lg font-bold">Magnesium Bisglycinate</h4>
+<p class="mt-2 text-sm text-on-surface-variant leading-relaxed">High bioavailability chelates for improved sleep quality and muscle relaxation. Ideal for late evening consumption.</p>
+</div>
+<div class="mt-6 pt-6 border-t border-surface-container flex items-center justify-between">
+<div>
+<span class="text-xs text-on-surface-variant block uppercase font-bold tracking-tighter">Standard Dose</span>
+<span class="text-sm font-bold">400mg Pre-Sleep</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>

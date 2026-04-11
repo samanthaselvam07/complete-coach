@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kinetic Curator | Coach's Calendar Dashboard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;1,800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-container": "#cfcaff",
+              "error": "#ba1a1a",
+              "on-tertiary-fixed": "#1b1b1b",
+              "on-surface": "#1b1c1c",
+              "background": "#fbf9f8",
+              "secondary-fixed-dim": "#ffb68c",
+              "secondary": "#9a4600",
+              "on-tertiary-container": "#cfcfcf",
+              "secondary-container": "#f87600",
+              "surface-bright": "#fbf9f8",
+              "tertiary": "#414141",
+              "surface-variant": "#e4e2e2",
+              "on-primary-fixed": "#140067",
+              "on-error": "#ffffff",
+              "on-error-container": "#93000a",
+              "primary-container": "#4f40cf",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "outline": "#787586",
+              "surface-container-highest": "#e4e2e2",
+              "primary-fixed-dim": "#c5c0ff",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface-container-low": "#f5f3f3",
+              "secondary-fixed": "#ffdbc9",
+              "primary": "#3620b8",
+              "primary-fixed": "#e3dfff",
+              "tertiary-container": "#585858",
+              "surface-container-lowest": "#ffffff",
+              "surface": "#fbf9f8",
+              "on-primary": "#ffffff",
+              "surface-container": "#efeded",
+              "on-background": "#1b1c1c",
+              "inverse-primary": "#c5c0ff",
+              "tertiary-fixed": "#e2e2e2",
+              "on-secondary": "#ffffff",
+              "on-surface-variant": "#474554",
+              "inverse-on-surface": "#f2f0f0",
+              "on-primary-fixed-variant": "#3c29bd",
+              "on-secondary-fixed-variant": "#753400",
+              "on-secondary-fixed": "#321200",
+              "error-container": "#ffdad6",
+              "surface-container-high": "#e9e8e7",
+              "surface-tint": "#5547d5",
+              "on-secondary-container": "#562500",
+              "surface-dim": "#dbdad9",
+              "outline-variant": "#c8c4d7",
+              "on-tertiary": "#ffffff",
+              "inverse-surface": "#303031"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface flex min-h-screen overflow-hidden">
+<!-- SideNavBar Component (JSON Anchor) -->
+<nav class="h-screen w-64 hidden lg:flex flex-col sticky left-0 bg-zinc-50 dark:bg-zinc-900 p-4 gap-y-2 font-plus-jakarta text-sm font-semibold z-40">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<span class="text-lg font-black text-zinc-900 dark:text-white">Kinetic Curator</span>
+</div>
+<div class="mb-8 flex items-center gap-3 px-2">
+<img alt="Coach Alex" class="w-10 h-10 rounded-full object-cover" data-alt="Close up portrait of a professional athletic coach with confident expression and soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtFXmhMEkCXCmgVTvmH3EwjH-gmp8mFZIfvWjnL7W3gabPr9G-7T3pTz2PjzXjjTlCs3o-bhhjoCycAdda3lt23ZTWzHZRgKvX0IMsfHFe_IV84w0T6Nuh-IlzB-tdHly22pB2KgH9nnrBLG4YAQZM5VSTVYYpPudFLQFcLvUeZP3NjlI0NfCHJQ_0S04wsdlPS63I_9jxy4x9g4Ny3unqgGz9WzGmENszWaFsk-h7Fp2lv-DQv3HOjgcu3OZjPltBq08CRTRM4v0"/>
+<div>
+<p class="text-zinc-900 font-bold">Coach Alex</p>
+<p class="text-zinc-500 text-xs font-normal">Premium Tier</p>
+</div>
+</div>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-zinc-800 rounded-xl shadow-sm hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span>Calendar</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span>Library</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span>Finances</span>
+</a>
+</div>
+<div class="mt-auto px-2">
+<button class="w-full bg-primary text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+                Schedule Session
+            </button>
+</div>
+</nav>
+<div class="flex-1 flex flex-col min-w-0">
+<!-- TopNavBar Component (JSON Anchor) -->
+<header class="fixed top-0 right-0 left-64 h-16 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl z-50 flex justify-between items-center px-8 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] lg:left-64">
+<div class="flex-1 max-w-xl">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">search</span>
+<input class="w-full bg-zinc-100/50 border-none rounded-full pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search clients, events, or plans..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4 ml-8">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-100/50 transition-all text-zinc-600">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-100/50 transition-all text-zinc-600">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-[1px] bg-zinc-200 mx-2"></div>
+<img alt="User profile photo" class="w-10 h-10 rounded-full ring-2 ring-white shadow-sm" data-alt="Professional headshot of a person with short hair and a clean background in natural daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBphrtOHvUJkm_N1XcgM4FQDzUoYenVMKWMnQ4Gs9Gf-MFDVGVMBsaEM1qJCGRDQ1NipiG0HiRTlU5CgTDomVfv6bOsQnece5e08Pyjv0vJ_pmBirdLXVELLgcm--SyI3MG4QPjVdRCSvREb6X1eP7vnVI-KJWXhNIQ0CYGX4A8OC4UU7rte39ptYkVne9WthZs0KewgPuqi8_eQFcibybrnBJfhj-1miLoesKZRvF1Aa5EpPylYRx4ygj7E6pTRXnUFdjAE9m2jEM"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="mt-16 p-8 flex gap-8 h-[calc(100vh-64px)] overflow-hidden">
+<!-- Calendar Engine -->
+<div class="flex-1 flex flex-col gap-6 overflow-y-auto pr-2">
+<div class="flex items-end justify-between">
+<div>
+<h1 class="font-headline text-4xl font-extrabold tracking-tight text-on-surface">Macro-Cycle Planning</h1>
+<p class="text-on-surface-variant mt-1">October 2023 • 4 Active Client Groups</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex bg-surface-container rounded-xl p-1">
+<button class="px-4 py-2 text-xs font-bold rounded-lg bg-surface-container-lowest shadow-sm">Month</button>
+<button class="px-4 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface">Week</button>
+<button class="px-4 py-2 text-xs font-bold text-on-surface-variant hover:text-on-surface">Timeline</button>
+</div>
+<button class="bg-primary text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:opacity-95 transition-all">
+<span class="material-symbols-outlined text-sm">calendar_add_on</span>
+                            New Event
+                        </button>
+</div>
+</div>
+<!-- Bento Style Calendar Grid -->
+<div class="grid grid-cols-7 gap-px bg-surface-container-high rounded-3xl overflow-hidden shadow-sm border border-transparent">
+<!-- Days Header -->
+<div class="bg-surface-container-low p-4 text-center text-xs font-bold uppercase tracking-widest text-on-surface-variant">Mon</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-bold uppercase tracking-widest text-on-surface-variant">Tue</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-bold uppercase tracking-widest text-on-surface-variant">Wed</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-bold uppercase tracking-widest text-on-surface-variant">Thu</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-bold uppercase tracking-widest text-on-surface-variant">Fri</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-bold uppercase tracking-widest text-on-surface-variant">Sat</div>
+<div class="bg-surface-container-low p-4 text-center text-xs font-bold uppercase tracking-widest text-on-surface-variant">Sun</div>
+<!-- Calendar Cells (Partial Month Preview) -->
+<!-- Week 1 -->
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-outline">28</span>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-outline">29</span>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-outline">30</span>
+<div class="bg-primary-fixed text-on-primary-fixed-variant p-2 rounded-lg text-[10px] font-bold">Group Alpha: Deload Phase</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-on-surface">1</span>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-on-surface">2</span>
+<div class="bg-secondary-fixed text-on-secondary-fixed-variant p-2 rounded-lg text-[10px] font-bold">Elite Squad: Hypertrophy Start</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-on-surface">3</span>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-on-surface">4</span>
+</div>
+<!-- Week 2 (Highlighted) -->
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-on-surface">5</span>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2 ring-2 ring-primary ring-inset">
+<span class="text-sm font-bold text-primary">6</span>
+<div class="bg-primary text-white p-2 rounded-lg text-[10px] font-bold flex flex-col gap-1">
+<span>10:00 AM • Live Call</span>
+<span class="opacity-80 font-normal">Macro Review (8/12)</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-on-surface">7</span>
+<div class="bg-tertiary-fixed text-on-tertiary-fixed-variant p-2 rounded-lg text-[10px] font-bold">System Maintenance</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-on-surface">8</span>
+<div class="bg-error-container text-on-error-container p-2 rounded-lg text-[10px] font-bold">Check-in Deadline (Alpha)</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-on-surface">9</span>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-on-surface">10</span>
+</div>
+<div class="bg-surface-container-lowest min-h-[160px] p-4 flex flex-col gap-2">
+<span class="text-sm font-bold text-on-surface">11</span>
+</div>
+</div>
+</div>
+<!-- Performance Pulse Sidebar -->
+<aside class="w-80 flex flex-col gap-6">
+<!-- Analytics Card -->
+<div class="glass-card p-6 rounded-[2rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<h3 class="font-headline font-bold text-lg">Performance Pulse</h3>
+<span class="material-symbols-outlined text-secondary">insights</span>
+</div>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-xs font-bold mb-2">
+<span class="text-on-surface-variant uppercase">Adherence Rate</span>
+<span class="text-primary">92.4%</span>
+</div>
+<div class="h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 92.4%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold mb-2">
+<span class="text-on-surface-variant uppercase">Roster Progress</span>
+<span class="text-secondary-container">78.1%</span>
+</div>
+<div class="h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-secondary-container to-secondary" style="width: 78.1%"></div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-4 rounded-2xl">
+<p class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">Active</p>
+<p class="text-2xl font-black text-on-surface">42</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-2xl">
+<p class="text-[10px] font-bold text-on-surface-variant uppercase mb-1">New</p>
+<p class="text-2xl font-black text-on-surface">+5</p>
+</div>
+</div>
+</div>
+<!-- Upcoming Check-ins Glass List -->
+<div class="glass-card p-6 rounded-[2rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex-1 overflow-hidden flex flex-col">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline font-bold text-lg">Quick Access</h3>
+<button class="text-xs font-bold text-primary">View All</button>
+</div>
+<div class="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="relative">
+<img alt="Client photo" class="w-12 h-12 rounded-2xl object-cover" data-alt="Close up of a man smiling with professional lighting and blurred modern gym background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCU5aHyqAW7JISp01IwMar08R4EREB2z6FsXJP6MahfmD8_oDV45FpXZPaqq3RKjUdSPXlLxC4XfrlLjPyFZaqMTSkmc_BKk-qUxJ402Jl-4thDRQOaE43BuK8eb1qrOUExEP6HMlRg_fGSNWLBoAEGsYsfC0j7wAZtO7AtTuyNVRwep1IeizHV6yIIbcMBfZIo8WQfT9MDxxMJ5a4ZwuatJCdGktL6KZCeRDF-xZTWOH9Dn37rL9CTvFvo_sV2IK3NE5c-SX1zhxs"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Marcus Chen</p>
+<p class="text-xs text-on-surface-variant truncate">Strength Cycle • Week 3</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="relative">
+<img alt="Client photo" class="w-12 h-12 rounded-2xl object-cover" data-alt="Portrait of a young woman with a focused expression, athletic wear, in a bright contemporary training space" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-1LtVB6xaXYDQMEzpY8Xg-R4RcZFk5HMLzVny8ztWoV6WAxB-MOw90xbHHn7MvRvoD8x21kf6R2lchV9Cc4_63dfCJzgLy9jpraBQIGht_L-BvLkjk-yxI0DpxAxEZtI9CvW21f5kDRbMyIRyYgjnaSR_AuGuAA34Lt0yPE5C24Sep270zAYf4x-LHJ1ket5XBpi8A6D3_jSwsCcwbZR8RX4xEMZuR5UQGxe_b2HfvX4gXfIfVVFxPfOYa_yFxY9Dg9DxuQbo9q8"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-orange-500 border-2 border-white rounded-full"></div>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Elena Rodriguez</p>
+<p class="text-xs text-on-surface-variant truncate">Weight Loss • Check-in Due</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="relative">
+<img alt="Client photo" class="w-12 h-12 rounded-2xl object-cover" data-alt="Smiling person in gym attire with natural lighting and soft focus equipment background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvp8a7ZvyxFOydUKATLPJC5I96ptUBhxI_nmRi3Eveikn-6PIRYu5WgTKC3B-YRlQGxf_FZwZNN-csSAXyzXrleu3gQJ0SezRJwBfJPZLNvQtrg-ufYA5rcWH-kqkly8caDkrAVvReT-Nw71kgfnjxmO4z7b8meXHBN9N7Oeo7ItorroNp05-_J0O7iV-XOBvI9y0--go2Dr_70CSU0mtRZVAWczPIDqJJEc6aeVfO-JwZKAMcJYnfePKlb8oMukJeKk11_i0TDeY"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-zinc-400 border-2 border-white rounded-full"></div>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Julian Baker</p>
+<p class="text-xs text-on-surface-variant truncate">Maintenance Phase</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Macro Summary Mini-Widget -->
+<div class="mt-8 pt-8 border-t border-zinc-100">
+<div class="bg-primary/5 p-4 rounded-2xl">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary text-sm">auto_awesome</span>
+<span class="text-xs font-bold text-primary uppercase tracking-wider">Coach's Insight</span>
+</div>
+<p class="text-[11px] text-on-surface-variant leading-relaxed">
+                                Client adherence is up 12% following the new group call schedule. Consider adding a Friday evening recap.
+                            </p>
+</div>
+</div>
+</div>
+</aside>
+</main>
+</div>
+<!-- Mobile Navigation Suppressed per Task Requirements (Desktop View Priority) -->
+</body></html>

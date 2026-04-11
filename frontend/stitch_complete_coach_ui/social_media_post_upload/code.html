@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Social Planner | MCP Coaching</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface": "#1b1c1c",
+                    "inverse-surface": "#303031",
+                    "secondary-fixed": "#ffdbc9",
+                    "surface-tint": "#5547d5",
+                    "surface-container-high": "#e9e8e7",
+                    "secondary-fixed-dim": "#ffb68c",
+                    "primary": "#3620b8",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed-variant": "#3c29bd",
+                    "inverse-primary": "#c5c0ff",
+                    "surface-bright": "#fbf9f8",
+                    "primary-container": "#4f40cf",
+                    "on-secondary": "#ffffff",
+                    "outline-variant": "#c8c4d7",
+                    "surface-variant": "#e4e2e2",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-background": "#1b1c1c",
+                    "on-surface-variant": "#474554",
+                    "surface-container-low": "#f5f3f3",
+                    "inverse-on-surface": "#f2f0f0",
+                    "tertiary-fixed": "#e2e2e2",
+                    "tertiary": "#414141",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#140067",
+                    "on-error-container": "#93000a",
+                    "secondary": "#9a4600",
+                    "on-secondary-fixed": "#321200",
+                    "on-tertiary-container": "#cfcfcf",
+                    "outline": "#787586",
+                    "on-secondary-fixed-variant": "#753400",
+                    "on-primary-container": "#cfcaff",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "primary-fixed": "#e3dfff",
+                    "surface-dim": "#dbdad9",
+                    "on-secondary-container": "#562500",
+                    "on-tertiary-fixed-variant": "#474747",
+                    "tertiary-container": "#585858",
+                    "surface-container": "#efeded",
+                    "tertiary-fixed-dim": "#c6c6c6",
+                    "background": "#fbf9f8",
+                    "secondary-container": "#f87600",
+                    "surface": "#fbf9f8",
+                    "on-tertiary-fixed": "#1b1b1b",
+                    "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .tonal-shift {
+            background-color: #f5f3f3;
+        }
+        .surface-container-low {
+            background-color: #f5f3f3;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fbf9f8;
+            color: #1b1c1c;
+        }
+        h1, h2, h3, .font-plus-jakarta {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 bottom-0 flex flex-col p-6 h-full w-64 border-r-0 bg-[#f5f3f3] dark:bg-neutral-900 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-xl font-bold text-[#1b1c1c] dark:text-white font-plus-jakarta tracking-tight">MCP</h1>
+<p class="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Elite Coaching</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 dark:text-neutral-400 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span> Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 dark:text-neutral-400 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span> Training
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 dark:text-neutral-400 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span> Nutrition
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 dark:text-neutral-400 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span> Education
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 dark:text-neutral-400 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="pill">pill</span> Supplementation
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 dark:text-neutral-400 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span> Clients
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-neutral-500 dark:text-neutral-400 hover:text-[#4F40CF] transition-colors font-plus-jakarta text-sm font-semibold tracking-tight" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span> Forms
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c] dark:text-white bg-white dark:bg-neutral-800 rounded-xl shadow-sm font-bold font-plus-jakarta text-sm tracking-tight scale-95 duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span> Social Planner
+            </a>
+</nav>
+<div class="mt-auto">
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-white rounded-xl py-4 font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                New Post
+            </button>
+</div>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="fixed top-0 right-0 left-64 z-40 flex justify-between items-center px-8 h-20 bg-[#fbf9f8]/80 dark:bg-neutral-950/80 backdrop-blur-xl">
+<div class="flex items-center gap-4">
+<div class="bg-surface-container-high rounded-full px-4 py-2 flex items-center gap-3 w-96">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full" placeholder="Search scheduled posts..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<button class="p-2 text-neutral-600 dark:text-neutral-400 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-neutral-600 dark:text-neutral-400 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="h-10 w-10 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="Coach Profile" class="w-full h-full object-cover" data-alt="professional male fitness coach in black athletic gear looking confident in a gym setting with soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcn6NSDBUj2vN9Ku40tPFtlls7zBfjYYMOvUErS8DW9_fzu5prcORk5hWEM4wz7RtK5cR89WE8seo3YDsZ_tZSYDEIbtDHipTNL-m0gb7EQpyjv2sVjOvBDXdJYuu51NFg4gTmRTf3NNfvwUhje1D8ZcFyW1wF3pQMv6xYQY5ISYE3KR9S3jbbLdDAdyTXb9GJTNuB6IyEn3j00vzO8thV4_IKyuvKomx22jImyz8HV5xSM4Vvb_qy466B0r6rTu8_qbHNO79IAdA"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="ml-64 pt-24 p-8 min-h-screen">
+<div class="max-w-6xl mx-auto">
+<header class="mb-10">
+<h2 class="text-4xl font-extrabold tracking-tight font-plus-jakarta mb-2">Create New Post</h2>
+<p class="text-on-surface-variant font-medium">Draft, schedule, and curate your elite brand presence.</p>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Upload & Caption Area -->
+<div class="lg:col-span-8 space-y-8">
+<!-- Glassmorphic Drag & Drop Zone -->
+<div class="glass-panel border-2 border-dashed border-outline-variant/30 rounded-[2rem] p-12 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-primary/50 transition-colors">
+<div class="w-20 h-20 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-4xl" data-icon="cloud_upload">cloud_upload</span>
+</div>
+<h3 class="text-xl font-bold font-plus-jakarta mb-2">Drag &amp; Drop Media</h3>
+<p class="text-on-surface-variant max-w-sm mb-8 text-sm">Upload high-performance videos or lifestyle photography. Supports MP4, MOV, and high-res JPG.</p>
+<div class="flex items-center gap-4">
+<button class="bg-surface-container-lowest border border-outline-variant/20 px-6 py-3 rounded-xl font-bold text-sm shadow-sm hover:bg-surface-container-low transition-colors">Choose from Device</button>
+<span class="text-outline text-xs font-bold">OR</span>
+<button class="bg-primary/5 text-primary px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary/10 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="database">database</span>
+                                Import from Vault
+                            </button>
+</div>
+</div>
+<!-- Editor Section -->
+<div class="bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<label class="text-sm font-bold uppercase tracking-wider text-outline">Caption Content</label>
+<span class="text-xs text-outline">0 / 2200 characters</span>
+</div>
+<div class="relative">
+<textarea class="w-full min-h-[200px] bg-surface-container-high/30 border-none rounded-xl p-6 focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:text-outline/60 resize-none font-medium" placeholder="Write a caption that motivates..."></textarea>
+<div class="absolute bottom-4 right-4 flex items-center gap-2">
+<button class="p-2 hover:bg-surface-container-high rounded-lg text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="sentiment_satisfied">sentiment_satisfied</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-lg text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="tag">tag</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Channel Selector -->
+<div class="space-y-4">
+<label class="text-sm font-bold uppercase tracking-wider text-outline px-1">Publish To</label>
+<div class="flex flex-wrap gap-4">
+<button class="flex items-center gap-3 px-6 py-3 rounded-full bg-secondary-container text-white font-bold text-sm transition-transform active:scale-95">
+<span class="material-symbols-outlined" data-icon="photo_camera">photo_camera</span> Instagram
+                                </button>
+<button class="flex items-center gap-3 px-6 py-3 rounded-full bg-surface-container-high text-on-surface-variant font-bold text-sm hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined" data-icon="music_video">music_video</span> TikTok
+                                </button>
+<button class="flex items-center gap-3 px-6 py-3 rounded-full bg-surface-container-high text-on-surface-variant font-bold text-sm hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined" data-icon="facebook">social_leaderboard</span> Facebook
+                                </button>
+<button class="flex items-center gap-3 px-6 py-3 rounded-full bg-surface-container-high text-on-surface-variant font-bold text-sm hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined" data-icon="smart_display">smart_display</span> YouTube
+                                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Scheduling & Assets Sidebar -->
+<div class="lg:col-span-4 space-y-8">
+<!-- Scheduling Card -->
+<div class="bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<h3 class="text-lg font-bold font-plus-jakarta mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="schedule">schedule</span>
+                            Scheduling
+                        </h3>
+<div class="space-y-6">
+<div class="space-y-2">
+<label class="text-xs font-bold text-outline">DATE</label>
+<div class="bg-surface-container-high/40 rounded-xl p-4 flex justify-between items-center cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="font-semibold text-sm">October 24, 2024</span>
+<span class="material-symbols-outlined text-primary text-xl" data-icon="calendar_today">calendar_today</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold text-outline">TIME</label>
+<div class="bg-surface-container-high/40 rounded-xl p-4 flex justify-between items-center cursor-pointer hover:bg-surface-container-high transition-colors">
+<span class="font-semibold text-sm">08:00 AM (EST)</span>
+<span class="material-symbols-outlined text-primary text-xl" data-icon="schedule">schedule</span>
+</div>
+</div>
+<div class="pt-4">
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+                                    Schedule Post
+                                </button>
+<button class="w-full text-primary font-bold text-sm py-4 hover:opacity-80 transition-opacity">
+                                    Save as Draft
+                                </button>
+</div>
+</div>
+</div>
+<!-- Quick Assets Sidebar (Educational Vault) -->
+<div class="bg-surface-container-low rounded-[2rem] p-8">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-lg font-bold font-plus-jakarta">The Vault</h3>
+<button class="text-xs font-bold text-primary hover:underline">View All</button>
+</div>
+<div class="space-y-4">
+<!-- Asset Item -->
+<div class="bg-surface-container-lowest p-3 rounded-2xl flex items-center gap-3 group cursor-pointer hover:scale-[1.02] transition-transform">
+<div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container-high">
+<img alt="Exercise Demo" class="w-full h-full object-cover" data-alt="close-up of clean chrome dumbbells on a gym floor with moody aesthetic lighting and soft shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuvN65AzS0M3NH7q9dHWK9fv2TH6emO4S5LjnClySenhLW_guxEPSem5hj6IIMSbqI6hqmyrFKCSuO_hfJ50ARwHV8ihJBwjBVn514cU4sYy4rp9MdAFXvOABMVO486QpcypUZPvyZvPQFfhW7mPf_d1BI3SgMODnCqhd7Q_spR56anY-F-cCBBLOFH8oheg86rh-ZFVhgd6zSmF1WYfK6z-Csm0MBZoV1Z7UDAiKB91zELE0Sqt53wwud6uk7Z_Udg-8j7rBmG4I"/>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold text-on-surface truncate">Perfect Form: Deadlift</p>
+<p class="text-[10px] text-outline">Tutorial • 0:45</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="add_circle">add_circle</span>
+</div>
+<!-- Asset Item -->
+<div class="bg-surface-container-lowest p-3 rounded-2xl flex items-center gap-3 group cursor-pointer hover:scale-[1.02] transition-transform">
+<div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container-high">
+<img alt="Nutrition Tip" class="w-full h-full object-cover" data-alt="vibrant healthy meal prep bowl with colorful vegetables and protein arranged artistically on a light stone surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4kq1yxYsDLWqijZ3w8KsN7_kU27lccxinrrzx4udmD76HvxMaDwMBFB7JDWb9m1tLgMxdGQR2q4GF3_B94i0MWzGyN1WHvw3UDPhrKOQIv1FrpdqD9d5Tgd2z4FzdF_8-AZCneMq_Ckdp9v6geiTbRwsTe9768UsggCaYiIzX-H4M6W7tDHMlVJqTeO9Gmmsyra9C_ed1w2Q5bm8Uw3nUjT1frQ4n_e2Q0ool3ovFxNlfvP3iGsmZcLMx7-irwkL4HUHmX1TGWGk"/>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold text-on-surface truncate">Meal Prep Sunday</p>
+<p class="text-[10px] text-outline">Infographic • PNG</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="add_circle">add_circle</span>
+</div>
+<!-- Asset Item -->
+<div class="bg-surface-container-lowest p-3 rounded-2xl flex items-center gap-3 group cursor-pointer hover:scale-[1.02] transition-transform">
+<div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container-high">
+<img alt="Client Transformation" class="w-full h-full object-cover" data-alt="dynamic shot of a person running outdoors at sunrise with golden light and motion blur in the background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDctUOWLLoBEGA23ngYEd4YKi9kW60eb4tjZMH9zNZ9wLsaEUzYAVC9a_1s5R36Ee7n_xcPzOiwLxl8-c0SK_oPQIeWd4HgSNgl3EV_li-E3BxacE9KpBeCDP1Kcaw9XwI_HJPmfE8TXdxAHSn4qlxhJt-onmGnrdg8zl0yg8jIytNdo3AN-LKksGcHpO1iOvW3XNSFcL3IV2avg3o27xgjNj1kUcMC9I4Vqgc07ftzkd1jU504Ll3c3KTMDqGdsQRCtg4VxZjTzMM"/>
+</div>
+<div class="flex-1">
+<p class="text-xs font-bold text-on-surface truncate">Client Peak Week</p>
+<p class="text-[10px] text-outline">Success Story • 1:12</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="add_circle">add_circle</span>
+</div>
+</div>
+<div class="mt-6 p-4 rounded-xl border border-primary/10 bg-primary/5">
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Coach Pro Tip</p>
+<p class="text-xs text-on-primary-fixed-variant leading-relaxed">Engagement is 40% higher when you post between 8AM - 10AM EST on Thursdays.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual Status Bar -->
+<div class="fixed bottom-8 right-8 flex items-center gap-3 px-6 py-3 rounded-full bg-inverse-surface text-inverse-on-surface shadow-2xl z-50">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<span class="text-xs font-bold">Auto-save active</span>
+<div class="w-[1px] h-4 bg-outline/30 mx-2"></div>
+<span class="text-xs opacity-70">Last saved 2m ago</span>
+</div>
+</body></html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Client Check-in Video Review | MCP</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "primary": "#3620b8",
+                        "on-primary-container": "#cfcaff",
+                        "secondary-container": "#f87600",
+                        "on-surface": "#1b1c1c",
+                        "surface-bright": "#fbf9f8",
+                        "inverse-on-surface": "#f2f0f0",
+                        "tertiary-container": "#585858",
+                        "on-tertiary-container": "#cfcfcf",
+                        "primary-fixed": "#e3dfff",
+                        "surface-tint": "#5547d5",
+                        "surface-variant": "#e4e2e2",
+                        "primary-container": "#4f40cf",
+                        "secondary": "#9a4600",
+                        "on-secondary-fixed-variant": "#753400",
+                        "surface": "#fbf9f8",
+                        "surface-dim": "#dbdad9",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#321200",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "outline-variant": "#c8c4d7",
+                        "on-background": "#1b1c1c",
+                        "surface-container": "#efeded",
+                        "surface-container-low": "#f5f3f3",
+                        "surface-container-high": "#e9e8e7",
+                        "on-secondary-container": "#562500",
+                        "on-primary": "#ffffff",
+                        "background": "#fbf9f8",
+                        "inverse-surface": "#303031",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#ffdbc9",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#474554",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#c5c0ff",
+                        "surface-container-highest": "#e4e2e2",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "tertiary": "#414141",
+                        "on-error": "#ffffff",
+                        "outline": "#787586",
+                        "on-primary-fixed": "#140067",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-nav { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased">
+<!-- SideNavBar Anchor -->
+<aside class="h-screen w-72 flex-col fixed left-0 top-0 bg-stone-50 dark:bg-stone-950 flex flex-col h-full p-6 space-y-8 z-50">
+<div class="flex flex-col gap-1">
+<span class="text-xl font-bold tracking-tight text-stone-900 dark:text-stone-50">MCP</span>
+<span class="text-xs text-stone-500 font-medium tracking-wide">My Complete Physique</span>
+</div>
+<button class="w-full flex items-center justify-center gap-2 bg-primary-container text-on-primary py-3 px-4 rounded-xl font-semibold shadow-lg hover:opacity-90 transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined text-lg">add</span>
+<span>New Client</span>
+</button>
+<nav class="flex flex-col gap-1 flex-grow">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-stone-600 dark:text-stone-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<!-- Training -->
+<a class="flex items-center gap-3 px-4 py-3 text-stone-600 dark:text-stone-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-medium">Training</span>
+</a>
+<!-- Nutrition -->
+<a class="flex items-center gap-3 px-4 py-3 text-stone-600 dark:text-stone-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span class="font-medium">Nutrition</span>
+</a>
+<!-- Education -->
+<a class="flex items-center gap-3 px-4 py-3 text-stone-600 dark:text-stone-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-medium">Education</span>
+</a>
+<!-- Supplementation -->
+<a class="flex items-center gap-3 px-4 py-3 text-stone-600 dark:text-stone-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">pill</span>
+<span class="font-medium">Supplementation</span>
+</a>
+<!-- Clients (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl font-semibold transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-medium">Clients</span>
+</a>
+<!-- Forms -->
+<a class="flex items-center gap-3 px-4 py-3 text-stone-600 dark:text-stone-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-medium">Forms</span>
+</a>
+</nav>
+<div class="pt-6 border-t border-stone-200/50 dark:border-stone-800/50">
+<a class="flex items-center gap-3 px-4 py-3 text-stone-600 dark:text-stone-400 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-medium">Coach Profile</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar Anchor -->
+<header class="fixed top-0 right-0 w-[calc(100%-18rem)] z-40 bg-white/70 dark:bg-stone-900/70 backdrop-blur-xl flex justify-between items-center px-8 py-4 shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex items-center gap-4">
+<a class="text-stone-400 hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined">arrow_back</span>
+</a>
+<h1 class="text-lg font-black text-stone-900 dark:text-stone-50 tracking-tight">Client Review: Alex Rivers</h1>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-stone-500 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="text-stone-500 hover:opacity-80 transition-opacity relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-secondary-container rounded-full"></span>
+</button>
+<img alt="Coach Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-primary-container" data-alt="portrait of a professional fitness coach with a focused and confident expression in a high-end gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGZYk0TjxcFn683rXZsjqqixmTzCbwBrURr1KYdhUK_DRe9FYo8Vx5JuzlJSiTXpg39qRgPdNpgTeZodL6Ywtgeq4dDl60VAxWf0v_Cr7TrtIOk2c760Fh3zIrwQDWr8xdzPHazLy3d9zz9OzwmITXmU08RBcyg2Hcm3KTQ-drVivDH3ociqYYprLy_7RN8-4RIfycZbqR0unGQHgrluwRdjU4QHt_2bZLGFSDYN7vdiKibsTFuw6n--zTrL9XswkrATnoHxV0ADE"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-72 pt-24 p-8 min-h-screen bg-background">
+<div class="max-w-[1400px] mx-auto grid grid-cols-12 gap-8">
+<!-- Left Column: Video & Controls -->
+<div class="col-span-12 lg:col-span-8 space-y-8">
+<!-- Video Recording Area -->
+<div class="relative group bg-surface-container-lowest rounded-[2rem] overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)] aspect-video flex flex-col items-center justify-center border border-surface-variant/20">
+<img alt="Camera Preview" class="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" data-alt="blurred POV of a professional video production setup in a bright, modern studio with warm ambient lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCV26ey3p6s-QNaxlMNLfCQwcWGsV4X8AjnjuPH_tjrGjVffrjrNySvX1Y4byaxU3AxqUkiY8XseUwvieNfDF-mpHOZSXUUcjEJDGvknbhxnvFKchjuEqK2d2Z5W1DABUhIK-jYpfYD5qMnBbXmruIzKVy-gq65IjnH9jPHEOiGpr_ZkhLfLuqplPwl35kNQCxIyypOEgLe0gpYP6kJbOtrf11oZfLSoLwGsnRNL3GwOSBHLdqIWIP_GzlrHLrdfqFFG5_9xUF5vi0"/>
+<div class="absolute inset-0 bg-gradient-to-t from-stone-900/60 via-transparent to-stone-900/20"></div>
+<!-- Recording Indicators -->
+<div class="absolute top-6 left-6 flex items-center gap-3">
+<div class="flex items-center gap-2 bg-stone-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+<span class="w-2.5 h-2.5 bg-error rounded-full animate-pulse"></span>
+<span class="text-white text-sm font-bold tracking-widest">04:22</span>
+</div>
+</div>
+<!-- Overlay Controls (Apple Inspired) -->
+<div class="absolute bottom-10 flex items-center gap-6">
+<button class="w-14 h-14 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 flex items-center justify-center text-white hover:bg-white/30 transition-all active:scale-90">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+<button class="w-20 h-20 rounded-full bg-white flex items-center justify-center text-error shadow-2xl hover:scale-105 transition-all active:scale-95">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">stop_circle</span>
+</button>
+<button class="w-14 h-14 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 flex items-center justify-center text-white hover:bg-white/30 transition-all active:scale-90">
+<span class="material-symbols-outlined">upload</span>
+</button>
+</div>
+</div>
+<!-- Recording Notes Section -->
+<div class="bg-surface-container-low rounded-3xl p-8 space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="text-xl font-extrabold tracking-tight text-on-surface">Recording Script &amp; Notes</h2>
+<span class="text-xs font-semibold uppercase tracking-widest text-stone-400">Autosaved 2m ago</span>
+</div>
+<textarea class="w-full bg-surface-container-lowest border-none rounded-2xl p-6 text-on-surface placeholder:text-stone-300 focus:ring-2 focus:ring-primary/20 min-h-[160px] text-lg leading-relaxed resize-none shadow-sm" placeholder="Start typing key points for Alex..."></textarea>
+<div class="flex flex-wrap gap-3">
+<span class="px-4 py-2 bg-primary/5 text-primary text-sm font-bold rounded-full border border-primary/10">Mention: Sodium Intake</span>
+<span class="px-4 py-2 bg-primary/5 text-primary text-sm font-bold rounded-full border border-primary/10">Note: Step Count Increase</span>
+<span class="px-4 py-2 bg-stone-200/50 text-stone-500 text-sm font-bold rounded-full border border-transparent">+ Add Point</span>
+</div>
+</div>
+</div>
+<!-- Right Column: Client Context & Data -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Client Overview Card -->
+<div class="bg-surface-container-lowest rounded-3xl p-8 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] space-y-8 border border-surface-variant/10">
+<div class="flex items-center gap-4">
+<img alt="Client Avatar" class="w-16 h-16 rounded-2xl object-cover shadow-inner" data-alt="close-up portrait of a fit young man with a friendly smile, clean-shaven, in natural daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxfinX3w8yfo-IyiEfPnHvCDUAc_7iI6n5WyTEfWxEkR2lGeHKJCoHQI3y4Uw4Vx_-ILsi3xMA7zc7dGEkYIv5swu7en-1Xjh4-qkIb7HkNo4E5aJU3alBlwCWq0ROoNX3cF6adAFYWyUJuK2ymwcLYxLGWioEb4ny8YxLOFJ3qrWLVJRpT_iW5XpzHST21MN7jLI2jvm1t114xHpj1Rx-vtxubqupS-3WegIOuWfr-TcfljDJ0GW_JyQKRK2NDSZm2IDyN8f4idg"/>
+<div>
+<h3 class="text-xl font-extrabold text-on-surface tracking-tight">Alex Rivers</h3>
+<p class="text-sm font-medium text-stone-400">Week 12 of "Summer Shred"</p>
+</div>
+</div>
+<!-- Bento Metrics -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-5 rounded-2xl">
+<span class="text-stone-400 text-xs font-bold uppercase tracking-wider block mb-1">Weight</span>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-black text-on-surface">184.2</span>
+<span class="text-xs font-bold text-error mb-1">-1.2lb</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-5 rounded-2xl">
+<span class="text-stone-400 text-xs font-bold uppercase tracking-wider block mb-1">Sleep</span>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-black text-on-surface">7.4h</span>
+<span class="text-xs font-bold text-primary mb-1">+0.5</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-5 rounded-2xl col-span-2">
+<span class="text-stone-400 text-xs font-bold uppercase tracking-wider block mb-2">Energy &amp; Focus</span>
+<div class="flex items-center justify-between">
+<div class="flex gap-1">
+<div class="w-8 h-2 bg-secondary-container rounded-full"></div>
+<div class="w-8 h-2 bg-secondary-container rounded-full"></div>
+<div class="w-8 h-2 bg-secondary-container rounded-full"></div>
+<div class="w-8 h-2 bg-secondary-container/20 rounded-full"></div>
+<div class="w-8 h-2 bg-secondary-container/20 rounded-full"></div>
+</div>
+<span class="text-sm font-bold text-on-surface">High/Stable</span>
+</div>
+</div>
+</div>
+<!-- Progress Photos -->
+<div class="space-y-4">
+<h4 class="text-sm font-bold text-stone-500 uppercase tracking-widest">Progress Check-in</h4>
+<div class="grid grid-cols-2 gap-3">
+<div class="relative group rounded-xl overflow-hidden aspect-[3/4]">
+<img alt="Front Progress" class="w-full h-full object-cover transition-transform group-hover:scale-110" data-alt="physique progress photo showing front torso of a muscular male athlete in a gym, professional fitness photography style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOCDdJSzeJfSw5JeptkbB9sPzniR5aKhtkgvaWrZocfzBTrOVSAihLCHyfYZtsH09JVAlQRzl3fs3SEY3X-fLc1DYfknPPAs84YU-wxhikLqwJRuP7p8aUFsweTbGl6IuFeO9neMLh-s4maWdlMfp1kK1aw_u1Kump8AjHe4V-_3qiwHwRw7oSEEIiSw4Ueq-k_ipo8zkSCK-fRvOCjgNAOC6MOicNMYJBO_1r-3A2Ronn083VqcuBE-OFK9PbG-IZVP_9XwMABtc"/>
+<div class="absolute top-2 right-2 px-2 py-1 bg-stone-900/40 backdrop-blur-md rounded text-[10px] text-white font-bold uppercase">Front</div>
+</div>
+<div class="relative group rounded-xl overflow-hidden aspect-[3/4]">
+<img alt="Side Progress" class="w-full h-full object-cover transition-transform group-hover:scale-110" data-alt="physique progress photo showing profile view of a muscular male athlete in a gym, high-end commercial aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbEjyG1KkVpYejti5h1V09SePYmU5TbXeFRKVPCa7WAufDEjU4Dtcxfacnh4HHg_NJkngbmADLhDboHGQxHbNgRjiMCWU3ppfKuaBqyux3jDG5dAheVDtoKTxxUsuTQImfusPMnaIuCsSwWhq_mCL1eZabJpehVgXqz_f5eUMRrrnxIJz1TmrnGoHg1LQHbtDovc-GXHsCGYZ1aSc1xb2y2oXlxeTlvQFbroghxsge8UumdAbGHDeYTuqpQcIfmmEouxErlaM925E"/>
+<div class="absolute top-2 right-2 px-2 py-1 bg-stone-900/40 backdrop-blur-md rounded text-[10px] text-white font-bold uppercase">Side</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Protocol Adjustments -->
+<div class="bg-surface-container-low rounded-3xl p-8 space-y-6">
+<h3 class="text-lg font-bold text-on-surface">Protocol Updates</h3>
+<div class="space-y-3">
+<label class="flex items-center justify-between p-4 bg-surface-container-lowest rounded-2xl cursor-pointer hover:shadow-sm transition-all border border-transparent active:scale-[0.98]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">fitness_center</span>
+<span class="font-bold text-sm">Modify Training</span>
+</div>
+<input class="w-5 h-5 rounded-md text-primary border-stone-200 focus:ring-primary/20" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-4 bg-surface-container-lowest rounded-2xl cursor-pointer hover:shadow-sm transition-all border border-transparent active:scale-[0.98]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">restaurant</span>
+<span class="font-bold text-sm">Adjust Nutrition</span>
+</div>
+<input checked="" class="w-5 h-5 rounded-md text-primary border-stone-200 focus:ring-primary/20" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-4 bg-surface-container-lowest rounded-2xl cursor-pointer hover:shadow-sm transition-all border border-transparent active:scale-[0.98]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">pill</span>
+<span class="font-bold text-sm">New Supplement</span>
+</div>
+<input class="w-5 h-5 rounded-md text-primary border-stone-200 focus:ring-primary/20" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Final Actions -->
+<div class="flex flex-col gap-4">
+<button class="w-full py-5 px-6 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-extrabold text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+<span>Send Video to Client</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+<button class="w-full py-5 px-6 rounded-2xl bg-surface-container-lowest text-stone-600 font-bold hover:bg-stone-50 active:scale-[0.98] transition-all border border-surface-variant/20 shadow-sm">
+                        Save as Draft
+                    </button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

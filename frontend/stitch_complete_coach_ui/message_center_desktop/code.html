@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCP | Message Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-low": "#f5f3f3",
+              "secondary": "#9a4600",
+              "outline": "#787586",
+              "tertiary": "#414141",
+              "on-secondary-fixed-variant": "#753400",
+              "surface-container-highest": "#e4e2e2",
+              "error": "#ba1a1a",
+              "tertiary-fixed": "#e2e2e2",
+              "surface-variant": "#e4e2e2",
+              "secondary-fixed": "#ffdbc9",
+              "primary": "#3620b8",
+              "on-secondary-fixed": "#321200",
+              "on-primary-fixed-variant": "#3c29bd",
+              "background": "#fbf9f8",
+              "tertiary-container": "#585858",
+              "on-secondary-container": "#562500",
+              "on-error": "#ffffff",
+              "outline-variant": "#c8c4d7",
+              "on-error-container": "#93000a",
+              "on-tertiary-fixed": "#1b1b1b",
+              "secondary-fixed-dim": "#ffb68c",
+              "primary-fixed-dim": "#c5c0ff",
+              "primary-fixed": "#e3dfff",
+              "on-surface-variant": "#474554",
+              "surface-tint": "#5547d5",
+              "surface-bright": "#fbf9f8",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface-container": "#efeded",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "surface": "#fbf9f8",
+              "secondary-container": "#f87600",
+              "on-tertiary-container": "#cfcfcf",
+              "on-background": "#1b1c1c",
+              "inverse-surface": "#303031",
+              "on-secondary": "#ffffff",
+              "on-primary-container": "#cfcaff",
+              "on-primary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "primary-container": "#4f40cf",
+              "surface-dim": "#dbdad9",
+              "on-surface": "#1b1c1c",
+              "inverse-primary": "#c5c0ff",
+              "inverse-on-surface": "#f2f0f0",
+              "on-tertiary": "#ffffff",
+              "surface-container-high": "#e9e8e7",
+              "on-primary-fixed": "#140067",
+              "error-container": "#ffdad6"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #e4e2e2; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body overflow-hidden">
+<!-- Desktop Side Navigation -->
+<aside class="hidden md:flex flex-col p-4 space-y-6 h-screen w-64 fixed left-0 top-0 bg-white/40 backdrop-blur-2xl z-40">
+<div class="px-2 py-4">
+<h1 class="text-2xl font-black text-zinc-900 tracking-tighter font-headline">MCP Coach</h1>
+<p class="text-xs font-semibold text-indigo-600 font-headline uppercase tracking-widest mt-1">Elite Performance</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-600 hover:bg-zinc-100 transition-all font-headline text-sm font-semibold rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+                Client Roster
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-600 hover:bg-zinc-100 transition-all font-headline text-sm font-semibold rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+                Program Library
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-indigo-50 text-indigo-700 transition-all font-headline text-sm font-semibold rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+                Message Center
+            </a>
+</nav>
+<div class="mt-auto space-y-4">
+<button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                New Program
+            </button>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-600 hover:bg-zinc-100 transition-all font-headline text-sm font-semibold rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                Support
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="md:ml-64 flex flex-col h-screen">
+<!-- Top Bar -->
+<header class="sticky top-0 z-50 flex justify-between items-center px-6 py-4 w-full bg-white/70 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex items-center gap-4">
+<h2 class="text-xl font-black text-indigo-700 tracking-tighter font-headline">Message Center</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-lg" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm w-64 focus:ring-2 focus:ring-indigo-500/20 transition-all" placeholder="Search conversations..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-zinc-500 hover:text-indigo-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-zinc-500 hover:text-indigo-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<img alt="Coach Profile" class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover" data-alt="professional male athletic coach with short beard and athletic wear in a bright studio environment, confident expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkVBV9eVQx49rjek13_L1ZWUvJ_AdMkwt7aXOYh_s55UI1ZdY2I5DnjdUEyS25mqA_2Q_aOBu_5igg2dRNQfRz74kGXfc7679WV2MGMLCa9giJR-NzL13Xe4yC-zJZv9cWdgLXU2xsBuXooki0lpL2-RzI2MOkyF1PHGY6-R9OZg3Tz1ofE0uvQ391Gmh7hqEJ1j84WdYM6umxss9T407Si6VWxqAAjnwig0diOLl50iyuJrckPivX9U4y8LiPV7m3c426mnJKKD4"/>
+</div>
+</div>
+</header>
+<!-- Messaging Split Pane -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Left Sidebar: Conversations List -->
+<section class="w-full md:w-80 lg:w-96 flex flex-col bg-surface-container-low">
+<div class="p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold font-headline text-on-surface">Recent Clients</h3>
+<button class="text-indigo-600 hover:bg-indigo-50 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="edit_square">edit_square</span>
+</button>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
+<span class="px-4 py-1.5 bg-secondary-container text-white text-xs font-bold rounded-full whitespace-nowrap cursor-pointer">All</span>
+<span class="px-4 py-1.5 bg-surface-container-lowest text-zinc-600 text-xs font-bold rounded-full whitespace-nowrap cursor-pointer hover:bg-zinc-100">Unread</span>
+<span class="px-4 py-1.5 bg-surface-container-lowest text-zinc-600 text-xs font-bold rounded-full whitespace-nowrap cursor-pointer hover:bg-zinc-100">Groups</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar px-3 space-y-1">
+<!-- Active Conversation -->
+<div class="p-4 bg-surface-container-lowest rounded-2xl shadow-sm cursor-pointer flex gap-4 border-l-4 border-indigo-600">
+<div class="relative flex-shrink-0">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="close up headshot of a fit man in his 30s with short hair, warm natural lighting, smiling softly" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDN7E_QZ-G2xQWAacGacddwRvFJif1SRUPG4a20ATtvJN5zwsBZ4knaJh6JTGb06IYR7OuBYDJKSXIXG1kYnh_CPQXQOI2d11NUvfmwbHa7RUXIr62XYY9aCe99OwE5wShT_p4jkjtywNW16Vdage4eZELbPyhFuvfCi2pqdrS8Oo6sRUb96x_cyrAOJk3BLcLsHcT2vu3gLrjIVfpFjVEnp5DpgZOv97tVCX7K9pFuNVbOinRnc6dm0hZRBGBKm9Bv_Z8hfJQxORI"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h4 class="text-sm font-bold font-headline text-on-surface truncate">Alex Rivera</h4>
+<span class="text-[10px] font-bold text-indigo-600 uppercase">2m ago</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-1">That protein goal feels much more attainable now...</p>
+</div>
+</div>
+<!-- Conversation 2 -->
+<div class="p-4 hover:bg-white/60 rounded-2xl transition-all cursor-pointer flex gap-4">
+<div class="relative flex-shrink-0">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a focused young woman athlete with braided hair, indoor gym lighting, high contrast" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdyyefEv9vvRFnG2JZH_gfPwqZW79FwzWAn-hXmMrEsUho4XTkKZxEJzVTWhYZvJ5vWl0mFTJd9HmAhDH-0GZh3_h3YLsQUCPoX8GiVDhnDZEKQPjN-yvbl96tsij9bzM1EccAduJPxSgiEIjhNd-0hV_oFAKLohLFosnMHyEsirkhxzxov4CSMH_7CfFxJtRfl8VDBjz9B4Ui8WhA5t7kBqSJu6MY4ni-GdZ4ZLgldnEUpdCSWn5ZbogofHnJj1h6lGDRsq85glg"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h4 class="text-sm font-bold font-headline text-on-surface truncate">Elena Vance</h4>
+<span class="text-[10px] font-medium text-zinc-400 uppercase">1h ago</span>
+</div>
+<p class="text-xs text-zinc-400 line-clamp-1">Did you see the latest PR video I uploaded?</p>
+</div>
+</div>
+<!-- Conversation 3 -->
+<div class="p-4 hover:bg-white/60 rounded-2xl transition-all cursor-pointer flex gap-4">
+<div class="relative flex-shrink-0">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="headshot of a middle aged man with graying hair, outdoor light, friendly expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGi2W1p1tkTfFgGiSXv0PAXRLOB-wMchK5UCNfXw5RZP9S8JinNxs8CF72ONo0A92thAcfDPr5b1cQPa4ekEkrVe4WPbrAu1bEoWfGNfylBdRxBXqCS5yNyRvdmyWZ5rZPOce-iYa5QSo6Y3k7ATEM5Mp6_g6sOKpaYGY4y4BSjpmhd8OTjHOnME3XBYh2CiSeFuXs8qedrNzPJ4SUsNSafQfzEJEmik2UUg6M9L7cLRT7Hty048gjM2P2dQ4o9WDELC-FB41KOsc"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h4 class="text-sm font-bold font-headline text-on-surface truncate">Marcus Sterling</h4>
+<span class="text-[10px] font-medium text-zinc-400 uppercase">4h ago</span>
+</div>
+<p class="text-xs text-zinc-400 line-clamp-1 font-semibold text-indigo-600">Sent a file: Marathon_Prep.pdf</p>
+</div>
+</div>
+<!-- More Conversations -->
+<div class="p-4 hover:bg-white/60 rounded-2xl transition-all cursor-pointer flex gap-4">
+<div class="relative flex-shrink-0">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="professional portrait of a young woman with curly hair, soft rim lighting, blurred urban background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCN8xKtJlj6vKjLuhZSLjEz_b--GxqqGpnXPRbsYx6g22szUuGhd5kFQizyH-rWLoSmjQmsBGPekmeZqr1PwH1NfdsHpQJCiNPkolX5p2zMBFXlNYYi_kJPkWIumvoM_0EJIezQfBtQ9fHI4W4O87Vf2NfnNxkycfX9J8ew2XTJeLZDStgOUTq-pnKSmSH2Z-glfyS4gaA26nj2safuAS4U3osSmyW8kKzYrlhBVCVMeQ_uPsYX-JV3_RHS9OsNWxMS2zcE8Yqyuqo"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h4 class="text-sm font-bold font-headline text-on-surface truncate">Sarah Jenkins</h4>
+<span class="text-[10px] font-medium text-zinc-400 uppercase">YESTERDAY</span>
+</div>
+<p class="text-xs text-zinc-400 line-clamp-1">I'm struggling with the knee pain again during squats.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Content: Chat Interface -->
+<section class="flex-1 flex flex-col bg-background">
+<!-- Chat Header -->
+<div class="px-8 py-4 bg-white/40 border-b border-white/20 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="active client headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE0bkSWQysaFconx5_zGEJB0vycdFt7LBBVcT6XY1YHwmkx6jeX5_PlLpxRlp7GtMMVf5EAbkxa8ylZqmMTUp-XmPcBItaAQa9tpG56wulWyhIQ_NUjqoXoa7Fq-7psYTuXIj6NoyYuFTVw2hgacD3kNt5sUdkXwLm-QXGI4CGv3u7c6_wLvAahpj_u81deL5LGXTmzJgkJBI08LJTh-zS6lj0MDP-GZ7VZuVPHP8rGYycgyhj-_JRbWTw_pRN_YDvej6sz6ECz0I"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div>
+<h4 class="text-base font-bold font-headline text-on-surface">Alex Rivera</h4>
+<p class="text-[10px] font-bold text-green-600 uppercase tracking-widest">Active Now • Elite Tier Client</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition-all">
+<span class="material-symbols-outlined" data-icon="videocam">videocam</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition-all">
+<span class="material-symbols-outlined" data-icon="call">call</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition-all">
+<span class="material-symbols-outlined" data-icon="info">info</span>
+</button>
+</div>
+</div>
+<!-- Chat Messages Area -->
+<div class="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+<!-- Date Divider -->
+<div class="flex justify-center">
+<span class="px-4 py-1 bg-surface-container-high rounded-full text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Today, Oct 24</span>
+</div>
+<!-- Client Message -->
+<div class="flex gap-4 max-w-2xl">
+<img class="w-8 h-8 rounded-full flex-shrink-0 mt-auto" data-alt="active client headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7rlHHNLOS2t3N8nedydh8nvf4Td5HY7-wi85RCNLy7YwmM7DA2pMAERPK20EZxfAOX3wHRnywvN-5uSTshfVxzBz-NZx3kSR4bObIsYzI4XFrN8P9BD7ThcaOahdERMGsxuPMLksFiyxLoSSYXur1JOeQtcmI3WMJc4QjGFDFtaSMgwiXGb2jtU03JZkf6p71oWW93z-3NqlPLumsOGXuZPEdttOD9LpDD4LxhPTpUvkckgpiR0g5NtCzHD45ZQJnWDUheV-N-Bc"/>
+<div class="space-y-2">
+<div class="bg-surface-container-lowest p-4 rounded-2xl rounded-bl-none shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-white/60">
+<p class="text-sm text-on-surface-variant leading-relaxed">Hey Coach! I just finished the morning session. The new tempo on the goblet squats is definitely a game changer. I felt it way more in my glutes.</p>
+</div>
+<span class="text-[10px] font-semibold text-zinc-400 pl-1">09:42 AM</span>
+</div>
+</div>
+<!-- Coach Message -->
+<div class="flex gap-4 max-w-2xl ml-auto flex-row-reverse">
+<div class="space-y-2 flex flex-col items-end">
+<div class="bg-gradient-to-br from-primary to-primary-container p-4 rounded-2xl rounded-br-none shadow-xl shadow-indigo-500/10 text-white">
+<p class="text-sm leading-relaxed">That's exactly what we're looking for, Alex. That increased time under tension is key for your current phase. How was your recovery sleep last night?</p>
+</div>
+<div class="flex items-center gap-1">
+<span class="text-[10px] font-semibold text-zinc-400">09:45 AM</span>
+<span class="material-symbols-outlined text-[14px] text-indigo-500" data-icon="done_all">done_all</span>
+</div>
+</div>
+</div>
+<!-- Client Message -->
+<div class="flex gap-4 max-w-2xl">
+<img class="w-8 h-8 rounded-full flex-shrink-0 mt-auto" data-alt="active client headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTw3zDpevIgUmqg6SBcIG653-Z3rEz9ARjj1mGz5lOHGG310aqQq9n0Tj7gwvk1qxNE07GPyWFFBCNGGT6atJ6UZAFN8rVuDmVfIgv4ttG0gwR5BLrmtipgsP00-qD0Us10klklJCwQptYT8YHVA6UeYnc1zlP6UbvizbnAn7vt_DEue31h675EY649M7AtfbBaCtKir8okv7501tCaVFOR_tnjV7VeLhEXKVI_ZKPGRm49y3H_YNDQAVA_MdZwkpPMZ5hZDlaNow"/>
+<div class="space-y-2">
+<div class="bg-surface-container-lowest p-4 rounded-2xl rounded-bl-none shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-white/60">
+<p class="text-sm text-on-surface-variant leading-relaxed">Slept like a rock! 7.5 hours. I also hit my macros yesterday perfectly. That protein goal feels much more attainable now with those meal prep tips you sent.</p>
+</div>
+<span class="text-[10px] font-semibold text-zinc-400 pl-1">09:58 AM</span>
+</div>
+</div>
+<!-- Rich Content: Progress Photo -->
+<div class="flex gap-4 max-w-2xl">
+<img class="w-8 h-8 rounded-full flex-shrink-0 mt-auto" data-alt="active client headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnBn-ePu9b-U4H5MEdcKF9V07MK8QGagohaVxDWtRYbPhE2_VhFZ5ChFbGkBOwPPIIWJevdscj6acrxlWJNsttII53fGM79upROG9AtiMs18Egystub_N5rugpT9inmxs7BMB9jajTafhtDKBgwSPX6gL85toskZGtIx27pC6QBYatFjjOB4N1CoYqeb-Y55tEwpL9Z3SjnNjnXSZf3YHSQZpQYz9MG4REWxl5bjOW8fst1z99PGTAB1mBsffnX0nVX-879eCDWN4"/>
+<div class="space-y-2">
+<div class="bg-surface-container-lowest p-2 rounded-2xl rounded-bl-none shadow-sm border border-white/60">
+<img class="w-full h-48 object-cover rounded-xl mb-2" data-alt="close up of healthy meal prep containers with grilled chicken, sweet potatoes and broccoli in a modern kitchen" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgIdToJmFZor9WJqDJoYNBhmx_-Nc-eENvn8P6y-LEWs9ql-D1mPqqBeYxk-NXJqowfkndcO0Q4FC1mQSGZTp-Plf5rm52I8pJXyo7PLsAKnLfQDKDRe5HLnpScCX5sp9e6Te6JXnB89B-YGlIllN71vfn7ggdH2j1b76mpxlGF5eS9H4TEvIdT5nPTksOaYt_F5QJ1g6g85Votv4CZeqauUeQFdBYBT1ePKw9FEngUCkjG4aul9QesibEcbGStyXBAvdUCWzimi0"/>
+<p class="text-xs text-zinc-500 px-2 pb-2 italic">Prepped for the rest of the week!</p>
+</div>
+<span class="text-[10px] font-semibold text-zinc-400 pl-1">09:59 AM</span>
+</div>
+</div>
+</div>
+<!-- Chat Input -->
+<div class="p-6 bg-white/40 backdrop-blur-md">
+<div class="max-w-4xl mx-auto relative flex items-center gap-3">
+<button class="p-2 text-zinc-400 hover:text-indigo-600 transition-all flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+<div class="flex-1 relative">
+<textarea class="w-full bg-surface-container-high border-none rounded-2xl py-3 pl-4 pr-12 text-sm focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none font-body" placeholder="Type a message to Alex..." rows="1"></textarea>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+<span class="material-symbols-outlined" data-icon="emoji_emotions">emoji_emotions</span>
+</button>
+</div>
+<button class="w-10 h-10 flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition-all flex items-center justify-center">
+<span class="material-symbols-outlined text-xl" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Mobile Navigation Shell -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-end px-6 pb-8 pt-4 bg-white/60 backdrop-blur-3xl shadow-[0px_-10px_40px_rgba(0,0,0,0.04)] rounded-t-[2.5rem]">
+<div class="flex flex-col items-center justify-center text-zinc-400 p-2">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-[10px] font-bold uppercase tracking-widest mt-1">Clients</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-400 p-2">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+<span class="text-[10px] font-bold uppercase tracking-widest mt-1">Library</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-indigo-600 text-white rounded-full p-3 mb-2 transform -translate-y-2 shadow-lg shadow-indigo-500/40">
+<span class="material-symbols-outlined" data-icon="chat_bubble" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+<span class="hidden">Messages</span>
+</div>
+</nav>
+</body></html>

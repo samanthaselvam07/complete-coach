@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-highest": "#e4e2e2",
+              "outline-variant": "#c8c4d7",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface-container-low": "#f5f3f3",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-secondary-fixed": "#321200",
+              "outline": "#787586",
+              "on-primary-fixed-variant": "#3c29bd",
+              "secondary-container": "#f87600",
+              "surface-container": "#efeded",
+              "on-error-container": "#93000a",
+              "on-secondary-fixed-variant": "#753400",
+              "surface-dim": "#dbdad9",
+              "surface-bright": "#fbf9f8",
+              "error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "surface-container-high": "#e9e8e7",
+              "tertiary-container": "#585858",
+              "on-secondary": "#ffffff",
+              "inverse-on-surface": "#f2f0f0",
+              "surface-tint": "#5547d5",
+              "on-secondary-container": "#562500",
+              "on-primary-fixed": "#140067",
+              "surface-variant": "#e4e2e2",
+              "secondary": "#9a4600",
+              "inverse-primary": "#c5c0ff",
+              "on-tertiary-fixed": "#1b1b1b",
+              "surface": "#fbf9f8",
+              "primary-container": "#4f40cf",
+              "on-surface": "#1b1c1c",
+              "inverse-surface": "#303031",
+              "secondary-fixed": "#ffdbc9",
+              "primary": "#3620b8",
+              "on-background": "#1b1c1c",
+              "surface-container-lowest": "#ffffff",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#cfcfcf",
+              "on-primary-container": "#cfcaff",
+              "on-primary": "#ffffff",
+              "tertiary": "#414141",
+              "primary-fixed-dim": "#c5c0ff",
+              "background": "#fbf9f8",
+              "primary-fixed": "#e3dfff",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#474554",
+              "on-error": "#ffffff",
+              "tertiary-fixed": "#e2e2e2"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-fixed">
+<div class="flex h-screen overflow-hidden">
+<!-- SideNavBar Component -->
+<aside class="hidden md:flex flex-col h-full p-4 gap-2 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl h-screen w-64 border-r border-zinc-200/20 dark:border-zinc-800/20 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] z-50">
+<div class="flex items-center gap-3 px-2 py-4 mb-4">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-xl font-black text-zinc-900 dark:text-zinc-50 tracking-tighter">MCP Coaching</h1>
+<p class="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">Premium Performance</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span>Training</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+<span>Nutrition</span>
+</a>
+<!-- Active Item: Education -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#4F40CF] dark:text-[#4F40CF] font-bold bg-zinc-100/50 dark:bg-zinc-800/50 rounded-xl font-['Plus_Jakarta_Sans'] tracking-tight text-sm transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="school" style="font-variation-settings: 'FILL' 1;">school</span>
+<span>Education</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="pill">pill</span>
+<span>Supplementation</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Forms</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800">
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-white py-3 rounded-xl font-bold text-sm mb-4 active:scale-95 transition-transform duration-150 ease-out flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                    + New Client
+                </button>
+<div class="flex items-center gap-3 px-2">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover" data-alt="Close-up portrait of a professional athletic coach with a confident expression in a bright modern gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjOR_yk-_PYHEHkIVcC2Kq3zPzDiGhx1GAM8Trd8aokGXChoVpGb9qb_q193SZMXlA0E4kCeCNYxe9COngYTNTet1dbthtU_pO1cGW4zjUF5meyHjfa_Sv21CJ4D1BAHSl3RRYs0oGujXdYBaf7AqTgKYvX-ziz8beZ64hc6Gne4oSrs_nNLC0LlwPaFNiOZiy108GZwEhPY4IAFrskd5mvaBghly1glnMyDd_uu2qMDObjCeH0FJjgd89clnQd9sQlmbpWiFu218"/>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Coach Marcus</p>
+<p class="text-[10px] text-zinc-400 truncate">Elite Tier</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto no-scrollbar">
+<!-- TopAppBar Component -->
+<header class="w-full h-16 sticky top-0 z-40 bg-[#fbf9f8]/80 dark:bg-zinc-950/80 backdrop-blur-md flex items-center justify-between px-6 font-['Plus_Jakarta_Sans']">
+<div class="flex items-center gap-4">
+<h2 class="text-lg font-bold text-zinc-900 dark:text-zinc-50">Educational Vault</h2>
+<div class="hidden lg:flex items-center bg-surface-container-low px-3 py-1.5 rounded-full gap-2 text-zinc-500">
+<span class="material-symbols-outlined text-sm">search</span>
+<input class="bg-transparent border-none text-xs focus:ring-0 w-48" placeholder="Search resources..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-zinc-500 hover:opacity-80 transition-all scale-98 p-2">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-zinc-500 hover:opacity-80 transition-all scale-98 p-2">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-zinc-200">
+<img alt="Coach Avatar" class="w-full h-full object-cover" data-alt="Portrait of a fitness coach with a friendly and professional look" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZno-wBI2hR3hMhiL8zWDaHzNggrUdRRignyhSa7rv08_e3eDYwKnHSQHDIYiaokV4-YQdd4ZGXS2gXxUHvOzrMuixBn5ICX11kHCqo4Mz4Bh-MV2KR5PtQDJGeOwan5eZDuOSWlRYQRA-aNcjalGmXFOjqBE8I06mlZ3IKuhjoRGc9hWQrhvzWMhMzqR-B4akrC8Be7DHn7rOkcvT2t1K5xwydyp1gzbrjE6uKiFC4mHJXoezz6mE2nbiyWL17vKrOPfCVK6FpA4"/>
+</div>
+</div>
+</header>
+<div class="p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-10">
+<!-- Hero Section (Editorial Title) -->
+<section class="space-y-4">
+<h1 class="text-5xl md:text-6xl font-headline font-extrabold tracking-tighter text-on-surface leading-[0.9]">
+                        Elevate Your <br/><span class="text-primary">Athletes.</span>
+</h1>
+<p class="max-w-xl text-zinc-500 text-lg">
+                        The definitive hub for performance coaching material. Distribute professional science-backed resources to your clients in one click.
+                    </p>
+</section>
+<!-- Category Filters -->
+<div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
+<button class="px-6 py-2.5 rounded-full bg-secondary-container text-white font-bold text-sm shadow-lg shadow-secondary-container/20 whitespace-nowrap">All Resources</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface font-semibold text-sm hover:bg-surface-container-highest transition-colors whitespace-nowrap">Training Science</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface font-semibold text-sm hover:bg-surface-container-highest transition-colors whitespace-nowrap">Nutrition 101</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface font-semibold text-sm hover:bg-surface-container-highest transition-colors whitespace-nowrap">Member Success</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface font-semibold text-sm hover:bg-surface-container-highest transition-colors whitespace-nowrap">Video Masterclasses</button>
+</div>
+<!-- Featured Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Featured Large -->
+<div class="md:col-span-2 group relative overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-[0px_10px_30px_rgba(27,28,28,0.04)] h-[400px]">
+<img alt="Training Science" class="absolute inset-0 w-full h-full object-cover grayscale opacity-80 group-hover:scale-105 transition-transform duration-700" data-alt="High-contrast black and white photography of an athlete performing a clean and jerk in a gritty professional gym" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPrryOr29qkwVlqb-AOnCeAyzUNXzXu1ynKMtNCdaaOW4Dgr4_7cT-KzJOg-5pkb0k36RpYzE7VFmoqC9CVRc2r26Xt2d2lSLcWvD6r2c9UmCjowFx2gpkachYwuLvLva-g7HilfsR1iEEt5LGrkgeqY_yqiXXsncIZdR1BVqN-5pkMv05tM_lZ-QvbjoNKqHXEUF51LimnxmRg5Fx6zflKZQiyacnCxKjpFQBZGy0Ex6_w1O7gguREJZu3sFf7YKX1FKHUhXVHWE"/>
+<div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-8 space-y-4">
+<span class="bg-primary px-3 py-1 rounded-full text-[10px] font-black uppercase text-white tracking-widest">Training Science</span>
+<h3 class="text-3xl font-headline font-bold text-white leading-tight">Advanced Hypertrophy <br/>Mechanisms &amp; Periodization</h3>
+<div class="flex gap-4">
+<button class="bg-white text-zinc-900 px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-zinc-100 transition-colors">
+<span class="material-symbols-outlined text-sm">play_circle</span> Watch Video
+                                </button>
+<button class="bg-white/20 backdrop-blur-md text-white border border-white/20 px-6 py-3 rounded-xl font-bold text-sm hover:bg-white/30 transition-colors">
+                                    Assign to Client
+                                </button>
+</div>
+</div>
+</div>
+<!-- Small Highlight 1 -->
+<div class="rounded-[2rem] bg-surface-container-lowest p-8 flex flex-col justify-between shadow-[0px_10px_30px_rgba(27,28,28,0.04)] border border-outline-variant/15">
+<div class="space-y-4">
+<div class="w-12 h-12 bg-secondary-container/10 rounded-2xl flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</div>
+<h3 class="text-xl font-headline font-bold leading-tight">Macro Tracking for Performance</h3>
+<p class="text-sm text-zinc-500">The complete PDF guide for elite-level metabolic flexibility.</p>
+</div>
+<button class="mt-6 flex items-center justify-center w-full py-3 rounded-xl border border-primary/20 text-primary font-bold text-sm gap-2 hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-sm">send</span> Assign Now
+                        </button>
+</div>
+</section>
+<!-- Resource Grid -->
+<section class="space-y-6">
+<div class="flex items-end justify-between">
+<div>
+<h2 class="text-2xl font-headline font-bold">Latest Resources</h2>
+<p class="text-zinc-400 text-sm">Fresh content updated weekly</p>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">View archive</button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-outline-variant/10 group hover:shadow-md transition-all">
+<div class="aspect-video rounded-xl overflow-hidden mb-4 bg-surface-container-high relative">
+<img alt="Meal Prep" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Vibrant healthy meal prep containers arranged neatly on a wooden table with fresh vegetables" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZED508GmEqiCvUMVUn07zp4ujwOBEIatuVtEB7novL9XTvPu0b1eqc3qqeS0zK4UFHJ0WtBroezFEdfY3xbWDC6GNKdZjC9eLeIVsbMKD7PiARF4lraJ4KPS95yR_EygFZDq0e8U-EW_KP8JbqSX3Pv-WDNeLTh-WPL3cnqHoG3ENAi-I3I9LS4KdD3IO01fr7quiPIq78dqx_ZW2dGrx1FThUblRbKQZbUszwLu6w5pXHNA5c00n-tGBpxYxQdT5I_GIJXD6Fok"/>
+<div class="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold">8 MIN</div>
+</div>
+<span class="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Nutrition 101</span>
+<h4 class="font-bold text-zinc-900 mt-1 mb-3 line-clamp-2">The Meal Prep Masterclass: 20-Min Strategies</h4>
+<div class="flex items-center gap-2 pt-3 border-t border-zinc-50">
+<button class="flex-1 bg-zinc-100 py-2 rounded-lg text-[11px] font-bold hover:bg-zinc-200 transition-colors">View</button>
+<button class="flex-1 bg-primary text-white py-2 rounded-lg text-[11px] font-bold hover:bg-primary-container transition-colors">Assign</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-outline-variant/10 group hover:shadow-md transition-all">
+<div class="aspect-video rounded-xl overflow-hidden mb-4 bg-surface-container-high relative flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-zinc-300">description</span>
+</div>
+<span class="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">PDF GUIDE</span>
+<h4 class="font-bold text-zinc-900 mt-1 mb-3 line-clamp-2">Post-Workout Recovery: The Science of Sleep</h4>
+<div class="flex items-center gap-2 pt-3 border-t border-zinc-50">
+<button class="flex-1 bg-zinc-100 py-2 rounded-lg text-[11px] font-bold hover:bg-zinc-200 transition-colors">Read</button>
+<button class="flex-1 bg-primary text-white py-2 rounded-lg text-[11px] font-bold hover:bg-primary-container transition-colors">Assign</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-outline-variant/10 group hover:shadow-md transition-all">
+<div class="aspect-video rounded-xl overflow-hidden mb-4 bg-surface-container-high relative">
+<img alt="Success Story" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Toned woman smiling while holding a shaker bottle after a successful workout" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx0q6Eusc3NvcuTCJ6z0irv4NpYIv3YC5aK_2hmWGl7azHV96j-3FYQo0XLZ0DofqnObkfQ3U9oZzs4xXOY9nqPimOOjiRLL8Ink2qxjIi8u1Kagnkm1Lx4oQ4VVtmWX8xEUoAklKKjAiu-evQXR3irAK4Cy6xBQ1LJiB61l6Z0nEtbOuZFutDP1CTMZnkbfMFocMc_e3iR7V1YaxUKguO_H4KqDwxb5cmU8FZzp7B4Z0agihjwzSt3wytsAjH_dWq6APLTpg-fjk"/>
+</div>
+<span class="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Member Success</span>
+<h4 class="font-bold text-zinc-900 mt-1 mb-3 line-clamp-2">Client Spotlight: Breaking Through Plateaus</h4>
+<div class="flex items-center gap-2 pt-3 border-t border-zinc-50">
+<button class="flex-1 bg-zinc-100 py-2 rounded-lg text-[11px] font-bold hover:bg-zinc-200 transition-colors">Watch</button>
+<button class="flex-1 bg-primary text-white py-2 rounded-lg text-[11px] font-bold hover:bg-primary-container transition-colors">Assign</button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest rounded-2xl p-4 shadow-sm border border-outline-variant/10 group hover:shadow-md transition-all">
+<div class="aspect-video rounded-xl overflow-hidden mb-4 bg-surface-container-high relative">
+<img alt="Anatomy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Abstract medical 3D rendering of muscle fibers glowing with blue light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCC6YIP1czrfu_iYsmh38mSrn2aKj1i4XAsdnhAJwqiK1pEW5ATiw4qGJX6oAOsbeO8iE-Nq1yWMMg72A2itZLmA2tLgzPOBOboUxU6o1UTDmDjNPd71p6HMgvqdPUHfSUmGRZSQ-qXisWfzEAmYVqZ7kCnkUmK-UxQ378YqN0YPHAT0ffH9EABGKUg6CK1UXZQpCJucfYg8gtXKPa5DrBCFUkY4IahERl8OKQpcOn8ierLyrlqLRj57C7Pb7lf1nIAiW7Wa8NaE10"/>
+<div class="absolute inset-0 bg-primary/20 mix-blend-overlay"></div>
+</div>
+<span class="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Training Science</span>
+<h4 class="font-bold text-zinc-900 mt-1 mb-3 line-clamp-2">The Biomechanics of the Squat: Depth vs Load</h4>
+<div class="flex items-center gap-2 pt-3 border-t border-zinc-50">
+<button class="flex-1 bg-zinc-100 py-2 rounded-lg text-[11px] font-bold hover:bg-zinc-200 transition-colors">View</button>
+<button class="flex-1 bg-primary text-white py-2 rounded-lg text-[11px] font-bold hover:bg-primary-container transition-colors">Assign</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Resource Request Section -->
+<section class="bg-surface-container-low rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center gap-10">
+<div class="md:w-1/2 space-y-4">
+<h2 class="text-4xl font-headline font-extrabold tracking-tighter">Missing something?</h2>
+<p class="text-zinc-500">Request a custom educational resource or video masterclass for your coaching suite.</p>
+<button class="bg-white text-zinc-900 font-bold px-8 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all">Submit Request</button>
+</div>
+<div class="md:w-1/2 grid grid-cols-2 gap-4">
+<div class="bg-white/40 p-6 rounded-3xl backdrop-blur-sm">
+<h5 class="font-bold text-primary mb-1">98%</h5>
+<p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Retention</p>
+</div>
+<div class="bg-white/40 p-6 rounded-3xl backdrop-blur-sm translate-y-4">
+<h5 class="font-bold text-primary mb-1">2.4k</h5>
+<p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Resources</p>
+</div>
+</div>
+</section>
+</div>
+<!-- Spacer for mobile nav -->
+<div class="h-20 md:hidden"></div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl flex items-center justify-around h-16 border-t border-zinc-100 dark:border-zinc-800 z-50">
+<button class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="text-[10px] font-bold">Dash</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined text-xl">fitness_center</span>
+<span class="text-[10px] font-bold">Train</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="text-[10px] font-bold">Vault</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined text-xl">description</span>
+<span class="text-[10px] font-bold">Forms</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined text-xl">person</span>
+<span class="text-[10px] font-bold">Profile</span>
+</button>
+</nav>
+</div>
+</body></html>

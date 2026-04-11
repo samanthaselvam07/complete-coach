@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Complete Physique | Client Directory</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#1b1b1b",
+              "surface-variant": "#e4e2e2",
+              "on-secondary-fixed": "#321200",
+              "tertiary-fixed": "#e2e2e2",
+              "on-primary-fixed": "#140067",
+              "outline-variant": "#c8c4d7",
+              "primary-container": "#4f40cf",
+              "outline": "#787586",
+              "inverse-surface": "#303031",
+              "on-error-container": "#93000a",
+              "surface-tint": "#5547d5",
+              "on-primary-fixed-variant": "#3c29bd",
+              "surface-container": "#efeded",
+              "on-error": "#ffffff",
+              "error": "#ba1a1a",
+              "inverse-primary": "#c5c0ff",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-container": "#562500",
+              "surface-bright": "#fbf9f8",
+              "surface": "#fbf9f8",
+              "surface-container-highest": "#e4e2e2",
+              "on-surface": "#1b1c1c",
+              "on-tertiary-fixed-variant": "#474747",
+              "primary": "#3620b8",
+              "on-surface-variant": "#474554",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-primary-container": "#cfcaff",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "error-container": "#ffdad6",
+              "primary-fixed-dim": "#c5c0ff",
+              "surface-container-high": "#e9e8e7",
+              "on-secondary-fixed-variant": "#753400",
+              "surface-container-low": "#f5f3f3",
+              "secondary": "#9a4600",
+              "on-background": "#1b1c1c",
+              "surface-dim": "#dbdad9",
+              "secondary-container": "#f87600",
+              "primary-fixed": "#e3dfff",
+              "tertiary": "#414141",
+              "on-tertiary-container": "#cfcfcf",
+              "on-secondary": "#ffffff",
+              "tertiary-container": "#585858",
+              "on-tertiary": "#ffffff",
+              "background": "#fbf9f8",
+              "surface-container-lowest": "#ffffff",
+              "on-primary": "#ffffff",
+              "secondary-fixed": "#ffdbc9"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+      }
+      .glass-nav {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+      }
+      .ghost-border {
+        outline: 1px solid rgba(120, 117, 134, 0.15);
+      }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen">
+<div class="flex">
+<!-- SideNavBar (JSON Derived) -->
+<aside class="fixed inset-y-0 left-0 z-50 h-screen w-64 border-r border-zinc-200/20 bg-white/70 backdrop-blur-xl flex flex-col py-8 px-4 font-['Plus_Jakarta_Sans'] tracking-tight font-semibold shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex items-center gap-3 px-2 mb-10">
+<div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tighter text-zinc-900 leading-none">Complete Physique</h1>
+<p class="text-[10px] uppercase tracking-widest text-zinc-500 mt-1">Elite Performance</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 font-medium hover:bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-[#4F40CF] font-bold border-r-2 border-[#4F40CF] bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 font-medium hover:bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span>Programs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 font-medium hover:bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span>Messages</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 font-medium hover:bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-zinc-100">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 font-medium hover:bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined">help</span>
+<span>Support</span>
+</a>
+<div class="mt-6 flex items-center gap-3 px-2">
+<img alt="Coach Profile" class="w-10 h-10 rounded-full object-cover" data-alt="professional portrait of an elite fitness coach with a confident expression and athletic build in a bright studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnU65veNynmwK9CvnQ6yaIOGNVd0NDn2yCnA6OkmhL8ux21xM6B1kt-igb_g1i4aXZF7D9ntrg_Ckf3cvDXaQqaGjnZTISq5GXDCqjsaNjrIXpezQZq3XWsLxFjS6bf89zO4-HBctM0IRvmH4RQY7EmZSQ6jpcfxXnew1ulwZC6EZ7oqxEDfa0o6JjbE8qSEiWMk5J0dqbgwVyMg-A2kLVzdSiNQrL0wRN2t_zJ5fkpCukkrWn2abuxyyUoYUojWQq5YYTvJKES7g"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold text-on-surface truncate">Alex Sterling</p>
+<p class="text-xs text-on-surface-variant truncate">Master Coach</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-64 min-h-screen bg-background">
+<!-- TopNavBar (JSON Derived) -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-[#fbf9f8]/80 backdrop-blur-md z-40 flex justify-between items-center px-10">
+<h2 class="font-headline font-bold text-2xl text-on-surface">Clients</h2>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="bg-surface-container-high border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search elite roster..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-zinc-400 hover:text-[#4F40CF] transition-all relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-secondary-container rounded-full border-2 border-white"></span>
+</button>
+<button class="text-zinc-400 hover:text-[#4F40CF] transition-all">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Content Padding for Header -->
+<div class="pt-24 pb-12 px-10">
+<!-- Editorial Section: Top Metrics -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+<div class="bg-surface-container-lowest p-6 rounded-3xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] ghost-border">
+<p class="text-outline text-xs font-bold uppercase tracking-widest mb-1">Active Roster</p>
+<h3 class="text-3xl font-headline font-extrabold text-on-surface">42</h3>
+<div class="mt-4 flex items-center text-xs text-green-600 font-bold">
+<span class="material-symbols-outlined text-sm mr-1">trending_up</span>
+<span>+12% this month</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-3xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] ghost-border border-l-4 border-secondary-container">
+<p class="text-outline text-xs font-bold uppercase tracking-widest mb-1">Pending Reviews</p>
+<h3 class="text-3xl font-headline font-extrabold text-on-surface">08</h3>
+<div class="mt-4 flex items-center text-xs text-secondary-container font-bold">
+<span class="material-symbols-outlined text-sm mr-1">priority_high</span>
+<span>High priority</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-3xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] ghost-border">
+<p class="text-outline text-xs font-bold uppercase tracking-widest mb-1">Goal Success Rate</p>
+<h3 class="text-3xl font-headline font-extrabold text-on-surface">94%</h3>
+<div class="mt-4 w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[94%]"></div>
+</div>
+</div>
+<div class="bg-primary-container p-6 rounded-3xl shadow-[0px_10px_30px_rgba(27,28,28,0.2)] flex flex-col justify-between">
+<p class="text-on-primary-container text-xs font-bold uppercase tracking-widest">Growth</p>
+<button class="bg-white text-primary font-bold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-lg">person_add</span>
+              Onboard Client
+            </button>
+</div>
+</section>
+<!-- Main Directory: Editorial List Layout -->
+<div class="bg-surface-container-low rounded-[2rem] p-8">
+<div class="flex items-center justify-between mb-8">
+<div class="flex gap-4">
+<button class="bg-secondary-container text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg shadow-secondary-container/20">All Clients</button>
+<button class="bg-surface-container-highest text-on-surface-variant px-6 py-2 rounded-full text-sm font-bold hover:bg-surface-variant transition-colors">Active Programs</button>
+<button class="bg-surface-container-highest text-on-surface-variant px-6 py-2 rounded-full text-sm font-bold hover:bg-surface-variant transition-colors">High Risk</button>
+</div>
+<div class="flex items-center gap-2 text-outline">
+<span class="text-xs font-bold">SORT BY:</span>
+<button class="flex items-center gap-1 text-on-surface font-bold text-sm">
+                Last Activity <span class="material-symbols-outlined text-lg">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Client Rows -->
+<div class="space-y-4">
+<!-- Client 1 -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 flex items-center justify-between shadow-[0px_10px_30px_rgba(27,28,28,0.04)] transition-all hover:translate-y-[-2px] hover:shadow-[0px_15px_40px_rgba(27,28,28,0.08)] group">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative">
+<img class="w-16 h-16 rounded-2xl object-cover" data-alt="portrait of a focused athletic woman in high-end gym wear with soft cinematic natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxOPeC6myf5Hkal_2kBlihIfX-A1oF8YJ5RdxVgnPpCcncuwvZPTUb_BirPy9BI2sfuV-Myatv_M1gIT_MGLCW1L4s7To64PllJqi4m_wC7G6KoUclHZNhQnnfJq8-Fh-NIhuloQ0U-m7AQtBHXG5IQOhOSLitG7o6f7Cm5RmfhgHznawR6EOJ9To56d3Y2VlWzOiTDpRSmtSHOESVUDQKopp6Y15Ae5UbTBhVgS-oOZ_XBX4wXovKT3XIEOGDlEtATujypN-vvo4"/>
+<span class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></span>
+</div>
+<div>
+<h4 class="text-xl font-headline font-bold text-on-surface group-hover:text-primary transition-colors">Marcus Thorne</h4>
+<p class="text-sm text-outline font-medium">Competition Prep · 12 Weeks Out</p>
+</div>
+</div>
+<div class="flex items-center gap-12 text-center px-12 border-x border-zinc-100">
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Compliance</p>
+<p class="text-lg font-headline font-extrabold text-on-surface">98%</p>
+</div>
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Weight</p>
+<p class="text-lg font-headline font-extrabold text-on-surface">92.4<span class="text-xs ml-0.5 text-outline">kg</span></p>
+</div>
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Last Update</p>
+<p class="text-sm font-bold text-on-surface">2h ago</p>
+</div>
+</div>
+<div class="flex items-center gap-4 pl-12">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-secondary-container/10 text-secondary-container flex items-center justify-center ghost-border text-[10px] font-bold">C</div>
+<div class="w-8 h-8 rounded-full bg-primary-container/10 text-primary-container flex items-center justify-center ghost-border text-[10px] font-bold">P</div>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-outline hover:text-primary hover:bg-primary-fixed transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Client 2 -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 flex items-center justify-between shadow-[0px_10px_30px_rgba(27,28,28,0.04)] transition-all hover:translate-y-[-2px] group">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative">
+<img class="w-16 h-16 rounded-2xl object-cover" data-alt="confident professional man in casual designer clothing looking at camera with sophisticated urban office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVBI-SRCgi5Z4JIh8M92xZKZ4TksnX7sCBfQUAKmwcvUPzgxmj8My43JPSJHE2r8lR0cG1CcQWSMhXzU0k9_dz3SRO3SJXSmxVbNexAekF1a8BqJlXab4o_pXb4CNY-NGAqhagvyTV72VeoKoP5djp4YR5LeVHSwnpm9b5CWKnf-5GfmDYEe7dUcPXw3rqb11jJYljDNV6AXWg2eRRFvAPOwPjRJ77FyQsDiGtw_LxxVcObpa1Hx-a8wZCuXaWbowoQ08zzFq51YY"/>
+<span class="absolute -bottom-1 -right-1 w-5 h-5 bg-zinc-300 border-4 border-white rounded-full"></span>
+</div>
+<div>
+<h4 class="text-xl font-headline font-bold text-on-surface group-hover:text-primary transition-colors">Elena Rodriguez</h4>
+<p class="text-sm text-outline font-medium">Functional Strength · Maintenance</p>
+</div>
+</div>
+<div class="flex items-center gap-12 text-center px-12 border-x border-zinc-100">
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Compliance</p>
+<p class="text-lg font-headline font-extrabold text-on-surface">82%</p>
+</div>
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Weight</p>
+<p class="text-lg font-headline font-extrabold text-on-surface">64.2<span class="text-xs ml-0.5 text-outline">kg</span></p>
+</div>
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Last Update</p>
+<p class="text-sm font-bold text-on-surface">1d ago</p>
+</div>
+</div>
+<div class="flex items-center gap-4 pl-12">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-secondary-container/10 text-secondary-container flex items-center justify-center ghost-border text-[10px] font-bold">N</div>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-outline hover:text-primary hover:bg-primary-fixed transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Client 3 - Action Required -->
+<div class="bg-white border-2 border-secondary-container/20 rounded-3xl p-6 flex items-center justify-between shadow-[0px_10px_30px_rgba(248,118,0,0.06)] transition-all hover:translate-y-[-2px] group relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary-container"></div>
+<div class="flex items-center gap-6 flex-1">
+<div class="relative">
+<img class="w-16 h-16 rounded-2xl object-cover" data-alt="portrait of a bearded man with a fit physique looking determined in moody gym lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkpfwk7qK0YeIa-G67uLakSjZ7u3bzZltDrTU_MKOsd3X3DD3xGzDyPJWvog6-Eiu1sxFOmvCa07WFpoz-vGexhwGdlX32nx8Exf1Fso6XKlgy6ioS3kDyfa2sBTbek9xhGqmVGSbI8v6bzl9DTx9oX3AVXyz-HsN8ttanlTHLklLG1FNKB5W1mPaj7fc-GsanEw9_9j9odcuOC_9I3uAsSu1m1R6GoCepyaqrrl3JWE1vQhiEhaj8L_6B8b0CvkHAv9BHjQ6NrLU"/>
+<span class="absolute -bottom-1 -right-1 w-5 h-5 bg-secondary-container border-4 border-white rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-white" style="font-variation-settings: 'wght' 800;">exclamation</span>
+</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h4 class="text-xl font-headline font-bold text-on-surface group-hover:text-primary transition-colors">Jordan Vance</h4>
+<span class="bg-secondary-fixed text-on-secondary-fixed px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase">Review Needed</span>
+</div>
+<p class="text-sm text-outline font-medium">Hypertrophy Block 2 · Week 4</p>
+</div>
+</div>
+<div class="flex items-center gap-12 text-center px-12 border-x border-zinc-100">
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Compliance</p>
+<p class="text-lg font-headline font-extrabold text-error">45%</p>
+</div>
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Weight</p>
+<p class="text-lg font-headline font-extrabold text-on-surface">88.9<span class="text-xs ml-0.5 text-outline">kg</span></p>
+</div>
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Last Update</p>
+<p class="text-sm font-bold text-on-surface">3d ago</p>
+</div>
+</div>
+<div class="flex items-center gap-4 pl-12">
+<button class="bg-secondary-container text-white px-4 py-2 rounded-xl text-xs font-bold hover:scale-105 transition-transform">Update Plan</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-outline hover:text-primary hover:bg-primary-fixed transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Client 4 -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 flex items-center justify-between shadow-[0px_10px_30px_rgba(27,28,28,0.04)] transition-all hover:translate-y-[-2px] group">
+<div class="flex items-center gap-6 flex-1">
+<div class="relative">
+<img class="w-16 h-16 rounded-2xl object-cover" data-alt="natural headshot of a radiant woman with a warm smile in a soft daylight setting with blurred greenery" src="https://lh3.googleusercontent.com/aida-public/AB6AXuClD7NMKCfazXH_ZVofeqZZnawDQxi0v_8rehjYgfZFFqBbF5py9t2cyjOIhIEbrNm5M7asn9uyhMFvRj5VJ_D2gVfNUAA54gzq_scDVO3aaxdXE3pNuLPNsOv3YJBsd0oZaiBvL1c9tPBYTW8eQMbNP-aXetrTkkfLctXcM9HyI2eLhdqW3QgDOZi0Ju66D0cZ1DZ9mNVCDV-imMCu3iVILZPJxkallz7YQIhGLpa4QEOkUyIYSL3viqq-DqdJY0AHRq9DO7plrnw"/>
+<span class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></span>
+</div>
+<div>
+<h4 class="text-xl font-headline font-bold text-on-surface group-hover:text-primary transition-colors">Sarah Jenkins</h4>
+<p class="text-sm text-outline font-medium">Post-Natal Recovery · Week 2</p>
+</div>
+</div>
+<div class="flex items-center gap-12 text-center px-12 border-x border-zinc-100">
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Compliance</p>
+<p class="text-lg font-headline font-extrabold text-on-surface">92%</p>
+</div>
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Weight</p>
+<p class="text-lg font-headline font-extrabold text-on-surface">68.1<span class="text-xs ml-0.5 text-outline">kg</span></p>
+</div>
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Last Update</p>
+<p class="text-sm font-bold text-on-surface">5h ago</p>
+</div>
+</div>
+<div class="flex items-center gap-4 pl-12">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-primary-container/10 text-primary-container flex items-center justify-center ghost-border text-[10px] font-bold">P</div>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-outline hover:text-primary hover:bg-primary-fixed transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Pagination / View More -->
+<div class="mt-8 flex justify-center">
+<button class="group flex items-center gap-2 text-outline font-bold text-sm hover:text-on-surface transition-colors">
+              Show more clients
+              <span class="material-symbols-outlined group-hover:translate-y-1 transition-transform">expand_more</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Editorial Sidebar: Performance Insights -->
+<div class="fixed top-24 right-10 w-80 hidden xl:block space-y-6">
+<div class="bg-surface-container-lowest p-8 rounded-[2rem] shadow-[0px_10px_40px_rgba(27,28,28,0.08)] ghost-border">
+<h5 class="font-headline font-bold text-lg mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container">auto_awesome</span>
+        AI Insights
+      </h5>
+<div class="space-y-6">
+<div class="bg-surface-container-low p-4 rounded-2xl">
+<p class="text-xs font-bold text-primary uppercase tracking-tighter mb-2">Trend Alert</p>
+<p class="text-sm text-on-surface leading-relaxed">Compliance across the <span class="font-bold">Strength Elite</span> group is up 14% since new macros were applied.</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-2xl border-l-2 border-secondary-container">
+<p class="text-xs font-bold text-secondary-container uppercase tracking-tighter mb-2">Review Required</p>
+<p class="text-sm text-on-surface leading-relaxed">3 clients have stalled progress over 14 days. Click to batch-review.</p>
+</div>
+</div>
+<button class="w-full mt-8 py-3 bg-surface-container-high rounded-xl text-xs font-extrabold uppercase tracking-widest hover:bg-surface-variant transition-colors">View All Insights</button>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-[2rem] shadow-[0px_10px_40px_rgba(27,28,28,0.08)] ghost-border overflow-hidden relative group">
+<div class="relative z-10">
+<h5 class="font-headline font-bold text-lg text-on-surface mb-2">Team Sync</h5>
+<p class="text-xs text-outline mb-6">Connect with fellow specialist coaches.</p>
+<div class="flex -space-x-3 mb-8">
+<img class="w-10 h-10 rounded-full border-2 border-white object-cover" data-alt="portrait of a smiling female dietitian with a friendly professional appearance" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvH78HYmIlz2whCshLxjNhDDMkGnWWjBqz4MCl9dIiKjOyT3dt12mnS5XTEKDtqhzMaMqiaCtDjefxfeZBjBLUfAuSkoT0421q9p3sp_VhstFjM-J94JrXFQfv_FIHO3cIHvGj0fWZtibwRkncvfnOkLGmyAVoTga1KfU1L_T9UALKaxpr0pM_3JuYgmzkErca1d8PxOQdaB7qpQnbLgzNt4qdHXVGQbfozeANZbFK4Fq6sW8wDO1cv7duEgqaafYUbI2XLte6T_E"/>
+<img class="w-10 h-10 rounded-full border-2 border-white object-cover" data-alt="professional portrait of a male strength conditioning specialist in athletic attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCusGpwWQv2XyMk4-rLyonFLS86qUXEApdxMAUUiyXofXquQrMoBSjIMWwS7QmycMNac0zBwUmN6lIGAcXoH8HCzQYm2IhdmO4bob6dLYl6ZQh0Zz96yck90Plo5Ytu_mqoAW042Z-6zAyg9tcYHzN5ayOd7V4WhZCLLo_-P0mDnAgeHXkzHMwdcCR9WAtfd-zQgF8zQIbMeIU7A8zAAd1xfU6hKaFkJdOxuXDOeU1CMVZ_qgWuG5NOJ03YQzsCIFUOmA5bhRzDZzM"/>
+<img class="w-10 h-10 rounded-full border-2 border-white object-cover" data-alt="close up of a professional health consultant with a friendly and supportive expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuIlXSaGEBi64y8tYIAd0GlWmewz45cUjppmx_YmHETMrYdJqRQH3tft57jl9nn5F0BwzdI4k9z0mQSy2z3yD6OTHkl1OCWpIaXJD9jaZH4or1oRPiK0FfSTqmgjeD2LHxWXzW_yDVq-pgPmznOeRANXJ1l1Ia2xmQ2AN5G4ank0TL_N0x4stF3DJWoXzkJFdNLC48KNinexX94US9PIi3hFT8tnutaz5ZeRXq0KiigNBcLv9HJxfVVAYToRQoclSGr-gT4UIrrZ4"/>
+<div class="w-10 h-10 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold">+2</div>
+</div>
+<button class="text-primary font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
+          Open Slack Channel <span class="material-symbols-outlined text-sm">arrow_right_alt</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

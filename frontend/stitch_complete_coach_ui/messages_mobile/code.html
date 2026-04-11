@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-tertiary-fixed-variant": "#474747",
+            "outline-variant": "#c8c4d7",
+            "secondary-fixed-dim": "#ffb68c",
+            "on-tertiary-fixed": "#1b1b1b",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "tertiary": "#414141",
+            "surface-container-low": "#f5f3f3",
+            "primary-container": "#4f40cf",
+            "on-surface-variant": "#474554",
+            "error-container": "#ffdad6",
+            "surface-variant": "#e4e2e2",
+            "secondary-container": "#f87600",
+            "on-secondary-fixed-variant": "#753400",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-highest": "#e4e2e2",
+            "outline": "#787586",
+            "error": "#ba1a1a",
+            "surface-container": "#efeded",
+            "on-primary": "#ffffff",
+            "on-error-container": "#93000a",
+            "background": "#fbf9f8",
+            "primary": "#3620b8",
+            "primary-fixed-dim": "#c5c0ff",
+            "on-secondary-container": "#562500",
+            "on-primary-container": "#cfcaff",
+            "secondary-fixed": "#ffdbc9",
+            "surface-tint": "#5547d5",
+            "surface-bright": "#fbf9f8",
+            "surface": "#fbf9f8",
+            "secondary": "#9a4600",
+            "on-primary-fixed": "#140067",
+            "surface-dim": "#dbdad9",
+            "on-background": "#1b1c1c",
+            "on-surface": "#1b1c1c",
+            "inverse-on-surface": "#f2f0f0",
+            "on-secondary-fixed": "#321200",
+            "surface-container-high": "#e9e8e7",
+            "primary-fixed": "#e3dfff",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-container": "#cfcfcf",
+            "on-primary-fixed-variant": "#3c29bd",
+            "on-error": "#ffffff",
+            "inverse-surface": "#303031",
+            "tertiary-container": "#585858",
+            "tertiary-fixed": "#e2e2e2",
+            "inverse-primary": "#c5c0ff",
+            "on-secondary": "#ffffff"
+          },
+          fontFamily: {
+            "headline": ["Plus Jakarta Sans"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .glass-effect {
+      backdrop-filter: blur(20px);
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body min-h-screen flex flex-col">
+<!-- TopAppBar Component -->
+<header class="fixed top-0 w-full z-50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-sm dark:shadow-none flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high ring-2 ring-primary/10">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="Close-up headshot of a professional fitness coach with a warm smile, natural outdoor lighting, blurred greenery background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1n5TpMRQ74XHQ0U5MmylZLoDqwfju4B-ziGDb4uji6yTjEY99vbJjqDSBCkC-06CIGA3i53E6eP83E0pyJl6l6slZujEeY6hbL0zHYvsUkvXVvdSu8qKXcVLkGZjVdPa47AL5F4rhohRqVtLheogxLoXgREIPM2kNUo-ZPI_SgZnWIoYs0Kk_JuhcWs8A1FI_M9n8zrtet5vNdYPPiTkdu809Ofy2Cs7DUhhbJwT02WIYfBMcv8gbuGIvfdahbPJ0FgI8HuaLtis"/>
+</div>
+<span class="text-lg font-extrabold tracking-tighter text-indigo-700 dark:text-indigo-400 font-headline uppercase">COMPLETE PHYSIQUE</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-indigo-700 dark:text-indigo-400 hover:opacity-80 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined">videocam</span>
+</button>
+<button class="text-zinc-500 dark:text-zinc-400 hover:opacity-80 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 mt-[72px] mb-[88px] flex flex-col md:flex-row max-w-7xl mx-auto w-full gap-6 px-4 md:px-6">
+<!-- Chat Conversation Section -->
+<section class="flex-1 flex flex-col h-[calc(100vh-176px)] min-h-[500px]">
+<!-- Header / Active Client -->
+<div class="flex items-center justify-between py-4 border-b border-outline-variant/15">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img alt="Marcus Chen profile" class="w-12 h-12 rounded-full object-cover shadow-sm" data-alt="Portrait of a determined young man with short dark hair, wearing athletic gear, soft cinematic studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuANvX3SqUhBSvPhwGZXYdP4NtO6sgcec8S6WkBCcrw9RiDTrFtUk11RyIPsuclVal_bggyoeo2pfjyMu-TEUqXjyv3TVjegzzO4k4neV-2uyODfwgS6HTWVN-lg_ysIr0VssQOBdj9WoZj_VC-B5baVSEkqHnk65AYe1S18-p1wR4C2r8K8vj48RiyG3bBm5Svy5Qfy2dAiGkYqxS9SoTr_LMZc8qn6Z5rlVGpcOCccZOZz1P1Rs6ACRIgmJB0F1w2ucVmnBuN__nk"/>
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div>
+<h1 class="font-headline font-bold text-on-surface leading-tight text-lg">Marcus Chen</h1>
+<p class="text-sm text-on-surface-variant font-medium">Hypertrophy Phase • Week 6</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="p-2 rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">info</span>
+</button>
+</div>
+</div>
+<!-- Messages History -->
+<div class="flex-1 overflow-y-auto py-6 space-y-6 hide-scrollbar">
+<!-- Date Marker -->
+<div class="flex justify-center">
+<span class="text-[11px] font-bold tracking-widest text-on-surface-variant/60 uppercase bg-surface-container px-3 py-1 rounded-full">Today</span>
+</div>
+<!-- Coach Message -->
+<div class="flex flex-col items-start max-w-[85%]">
+<div class="bg-surface-container-low text-on-surface px-5 py-3.5 rounded-2xl rounded-bl-none text-sm leading-relaxed shadow-sm">
+            Great session today, Marcus! Your intensity on the Romanian deadlifts was impressive. How are your hamstrings feeling this evening?
+          </div>
+<span class="text-[10px] mt-1.5 ml-1 font-semibold text-on-surface-variant/50">09:14 AM</span>
+</div>
+<!-- Client Message -->
+<div class="flex flex-col items-end self-end max-w-[85%]">
+<div class="bg-primary text-on-primary px-5 py-3.5 rounded-2xl rounded-br-none text-sm leading-relaxed shadow-md">
+            Feeling the burn for sure! 😅 
+            Quick question about the macros for tonight—can I swap the avocado for almond butter? I ran out during prep.
+          </div>
+<span class="text-[10px] mt-1.5 mr-1 font-semibold text-on-surface-variant/50">09:42 AM</span>
+</div>
+<!-- Coach Message with Data -->
+<div class="flex flex-col items-start max-w-[85%]">
+<div class="bg-surface-container-low text-on-surface px-5 py-3.5 rounded-2xl rounded-bl-none text-sm leading-relaxed shadow-sm">
+            Absolutely. Just aim for 15g of almond butter to match the fat content closely. I've updated your daily log to reflect the change.
+          </div>
+<div class="mt-3 bg-surface-container-lowest border border-outline-variant/20 p-3 rounded-2xl flex items-center gap-4 shadow-sm">
+<div class="w-10 h-10 bg-secondary-container/10 text-secondary-container rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">restaurant</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Plan Updated</p>
+<p class="text-[10px] text-on-surface-variant">Evening Nutrition: Fat Source Adjustment</p>
+</div>
+</div>
+<span class="text-[10px] mt-1.5 ml-1 font-semibold text-on-surface-variant/50">10:05 AM</span>
+</div>
+<!-- Client Voice Message -->
+<div class="flex flex-col items-end self-end w-full max-w-[70%]">
+<div class="bg-primary-container text-on-primary-container px-4 py-3 rounded-2xl rounded-br-none flex items-center gap-3 w-full shadow-md">
+<span class="material-symbols-outlined cursor-pointer">play_arrow</span>
+<div class="flex-1 h-6 flex items-center gap-1">
+<div class="w-1 h-3 bg-on-primary-container/40 rounded-full"></div>
+<div class="w-1 h-5 bg-on-primary-container/80 rounded-full"></div>
+<div class="w-1 h-2 bg-on-primary-container/40 rounded-full"></div>
+<div class="w-1 h-4 bg-on-primary-container rounded-full"></div>
+<div class="w-1 h-6 bg-on-primary-container/60 rounded-full"></div>
+<div class="w-1 h-3 bg-on-primary-container/90 rounded-full"></div>
+<div class="w-1 h-5 bg-on-primary-container/50 rounded-full"></div>
+<div class="w-1 h-4 bg-on-primary-container rounded-full"></div>
+</div>
+<span class="text-[10px] font-bold">0:12</span>
+</div>
+<span class="text-[10px] mt-1.5 mr-1 font-semibold text-on-surface-variant/50">11:15 AM</span>
+</div>
+</div>
+<!-- Modern Chat Input -->
+<div class="pt-4 pb-2">
+<div class="bg-surface-container-high rounded-full px-4 py-2 flex items-center gap-3 focus-within:ring-2 ring-primary/20 transition-all">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 placeholder:text-on-surface-variant/60 font-medium" placeholder="Type a message..." type="text"/>
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">mood</span>
+</button>
+<button class="w-10 h-10 bg-primary text-on-primary rounded-full flex items-center justify-center hover:shadow-lg active:scale-90 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Side Panel: Client Snapshot -->
+<aside class="hidden lg:flex flex-col w-80 space-y-6 overflow-y-auto hide-scrollbar">
+<!-- Status Card -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col gap-5">
+<div class="flex justify-between items-start">
+<h3 class="font-headline font-extrabold text-on-surface text-base uppercase tracking-tight">Client Pulse</h3>
+<span class="bg-secondary-container/10 text-secondary-container text-[10px] font-black px-2 py-1 rounded-full uppercase">On Track</span>
+</div>
+<!-- Compliance Mini-Grid -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-background rounded-2xl p-4 flex flex-col gap-1">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Compliance</span>
+<span class="text-xl font-headline font-black text-primary">94%</span>
+</div>
+<div class="bg-background rounded-2xl p-4 flex flex-col gap-1">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Workout</span>
+<span class="text-xl font-headline font-black text-secondary">6/6</span>
+</div>
+</div>
+<!-- Nutrition Progress Glass -->
+<div class="space-y-2">
+<div class="flex justify-between items-center px-1">
+<span class="text-xs font-bold text-on-surface">Nutrition Target</span>
+<span class="text-xs font-medium text-on-surface-variant">2,450 kcal</span>
+</div>
+<div class="h-3 w-full bg-surface-container rounded-full overflow-hidden relative">
+<div class="absolute inset-0 bg-gradient-to-r from-secondary to-secondary-container rounded-full" style="width: 82%;"></div>
+</div>
+</div>
+</div>
+<!-- Current Phase Card -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<h3 class="font-headline font-extrabold text-on-surface text-base uppercase tracking-tight mb-4">Phase: Sculpting</h3>
+<div class="relative h-48 rounded-2xl overflow-hidden mb-4 group">
+<img alt="Training phase visual" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Athletic man performing a bicep curl with a heavy dumbbell, focused expression, dramatic lighting highlighting muscle definition" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsLEp7g8mISf-BuodFtcjErroRnRf3Im1m61T-yJlQaa179nWEbZtc3gmRc24VPlIeO-czYg3GaGZiBbrjNkGNZQiCrA4N9FLgcXRDdH9klPWAoIF5Bt2YY-Y2VL6jJuy8XYgSIeGdYvEF0B-aMpbfF3TbFvsXQqTQidQ9QirEEVIzGypnPQRe6nRYhhq1F1D2R-xSSEgeSlvTnrgWivVsG80KUhHNsEbVQ5EFvmxC3tPnBmaeD6dFjmoRpyvuCuLi2gnXVFH2SnA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-zinc-900/80 to-transparent flex flex-col justify-end p-4">
+<p class="text-white font-headline font-bold text-lg">Hypertrophy II</p>
+<p class="text-white/70 text-xs font-medium">Goal: Maximize volume, maintain 12% body fat.</p>
+</div>
+</div>
+<button class="w-full py-3 bg-surface-container-low text-primary font-bold text-xs rounded-xl hover:bg-primary hover:text-white transition-all uppercase tracking-widest">
+          View Protocol
+        </button>
+</div>
+<!-- Client Notes -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<h3 class="font-headline font-extrabold text-on-surface text-base uppercase tracking-tight mb-3">Coach's Memo</h3>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+          Marcus responded well to the drop-set protocol on Chest Day. Focus on increasing his recovery time between sessions. Monitor right shoulder impingement during vertical presses.
+        </p>
+</div>
+</aside>
+</main>
+<!-- BottomNavBar Component -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-8 pt-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl z-50 rounded-t-3xl shadow-[0px_-10px_30px_rgba(27,28,28,0.06)] border-t border-white/20">
+<a class="flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-400 scale-110 transition-transform active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="fitness_center">fitness_center</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide mt-1">Coach</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-indigo-500 active:scale-90 transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="bolt">bolt</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide mt-1">Workouts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-indigo-500 active:scale-90 transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="restaurant">restaurant</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide mt-1">Nutrition</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-indigo-500 active:scale-90 transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="insights">insights</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide mt-1">Progress</span>
+</a>
+</nav>
+</body></html>

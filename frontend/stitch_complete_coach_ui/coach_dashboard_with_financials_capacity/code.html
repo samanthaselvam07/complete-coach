@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-fixed-variant": "#3c29bd",
+              "surface-container": "#efeded",
+              "surface-container-highest": "#e4e2e2",
+              "tertiary": "#414141",
+              "surface-container-high": "#e9e8e7",
+              "on-error": "#ffffff",
+              "on-secondary-fixed-variant": "#753400",
+              "on-primary-fixed": "#140067",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "on-secondary-fixed": "#321200",
+              "error": "#ba1a1a",
+              "primary-container": "#4f40cf",
+              "surface-tint": "#5547d5",
+              "surface-dim": "#dbdad9",
+              "tertiary-container": "#585858",
+              "surface-bright": "#fbf9f8",
+              "primary-fixed": "#e3dfff",
+              "inverse-surface": "#303031",
+              "on-primary": "#ffffff",
+              "on-tertiary-fixed": "#1b1b1b",
+              "on-primary-container": "#cfcaff",
+              "inverse-primary": "#c5c0ff",
+              "surface-variant": "#e4e2e2",
+              "outline": "#787586",
+              "on-surface-variant": "#474554",
+              "on-surface": "#1b1c1c",
+              "inverse-on-surface": "#f2f0f0",
+              "secondary-fixed": "#ffdbc9",
+              "surface": "#fbf9f8",
+              "outline-variant": "#c8c4d7",
+              "on-tertiary": "#ffffff",
+              "background": "#fbf9f8",
+              "secondary-container": "#f87600",
+              "on-background": "#1b1c1c",
+              "surface-container-lowest": "#ffffff",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-tertiary-fixed-variant": "#474747",
+              "primary": "#3620b8",
+              "on-secondary-container": "#562500",
+              "on-error-container": "#93000a",
+              "tertiary-fixed": "#e2e2e2",
+              "on-secondary": "#ffffff",
+              "primary-fixed-dim": "#c5c0ff",
+              "secondary": "#9a4600",
+              "on-tertiary-container": "#cfcfcf",
+              "surface-container-low": "#f5f3f3",
+              "error-container": "#ffdad6"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-effect {
+        backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.7);
+      }
+      .ghost-border {
+        outline: 1px solid rgba(200, 196, 215, 0.15);
+      }
+      .sidebar-glass {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(40px);
+        -webkit-backdrop-filter: blur(40px);
+      }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface flex min-h-screen">
+<!-- Sidebar Navigation (Exact ID Persistence from SCREEN_70) -->
+<aside class="h-screen w-72 sticky top-0 z-50 sidebar-glass flex flex-col py-8 px-5 shadow-[20px_0px_60px_rgba(27,28,28,0.03)] border-r border-outline-variant/10">
+<div class="mb-10 px-3">
+<h1 class="text-xl font-black text-primary-container font-headline tracking-tighter">MCP Coaching</h1>
+<span class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Coach Portal</span>
+</div>
+<div class="flex items-center gap-3 px-3 mb-8">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover shadow-sm ring-2 ring-primary-container/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAM0tVLKLCy6sPR072UIlEVj8w-OsB4vFWoQhAaFKu_NksLYnUKmJgCOBx-IDlMSLgR587PRTcaNV1qxTsrTz6O0sJN5UZHm3OHIs_0JX8uio6YOKaibk3m_wxDR6Q0gn0pOFhaob8v9uuKnnAG8HrIFdtHEM40RsoHy3Dmxi2B7szekGE2xXuVID-vuLf_Pp4XC0XP_b8Wt9OELJHPUyHPZHnxgXTcHkjnfvRxKLdJbHQsN2Un08t-D52Qn0FxvyU_JRXt1F4gHaU"/>
+<div>
+<p class="font-headline font-bold text-sm leading-tight">Coach Dashboard</p>
+<p class="text-xs text-on-surface-variant font-medium">Elite Performance</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1.5 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-primary-container bg-primary-container/10 border-r-4 border-primary-container transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-headline font-bold text-[14px]">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-headline font-bold text-[14px]">Training</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span class="font-headline font-bold text-[14px]">Nutrition</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="font-headline font-bold text-[14px]">Education</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="#">
+<span class="material-symbols-outlined">pill</span>
+<span class="font-headline font-bold text-[14px]">Supplementation</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-headline font-bold text-[14px]">Clients</span>
+</a>
+</nav>
+<div class="mt-8 space-y-4">
+<button class="w-full py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-2xl font-headline font-bold text-sm shadow-[0_10px_25px_-5px_rgba(54,32,184,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-base">add</span>
+                New Client
+            </button>
+<div class="pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant font-medium hover:text-zinc-900 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="text-xs font-bold font-headline">Coach Profile</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 h-screen overflow-y-auto bg-background p-8 lg:p-12">
+<header class="flex justify-between items-end mb-12">
+<div class="space-y-2">
+<h1 class="font-headline text-4xl font-extrabold tracking-tight text-on-surface">Performance Pulse</h1>
+<p class="text-on-surface-variant font-medium">Overview for September 2023</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-surface-container-lowest px-4 py-2 rounded-full ghost-border flex items-center gap-2">
+<span class="w-2 h-2 bg-green-500 rounded-full"></span>
+<span class="text-sm font-semibold text-on-surface">Coach Status: Online</span>
+</div>
+</div>
+</header>
+<!-- Top Grid: Financial Analytics & Stats -->
+<div class="grid grid-cols-12 gap-8 mb-12">
+<!-- Revenue Analytics Card (Bento Style from SCREEN_52) -->
+<section class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-[2.5rem] p-10 shadow-[0px_20px_50px_rgba(27,28,28,0.04)] flex flex-col justify-between overflow-hidden relative group border border-outline-variant/5">
+<div class="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[100px] -mr-24 -mt-24"></div>
+<div class="flex justify-between items-start mb-10 relative z-10">
+<div>
+<h3 class="text-on-surface-variant font-bold text-xs uppercase tracking-[0.2em] mb-2">Monthly Revenue</h3>
+<div class="flex items-baseline gap-4">
+<span class="text-5xl font-headline font-black tracking-tighter">$24,850</span>
+<span class="bg-secondary-container/10 text-secondary font-bold text-xs px-3 py-1 rounded-full ring-1 ring-secondary/20">+12.5%</span>
+</div>
+</div>
+<select class="bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-2 text-xs font-bold text-on-surface-variant focus:ring-primary/20 cursor-pointer">
+<option>Last 30 Days</option>
+<option>Last 6 Months</option>
+</select>
+</div>
+<!-- Growth Chart Representation (from SCREEN_24/SCREEN_52 hybrid) -->
+<div class="h-56 w-full flex items-end gap-3 px-2 relative z-10">
+<div class="flex-1 bg-primary/5 rounded-t-2xl h-[40%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/5 rounded-t-2xl h-[55%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/5 rounded-t-2xl h-[45%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/5 rounded-t-2xl h-[70%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/5 rounded-t-2xl h-[60%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-gradient-to-t from-primary-container to-primary-container/80 rounded-t-2xl h-[85%] hover:scale-x-105 transition-all cursor-pointer shadow-[0_0_30px_rgba(79,64,207,0.3)] relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] font-bold px-2 py-1 rounded hidden group-hover:block">Peak Day</div>
+</div>
+<div class="flex-1 bg-primary/10 rounded-t-2xl h-[75%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+</div>
+</section>
+<!-- Summary Stats Stack -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-8">
+<!-- Active Roster Card (from SCREEN_52) -->
+<article class="bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0px_20px_50px_rgba(27,28,28,0.04)] flex flex-col justify-center border border-outline-variant/5">
+<div class="flex items-center gap-5 mb-6">
+<div class="w-14 h-14 rounded-2xl bg-secondary-container/10 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined text-3xl">groups</span>
+</div>
+<div>
+<h4 class="font-headline font-bold text-on-surface-variant text-sm tracking-wide">Active Clients</h4>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-4xl font-headline font-black">42</span>
+<span class="text-on-surface-variant/60 font-bold text-xs uppercase">/ 84</span>
+</div>
+</div>
+</div>
+<div class="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[50%]"></div>
+</div>
+<p class="text-[10px] font-bold text-on-surface-variant mt-2 uppercase tracking-widest">50% CAPACITY REACHED</p>
+</article>
+<!-- Pending Review Card (from SCREEN_52) -->
+<article class="bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0px_20px_50px_rgba(27,28,28,0.04)] flex flex-col justify-center border border-outline-variant/5">
+<div class="flex items-center gap-5 mb-6">
+<div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-3xl">assignment_late</span>
+</div>
+<div>
+<h4 class="font-headline font-bold text-on-surface-variant text-sm tracking-wide">Pending Check Ins</h4>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-4xl font-headline font-black">08</span>
+<span class="text-on-surface-variant/60 font-bold text-xs uppercase">Check ins</span>
+</div>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="px-2 py-1 bg-error-container text-error text-[10px] font-bold rounded">3 URGENT</span>
+<span class="px-2 py-1 bg-surface-container-high text-on-surface-variant text-[10px] font-bold rounded">5 REGULAR</span>
+</div>
+</article>
+</div>
+</div>
+<!-- Command Center & Main Content Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<div class="lg:col-span-8 space-y-8">
+<section>
+<h3 class="font-headline text-2xl font-black mb-8 text-on-surface flex items-center gap-2">
+                        Command Center
+                    </h3>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<button class="bg-surface-container-lowest p-6 rounded-2xl ghost-border hover:bg-primary hover:text-white transition-all duration-300 flex flex-col items-center text-center gap-3 group">
+<span class="material-symbols-outlined text-3xl text-primary group-hover:text-white transition-colors">edit_note</span>
+<span class="text-xs font-bold font-headline uppercase tracking-tight">Create New Program</span>
+</button>
+<button class="bg-surface-container-lowest p-6 rounded-2xl ghost-border hover:bg-secondary hover:text-white transition-all duration-300 flex flex-col items-center text-center gap-3 group">
+<span class="material-symbols-outlined text-3xl text-secondary group-hover:text-white transition-colors">restaurant_menu</span>
+<span class="text-xs font-bold font-headline uppercase tracking-tight">Nutrition Plans</span>
+</button>
+<button class="bg-surface-container-lowest p-6 rounded-2xl ghost-border hover:bg-primary-container hover:text-white transition-all duration-300 flex flex-col items-center text-center gap-3 group">
+<span class="material-symbols-outlined text-3xl text-primary-container group-hover:text-white transition-colors">person_add</span>
+<span class="text-xs font-bold font-headline uppercase tracking-tight">Invite Client</span>
+</button>
+<button class="bg-surface-container-lowest p-6 rounded-2xl ghost-border hover:bg-tertiary hover:text-white transition-all duration-300 flex flex-col items-center text-center gap-3 group">
+<span class="material-symbols-outlined text-3xl text-tertiary group-hover:text-white transition-colors">campaign</span>
+<span class="text-xs font-bold font-headline uppercase tracking-tight">Message Roster</span>
+</button>
+</div>
+</section>
+<!-- Recent Messages -->
+<section>
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline text-2xl font-black text-on-surface">Recent Messages</h3>
+<button class="text-primary font-bold text-sm">View All</button>
+</div>
+<div class="bg-surface-container-low p-2 rounded-[2rem] space-y-2">
+<div class="bg-surface-container-lowest p-4 rounded-2xl flex items-center justify-between ghost-border">
+<div class="flex items-center gap-4">
+<img alt="Sarah J" class="h-12 w-12 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbdT_vh13YHB_NwZTMl_whqMZS9JK5YZGxYm3ujpyHGcnT4e2v8MKTPNMsmhLBMV9pzn2eMiwWiW7oYRzrn3O96dkmt-ffW4SVg0oDDcGHSS9JWs0M608Ds5BSd0jf5VnsjshZ_LBr8LgTNo4zv90NdJ3AOnpdyMzz8y8aeVTUR270misXWmjB8erWj6FDGZEj6nitucq_twogqjxryjeSsBhJF2YVEOTdpnuvsIzHerkP6cXH4GQt-ifYtsaxVVLsP2mNZFuFuVo"/>
+<div>
+<h4 class="font-bold text-on-surface">Sarah Jenkins</h4>
+<p class="text-sm text-on-surface-variant truncate max-w-[200px] md:max-w-md">Coach, the RPE on today's deadlifts felt higher than expected...</p>
+</div>
+</div>
+<span class="text-xs font-medium text-on-surface-variant">2m ago</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-2xl flex items-center justify-between ghost-border">
+<div class="flex items-center gap-4">
+<img alt="David L" class="h-12 w-12 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVGN2_9Gx9fIp1tbJuNxfx9cSjvpVlAmOUaTjh1q0EDgB8qeJuEBDTCSWnnfLfr-qpZdwdAp82x-tjnriqtDFe64g-ZsWZ1MlvyD3rbs-Cu1_Sqx_LuUMM7g-xf4DVUEhnqxYRbusU3rdayrSrgaruGQCvqxZKqAwMvjLlnsxh1-czH-d_5Ey5Y8QO-EwgTeFEvqoy21EFKgeZf2l-T4YVl_Y0ZOSYdI1REnHmhEzU-I4Qjhph_jgt6wXjqHJiH4wrJqSCMguHZcY"/>
+<div>
+<h4 class="font-bold text-on-surface">David Lopez</h4>
+<p class="text-sm text-on-surface-variant">Just uploaded my meal prep photos for the week. Thoughts?</p>
+</div>
+</div>
+<span class="text-xs font-medium text-on-surface-variant">14m ago</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Program Pipeline -->
+<div class="lg:col-span-4 space-y-8">
+<section class="bg-surface-container-low p-8 rounded-[2rem]">
+<h3 class="font-headline text-xl font-bold mb-6">Program Pipeline</h3>
+<div class="space-y-6">
+<div class="flex gap-4">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">sync</span>
+</div>
+<div class="absolute top-10 left-1/2 w-[2px] h-full bg-outline-variant/30 -translate-x-1/2"></div>
+</div>
+<div class="flex-1 pb-8">
+<h4 class="font-bold text-on-surface leading-tight">Weekly Review: Alex M.</h4>
+<p class="text-xs text-on-surface-variant mt-1">Status: Adjusting Volume</p>
+<div class="mt-3 h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[75%]"></div>
+</div>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-green-600" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="flex-1">
+<h4 class="font-bold text-on-surface leading-tight">Program Ready: Sarah J.</h4>
+<p class="text-xs text-on-surface-variant mt-1">Sent to Athlete Portal</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-4 bg-surface-container-highest rounded-2xl font-bold text-sm text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                        View Full Pipeline
+                    </button>
+</section>
+<!-- Support/Resource Card -->
+<div class="bg-gradient-to-br from-[#1b1c1c] to-[#303031] p-8 rounded-[2rem] text-white relative overflow-hidden">
+<div class="relative z-10">
+<h4 class="font-headline font-bold text-lg mb-2">Coach's Academy</h4>
+<p class="text-xs text-zinc-400 leading-relaxed mb-6">New masterclass available: Advanced Programming for Hypertrophy Part II.</p>
+<a class="inline-flex items-center gap-2 text-primary-fixed font-bold text-sm" href="#">
+                            Learn more
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-20">
+<span class="material-symbols-outlined text-9xl">school</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

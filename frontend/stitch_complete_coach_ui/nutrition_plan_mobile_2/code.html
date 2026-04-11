@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nutrition Plan - My Complete Physique</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed-variant": "#753400",
+              "primary-container": "#4f40cf",
+              "tertiary": "#414141",
+              "secondary-fixed-dim": "#ffb68c",
+              "tertiary-fixed": "#e2e2e2",
+              "on-primary-container": "#cfcaff",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-container": "#cfcfcf",
+              "on-background": "#1b1c1c",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface-tint": "#5547d5",
+              "surface-container-lowest": "#ffffff",
+              "on-surface": "#1b1c1c",
+              "surface-container-highest": "#e4e2e2",
+              "on-tertiary-fixed": "#1b1b1b",
+              "primary-fixed-dim": "#c5c0ff",
+              "primary-fixed": "#e3dfff",
+              "secondary-fixed": "#ffdbc9",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#3c29bd",
+              "surface-container-low": "#f5f3f3",
+              "on-primary-fixed": "#140067",
+              "on-surface-variant": "#474554",
+              "on-error-container": "#93000a",
+              "on-tertiary": "#ffffff",
+              "inverse-surface": "#303031",
+              "outline-variant": "#c8c4d7",
+              "primary": "#3620b8",
+              "on-error": "#ffffff",
+              "surface-variant": "#e4e2e2",
+              "surface-bright": "#fbf9f8",
+              "surface": "#fbf9f8",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "on-secondary-fixed": "#321200",
+              "tertiary-container": "#585858",
+              "surface-container": "#efeded",
+              "on-primary": "#ffffff",
+              "error-container": "#ffdad6",
+              "surface-container-high": "#e9e8e7",
+              "secondary-container": "#f87600",
+              "outline": "#787586",
+              "on-secondary-container": "#562500",
+              "inverse-primary": "#c5c0ff",
+              "background": "#fbf9f8",
+              "on-secondary": "#ffffff",
+              "inverse-on-surface": "#f2f0f0",
+              "secondary": "#9a4600"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-surface min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex items-center justify-between px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="close-up portrait of a fit woman with a confident expression in a bright modern gym environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBad1nG_dq3rSma6rxtisSt2afwQeEAgRWVI7rJ7tyX2qP8VqoRLbECIU_i1kjlXFdvBwQosz3k4kdVHZQ3o40L_tWsXGk4B2EWqnJxHoeZuQeS0A0EixJpSTU7KVXFrcK2LbVYEK2A7cwKYws1fprT_ZCsJfHdL1QX-lmLcn9Np1yrjbrBL52cVO402Bzz8cGtmMA8JmaAb7RPTCfgHUAI4Lxn61AXf2a5jrJEHt-PGdkGBjZrxoTum5zx90akWMpzamLR44MBrw"/>
+</div>
+<h1 class="text-xl font-extrabold tracking-tighter text-on-surface font-headline">My Complete Physique</h1>
+</div>
+<button class="text-[#4F40CF] hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="pt-24 px-6 max-w-2xl mx-auto">
+<!-- Editorial Header -->
+<section class="mb-10">
+<p class="text-secondary font-semibold font-headline tracking-wider uppercase text-xs mb-2">Fueling Performance</p>
+<h2 class="text-4xl font-extrabold font-headline tracking-tight leading-tight">Daily Fuel <br/><span class="text-primary">Plan</span></h2>
+</section>
+<!-- Kinetic Curator Bento Grid: Macros -->
+<section class="grid grid-cols-6 gap-4 mb-10">
+<!-- Main Calories Card -->
+<div class="col-span-6 bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex justify-between items-end mb-6">
+<div>
+<span class="text-on-surface-variant font-medium text-sm">Calories Remaining</span>
+<div class="text-5xl font-extrabold font-headline tracking-tighter mt-1">1,240</div>
+</div>
+<div class="text-right">
+<span class="text-secondary font-bold text-lg">Goal: 2,400</span>
+</div>
+</div>
+<!-- Progress Glass Component -->
+<div class="h-4 w-full bg-surface-container-high rounded-full overflow-hidden relative">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full w-[48%] shadow-[0_0_15px_rgba(79,64,207,0.4)]"></div>
+</div>
+</div>
+<!-- Decorative element -->
+<div class="absolute top-[-20%] right-[-10%] w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
+</div>
+<!-- Protein Card -->
+<div class="col-span-3 bg-surface-container-low rounded-[2rem] p-6 flex flex-col justify-between aspect-square">
+<div>
+<span class="material-symbols-outlined text-primary mb-3" data-icon="fitness_center">fitness_center</span>
+<h3 class="font-headline font-bold text-lg">Protein</h3>
+<p class="text-on-surface-variant text-sm">Target: 180g</p>
+</div>
+<div>
+<div class="text-2xl font-extrabold font-headline text-primary">112g</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full mt-2 overflow-hidden">
+<div class="h-full bg-primary w-[62%]"></div>
+</div>
+</div>
+</div>
+<!-- Carbs & Fat Stack -->
+<div class="col-span-3 flex flex-col gap-4">
+<!-- Carbs -->
+<div class="flex-1 bg-surface-container-lowest rounded-[2rem] p-5 shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center mb-2">
+<h3 class="font-headline font-bold">Carbs</h3>
+<span class="text-xs font-bold text-on-surface-variant">210g</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[45%]"></div>
+</div>
+</div>
+<!-- Fats -->
+<div class="flex-1 bg-surface-container-lowest rounded-[2rem] p-5 shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center mb-2">
+<h3 class="font-headline font-bold">Fats</h3>
+<span class="text-xs font-bold text-on-surface-variant">65g</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-on-background w-[30%]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Prescribed Meals Section -->
+<section class="space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="text-2xl font-extrabold font-headline">Prescribed Meals</h2>
+<button class="text-primary font-bold text-sm">View All</button>
+</div>
+<!-- Meal Card 1: Breakfast -->
+<div class="bg-surface-container-lowest rounded-[2rem] overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex h-40">
+<div class="w-1/3 relative h-full">
+<img alt="Breakfast Bowl" class="w-full h-full object-cover" data-alt="overhead shot of a healthy acai bowl with berries, seeds, and nuts in a minimalist white ceramic bowl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDG61o8UCuMg93m3MbbOrvZohygmwT6db_lAgk5joqLJsi1fJmYTkSX8mUnmU9-Z-7_Ro-XFfwIWkp8kc5RBs10KgGVx1_cfuiUu4afjTo_KLrEvjR6yMfocq_JF3CWDYb_5p3jxD0sKL2lmBgnw52nTZ1dXM-qKxB5WySEC0ZigSIhfaMUKOSrJMXJHbEiWATArrnsTIcRNcSrybHORzGiQIAk9UAA-38-U_a-v_6_puMgEBJh6lrFvYIiVLmbj8R4H-HxskXu9Pc"/>
+<div class="absolute top-2 left-2 px-3 py-1 bg-white/80 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest">
+                            Meal 1
+                        </div>
+</div>
+<div class="w-2/3 p-6 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-lg leading-tight">Pro-Oats with Berries</h4>
+<span class="material-symbols-outlined text-secondary" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<p class="text-on-surface-variant text-xs mt-1">450 kcal • 35g Protein</p>
+</div>
+<button class="flex items-center gap-2 text-on-surface-variant font-bold text-sm bg-surface-container-low w-fit px-4 py-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-base" data-icon="refresh">refresh</span> Swap Meal
+                        </button>
+</div>
+</div>
+</div>
+<!-- Meal Card 2: Lunch -->
+<div class="bg-surface-container-lowest rounded-[2rem] overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex h-40">
+<div class="w-1/3 relative h-full">
+<img alt="Lunch Salad" class="w-full h-full object-cover" data-alt="gourmet salmon salad with fresh greens, avocado, and vibrant citrus vinaigrette on a dark textured plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpKuFlmjsWW0WKo7ZLzIif3bgSdf2OaW85sjDkWe3U-ZPO4VW55MewirY7NrwGufIbmRdT9qOgEEdGwZ32zbg6uvi_YP7vzp0APWcHL1ToJRyj7MylPzPNBxZcJDh-BUgmlmA9aGjuLZ_sNOSnjnlP6CHU2YjeBoKIwrVg5dp4shc3xHkrgsw8DMWzZ3Yzxy-VTnSk-nqgaavNixcyOdCkRjVuOHZ_DI1FQD2u8ZDZV9kv8Rxw_iK0a-w6VOP5WRvVhQIVWqugg7k"/>
+<div class="absolute top-2 left-2 px-3 py-1 bg-white/80 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest">
+                            Meal 2
+                        </div>
+</div>
+<div class="w-2/3 p-6 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h4 class="font-headline font-bold text-lg leading-tight">Grilled Salmon &amp; Greens</h4>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant flex items-center justify-center"></div>
+</div>
+<p class="text-on-surface-variant text-xs mt-1">620 kcal • 42g Protein</p>
+</div>
+<button class="bg-gradient-to-r from-primary to-primary-container text-white font-bold text-sm px-6 py-2 rounded-full shadow-lg shadow-primary/20 scale-100 active:scale-95 transition-transform">
+                            Log Meal
+                        </button>
+</div>
+</div>
+</div>
+<!-- Nutrition Tip Card -->
+<div class="bg-primary/5 rounded-[2rem] p-8 border border-primary/10">
+<div class="flex gap-4 items-start">
+<div class="bg-primary/10 p-3 rounded-2xl">
+<span class="material-symbols-outlined text-primary" data-icon="lightbulb">lightbulb</span>
+</div>
+<div>
+<h4 class="font-headline font-bold text-primary">Pro Tip</h4>
+<p class="text-on-surface-variant text-sm mt-1 leading-relaxed">Increasing your protein intake by just 10% this week can help significantly with muscle recovery after your leg sessions.</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-8 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-t-[2rem] z-50 shadow-[0px_-10px_40px_rgba(0,0,0,0.04)]">
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60 hover:text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60 hover:text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase mt-1">Workouts</span>
+</div>
+<!-- ACTIVE TAB: Nutrition -->
+<div class="flex flex-col items-center justify-center text-[#4F40CF] dark:text-[#4F40CF] scale-110">
+<span class="material-symbols-outlined" data-icon="pie_chart" data-weight="fill" style="font-variation-settings: 'FILL' 1;">pie_chart</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase mt-1">Nutrition</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60 hover:text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="subscriptions">subscriptions</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase mt-1">Vault</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60 hover:text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase mt-1">Check-in</span>
+</div>
+</nav>
+</body></html>

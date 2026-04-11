@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f5f3f3",
+                        "secondary": "#9a4600",
+                        "outline": "#787586",
+                        "tertiary": "#414141",
+                        "on-secondary-fixed-variant": "#753400",
+                        "surface-container-highest": "#e4e2e2",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-variant": "#e4e2e2",
+                        "secondary-fixed": "#ffdbc9",
+                        "primary": "#3620b8",
+                        "on-secondary-fixed": "#321200",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "background": "#fbf9f8",
+                        "tertiary-container": "#585858",
+                        "on-secondary-container": "#562500",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#c8c4d7",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "primary-fixed": "#e3dfff",
+                        "on-surface-variant": "#474554",
+                        "surface-tint": "#5547d5",
+                        "surface-bright": "#fbf9f8",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface-container": "#efeded",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "surface": "#fbf9f8",
+                        "secondary-container": "#f87600",
+                        "on-tertiary-container": "#cfcfcf",
+                        "on-background": "#1b1c1c",
+                        "inverse-surface": "#303031",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#cfcaff",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#4f40cf",
+                        "surface-dim": "#dbdad9",
+                        "on-surface": "#1b1c1c",
+                        "inverse-primary": "#c5c0ff",
+                        "inverse-on-surface": "#f2f0f0",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e9e8e7",
+                        "on-primary-fixed": "#140067",
+                        "error-container": "#ffdad6"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-surface antialiased">
+<!-- TopNavBar -->
+<nav class="sticky top-0 z-50 flex justify-between items-center px-6 py-4 w-full bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex items-center gap-2">
+<span class="text-xl font-black text-indigo-700 dark:text-indigo-400 tracking-tighter font-headline">MCP</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-zinc-500" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-zinc-500" data-icon="settings">settings</span>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high border-2 border-white">
+<img alt="Coach Profile" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional athletic coach with a confident expression in a bright modern gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCS65WRGuxDyF2SL1NPx0kv9rCATMyY5nGDqU4z34-LWLDvBy4u3G-caN20sqYKKw5uQC_HtWYzEWzSjIMVOPOnggbwV-nWfJAB18hlA_mfpIDY_7ALOQcIc8v9kCueq-dnn1OsopmK_1jM7X42AYPizqCqdq4LzTEa0WzTDdE1Qy3luSkD2dZt7tSfvCiCdfAHuS_Y-Eic4fmNoIkY7Qg5Lahs1zUkVHj1qmQKslicH-fE7L4IRfUs9L72bvZ779zv1mTzn2X_qps"/>
+</div>
+</div>
+</nav>
+<main class="px-6 pt-8 pb-32 max-w-md mx-auto">
+<!-- Header Section -->
+<header class="mb-10">
+<span class="text-secondary font-headline font-bold tracking-widest text-[10px] uppercase mb-2 block">Curation</span>
+<h1 class="text-4xl font-headline font-extrabold tracking-tight text-on-surface leading-none mb-4">Program Library</h1>
+<div class="flex gap-2 overflow-x-auto hide-scrollbar">
+<span class="px-4 py-2 bg-secondary-container text-white text-xs font-bold rounded-full whitespace-nowrap">All Programs</span>
+<span class="px-4 py-2 bg-surface-container-high text-on-surface-variant text-xs font-bold rounded-full whitespace-nowrap">Hypertrophy</span>
+<span class="px-4 py-2 bg-surface-container-high text-on-surface-variant text-xs font-bold rounded-full whitespace-nowrap">Endurance</span>
+<span class="px-4 py-2 bg-surface-container-high text-on-surface-variant text-xs font-bold rounded-full whitespace-nowrap">Mobility</span>
+</div>
+</header>
+<!-- Vertical Program List -->
+<div class="space-y-10">
+<!-- Program Card 1 -->
+<div class="group relative bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)] active:scale-98 transition-all duration-200">
+<div class="relative h-64 w-full">
+<img alt="Elite Strength" class="w-full h-full object-cover" data-alt="Dramatic high-contrast photo of a person lifting a heavy barbell in a dark industrial gym with cinematic spotlighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBl2WjwRdK2gDMI2FHPBnN1CuX2N_np9iAghMmJBjDjAQDGbegd_GGDeXW9qPnszmPuvDP0zWQi7Na4YExSi6_wSdwaD_6DgbFxqp-jvjSnjG0RjwJGD2sSvH7T8GVINqY-EyF0FoxM79tbuq9fVmeqaFhm1iqML_61ej-dqzKj-QXYSsNGobSbHuZeBWPeO9czOFEY8Wqxwxyp8gYWrublbKAxPChBMxxqEzcrJ0E8W9NNv7oUDO1Y-p1pNl_gs6HJ6UUVJBiizc4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-6 left-6 right-6">
+<div class="flex justify-between items-end">
+<div>
+<span class="bg-primary/20 backdrop-blur-md text-primary-fixed-dim text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full mb-2 inline-block">Advanced</span>
+<h2 class="text-2xl font-headline font-extrabold text-white leading-tight">Elite Strength Phase I</h2>
+</div>
+<span class="material-symbols-outlined text-white/50 text-3xl" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="p-6 flex justify-between items-center bg-surface-container-lowest">
+<div class="flex gap-6">
+<div class="flex flex-col">
+<span class="text-[10px] text-outline uppercase font-bold tracking-wider">Duration</span>
+<span class="font-headline font-bold text-on-surface">12 Weeks</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-outline uppercase font-bold tracking-wider">Intensity</span>
+<span class="font-headline font-bold text-on-surface">85-90%</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="group" data-weight="fill">group</span>
+<span class="text-xs font-bold">142</span>
+</div>
+</div>
+</div>
+<!-- Program Card 2 -->
+<div class="group relative bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)] active:scale-98 transition-all duration-200">
+<div class="relative h-64 w-full">
+<img alt="Kinetic Flow" class="w-full h-full object-cover" data-alt="Graceful athlete performing dynamic yoga movement in a bright minimalist studio with soft natural light and shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDWMKPKeazZbm6oeBu9n6HZPq3hGIiML-JI3dM_ISfyYY0KE9yayLRkluS_VYegcA5GiKksaYJp4-iu-4VjZUbtDHu1mAJASIfrCzc9XaczKZKSkoqDKsTcIruF1RiTE2Axx7xCGoNQHBIVuIhrOiZ1vMovVD5DwWkEobxMZaWSTPdedyPVO5PDkUxD2rk9jX9F0MqV89fzc2ssMkZ5dxM_nO85A3SaSqmxtsxu69no85PwSUoP1y4nU03v4bYdQquYIhFmcYqGnE"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-6 left-6 right-6">
+<div class="flex justify-between items-end">
+<div>
+<span class="bg-secondary/20 backdrop-blur-md text-secondary-fixed-dim text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full mb-2 inline-block">All Levels</span>
+<h2 class="text-2xl font-headline font-extrabold text-white leading-tight">Kinetic Flow &amp; Restoration</h2>
+</div>
+<span class="material-symbols-outlined text-white/50 text-3xl" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="p-6 flex justify-between items-center bg-surface-container-lowest">
+<div class="flex gap-6">
+<div class="flex flex-col">
+<span class="text-[10px] text-outline uppercase font-bold tracking-wider">Sessions</span>
+<span class="font-headline font-bold text-on-surface">24 Total</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-outline uppercase font-bold tracking-wider">Focus</span>
+<span class="font-headline font-bold text-on-surface">Mobility</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="group" data-weight="fill">group</span>
+<span class="text-xs font-bold">89</span>
+</div>
+</div>
+</div>
+<!-- Program Card 3 -->
+<div class="group relative bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)] active:scale-98 transition-all duration-200">
+<div class="relative h-64 w-full">
+<img alt="Body Recomp" class="w-full h-full object-cover" data-alt="Overhead view of healthy meal prep containers with vibrant vegetables and lean protein on a clean white surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSSuUaJ4xntGgkyOpxyONMwr6nFVUFKo5tn2liV7BmQxk1jKiPOi_KjVlNiJYleq-uAnYcIGwUkQMKZyaGx9s4P-qTCbr2c_DuQ0A3Y53l4dQd1L7ztg4wdOuPJj7CdVyROooMGLn0grAA-XyG8iNNrGZT_h6Nl-1KT5VKQkBmvnUdZ5iPWZUzcHKIFpFxEoYQtGiI5OJN-xI0ZerFtt1lXuvwxw9pqJcnwvOKqgOBUBB--6JKtI9WxF54wL-12aiiGulGvhSYWd0"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-6 left-6 right-6">
+<div class="flex justify-between items-end">
+<div>
+<span class="bg-indigo-500/20 backdrop-blur-md text-indigo-100 text-[10px] font-black tracking-widest uppercase px-3 py-1 rounded-full mb-2 inline-block">Nutrition</span>
+<h2 class="text-2xl font-headline font-extrabold text-white leading-tight">Mastering Recomposition</h2>
+</div>
+<span class="material-symbols-outlined text-white/50 text-3xl" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="p-6 flex justify-between items-center bg-surface-container-lowest">
+<div class="flex gap-6">
+<div class="flex flex-col">
+<span class="text-[10px] text-outline uppercase font-bold tracking-wider">Type</span>
+<span class="font-headline font-bold text-on-surface">Hybrid</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] text-outline uppercase font-bold tracking-wider">Goal</span>
+<span class="font-headline font-bold text-on-surface">Fat Loss</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-sm" data-icon="group" data-weight="fill">group</span>
+<span class="text-xs font-bold">215</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB -->
+<button class="fixed right-6 bottom-28 z-40 bg-gradient-to-br from-primary to-primary-container text-white p-5 rounded-2xl shadow-lg shadow-primary/40 active:scale-95 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span class="font-headline font-bold text-sm pr-1">New Program</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-end px-6 pb-8 pt-4 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl shadow-[0px_-10px_40px_rgba(0,0,0,0.04)] rounded-t-[2.5rem]">
+<!-- Clients Tab -->
+<div class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 p-2 active:bg-zinc-100 dark:active:bg-zinc-800 transition-all">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-plus-jakarta-sans text-[10px] font-bold uppercase tracking-widest mt-1">Clients</span>
+</div>
+<!-- Library Tab (ACTIVE) -->
+<div class="flex flex-col items-center justify-center bg-indigo-600 text-white rounded-full p-3 mb-2 transform -translate-y-2 shadow-lg shadow-indigo-500/40 duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="library_books" data-weight="fill">library_books</span>
+<span class="font-plus-jakarta-sans text-[10px] font-bold uppercase tracking-widest mt-1">Library</span>
+</div>
+<!-- Messages Tab -->
+<div class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 p-2 active:bg-zinc-100 dark:active:bg-zinc-800 transition-all">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="font-plus-jakarta-sans text-[10px] font-bold uppercase tracking-widest mt-1">Messages</span>
+</div>
+</nav>
+</body></html>

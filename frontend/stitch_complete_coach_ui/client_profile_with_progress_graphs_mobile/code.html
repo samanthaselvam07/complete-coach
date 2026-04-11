@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kinetic Pro | Client Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "surface-container-highest": "#e4e2e2",
+                        "inverse-surface": "#303031",
+                        "secondary-fixed": "#ffdbc9",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "on-background": "#1b1c1c",
+                        "error": "#ba1a1a",
+                        "surface": "#fbf9f8",
+                        "on-primary-fixed": "#140067",
+                        "on-error-container": "#93000a",
+                        "secondary": "#9a4600",
+                        "surface-dim": "#dbdad9",
+                        "inverse-on-surface": "#f2f0f0",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "outline": "#787586",
+                        "tertiary-container": "#585858",
+                        "on-tertiary-container": "#cfcfcf",
+                        "on-surface": "#1b1c1c",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "on-secondary-fixed": "#321200",
+                        "surface-variant": "#e4e2e2",
+                        "on-surface-variant": "#474554",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#753400",
+                        "outline-variant": "#c8c4d7",
+                        "surface-tint": "#5547d5",
+                        "primary-fixed": "#e3dfff",
+                        "primary-container": "#4f40cf",
+                        "surface-container": "#efeded",
+                        "inverse-primary": "#c5c0ff",
+                        "tertiary": "#414141",
+                        "on-primary": "#ffffff",
+                        "primary": "#3620b8",
+                        "on-secondary": "#ffffff",
+                        "background": "#fbf9f8",
+                        "on-secondary-container": "#562500",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f5f3f3",
+                        "on-primary-container": "#cfcaff",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-bright": "#fbf9f8",
+                        "secondary-container": "#f87600",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e9e8e7",
+                        "secondary-fixed-dim": "#ffb68c"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .chart-grid {
+            background-image: linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: 20% 20%;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-background antialiased overflow-x-hidden">
+<!-- Top Navigation Anchor (Coach View Context) -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<span class="text-xl font-headline font-bold tracking-tighter text-on-background">Alex Rivers</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-zinc-500">notifications</span>
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high ring-2 ring-primary/10">
+<img alt="Coach profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkLvE34Zv0AIn8v9eT76Raz55hWfejBDjdhQ-9CePXBxyKeIzhmZlqFQqR-90usGDd1EBzIMZbjWh0lLzC21pFBanRpUKPo-ntRxPr0SrxHNehjeXMb9XHm3g9yFd807OFPOy-a78l1BVZP5um8r6jvm74nRCBx846oiPHu2H0nQykR8eY7C9lI-HhmvoPNG0hoF8nIVxS46ldG-V4Nmoogd99lVtGlFu3u-cNvjin26sr4s2G6hDC-3C1P1ah1HCjnaacw4XxoOE"/>
+</div>
+</div>
+</nav>
+<main class="pt-24 pb-32 px-6 max-w-md mx-auto">
+<!-- Client Profile Header -->
+<section class="mb-10 text-center">
+<div class="relative inline-block mb-6">
+<div class="w-28 h-28 rounded-full overflow-hidden mx-auto shadow-xl ring-4 ring-white">
+<img alt="Alex Rivers" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCt06DjFQsC_CNR_uRRptkCuRRqJ_7-JXRv3zsUybO8Lxi_CoC3JYcdW-y7Ky3Wv1nySURs74I4bDe74ujSYyY7kLG2SphzWdkFwF2lDyZ9yXtZjMP4jkZDgyjSxS6WjatyheF2qOZsJa9TI8rowaFTNgAl20rNglM0LGt-3O5ISPl2r0JBlX6I5LPE9Lz1AfaotpeL2ioK-dDqI7FASDRFe0pVtTgK2NYmcYeHDhxzysguNvlthVyAaPmaiNjWX14cAQAHTWTFPQY"/>
+</div>
+<div class="absolute bottom-1 right-1 bg-secondary-container text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg">
+                    Elite
+                </div>
+</div>
+<h1 class="text-3xl font-headline font-extrabold tracking-tight text-on-background mb-1">Alex Rivers</h1>
+<p class="text-zinc-500 font-medium mb-6">Elite Performance • Hybrid Athlete</p>
+<div class="grid grid-cols-3 gap-4 bg-surface-container-low p-5 rounded-3xl">
+<div class="text-center">
+<p class="text-xs text-on-surface-variant font-semibold uppercase tracking-wider mb-1">Body Fat</p>
+<p class="text-lg font-headline font-bold text-primary">12.4%</p>
+</div>
+<div class="text-center">
+<p class="text-xs text-on-surface-variant font-semibold uppercase tracking-wider mb-1">Weight</p>
+<p class="text-lg font-headline font-bold text-primary">84kg</p>
+</div>
+<div class="text-center">
+<p class="text-xs text-on-surface-variant font-semibold uppercase tracking-wider mb-1">RHR</p>
+<p class="text-lg font-headline font-bold text-primary">48 bpm</p>
+</div>
+</div>
+</section>
+<!-- Segmented Control (Mobile Tabs) -->
+<div class="flex p-1.5 bg-surface-container-high rounded-2xl mb-8">
+<button class="flex-1 py-3 text-sm font-bold rounded-xl text-zinc-500 hover:text-on-background transition-all">Overview</button>
+<button class="flex-1 py-3 text-sm font-bold rounded-xl text-zinc-500 hover:text-on-background transition-all">Calendar</button>
+<button class="flex-1 py-3 text-sm font-extrabold rounded-xl bg-white shadow-sm text-primary transition-all">Progress</button>
+</div>
+<!-- Progress Section -->
+<section class="space-y-8 mb-10">
+<div class="flex items-center justify-between">
+<h2 class="text-xl font-headline font-bold">Performance Trends</h2>
+<div class="flex items-center gap-1 text-primary text-xs font-bold bg-primary/5 px-3 py-1.5 rounded-full">
+<span>Last 30 Days</span>
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</div>
+</div>
+<!-- Weight Trend Chart -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h3 class="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-1">Body Weight</h3>
+<p class="text-2xl font-headline font-extrabold">84.2 <span class="text-sm font-medium text-zinc-400">kg</span></p>
+</div>
+<div class="text-right">
+<span class="text-xs font-bold text-error flex items-center gap-0.5">
+<span class="material-symbols-outlined text-sm">trending_down</span>
+                            1.2kg
+                        </span>
+<p class="text-[10px] text-zinc-400 font-bold uppercase">vs. last month</p>
+</div>
+</div>
+<div class="h-32 w-full relative chart-grid rounded-xl mb-4 overflow-hidden">
+<!-- High Fidelity SVG Chart Path -->
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<defs>
+<lineargradient id="weightGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="rgba(54, 32, 184, 0.2)"></stop>
+<stop offset="100%" stop-color="rgba(54, 32, 184, 0)"></stop>
+</lineargradient>
+</defs>
+<!-- Area -->
+<path d="M0,80 Q20,75 40,65 T80,45 T100,35 L100,100 L0,100 Z" fill="url(#weightGradient)"></path>
+<!-- Line -->
+<path d="M0,80 Q20,75 40,65 T80,45 T100,35" fill="none" stroke="#3620b8" stroke-linecap="round" stroke-width="2.5"></path>
+<!-- Dots -->
+<circle cx="0" cy="80" fill="#3620b8" r="3"></circle>
+<circle cx="40" cy="65" fill="#3620b8" r="3"></circle>
+<circle cx="100" cy="35" fill="#3620b8" r="3"></circle>
+</svg>
+</div>
+<div class="flex justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">
+<span>Sep 25</span>
+<span>Oct 05</span>
+<span>Oct 15</span>
+<span>Today</span>
+</div>
+</div>
+<!-- Body Fat Trend Chart -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h3 class="text-sm font-bold text-zinc-500 uppercase tracking-widest mb-1">Body Fat</h3>
+<p class="text-2xl font-headline font-extrabold">12.4 <span class="text-sm font-medium text-zinc-400">%</span></p>
+</div>
+<div class="text-right">
+<span class="text-xs font-bold text-primary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-sm">trending_down</span>
+                            0.8%
+                        </span>
+<p class="text-[10px] text-zinc-400 font-bold uppercase">vs. last month</p>
+</div>
+</div>
+<div class="h-32 w-full relative chart-grid rounded-xl mb-4 overflow-hidden">
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<defs>
+<lineargradient id="bfGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="rgba(248, 118, 0, 0.15)"></stop>
+<stop offset="100%" stop-color="rgba(248, 118, 0, 0)"></stop>
+</lineargradient>
+</defs>
+<!-- Area -->
+<path d="M0,60 Q25,55 50,45 T100,25 L100,100 L0,100 Z" fill="url(#bfGradient)"></path>
+<!-- Line -->
+<path d="M0,60 Q25,55 50,45 T100,25" fill="none" stroke="#f87600" stroke-linecap="round" stroke-width="2.5"></path>
+<!-- Dots -->
+<circle cx="0" cy="60" fill="#f87600" r="3"></circle>
+<circle cx="50" cy="45" fill="#f87600" r="3"></circle>
+<circle cx="100" cy="25" fill="#f87600" r="3"></circle>
+</svg>
+</div>
+<div class="flex justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">
+<span>Sep 25</span>
+<span>Oct 05</span>
+<span>Oct 15</span>
+<span>Today</span>
+</div>
+</div>
+<!-- Summary Bento Grid -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest p-5 rounded-3xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<span class="material-symbols-outlined text-primary mb-3" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<h4 class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Intensity</h4>
+<p class="text-xl font-headline font-extrabold">8.4/10</p>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-3xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<span class="material-symbols-outlined text-secondary-container mb-3" style="font-variation-settings: 'FILL' 1;">sleep</span>
+<h4 class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">Recovery</h4>
+<p class="text-xl font-headline font-extrabold">High</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual Floating Action Button -->
+<button class="fixed bottom-24 right-6 w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary-container text-white shadow-2xl flex items-center justify-center scale-100 hover:scale-95 active:scale-90 transition-all z-50">
+<span class="material-symbols-outlined text-3xl">add_chart</span>
+</button>
+<!-- SideNavBar Logic for Mobile (Bottom Bar) -->
+<nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-xl px-8 pt-4 pb-8 flex justify-between items-center z-50 md:hidden">
+<div class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-bold">Overview</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" data-icon="fitness_center" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="text-[10px] font-bold">Training</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+<span class="text-[10px] font-bold">Nutrition</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="text-[10px] font-bold">Biometrics</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-zinc-400">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="text-[10px] font-bold">Messages</span>
+</div>
+</nav>
+</body></html>

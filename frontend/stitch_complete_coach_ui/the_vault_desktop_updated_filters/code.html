@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#1b1b1b",
+              "primary-container": "#4f40cf",
+              "tertiary-container": "#585858",
+              "surface-container-lowest": "#ffffff",
+              "secondary": "#9a4600",
+              "inverse-primary": "#c5c0ff",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed-variant": "#474747",
+              "on-primary-fixed": "#140067",
+              "on-surface-variant": "#474554",
+              "on-background": "#1b1c1c",
+              "tertiary-fixed": "#e2e2e2",
+              "on-primary-fixed-variant": "#3c29bd",
+              "primary": "#3620b8",
+              "on-error": "#ffffff",
+              "error-container": "#ffdad6",
+              "outline-variant": "#c8c4d7",
+              "on-primary": "#ffffff",
+              "surface-variant": "#e4e2e2",
+              "on-surface": "#1b1c1c",
+              "secondary-fixed-dim": "#ffb68c",
+              "inverse-on-surface": "#f2f0f0",
+              "secondary-fixed": "#ffdbc9",
+              "on-secondary-fixed-variant": "#753400",
+              "on-error-container": "#93000a",
+              "surface-container-low": "#f5f3f3",
+              "on-tertiary": "#ffffff",
+              "outline": "#787586",
+              "primary-fixed-dim": "#c5c0ff",
+              "inverse-surface": "#303031",
+              "surface-container": "#efeded",
+              "background": "#fbf9f8",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#cfcfcf",
+              "on-secondary-fixed": "#321200",
+              "surface-tint": "#5547d5",
+              "surface-container-high": "#e9e8e7",
+              "surface-container-highest": "#e4e2e2",
+              "on-primary-container": "#cfcaff",
+              "surface-dim": "#dbdad9",
+              "secondary-container": "#f87600",
+              "surface": "#fbf9f8",
+              "primary-fixed": "#e3dfff",
+              "tertiary": "#414141",
+              "on-secondary-container": "#562500",
+              "surface-bright": "#fbf9f8"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-effect { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- Top Navigation Shell -->
+<nav class="fixed top-0 w-full z-50 bg-[#fbf9f8]/80 dark:bg-[#1b1c1c]/80 backdrop-blur-xl">
+<div class="flex justify-between items-center w-full px-6 py-4 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-extrabold tracking-tight text-[#1b1c1c] dark:text-[#fbf9f8] font-headline">My Complete Physique</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-[#1b1c1c]/60 dark:text-[#fbf9f8]/60 font-medium hover:opacity-80 transition-opacity duration-200" href="#">Dashboard</a>
+<a class="text-[#1b1c1c]/60 dark:text-[#fbf9f8]/60 font-medium hover:opacity-80 transition-opacity duration-200" href="#">Workouts</a>
+<a class="text-[#1b1c1c]/60 dark:text-[#fbf9f8]/60 font-medium hover:opacity-80 transition-opacity duration-200" href="#">Nutrition</a>
+<a class="text-[#4F40CF] dark:text-[#3620b8] font-bold border-b-2 border-[#4F40CF]" href="#">Resources</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-zinc-100/50 transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined text-on-surface">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-zinc-100/50 transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined text-on-surface">settings</span>
+</button>
+<div class="h-10 w-10 rounded-full overflow-hidden bg-surface-container-high ml-2 cursor-pointer active:scale-95 duration-150">
+<img alt="User profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAurC9Yxdlsl7I6JqpwPBz0MeZOhK-QSK_euu4ar3-I5oskzS5C04MrFzzH8BaissvvBcJMurMtQb0AydUDTp-Ln7p1gW9DzUwohP-iEli3bMQFTHUsGuQwaknFl_qaxJcl8IMP4LvqpWf4zXsvjisZZ3QEH-LDal_JeVKK4KSJiCmngZrs1MiwZ8gNsEYKu2cAlNjaW-wgFLdqU2D0ykunPreKRZEqnNFMULCKg8n8IzjD9p98wOjZswrNz04OnDwy4bQ9khqq38g"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- Standardized Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-[#f5f3f3] dark:bg-[#2a2a2a] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col pt-20 pb-8 px-4">
+<div class="mb-8 px-4">
+<h2 class="text-lg font-black text-[#1b1c1c] dark:text-[#fbf9f8] font-headline">Client Portal</h2>
+<p class="text-[10px] text-[#1b1c1c]/50 dark:text-[#fbf9f8]/50 uppercase tracking-widest font-bold">Premium Tier</p>
+</div>
+<nav class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 text-[#1b1c1c]/50 dark:text-[#fbf9f8]/50 pl-4 py-3 hover:bg-[#ffffff]/50 dark:hover:bg-[#ffffff]/10 transition-all active:scale-[0.98] font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 text-[#1b1c1c]/50 dark:text-[#fbf9f8]/50 pl-4 py-3 hover:bg-[#ffffff]/50 dark:hover:bg-[#ffffff]/10 transition-all active:scale-[0.98] font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="#">
+<span class="material-symbols-outlined text-lg">fitness_center</span>
+<span>Workouts</span>
+</a>
+<a class="flex items-center gap-3 text-[#1b1c1c]/50 dark:text-[#fbf9f8]/50 pl-4 py-3 hover:bg-[#ffffff]/50 dark:hover:bg-[#ffffff]/10 transition-all active:scale-[0.98] font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="#">
+<span class="material-symbols-outlined text-lg">restaurant</span>
+<span>Nutrition</span>
+</a>
+<a class="flex items-center gap-3 text-[#4F40CF] dark:text-[#fbf9f8] border-r-4 border-[#4F40CF] pl-4 py-3 hover:bg-[#ffffff]/50 dark:hover:bg-[#ffffff]/10 transition-all active:scale-[0.98] font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="#">
+<span class="material-symbols-outlined text-lg">school</span>
+<span>Education</span>
+</a>
+<a class="flex items-center gap-3 text-[#1b1c1c]/50 dark:text-[#fbf9f8]/50 pl-4 py-3 hover:bg-[#ffffff]/50 dark:hover:bg-[#ffffff]/10 transition-all active:scale-[0.98] font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="#">
+<span class="material-symbols-outlined text-lg">pill</span>
+<span>Supplementation</span>
+</a>
+<a class="flex items-center gap-3 text-[#1b1c1c]/50 dark:text-[#fbf9f8]/50 pl-4 py-3 hover:bg-[#ffffff]/50 dark:hover:bg-[#ffffff]/10 transition-all active:scale-[0.98] font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="#">
+<span class="material-symbols-outlined text-lg">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 text-[#1b1c1c]/50 dark:text-[#fbf9f8]/50 pl-4 py-3 hover:bg-[#ffffff]/50 dark:hover:bg-[#ffffff]/10 transition-all active:scale-[0.98] font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="#">
+<span class="material-symbols-outlined text-lg">description</span>
+<span>Forms</span>
+</a>
+</nav>
+<div class="mt-auto px-2 space-y-4">
+<button class="w-full py-3 bg-[#4F40CF] text-white font-bold rounded-xl shadow-lg hover:scale-[0.98] transition-transform flex items-center justify-center gap-2 text-sm">
+<span class="material-symbols-outlined text-lg">play_circle</span>
+            Start Workout
+        </button>
+<a class="flex items-center gap-3 text-[#1b1c1c]/50 dark:text-[#fbf9f8]/50 pl-2 py-3 hover:bg-[#ffffff]/50 dark:hover:bg-[#ffffff]/10 transition-all font-['Plus_Jakarta_Sans'] text-sm font-semibold" href="#">
+<span class="material-symbols-outlined text-lg">account_circle</span>
+<span>Coach Profile</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 pt-24 pb-12 px-6 md:px-12 max-w-7xl mx-auto">
+<!-- Editorial Header -->
+<header class="mb-12">
+<h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-on-surface font-headline mb-4">Educational Vault</h1>
+<p class="text-on-surface-variant text-lg max-w-2xl leading-relaxed font-body">Master your physique with our curated library of high-performance protocols, nutrition science, and movement mastery modules.</p>
+</header>
+<!-- Featured Resource (Hero Card) -->
+<section class="mb-8">
+<div class="relative group overflow-hidden rounded-[2rem] bg-surface-container-lowest shadow-xl border-0">
+<div class="grid md:grid-cols-2">
+<div class="p-8 md:p-12 flex flex-col justify-center">
+<span class="text-secondary font-bold text-sm uppercase tracking-widest mb-4">Featured Mastery</span>
+<h2 class="text-3xl md:text-4xl font-extrabold font-headline mb-6 leading-tight">Advanced Metabolic Conditioning Protocols</h2>
+<p class="text-on-surface-variant mb-8 text-lg">A 45-page deep dive into the science of fat loss and lean mass preservation during intensive training phases.</p>
+<div class="flex items-center gap-4">
+<button class="bg-primary text-white px-8 py-4 rounded-xl font-bold flex items-center gap-2 hover:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined">download</span> Download Guide
+                        </button>
+<span class="text-sm font-medium text-on-surface-variant">45 Pages • PDF</span>
+</div>
+</div>
+<div class="relative h-64 md:h-full min-h-[350px]">
+<img alt="Gym training" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7JhiyRM-BDrQ05o-TcFrcD2RDeSVuzP9gICAbAdadXnClgDQV_jXzXvfDgjSM9mO05NkLwcdHKVI_Xyt3etKrS8QQ2OmN9z06BRLemc1GGyPso7Svf2MAd57Nq3iyP9PqmvU7MQBEXqae_KQtgBPwHjIzHOwNHVhNj-GVMRZOmPLrjSDjjWToxJ5OoQ1oReFWkxOyldFEMI_B8gSQDIO0GdPQwHfHWKW28XAtmowR7RYQkQSh_VknJogoezftcNiJVecn7PxQlhA"/>
+<div class="absolute inset-0 bg-gradient-to-r from-surface-container-lowest via-transparent to-transparent hidden md:block"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- New Prominent Topic Filter Bar -->
+<section class="mb-12">
+<div class="flex items-center gap-4 overflow-x-auto pb-4 no-scrollbar">
+<button class="px-8 py-3 rounded-full bg-secondary text-white font-bold text-sm shadow-md whitespace-nowrap hover:scale-[0.98] transition-transform">All Resources</button>
+<button class="px-8 py-3 rounded-full bg-white text-secondary-container font-bold text-sm shadow-sm border border-secondary/20 whitespace-nowrap hover:bg-secondary/5 transition-all">Training Modules</button>
+<button class="px-8 py-3 rounded-full bg-white text-secondary-container font-bold text-sm shadow-sm border border-secondary/20 whitespace-nowrap hover:bg-secondary/5 transition-all">Nutrition Protocols</button>
+<button class="px-8 py-3 rounded-full bg-white text-secondary-container font-bold text-sm shadow-sm border border-secondary/20 whitespace-nowrap hover:bg-secondary/5 transition-all">Recovery Science</button>
+<button class="px-8 py-3 rounded-full bg-white text-secondary-container font-bold text-sm shadow-sm border border-secondary/20 whitespace-nowrap hover:bg-secondary/5 transition-all">Hormonal Health</button>
+<button class="px-8 py-3 rounded-full bg-white text-secondary-container font-bold text-sm shadow-sm border border-secondary/20 whitespace-nowrap hover:bg-secondary/5 transition-all">Supplement Guides</button>
+</div>
+</section>
+<!-- Recommended for You Section -->
+<section class="mb-16">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-3xl">auto_awesome</span>
+<h2 class="text-2xl font-extrabold font-headline">Recommended for You</h2>
+</div>
+<button class="text-primary font-bold flex items-center gap-1 hover:underline">View all recommendations <span class="material-symbols-outlined">arrow_forward</span></button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Personalized Card 1 -->
+<div class="bg-surface-container-lowest rounded-[1.5rem] overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)] group hover:translate-y-[-4px] transition-all duration-300">
+<div class="relative aspect-video">
+<img alt="Training" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBRaFSWChyPRtK6tN7N8H4U1sn5JDOCJGRSlJgVyi5vlcINul8f8-0RfFthLnY-39iCbErd16jS7jYaQpJX92wooijCo2yweN8i9ahuCW8oeKe4k2jKE6Rz_NWEgWoDUYllrzvyLEwrmqMfW5dojWXdzMM_VEt5_b6IAgR9P-eiUXRycRlZqxjKVfWnlBgHHxVzJ0fjcil07LYyS9djGrRTVqmBMEDT-EtiI9-kMHb5NxK4eovd2p111jDqEHLF8RowKVM0jGX098"/>
+<div class="absolute top-4 left-4">
+<span class="bg-primary/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-white">Recommended</span>
+</div>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold font-headline mb-2">High-Frequency Leg Hypertrophy</h3>
+<p class="text-on-surface-variant text-sm mb-6">Based on your recent workout logs, this protocol will help breakthrough your current plateaus.</p>
+<div class="flex justify-between items-center text-xs font-semibold text-outline">
+<span>VIDEO MODULE • 22 MIN</span>
+<button class="text-primary flex items-center gap-1">Start <span class="material-symbols-outlined text-sm">play_circle</span></button>
+</div>
+</div>
+</div>
+<!-- Personalized Card 2 -->
+<div class="bg-surface-container-lowest rounded-[1.5rem] overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)] group hover:translate-y-[-4px] transition-all duration-300">
+<div class="relative aspect-video">
+<img alt="Nutrition" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgxaSz5pYXka_fHdRzo6OpzIto26U9R1ZBbbkYIrnJuZOe5pZT4o6hyCxmyBUUivzVYjp_Tuq91mbF1wm0kyoawtU_jdjH2wE2XZyDKFTgebHpN42KlWNGzrW9WA_3RJUxQPxmRZmPX-BED4Uglv4TfwM4Z6Y4QNXhdvz0pFkEOOxcC_EZJU_m4NlfYe0KogowuXu9aEZWi7TkSaymqkEAp99GKoPddfG1f0MgosusZFcamyN0cAAMBy_wAI17w1VrwMpgh231Fz4"/>
+<div class="absolute top-4 left-4">
+<span class="bg-primary/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-white">Trending</span>
+</div>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold font-headline mb-2">The Gut-Brain Performance Axis</h3>
+<p class="text-on-surface-variant text-sm mb-6">Advanced strategies for optimizing digestion and focus during your high-volume weeks.</p>
+<div class="flex justify-between items-center text-xs font-semibold text-outline">
+<span>E-BOOK • 18 PAGES</span>
+<button class="text-primary flex items-center gap-1">Read <span class="material-symbols-outlined text-sm">open_in_new</span></button>
+</div>
+</div>
+</div>
+<!-- Personalized Card 3 -->
+<div class="bg-surface-container-lowest rounded-[1.5rem] overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)] group hover:translate-y-[-4px] transition-all duration-300">
+<div class="relative aspect-video">
+<img alt="Lifestyle" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzWY1lLmwF2q757BosLcaMbtwescuvOw9keOnNeYCXWdvADrFIlvzqx9xQkdY4KlrHOv09ra4tn31nmqqFG5W-J-QEy7uevttPlip2exFynfw_r74qBZZ4-v-1aMHjkAOjYOWKzc3xYYuZPTn7Sj5W6JNnkCteBrjgJPIX6kdRcXDIv-luhrPcyPbrtkci-15LH5B2gRhdhjO-0-e2TrQOWll3BEn7OHTiM2Fns9VUp4lHTz4GN83WWZLsDs1t1Xn87t_odBt2fTg"/>
+<div class="absolute top-4 left-4">
+<span class="bg-primary/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-white">New</span>
+</div>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold font-headline mb-2">Morning Rituals of the Elite</h3>
+<p class="text-on-surface-variant text-sm mb-6">A breakdown of the morning protocols used by world-class athletes to win the day.</p>
+<div class="flex justify-between items-center text-xs font-semibold text-outline">
+<span>GUIDE • 12 MIN READ</span>
+<button class="text-primary flex items-center gap-1">Open <span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Grid Resources -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Video Module Card -->
+<div class="bg-surface-container-lowest rounded-[1.5rem] overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)] group hover:translate-y-[-4px] transition-all duration-300">
+<div class="relative aspect-video">
+<img alt="Cooking prep" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgxaSz5pYXka_fHdRzo6OpzIto26U9R1ZBbbkYIrnJuZOe5pZT4o6hyCxmyBUUivzVYjp_Tuq91mbF1wm0kyoawtU_jdjH2wE2XZyDKFTgebHpN42KlWNGzrW9WA_3RJUxQPxmRZmPX-BED4Uglv4TfwM4Z6Y4QNXhdvz0pFkEOOxcC_EZJU_m4NlfYe0KogowuXu9aEZWi7TkSaymqkEAp99GKoPddfG1f0MgosusZFcamyN0cAAMBy_wAI17w1VrwMpgh231Fz4"/>
+<div class="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="bg-white/90 p-4 rounded-full shadow-lg">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<div class="absolute top-4 left-4">
+<span class="bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">videocam</span> Video Module
+                    </span>
+</div>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold font-headline mb-2">Macro-Based Meal Prep Masterclass</h3>
+<p class="text-on-surface-variant text-sm mb-6">Learn the efficiency hacks used by pro athletes to prep 21 meals in under 90 minutes.</p>
+<div class="flex justify-between items-center text-xs font-semibold text-outline">
+<span>18:24 MINUTES</span>
+<span class="text-secondary">NEW CONTENT</span>
+</div>
+</div>
+</div>
+<!-- E-Book Card -->
+<div class="bg-surface-container-lowest rounded-[1.5rem] overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)] group hover:translate-y-[-4px] transition-all duration-300">
+<div class="relative aspect-video">
+<img alt="Nutrition guide" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzWY1lLmwF2q757BosLcaMbtwescuvOw9keOnNeYCXWdvADrFIlvzqx9xQkdY4KlrHOv09ra4tn31nmqqFG5W-J-QEy7uevttPlip2exFynfw_r74qBZZ4-v-1aMHjkAOjYOWKzc3xYYuZPTn7Sj5W6JNnkCteBrjgJPIX6kdRcXDIv-luhrPcyPbrtkci-15LH5B2gRhdhjO-0-e2TrQOWll3BEn7OHTiM2Fns9VUp4lHTz4GN83WWZLsDs1t1Xn87t_odBt2fTg"/>
+<div class="absolute top-4 left-4">
+<span class="bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">menu_book</span> E-Book
+                    </span>
+</div>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold font-headline mb-2">The Micronutrient Manifesto</h3>
+<p class="text-on-surface-variant text-sm mb-6">A definitive guide to minerals and vitamins for optimal hormonal health and recovery.</p>
+<div class="flex justify-between items-center text-xs font-semibold text-outline">
+<span>12 MB • PDF</span>
+<button class="text-primary flex items-center gap-1">Download <span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+<!-- Workshop Card -->
+<div class="bg-surface-container-lowest rounded-[1.5rem] overflow-hidden shadow-[0px_10px_30px_rgba(27,28,28,0.06)] group hover:translate-y-[-4px] transition-all duration-300">
+<div class="relative aspect-video">
+<img alt="Sprinting" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBRaFSWChyPRtK6tN7N8H4U1sn5JDOCJGRSlJgVyi5vlcINul8f8-0RfFthLnY-39iCbErd16jS7jYaQpJX92wooijCo2yweN8i9ahuCW8oeKe4k2jKE6Rz_NWEgWoDUYllrzvyLEwrmqMfW5dojWXdzMM_VEt5_b6IAgR9P-eiUXRycRlZqxjKVfWnlBgHHxVzJ0fjcil07LYyS9djGrRTVqmBMEDT-EtiI9-kMHb5NxK4eovd2p111jDqEHLF8RowKVM0jGX098"/>
+<div class="absolute top-4 left-4">
+<span class="bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">groups</span> Workshop
+                    </span>
+</div>
+</div>
+<div class="p-6">
+<h3 class="text-xl font-bold font-headline mb-2">Sleep Science for Hypertrophy</h3>
+<p class="text-on-surface-variant text-sm mb-6">Expert-led recording on optimizing circadian rhythms for maximum growth hormone production.</p>
+<div class="flex justify-between items-center text-xs font-semibold text-outline">
+<span>REPLAY AVAILABLE</span>
+<button class="text-primary flex items-center gap-1">Watch <span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+<div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+<div class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-primary mb-4">analytics</span>
+<div>
+<h4 class="font-bold font-headline mb-1">Supplement Cheat Sheet</h4>
+<p class="text-xs text-on-surface-variant">The "Essential 5" for elite performers.</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-secondary mb-4">timer</span>
+<div>
+<h4 class="font-bold font-headline mb-1">Intermittent Fasting 101</h4>
+<p class="text-xs text-on-surface-variant">Protocol guide for busy professionals.</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-tertiary mb-4">settings_accessibility</span>
+<div>
+<h4 class="font-bold font-headline mb-1">Mobility Routine 2.0</h4>
+<p class="text-xs text-on-surface-variant">15-minute daily flow for joint health.</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-primary-container mb-4">psychology</span>
+<div>
+<h4 class="font-bold font-headline mb-1">Performance Psychology</h4>
+<p class="text-xs text-on-surface-variant">Building the elite mindset framework.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Newsletter Section -->
+<section class="mt-20 p-1 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-[2.5rem]">
+<div class="bg-white/80 backdrop-blur-xl rounded-[2.4rem] p-8 md:p-16 flex flex-col md:flex-row items-center justify-between gap-12">
+<div class="max-w-lg">
+<h2 class="text-3xl font-extrabold font-headline mb-4">Never miss a protocol.</h2>
+<p class="text-on-surface-variant">Get notified every time our researchers drop new training modules or metabolic guides directly in your vault.</p>
+</div>
+<div class="w-full md:w-auto flex flex-col sm:flex-row gap-3">
+<input class="px-6 py-4 rounded-xl bg-surface-container-high border-0 focus:ring-2 focus:ring-primary/20 transition-all w-full sm:w-64" placeholder="Email address" type="email"/>
+<button class="px-8 py-4 bg-on-surface text-white rounded-xl font-bold hover:scale-[0.98] transition-transform whitespace-nowrap">Notify Me</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Mobile Navigation Shell -->
+<nav class="md:hidden fixed bottom-0 w-full bg-white/80 backdrop-blur-xl border-t-0 z-50 shadow-[0px_-10px_30px_rgba(0,0,0,0.03)]">
+<div class="flex justify-around items-center py-4">
+<a class="flex flex-col items-center gap-1 text-zinc-400" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-bold">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-400" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="text-[10px] font-bold">Training</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+<span class="text-[10px] font-bold">Vault</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-400" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span class="text-[10px] font-bold">Meals</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-zinc-400" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="text-[10px] font-bold">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

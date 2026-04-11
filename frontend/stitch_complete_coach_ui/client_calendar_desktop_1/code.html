@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kinetic Curator | Client Calendar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#585858",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "on-primary-fixed": "#140067",
+                        "secondary": "#9a4600",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#5547d5",
+                        "on-surface": "#1b1c1c",
+                        "on-secondary-fixed": "#321200",
+                        "on-tertiary-container": "#cfcfcf",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "on-secondary-fixed-variant": "#753400",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface": "#fbf9f8",
+                        "on-surface-variant": "#474554",
+                        "primary-fixed": "#e3dfff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e4e2e2",
+                        "secondary-fixed": "#ffdbc9",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "inverse-primary": "#c5c0ff",
+                        "tertiary": "#414141",
+                        "surface-container-low": "#f5f3f3",
+                        "primary-container": "#4f40cf",
+                        "on-secondary-container": "#562500",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e4e2e2",
+                        "surface-dim": "#dbdad9",
+                        "inverse-surface": "#303031",
+                        "outline": "#787586",
+                        "on-primary-container": "#cfcaff",
+                        "background": "#fbf9f8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e9e8e7",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#fbf9f8",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#c8c4d7",
+                        "on-error": "#ffffff",
+                        "primary": "#3620b8",
+                        "surface-container": "#efeded",
+                        "secondary-container": "#f87600",
+                        "on-background": "#1b1c1c",
+                        "inverse-on-surface": "#f2f0f0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #fbf9f8; }
+        .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .tonal-transition { background: linear-gradient(180deg, #fbf9f8 0%, #f5f3f3 100%); }
+    </style>
+</head>
+<body class="text-on-surface antialiased overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="text-xl font-black text-zinc-900 tracking-tighter font-headline">Kinetic Curator</div>
+<nav class="hidden md:flex items-center gap-8 font-headline font-bold tracking-tight">
+<a class="text-zinc-500 hover:text-zinc-900 transition-colors" href="#">Dashboard</a>
+<a class="text-indigo-700 border-b-2 border-indigo-600 pb-1" href="#">Calendar</a>
+<a class="text-zinc-500 hover:text-zinc-900 transition-colors" href="#">Training</a>
+<a class="text-zinc-500 hover:text-zinc-900 transition-colors" href="#">Nutrition</a>
+<a class="text-zinc-500 hover:text-zinc-900 transition-colors" href="#">Progress</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-zinc-100/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:bg-zinc-100/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden ml-2 ring-2 ring-primary/10">
+<img alt="Client Profile Avatar" data-alt="portrait of a focused athletic man in high-end sportswear, natural outdoor lighting, premium editorial aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCK6I8vUQrA0MjXBYKARWD5vEtfSXwVGPSAg4n3rajtTk-T8VL6smc8II-Cz8baCO93ANQfJkN2xjq-SOKgVT7vLCHo0ERo2X3Lxv9R8ZnDnKcLZ2krtI4Fi1r00EJ8SfI9wnhPG_SNh1yy8vIkAfpwARfdJcJf2jHv-bA-RQyM0zrEdpdRUei2XUJL4phOrmVhFiBVDgWComp99_oFlJV7EZwsUPrfdwve9ZY3Vl95MVH3SU0QdHkbda1R3TCW-MU_8_R4fh3MdHc"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Sidebar (SideNavBar) -->
+<aside class="h-screen w-64 fixed left-0 top-0 z-40 bg-zinc-50/50 backdrop-blur-2xl flex flex-col p-6 gap-8 pt-24 hidden lg:flex">
+<div>
+<h3 class="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">Portal View</h3>
+<div class="flex flex-col gap-2">
+<button class="flex items-center gap-3 p-3 bg-white text-indigo-600 shadow-sm rounded-xl font-medium font-headline">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span>Month View</span>
+</button>
+<button class="flex items-center gap-3 p-3 text-zinc-500 hover:bg-zinc-200/50 transition-all rounded-xl font-medium font-headline">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span>Schedule</span>
+</button>
+<button class="flex items-center gap-3 p-3 text-zinc-500 hover:bg-zinc-200/50 transition-all rounded-xl font-medium font-headline">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+<span>Phases</span>
+</button>
+<button class="flex items-center gap-3 p-3 text-zinc-500 hover:bg-zinc-200/50 transition-all rounded-xl font-medium font-headline">
+<span class="material-symbols-outlined" data-icon="video_call">video_call</span>
+<span>Coaching Calls</span>
+</button>
+</div>
+</div>
+<button class="mt-4 bg-gradient-to-r from-primary to-primary-container text-white py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+            Create Event
+        </button>
+<div class="mt-auto border-t border-zinc-200 pt-6">
+<button class="flex items-center gap-3 p-3 text-zinc-500 hover:bg-zinc-200/50 transition-all rounded-xl font-medium w-full font-headline">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span>Support</span>
+</button>
+<button class="flex items-center gap-3 p-3 text-zinc-500 hover:bg-zinc-200/50 transition-all rounded-xl font-medium w-full font-headline">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Logout</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 pt-24 px-8 pb-12">
+<div class="max-w-7xl mx-auto grid grid-cols-12 gap-8">
+<!-- Calendar Header -->
+<div class="col-span-12 flex justify-between items-end mb-4">
+<div>
+<h1 class="text-4xl font-black font-headline tracking-tighter text-on-surface">September 2024</h1>
+<p class="text-on-surface-variant font-medium">Phase 1: Hypertrophy &amp; Metabolism Priming</p>
+</div>
+<div class="flex bg-surface-container-low rounded-full p-1 gap-1">
+<button class="px-6 py-2 bg-white rounded-full shadow-sm text-sm font-bold text-on-surface">Month</button>
+<button class="px-6 py-2 text-sm font-bold text-zinc-500 hover:text-zinc-800 transition-colors">Week</button>
+<button class="px-6 py-2 text-sm font-bold text-zinc-500 hover:text-zinc-800 transition-colors">Day</button>
+</div>
+</div>
+<!-- Calendar Month View Area -->
+<div class="col-span-12 xl:col-span-9">
+<div class="bg-surface-container-lowest rounded-[2rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] overflow-hidden">
+<!-- Days Header -->
+<div class="grid grid-cols-7 border-b border-surface-container-low bg-surface-container-low/30">
+<div class="py-4 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Sun</div>
+<div class="py-4 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Mon</div>
+<div class="py-4 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Tue</div>
+<div class="py-4 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Wed</div>
+<div class="py-4 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Thu</div>
+<div class="py-4 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Fri</div>
+<div class="py-4 text-center text-xs font-black text-zinc-400 uppercase tracking-widest">Sat</div>
+</div>
+<!-- Calendar Grid -->
+<div class="grid grid-cols-7 grid-rows-5 min-h-[700px]">
+<!-- Row 1 -->
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-zinc-300">27</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-zinc-300">28</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-zinc-300">29</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-zinc-300">30</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-zinc-300">31</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group bg-surface-container-low/10">
+<span class="text-sm font-bold text-on-surface">1</span>
+<div class="mt-2 space-y-1">
+<div class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="fitness_center">fitness_center</span>
+                                    Upper A
+                                </div>
+</div>
+</div>
+<div class="border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">2</span>
+<div class="mt-2">
+<div class="bg-orange-50 text-orange-700 px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="restaurant">restaurant</span>
+                                    Macro Refeed
+                                </div>
+</div>
+</div>
+<!-- Row 2 (Phase Bar example) -->
+<div class="border-r border-b border-surface-container-low p-3 relative group h-32">
+<span class="text-sm font-bold text-on-surface">3</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">4</span>
+<div class="mt-2">
+<div class="bg-primary/5 text-primary px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 ring-1 ring-primary/10">
+<span class="material-symbols-outlined text-[12px]" data-icon="video_call">video_call</span>
+                                    Check-in Call
+                                </div>
+</div>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">5</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">6</span>
+<div class="mt-2">
+<div class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="fitness_center">fitness_center</span>
+                                    Lower B
+                                </div>
+</div>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">7</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">8</span>
+</div>
+<div class="border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">9</span>
+</div>
+<!-- Phase 1 Overlay (Conceptual Visualization) -->
+<div class="absolute top-[280px] left-[5%] w-[85%] h-8 bg-primary/10 backdrop-blur-md rounded-full border border-primary/20 flex items-center px-6 z-10 pointer-events-none">
+<span class="text-[10px] font-black text-primary tracking-widest uppercase">Phase 1: Hypertrophy (Weeks 1-4)</span>
+</div>
+<!-- Row 3 -->
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">10</span>
+<div class="mt-8">
+<div class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="fitness_center">fitness_center</span>
+                                    Upper B
+                                </div>
+</div>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">11</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">12</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group bg-indigo-50/10">
+<span class="text-sm font-bold text-on-surface">13</span>
+<div class="mt-2">
+<div class="bg-primary text-white px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[12px]" data-icon="emoji_events">emoji_events</span>
+                                    1RM Testing
+                                </div>
+</div>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">14</span>
+</div>
+<div class="border-r border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">15</span>
+</div>
+<div class="border-b border-surface-container-low p-3 relative group">
+<span class="text-sm font-bold text-on-surface">16</span>
+</div>
+<!-- Filling remaining cells for visual weight -->
+<div class="border-r border-b border-surface-container-low p-3 bg-surface-container-low/5"></div>
+<div class="border-r border-b border-surface-container-low p-3 bg-surface-container-low/5"></div>
+<div class="border-r border-b border-surface-container-low p-3 bg-surface-container-low/5"></div>
+<div class="border-r border-b border-surface-container-low p-3 bg-surface-container-low/5"></div>
+<div class="border-r border-b border-surface-container-low p-3 bg-surface-container-low/5"></div>
+<div class="border-r border-b border-surface-container-low p-3 bg-surface-container-low/5"></div>
+<div class="border-b border-surface-container-low p-3 bg-surface-container-low/5"></div>
+</div>
+</div>
+</div>
+<!-- Sidebar Panel: Upcoming Milestones -->
+<div class="col-span-12 xl:col-span-3 space-y-6">
+<!-- Milestones Card -->
+<div class="bg-surface-container-low rounded-[2rem] p-8 space-y-6">
+<h2 class="text-xl font-black font-headline tracking-tight text-on-surface">Milestones</h2>
+<div class="space-y-4">
+<!-- Milestone Item -->
+<div class="bg-white p-5 rounded-2xl shadow-sm border border-transparent hover:border-primary/20 transition-all group">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-secondary-container/10 text-secondary-container px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Crucial</span>
+<span class="text-[10px] font-bold text-zinc-400">Sep 15</span>
+</div>
+<h4 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors">Form Analysis Upload</h4>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Upload videos of your Squat and Deadlift for coach review.</p>
+</div>
+<!-- Milestone Item -->
+<div class="bg-white p-5 rounded-2xl shadow-sm border border-transparent hover:border-primary/20 transition-all group">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Scheduled</span>
+<span class="text-[10px] font-bold text-zinc-400">Sep 18</span>
+</div>
+<h4 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors">Program Refinement</h4>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Adjusting Phase 2 parameters based on current performance.</p>
+</div>
+<!-- Milestone Item -->
+<div class="bg-white p-5 rounded-2xl shadow-sm border border-transparent hover:border-primary/20 transition-all group">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-zinc-100 text-zinc-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Goal</span>
+<span class="text-[10px] font-bold text-zinc-400">Oct 01</span>
+</div>
+<h4 class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors">Body Comp Scan</h4>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">End of month 1 check-in and DEXA progress scan.</p>
+</div>
+</div>
+<button class="w-full py-4 rounded-xl border border-dashed border-zinc-300 text-zinc-500 text-sm font-bold hover:bg-white hover:text-primary hover:border-primary/50 transition-all">
+                        View All Tasks
+                    </button>
+</div>
+<!-- Coach Interaction Card -->
+<div class="bg-primary-container rounded-[2rem] p-8 text-white overflow-hidden relative">
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full border-2 border-white/20 overflow-hidden">
+<img alt="Coach Preview" data-alt="portrait of a professional fitness coach, athletic build, friendly expression, high-end gym background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkVrQgcRIv2CAYMn9k7Qa1LXphn-DCzZweo2My_qqxKfrP3V1zjB6TYm5MRgr7cpGV4dDdewNIL8FsIRCMF7-GfWPFGobOUbWIcfhUKHYjjXg8KjdR1Kucfq-oZHBjQ5xdVMCAk6sDCIt7iqT5c9bgV49DZ6ocXiwlJgMUqP0Tdg1YDkPk6Mkofrzcdj1Hd240aX0yOqT7zDU4QC5OxxgPs0MxH6WbNi6btBRbGRDMsgsR23HWQyYepHyA7vHct1JIPfJaeAj7Pvc"/>
+</div>
+<div>
+<h3 class="font-headline font-extrabold text-sm leading-tight">Coach Marcus</h3>
+<p class="text-[10px] text-white/70">Elite Performance Specialist</p>
+</div>
+</div>
+<p class="text-sm font-medium leading-relaxed mb-6 italic text-white/90">"Consistency is the currency of growth. You're tracking perfectly for Phase 1."</p>
+<button class="bg-white text-primary px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest shadow-xl active:scale-95 transition-transform">
+                            Message Coach
+                        </button>
+</div>
+<!-- Decorative background element -->
+<div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+</div>
+</div>
+</div>
+</main>
+<!-- Side Panel: Add Event (Sleek/Translucent) -->
+<!-- Positioned hidden by default, visible here for demonstration -->
+<div class="fixed top-0 right-0 h-full w-[450px] bg-white/80 backdrop-blur-2xl z-[100] shadow-[-10px_0px_50px_rgba(0,0,0,0.05)] translate-x-full transition-transform duration-500 ease-in-out border-l border-white/50" id="add-event-panel">
+<div class="p-12 h-full flex flex-col">
+<div class="flex justify-between items-center mb-12">
+<h2 class="text-3xl font-black font-headline tracking-tighter">New Event</h2>
+<button class="p-2 hover:bg-zinc-100 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<form class="space-y-8">
+<div class="space-y-2">
+<label class="text-xs font-black text-zinc-400 uppercase tracking-widest px-1">Event Title</label>
+<input class="w-full bg-surface-container-high border-none rounded-xl py-4 px-6 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 transition-all" placeholder="e.g., Heavy Push Day" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="text-xs font-black text-zinc-400 uppercase tracking-widest px-1">Category</label>
+<select class="w-full bg-surface-container-high border-none rounded-xl py-4 px-6 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none">
+<option>Training</option>
+<option>Nutrition</option>
+<option>Coaching</option>
+<option>Recovery</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-black text-zinc-400 uppercase tracking-widest px-1">Priority</label>
+<select class="w-full bg-surface-container-high border-none rounded-xl py-4 px-6 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none">
+<option>Normal</option>
+<option>High</option>
+<option>Elite</option>
+</select>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-black text-zinc-400 uppercase tracking-widest px-1">Date &amp; Time</label>
+<div class="flex gap-2">
+<input class="flex-1 bg-surface-container-high border-none rounded-xl py-4 px-6 text-on-surface font-medium focus:ring-2 focus:ring-primary/20" type="date"/>
+<input class="w-32 bg-surface-container-high border-none rounded-xl py-4 px-6 text-on-surface font-medium focus:ring-2 focus:ring-primary/20" type="time"/>
+</div>
+</div>
+<div class="space-y-2 pt-4">
+<label class="text-xs font-black text-zinc-400 uppercase tracking-widest px-1">Notes</label>
+<textarea class="w-full bg-surface-container-high border-none rounded-xl py-4 px-6 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 min-h-[120px]" placeholder="Add details..."></textarea>
+</div>
+<div class="pt-8 space-y-4">
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-transform">
+                        Schedule Event
+                    </button>
+<button class="w-full py-4 text-zinc-400 font-bold text-sm hover:text-zinc-600 transition-colors" type="button">
+                        Save as Draft
+                    </button>
+</div>
+</form>
+</div>
+</div>
+<!-- Floating Action Button for Mobile Context -->
+<button class="fixed bottom-8 right-8 w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl md:hidden z-50">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+</body></html>

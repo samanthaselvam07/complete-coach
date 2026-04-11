@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "tertiary": "#575f67",
+                "surface-dim": "#d5d8f6",
+                "primary-container": "#3699ff",
+                "on-tertiary-fixed-variant": "#3f484f",
+                "secondary-fixed": "#dee1ff",
+                "surface-bright": "#fbf8ff",
+                "outline-variant": "#c0c7d5",
+                "secondary-container": "#dbdefc",
+                "outline": "#707784",
+                "on-secondary-fixed-variant": "#42455e",
+                "background": "#fbf8ff",
+                "surface-container-highest": "#dee1ff",
+                "on-surface": "#161a30",
+                "inverse-primary": "#a3c9ff",
+                "on-background": "#161a30",
+                "secondary-fixed-dim": "#c2c5e2",
+                "surface-container-low": "#f4f2ff",
+                "on-tertiary-container": "#283037",
+                "surface-container": "#ececff",
+                "inverse-surface": "#2b2f46",
+                "on-secondary": "#ffffff",
+                "primary-fixed": "#d3e3ff",
+                "tertiary-fixed-dim": "#bfc8d0",
+                "surface-container-lowest": "#ffffff",
+                "secondary": "#595d76",
+                "surface-container-high": "#e5e6ff",
+                "on-tertiary": "#ffffff",
+                "primary": "#0060ab",
+                "surface-tint": "#0060ab",
+                "tertiary-container": "#8f98a0",
+                "error-container": "#ffdad6",
+                "on-error-container": "#93000a",
+                "on-surface-variant": "#404753",
+                "inverse-on-surface": "#f0efff",
+                "on-secondary-container": "#5d617b",
+                "on-error": "#ffffff",
+                "on-secondary-fixed": "#161a30",
+                "primary-fixed-dim": "#a3c9ff",
+                "surface-variant": "#dee1ff",
+                "surface": "#fbf8ff",
+                "tertiary-fixed": "#dbe4ed",
+                "on-tertiary-fixed": "#141d23",
+                "on-primary-container": "#00305b",
+                "on-primary-fixed": "#001c39",
+                "on-primary": "#ffffff",
+                "error": "#ba1a1a",
+                "on-primary-fixed-variant": "#004883"
+              },
+              fontFamily: {
+                "headline": ["Plus Jakarta Sans"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fbf8ff;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #dee1ff;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col p-6 bg-slate-50 dark:bg-slate-900 border-r border-slate-200/15 dark:border-slate-800/15 w-64 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400 font-headline">Kahunas</h1>
+<p class="text-xs text-slate-500 font-medium mt-1">Digital Architect</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-['Plus_Jakarta_Sans'] font-medium" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-['Plus_Jakarta_Sans'] font-medium" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-['Plus_Jakarta_Sans'] font-medium" href="#">
+<span class="material-symbols-outlined">exercise</span>
+<span>Programs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors bg-blue-100/50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold font-['Plus_Jakarta_Sans']" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span>Messages</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-['Plus_Jakarta_Sans'] font-medium" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto flex items-center gap-3 px-2 pt-6 border-t border-slate-200/10">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-highest">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="professional portrait of a high-end digital architect, minimal clean lighting, soft bokeh background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnslV6kZD9k2u2uXLZPo2k32UdmEHrEa-ns-UiZk5suGKgLC_N-muBVr2d5dIOLHT9eBezUH1HM-W5ZT5yZp_vNACelw8hC8JYG49X6vxlWC_bPpyA5IKe_KdmmVdR5OVCHXJobtklNvGpnrMEUz_jaPtv0HsdUkGqIXEzY0YqPlobKroJ7rWhUx_mytPZasmfgXyD30JFntmnWmVJcjN6dnIlLxZSSuzy4vWi7M1TusEpz0CeT3pAoof16DUAN_t8StEvHPolcjg"/>
+</div>
+<div>
+<p class="text-sm font-semibold">John Doe</p>
+<p class="text-xs text-slate-500">Premium Plan</p>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopNavBar Shell -->
+<header class="sticky top-0 z-40 flex justify-between items-center px-8 py-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm shadow-slate-200/10 dark:shadow-none">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all font-body" placeholder="Search conversations..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-slate-500">
+<button class="hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-lg transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-lg transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+<div class="h-8 w-px bg-outline-variant/20"></div>
+<div class="flex items-center gap-3">
+<span class="text-sm font-medium text-on-surface font-body">Messages</span>
+<div class="w-8 h-8 rounded-lg overflow-hidden bg-surface-container-highest">
+<img alt="John Doe" class="w-full h-full object-cover" data-alt="minimalist close up headshot of a professional in business casual, clean bright studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChvDa4olmPU2oEFyibcjWz1_RLMi_EyCPr9rb6OWwJEcFPT7WzL-gUPg5wgZ5Y39WQMZvUZ1NUCa-8EHCpO5Spwl4dVZ2i2rhXQ8Gr-LmrjwZrl-NpFzMmeRQK_cTmYSlI6T6flHCYCqCcP4DuRWjRM4B2yzrNTPFigrCEXDQVtc5gHvM72unN0szkc1iJhjl0mAGiA8jKNVRoBOC9c6j3mXD_0j6f7EoF_GCRI0yuY_23DThLGlCAB-pnmfWWPiPZcTvrw4x1bpg"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Content Area: Two Column Layout -->
+<section class="flex-1 flex overflow-hidden p-6 gap-6">
+<!-- Left Column: Conversation List -->
+<div class="w-96 flex flex-col bg-surface-container-lowest rounded-3xl overflow-hidden shadow-sm shadow-slate-200/5">
+<div class="p-6 border-b border-surface-container/50">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-xl font-bold font-headline">Inbox</h2>
+<button class="w-10 h-10 flex items-center justify-center bg-primary-fixed text-primary rounded-xl hover:bg-primary-container hover:text-white transition-all">
+<span class="material-symbols-outlined">edit_square</span>
+</button>
+</div>
+<div class="flex gap-2">
+<span class="px-4 py-1.5 bg-primary text-on-primary rounded-full text-xs font-semibold">All</span>
+<span class="px-4 py-1.5 bg-surface-container text-on-surface-variant rounded-full text-xs font-medium hover:bg-surface-container-high cursor-pointer transition-colors">Unread</span>
+<span class="px-4 py-1.5 bg-surface-container text-on-surface-variant rounded-full text-xs font-medium hover:bg-surface-container-high cursor-pointer transition-colors">Groups</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+<!-- Chat Item Active -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-primary-fixed transition-all cursor-pointer">
+<div class="relative">
+<img alt="Sarah Miller" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a young female athlete, natural sunlight, optimistic expression, high-end fitness aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPANSV5kwmj0n_6hueqz6fBGUejZTi2dKSsOF7Ju2O6rgA9qXTJDcTxpcNjAWEX29JstgD-nF6cUub0gVevKkWsflQAht-XoodKc_CpzgEe9WJv7xi8hzQ312XRX-gvJyNH90LJrWg1t1eOKFIGN1xyucf-bRJRFhxI26LnsefOSfiDS4SUGOmu2aeG5NI3HFl_vPOMfBlZcQBddnwXaRKY0P_XOpjO6G2mWkFf04bBrZaXCkeHVx8SGTURq0Ey5PluZ3phEm_Eww"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-primary-fixed rounded-full"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h3 class="text-sm font-bold truncate text-on-primary-fixed font-headline">Sarah Miller</h3>
+<span class="text-[10px] font-medium text-primary">12:45 PM</span>
+</div>
+<p class="text-xs text-on-primary-fixed-variant truncate font-medium">The workout plan looks intense! I'm ready to...</p>
+</div>
+</div>
+<!-- Chat Item -->
+<div class="flex items-center gap-4 p-4 rounded-2xl hover:bg-surface-container-low transition-all cursor-pointer">
+<div class="relative">
+<img alt="Marcus Chen" class="w-12 h-12 rounded-full object-cover" data-alt="smiling man in his 30s wearing fitness gear, clean urban gym background, high contrast professional photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgZiXO1yqmWhKfo9HEsTQ9tXQSJYuilwVyWn3Kl-KZ12S9wuRgZRKUuvvrVvAYPR_fZu-slRLX1NlaEDd3LXkoiEpwHGFEPG4LITN9rcF2UaxlCGPmbFeiAFtpUjGRvEawjkEE9MYLRrJwcuYgciB4v58cebHQ_Ngubpd9okwKqOJYLzlo1Qje9SfMuXdkxziWgiE4ophM5PvtYi6A5W5ZukQ1QhrHnOjNxlVYCwXYHimRsVWlzfttlpIKJCj86vqnxGuomEWAcHg"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h3 class="text-sm font-bold truncate font-headline">Marcus Chen</h3>
+<span class="text-[10px] font-medium text-outline">Yesterday</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">Thanks for the feedback on the meal prep.</p>
+</div>
+</div>
+<!-- Chat Item -->
+<div class="flex items-center gap-4 p-4 rounded-2xl hover:bg-surface-container-low transition-all cursor-pointer">
+<div class="relative">
+<img alt="Elena Rodriguez" class="w-12 h-12 rounded-full object-cover" data-alt="professional woman in yoga attire, peaceful expression, soft natural lighting in a bright studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbBPCc5zwRx8l1jngNUKIlXm0HG6lhrw73tEg9yItBaOvfgIspgrR2AQlFtSW9sc6eifaAqSP7xVgfL1G3qjWNk61Il9IfCCDq0I3nOyg4vCGIA4RvFQwVyaFMoc-0GOVefEW8oaFGtQ_0BDc_t72T6dmo9ps8B4-YGS2XMiMQ6XhBmZKSnE-UVmM1WOsgvDFlBda92tF1BWPHN7_RXqxWeU3JaT6peYCR1ipW3oBWKM_b1Vd-hWE6cVjeluNiMFRZ0wx-TblGKb0"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-slate-300 border-2 border-white rounded-full"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h3 class="text-sm font-bold truncate font-headline">Elena Rodriguez</h3>
+<span class="text-[10px] font-medium text-outline">Feb 24</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">Can we reschedule our check-in to Tuesday?</p>
+</div>
+</div>
+<!-- Chat Item -->
+<div class="flex items-center gap-4 p-4 rounded-2xl hover:bg-surface-container-low transition-all cursor-pointer">
+<div class="relative">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center">
+<span class="text-secondary font-bold text-sm">DM</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h3 class="text-sm font-bold truncate font-headline">David Miller</h3>
+<span class="text-[10px] font-medium text-outline">Feb 22</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">Payment received for the 12-week program.</p>
+</div>
+</div>
+<!-- Chat Item -->
+<div class="flex items-center gap-4 p-4 rounded-2xl hover:bg-surface-container-low transition-all cursor-pointer">
+<div class="relative">
+<img alt="Jordan Smith" class="w-12 h-12 rounded-full object-cover" data-alt="man in athletic wear jogging, profile view, motion blur background, bright daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCi2Y78WVIGvY9xAWGyTl90GY9gRheoLiKGqjNo6cmLwRIe5puWluBYtOtoMT9uzG9C88b3uwftFvdMHRkcpfeXJe_dd5jaiCkGjBtOtweybPSpFdfCdZ364YvxkfQW-gYE_L9Kzl4osMhfnkOjoTvjXGBFrXrOz4BNKrUcZgB_lr6nfkVGpZEbenyxz8-Rni0-JM9BXzM0cVHbutpFfsd49GjB9od9dH0yPB7Scsk6XtciAjJ1tgc5aYuauPbM6b_w1JldwHoE_Rk"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h3 class="text-sm font-bold truncate font-headline">Jordan Smith</h3>
+<span class="text-[10px] font-medium text-outline">Feb 20</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">I've uploaded my progress photos to the portal.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Chat Window -->
+<div class="flex-1 flex flex-col bg-surface-container-lowest rounded-3xl shadow-sm shadow-slate-200/5 overflow-hidden">
+<!-- Chat Header -->
+<div class="px-8 py-5 flex justify-between items-center border-b border-surface-container/50">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img alt="Sarah Miller" class="w-11 h-11 rounded-full object-cover" data-alt="portrait of a young female athlete, natural sunlight, optimistic expression, high-end fitness aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7FJcR6xSG84OnYC4VOaGilc02n5Q-tubbgUgfb-cerX25ziD8enlU8TmYwqA7KFAQV7Hbw2KZsPAL0wjN0PiBWX2BIoJOEIHNJdi5pUaAmc7mtWlT9xPUUaCGlox18mSrB23_6eRDXJF9Ky_W8ZnjcmxaEKZTS1txuLLzlAaZgUjWWiKOcy22Ko0-SBGbkjgHZ7davvfMwujXYbUXG-2Eb0dxhMPpBNOUZ4fp0OoQRcfHGxt6k1LbpYidPWgk2paAiy4V5wH_-IU"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<h3 class="font-bold text-base font-headline">Sarah Miller</h3>
+<span class="text-xs font-medium text-emerald-600">Active now</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2.5 text-outline hover:bg-surface-container-low rounded-xl transition-all">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="p-2.5 text-outline hover:bg-surface-container-low rounded-xl transition-all">
+<span class="material-symbols-outlined">videocam</span>
+</button>
+<button class="p-2.5 text-outline hover:bg-surface-container-low rounded-xl transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Message History -->
+<div class="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-6">
+<div class="flex justify-center">
+<span class="px-4 py-1 bg-surface-container-low text-[10px] font-bold tracking-wider text-outline uppercase rounded-full">Today</span>
+</div>
+<!-- Message Received -->
+<div class="flex items-end gap-3 max-w-[80%]">
+<img alt="Sarah Miller" class="w-8 h-8 rounded-full object-cover" data-alt="portrait of a young female athlete, natural sunlight, optimistic expression, high-end fitness aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBk60IrZt3eYg7ZagHZj4O89L8nXpWaUz6Q-bBc_hRrz2gKPZ6KGe81QEgrNVOYBlMn39XYQv2PfzKmuc0IHWf2ZCEcjipk4g5vfy2jU-VFU-VC5EtQUucYPqeAMyMJa47DAWrKhFwfy31Qz9IGX4NjBJ-Cui36kQCziqwQvVGcTf-4pCSPmTnK5Bo3v1tDU2DSdckR3QR4_g9TRaD6UFZ4ZxS181Jog8X27rDx6x8BT_HURx94s8ZgTIixSi6TWtVV9u5lliC6U3A"/>
+<div class="flex flex-col gap-1">
+<div class="bg-surface-container-low p-4 rounded-2xl rounded-bl-none">
+<p class="text-sm leading-relaxed text-on-surface font-body">Hey! I just saw the updated training block for week 4. The volume seems quite high compared to last week, should I adjust the weights?</p>
+</div>
+<span class="text-[10px] text-outline font-medium px-1">12:40 PM</span>
+</div>
+</div>
+<!-- Message Sent -->
+<div class="flex items-end gap-3 max-w-[80%] ml-auto flex-row-reverse">
+<div class="flex flex-col items-end gap-1">
+<div class="bg-primary text-on-primary p-4 rounded-2xl rounded-br-none shadow-lg shadow-primary/10">
+<p class="text-sm leading-relaxed font-body">Yes, exactly. I increased the volume because your recovery markers were excellent this week. Keep the RPE at 8, so if the weight feels too heavy with the added reps, drop it by about 5%.</p>
+</div>
+<div class="flex items-center gap-1 px-1">
+<span class="text-[10px] text-outline font-medium">12:42 PM</span>
+<span class="material-symbols-outlined text-sm text-primary" style="font-variation-settings: 'FILL' 1;">done_all</span>
+</div>
+</div>
+</div>
+<!-- Message Received -->
+<div class="flex items-end gap-3 max-w-[80%]">
+<img alt="Sarah Miller" class="w-8 h-8 rounded-full object-cover" data-alt="portrait of a young female athlete, natural sunlight, optimistic expression, high-end fitness aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0wdSZRcmZOHecN-FBOzL03HyDkpbUIgwDd9Vf0o4JP_9drVEkUuUOSvxJvJnc_i0GLxJ4rb6iC-g5UcRA-2VAqlIDlK076xououLxSGOEepTSxQmC0vUrH4ETn6GuV1fJN3gt_Qw7VsKpi9EeJDxG0LWcTMC8ytcVogS7vQM6SzMC0rb4F5kRY59mCT6P4kroOBpShH_OYCMo4N1lyodYLqs12FoSsDX57MkQluOKFxbGP7-d-5nCSoEEPKmMLV0z52HkeZYQgjM"/>
+<div class="flex flex-col gap-1">
+<div class="bg-surface-container-low p-4 rounded-2xl rounded-bl-none">
+<p class="text-sm leading-relaxed text-on-surface font-body">Got it! I'll try to stick with the current weights first and see how it feels. Also, I sent over the video of my squats for a form check.</p>
+</div>
+<span class="text-[10px] text-outline font-medium px-1">12:45 PM</span>
+</div>
+</div>
+<!-- Media Attachment -->
+<div class="flex items-end gap-3 max-w-[80%]">
+<img alt="Sarah Miller" class="w-8 h-8 rounded-full object-cover" data-alt="portrait of a young female athlete, natural sunlight, optimistic expression, high-end fitness aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtjen5N07Bus7Xx1YJ2U8RGON_npCrBszbdqPlfeO5l64Lpy45FpGXtJrTD_jgX9ilOJTbNQLyvpuIVanLlKVSUA2M8oE78y8DdUB-3TGg5nUJ1IRGBdvDSYURzpFLzvA0FTE7GHVK8R66yyvSoBH3bXPmtjWxKBHLv9HXYAzdz_EspgvaVLmNxp0EnecLyuCn1KXl34Ncij4VmGhynHRP5YKpCX6n76lxH47Gd0cUvv6zCyQ1j89mZVOdEKB1Y9Ros04xStOcego"/>
+<div class="flex flex-col gap-2">
+<div class="relative group cursor-pointer overflow-hidden rounded-2xl rounded-bl-none bg-surface-container-low border-4 border-surface-container-low">
+<img alt="Squat Form" class="w-64 aspect-video object-cover" data-alt="first person perspective or side view of a person performing a barbell squat in a modern gym, focused high-quality lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCm5AuL0qvT3TCeuVN1L7KhJz_jNIFqTVgYtqK68dgCHbSMTEdfZGCVJ6TlnxIN7hDOSCV4Al3lFxcAPKHc0pw7FnDKpPhogkHQkgoUQBYoZ-F2emTOuagYE93WezQOeJjO8wGUNptjsTVqaDcX9LTXgBzuJw3hDM5uo9WrNN8NtYP6DgQkoek6-IwGJEO-jXuLv3ilLpoRQn85Hzg95DrAb2PHMaK6kokroyifUt7BsOs8HKD6iC-y8PAP14fiL9SCr-EqVfFC-yA"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="w-12 h-12 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+</div>
+<span class="text-[10px] text-outline font-medium px-1">12:45 PM</span>
+</div>
+</div>
+</div>
+<!-- Message Input -->
+<div class="p-6 border-t border-surface-container/50">
+<div class="bg-surface-container-low rounded-2xl p-2 flex items-end gap-2 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+<button class="p-2.5 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<button class="p-2.5 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">image</span>
+</button>
+<textarea class="flex-1 py-2.5 px-2 bg-transparent border-none focus:ring-0 text-sm resize-none custom-scrollbar font-body" placeholder="Type a message..." rows="1" style="max-height: 120px;"></textarea>
+<button class="p-2.5 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">mood</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center bg-primary text-on-primary rounded-xl hover:opacity-90 transition-all active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body></html>

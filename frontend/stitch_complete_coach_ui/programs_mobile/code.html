@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Complete Physique - Library</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed-variant": "#474747",
+              "outline-variant": "#c8c4d7",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-tertiary-fixed": "#1b1b1b",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "tertiary": "#414141",
+              "surface-container-low": "#f5f3f3",
+              "primary-container": "#4f40cf",
+              "on-surface-variant": "#474554",
+              "error-container": "#ffdad6",
+              "surface-variant": "#e4e2e2",
+              "secondary-container": "#f87600",
+              "on-secondary-fixed-variant": "#753400",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-highest": "#e4e2e2",
+              "outline": "#787586",
+              "error": "#ba1a1a",
+              "surface-container": "#efeded",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "background": "#fbf9f8",
+              "primary": "#3620b8",
+              "primary-fixed-dim": "#c5c0ff",
+              "on-secondary-container": "#562500",
+              "on-primary-container": "#cfcaff",
+              "secondary-fixed": "#ffdbc9",
+              "surface-tint": "#5547d5",
+              "surface-bright": "#fbf9f8",
+              "surface": "#fbf9f8",
+              "secondary": "#9a4600",
+              "on-primary-fixed": "#140067",
+              "surface-dim": "#dbdad9",
+              "on-background": "#1b1c1c",
+              "on-surface": "#1b1c1c",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-fixed": "#321200",
+              "surface-container-high": "#e9e8e7",
+              "primary-fixed": "#e3dfff",
+              "on-tertiary": "#ffffff",
+              "on-tertiary-container": "#cfcfcf",
+              "on-primary-fixed-variant": "#3c29bd",
+              "on-error": "#ffffff",
+              "inverse-surface": "#303031",
+              "tertiary-container": "#585858",
+              "tertiary-fixed": "#e2e2e2",
+              "inverse-primary": "#c5c0ff",
+              "on-secondary": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .kinetic-gradient {
+        background: linear-gradient(135deg, #3620b8 0%, #4f40cf 100%);
+      }
+      ::-webkit-scrollbar { display: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body selection:bg-primary-fixed selection:text-primary">
+<!-- Top Navigation -->
+<header class="fixed top-0 w-full z-50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-sm flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User Profile" data-alt="Close up portrait of a fit woman with athletic wear looking confidently at the camera, soft natural studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGCftrk1Dk-txzZZie1UkDb-ZVXEIIxLcBAJXnn0hHOCa7tX9zpqEK7UnEvbbSEHL8oUf5VFCLt7HypMBLwOW1JPR1hyTlxQxdC-NVEs4dOrW2tsZsg4YqFFVE7Cm8r9TvL3RPWkRxvavtniTpyjGFHUE3cStr5u4fvB18E5Ki1ftxWidp4Uc7iai990cgOfZKIA3bnpGLgLZHejcMVA0KZimxLY8RCLZgqJFMSKKxyKsz3FZeSxLuBp8gtjouFUlX1gxMG10YyB4"/>
+</div>
+</div>
+<h1 class="text-lg font-extrabold tracking-tighter text-indigo-700 dark:text-indigo-400 font-headline uppercase">COMPLETE PHYSIQUE</h1>
+<button class="text-zinc-500 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<main class="pt-24 pb-32 px-6">
+<!-- Header & Editorial Intro -->
+<section class="mb-10">
+<span class="text-secondary-container font-bold uppercase tracking-widest text-xs mb-2 block">The Library</span>
+<h2 class="text-4xl font-extrabold font-headline tracking-tight text-on-surface leading-tight mb-4">Select Your <br/>Next Protocol.</h2>
+<p class="text-on-surface-variant max-w-xs leading-relaxed">Curated high-performance programs designed for elite transformation and metabolic mastery.</p>
+</section>
+<!-- Search & Filters -->
+<div class="mb-8 space-y-4">
+<div class="flex items-center bg-surface-container-low rounded-xl px-4 py-3 gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface w-full font-medium" placeholder="Search programs..." type="text"/>
+</div>
+<div class="flex gap-3 overflow-x-auto pb-2 -mx-2 px-2 no-scrollbar">
+<button class="px-6 py-2 rounded-full bg-secondary-container text-on-secondary-container font-semibold text-sm whitespace-nowrap">All Protocols</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm whitespace-nowrap">Strength</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm whitespace-nowrap">Hypertrophy</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm whitespace-nowrap">Fat Loss</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm whitespace-nowrap">Mobility</button>
+</div>
+</div>
+<!-- Featured Programs: Bento/Editorial Style -->
+<div class="grid grid-cols-1 gap-8">
+<!-- Program Card: Titan Protocol -->
+<div class="relative group aspect-[4/5] rounded-[2rem] overflow-hidden shadow-sm">
+<img alt="Titan Protocol" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Moody cinematic shot of a muscular athlete lifting heavy iron plates in a dark gritty high-end gym with dramatic rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7iKOO9-6MH5Wv67O7FLB9KMpSqXa-046ilG7CNIjKhalIAUuBUFJ20Od1t3CUzkan3iPPWqrtGXbRcvWS3yVRlMZIVxFTENJG91SzBAaWQ0xFFh57tbwIlWyafF5Q8UzUj102cuodnzXHOchb0gvCtGxTEVJ537Ed-nd3fTrvu_i_wkceqVKrAczGvovMThkVSBFDbe7As4zDIeDj9FYaxtCmFj8DVACP3thOIK-AY6BLcVyGIrAVrzAwRdCpwTTogXJnxEv7Duo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute inset-x-0 bottom-0 p-8">
+<div class="flex gap-2 mb-4">
+<span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider">Advanced</span>
+<span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider">12 Weeks</span>
+</div>
+<h3 class="text-white text-3xl font-extrabold font-headline tracking-tighter mb-2">TITAN PROTOCOL</h3>
+<p class="text-white/70 text-sm mb-6 max-w-[80%]">Focus on progressive overload and maximum mechanical tension for pure strength gains.</p>
+<button class="kinetic-gradient text-white px-8 py-3 rounded-full font-bold text-sm flex items-center gap-2 w-max active:scale-95 transition-all">
+                        View Details
+                        <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Program Card: Kinetic Burn -->
+<div class="relative group aspect-[4/5] rounded-[2rem] overflow-hidden shadow-sm">
+<img alt="Kinetic Burn" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Dynamic shot of a person performing explosive battle rope exercises in a modern sun-drenched fitness studio with lens flare" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk9X9crx2ZOrFcyZ-PeSH04-Ddc8Q7Gc9wZLYA1uigE51uv2qyjq6ve7FWJSakcfL3R_Sl1rBFjEdtjJCbz8Vx8CfIyjJ5Rwiu_ZFzwiXdjD-bOunX_uaV-NkyB6ePlgqgq04csW5R1Jq2PByvtGreoI8NDvHMcYwkqsyMUabTocpj8N8zmpnFTwzhR1LdgfPHKP4QrmC67jhbP9AQvMNyh3PluqVc_oE84A_UaIcQHzaRpWnI_qa-GlGIaxSxudIdbTwfSeEy5Yg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute inset-x-0 bottom-0 p-8">
+<div class="flex gap-2 mb-4">
+<span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider">Intermediate</span>
+<span class="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider">8 Weeks</span>
+</div>
+<h3 class="text-white text-3xl font-extrabold font-headline tracking-tighter mb-2">KINETIC BURN</h3>
+<p class="text-white/70 text-sm mb-6 max-w-[80%]">High-intensity metabolic conditioning designed to torch fat while maintaining lean mass.</p>
+<button class="kinetic-gradient text-white px-8 py-3 rounded-full font-bold text-sm flex items-center gap-2 w-max active:scale-95 transition-all">
+                        View Details
+                        <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Secondary List Section -->
+<div class="mt-4">
+<h4 class="text-xl font-bold font-headline mb-6">Upcoming Releases</h4>
+<div class="space-y-4">
+<div class="flex items-center gap-4 bg-surface-container-lowest p-4 rounded-2xl shadow-sm">
+<div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+<img alt="Aesthetic Engine" class="w-full h-full object-cover" data-alt="Top-down view of healthy meal prep containers with vibrant vegetables and lean proteins, clean editorial photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTy1akEPuufDLsR1vK8cOTul_SgTE2LcMGGr9hsqqPZjfS8kaabGd5dURW2MiMO4Yug80humO6tkzWE8CcTyLlpVkS3DInob9HNmvUkDlCE7KWXJ-k4ENuTNbuTokbJCqrE95Pdti0FTpZ29oPRqfXLbvvEiPKGTPYkgkyYia-VQOxyxdcPAW1f2Nz_vaq81uDy434FJhIeUVKs23mxU5es0n277OtQpL_JQqBR3VtXltQIxHndeJqrXspo-M6fUkzQ2ZP1CakblE"/>
+</div>
+<div class="flex-grow">
+<h5 class="font-bold text-on-surface">AESTHETIC ENGINE</h5>
+<p class="text-xs text-on-surface-variant">Hypertrophy &amp; Symmetry Focus</p>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="lock">lock</span>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-lowest p-4 rounded-2xl shadow-sm">
+<div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+<img alt="Zenith Peak" class="w-full h-full object-cover" data-alt="Minimalist yoga studio setting with a person doing a balance pose, soft morning light through large windows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDl3MgghtYtqN82Ve0Ge8nSQ8FGB5V-BAY579nGBSYflRAINI1HUmt8eezeWltDzhL0ooC6rrRib_bw2XV7TclL2H1wWYQHjXxBFk7zyo1V3dS_uj1GBtAwQeAsC9CB2C-n2OmYwN8IykhKOYQNqdAyTfDDgARBuh8kWKrzh9EaXGlZCCTnaOwSYqlptE2bylEYFX9w4DHV9bdibU1qroCPReOXNdV_irxlcWfkwUbXadW6Gs4XOS_-j8A_r3a-QdZlG5dks1T2_BM"/>
+</div>
+<div class="flex-grow">
+<h5 class="font-bold text-on-surface">ZENITH PEAK</h5>
+<p class="text-xs text-on-surface-variant">Performance Mobility &amp; Core</p>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="lock">lock</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-8 pt-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl rounded-t-3xl border-t border-white/20 shadow-[0px_-10px_30px_rgba(27,28,28,0.06)] z-50">
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-indigo-500 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="fitness_center">fitness_center</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide">Coach</span>
+</a>
+<a class="flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-400 scale-110 transition-transform" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide">Workouts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-indigo-500 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="restaurant">restaurant</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide">Nutrition</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-indigo-500 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="insights">insights</span>
+<span class="font-['Inter'] text-[11px] font-semibold tracking-wide">Progress</span>
+</a>
+</nav>
+</body></html>

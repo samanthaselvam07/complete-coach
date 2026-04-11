@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Form Builder &amp; Management | MCP Coaching</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-highest": "#e4e2e2",
+                        "outline-variant": "#c8c4d7",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface-container-low": "#f5f3f3",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "on-secondary-fixed": "#321200",
+                        "outline": "#787586",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "secondary-container": "#f87600",
+                        "surface-container": "#efeded",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#753400",
+                        "surface-dim": "#dbdad9",
+                        "surface-bright": "#fbf9f8",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "surface-container-high": "#e9e8e7",
+                        "tertiary-container": "#585858",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f2f0f0",
+                        "surface-tint": "#5547d5",
+                        "on-secondary-container": "#562500",
+                        "on-primary-fixed": "#140067",
+                        "surface-variant": "#e4e2e2",
+                        "secondary": "#9a4600",
+                        "inverse-primary": "#c5c0ff",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "surface": "#fbf9f8",
+                        "primary-container": "#4f40cf",
+                        "on-surface": "#1b1c1c",
+                        "inverse-surface": "#303031",
+                        "secondary-fixed": "#ffdbc9",
+                        "primary": "#3620b8",
+                        "on-background": "#1b1c1c",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#cfcfcf",
+                        "on-primary-container": "#cfcaff",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#414141",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "background": "#fbf9f8",
+                        "primary-fixed": "#e3dfff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#474554",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#e2e2e2"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-64 border-r border-zinc-200/20 dark:border-zinc-800/20 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl flex flex-col p-4 gap-2 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] shrink-0">
+<div class="flex flex-col gap-1 mb-6 px-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-white text-xl">bolt</span>
+</div>
+<h1 class="text-xl font-black text-zinc-900 dark:text-zinc-50 tracking-tighter">MCP Coaching</h1>
+<p class="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Premium Performance</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+                Training
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+                Nutrition
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+                Education
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="pill">pill</span>
+                Supplementation
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="alt_route">alt_route</span>
+                Pipeline
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all duration-200 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+                Clients
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-[#4F40CF] dark:text-[#4F40CF] font-bold bg-zinc-100/50 dark:bg-zinc-800/50 rounded-xl transition-all duration-200 font-['Plus_Jakarta_Sans'] tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+                Forms
+            </a>
+</nav>
+<button class="mt-auto flex items-center justify-center gap-2 text-white px-4 py-3 rounded-xl font-bold transition-all duration-150 active:scale-95 bg-[#4F40CF]">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+            + New Client
+        </button>
+<div class="mt-4 flex items-center gap-3 px-2 py-3 border-t border-zinc-200/50 dark:border-zinc-800/50">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEla1rz15ViDzCi0-YUCArm_DA8VnvyG3Tjf1mzswfWU0i5YpEOHL1Ht87yKNs5blilvtotG9zWwYYG-hHtC9PSN8DYtF48N63MAvLlIhztM4CMP9eJWKEj7eV_Pt_9isM0c2I1C4-LwLcwHZ5YRFYeLLHnj0OAgRn9G3bP-3XcjvwqpG5EBpgG58NemIQpYgQioih1BHOpYTUX3Z0OJUzKeEeGnj8VBjrFPOgILR4rTiS8Lh8AdcQcKbsitE8vnenXkPMeVR8a9Y"/>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-zinc-900 dark:text-zinc-50">Marcus P.</span>
+<span class="text-[10px] text-zinc-500 font-semibold">Head Coach</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 bg-[#fbf9f8] overflow-hidden relative">
+<!-- Top App Bar -->
+<header class="w-full h-16 sticky top-0 z-40 bg-[#fbf9f8]/80 dark:bg-zinc-950/80 backdrop-blur-md flex items-center justify-between px-6 border-b border-zinc-200/50">
+<div class="flex items-center gap-4">
+<h2 class="text-lg font-bold text-zinc-900 dark:text-zinc-50 font-headline">Form Builder &amp; Management</h2>
+<div class="h-4 w-[1px] bg-zinc-300"></div>
+<div class="flex items-center gap-2">
+<span class="flex h-2 w-2 rounded-full bg-green-500"></span>
+<span class="text-xs font-medium text-zinc-500">Ready to design</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-4 py-2 text-zinc-500 hover:text-zinc-900 transition-colors text-sm font-semibold">
+<span class="material-symbols-outlined text-sm">folder</span>
+                    My Forms
+                </button>
+<div class="h-8 w-[1px] bg-zinc-200 mx-2"></div>
+<span class="material-symbols-outlined text-zinc-500 cursor-pointer" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-zinc-500 cursor-pointer" data-icon="settings">settings</span>
+</div>
+</header>
+<!-- Dynamic Content: Dashboard Selection Layer (Initially Visible) -->
+<div class="absolute inset-0 z-50 bg-[#fbf9f8] p-10 overflow-y-auto no-scrollbar" id="form-selection-overlay">
+<div class="max-w-5xl mx-auto">
+<div class="flex justify-between items-end mb-10">
+<div>
+<h2 class="text-3xl font-black font-headline tracking-tight text-zinc-900">Create a New Form</h2>
+<p class="text-zinc-500 font-medium mt-1">Select a form type to start building from a specialized template.</p>
+</div>
+<button class="px-6 py-2.5 bg-zinc-900 text-white rounded-full font-bold text-sm shadow-xl hover:shadow-zinc-900/10 active:scale-95 transition-all">
+                        Start from Scratch
+                    </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Template Card: Check-in -->
+<div class="group bg-white p-6 rounded-[2rem] border border-zinc-200/60 hover:border-primary/40 hover:shadow-[0_20px_50px_rgba(79,64,207,0.08)] transition-all cursor-pointer flex flex-col h-full" onclick="document.getElementById('form-selection-overlay').style.display='none'">
+<div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-2xl">event_available</span>
+</div>
+<h3 class="text-lg font-bold text-zinc-900 mb-2">Check-in Forms</h3>
+<p class="text-sm text-zinc-500 leading-relaxed mb-6">Track physique progress, energy levels, and weekly qualitative data.</p>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-zinc-100 rounded-md text-[10px] font-bold text-zinc-400 uppercase">Weight Tracking</span>
+<span class="px-2 py-1 bg-zinc-100 rounded-md text-[10px] font-bold text-zinc-400 uppercase">Photo Uploads</span>
+</div>
+</div>
+<!-- Template Card: Habit Tracker -->
+<div class="group bg-white p-6 rounded-[2rem] border border-zinc-200/60 hover:border-secondary/40 hover:shadow-[0_20px_50px_rgba(154,70,0,0.08)] transition-all cursor-pointer flex flex-col h-full" onclick="document.getElementById('form-selection-overlay').style.display='none'">
+<div class="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-2xl">checklist</span>
+</div>
+<h3 class="text-lg font-bold text-zinc-900 mb-2">Daily Habit Trackers</h3>
+<p class="text-sm text-zinc-500 leading-relaxed mb-6">Create recurring checklists for hydration, steps, and sleep targets.</p>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-zinc-100 rounded-md text-[10px] font-bold text-zinc-400 uppercase">Checkboxes</span>
+<span class="px-2 py-1 bg-zinc-100 rounded-md text-[10px] font-bold text-zinc-400 uppercase">Daily Frequency</span>
+</div>
+</div>
+<!-- Template Card: Application -->
+<div class="group bg-white p-6 rounded-[2rem] border border-zinc-200/60 hover:border-emerald-500/40 hover:shadow-[0_20px_50px_rgba(16,185,129,0.08)] transition-all cursor-pointer flex flex-col h-full" onclick="document.getElementById('form-selection-overlay').style.display='none'">
+<div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-2xl">person_add</span>
+</div>
+<h3 class="text-lg font-bold text-zinc-900 mb-2">Application Forms</h3>
+<p class="text-sm text-zinc-500 leading-relaxed mb-6">Qualify potential athletes with background info and health history.</p>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-zinc-100 rounded-md text-[10px] font-bold text-zinc-400 uppercase">Long Text</span>
+<span class="px-2 py-1 bg-zinc-100 rounded-md text-[10px] font-bold text-zinc-400 uppercase">File Upload</span>
+</div>
+</div>
+<!-- Template Card: Contact -->
+<div class="group bg-white p-6 rounded-[2rem] border border-zinc-200/60 hover:border-blue-500/40 hover:shadow-[0_20px_50px_rgba(59,130,246,0.08)] transition-all cursor-pointer flex flex-col h-full" onclick="document.getElementById('form-selection-overlay').style.display='none'">
+<div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-2xl">mail</span>
+</div>
+<h3 class="text-lg font-bold text-zinc-900 mb-2">Contact Forms</h3>
+<p class="text-sm text-zinc-500 leading-relaxed mb-6">Simple intake for general inquiries and feedback from your team.</p>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-zinc-100 rounded-md text-[10px] font-bold text-zinc-400 uppercase">Short Answer</span>
+<span class="px-2 py-1 bg-zinc-100 rounded-md text-[10px] font-bold text-zinc-400 uppercase">Email Field</span>
+</div>
+</div>
+</div>
+<!-- Recent Activity Section -->
+<div class="mt-16">
+<h3 class="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-6">Recent Forms</h3>
+<div class="space-y-3">
+<div class="bg-white p-4 rounded-2xl border border-zinc-100 flex items-center justify-between hover:border-zinc-300 transition-colors cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+<span class="material-symbols-outlined text-xl">description</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-zinc-900">Weekly Performance Log</h4>
+<p class="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">Last edited 2 hours ago • 14 Responses</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-zinc-400">more_horiz</span>
+</div>
+<div class="bg-white p-4 rounded-2xl border border-zinc-100 flex items-center justify-between hover:border-zinc-300 transition-colors cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400">
+<span class="material-symbols-outlined text-xl">description</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-zinc-900">Pre-Workout Supplement Survey</h4>
+<p class="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">Last edited 1 day ago • 48 Responses</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-zinc-400">more_horiz</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Builder Interface Container -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Component Sidebar (Elements) -->
+<div class="w-72 bg-surface-container-low p-6 overflow-y-auto no-scrollbar flex flex-col gap-6">
+<div>
+<h3 class="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-4">Core Elements</h3>
+<div class="grid grid-cols-1 gap-3">
+<div class="flex items-center gap-3 p-4 bg-surface-container-lowest rounded-xl cursor-grab hover:shadow-md transition-all border border-transparent hover:border-primary/20 group">
+<span class="material-symbols-outlined text-primary" data-icon="text_fields">text_fields</span>
+<span class="text-sm font-semibold text-on-surface">Short Answer</span>
+</div>
+<div class="flex items-center gap-3 p-4 bg-surface-container-lowest rounded-xl cursor-grab hover:shadow-md transition-all border border-transparent hover:border-primary/20 group">
+<span class="material-symbols-outlined text-primary" data-icon="subject">subject</span>
+<span class="text-sm font-semibold text-on-surface">Long Text</span>
+</div>
+<div class="flex items-center gap-3 p-4 bg-surface-container-lowest rounded-xl cursor-grab hover:shadow-md transition-all border border-transparent hover:border-primary/20 group">
+<span class="material-symbols-outlined text-primary" data-icon="star">star</span>
+<span class="text-sm font-semibold text-on-surface">Rating Scale</span>
+</div>
+<div class="flex items-center gap-3 p-4 bg-surface-container-lowest rounded-xl cursor-grab hover:shadow-md transition-all border border-transparent hover:border-primary/20 group">
+<span class="material-symbols-outlined text-primary" data-icon="check_box">check_box</span>
+<span class="text-sm font-semibold text-on-surface">Checkboxes</span>
+</div>
+</div>
+</div>
+<div>
+<h3 class="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-4">Media &amp; Fitness</h3>
+<div class="grid grid-cols-1 gap-3">
+<div class="flex items-center gap-3 p-4 bg-surface-container-lowest rounded-xl cursor-grab hover:shadow-md transition-all border border-transparent hover:border-primary/20 group">
+<span class="material-symbols-outlined text-secondary-container" data-icon="add_a_photo">add_a_photo</span>
+<span class="text-sm font-semibold text-on-surface">Photo Upload</span>
+</div>
+<div class="flex items-center gap-3 p-4 bg-surface-container-lowest rounded-xl cursor-grab hover:shadow-md transition-all border border-transparent hover:border-primary/20 group">
+<span class="material-symbols-outlined text-secondary-container" data-icon="monitoring">monitoring</span>
+<span class="text-sm font-semibold text-on-surface">Body Weight</span>
+</div>
+<div class="flex items-center gap-3 p-4 bg-surface-container-lowest rounded-xl cursor-grab hover:shadow-md transition-all border border-transparent hover:border-primary/20 group">
+<span class="material-symbols-outlined text-secondary-container" data-icon="straighten">straighten</span>
+<span class="text-sm font-semibold text-on-surface">Measurements</span>
+</div>
+</div>
+</div>
+<div class="mt-auto p-4 bg-primary/5 rounded-2xl border border-primary/10">
+<p class="text-xs text-primary font-medium leading-relaxed">
+                        Pro Tip: Drag elements directly into the preview canvas to add them to your form.
+                    </p>
+</div>
+</div>
+<!-- Preview Canvas Area -->
+<div class="flex-1 bg-[#f5f3f3] p-10 overflow-y-auto flex flex-col items-center no-scrollbar">
+<div class="w-full max-w-2xl flex flex-col gap-6">
+<!-- Form Header Section -->
+<div class="bg-surface-container-lowest p-10 rounded-[2.5rem] shadow-sm border border-transparent">
+<div class="flex flex-col gap-2">
+<input class="text-3xl font-black font-headline tracking-tight border-none p-0 focus:ring-0 w-full placeholder-zinc-300" type="text" value="New Form Template"/>
+<textarea class="text-sm text-zinc-500 border-none p-0 focus:ring-0 w-full resize-none min-h-[40px] bg-transparent" placeholder="Add a description or instructions for your athletes...">Click a template from the dashboard or start adding elements here to build your form.</textarea>
+</div>
+</div>
+<!-- Example Template Element: Habit Tracker Suggestion -->
+<div class="group relative bg-surface-container-lowest p-8 rounded-[2rem] shadow-sm border-2 border-transparent hover:border-secondary/20 transition-all cursor-pointer">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<input class="text-lg font-bold font-headline border-none p-0 focus:ring-0 w-full" type="text" value="Daily Habit Checklist"/>
+<span class="px-2 py-1 bg-secondary/5 text-[10px] font-bold text-secondary rounded uppercase">Habit Tracker Suggestion</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3">
+<div class="w-5 h-5 rounded border-2 border-zinc-300"></div>
+<span class="text-sm text-zinc-600 font-medium">Hydration (4L+) met?</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-5 h-5 rounded border-2 border-zinc-300"></div>
+<span class="text-sm text-zinc-600 font-medium">Protein target (200g) reached?</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-5 h-5 rounded border-2 border-zinc-300"></div>
+<span class="text-sm text-zinc-600 font-medium">7+ Hours sleep achieved?</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Draggable Element: Photo Upload -->
+<div class="group relative bg-surface-container-lowest p-8 rounded-[2rem] shadow-sm border-2 border-transparent hover:border-primary/20 transition-all cursor-pointer">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<input class="text-lg font-bold font-headline border-none p-0 focus:ring-0 w-full" type="text" value="Upload Progress Photos"/>
+<span class="px-2 py-1 bg-primary/5 text-[10px] font-bold text-primary rounded uppercase">Check-in Suggestion</span>
+</div>
+<p class="text-sm text-zinc-500 -mt-2">Front, Side, and Back relaxed poses.</p>
+<div class="grid grid-cols-3 gap-4 mt-2">
+<div class="aspect-[3/4] rounded-2xl bg-surface-container-low border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:bg-zinc-100 transition-colors">
+<span class="material-symbols-outlined text-3xl" data-icon="add_a_photo">add_a_photo</span>
+<span class="text-[10px] font-bold uppercase tracking-tight">Add Photo</span>
+</div>
+<div class="aspect-[3/4] rounded-2xl bg-surface-container-low border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:bg-zinc-100 transition-colors">
+<span class="material-symbols-outlined text-3xl" data-icon="add_a_photo">add_a_photo</span>
+<span class="text-[10px] font-bold uppercase tracking-tight">Add Photo</span>
+</div>
+<div class="aspect-[3/4] rounded-2xl bg-surface-container-low border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:bg-zinc-100 transition-colors">
+<span class="material-symbols-outlined text-3xl" data-icon="add_a_photo">add_a_photo</span>
+<span class="text-[10px] font-bold uppercase tracking-tight">Add Photo</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Insertion Point -->
+<div class="w-full flex items-center justify-center py-4 group">
+<div class="h-[2px] w-full bg-zinc-200 group-hover:bg-primary/20 transition-colors relative">
+<button class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-md border border-zinc-100 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Configuration Sidebar (Inspector) -->
+<div class="w-80 bg-surface-container-lowest border-l border-zinc-200/50 p-6 overflow-y-auto no-scrollbar hidden xl:flex flex-col gap-8">
+<div class="flex items-center gap-2 mb-2">
+<button class="text-zinc-400 hover:text-zinc-900 transition-colors" onclick="document.getElementById('form-selection-overlay').style.display='block'">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<span class="text-xs font-bold text-zinc-400 uppercase tracking-widest">Back to Templates</span>
+</div>
+<div>
+<h3 class="text-sm font-bold text-zinc-900 mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="settings">settings</span>
+                        Form Settings
+                    </h3>
+<div class="space-y-4">
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Form Name</label>
+<input class="bg-surface-container-low border-none rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-1 focus:ring-primary/20" type="text" value="Untitled Form"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Form Type</label>
+<select class="bg-surface-container-low border-none rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-1 focus:ring-primary/20">
+<option>Check-in Form</option>
+<option>Habit Tracker</option>
+<option>Application Form</option>
+<option>Contact Form</option>
+</select>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Frequency</label>
+<select class="bg-surface-container-low border-none rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-1 focus:ring-primary/20">
+<option>Daily</option>
+<option>Weekly (Sunday)</option>
+<option>Monthly</option>
+<option>Ad-hoc (Manual)</option>
+</select>
+</div>
+</div>
+</div>
+<div class="pt-6 border-t border-zinc-100">
+<h3 class="text-sm font-bold text-zinc-900 mb-4">Integrations</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-3 rounded-xl border border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+<span class="material-symbols-outlined text-lg" data-icon="table_chart">table_chart</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold">Google Sheets</span>
+<span class="text-[10px] text-zinc-400">Sync all responses</span>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-xl border border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+<span class="material-symbols-outlined text-lg">chat</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold">Slack Notification</span>
+<span class="text-[10px] text-zinc-400">Alert in #coach-updates</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-auto">
+<button class="w-full py-4 bg-primary text-white rounded-2xl font-bold text-sm shadow-lg hover:shadow-primary/30 active:scale-95 transition-all">
+                        Publish Form
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+<span class="absolute right-full mr-4 bg-zinc-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Quick Add Element</span>
+</button>
+</body></html>

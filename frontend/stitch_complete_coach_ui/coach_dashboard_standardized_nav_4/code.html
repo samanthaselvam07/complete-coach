@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Coach Dashboard | My Complete Physique</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fbf9f8;
+        }
+        .font-headline {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .sidebar-glass {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "error": "#ba1a1a",
+                "primary-fixed": "#e3dfff",
+                "primary-container": "#4f40cf",
+                "primary-fixed-dim": "#c5c0ff",
+                "outline": "#787586",
+                "outline-variant": "#c8c4d7",
+                "on-tertiary-fixed": "#1b1b1b",
+                "surface-container": "#efeded",
+                "on-surface": "#1b1c1c",
+                "surface-variant": "#e4e2e2",
+                "on-tertiary-fixed-variant": "#474747",
+                "on-secondary-fixed": "#321200",
+                "tertiary-fixed": "#e2e2e2",
+                "on-primary-fixed": "#140067",
+                "on-secondary-container": "#562500",
+                "background": "#fbf9f8",
+                "on-primary-fixed-variant": "#3c29bd",
+                "surface-container-low": "#f5f3f3",
+                "on-error-container": "#93000a",
+                "error-container": "#ffdad6",
+                "on-error": "#ffffff",
+                "tertiary-fixed-dim": "#c6c6c6",
+                "surface-tint": "#5547d5",
+                "surface-container-lowest": "#ffffff",
+                "inverse-on-surface": "#f2f0f0",
+                "secondary-container": "#f87600",
+                "secondary-fixed": "#ffdbc9",
+                "surface-dim": "#dbdad9",
+                "on-tertiary": "#ffffff",
+                "on-tertiary-container": "#cfcfcf",
+                "tertiary": "#414141",
+                "surface-container-high": "#e9e8e7",
+                "on-primary": "#ffffff",
+                "on-background": "#1b1c1c",
+                "primary": "#3620b8",
+                "on-secondary": "#ffffff",
+                "inverse-surface": "#303031",
+                "tertiary-container": "#585858",
+                "surface-bright": "#fbf9f8",
+                "on-secondary-fixed-variant": "#753400",
+                "on-primary-container": "#cfcaff",
+                "surface": "#fbf9f8",
+                "secondary-fixed-dim": "#ffb68c",
+                "surface-container-highest": "#e4e2e2",
+                "secondary": "#9a4600",
+                "on-surface-variant": "#474554",
+                "inverse-primary": "#c5c0ff"
+              },
+              fontFamily: {
+                "headline": ["Plus Jakarta Sans"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface antialiased flex" data-mode="connect">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-72 sticky top-0 z-50 sidebar-glass flex flex-col py-8 px-5 shadow-[20px_0px_60px_rgba(27,28,28,0.03)] border-r border-outline-variant/10">
+<div class="mb-10 px-3">
+<h1 class="text-xl font-black text-primary-container font-headline tracking-tighter">My Complete Physique</h1>
+</div>
+<div class="flex items-center gap-3 px-3 mb-8">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover shadow-sm ring-2 ring-primary-container/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAM0tVLKLCy6sPR072UIlEVj8w-OsB4vFWoQhAaFKu_NksLYnUKmJgCOBx-IDlMSLgR587PRTcaNV1qxTsrTz6O0sJN5UZHm3OHIs_0JX8uio6YOKaibk3m_wxDR6Q0gn0pOFhaob8v9uuKnnAG8HrIFdtHEM40RsoHy3Dmxi2B7szekGE2xXuVID-vuLf_Pp4XC0XP_b8Wt9OELJHPUyHPZHnxgXTcHkjnfvRxKLdJbHQsN2Un08t-D52Qn0FxvyU_JRXt1F4gHaU"/>
+<div>
+<p class="font-headline font-bold text-sm leading-tight">Coach Dashboard</p>
+<p class="text-xs text-on-surface-variant font-medium">Elite Performance</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1.5 overflow-y-auto">
+<!-- Active Tab: Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-primary bg-primary/10 border-r-4 border-primary transition-all group" href="#">
+<span class="material-symbols-outlined !fill-1" data-icon="dashboard">dashboard</span>
+<span class="font-headline font-bold text-[14px]">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="fitness_center">fitness_center</span>
+<span class="font-headline font-bold text-[14px]">Training</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="restaurant">restaurant</span>
+<span class="font-headline font-bold text-[14px]">Nutrition</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="school">school</span>
+<span class="font-headline font-bold text-[14px]">Education</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="medical_services">medical_services</span>
+<span class="font-headline font-bold text-[14px]">Supplementation</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary" data-icon="group">group</span>
+<span class="font-headline font-bold text-[14px]">Clients</span>
+</a>
+</nav>
+<div class="mt-8 space-y-4">
+<div class="px-4 py-4 rounded-2xl bg-surface-container-low border border-outline-variant/10">
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Internal Tools</p>
+<div class="space-y-1">
+<a class="flex items-center gap-3 py-1 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="chat">chat</span>
+<span class="text-xs font-bold font-headline">Messages</span>
+</a>
+<a class="flex items-center gap-3 py-1 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="settings">settings</span>
+<span class="text-xs font-bold font-headline">Settings</span>
+</a>
+</div>
+</div>
+<button class="w-full py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-2xl font-headline font-bold text-sm shadow-[0_10px_25px_-5px_rgba(54,32,184,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-base" data-icon="add">add</span>
+                Create New Program
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 min-h-screen p-10 overflow-y-auto">
+<!-- Header -->
+<header class="flex justify-between items-center mb-10">
+<div>
+<h2 class="text-4xl font-headline font-black tracking-tight text-on-surface">My Complete Physique</h2>
+<p class="text-on-surface-variant font-medium mt-1">Don't just train, complete your physique!</p>
+</div>
+<div class="flex items-center gap-5">
+<div class="relative bg-white/50 p-2.5 rounded-full shadow-sm cursor-pointer hover:bg-white transition-all">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="notifications">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-secondary-container rounded-full ring-2 ring-background"></span>
+</div>
+<div class="flex items-center gap-3 pl-5 border-l border-outline-variant/20">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant cursor-pointer hover:bg-white transition-all">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Top Grid: Analytics & Stats -->
+<div class="grid grid-cols-12 gap-8 mb-12">
+<!-- Revenue Analytics Card (Bento Style) -->
+<section class="col-span-8 bg-surface-container-lowest rounded-[2.5rem] p-10 shadow-[0px_20px_50px_rgba(27,28,28,0.04)] flex flex-col justify-between overflow-hidden relative group">
+<div class="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[100px] -mr-24 -mt-24"></div>
+<div class="flex justify-between items-start mb-10 relative z-10">
+<div>
+<h3 class="text-on-surface-variant font-bold text-xs uppercase tracking-[0.2em] mb-2">Monthly Revenue</h3>
+<div class="flex items-baseline gap-4">
+<span class="text-5xl font-headline font-black tracking-tighter">$24,850</span>
+<span class="bg-secondary-container/10 text-secondary font-bold text-xs px-3 py-1 rounded-full ring-1 ring-secondary/20">+12.5%</span>
+</div>
+</div>
+<select class="bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-2 text-xs font-bold text-on-surface-variant focus:ring-primary/20 cursor-pointer">
+<option>Last 30 Days</option>
+<option>Last 6 Months</option>
+</select>
+</div>
+<div class="h-56 w-full flex items-end gap-3 px-2 relative z-10">
+<div class="flex-1 bg-primary/5 rounded-t-2xl h-[40%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/5 rounded-t-2xl h-[55%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/5 rounded-t-2xl h-[45%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/5 rounded-t-2xl h-[70%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/5 rounded-t-2xl h-[60%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-gradient-to-t from-primary-container to-primary-container/80 rounded-t-2xl h-[85%] hover:scale-x-105 transition-all cursor-pointer shadow-[0_0_30px_rgba(79,64,207,0.3)] relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] font-bold px-2 py-1 rounded hidden group-hover:block">Peak Day</div>
+</div>
+<div class="flex-1 bg-primary/10 rounded-t-2xl h-[75%] hover:bg-primary-container/20 transition-all cursor-pointer"></div>
+</div>
+</section>
+<!-- Summary Stats Stack -->
+<div class="col-span-4 flex flex-col gap-8">
+<!-- Active Roster Card -->
+<article class="bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0px_20px_50px_rgba(27,28,28,0.04)] flex flex-col justify-center border border-outline-variant/5">
+<div class="flex items-center gap-5 mb-6">
+<div class="w-14 h-14 rounded-2xl bg-secondary-container/10 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined text-3xl" data-icon="groups">groups</span>
+</div>
+<div class="">
+<h4 class="font-headline font-bold text-on-surface-variant text-sm tracking-wide">Active Clients</h4>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-4xl font-headline font-black">42</span>
+<span class="text-on-surface-variant/60 font-bold text-xs uppercase">Clients</span>
+</div>
+</div>
+</div>
+<div class="w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-[84%]"></div>
+</div>
+<p class="text-[10px] font-bold text-on-surface-variant mt-2">84% CAPACITY REACHED</p>
+</article>
+<!-- Pending Review Card -->
+<article class="bg-surface-container-lowest rounded-[2rem] p-8 shadow-[0px_20px_50px_rgba(27,28,28,0.04)] flex flex-col justify-center border border-outline-variant/5">
+<div class="flex items-center gap-5 mb-6">
+<div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-3xl" data-icon="assignment_late">assignment_late</span>
+</div>
+<div>
+<h4 class="font-headline font-bold text-on-surface-variant text-sm tracking-wide">Pending Check Ins</h4>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-4xl font-headline font-black">08</span>
+<span class="text-on-surface-variant/60 font-bold text-xs uppercase">Check ins</span>
+</div>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="px-2 py-1 bg-error-container text-error text-[10px] font-bold rounded">3 URGENT</span>
+<span class="px-2 py-1 bg-surface-container-high text-on-surface-variant text-[10px] font-bold rounded">5 REGULAR</span>
+</div>
+</article>
+</div>
+</div>
+<!-- Middle Row: Command Center & Pulse Feed -->
+<div class="grid grid-cols-12 gap-10 items-start">
+<div class="col-span-5">
+<h3 class="text-2xl font-headline font-black mb-8 text-on-surface">Command Center</h3>
+<div class="grid grid-cols-2 gap-5">
+<button class="aspect-square bg-surface-container-lowest rounded-[2.5rem] p-8 shadow-sm hover:shadow-xl hover:scale-[1.03] active:scale-95 transition-all text-left flex flex-col justify-between group border border-outline-variant/5">
+<div class="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined text-2xl" data-icon="add_circle">add_circle</span>
+</div>
+<div>
+<p class="font-headline font-bold text-[15px] leading-tight text-on-surface">Create New Program</p>
+<p class="text-xs text-on-surface-variant mt-1.5 font-medium">Design performance systems</p>
+</div>
+</button>
+<button class="aspect-square bg-surface-container-lowest rounded-[2.5rem] p-8 shadow-sm hover:shadow-xl hover:scale-[1.03] active:scale-95 transition-all text-left flex flex-col justify-between group border border-outline-variant/5">
+<div class="w-12 h-12 rounded-2xl bg-secondary-container/5 flex items-center justify-center text-secondary-container group-hover:bg-secondary-container group-hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined text-2xl" data-icon="restaurant">restaurant</span>
+</div>
+<div>
+<p class="font-headline font-bold text-[15px] leading-tight text-on-surface">Nutrition Plans</p>
+<p class="text-xs text-on-surface-variant mt-1.5 font-medium">Manage macros &amp; fuel</p>
+</div>
+</button>
+<button class="aspect-square bg-surface-container-lowest rounded-[2.5rem] p-8 shadow-sm hover:shadow-xl hover:scale-[1.03] active:scale-95 transition-all text-left flex flex-col justify-between group border border-outline-variant/5">
+<div class="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined text-2xl" data-icon="person_add">person_add</span>
+</div>
+<div>
+<p class="font-headline font-bold text-[15px] leading-tight text-on-surface">Invite Client</p>
+<p class="text-xs text-on-surface-variant mt-1.5 font-medium">Onboard elite athletes</p>
+</div>
+</button>
+<button class="aspect-square bg-surface-container-lowest rounded-[2.5rem] p-8 shadow-sm hover:shadow-xl hover:scale-[1.03] active:scale-95 transition-all text-left flex flex-col justify-between group border border-outline-variant/5">
+<div class="w-12 h-12 rounded-2xl bg-secondary-container/5 flex items-center justify-center text-secondary-container group-hover:bg-secondary-container group-hover:text-white transition-all shadow-sm">
+<span class="material-symbols-outlined text-2xl" data-icon="forum">forum</span>
+</div>
+<div>
+<p class="font-headline font-bold text-[15px] leading-tight text-on-surface">Message Roster</p>
+<p class="text-xs text-on-surface-variant mt-1.5 font-medium">Global athlete broadcast</p>
+</div>
+</button>
+</div>
+</div>
+<div class="col-span-7">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-2xl font-headline font-black text-on-surface">Client Activity</h3>
+<button class="text-primary-container font-bold text-sm hover:underline flex items-center gap-1">
+                        View All Activity <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="bg-surface-container-lowest rounded-[2.5rem] p-3 shadow-[0px_20px_50px_rgba(27,28,28,0.04)] border border-outline-variant/5">
+<div class="space-y-1">
+<div class="flex items-center gap-5 p-6 rounded-[2rem] hover:bg-surface-container-low transition-all cursor-pointer group">
+<img alt="Elena R." class="w-14 h-14 rounded-full object-cover ring-2 ring-primary-container/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmkkFdyWNHwxvzyCsUYfljaoO9uGGVils_ARC2_VJVrg1o65BewFOm0Z0fg4iSRZ4NW3o1-UILGMeBt3_chIYHH-Hnqa9_ivpmo4j0lK1aKcufiz5gIXVyD9fdVTjWNChtVdZC8_fslWiGAKZ5E6c1tBs2-LDqwh78-NYu75TCiHujGbjRR7Bu3ibJH8_RqpHnbBRxgjp5bgAqML7I13KpYIXkPoI3YRiw5G7qlmwT2Nap_f-xYmWkXVZ3bijuNtKOmd0mm_hlzZY"/>
+<div class="flex-1">
+<p class="text-[15px] font-bold"><span class="font-headline">Elena R.</span> updated their macro log</p>
+<p class="text-xs text-on-surface-variant font-medium mt-0.5">Protein intake exceeded by 15g • 14 mins ago</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-1 transition-all" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center gap-5 p-6 rounded-[2rem] hover:bg-surface-container-low transition-all cursor-pointer group">
+<img alt="Jordan S." class="w-14 h-14 rounded-full object-cover ring-2 ring-primary-container/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQLok4uo6LGM0hstobMWDDFyfU9qAx-1SrlWsJxoYkSaKGIvRO0joH27zxbGFWXsB-_L964KaVdyLFgENLlpvV2yZ-WTeYbVcjZUPoEwuCzb6EIaa5CKGNFxRCz3dQofO5R-oyspMWNmEFAuoZt4OPRT1PecSHo3CRY03OqVaQUH0i406qIqWucEBpdXPTM06ol93P9gIimUdreDlfCoQdmsIcEqU3zdTPvpoJmARqpJurT3ZhONhN94SIs5NuUulX1solMIKo69c"/>
+<div class="flex-1">
+<p class="text-[15px] font-bold"><span class="font-headline">Jordan S.</span> completed Leg Power II</p>
+<p class="text-xs text-on-surface-variant font-medium mt-0.5">PR set on Back Squat (315 lbs) • 2 hours ago</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-1 transition-all" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center gap-5 p-6 rounded-[2rem] hover:bg-surface-container-low transition-all cursor-pointer group">
+<div class="w-14 h-14 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container font-headline font-bold text-sm ring-2 ring-primary-container/5">MT</div>
+<div class="flex-1">
+<p class="text-[15px] font-bold"><span class="font-headline">Marcus T.</span> submitted Weekly Check-in</p>
+<p class="text-xs text-on-surface-variant font-medium mt-0.5">Awaiting review of physique photos • 5 hours ago</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-1 transition-all" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Row: Messages & Programs -->
+<div class="mt-16 grid grid-cols-12 gap-10">
+<section class="col-span-4">
+<h3 class="text-2xl font-headline font-black mb-8 text-on-surface">Recent Messages</h3>
+<div class="space-y-5">
+<div class="bg-surface-container-lowest p-6 rounded-[2rem] shadow-sm border border-outline-variant/5 flex gap-4 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary scale-y-0 group-hover:scale-y-100 transition-transform origin-top"></div>
+<img alt="Sarah Jenkins" class="w-12 h-12 rounded-full object-cover ring-2 ring-surface-container-high" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXK9zEl9TL3kIz1AgGTsdnDuO83QEPwcYvdu2IG5faJnMBV_RBJBTuct22_19ia0pZwimAXWwaBqKp2yrnbt1tlezMK3AqqQcrNaZEu45Il0OLe-bM38OXJxZdfBtqwzEk9rVsf5P8Lg1gzcTcaQijzRds939103CCsQogxVPxcHNYKEJTcDjT0NrYy6Okce4qUvw65nzVPo_r6ShWB6_5mscakbN2kJCK_42133pZ46yXMosRmtGBPAq8F1i_0ywU25YJ3xXiLK8"/>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="font-headline font-bold text-sm">Sarah Jenkins</p>
+<span class="text-[10px] text-primary font-black uppercase tracking-tighter">New</span>
+</div>
+<p class="text-xs text-on-surface-variant font-medium line-clamp-2 mt-1.5 group-hover:text-on-surface transition-colors">"Hey coach, should I push the cardio session to tomorrow? Feeling a bit fatigued..."</p>
+<p class="text-[10px] text-on-surface-variant/50 font-bold mt-2 uppercase tracking-widest">10:45 AM</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-[2rem] shadow-sm border border-outline-variant/5 flex gap-4 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group relative overflow-hidden">
+<div class="w-12 h-12 rounded-full bg-secondary-container/10 flex items-center justify-center text-secondary-container font-black text-xs ring-2 ring-surface-container-high">MT</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="font-headline font-bold text-sm">Marcus Thorne</p>
+<span class="text-[10px] text-on-surface-variant font-bold">YESTERDAY</span>
+</div>
+<p class="text-xs text-on-surface-variant font-medium line-clamp-2 mt-1.5 group-hover:text-on-surface transition-colors">"The new macro targets feel sustainable. Thanks for the quick adjustment!"</p>
+<p class="text-[10px] text-on-surface-variant/50 font-bold mt-2 uppercase tracking-widest">Sent from mobile</p>
+</div>
+</div>
+</div>
+</section>
+<section class="col-span-8">
+<h3 class="text-2xl font-headline font-black mb-8 text-on-surface">Program Pipeline</h3>
+<div class="bg-surface-container-lowest rounded-[2.5rem] overflow-hidden shadow-sm border border-outline-variant/5">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low/50 border-b border-outline-variant/10">
+<tr>
+<th class="px-8 py-5 text-xs font-black text-on-surface-variant uppercase tracking-widest">Program Name</th>
+<th class="px-8 py-5 text-xs font-black text-on-surface-variant uppercase tracking-widest">Active Clients</th>
+<th class="px-8 py-5 text-xs font-black text-on-surface-variant uppercase tracking-widest">Completion</th>
+<th class="px-8 py-5 text-xs font-black text-on-surface-variant uppercase tracking-widest text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-8 py-7">
+<p class="text-[15px] font-headline font-black text-on-surface">Hypertrophy Blueprint v4</p>
+<p class="text-xs text-on-surface-variant font-medium mt-0.5">Strength • 12 Weeks</p>
+</td>
+<td class="px-8 py-7">
+<div class="flex -space-x-3">
+<div class="w-9 h-9 rounded-full bg-primary ring-4 ring-white shadow-sm"></div>
+<div class="w-9 h-9 rounded-full bg-secondary ring-4 ring-white shadow-sm"></div>
+<div class="w-9 h-9 rounded-full bg-surface-container-highest ring-4 ring-white shadow-sm flex items-center justify-center text-[11px] font-black text-on-surface-variant">+12</div>
+</div>
+</td>
+<td class="px-8 py-7">
+<div class="w-40 h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary-container to-primary" style="width: 78%;"></div>
+</div>
+<span class="text-[11px] font-black text-on-surface-variant mt-2 block uppercase tracking-tighter">78% AVG PROGRESS</span>
+</td>
+<td class="px-8 py-7 text-right">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-outline-variant hover:bg-white hover:text-primary hover:shadow-md transition-all" data-icon="more_vert">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-8 py-7">
+<p class="text-[15px] font-headline font-black text-on-surface">Physique Sculpt Elite</p>
+<p class="text-xs text-on-surface-variant font-medium mt-0.5">Conditioning • 8 Weeks</p>
+</td>
+<td class="px-8 py-7">
+<div class="flex -space-x-3">
+<div class="w-9 h-9 rounded-full bg-secondary ring-4 ring-white shadow-sm"></div>
+<div class="w-9 h-9 rounded-full bg-primary-fixed ring-4 ring-white shadow-sm"></div>
+<div class="w-9 h-9 rounded-full bg-surface-container-highest ring-4 ring-white shadow-sm flex items-center justify-center text-[11px] font-black text-on-surface-variant">+5</div>
+</div>
+</td>
+<td class="px-8 py-7">
+<div class="w-40 h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-secondary-container to-secondary" style="width: 45%;"></div>
+</div>
+<span class="text-[11px] font-black text-on-surface-variant mt-2 block uppercase tracking-tighter">45% AVG PROGRESS</span>
+</td>
+<td class="px-8 py-7 text-right">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-outline-variant hover:bg-white hover:text-primary hover:shadow-md transition-all" data-icon="more_vert">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-6 bg-surface-container-low/20 flex justify-center">
+<button class="text-xs font-black text-on-surface-variant uppercase tracking-widest hover:text-primary transition-colors">View full pipeline overview</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

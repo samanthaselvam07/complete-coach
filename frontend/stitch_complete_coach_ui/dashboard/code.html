@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kahunas | Digital Architect Dashboard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary": "#575f67",
+              "surface-dim": "#d5d8f6",
+              "primary-container": "#3699ff",
+              "on-tertiary-fixed-variant": "#3f484f",
+              "secondary-fixed": "#dee1ff",
+              "surface-bright": "#fbf8ff",
+              "outline-variant": "#c0c7d5",
+              "secondary-container": "#dbdefc",
+              "outline": "#707784",
+              "on-secondary-fixed-variant": "#42455e",
+              "background": "#fbf8ff",
+              "surface-container-highest": "#dee1ff",
+              "on-surface": "#161a30",
+              "inverse-primary": "#a3c9ff",
+              "on-background": "#161a30",
+              "secondary-fixed-dim": "#c2c5e2",
+              "surface-container-low": "#f4f2ff",
+              "on-tertiary-container": "#283037",
+              "surface-container": "#ececff",
+              "inverse-surface": "#2b2f46",
+              "on-secondary": "#ffffff",
+              "primary-fixed": "#d3e3ff",
+              "tertiary-fixed-dim": "#bfc8d0",
+              "surface-container-lowest": "#ffffff",
+              "secondary": "#595d76",
+              "surface-container-high": "#e5e6ff",
+              "on-tertiary": "#ffffff",
+              "primary": "#0060ab",
+              "surface-tint": "#0060ab",
+              "tertiary-container": "#8f98a0",
+              "error-container": "#ffdad6",
+              "on-error-container": "#93000a",
+              "on-surface-variant": "#404753",
+              "inverse-on-surface": "#f0efff",
+              "on-secondary-container": "#5d617b",
+              "on-error": "#ffffff",
+              "on-secondary-fixed": "#161a30",
+              "primary-fixed-dim": "#a3c9ff",
+              "surface-variant": "#dee1ff",
+              "surface": "#fbf8ff",
+              "tertiary-fixed": "#dbe4ed",
+              "on-tertiary-fixed": "#141d23",
+              "on-primary-container": "#00305b",
+              "on-primary-fixed": "#001c39",
+              "on-primary": "#ffffff",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#004883"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- SideNavBar (Execution from JSON) -->
+<aside class="fixed left-0 top-0 h-full flex flex-col p-6 h-screen w-64 border-r-0 bg-slate-50 dark:bg-slate-900 border-r border-slate-200/15 dark:border-slate-800/15 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-2xl font-bold tracking-tight text-blue-600 dark:text-blue-400 font-headline">Kahunas</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-400 mt-1">Digital Architect</p>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Active: Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors bg-blue-100/50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold font-headline" href="#">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-headline" href="#">
+<span class="material-symbols-outlined text-[22px]">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-headline" href="#">
+<span class="material-symbols-outlined text-[22px]">exercise</span>
+<span>Programs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-headline" href="#">
+<span class="material-symbols-outlined text-[22px]">mail</span>
+<span>Messages</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 font-headline" href="#">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto p-4 bg-slate-200/30 rounded-2xl flex items-center gap-3">
+<img alt="User Profile" class="w-10 h-10 rounded-lg object-cover" data-alt="professional portrait of a high-end fitness coach in clean athletic wear against a neutral grey studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtAGubaE751u4730J5HOgCKN4IQDWczwfayIDGq-OCD6UYj4V0kFKoSsUxb8DmmUZXdAJGWrUTZpjd62GIFFJTcV6b4FXP67FeP2H0Ct5VoKdmu0bgd2QwBYZgH1kdMtuGIn3FC3Ek6XuNeZCKkcN_oDnoFMyzdifLXP1Q6_Os9VwndsuIbpujfpWh5O4IhSF-13cyUB2Z3J8BEL5XSpDjFchvDToxxqSmiIQedsH1V6KO0oFz6SnbYmrBFRyldg1fluExNt25Lu0"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">John Doe</p>
+<p class="text-xs text-slate-500 truncate">Pro Architect</p>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Execution from JSON) -->
+<header class="sticky top-0 z-40 flex justify-between items-center px-8 py-4 ml-64 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl font-['Inter'] text-sm shadow-sm shadow-slate-200/10">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary-container text-sm transition-all" placeholder="Search clients, programs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="relative p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all active:scale-95">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-slate-200"></div>
+<div class="flex items-center gap-3 pl-2">
+<span class="font-bold text-on-surface">Dashboard</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-10 min-h-screen bg-surface">
+<!-- Hero / Welcome Section -->
+<section class="mb-12">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-4xl font-extrabold tracking-tight font-headline text-on-surface mb-2">Welcome back, John</h2>
+<p class="text-slate-500 text-lg font-body">Your digital architecture is performing optimally today.</p>
+</div>
+<div class="flex gap-4">
+<button class="flex items-center gap-2 px-6 py-3 bg-secondary-container text-on-secondary-container rounded-xl font-semibold transition-all hover:bg-surface-container-highest">
+<span class="material-symbols-outlined text-xl">analytics</span>
+<span>View Insights</span>
+</button>
+<button class="flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-semibold shadow-lg shadow-primary-container/20 transition-all hover:opacity-90">
+<span class="material-symbols-outlined text-xl">add</span>
+<span>Create New</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Bento Grid Dashboard -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Progress Metrics (Visual Anchor) -->
+<div class="col-span-8 bg-surface-container-lowest rounded-[2rem] p-8 shadow-sm border border-outline-variant/10">
+<div class="flex justify-between items-start mb-8">
+<div>
+<h3 class="text-xl font-bold font-headline">Revenue &amp; Client Growth</h3>
+<p class="text-sm text-slate-500">Performance metrics for current month</p>
+</div>
+<select class="bg-surface-container-low border-none rounded-lg text-xs font-semibold py-1.5 pl-3 pr-8 focus:ring-primary">
+<option>Last 30 Days</option>
+<option>Last 90 Days</option>
+</select>
+</div>
+<!-- Visual Mockup of a Graph -->
+<div class="relative h-[280px] w-full mt-4 flex items-end justify-between gap-2">
+<div class="flex-1 bg-primary-container/10 rounded-t-xl h-[40%] transition-all hover:h-[45%] cursor-pointer group relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">$12.4k</div>
+</div>
+<div class="flex-1 bg-primary-container/20 rounded-t-xl h-[60%] transition-all hover:h-[65%] cursor-pointer group relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">$18.2k</div>
+</div>
+<div class="flex-1 bg-primary-container/40 rounded-t-xl h-[55%] transition-all hover:h-[60%] cursor-pointer group relative"></div>
+<div class="flex-1 bg-primary-container/60 rounded-t-xl h-[75%] transition-all hover:h-[80%] cursor-pointer group relative"></div>
+<div class="flex-1 bg-primary rounded-t-xl h-[90%] transition-all hover:h-[95%] cursor-pointer group relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">$24.1k</div>
+</div>
+<div class="flex-1 bg-primary-container/30 rounded-t-xl h-[45%] transition-all hover:h-[50%] cursor-pointer group relative"></div>
+<div class="flex-1 bg-primary-container/10 rounded-t-xl h-[30%] transition-all hover:h-[35%] cursor-pointer group relative"></div>
+</div>
+<div class="flex justify-between mt-6 pt-6 border-t border-slate-100">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<div>
+<p class="text-xs text-slate-500 font-medium">Conversion Rate</p>
+<p class="text-lg font-bold font-headline">+14.2%</p>
+</div>
+</div>
+<div class="flex items-center gap-3 border-l border-slate-100 pl-8">
+<div class="w-10 h-10 rounded-full bg-secondary-container/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+</div>
+<div>
+<p class="text-xs text-slate-500 font-medium">Active Clients</p>
+<p class="text-lg font-bold font-headline">128</p>
+</div>
+</div>
+<div class="flex items-center gap-3 border-l border-slate-100 pl-8">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed/30 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div>
+<p class="text-xs text-slate-500 font-medium">Retention</p>
+<p class="text-lg font-bold font-headline">96%</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="col-span-4 flex flex-col gap-8">
+<div class="bg-gradient-to-br from-primary to-primary-container rounded-[2rem] p-8 text-white shadow-xl shadow-primary-container/20">
+<h3 class="text-xl font-bold font-headline mb-4">Quick Actions</h3>
+<div class="grid grid-cols-2 gap-4">
+<button class="flex flex-col items-center justify-center p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all aspect-square gap-3">
+<span class="material-symbols-outlined text-3xl">person_add</span>
+<span class="text-xs font-bold">New Client</span>
+</button>
+<button class="flex flex-col items-center justify-center p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all aspect-square gap-3">
+<span class="material-symbols-outlined text-3xl">add_task</span>
+<span class="text-xs font-bold">Assign Program</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-[2rem] p-8">
+<h3 class="text-xl font-bold font-headline mb-6">Upcoming Workouts</h3>
+<div class="space-y-6">
+<div class="flex items-start gap-4">
+<div class="w-12 h-12 rounded-xl bg-white flex flex-col items-center justify-center shadow-sm">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Oct</span>
+<span class="text-lg font-extrabold text-on-surface">24</span>
+</div>
+<div>
+<h4 class="text-sm font-bold font-headline">Hypertrophy Ph-1</h4>
+<p class="text-xs text-slate-500 mt-0.5">David Miller • 09:00 AM</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<div class="w-12 h-12 rounded-xl bg-white flex flex-col items-center justify-center shadow-sm">
+<span class="text-[10px] font-bold text-slate-400 uppercase">Oct</span>
+<span class="text-lg font-extrabold text-on-surface">25</span>
+</div>
+<div>
+<h4 class="text-sm font-bold font-headline">Endurance Core</h4>
+<p class="text-xs text-slate-500 mt-0.5">Sarah J. • 11:30 AM</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-3 text-sm font-bold text-primary hover:text-on-primary-container transition-colors">View full calendar</button>
+</div>
+</div>
+<!-- Client Activity List -->
+<div class="col-span-12 bg-white rounded-[2rem] p-10 shadow-sm">
+<div class="flex justify-between items-center mb-10">
+<div>
+<h3 class="text-2xl font-extrabold font-headline">Recent Client Activity</h3>
+<p class="text-slate-500 font-body">Track engagement across your athlete base</p>
+</div>
+<button class="p-3 bg-surface-container-low rounded-xl text-slate-600 hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+<div class="space-y-4">
+<!-- Activity Item -->
+<div class="flex items-center justify-between p-4 rounded-2xl hover:bg-surface-container-low transition-all group">
+<div class="flex items-center gap-5">
+<div class="relative">
+<img alt="Client" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a focused athletic woman with hair tied back in a modern gym environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPXKClvR007SmvXhZj26kFINXto5mR-AUfmS2gxJhcaQUfJtnx9bC7KgJdcumUs3QEnqB9-sDHTdohaQUGcnnNCvojcbAMe49j1LmioMQWQb-g_3yzXiyQM7pMornEZZg4fSan0wJqF2M7UntYXXFl9NC-6qJH2ZR-jZrm5etP0w-3HIpAsxWkd-d-CtqDvyfNp0iSAPFUwGXAZglvnkLcPw3kDAuGe5SvSwbFEaCGC-oiUe2Xpvd17wj903pWMdZaFPmMNWyijTo"/>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<h4 class="text-base font-bold font-headline">Elena Rodriguez</h4>
+<p class="text-sm text-slate-500">Completed "Power Pull" Workout</p>
+</div>
+</div>
+<div class="flex items-center gap-10">
+<div class="text-right">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase tracking-wider">Workout</span>
+<p class="text-[11px] text-slate-400 mt-1">2 mins ago</p>
+</div>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-slate-400 hover:text-primary">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="flex items-center justify-between p-4 rounded-2xl hover:bg-surface-container-low transition-all group">
+<div class="flex items-center gap-5">
+<div class="relative">
+<img alt="Client" class="w-12 h-12 rounded-full object-cover" data-alt="professional headshot of a fit man in his 30s with a clean-cut look and friendly smile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBubbISE7h1IMQrKWTkUjMc7sFUlTGcgwuJOR_AmbTgJohbpRJqiYEQo5AZ29XiBt2k7Kpgm-sZN015zITbkQL2UK341A61LQUV93pg72AT2W1EjdeYa-nyDG_CcoSe3QmZi-VniGGUnYMhTWNVu5_j8pCLBHfArlgRsR3Fw5HHnb0SnyPWRvmsl1OI9seW47BedjNkg0IFKzdLiuwvliWujZ_UWJC04fsr9g6mjbwZpKP6otHKgLxrhNr4zbqCrchUH-TQsAGqmJU"/>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-slate-300 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<h4 class="text-base font-bold font-headline">Marcus Chen</h4>
+<p class="text-sm text-slate-500">Updated Daily Macro Logging</p>
+</div>
+</div>
+<div class="flex items-center gap-10">
+<div class="text-right">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase tracking-wider">Nutrition</span>
+<p class="text-[11px] text-slate-400 mt-1">1 hour ago</p>
+</div>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-slate-400 hover:text-primary">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="flex items-center justify-between p-4 rounded-2xl hover:bg-surface-container-low transition-all group">
+<div class="flex items-center gap-5">
+<div class="relative">
+<img alt="Client" class="w-12 h-12 rounded-full object-cover" data-alt="side profile of a woman athlete focusing during a workout, natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOnbAJRIYpbBG3331J-UNp1tddTEC6XzptRXy78cD7hBYBD97BZkhP3z9Z3Y0GxX0lZwbihNUlYXGw7aocdruGjC3GwzsPqq0rMmPNKcQpjaGEE6Cu_GrG2CNVUTJbFgNX9mw4fepM1-iZ8yAwEi1Y8LIeGrBU_Qmc86-mvzyz5StZUirWbFb6SS1DU15vPYYQzXnEyq9uzbokrzkonc-UIV6h2lYvS3e-R8qQBnWVUo6ha4babA2OGkLiYGG23vzVbIAscQLR-FI"/>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+</div>
+<div>
+<h4 class="text-base font-bold font-headline">Sophia Taylor</h4>
+<p class="text-sm text-slate-500">New progress photo uploaded</p>
+</div>
+</div>
+<div class="flex items-center gap-10">
+<div class="text-right">
+<span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-bold rounded-full uppercase tracking-wider">Check-in</span>
+<p class="text-[11px] text-slate-400 mt-1">3 hours ago</p>
+</div>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-slate-400 hover:text-primary">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

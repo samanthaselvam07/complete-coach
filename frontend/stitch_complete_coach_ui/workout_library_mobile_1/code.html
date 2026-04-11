@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Training Protocols - MCP</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#efeded",
+                        "on-secondary-container": "#562500",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#e2e2e2",
+                        "primary-container": "#4f40cf",
+                        "surface-variant": "#e4e2e2",
+                        "tertiary-container": "#585858",
+                        "on-tertiary-container": "#cfcfcf",
+                        "surface-tint": "#5547d5",
+                        "secondary-container": "#f87600",
+                        "surface": "#fbf9f8",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed": "#140067",
+                        "inverse-on-surface": "#f2f0f0",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#c5c0ff",
+                        "surface-dim": "#dbdad9",
+                        "on-secondary-fixed": "#321200",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#e3dfff",
+                        "on-surface": "#1b1c1c",
+                        "on-background": "#1b1c1c",
+                        "surface-container-low": "#f5f3f3",
+                        "inverse-surface": "#303031",
+                        "secondary-fixed": "#ffdbc9",
+                        "on-secondary": "#ffffff",
+                        "background": "#fbf9f8",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "surface-container-highest": "#e4e2e2",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#753400",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "outline-variant": "#c8c4d7",
+                        "primary": "#3620b8",
+                        "on-surface-variant": "#474554",
+                        "surface-container-high": "#e9e8e7",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "tertiary": "#414141",
+                        "secondary": "#9a4600",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "surface-bright": "#fbf9f8",
+                        "on-primary-container": "#cfcaff",
+                        "outline": "#787586"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-kinetic {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-transition {
+            background: linear-gradient(180deg, #fbf9f8 0%, #f5f3f3 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-surface antialiased min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl shadow-[0_10px_30px_rgba(27,28,28,0.04)] flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="user profile picture" class="w-full h-full object-cover" data-alt="close-up portrait of a determined male athlete with subtle beads of sweat and soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAp_Xxsb-RE7aFgMmod72onZ8GriE1NqGx3qT8-QCX0c3fZNg9JBzJQod_mZvTIFTNYfxUTHCVoObgy939vszVBbVPqqfDTDbWBQYpPzqiD2Rgn8BbF5rki280azjEQARkYb6AxgG4bXYPMgnYYAwrJAmhAlOhQVBEzCeI5iTPOCxyv2H12MpTx2L8msRacXXxkwU6su2-6epfA2t-R-IO-S7ObKvoGIFVOLA7QpXsXqxe-ZmNwa6frx5oGdszu_A_EE2I3xQVbSL8"/>
+</div>
+<span class="text-xl font-black italic tracking-tighter text-zinc-900 dark:text-white font-headline">MCP</span>
+</div>
+<h1 class="font-headline font-bold tracking-tight text-on-surface text-lg">Training Protocols</h1>
+<button class="text-zinc-500 hover:opacity-80 transition-opacity scale-95 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="pt-20 pb-32 px-6">
+<!-- Search Bar -->
+<section class="mb-10">
+<div class="relative flex items-center group">
+<span class="material-symbols-outlined absolute left-4 text-outline" data-icon="search">search</span>
+<input class="w-full h-14 pl-12 pr-4 bg-surface-container-high border-none rounded-full focus:ring-2 focus:ring-primary/20 transition-all font-medium text-on-surface placeholder:text-outline" placeholder="Search exercise demos..." type="text"/>
+</div>
+</section>
+<!-- Active Program Card (The Physique Card) -->
+<section class="mb-12">
+<div class="flex justify-between items-end mb-4">
+<h2 class="font-headline text-2xl font-extrabold tracking-tight">Active Protocol</h2>
+<span class="text-xs font-bold text-primary tracking-widest uppercase">In Progress</span>
+</div>
+<div class="relative overflow-hidden rounded-[1.5rem] bg-surface-container-lowest shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-6 group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+<div class="flex flex-col gap-6 relative z-10">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<h3 class="font-headline text-2xl font-bold leading-tight">Hypertrophy Phase II</h3>
+<p class="text-on-surface-variant font-medium">Week 4/12 • Plateau Breaking</p>
+</div>
+<div class="bg-secondary-container/10 text-secondary-container px-3 py-1 rounded-full text-xs font-bold">
+                            Advanced
+                        </div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between text-sm mb-1">
+<span class="font-bold text-on-surface">Overall Completion</span>
+<span class="text-primary font-bold">33%</span>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-1/3 rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-widest text-outline font-bold">Next Session</span>
+<span class="font-headline font-bold text-lg">Lower Body A</span>
+</div>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-3 rounded-full font-bold shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+<span>Start Now</span>
+<span class="material-symbols-outlined text-sm" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Protocol Grid (Editorial Layout) -->
+<section class="mb-8">
+<h2 class="font-headline text-2xl font-extrabold tracking-tight mb-6">Explore Protocols</h2>
+<div class="grid grid-cols-1 gap-6">
+<!-- Large Card 1 -->
+<div class="relative h-64 rounded-[1.5rem] overflow-hidden group">
+<img alt="Elite Strength Foundations" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="dramatic wide shot of a heavy barbell in a dark high-end gym with spotlight hitting the metal surface and dust motes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhNqdtELZze5rT2p0P5SgvIbzSPb7mJIm_j7rOQ1sIkXZZgfWui2PaCNzypaMpF2mw6BZGJnkaSum4E20viiOt8BdJciYGLb8ZputhiF7xXylkfaFMZFf_ZKX1_AWWG660qMs12vE1plZL2VI-BmKmH5Jm60w_PtNEKCT4qlo5TtCLCtuif72jzLW07ZCl_D19BE-LccRHJgnPmQoaIpWQXWJrAH4I-AX2itt9p3w6QETUkuipwFNQB_NJS0G1nxDSi-PDdnmaZUA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-6 w-full">
+<div class="flex justify-between items-end">
+<div>
+<span class="bg-primary/20 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block uppercase tracking-wider">Strength</span>
+<h3 class="text-white font-headline text-xl font-bold">Elite Strength Foundations</h3>
+<p class="text-white/70 text-sm">Compound focus &amp; power dynamics</p>
+</div>
+<span class="material-symbols-outlined text-white" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</div>
+</div>
+<!-- Asymmetric Row -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Metabolic Card -->
+<div class="bg-surface-container-low rounded-[1.5rem] p-5 flex flex-col justify-between h-48 border border-white/10">
+<span class="material-symbols-outlined text-secondary-container text-3xl" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<div>
+<h3 class="font-headline font-bold text-base leading-tight mb-1">Metabolic Conditioning</h3>
+<div class="flex items-center gap-2 text-[10px] text-outline font-bold uppercase tracking-tighter">
+<span>High Intensity</span>
+</div>
+</div>
+</div>
+<!-- Mobility Card -->
+<div class="bg-surface-container-low rounded-[1.5rem] p-5 flex flex-col justify-between h-48 border border-white/10">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="self_improvement">self_improvement</span>
+<div>
+<h3 class="font-headline font-bold text-base leading-tight mb-1">Mobility Specialist</h3>
+<div class="flex items-center gap-2 text-[10px] text-outline font-bold uppercase tracking-tighter">
+<span>Recovery</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Extra Card for Depth -->
+<div class="relative h-40 rounded-[1.5rem] overflow-hidden group">
+<img alt="Nutrition Sync" class="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="minimalist top-down view of a vibrant healthy meal bowl with fresh greens and protein on a textured ceramic plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9kSypqbfZcDsme3zAMUmRYpslccY_2uXNnw8l_Q0ynf8ChBhMw7dBNQ8ewknf5MD4eXRSKc8t9zqkSeSWj-NuyCMXRJU5ZmwZ9MskxHMiaeVlXuy4Yej0WbACn846TnV96xunbs9yb8wPUrwkGa8r52u3l1zY2zcea_d8Z4kG1EJvyocKNnER7H1bCJ7TsbMqdQuGWyAVTFqmrPsvbYX2TzQ8XIGXTNiH9XccMr5GChp5s9L21BZ6WQRtmri4zX4uBrJ6o0NoRyw"/>
+<div class="absolute inset-0 bg-primary/40 mix-blend-multiply"></div>
+<div class="absolute inset-0 flex items-center justify-center p-6 text-center">
+<div class="space-y-1">
+<h3 class="text-white font-headline text-xl font-black italic tracking-tighter uppercase">Nutrition Protocol Alpha</h3>
+<p class="text-white/80 text-xs font-medium tracking-wide">Sync fueling with your training output</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-0 right-0 z-50 flex justify-around items-center px-4 h-20">
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] rounded-[2rem] border border-white/20 dark:border-zinc-800/20 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex justify-around items-center h-20">
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-500 text-white rounded-full w-12 h-12 shadow-lg shadow-indigo-500/30 scale-110 transition-all duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+</a>
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+</a>
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+</a>
+<a class="flex items-center justify-center text-zinc-400 dark:text-zinc-500 w-12 h-12 hover:text-indigo-400 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+</a>
+</div>
+</nav>
+</body></html>

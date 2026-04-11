@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Program Library | MCP Coaching</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed-variant": "#753400",
+              "surface-container-low": "#f5f3f3",
+              "primary-fixed-dim": "#c5c0ff",
+              "surface-container-high": "#e9e8e7",
+              "tertiary": "#414141",
+              "on-tertiary-container": "#cfcfcf",
+              "secondary": "#9a4600",
+              "on-background": "#1b1c1c",
+              "surface-dim": "#dbdad9",
+              "secondary-container": "#f87600",
+              "primary-fixed": "#e3dfff",
+              "tertiary-container": "#585858",
+              "on-secondary": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "background": "#fbf9f8",
+              "secondary-fixed": "#ffdbc9",
+              "surface-container-lowest": "#ffffff",
+              "on-primary": "#ffffff",
+              "tertiary-fixed": "#e2e2e2",
+              "on-secondary-fixed": "#321200",
+              "on-primary-fixed": "#140067",
+              "on-tertiary-fixed": "#1b1b1b",
+              "surface-variant": "#e4e2e2",
+              "surface-tint": "#5547d5",
+              "on-primary-fixed-variant": "#3c29bd",
+              "surface-container": "#efeded",
+              "on-error": "#ffffff",
+              "inverse-primary": "#c5c0ff",
+              "error": "#ba1a1a",
+              "outline-variant": "#c8c4d7",
+              "primary-container": "#4f40cf",
+              "outline": "#787586",
+              "on-error-container": "#93000a",
+              "inverse-surface": "#303031",
+              "on-surface": "#1b1c1c",
+              "primary": "#3620b8",
+              "on-tertiary-fixed-variant": "#474747",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-container": "#562500",
+              "surface-container-highest": "#e4e2e2",
+              "surface-bright": "#fbf9f8",
+              "surface": "#fbf9f8",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "on-primary-container": "#cfcaff",
+              "error-container": "#ffdad6",
+              "on-surface-variant": "#474554",
+              "secondary-fixed-dim": "#ffb68c"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #fbf9f8;
+        color: #1b1c1c;
+      }
+      h1, h2, h3, h4 {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+    </style>
+</head>
+<body class="bg-background text-on-surface overflow-x-hidden">
+<!-- SideNavBar Anchor -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-stone-50 dark:bg-stone-950 flex flex-col py-6 px-4 z-50">
+<div class="flex items-center gap-3 px-2 mb-10">
+<div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<div class="text-lg font-black text-indigo-700 dark:text-indigo-500 font-headline leading-tight">MCP Coaching</div>
+<div class="text-[10px] uppercase tracking-[0.2em] font-bold text-stone-400">The Kinetic Curator</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-stone-200/50 text-stone-500 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors bg-stone-200/50 text-indigo-700 font-bold border-r-4 border-indigo-600 font-['Plus_Jakarta_Sans'] tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">fitness_center</span> Training
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-stone-200/50 text-stone-500 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">restaurant</span> Nutrition
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-stone-200/50 text-stone-500 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">menu_book</span> Education
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-stone-200/50 text-stone-500 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">pill</span> Supplementation
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-stone-200/50 text-stone-500 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">group</span> Clients
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-stone-200/50 text-stone-500 font-['Plus_Jakarta_Sans'] font-semibold tracking-tight text-sm" href="#">
+<span class="material-symbols-outlined">description</span> Forms
+            </a>
+</nav>
+<div class="mt-auto pt-6 space-y-4">
+<button class="w-full bg-primary-container text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm">add</span> + New Client
+            </button>
+<div class="flex items-center gap-3 p-2 rounded-xl bg-surface-container-low border border-stone-200/20">
+<img class="w-10 h-10 rounded-full object-cover border-2 border-white" data-alt="Close-up portrait of a professional male fitness coach with a warm, confident expression in a bright studio environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE-iG0NmuSCtwsDyazB4xt5nMZYLTYIcIIfyt7Vi_ItSs37TFYfaHvEuw8sAFRdtBk1wIY5InHIVQvkxSHpN5OTrCg6OIbV2hXE0mSqUZ9hqkp2G5YIhhMynXoavWEsOr8zzSbIgd37BRQ2I0qY8AaUFzKQO9511aIfAfF9HWsS9MBrhIvYYnlePJ1DxAPFyl5LF-Bkn-r6HNhxa17MEDY47KZiN2EuP-mbJOGZp5Z4iOlAge3sRp6fFSX3tt355E-xmO_57dCLlg"/>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface">Alex Rivera</span>
+<span class="text-[10px] text-stone-400">Head Coach</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- TopNavBar Anchor -->
+<header class="h-16 px-8 flex justify-between items-center bg-white/80 backdrop-blur-xl sticky top-0 z-40 border-b border-stone-200/20">
+<div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full w-96">
+<span class="material-symbols-outlined text-stone-400 text-lg">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full p-0" placeholder="Search programs or templates..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-low transition-colors relative">
+<span class="material-symbols-outlined text-stone-600">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-secondary-container rounded-full ring-2 ring-white"></span>
+</button>
+<div class="w-px h-6 bg-stone-200"></div>
+<div class="flex items-center gap-3">
+<span class="text-sm font-semibold">Coach Rivera</span>
+<span class="material-symbols-outlined text-stone-400">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-10 max-w-7xl mx-auto space-y-12">
+<!-- Page Header -->
+<section class="flex justify-between items-end">
+<div>
+<h1 class="text-4xl font-black text-on-surface tracking-tight mb-2">Program Library</h1>
+<p class="text-stone-500 font-body">Manage individualized athlete protocols and master coaching templates.</p>
+</div>
+<div class="flex gap-3">
+<button class="bg-surface-container-lowest text-on-surface border border-stone-200 px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 hover:bg-stone-50 transition-colors">
+<span class="material-symbols-outlined text-lg">filter_list</span> Filters
+                    </button>
+<button class="bg-primary-container text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+<span class="material-symbols-outlined text-lg">add_circle</span> Create New Program
+                    </button>
+</div>
+</section>
+<!-- Active Client Programs (Primary Section) -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="w-1.5 h-6 bg-primary-container rounded-full"></span>
+                        Active Client Programs
+                    </h2>
+<span class="text-xs font-bold text-stone-400 uppercase tracking-widest">32 Total Active</span>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-[11px] uppercase tracking-widest text-stone-400 border-b border-stone-100 bg-stone-50/50">
+<th class="px-8 py-4 font-bold">Program Name</th>
+<th class="px-6 py-4 font-bold">Assigned Client</th>
+<th class="px-6 py-4 font-bold">Progress</th>
+<th class="px-6 py-4 font-bold">Last Edited</th>
+<th class="px-8 py-4 font-bold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-stone-100">
+<!-- Program Item 1 -->
+<tr class="group hover:bg-stone-50 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-indigo-600" style="font-variation-settings: 'FILL' 1;">architecture</span>
+</div>
+<div>
+<div class="font-bold text-on-surface">Hypertrophy Phase II</div>
+<div class="text-xs text-stone-400">Strength &amp; Conditioning</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full" data-alt="Headshot of a focused young man with athletic build in gym attire, soft natural window light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcG0VZSlu1sq2MqYmJVkVzCzZxbroU2ecJptwFslGWES1cEt_6yvmxDpJyhCYHdMjRG_ENd_BxRSJoLb9hrdS4U79gBmdIg1T4uxsZjaGQZ1kjDei0gy8JMMD3oePqnDnBpVMzd8T6VfQdGKNWJSmNecKhUp8wgxStM4q1xdRQGFUa6ATIWTTzrMeyKkc_ArIiZ2JwE3uq02ke98Qvdg9iH1NQ9VWkgXGOjWJabB2aO-1P1NNuMZMMBNl4Wt_ExPJo1cvOp5Qqnns"/>
+<span class="text-sm font-medium">Marcus Chen</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="w-full max-w-[140px]">
+<div class="flex justify-between text-[10px] font-bold mb-1">
+<span>Week 4/12</span>
+<span class="text-indigo-600">33%</span>
+</div>
+<div class="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 33%"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-stone-500">Oct 12, 2023</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 hover:bg-stone-200/50 rounded-lg transition-colors group-hover:text-primary-container">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 hover:bg-stone-200/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Program Item 2 -->
+<tr class="group hover:bg-stone-50 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-orange-600" style="font-variation-settings: 'FILL' 1;">speed</span>
+</div>
+<div>
+<div class="font-bold text-on-surface">Functional Power</div>
+<div class="text-xs text-stone-400">Athletic Performance</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full" data-alt="Professional athlete woman with hair tied back, wearing performance sports bra, looking intense and ready" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASJGK2_8Z3-KU3B7ed3pAMKKzM8gpK_OvGB93cWbh6gq3JPOooGLQ0Se26oQgYZowZuAhedFw19mBpxvrS4G1MXnrQDbs2AOm8MIS68J4JLFzVXWVm20iVaiRiyKW8x4KMaZ90ilwqkAZE4Q65ss0UEhJxqjNb2P_W3LdVixswflZUtLK3qeVsS4DMIQFZE09rqAZd5FLN1M-twMuRjHkF4-ABfRo9n75X0Fq4eaDx_5NlGx4wdYFsoSAZZrqMqzkhpZfihcmEQy4"/>
+<span class="text-sm font-medium">Sarah Jenkins</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="w-full max-w-[140px]">
+<div class="flex justify-between text-[10px] font-bold mb-1">
+<span>Week 10/12</span>
+<span class="text-indigo-600">83%</span>
+</div>
+<div class="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 83%"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-stone-500">Yesterday</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 hover:bg-stone-200/50 rounded-lg transition-colors group-hover:text-primary-container">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 hover:bg-stone-200/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Program Item 3 -->
+<tr class="group hover:bg-stone-50 transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-blue-600" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</div>
+<div>
+<div class="font-bold text-on-surface">Metabolic Reset</div>
+<div class="text-xs text-stone-400">Weight Management</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full" data-alt="Middle-aged man smiling confidently, dressed in fitness apparel, bright airy studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARr18X03ro9340tq7q4NuqP1JvHiIUk1ofVHq85yiy2fgYYfDbWohjTNwzcYB8I8Dt1xmeH-cc9zuAqPeRyTvdclW6GWNwq8hG2lzcskMbFNPv_NAlrp65pWS64CPPgYtrZ2-_XagG3VjZa0ZFxcF5RtKrsw1Dj1_eRnCg93fQ6QX7h4W4nL_JzkhSjssloyPd7qkINSaSSRjHxyenf2HCbwrQsTYeVpNxx5nzfVbizpFWbt8DLGO__xWIoClgmIu-KpcUlyywtrA"/>
+<span class="text-sm font-medium">David Miller</span>
+</div>
+</td>
+<td class="px-6 py-6">
+<div class="w-full max-w-[140px]">
+<div class="flex justify-between text-[10px] font-bold mb-1">
+<span>Week 2/8</span>
+<span class="text-indigo-600">25%</span>
+</div>
+<div class="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 25%"></div>
+</div>
+</div>
+</td>
+<td class="px-6 py-6 text-sm text-stone-500">2h ago</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 hover:bg-stone-200/50 rounded-lg transition-colors group-hover:text-primary-container">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 hover:bg-stone-200/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-4 border-t border-stone-100 bg-stone-50/30 flex justify-center">
+<button class="text-sm font-bold text-primary-container hover:underline underline-offset-4">View All Active Programs (29 more)</button>
+</div>
+</div>
+</section>
+<!-- Master Templates (Secondary Section) -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="w-1.5 h-6 bg-secondary-container rounded-full"></span>
+                        Master Templates
+                    </h2>
+<div class="flex items-center gap-4">
+<div class="flex bg-surface-container rounded-full p-1">
+<button class="px-4 py-1 text-xs font-bold bg-white shadow-sm rounded-full">All</button>
+<button class="px-4 py-1 text-xs font-bold text-stone-500 hover:text-on-surface">Strength</button>
+<button class="px-4 py-1 text-xs font-bold text-stone-500 hover:text-on-surface">Endurance</button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Template Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-stone-100 group hover:border-indigo-200 transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">grid_view</span>
+</div>
+<span class="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Foundation</span>
+</div>
+<h3 class="font-bold text-lg mb-1">Body Recomp 101</h3>
+<p class="text-xs text-stone-500 mb-6 leading-relaxed">Perfect for beginners aiming for fat loss and lean muscle gain over 12 weeks.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-stone-50">
+<div class="flex items-center gap-1.5 text-stone-400">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span class="text-[10px] font-semibold">12 Weeks</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-low text-indigo-600 hover:bg-indigo-600 hover:text-white text-xs font-bold transition-all">
+<span class="material-symbols-outlined text-sm">content_copy</span> Clone
+                            </button>
+</div>
+</div>
+<!-- Template Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-stone-100 group hover:border-indigo-200 transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<span class="bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Elite</span>
+</div>
+<h3 class="font-bold text-lg mb-1">Powerlifting Peak</h3>
+<p class="text-xs text-stone-500 mb-6 leading-relaxed">High-intensity 4-week peaking block for competitive lifters heading to meet.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-stone-50">
+<div class="flex items-center gap-1.5 text-stone-400">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span class="text-[10px] font-semibold">4 Weeks</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-low text-indigo-600 hover:bg-indigo-600 hover:text-white text-xs font-bold transition-all">
+<span class="material-symbols-outlined text-sm">content_copy</span> Clone
+                            </button>
+</div>
+</div>
+<!-- Template Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-stone-100 group hover:border-indigo-200 transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">directions_run</span>
+</div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Hyrox</span>
+</div>
+<h3 class="font-bold text-lg mb-1">Hybrid Athlete v2</h3>
+<p class="text-xs text-stone-500 mb-6 leading-relaxed">Balanced metabolic conditioning and structural hypertrophy protocol.</p>
+<div class="flex items-center justify-between mt-auto pt-4 border-t border-stone-50">
+<div class="flex items-center gap-1.5 text-stone-400">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span class="text-[10px] font-semibold">8 Weeks</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-low text-indigo-600 hover:bg-indigo-600 hover:text-white text-xs font-bold transition-all">
+<span class="material-symbols-outlined text-sm">content_copy</span> Clone
+                            </button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- FAB Anchor (Contextual for Program Management) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-secondary-container text-white rounded-full flex items-center justify-center shadow-xl shadow-secondary-container/30 hover:scale-110 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</body></html>

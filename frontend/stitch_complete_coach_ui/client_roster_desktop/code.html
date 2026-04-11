@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCP Coach | Client Roster</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-low": "#f5f3f3",
+              "secondary": "#9a4600",
+              "outline": "#787586",
+              "tertiary": "#414141",
+              "on-secondary-fixed-variant": "#753400",
+              "surface-container-highest": "#e4e2e2",
+              "error": "#ba1a1a",
+              "tertiary-fixed": "#e2e2e2",
+              "surface-variant": "#e4e2e2",
+              "secondary-fixed": "#ffdbc9",
+              "primary": "#3620b8",
+              "on-secondary-fixed": "#321200",
+              "on-primary-fixed-variant": "#3c29bd",
+              "background": "#fbf9f8",
+              "tertiary-container": "#585858",
+              "on-secondary-container": "#562500",
+              "on-error": "#ffffff",
+              "outline-variant": "#c8c4d7",
+              "on-error-container": "#93000a",
+              "on-tertiary-fixed": "#1b1b1b",
+              "secondary-fixed-dim": "#ffb68c",
+              "primary-fixed-dim": "#c5c0ff",
+              "primary-fixed": "#e3dfff",
+              "on-surface-variant": "#474554",
+              "surface-tint": "#5547d5",
+              "surface-bright": "#fbf9f8",
+              "on-tertiary-fixed-variant": "#474747",
+              "surface-container": "#efeded",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "surface": "#fbf9f8",
+              "secondary-container": "#f87600",
+              "on-tertiary-container": "#cfcfcf",
+              "on-background": "#1b1c1c",
+              "inverse-surface": "#303031",
+              "on-secondary": "#ffffff",
+              "on-primary-container": "#cfcaff",
+              "on-primary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "primary-container": "#4f40cf",
+              "surface-dim": "#dbdad9",
+              "on-surface": "#1b1c1c",
+              "inverse-primary": "#c5c0ff",
+              "inverse-on-surface": "#f2f0f0",
+              "on-tertiary": "#ffffff",
+              "surface-container-high": "#e9e8e7",
+              "on-primary-fixed": "#140067",
+              "error-container": "#ffdad6"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        display: inline-block;
+        line-height: 1;
+      }
+      .glass-nav {
+        backdrop-filter: blur(40px);
+        -webkit-backdrop-filter: blur(40px);
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e4e2e2;
+        border-radius: 10px;
+      }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Desktop SideNavBar -->
+<aside class="hidden md:flex flex-col p-4 space-y-6 h-screen w-64 fixed left-0 top-0 bg-white/40 backdrop-blur-2xl z-40">
+<div class="flex items-center gap-3 px-2 py-4">
+<div class="w-10 h-10 rounded-xl overflow-hidden bg-primary-container flex items-center justify-center">
+<img alt="MCP Logo" data-alt="minimalist geometric logo of a fitness coaching brand with deep indigo and vibrant orange accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpkCwcW1FjbBKTVMWFwaH8y8rc7i8blm8VzTTi-dYz0AZidFOkqtNDnINUWbiYvWBsTsps5PTUHGPIuGZk29wBiznuZ3bNWFUFpjL7jEfIPPEAZnLX2VMdrh92laRbS655v9EEPXQPZVmigUZ_goz6g8MaJzFhz4lNZzqUuTcMXefbTyKkVSO93xwJ-Yja8Swgq7_Afe43DBuaZDhFvB2Zxxjmlw94VP38_UBqZITc3gUqHG9B3Uv80EFrsE-stO4dpb5-Q08PldQ"/>
+</div>
+<div>
+<h1 class="text-2xl font-black text-zinc-900 tracking-tight leading-none font-headline">MCP Coach</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-500 mt-1">Elite Performance</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Active Tab: Client Roster -->
+<a class="flex items-center gap-3 px-4 py-3 bg-indigo-50 text-indigo-700 rounded-xl transition-all scale-98 font-headline text-sm font-semibold" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Client Roster</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-600 hover:bg-zinc-100 rounded-xl transition-all font-headline text-sm font-semibold" href="#">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+<span>Program Library</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-600 hover:bg-zinc-100 rounded-xl transition-all font-headline text-sm font-semibold" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span>Message Center</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-outline-variant/15 space-y-1">
+<button class="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-br from-primary to-primary-container text-white font-headline font-bold text-sm shadow-lg shadow-primary/20 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+<span>New Program</span>
+</button>
+<a class="flex items-center gap-3 px-4 py-3 text-zinc-600 hover:bg-zinc-100 rounded-xl transition-all font-headline text-sm font-semibold" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="sticky top-0 z-30 flex justify-between items-center px-6 py-4 w-full md:pl-72 bg-white/70 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="flex items-center gap-4">
+<h2 class="text-xl font-black text-indigo-700 tracking-tighter font-headline">MCP</h2>
+<div class="h-4 w-[1px] bg-outline-variant/30"></div>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-lg" data-icon="search">search</span>
+<input class="bg-surface-container-high border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search clients..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-zinc-500 hover:text-indigo-600 transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-zinc-500 hover:text-indigo-600 transition-colors" data-icon="settings">settings</button>
+</div>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant/15">
+<img alt="Coach Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary-container/10" data-alt="portrait of a professional fitness coach with a warm, confident expression in high-key lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBWj_zD6tYWkySwaVRKbFfQFueJWVntius47sFSA8wmxid_II4ZM8aYiOxGYEvc_3usw7jcdFFiWaVXbE40mDsrn7G6dYbBqJntYTotKzXrK-kjPnDHadGk_H6zsm1p5teD5rXQi97wDyq-ZzFGFLXLNwgEnHimuw6zG1w9Hn8dc7rxbTvoJB2bufvssawq7vH5Fsbcy0NnAftwP0S-8MytOIpZgufgjtW_tvvuDUWmGq7aCJPiStyUjEH55wFLZm6TLzAffqfsT0"/>
+<span class="text-sm font-headline font-bold text-on-surface">Coach Marcus</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="md:pl-64 min-h-screen">
+<div class="max-w-7xl mx-auto px-8 py-10">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-12">
+<div>
+<h1 class="text-5xl font-extrabold text-on-surface font-headline tracking-tighter leading-tight">Client Roster</h1>
+<p class="text-zinc-500 mt-2 font-body font-medium">Managing <span class="text-primary font-bold">24 active performance</span> athletes</p>
+</div>
+<div class="flex gap-2 p-1 bg-surface-container-low rounded-xl">
+<button class="px-6 py-2 bg-surface-container-lowest shadow-sm rounded-lg text-sm font-bold text-primary font-headline">All</button>
+<button class="px-6 py-2 hover:bg-surface-container-highest rounded-lg text-sm font-semibold text-zinc-500 font-headline transition-colors">Active</button>
+<button class="px-6 py-2 hover:bg-surface-container-highest rounded-lg text-sm font-semibold text-zinc-500 font-headline transition-colors">Onboarding</button>
+</div>
+</div>
+<!-- Client Bento/List Hybrid -->
+<div class="grid grid-cols-1 gap-4">
+<!-- Client Card 1 -->
+<div class="group bg-surface-container-lowest rounded-[1.5rem] p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.04)] flex items-center gap-8 border border-transparent hover:border-primary/10 transition-all hover:translate-y-[-2px]">
+<div class="relative">
+<img alt="Client Avatar" class="w-20 h-20 rounded-2xl object-cover" data-alt="close-up of an athletic woman in gym attire with focus and determination, natural daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFe109LvO-Ok-C6UD26FKjE9YRxEO9YMsyB0juwImBx2nz3VWoiNJqGB9y4wQpqFe-Y-CLZgCffSZssByc9LeIpY1SB6mzQ9yi6bSkTysTEQxO0SxNCwGEI2pToNWUvs85bkLJYWMZB8Hxq1a-qrQzZorRjJBk7oPvn-_Zflzg_oed4hKcABx7L0SqU1hRhWwm9_y5t-I4tJDpX0OCUNj6D_6kMCbuzjm8XAlkBr__NiG_P8xH-X6zj3OjwzF4-Jw2gzFKuDxzmRA"/>
+<div class="absolute -bottom-2 -right-2 bg-white p-1 rounded-lg shadow-sm">
+<span class="block w-4 h-4 bg-emerald-500 rounded-full border-2 border-white"></span>
+</div>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="text-xl font-bold font-headline text-on-surface">Serena Williams</h3>
+<span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full">Active</span>
+</div>
+<p class="text-sm text-zinc-400 font-body">Hypertrophy &amp; Longevity Focus</p>
+</div>
+<div class="hidden lg:flex flex-col gap-1 text-right">
+<span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Last Check-In</span>
+<span class="text-sm font-bold text-on-surface font-headline">Today, 08:45 AM</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-3 text-zinc-400 hover:text-primary hover:bg-primary-fixed rounded-xl transition-all active:scale-90">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</button>
+<button class="p-3 text-zinc-400 hover:text-primary hover:bg-primary-fixed rounded-xl transition-all active:scale-90">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+</button>
+<button class="ml-2 px-6 py-3 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-sm font-bold font-headline rounded-xl transition-all active:scale-95">
+                            Profile
+                        </button>
+</div>
+</div>
+<!-- Client Card 2 -->
+<div class="group bg-surface-container-lowest rounded-[1.5rem] p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.04)] flex items-center gap-8 border border-transparent hover:border-primary/10 transition-all hover:translate-y-[-2px]">
+<div class="relative">
+<img alt="Client Avatar" class="w-20 h-20 rounded-2xl object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="portrait of a muscular man in high-end training gear, moody lighting with deep shadows and sharp highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYyw3GxIcrYGonF-XWT68Qf4Gax9EayTe92euyzhhYlMGfYA_iJvoFbgiN0ZqGAhuVmERLJ_2GD-KcCxRUkz51Avi80LiX_amDTs0PDXKqeRT4ZjNWPfbAgi1fYGu826hEexnyPgZQ29IiccKP9BdAVBcQkC368FPsfPie5PI9Gb-b-kbQ8tFt-1uFPhADorjzd3_z5-h41imEctRiHDj7aI5p0kdvccWZSPbJlXmQw8KyJHOPVL_AeJkQwJzKm0SDoLNXKsWujJE"/>
+<div class="absolute -bottom-2 -right-2 bg-white p-1 rounded-lg shadow-sm">
+<span class="block w-4 h-4 bg-orange-500 rounded-full border-2 border-white"></span>
+</div>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="text-xl font-bold font-headline text-on-surface">Julian Rossi</h3>
+<span class="px-3 py-1 bg-orange-50 text-orange-700 text-[10px] font-black uppercase tracking-widest rounded-full">Onboarding</span>
+</div>
+<p class="text-sm text-zinc-400 font-body">Structural Re-composition Phase</p>
+</div>
+<div class="hidden lg:flex flex-col gap-1 text-right">
+<span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Pending Task</span>
+<span class="text-sm font-bold text-orange-600 font-headline">Onboarding Call (14:00)</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-3 text-zinc-400 hover:text-primary hover:bg-primary-fixed rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</button>
+<button class="p-3 text-zinc-400 hover:text-primary hover:bg-primary-fixed rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+</button>
+<button class="ml-2 px-6 py-3 bg-gradient-to-br from-secondary-container to-secondary text-white text-sm font-bold font-headline rounded-xl shadow-lg shadow-secondary/20 transition-all active:scale-95">
+                            Approve Plan
+                        </button>
+</div>
+</div>
+<!-- Client Card 3 -->
+<div class="group bg-surface-container-lowest rounded-[1.5rem] p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.04)] flex items-center gap-8 border border-transparent hover:border-primary/10 transition-all hover:translate-y-[-2px]">
+<div class="relative">
+<img alt="Client Avatar" class="w-20 h-20 rounded-2xl object-cover" data-alt="editorial portrait of a professional athlete in motion, blurred stadium lights background, vibrant colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtZ-glo7thxXJamaZsNVNoeb34z5oV49DPLa5YjJuCnuHZ0XwDVrMHRpAd9uUJsZPbadv9LSQBTs-eeHRF6_wWhSlgkSPQZnL-LoQz-6EjqEX11cFeri9VHHct_5o7ctTymp-qZqMlqcc2I4TIW6gY78Nbq7ZA6FTd2hx6Pd0NvKT0WPc16S5uAiL0X9Rf-lCP9oAT0mqpFGxBuBZEnvdjPozu05s-qThg-HXltLDG8vX_kSBc__4JMp51u9kT3O3TihX4r3zSics"/>
+<div class="absolute -bottom-2 -right-2 bg-white p-1 rounded-lg shadow-sm">
+<span class="block w-4 h-4 bg-indigo-500 rounded-full border-2 border-white"></span>
+</div>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="text-xl font-bold font-headline text-on-surface">Maya Ishikawa</h3>
+<span class="px-3 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-full">Review</span>
+</div>
+<p class="text-sm text-zinc-400 font-body">Elite Triathlon Prep</p>
+</div>
+<div class="hidden lg:flex flex-col gap-1 text-right">
+<span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Last Check-In</span>
+<span class="text-sm font-bold text-on-surface font-headline">Yesterday, 18:20 PM</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-3 text-zinc-400 hover:text-primary hover:bg-primary-fixed rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</button>
+<button class="p-3 text-primary bg-primary-fixed rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+</button>
+<button class="ml-2 px-6 py-3 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-sm font-bold font-headline rounded-xl transition-all active:scale-95">
+                            Profile
+                        </button>
+</div>
+</div>
+<!-- Client Card 4 -->
+<div class="group bg-surface-container-lowest rounded-[1.5rem] p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.04)] flex items-center gap-8 border border-transparent hover:border-primary/10 transition-all hover:translate-y-[-2px]">
+<div class="relative">
+<img alt="Client Avatar" class="w-20 h-20 rounded-2xl object-cover" data-alt="portrait of a runner at sunset, golden light illuminating the profile, sweat on skin, soft bokeh background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXeWi5y6oqpmBg55wy5kCU45V7dNn4oAw4xzxPbqIcfM-hGscuTgs8R7AGAKoqlHfMkaoHXw6Wvi9VScxj1e9deFNxrEEYFEsFImT_XENGdx-Qaa_eAqGI-BdpK5aSmsGh6z_Xl9ZqMhhnjEY8wKRCK5JpRY-2bUnrkB92v0gPlymRK9XLNKo3Ure9oTiv1lhJh8d_2m7HdEhNwhw1wWx_p9RsDtBfdewmBTZgCewRU-mglXKIj1krqCZd12ixSxb4BZHXck2kRnQ"/>
+<div class="absolute -bottom-2 -right-2 bg-white p-1 rounded-lg shadow-sm">
+<span class="block w-4 h-4 bg-emerald-500 rounded-full border-2 border-white"></span>
+</div>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="text-xl font-bold font-headline text-on-surface">Daniel Chen</h3>
+<span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full">Active</span>
+</div>
+<p class="text-sm text-zinc-400 font-body">Marathon Power Cycle</p>
+</div>
+<div class="hidden lg:flex flex-col gap-1 text-right">
+<span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Last Check-In</span>
+<span class="text-sm font-bold text-on-surface font-headline">Today, 06:10 AM</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-3 text-zinc-400 hover:text-primary hover:bg-primary-fixed rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</button>
+<button class="p-3 text-zinc-400 hover:text-primary hover:bg-primary-fixed rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+</button>
+<button class="ml-2 px-6 py-3 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-sm font-bold font-headline rounded-xl transition-all active:scale-95">
+                            Profile
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile Navigation Suppressed as per Task Intent (Desktop View) -->
+<!-- However, providing a minimal responsive shell for completeness if viewed on mobile -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-end px-6 pb-8 pt-4 bg-white/60 backdrop-blur-3xl shadow-[0px_-10px_40px_rgba(0,0,0,0.04)] rounded-t-[2.5rem]">
+<a class="flex flex-col items-center justify-center bg-indigo-600 text-white rounded-full p-3 mb-2 transform -translate-y-2 shadow-lg shadow-indigo-500/40" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 p-2" href="#">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 p-2" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Messages - Complete Physique</title>
+<!-- Google Fonts: Plus Jakarta Sans & Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#1b1b1b",
+              "surface-variant": "#e4e2e2",
+              "on-secondary-fixed": "#321200",
+              "tertiary-fixed": "#e2e2e2",
+              "on-primary-fixed": "#140067",
+              "outline-variant": "#c8c4d7",
+              "primary-container": "#4f40cf",
+              "outline": "#787586",
+              "inverse-surface": "#303031",
+              "on-error-container": "#93000a",
+              "surface-tint": "#5547d5",
+              "on-primary-fixed-variant": "#3c29bd",
+              "surface-container": "#efeded",
+              "on-error": "#ffffff",
+              "error": "#ba1a1a",
+              "inverse-primary": "#c5c0ff",
+              "inverse-on-surface": "#f2f0f0",
+              "on-secondary-container": "#562500",
+              "surface-bright": "#fbf9f8",
+              "surface": "#fbf9f8",
+              "surface-container-highest": "#e4e2e2",
+              "on-surface": "#1b1c1c",
+              "on-tertiary-fixed-variant": "#474747",
+              "primary": "#3620b8",
+              "on-surface-variant": "#474554",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-primary-container": "#cfcaff",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "error-container": "#ffdad6",
+              "primary-fixed-dim": "#c5c0ff",
+              "surface-container-high": "#e9e8e7",
+              "on-secondary-fixed-variant": "#753400",
+              "surface-container-low": "#f5f3f3",
+              "secondary": "#9a4600",
+              "on-background": "#1b1c1c",
+              "surface-dim": "#dbdad9",
+              "secondary-container": "#f87600",
+              "primary-fixed": "#e3dfff",
+              "tertiary": "#414141",
+              "on-tertiary-container": "#cfcfcf",
+              "on-secondary": "#ffffff",
+              "tertiary-container": "#585858",
+              "on-tertiary": "#ffffff",
+              "background": "#fbf9f8",
+              "surface-container-lowest": "#ffffff",
+              "on-primary": "#ffffff",
+              "secondary-fixed": "#ffdbc9"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-effect {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface selection:bg-primary-fixed antialiased">
+<!-- Sidebar Navigation -->
+<aside class="fixed inset-y-0 left-0 z-50 flex flex-col h-full py-8 px-4 w-64 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-r border-zinc-200/20 shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<div class="mb-10 px-4">
+<h1 class="text-xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-50 font-headline">Complete Physique</h1>
+<p class="text-xs text-zinc-500 font-medium tracking-tight">Elite Performance</p>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Navigation Items Mapping -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-zinc-500 dark:text-zinc-400 font-medium hover:bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight font-semibold">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-zinc-500 dark:text-zinc-400 font-medium hover:bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight font-semibold">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-zinc-500 dark:text-zinc-400 font-medium hover:bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight font-semibold">Programs</span>
+</a>
+<!-- Active Navigation State: Messages -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-[#4F40CF] dark:text-[#4F40CF] font-bold border-r-2 border-[#4F40CF]" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight font-semibold">Messages</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-zinc-500 dark:text-zinc-400 font-medium hover:bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight font-semibold">Settings</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-zinc-200/20 pt-6">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-zinc-500 dark:text-zinc-400 font-medium hover:bg-zinc-100/50" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-['Plus_Jakarta_Sans'] tracking-tight font-semibold">Support</span>
+</a>
+<div class="mt-6 flex items-center gap-3 px-4">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-full object-cover ring-2 ring-primary-container/20" data-alt="portrait of a focused professional fitness coach in premium gym attire, warm studio lighting, modern minimalist aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvI3qIjN2vsEeBhyY9tqeHuak3kn1iMDdADCAEVSImN3BPfAw60duAc_tJgpSdfucJD2KLwIFzQLVZAIwGpdrCriJSQPUU_PUTVoVU1xXDlRibIvM2VNZMLAO_gRQTSvM573uoX_2p-_WiRUxtNTQjr3BxnLafnwsAsulY2YH41zNsTr5r0OpwXQa8cLcD0YzsxZpcibBYwmph66ct783TfGqByS8gCx8JMXPez9-EWf3x9fQyXnixLVCQI98plSpUWdNCfZpyv1Y"/>
+<div>
+<p class="text-sm font-bold text-on-surface">Alex Rivera</p>
+<p class="text-[10px] text-zinc-500 font-semibold uppercase tracking-widest">Head Coach</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-[#fbf9f8]/80 dark:bg-zinc-950/80 backdrop-blur-md z-40">
+<div class="flex justify-between items-center px-10 h-full w-full">
+<h2 class="font-['Plus_Jakarta_Sans'] font-bold text-2xl text-on-surface">Messages</h2>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<input class="bg-surface-container-high/50 border-none rounded-full py-2 pl-10 pr-4 w-64 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-medium" placeholder="Search conversations..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-lg" data-icon="search">search</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="relative p-2 text-zinc-400 hover:text-[#4F40CF] transition-all scale-98 active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-secondary-container rounded-full ring-2 ring-background"></span>
+</button>
+<button class="p-2 text-zinc-400 hover:text-[#4F40CF] transition-all scale-98 active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Layout -->
+<main class="ml-64 pt-16 h-screen flex overflow-hidden">
+<!-- Conversation Sidebar (Asymmetric Column) -->
+<aside class="w-1/3 lg:w-80 h-full bg-surface-container-low flex flex-col border-none">
+<div class="p-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline font-bold text-lg">Active Clients</h3>
+<button class="p-1.5 rounded-lg bg-surface-container-highest/50 hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+</button>
+</div>
+<!-- Category Chips -->
+<div class="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+<span class="px-4 py-1.5 rounded-full text-xs font-bold bg-secondary-container text-white shrink-0">All</span>
+<span class="px-4 py-1.5 rounded-full text-xs font-bold bg-surface-container-high text-on-surface-variant shrink-0">Premium</span>
+<span class="px-4 py-1.5 rounded-full text-xs font-bold bg-surface-container-high text-on-surface-variant shrink-0">New</span>
+</div>
+</div>
+<!-- List of Chats -->
+<div class="flex-1 overflow-y-auto px-4 space-y-2 pb-6">
+<!-- Active Chat Item -->
+<div class="group flex items-center gap-4 p-4 rounded-xl bg-surface-container-lowest shadow-[0px_4px_20px_rgba(27,28,28,0.04)] cursor-pointer border-l-4 border-primary">
+<div class="relative">
+<img alt="Client avatar" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a confident woman in luxury sportswear, natural glowing skin, cinematic soft lighting with subtle fitness background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ_wXj1l9nyRHupKAgd2pcPK2l3b0RT3UasdZKLSfrzfEYEXKZ2hhqA4EGkGLA3xkzwvPuBnVgqg4Z7k1DsWg_LYSsWTgvwzPndvzsfgJ9f8JxAAkISuCpqTlKNL1oBbkeHkhu9mByFjz83L8hAxJIUlQXlS1wAJSfymB51ec0FKuvkyTOmqcdAuETwZjhWdxRzrwrVoCfxVCJyhkH70TEjAQubhMQr-_HxxAeRrSwXHUB4djJqD409HisLcwKkSnwscxcn74Fy0Y"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-surface-container-lowest rounded-full"></span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h4 class="font-bold text-sm text-on-surface truncate">Marcus Chen</h4>
+<span class="text-[10px] font-bold text-primary">2:14 PM</span>
+</div>
+<p class="text-xs text-on-surface-variant font-medium truncate">The macros look great for this week, coach!</p>
+</div>
+</div>
+<!-- Chat Item 2 -->
+<div class="group flex items-center gap-4 p-4 rounded-xl hover:bg-surface-container-highest transition-all cursor-pointer">
+<img alt="Client avatar" class="w-12 h-12 rounded-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all" data-alt="portrait of a fit man in minimalist apparel, high-end photography style, soft neutral background with professional depth of field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-Uw3MJynx-8j7AJiT8ex044Krmmq_eWBP6T-2nYyWFNWaLJyKYKRUTkziBPcX-Ezv827jgDMNj2K04wCOvjxYXRAeV_lAdgodYAZzH6pd7EsZ0YBhhHE7rM0Zz9fQj0VozDeF6Za4tgh3bUuE3VhaOeeIMpE7D-dr7uS64SchwGQCNib8vi6z4VIj3p85rLyHcmthTpyOfghZnHmN7quWwjQTdDOzPoH71yq2mHa6DwhCQr8eLYIpdQbj9GBCzYve_s_nePHvCmE"/>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h4 class="font-bold text-sm text-on-surface-variant truncate group-hover:text-on-surface">Sophie Laurent</h4>
+<span class="text-[10px] font-medium text-zinc-400">11:45 AM</span>
+</div>
+<p class="text-xs text-zinc-400 font-medium truncate">How should I adjust my cardio for tomorrow's sesh?</p>
+</div>
+</div>
+<!-- Chat Item 3 -->
+<div class="group flex items-center gap-4 p-4 rounded-xl hover:bg-surface-container-highest transition-all cursor-pointer">
+<img alt="Client avatar" class="w-12 h-12 rounded-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all" data-alt="young athletic woman smiling in sun-drenched outdoor fitness setting, bright and airy professional portraiture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqXeV0BuDzsTeOWB-qPBwyiMzjUeffojIwYS-y2eMwcH2dD_a0WaJuWJfp299w8TTl5IT76TMdDQFoxPQ283cgYDUYDwPkcsqT-WtlmvsKNboK5MPkQDaGWz4p5mj6xqEdKYZ3RhLw6pGh_mOMvlfPn1vEup_zIQ-Xcf3OuRroK4gQ95y24494ysS99K0Sv5LzddC4uyp4JtElFvsU-Lid-BYA-tr8SYB_YcuzLP6k9D6whdDZBHkqsaiF8JoJrgv61fBTlbBt9Fc"/>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-0.5">
+<h4 class="font-bold text-sm text-on-surface-variant truncate group-hover:text-on-surface">Jordan Smith</h4>
+<span class="text-[10px] font-medium text-zinc-400">Yesterday</span>
+</div>
+<p class="text-xs text-zinc-400 font-medium truncate">Thanks for the feedback on the deadlift video!</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Chat Area -->
+<section class="flex-1 bg-surface flex flex-col relative overflow-hidden">
+<!-- Chat Header -->
+<div class="px-10 py-6 bg-surface-container-lowest/50 backdrop-blur-sm flex justify-between items-center z-10">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img alt="Active Client" class="w-10 h-10 rounded-full object-cover" data-alt="portrait of a confident woman in luxury sportswear, natural glowing skin, cinematic soft lighting with subtle fitness background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkRCwRG3wn9XAHZnq527Tl_Fcxrvasw6XXphGcoiHtkK3uSvV-coOMi89pk19-vpL1qrf5zXqgDbTZovQl4Zf6AM81WQ0buTg2kIJRaRefFC-cI4Det-YmQRtd2REVOlUOSbHMi8zaK2qrhIP0OFE0R9Ac1bfuE7n74Df0fPpwUjXSTKLEz36LU0CloXAjUpKLNdSFqXmGxEJcEw9ZDQYHx0tGcWrkmGGkJf0fhEC3OVJYlab2XKar6WSCU0lidXXb5paenOHyyBI"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-surface rounded-full"></span>
+</div>
+<div>
+<h3 class="font-headline font-bold text-on-surface">Marcus Chen</h3>
+<p class="text-xs text-primary font-bold">Premium Program • Week 6</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="videocam">videocam</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="info">info</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Messages Stream -->
+<div class="flex-1 overflow-y-auto px-10 py-8 space-y-8 scrollbar-hide">
+<!-- Date Separator -->
+<div class="flex justify-center">
+<span class="px-4 py-1 rounded-full bg-surface-container-low text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Today</span>
+</div>
+<!-- Received Message (Client) -->
+<div class="flex flex-col items-start max-w-lg">
+<div class="flex items-center gap-2 mb-2">
+<span class="text-[10px] font-bold text-zinc-400">Marcus Chen • 2:10 PM</span>
+</div>
+<div class="p-4 rounded-2xl rounded-tl-none bg-surface-container-low text-on-surface-variant font-medium leading-relaxed text-sm shadow-sm">
+                        Coach, I'm finding the Wednesday AM sessions a bit tough to recover from before the heavy Friday legs. Should we tweak the volume?
+                    </div>
+</div>
+<!-- Sent Message (Coach) - Signature Gradient/Glass -->
+<div class="flex flex-col items-end ml-auto max-w-lg">
+<div class="flex items-center gap-2 mb-2">
+<span class="text-[10px] font-bold text-zinc-400">2:14 PM • Read</span>
+</div>
+<div class="p-5 rounded-3xl rounded-tr-none bg-gradient-to-br from-primary to-primary-container text-white font-medium leading-relaxed text-sm shadow-xl shadow-primary/10">
+                        The macros look great for this week, coach! I'm feeling strong.
+                        <div class="mt-4 pt-4 border-t border-white/10">
+                            I've reviewed your CNS fatigue markers. Let's drop the Wednesday accessory work by 2 sets each and focus on isometric holds instead. It'll keep the tension high without the eccentric strain.
+                        </div>
+</div>
+</div>
+<!-- Shared Content Card (Premium UI Element) -->
+<div class="flex flex-col items-end ml-auto max-w-xs">
+<div class="w-full bg-surface-container-lowest rounded-2xl overflow-hidden shadow-lg shadow-zinc-500/5 group cursor-pointer hover:-translate-y-1 transition-transform">
+<div class="h-32 bg-primary-container relative">
+<div class="absolute inset-0 bg-gradient-to-br from-black/40 to-transparent"></div>
+<img alt="Updated Plan" class="w-full h-full object-cover mix-blend-overlay" data-alt="dynamic athlete lifting weights in modern gym, dark aesthetic with dramatic rim lighting, high quality fitness photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRMVmi60SKunvCIsMMXLUS1rrPDgg6DCsCfUZ8RFnhfyqQTLPXgHsxcQljpA6OmhE5VcfUv4p28kHcULlaioJsljq4Aa83bbaTrYJLigFMdFcLCRgdLc8EsWcvBINF4QB3KY1mdinRTiQZ3AsbGt_YLh_rMeLLW8ttAEyDEV0tpe4g8RMx7wCm-9ra7CDjLghKbBJ_S60ErY0YA7K-WCQLn-OY9uumaMI2NZwdU8PR83xZDv5N7o-vOKNXBiZ-oW2PEJ2jpkCrF9E"/>
+<div class="absolute bottom-3 left-4 text-white">
+<p class="text-[10px] font-bold uppercase tracking-wider opacity-80">Training Plan</p>
+<p class="font-headline font-bold">Phase 2: Power Pivot</p>
+</div>
+</div>
+<div class="p-4 flex items-center justify-between">
+<span class="text-xs font-bold text-on-surface">Updated Program.pdf</span>
+<span class="material-symbols-outlined text-primary" data-icon="download">download</span>
+</div>
+</div>
+<span class="mt-2 text-[10px] font-bold text-zinc-400">Sent at 2:15 PM</span>
+</div>
+<!-- Received Message -->
+<div class="flex flex-col items-start max-w-lg">
+<div class="flex items-center gap-2 mb-2">
+<span class="text-[10px] font-bold text-zinc-400">Marcus Chen • 2:18 PM</span>
+</div>
+<div class="p-4 rounded-2xl rounded-tl-none bg-surface-container-low text-on-surface-variant font-medium leading-relaxed text-sm shadow-sm">
+                        Perfect. I'll make the adjustment. Also, do you want a video of my top set for squats on Friday?
+                    </div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="p-10 bg-surface-container-lowest/80 backdrop-blur-md">
+<div class="flex items-end gap-4 max-w-4xl mx-auto bg-surface-container-high/40 rounded-[2rem] p-2 pr-4 shadow-inner ring-1 ring-black/5">
+<button class="p-3 text-zinc-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+<textarea class="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium py-3 placeholder:text-zinc-400 resize-none max-h-32" placeholder="Type your message to Marcus..." rows="1"></textarea>
+<div class="flex items-center gap-2 mb-1">
+<button class="p-2 text-zinc-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="mic">mic</span>
+</button>
+<button class="bg-gradient-to-r from-primary to-primary-container p-3 rounded-full text-white shadow-lg shadow-primary/20 scale-100 hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="send" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+<p class="text-center text-[10px] font-bold text-zinc-400 mt-4 uppercase tracking-[0.2em]">Concierge Coaching Connection Securely Encrypted</p>
+</div>
+</section>
+<!-- Contextual Detail Panel (Asymmetric Column) -->
+<aside class="hidden xl:flex w-72 h-full bg-surface-container-low flex-col p-6 space-y-8 overflow-y-auto">
+<div>
+<h3 class="font-headline font-bold text-sm uppercase tracking-widest text-zinc-400 mb-6">Client Snapshot</h3>
+<div class="bg-surface-container-lowest rounded-2xl p-5 shadow-sm space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-medium text-zinc-500">Current Phase</span>
+<span class="text-xs font-bold text-primary">Hypertrophy</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-xs font-medium text-zinc-500">Compliance</span>
+<span class="text-xs font-bold text-green-600">94%</span>
+</div>
+<div class="space-y-2 pt-2">
+<div class="flex justify-between text-[10px] font-bold text-zinc-400 uppercase">
+<span>Goal: -4kg Fat</span>
+<span>75%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-secondary to-secondary-container w-3/4 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<div>
+<h3 class="font-headline font-bold text-sm uppercase tracking-widest text-zinc-400 mb-6">Shared Assets</h3>
+<div class="grid grid-cols-2 gap-3">
+<div class="aspect-square bg-surface-container-highest rounded-xl relative group overflow-hidden cursor-pointer">
+<img alt="Progress Photo" class="w-full h-full object-cover" data-alt="split view progress photo of an athlete, muscular definition, clean white background, high contrast lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRo8mcAgKaJ0uPDMPA86nNM-_uZgjLcgleUC9nu5OfGgklomKvQkkl5R2pEJK7Vsw6a5wQtQtR3dKfbSoDLcJTxK_7_tP86JKp_Ko1EpuYycQLmYa6e768IsxeF0m7V085zp4Gz4i1y4HDYzbrpfguMduWGi9wd8pUpF3e1EIeDqaRDKlQb1-7tmw-Pn8kzlvb4IGRIiHTbU_lSk-0n8CuFdJpJRjdj2qaNdZmK3dlZ7zpBI7NVAh8rs6nSsb7EcILAv7w07W2Niw"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-white" data-icon="visibility">visibility</span>
+</div>
+</div>
+<div class="aspect-square bg-surface-container-highest rounded-xl relative group overflow-hidden cursor-pointer">
+<img alt="Nutrition Log" class="w-full h-full object-cover" data-alt="vibrant healthy meal prep containers with grilled salmon and vegetables, bright natural kitchen lighting, professional food photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMIUpP2UtSrgppg1IWJQAdfe4kscXy54tsvLoGZxvxsnwggGQ4goo9cHcUicqIbwwSdmlSDXeGrieZiFRng8P4QxpElj5BVJW9fFt-iyPVJ3sH5-qyGo9FnNu-2fDJUm5ABHp9Hw-tSNOrizcIVG0r3r67VU9n8lymOeON2-oE6TnUvSi-wom44fJEIMo4WZKOBIdfUEVRM1qH0AGHVJirJ-1KlNv1Pj5jV5hh_XjCe9ODMWW839BDkTmDwRN_5HTWpVuCdf7Jsy4"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-white" data-icon="visibility">visibility</span>
+</div>
+</div>
+<div class="aspect-square bg-surface-container-highest rounded-xl flex items-center justify-center border-2 border-dashed border-zinc-300/50 hover:border-primary/50 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-zinc-400" data-icon="add">add</span>
+</div>
+</div>
+</div>
+<div>
+<h3 class="font-headline font-bold text-sm uppercase tracking-widest text-zinc-400 mb-6">Pinned Notes</h3>
+<div class="space-y-4">
+<div class="p-4 rounded-2xl bg-secondary-fixed/30 border border-secondary-fixed text-xs leading-relaxed text-on-secondary-fixed-variant font-medium">
+                        "Marcus prefers morning sessions due to work schedule. Increase sodium intake during heatwaves."
+                    </div>
+</div>
+</div>
+</aside>
+</main>
+</body></html>

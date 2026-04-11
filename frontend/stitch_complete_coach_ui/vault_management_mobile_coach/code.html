@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Educational Vault - Coach Management</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface-variant": "#474554",
+              "inverse-on-surface": "#f2f0f0",
+              "tertiary-container": "#585858",
+              "surface-tint": "#5547d5",
+              "on-error-container": "#93000a",
+              "error-container": "#ffdad6",
+              "primary": "#3620b8",
+              "on-tertiary": "#ffffff",
+              "surface-container-high": "#e9e8e7",
+              "secondary": "#9a4600",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-fixed-variant": "#3c29bd",
+              "error": "#ba1a1a",
+              "on-primary": "#ffffff",
+              "on-primary-fixed": "#140067",
+              "on-primary-container": "#cfcaff",
+              "on-tertiary-fixed": "#1b1b1b",
+              "tertiary-fixed": "#e2e2e2",
+              "surface": "#fbf9f8",
+              "surface-variant": "#e4e2e2",
+              "primary-fixed-dim": "#c5c0ff",
+              "on-secondary-fixed": "#321200",
+              "on-error": "#ffffff",
+              "on-secondary-container": "#562500",
+              "surface-container-highest": "#e4e2e2",
+              "background": "#fbf9f8",
+              "on-secondary-fixed-variant": "#753400",
+              "outline": "#787586",
+              "secondary-container": "#f87600",
+              "outline-variant": "#c8c4d7",
+              "surface-bright": "#fbf9f8",
+              "secondary-fixed": "#ffdbc9",
+              "on-tertiary-fixed-variant": "#474747",
+              "primary-container": "#4f40cf",
+              "tertiary": "#414141",
+              "surface-dim": "#dbdad9",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "primary-fixed": "#e3dfff",
+              "on-secondary": "#ffffff",
+              "inverse-surface": "#303031",
+              "surface-container": "#efeded",
+              "on-tertiary-container": "#cfcfcf",
+              "surface-container-low": "#f5f3f3",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-background": "#1b1c1c",
+              "inverse-primary": "#c5c0ff",
+              "on-surface": "#1b1c1c"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .kinetic-gradient {
+        background: linear-gradient(135deg, #3620b8 0%, #4F40CF 100%);
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-background antialiased pb-32">
+<!-- Top App Bar -->
+<header class="bg-[#fbf9f8]/80 dark:bg-zinc-950/80 backdrop-blur-xl fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden shadow-sm">
+<img alt="Coach profile photo" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional athletic coach with a confident smile in a bright gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWuFICTYyucZkJ2BF0GdBb4aRSB62zLPAQRGHG20FNVAtFlUcPMy-3HX3G2IKDmwXOr_7rqiygnlYvlce26rpApyLXig4a9xeN-u32B9OVkiCRFkDeVC8EiUjmIu96h6g2vS7B4ZVIkmL1Hq6ePxdHMS6hpSVAE_SpOOhbPTag9ZLLemZoNSjXaX39j7Lw5Q3WMYepTcASA4bDDWoSGnzI3qXSuKHiv5-mntgPWV3Sr-Xtvp7Oiiy2RN6JhETeD_jgDWgvyLIGT8k"/>
+</div>
+<h1 class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-xl text-[#1b1c1c] dark:text-zinc-100">Coach Portal</h1>
+</div>
+<button class="text-[#1b1c1c] dark:text-zinc-400 hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<main class="pt-20 px-6 max-w-md mx-auto">
+<!-- Hero Search Section -->
+<section class="mb-8">
+<h2 class="font-headline font-extrabold text-3xl leading-tight mb-4 tracking-tighter">Educational <span class="text-primary">Vault</span></h2>
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+</div>
+<input class="w-full h-14 pl-12 pr-4 bg-surface-container-high border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-on-surface" placeholder="Search resources or athletes..." type="text"/>
+</div>
+</section>
+<!-- Dynamic Category Chips -->
+<section class="mb-8 -mx-6 px-6 overflow-x-auto whitespace-nowrap flex gap-3 no-scrollbar">
+<button class="px-6 py-2.5 rounded-full bg-secondary-container text-white font-semibold text-sm shadow-lg shadow-secondary-container/20 transition-all">All Resources</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm hover:bg-surface-container-highest transition-all">Nutrition</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm hover:bg-surface-container-highest transition-all">Technique</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold text-sm hover:bg-surface-container-highest transition-all">Recovery</button>
+</section>
+<!-- Bento Layout: Feature Cards -->
+<div class="grid grid-cols-2 gap-4 mb-8">
+<!-- Upload Card -->
+<div class="col-span-2 relative h-48 rounded-3xl overflow-hidden shadow-sm group">
+<img alt="Video capture" class="absolute inset-0 w-full h-full object-cover brightness-50 group-hover:scale-105 transition-transform duration-700" data-alt="High-quality professional video camera on a tripod in a bright modern fitness studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxKo21m26v9SdmFZP-38y-oja3-VqAnojGyr3C_pImUR02f106fOGgADAMiCiQUPsQtVDDr4uWImbC6DHQAKuOO8V88MuVMCzqhBu3nxqQasjesK2ZOPH9gwREmLjMBSwI1WcjbQPmFEBFPt7PkIW3mVLIOY7qdyNRoxpzAmzPVaZkwBxpgOXQD0l82iH2ewUNb768WI9y1TUN8t_ERWQcl4AtZqtpLTBl9R3jJYVGZdyF2vQ_MFKQ8JwDffwjkXRMJ0hf-L6HV5I"/>
+<div class="absolute inset-0 p-6 flex flex-col justify-end">
+<h3 class="font-headline font-bold text-white text-2xl mb-1">Upload Video</h3>
+<p class="text-white/80 text-sm mb-4">Add new drills or technique analysis</p>
+<button class="w-fit px-6 py-2 bg-white text-primary rounded-full font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="cloud_upload">cloud_upload</span>
+                        Start Upload
+                    </button>
+</div>
+</div>
+<!-- Stats Card 1 -->
+<div class="bg-surface-container-lowest p-5 rounded-3xl shadow-sm border border-outline-variant/10">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="visibility">visibility</span>
+</div>
+<div class="font-headline font-extrabold text-2xl text-on-background">1.2k</div>
+<div class="text-xs font-semibold uppercase tracking-wider text-outline">Total Views</div>
+</div>
+<!-- Stats Card 2 -->
+<div class="bg-surface-container-lowest p-5 rounded-3xl shadow-sm border border-outline-variant/10">
+<div class="w-10 h-10 rounded-full bg-secondary-container/10 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-secondary-container" data-icon="share">share</span>
+</div>
+<div class="font-headline font-extrabold text-2xl text-on-background">482</div>
+<div class="text-xs font-semibold uppercase tracking-wider text-outline">Shares</div>
+</div>
+</div>
+<!-- Recent Resources Section -->
+<section class="mb-10">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h3 class="font-headline font-bold text-xl">Recent Library</h3>
+<p class="text-on-surface-variant text-sm">Most shared content this week</p>
+</div>
+<button class="text-primary font-bold text-sm">View All</button>
+</div>
+<div class="space-y-4">
+<!-- Video Item 1 -->
+<div class="glass-card p-4 rounded-3xl flex items-center gap-4 group">
+<div class="relative w-20 h-20 rounded-2xl overflow-hidden shrink-0">
+<img alt="Squat form" class="w-full h-full object-cover" data-alt="Side view of an athlete performing a perfect barbell back squat in a professional training facility" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJknHEs6NlSnwJtIeme8RtJrzke0s3cqBDZNzvBEeyLu-r0Zz-FUP0pX5UOqCfnrTabUPP-Zd7us1EcrDTRlRDW1ftqEUm0AdX8rZMORCEiIC7QnngDsxqECxWD0JuEbq4377biaHXPJLtdUf9byfRCOkjufBFAF7-isqUUsJVW26WOCpIJuTzt7SMeRXOgZnU4J4p0EdJHzAqAUs6Ry6bvTxt2pww92XsAPMx37_UEI_D9jNhsBGfH6PlaEocFA1fCepxyKQJC8I"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white" data-icon="play_circle">play_circle</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-on-surface truncate">Advanced Squat Biomechanics</h4>
+<p class="text-xs text-outline mb-2">Duration: 12:45 • MP4</p>
+<div class="flex gap-2">
+<button class="p-2 rounded-xl bg-surface-container-high text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="link">link</span>
+</button>
+<button class="p-2 rounded-xl bg-surface-container-high text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Video Item 2 -->
+<div class="glass-card p-4 rounded-3xl flex items-center gap-4 group">
+<div class="relative w-20 h-20 rounded-2xl overflow-hidden shrink-0">
+<img alt="Nutrition guide" class="w-full h-full object-cover" data-alt="Top-down view of a vibrant healthy meal prep bowl with salmon, avocado, and leafy greens" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCgIJJehP9tEKSkE55jADOC6DvP7JhdEcg2ORE5HawtmaRsQ4CSW8d1PjJBpwSmo15_DO64bLQJdmjhcPjJ-3TU2eau-8Qns1QhseRFbHuT5FTFmvRLBPcvuTBdHzEFCvo_h_GPSHP19Wrp6imR17DeKL79l_t4Vy6cK7MqX-uLnGIDarQvEKbto_xHOboA31IHGZpnDyRbpX0iXmyGRA-BxIaveJwDXYnlS5wPSb21FMILYZPY79DOH-vApvNRl0nxYCf4BoKMr0"/>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-on-surface truncate">Post-Workout Macronutrients</h4>
+<p class="text-xs text-outline mb-2">PDF Guide • 4.2 MB</p>
+<div class="flex gap-2">
+<button class="p-2 rounded-xl bg-surface-container-high text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="link">link</span>
+</button>
+<button class="p-2 rounded-xl bg-surface-container-high text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick Share with Client List -->
+<section class="mb-8">
+<h3 class="font-headline font-bold text-xl mb-4">Quick Share with Clients</h3>
+<div class="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6">
+<div class="flex flex-col items-center gap-2 shrink-0">
+<div class="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center border-2 border-dashed border-outline-variant">
+<span class="material-symbols-outlined text-outline" data-icon="add">add</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-outline">Add</span>
+</div>
+<!-- Client 1 -->
+<div class="flex flex-col items-center gap-2 shrink-0">
+<div class="w-16 h-16 rounded-2xl overflow-hidden ring-2 ring-primary ring-offset-2">
+<img alt="Alex" class="w-full h-full object-cover" data-alt="Portrait of a determined male athlete in workout gear with a focused expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEHjeBM0r60W1Ed39GQE9Ox5WN5ocIQ812k04kFpscWmdQTjOdTvb1Ve863Q13f50cNA-OC8eZ8mVjvlrgsTs_s-cMAJGoDqM9bzzbiS31KZTlVLSi4qb-8dB-AB5zMQ9q1NFXV94rj5cidnxsAS2V99e1Y5z28paJYAybLw6dbuQLJrMXLP2ADaqV_8bLHHeJYLiNPa6Tikz7Ez2uS7pbiUKXsYmb1Svk_zXxkmu0y3rAsbYcTEtgynOeo6UOEvdm8s0ZWoba0-M"/>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface">Alex M.</span>
+</div>
+<!-- Client 2 -->
+<div class="flex flex-col items-center gap-2 shrink-0">
+<div class="w-16 h-16 rounded-2xl overflow-hidden opacity-60">
+<img alt="Sarah" class="w-full h-full object-cover" data-alt="Portrait of a young woman in athletic clothing in a bright indoor gym environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzOIRQcbFKOA2OGXw4Awv8AkzZVh_Yt44Z2lcQdTEDe51jpkqgrhpQRzuqvDz_NX8wy9_rAP-xsV_Pdndgjar_kbHaWYBb2c7h_Y-kVYpGbALQmA3fuvtUKq5vm6CFIbruutDWZ1oYrmdE31Vt_ilNHwPPYqSOQYR-vJDAt-2rTz4w0wr5BbhVbh89Tl6VzCb_SezF-JSvniLcE4VTt51rVLdbMssu-PBCpY_PDkBfRNokfm74n7lJGnMPRlBeB9w_TKE3p8tjeHU"/>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface">Sarah J.</span>
+</div>
+<!-- Client 3 -->
+<div class="flex flex-col items-center gap-2 shrink-0">
+<div class="w-16 h-16 rounded-2xl overflow-hidden opacity-60">
+<img alt="David" class="w-full h-full object-cover" data-alt="Close-up headshot of a fit man with a friendly smile wearing a sports t-shirt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBVNN1iE85OYqRG2RzL81h7CmlgHADSZkZDTYq5eL-0RHSJIXLLhOx2K2xUQXTzEumhnpRYgfHrd3XXNKk7Y0ou5wM0Ct_eHdafwPukvxFNC7pmBtNeRdKdVCBRNNL3ZkAUh2gnmdLzT8we3uV8SlZ4E0ze1WJiKWyadZViK7eZqLKvCJeh-N36oRyIwZNelw0_Lw7zjZA3yDGYWvAm5eMRIghjV9OkE4Dl-rIoAVw_vgKileh22pigd5jCs_dR5AZI0WRc1GpBkc"/>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface">David K.</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="bg-[#fbf9f8]/80 dark:bg-zinc-950/80 backdrop-blur-3xl fixed bottom-0 left-0 w-full z-50 rounded-t-3xl flex justify-around items-center px-4 pt-3 pb-8 shadow-[0px_-10px_30px_rgba(27,28,28,0.06)]">
+<a class="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-500 opacity-60 hover:scale-105 transition-transform active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-['Inter'] text-[11px] font-semibold uppercase tracking-wider mt-1">Athletes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#3620b8] dark:text-[#4F40CF] bg-gradient-to-br from-[#3620b8]/10 to-[#4F40CF]/10 rounded-2xl px-4 py-2 hover:scale-105 transition-transform active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="font-['Inter'] text-[11px] font-semibold uppercase tracking-wider mt-1">Workouts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-500 opacity-60 hover:scale-105 transition-transform active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="font-['Inter'] text-[11px] font-semibold uppercase tracking-wider mt-1">Insights</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-500 opacity-60 hover:scale-105 transition-transform active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-['Inter'] text-[11px] font-semibold uppercase tracking-wider mt-1">Schedule</span>
+</a>
+</nav>
+<!-- Floating Action Button - Supressed based on context rules (not a primary destination page FAB scenario) -->
+</body></html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Active Workout - My Complete Physique</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-fixed-variant": "#753400",
+                        "primary-container": "#4f40cf",
+                        "tertiary": "#414141",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-primary-container": "#cfcaff",
+                        "surface-dim": "#dbdad9",
+                        "on-tertiary-container": "#cfcfcf",
+                        "on-background": "#1b1c1c",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface-tint": "#5547d5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#1b1c1c",
+                        "surface-container-highest": "#e4e2e2",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "primary-fixed": "#e3dfff",
+                        "secondary-fixed": "#ffdbc9",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "surface-container-low": "#f5f3f3",
+                        "on-primary-fixed": "#140067",
+                        "on-surface-variant": "#474554",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#303031",
+                        "outline-variant": "#c8c4d7",
+                        "primary": "#3620b8",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e4e2e2",
+                        "surface-bright": "#fbf9f8",
+                        "surface": "#fbf9f8",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "on-secondary-fixed": "#321200",
+                        "tertiary-container": "#585858",
+                        "surface-container": "#efeded",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e9e8e7",
+                        "secondary-container": "#f87600",
+                        "outline": "#787586",
+                        "on-secondary-container": "#562500",
+                        "inverse-primary": "#c5c0ff",
+                        "background": "#fbf9f8",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f2f0f0",
+                        "secondary": "#9a4600"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-workout-timer-blur {
+            backdrop-filter: blur(24px);
+        }
+        .glass-progress-track {
+            background: rgba(228, 226, 226, 0.3);
+            backdrop-filter: blur(8px);
+        }
+        .text-gradient-primary {
+            background: linear-gradient(135deg, #3620b8 0%, #4f40cf 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body text-on-surface min-h-screen">
+<!-- Top Navigation (Shell Suppressed for Focused Journey - Using specialized Back/Title layout) -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl px-6 py-4 flex items-center justify-between shadow-[0px_10px_30px_rgba(27,28,28,0.06)]">
+<button class="flex items-center justify-center p-2 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-on-surface">close</span>
+</button>
+<div class="text-center">
+<h1 class="font-headline font-bold text-base tracking-tight text-on-surface">Hypertrophy Block A</h1>
+<p class="font-label text-[10px] font-semibold uppercase tracking-widest text-secondary-container">Session Active</p>
+</div>
+<button class="bg-primary-container text-white px-4 py-2 rounded-full font-headline font-bold text-xs tracking-wide">
+            FINISH
+        </button>
+</header>
+<main class="pt-24 pb-32 px-6">
+<!-- Timer & Overall Progress Glass Component -->
+<section class="mb-10">
+<div class="surface-container-low rounded-[2rem] p-8 flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Background Image Aspect (Abstract/Athletic) -->
+<div class="absolute inset-0 opacity-10 pointer-events-none">
+<img class="w-full h-full object-cover" data-alt="close up detail of textured metallic weight plate and barbell in a moody high-end gym setting with soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMQRbu-slLzI8OlwOx-di29-6JQeKtiZ5Mncd98XibrhlJbO68jS6T1Qt2o49lfsMPBMIuYdu7FzhOUM59A7m6IEX9fal2ZbVndnrzvfb1m9orM7CSS7arYyI3ydXIRlneEw1lDiZKxwsyrg5fuIWKouaQbSrvZlm9ZKS3iE-a63E7TQ-FOprDHm-mHLmy_s2q8ms5Kj-tnG5HGmKMlGcS6lCDZAqSBxqBR8PtBIr-fBb7evhF75X6nqB_U8j5EU2WCPgagFFayAg"/>
+</div>
+<div class="z-10 text-center">
+<span class="font-label text-xs font-semibold text-on-surface-variant uppercase tracking-widest block mb-1">Workout Duration</span>
+<h2 class="font-headline text-5xl font-extrabold tracking-tighter text-on-surface">42:15</h2>
+<div class="mt-6 w-48 h-1.5 glass-progress-track rounded-full overflow-hidden">
+<div class="h-full w-3/4 bg-gradient-to-r from-primary to-primary-container rounded-full"></div>
+</div>
+<p class="mt-3 font-label text-[11px] font-medium text-on-surface-variant">4 of 6 exercises complete</p>
+</div>
+</div>
+</section>
+<!-- Active Exercise Header -->
+<section class="mb-6 flex items-end justify-between">
+<div class="max-w-[70%]">
+<span class="font-label text-[11px] font-bold text-secondary-container uppercase tracking-widest">Current Exercise</span>
+<h3 class="font-headline text-2xl font-extrabold text-on-surface leading-tight">Barbell Incline Bench Press</h3>
+</div>
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface text-xl">history</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface text-xl">videocam</span>
+</button>
+</div>
+</section>
+<!-- Workout Table (Bento Inspired Log) -->
+<section class="space-y-4">
+<!-- Table Header -->
+<div class="grid grid-cols-12 px-4 font-label text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+<div class="col-span-2">Set</div>
+<div class="col-span-3 text-center">LBS</div>
+<div class="col-span-3 text-center">Reps</div>
+<div class="col-span-2 text-center">RPE</div>
+<div class="col-span-2 text-right">Done</div>
+</div>
+<!-- Set Row 1 (Completed) -->
+<div class="grid grid-cols-12 items-center bg-surface-container-lowest p-4 rounded-xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="col-span-2 font-headline font-bold text-on-surface">1</div>
+<div class="col-span-3">
+<div class="text-center font-body font-semibold text-on-surface-variant">185</div>
+</div>
+<div class="col-span-3">
+<div class="text-center font-body font-semibold text-on-surface-variant">8</div>
+</div>
+<div class="col-span-2">
+<div class="text-center font-body font-semibold text-on-surface-variant">7</div>
+</div>
+<div class="col-span-2 flex justify-end">
+<div class="w-7 h-7 rounded-full bg-[#E8F5E9] flex items-center justify-center">
+<span class="material-symbols-outlined text-[#2E7D32] text-sm" style="font-variation-settings: 'wght' 700;">check</span>
+</div>
+</div>
+</div>
+<!-- Set Row 2 (Active) -->
+<div class="grid grid-cols-12 items-center bg-surface-container-lowest p-4 rounded-xl ring-2 ring-primary/20 shadow-[0px_10px_40px_rgba(54,32,184,0.08)]">
+<div class="col-span-2 font-headline font-extrabold text-primary text-lg italic">2</div>
+<div class="col-span-3">
+<input class="w-full text-center bg-surface-container-low border-none rounded-lg font-headline font-bold text-on-surface focus:ring-2 focus:ring-primary/40 py-2" placeholder="185" type="number"/>
+</div>
+<div class="col-span-3 px-2">
+<input class="w-full text-center bg-surface-container-low border-none rounded-lg font-headline font-bold text-on-surface focus:ring-2 focus:ring-primary/40 py-2" placeholder="8" type="number"/>
+</div>
+<div class="col-span-2">
+<input class="w-full text-center bg-surface-container-low border-none rounded-lg font-headline font-bold text-on-surface focus:ring-2 focus:ring-primary/40 py-2" placeholder="8" type="number"/>
+</div>
+<div class="col-span-2 flex justify-end">
+<button class="w-8 h-8 rounded-full bg-primary-container text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'wght' 600;">check</span>
+</button>
+</div>
+</div>
+<!-- Set Row 3 (Pending) -->
+<div class="grid grid-cols-12 items-center bg-surface-container-low/50 p-4 rounded-xl border border-dashed border-outline-variant/30">
+<div class="col-span-2 font-headline font-bold text-on-surface-variant opacity-50">3</div>
+<div class="col-span-3 text-center font-body text-on-surface-variant opacity-40 italic">—</div>
+<div class="col-span-3 text-center font-body text-on-surface-variant opacity-40 italic">—</div>
+<div class="col-span-2 text-center font-body text-on-surface-variant opacity-40 italic">—</div>
+<div class="col-span-2 flex justify-end">
+<div class="w-7 h-7 rounded-full border border-outline-variant/40 flex items-center justify-center"></div>
+</div>
+</div>
+<!-- Add Set Button -->
+<button class="w-full py-4 rounded-xl border-2 border-dashed border-outline-variant/40 flex items-center justify-center gap-2 group hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">add_circle</span>
+<span class="font-label text-xs font-bold uppercase tracking-widest text-on-surface-variant group-hover:text-primary transition-colors">Add Set</span>
+</button>
+</section>
+<!-- Up Next Bento Card -->
+<section class="mt-12">
+<div class="surface-container-low rounded-3xl p-6">
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-headline font-bold text-on-surface">Up Next</h4>
+<span class="font-label text-[10px] font-extrabold text-primary-container uppercase tracking-tighter">Exercise 5 of 6</span>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-lowest p-3 rounded-2xl">
+<div class="w-16 h-16 rounded-xl overflow-hidden bg-surface-container-high flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="muscular athlete performing weighted pull ups in a bright modern fitness facility with industrial accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsPJSB5qQ_VRSfcHrX5gtLVDOYQ04Ww5CF2CYnk-cQh7A0l55ElY71ybPqc8_gsCHre5TDHBD8IbWXlWF0N9x2ZswtPqz_VWONxR1E_vTHynqBW-owsBLqrhnYA45_5WVQaVE3XrbpF0Y3lNUqwSKOEgSt6MU-sQPxLMLJtcsBxPAOJ_lPXKcDu5IlIc0pJQcMT4pDxiQmBfY6TuhxEsp55ORX4eYGvacMjMwIu72KPUqTUZ1_ScVwi5k5PVSZ1NfaaUhEzTWPo0Y"/>
+</div>
+<div>
+<p class="font-headline font-bold text-on-surface text-sm">Weighted Pull Ups</p>
+<p class="font-label text-[11px] text-on-surface-variant">3 Sets • 8-10 Reps</p>
+</div>
+<div class="ml-auto">
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Rest Timer Floating Overlay -->
+<div class="fixed bottom-32 left-1/2 -translate-x-1/2 w-[85%] z-40">
+<div class="bg-white/90 backdrop-blur-2xl p-4 rounded-3xl shadow-[0px_20px_50px_rgba(0,0,0,0.1)] flex items-center justify-between ring-1 ring-black/[0.03]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary-container" style="font-variation-settings: 'FILL' 1;">timer</span>
+</div>
+<div>
+<p class="font-label text-[9px] font-bold text-secondary-container uppercase tracking-widest">Rest Timer</p>
+<p class="font-headline font-extrabold text-on-surface text-lg leading-none">01:42</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="bg-surface-container-high px-3 py-2 rounded-xl font-label text-[10px] font-bold text-on-surface">+30s</button>
+<button class="bg-on-surface text-white w-10 h-10 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-base">skip_next</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Contextually suppression/active logic) -->
+<!-- Applying Active State Logic: 'Workouts' matches the primary intent -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-8 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-t-[2rem] z-50 shadow-[0px_-10px_40px_rgba(0,0,0,0.04)]">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">dashboard</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase">Home</span>
+</a>
+<!-- Workouts (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-[#4F40CF] dark:text-[#4F40CF] scale-110" href="#">
+<span class="material-symbols-outlined text-2xl mb-1" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase">Workouts</span>
+</a>
+<!-- Nutrition -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">pie_chart</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase">Nutrition</span>
+</a>
+<!-- Vault -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">subscriptions</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase">Vault</span>
+</a>
+<!-- Check-in -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-2xl mb-1">assignment_turned_in</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wide uppercase">Check-in</span>
+</a>
+</nav>
+</body></html>

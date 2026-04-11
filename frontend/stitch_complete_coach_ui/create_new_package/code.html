@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Package | My Complete Physique</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#ffdbc9",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f2f0f0",
+                        "on-surface-variant": "#474554",
+                        "on-primary-fixed": "#140067",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#efeded",
+                        "on-secondary-container": "#562500",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#753400",
+                        "primary-fixed": "#e3dfff",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "on-secondary-fixed": "#321200",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface-container-low": "#f5f3f3",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "tertiary-container": "#585858",
+                        "surface-tint": "#5547d5",
+                        "on-primary": "#ffffff",
+                        "on-background": "#1b1c1c",
+                        "surface-dim": "#dbdad9",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "surface-container-high": "#e9e8e7",
+                        "secondary-container": "#f87600",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#fbf9f8",
+                        "primary-container": "#4f40cf",
+                        "surface-container-highest": "#e4e2e2",
+                        "inverse-surface": "#303031",
+                        "background": "#fbf9f8",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#e2e2e2",
+                        "primary": "#3620b8",
+                        "outline-variant": "#c8c4d7",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "on-primary-container": "#cfcaff",
+                        "inverse-primary": "#c5c0ff",
+                        "secondary": "#9a4600",
+                        "on-tertiary-container": "#cfcfcf",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#414141",
+                        "surface-variant": "#e4e2e2",
+                        "outline": "#787586",
+                        "surface": "#fbf9f8",
+                        "on-surface": "#1b1c1c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col p-6 bg-[#fbf9f8] dark:bg-zinc-950 h-screen w-72 border-r-0 bg-gradient-to-r from-zinc-100/50 to-transparent dark:from-zinc-900/50 z-50">
+<div class="mb-10 px-2 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined">fitness_center</span>
+</div>
+<div>
+<h1 class="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tighter">MCP</h1>
+<p class="text-xs font-['Plus_Jakarta_Sans'] tracking-tight font-medium opacity-60">Elite Performance</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200/50 font-['Plus_Jakarta_Sans'] tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200/50 font-['Plus_Jakarta_Sans'] tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span>Training</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200/50 font-['Plus_Jakarta_Sans'] tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span>Nutrition</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200/50 font-['Plus_Jakarta_Sans'] tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">school</span>
+<span>Education</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200/50 font-['Plus_Jakarta_Sans'] tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">medication</span>
+<span>Supplementation</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200/50 font-['Plus_Jakarta_Sans'] tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200/50 font-['Plus_Jakarta_Sans'] tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span>Forms</span>
+</a>
+</nav>
+<div class="mt-6 mb-8">
+<button class="w-full py-4 bg-primary-container text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-container/20 hover:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">add</span>
+<span>+ New Client</span>
+</button>
+</div>
+<div class="mt-auto pt-6 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200/50 font-['Plus_Jakarta_Sans'] tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200/50 font-['Plus_Jakarta_Sans'] tracking-tight font-medium" href="#">
+<span class="material-symbols-outlined">help</span>
+<span>Support</span>
+</a>
+<div class="flex items-center gap-3 mt-6 p-2 rounded-2xl bg-surface-container-low">
+<img alt="Coach Profile Picture" class="w-10 h-10 rounded-xl object-cover" data-alt="professional headshot of a fitness coach in a clean modern gym environment, cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuKpQUCwp74NqkYBT80EnTTxlwxqND2ZHs6ifwDhfdboGQywfhMfdg6oWYO30aFpHFwW_pNNe-GhIIEpSPRk_6AAmf35g2_ABfC8sW5JvRr2VCyw9NCIuWC1k4f9psV2XcCEq_pWNwVqVEVzJDJDyAcyAPX-bgsMbTrSrArKqP8jC6ThdLoBEtmKgkLpu9m7bPMagKVRxQVFDYhGQWDGNdZWvKN1-8NSdNc0Kl_BkhoYbkB12p_XInkIFOMCoIv1v2CxhBC2DGOo0"/>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold truncate">Coach Marcus</p>
+<p class="text-xs text-zinc-500 truncate">Head of Performance</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-72 min-h-screen pb-32">
+<!-- TopAppBar Shell -->
+<header class="sticky top-0 z-40 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl flex justify-between items-center w-full px-8 py-4 shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-zinc-100 rounded-full transition-all">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-lg font-black text-zinc-900 dark:text-zinc-50 font-['Plus_Jakarta_Sans']">Create Coaching Package</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary-container/20 w-64 transition-all" placeholder="Search resources..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm">search</span>
+</div>
+<button class="p-2 text-zinc-500 hover:text-primary transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<div class="max-w-6xl mx-auto px-8 pt-10">
+<!-- Header Editorial Section -->
+<div class="mb-12">
+<span class="inline-block px-3 py-1 bg-secondary-container/10 text-secondary-container text-xs font-bold rounded-full mb-4">WORKSPACE</span>
+<h1 class="text-5xl font-extrabold tracking-tighter text-zinc-900 mb-4 font-headline">The Kinetic Sculptor</h1>
+<p class="text-zinc-500 max-w-2xl text-lg font-body leading-relaxed">Define a premium coaching experience. Combine strategy, nutrition, and accountability into a high-performance package for your clients.</p>
+</div>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-12 gap-8 items-start">
+<!-- Left Column: Details & Inclusions -->
+<div class="col-span-12 lg:col-span-8 space-y-8">
+<!-- Package Details Card -->
+<section class="glass-card p-8 rounded-2xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex items-center gap-3 mb-8">
+<span class="w-8 h-8 rounded-lg bg-primary-container/10 text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+</span>
+<h3 class="text-xl font-bold font-headline">Package Foundation</h3>
+</div>
+<div class="space-y-6">
+<div class="group">
+<label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2 ml-1">Package Title</label>
+<input class="w-full px-6 py-4 bg-surface-container-high rounded-xl border-none focus:ring-2 focus:ring-primary-container transition-all text-lg font-medium" placeholder="e.g. 12-Week Metabolic Transformation" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2 ml-1">Category</label>
+<select class="w-full px-6 py-4 bg-surface-container-high rounded-xl border-none focus:ring-2 focus:ring-primary-container transition-all">
+<option>Hypertrophy</option>
+<option>Lifestyle &amp; Wellness</option>
+<option>Competition Prep</option>
+<option>Fat Loss Elite</option>
+</select>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2 ml-1">Lead Coach</label>
+<div class="flex items-center gap-3 px-6 py-3.5 bg-surface-container-high rounded-xl">
+<img alt="Coach Avatar" class="w-6 h-6 rounded-full" data-alt="portrait of a professional athletic coach with a confident expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJrHvQGSfefdNxux9SP0k38hGnHSe0CMI3zI1SwnCGi6-Qy5eh3ActTVDWkfDkcE5EWnR0mubvtOI7ywovLhpO4BNXeyqsbiLuP16PBxMZ9Axt7G8rh00LABVsW6w1CWBaNxTh0gEULCxWGmMWsGzRY0CKP9RFSALJCJUmLJmnx-tXNH2ewKdvscrzybhHoSUvo0r-3FqY4QX3CkToMSsp9RlmhZXJVBUWey_oPAH2ufLugJQn54I1cbfW3fpUzd3x8QpjJEoPDOY"/>
+<span class="text-sm font-medium">Marcus Chen</span>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2 ml-1">Description</label>
+<textarea class="w-full px-6 py-4 bg-surface-container-high rounded-xl border-none focus:ring-2 focus:ring-primary-container transition-all resize-none" placeholder="Outline the primary transformation journey and who this package is for..." rows="5"></textarea>
+</div>
+</div>
+</section>
+<!-- Service Inclusions Bento Card -->
+<section class="glass-card p-8 rounded-2xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex justify-between items-center mb-8">
+<div class="flex items-center gap-3">
+<span class="w-8 h-8 rounded-lg bg-secondary-container/10 text-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">verified</span>
+</span>
+<h3 class="text-xl font-bold font-headline">Service Inclusions</h3>
+</div>
+<span class="text-xs font-bold text-primary-container cursor-pointer hover:underline">+ Add Custom Inclusion</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Inclusion Items -->
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low group cursor-pointer border-2 border-transparent hover:border-primary-container/20 transition-all">
+<div class="w-6 h-6 rounded-full border-2 border-primary-container flex items-center justify-center bg-primary-container text-white">
+<span class="material-symbols-outlined text-xs">check</span>
+</div>
+<div>
+<p class="text-sm font-bold">1:1 Performance Coaching</p>
+<p class="text-[10px] text-zinc-400">Weekly video calls &amp; daily support</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low group cursor-pointer border-2 border-transparent hover:border-primary-container/20 transition-all">
+<div class="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center"></div>
+<div>
+<p class="text-sm font-bold">Daily Nutrition Strategy</p>
+<p class="text-[10px] text-zinc-400">Custom macros &amp; meal planning</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low group cursor-pointer border-2 border-transparent hover:border-primary-container/20 transition-all">
+<div class="w-6 h-6 rounded-full border-2 border-primary-container flex items-center justify-center bg-primary-container text-white">
+<span class="material-symbols-outlined text-xs">check</span>
+</div>
+<div>
+<p class="text-sm font-bold">Custom Training Programming</p>
+<p class="text-[10px] text-zinc-400">Tailored to specific goals &amp; gear</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low group cursor-pointer border-2 border-transparent hover:border-primary-container/20 transition-all">
+<div class="w-6 h-6 rounded-full border-2 border-primary-container flex items-center justify-center bg-primary-container text-white">
+<span class="material-symbols-outlined text-xs">check</span>
+</div>
+<div>
+<p class="text-sm font-bold">Weekly Form Analysis</p>
+<p class="text-[10px] text-zinc-400">Video breakdown of key lifts</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low group cursor-pointer border-2 border-transparent hover:border-primary-container/20 transition-all">
+<div class="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center"></div>
+<div>
+<p class="text-sm font-bold">Supplement Protocol</p>
+<p class="text-[10px] text-zinc-400">Optimized timing &amp; stack advice</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low group cursor-pointer border-2 border-transparent hover:border-primary-container/20 transition-all">
+<div class="w-6 h-6 rounded-full border-2 border-primary-container flex items-center justify-center bg-primary-container text-white">
+<span class="material-symbols-outlined text-xs">check</span>
+</div>
+<div>
+<p class="text-sm font-bold">Educational Vault Access</p>
+<p class="text-[10px] text-zinc-400">All MCP premium video content</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Pricing & Duration -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Pricing Card -->
+<section class="glass-card p-8 rounded-2xl shadow-[0px_20px_40px_rgba(79,64,207,0.08)] bg-gradient-to-br from-white to-indigo-50/30">
+<div class="flex items-center gap-3 mb-8">
+<span class="w-8 h-8 rounded-lg bg-primary-container text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">payments</span>
+</span>
+<h3 class="text-xl font-bold font-headline">Investment</h3>
+</div>
+<div class="space-y-6">
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Recurring Payment</label>
+<div class="relative">
+<span class="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-zinc-400">$</span>
+<input class="w-full pl-10 pr-6 py-4 bg-white/80 rounded-xl border-none focus:ring-2 focus:ring-primary-container transition-all text-2xl font-black" placeholder="499" type="number"/>
+<span class="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400 uppercase">/ Month</span>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">One-Time Setup Fee</label>
+<div class="relative">
+<span class="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-zinc-400">$</span>
+<input class="w-full pl-10 pr-6 py-4 bg-white/80 rounded-xl border-none focus:ring-2 focus:ring-primary-container transition-all text-xl font-bold" placeholder="150" type="number"/>
+</div>
+<p class="mt-2 text-[10px] text-zinc-400 px-1 italic">Charged immediately upon enrollment.</p>
+</div>
+</div>
+</section>
+<!-- Timeline Card -->
+<section class="glass-card p-8 rounded-2xl shadow-[0px_10px_30px_rgba(27,28,28,0.04)]">
+<div class="flex items-center gap-3 mb-8">
+<span class="w-8 h-8 rounded-lg bg-secondary-container/10 text-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">schedule</span>
+</span>
+<h3 class="text-xl font-bold font-headline">Timeline</h3>
+</div>
+<div class="space-y-6">
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Package Duration</label>
+<div class="grid grid-cols-1 gap-2">
+<button class="flex justify-between items-center w-full px-5 py-3.5 bg-primary-container text-white rounded-xl text-sm font-bold">
+<span>12 Weeks</span>
+<span class="material-symbols-outlined text-sm">radio_button_checked</span>
+</button>
+<button class="flex justify-between items-center w-full px-5 py-3.5 bg-surface-container-low text-zinc-600 rounded-xl text-sm font-medium hover:bg-zinc-200 transition-all">
+<span>16 Weeks</span>
+<span class="material-symbols-outlined text-sm">radio_button_unchecked</span>
+</button>
+<button class="flex justify-between items-center w-full px-5 py-3.5 bg-surface-container-low text-zinc-600 rounded-xl text-sm font-medium hover:bg-zinc-200 transition-all">
+<span>Ongoing / Subscription</span>
+<span class="material-symbols-outlined text-sm">radio_button_unchecked</span>
+</button>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Billing Frequency</label>
+<div class="flex gap-2">
+<button class="flex-1 py-3 bg-surface-container-low text-xs font-bold rounded-full border-2 border-transparent hover:border-primary-container/20 transition-all">Weekly</button>
+<button class="flex-1 py-3 bg-primary-container/10 text-primary-container text-xs font-bold rounded-full border-2 border-primary-container/30 transition-all">Monthly</button>
+<button class="flex-1 py-3 bg-surface-container-low text-xs font-bold rounded-full border-2 border-transparent hover:border-primary-container/20 transition-all">Upfront</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Preview Card -->
+<div class="relative overflow-hidden group rounded-2xl">
+<img alt="Package Preview" class="w-full h-40 object-cover" data-alt="close up of premium gym equipment on a textured floor with moody neon lighting and depth of field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMlkbTD1-DzBMxPK0AhvQfbvLiyAVj9twI8gTX6-thpfaZos6cqAA9YWyFo9iK2oLBJJxHVC5X7Ly9Ofn-qF-JgBodNTqRIRh2qHsgHN4sP4PN8G8pLaaxrGLZgabXndKZ3LS7Kb6AkKxaF86u9Vstd679Amn4hXdFWJs0kBf-VYfJxRjPTPzO0j13CV227fPAyjrCzRg7txy-S1pjoIBuXoZkueTD9mFgrBdvoDuGqi9qmiKWj79tAdl0KiEKcK7PdmRBOP3GDBI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6 flex flex-col justify-end">
+<p class="text-white font-headline font-bold">Preview Client View</p>
+<p class="text-white/60 text-xs">See how clients will view this package in their portal.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Action Bar -->
+<footer class="fixed bottom-0 right-0 w-[calc(100%-18rem)] bg-white/80 backdrop-blur-2xl border-t-0 py-6 px-12 flex justify-between items-center z-40">
+<div class="flex items-center gap-6">
+<div class="flex -space-x-2">
+<img alt="Team member" class="w-8 h-8 rounded-full border-2 border-white" data-alt="portrait of a female fitness professional smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXiU3iSAZUnImBAaP3cm_VaUBLgNvPExm1scg42IOEocxgpKgEtiMgypQTfgN8TgNqFJCd_xjndXlpzpj4ilmv1SmXUzjayijV4BaW1Jgs9c-rN7IfsHnTmjJ8eBhHTkfVlMZRqbBB3XBrr344QNj-b6rNRGjTOkK3qMYRYvhBaEffvRAlC1KZP5MzhnhExRxHom0OiylqDRxTAUacGeT4Hhq0XbMXIJVoTrtvRXersEEuaIcI-U8jPcF-VWFCS-GDYgW41X_DsWk"/>
+<img alt="Team member" class="w-8 h-8 rounded-full border-2 border-white" data-alt="portrait of a male fitness trainer with athletic build" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQuXwOhCGpJEz34eI7axSiM8HtmOIMggUkZPjBYfL49b3izRaz8rIebVD5s4aR76fH9NdZdicL61fDKvv2LRoORGEoC9Rnpisjnvld44sHTrwFq1oJo2wdHLVMYopDZNk3Jy_aSSoxyX4kQfx4OflGeYKOUe8qECulxk1YWDgddyfFsHcKfbPVHKPSZZaJfmNGqj3jvRM6XUaCud3ylQ_lAv03ZVELDC-P0XC4lTs7SnjAaoe8gRI6TGpbzXjtFG_LJaN4p8OBAmo"/>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold">+3</div>
+</div>
+<p class="text-xs font-medium text-zinc-500">Auto-saved as draft 2 minutes ago</p>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-8 py-4 bg-surface-container-high text-zinc-700 font-bold rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 duration-150">Save as Draft</button>
+<button class="px-10 py-4 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-2xl shadow-xl shadow-primary-container/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center gap-2">
+<span>Save Package</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</footer>
+</main>
+</body></html>

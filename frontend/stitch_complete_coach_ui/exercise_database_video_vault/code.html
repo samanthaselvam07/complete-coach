@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Exercise Database | Kinetic Curator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .premium-shadow {
+            box-shadow: 0px 10px 30px rgba(27, 28, 28, 0.06);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#fbf9f8",
+                        "primary-container": "#4f40cf",
+                        "primary-fixed": "#e3dfff",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "inverse-primary": "#c5c0ff",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e4e2e2",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#1b1c1c",
+                        "on-tertiary-container": "#cfcfcf",
+                        "on-secondary-fixed": "#321200",
+                        "inverse-on-surface": "#f2f0f0",
+                        "on-surface-variant": "#474554",
+                        "on-secondary-fixed-variant": "#753400",
+                        "outline": "#787586",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "on-secondary-container": "#562500",
+                        "on-primary-fixed": "#140067",
+                        "inverse-surface": "#303031",
+                        "surface": "#fbf9f8",
+                        "surface-dim": "#dbdad9",
+                        "secondary-fixed": "#ffdbc9",
+                        "on-background": "#1b1c1c",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#e9e8e7",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#f87600",
+                        "secondary": "#9a4600",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "surface-variant": "#e4e2e2",
+                        "surface-tint": "#5547d5",
+                        "surface-container": "#efeded",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "primary": "#3620b8",
+                        "outline-variant": "#c8c4d7",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "on-primary-container": "#cfcaff",
+                        "tertiary": "#414141",
+                        "tertiary-container": "#585858",
+                        "surface-container-low": "#f5f3f3",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "background": "#fbf9f8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-fixed selection:text-primary min-h-screen">
+<!-- Side Navigation Shell -->
+<nav class="h-screen w-72 fixed left-0 top-0 flex flex-col py-8 px-6 gap-8 bg-[#f5f3f3] dark:bg-slate-900 border-none z-50">
+<!-- Brand Header -->
+<div class="flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
+<span class="material-symbols-outlined" data-weight="fill">bolt</span>
+</div>
+<div>
+<h1 class="text-xl font-black text-[#4F40CF] tracking-tighter uppercase leading-none">Kinetic Curator</h1>
+<p class="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-1">Elite Performance</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex flex-col gap-1 flex-grow">
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#4F40CF] hover:bg-white/40 dark:hover:bg-white/5 transition-all rounded-xl font-headline font-bold text-sm" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-[#4F40CF] dark:text-white bg-white/60 dark:bg-white/10 rounded-xl transition-all font-headline font-bold text-sm" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span>Training</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#4F40CF] hover:bg-white/40 dark:hover:bg-white/5 transition-all rounded-xl font-headline font-bold text-sm" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span>Nutrition</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#4F40CF] hover:bg-white/40 dark:hover:bg-white/5 transition-all rounded-xl font-headline font-bold text-sm" href="#">
+<span class="material-symbols-outlined">school</span>
+<span>Education</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#4F40CF] hover:bg-white/40 dark:hover:bg-white/5 transition-all rounded-xl font-headline font-bold text-sm" href="#">
+<span class="material-symbols-outlined">medication</span>
+<span>Supplementation</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#4F40CF] hover:bg-white/40 dark:hover:bg-white/5 transition-all rounded-xl font-headline font-bold text-sm" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 py-3 px-4 text-slate-500 dark:text-slate-400 hover:text-[#4F40CF] hover:bg-white/40 dark:hover:bg-white/5 transition-all rounded-xl font-headline font-bold text-sm" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Forms</span>
+</a>
+</div>
+<!-- Footer Actions -->
+<div class="flex flex-col gap-6 mt-auto">
+<button class="w-full bg-gradient-to-r from-primary to-primary-container text-white py-4 px-6 rounded-xl font-headline font-bold text-sm shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+                + New Client
+            </button>
+<div class="flex flex-col gap-1 border-t border-slate-200/50 pt-4">
+<a class="flex items-center gap-3 py-2 px-4 text-slate-500 hover:text-primary transition-colors text-sm font-headline font-bold" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<span>Settings</span>
+</a>
+<div class="flex items-center gap-3 py-3 px-4 mt-2 bg-white/40 rounded-xl">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="close-up portrait of a professional fitness coach with a confident expression in a modern athletic setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBz1IY3jFAt8a3IDnoL4h_9jKDas2VnXM1XPtpGm9IsfVFrjzuWiGu4dlLG_bVqNFP8y0qj91t_yZRkn4KzwECMkkU3DlLUY_FGER6rBefpDypIEGGgdiIgG3kGUza4VxxlSiG33FVcUqS14bJEkDdfRCDyu3a-PAYQg2euLIX56NvldjaTPicm1qZ_Aru_f_JMmggPUZii0HUJvxL5Q_LbbZJtmkBjWwfxYkuo4lwj09DP2s3kQKcrEIOQrHcYaAOu5RTg4pPCa0g"/>
+<div class="flex flex-col overflow-hidden">
+<span class="text-xs font-bold truncate">Coach Marcus</span>
+<span class="text-[10px] text-slate-500">Pro Account</span>
+</div>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-72 min-h-screen">
+<!-- Top App Bar -->
+<header class="w-full h-20 sticky top-0 z-40 bg-[#fbf9f8]/80 dark:bg-slate-950/80 backdrop-blur-xl flex items-center justify-between px-12 border-none">
+<div class="flex items-center gap-8 flex-1">
+<div class="relative w-full max-w-md group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-high rounded-full border-none focus:ring-2 focus:ring-primary/20 text-sm font-medium placeholder:text-slate-400" placeholder="Search 2,400+ exercises..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="p-2 text-slate-600 hover:text-primary transition-all active:scale-90">
+<span class="material-symbols-outlined">video_call</span>
+</button>
+<button class="p-2 text-slate-600 hover:text-primary transition-all active:scale-90 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-secondary-container rounded-full border-2 border-surface"></span>
+</button>
+<div class="h-8 w-[1px] bg-slate-200"></div>
+<button class="bg-primary/5 hover:bg-primary/10 text-primary px-6 py-2.5 rounded-full font-headline font-bold text-sm flex items-center gap-2 transition-all active:scale-95">
+<span class="material-symbols-outlined text-lg">add_circle</span>
+                    Upload Exercise
+                </button>
+</div>
+</header>
+<!-- Content Area -->
+<div class="px-12 py-8 max-w-[1600px] mx-auto">
+<!-- Hero Header -->
+<div class="mb-12">
+<span class="text-primary font-headline font-extrabold uppercase tracking-widest text-xs mb-3 block">Asset Library</span>
+<h1 class="text-5xl font-headline font-extrabold text-on-surface tracking-tighter mb-4 leading-tight">
+                    The Movement <span class="text-primary-container">Vault</span>
+</h1>
+<p class="text-slate-500 max-w-2xl text-lg font-medium leading-relaxed">
+                    A curated collection of biomechanically optimized demonstrations. Filter by physiological target or equipment constraints to build elite programming.
+                </p>
+</div>
+<!-- Filter Section -->
+<div class="flex flex-col gap-6 mb-10">
+<!-- Muscle Groups -->
+<div class="flex flex-col gap-3">
+<h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Anatomy Filter</h3>
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+<button class="px-6 py-2.5 rounded-full bg-secondary-container text-white font-headline font-bold text-sm whitespace-nowrap premium-shadow">All Muscles</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-slate-600 hover:bg-surface-container-highest transition-colors font-headline font-bold text-sm whitespace-nowrap">Chest</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-slate-600 hover:bg-surface-container-highest transition-colors font-headline font-bold text-sm whitespace-nowrap">Back</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-slate-600 hover:bg-surface-container-highest transition-colors font-headline font-bold text-sm whitespace-nowrap">Quads</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-slate-600 hover:bg-surface-container-highest transition-colors font-headline font-bold text-sm whitespace-nowrap">Hamstrings</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-slate-600 hover:bg-surface-container-highest transition-colors font-headline font-bold text-sm whitespace-nowrap">Shoulders</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-slate-600 hover:bg-surface-container-highest transition-colors font-headline font-bold text-sm whitespace-nowrap">Arms</button>
+<button class="px-6 py-2.5 rounded-full bg-surface-container-high text-slate-600 hover:bg-surface-container-highest transition-colors font-headline font-bold text-sm whitespace-nowrap">Core</button>
+</div>
+</div>
+<!-- Equipment -->
+<div class="flex flex-col gap-3">
+<h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Equipment</h3>
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+<button class="px-5 py-2 rounded-xl bg-surface-container-lowest text-slate-700 font-bold text-xs whitespace-nowrap shadow-sm border border-slate-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-base">layers</span> All Gear
+                        </button>
+<button class="px-5 py-2 rounded-xl bg-surface-container-lowest text-slate-500 hover:text-primary transition-colors font-bold text-xs whitespace-nowrap flex items-center gap-2">
+<span class="material-symbols-outlined text-base">fitness_center</span> Dumbbells
+                        </button>
+<button class="px-5 py-2 rounded-xl bg-surface-container-lowest text-slate-500 hover:text-primary transition-colors font-bold text-xs whitespace-nowrap flex items-center gap-2">
+<span class="material-symbols-outlined text-base">exercise</span> Barbell
+                        </button>
+<button class="px-5 py-2 rounded-xl bg-surface-container-lowest text-slate-500 hover:text-primary transition-colors font-bold text-xs whitespace-nowrap flex items-center gap-2">
+<span class="material-symbols-outlined text-base">settings_input_component</span> Machines
+                        </button>
+<button class="px-5 py-2 rounded-xl bg-surface-container-lowest text-slate-500 hover:text-primary transition-colors font-bold text-xs whitespace-nowrap flex items-center gap-2">
+<span class="material-symbols-outlined text-base">accessibility_new</span> Bodyweight
+                        </button>
+<button class="px-5 py-2 rounded-xl bg-surface-container-lowest text-slate-500 hover:text-primary transition-colors font-bold text-xs whitespace-nowrap flex items-center gap-2">
+<span class="material-symbols-outlined text-base">cable</span> Cables
+                        </button>
+</div>
+</div>
+</div>
+<!-- Exercise Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+<!-- Card 1 -->
+<div class="group relative bg-surface-container-lowest rounded-3xl p-4 premium-shadow hover:scale-[1.02] transition-all duration-300">
+<div class="relative aspect-[4/5] rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="bodybuilder performing heavy barbell back squats in a professional dimly lit gym with focused lighting on form" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCA6ZgB07MwwxQWSALBEo_fNOkdXLpPnrP40YxUVw1hn3svUT7U99wah4t7Zpfl1_oPsF-Qwv2CnQWNDQGyMDk4GiQfZRg05vK7kVcxQuNr2Khn3-xwLKXLXoToRtSD6V58EhEJN49EuF6EJpabR9-ZpHf4Nv3tSaft84dop4YrpJkxUYqT4SAnzGhBI0BQznMf3fTzVRK-aHWKd_3qB8VtOkGQ802z7waZZ1EAXCrsJUl494dHIBlaEoh5ZDfL1L3E7OHgCc77UEo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+<div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+<span class="material-symbols-outlined text-4xl" data-weight="fill">play_arrow</span>
+</div>
+</div>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur rounded-full text-[10px] font-black uppercase tracking-widest text-primary">Advanced</div>
+</div>
+<div class="px-2">
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">Lower Body • Barbell</span>
+<h4 class="text-xl font-headline font-extrabold text-on-surface mb-2">High-Bar Back Squat</h4>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">schedule</span> 0:45
+                            </div>
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">visibility</span> 12.4k
+                            </div>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group relative bg-surface-container-lowest rounded-3xl p-4 premium-shadow hover:scale-[1.02] transition-all duration-300">
+<div class="relative aspect-[4/5] rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="woman performing dumbbell incline bench press focusing on upper chest development in a high-end commercial gym" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3_95_Dz5GIjGI2B3_Lvr7Vj96gedTwvjeV6cUP-5tuahp10Uu6LBRwTKyha6OLBvF6PaCZUjJmiMTq92jGlbWigQ__uwSJCnBAYc8_u_1pChxR-mLyjh1hjVjpKEaMq2R5c9HBhpZBF9zfY20AB1wphQx2x1h4tf9XNKpQXJXIar7GzsjAuv1308g1yGsg2sUOU5_K5SsWS8mETZ1fgaLw5jCeZ_r_d9yih8dxLFOX0qzLRSullMINh4nKXWdCzJTbAGPTgoeqe0"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+<div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+<span class="material-symbols-outlined text-4xl" data-weight="fill">play_arrow</span>
+</div>
+</div>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur rounded-full text-[10px] font-black uppercase tracking-widest text-primary">Intermediate</div>
+</div>
+<div class="px-2">
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">Chest • Dumbbells</span>
+<h4 class="text-xl font-headline font-extrabold text-on-surface mb-2">Incline DB Press</h4>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">schedule</span> 0:30
+                            </div>
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">visibility</span> 8.9k
+                            </div>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group relative bg-surface-container-lowest rounded-3xl p-4 premium-shadow hover:scale-[1.02] transition-all duration-300">
+<div class="relative aspect-[4/5] rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="close-up of athlete's back performing wide grip pull ups on a black metal bar with dramatic backlighting emphasizing muscle definition" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSKwSpouUBoQxbleItGK602IIEUhb_Ru1PzABvUaZbVraFIvKGzdrea5b6ExXuXQZTSqmda2oSCQXqj0YQFzw7gnuaTYoMj2YfD1--ngzkd30dhzXhAJuPI_bax8J5wW3u2VOdwe7ProW1i3T5RHhWV-Lo-psGYQKcU1hmvSx7aRWIjxk9607u0mHA7yIw-1njoAom0JiyKTodXqc9yKJSDpORMVa1ohiDwL_vEh1Hu3XUlOpjTw4XFoUun6rjIIGRy2vCr0dqrao"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+<div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+<span class="material-symbols-outlined text-4xl" data-weight="fill">play_arrow</span>
+</div>
+</div>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur rounded-full text-[10px] font-black uppercase tracking-widest text-primary">Intermediate</div>
+</div>
+<div class="px-2">
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">Back • Bodyweight</span>
+<h4 class="text-xl font-headline font-extrabold text-on-surface mb-2">Wide-Grip Pull Ups</h4>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">schedule</span> 1:12
+                            </div>
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">visibility</span> 25.1k
+                            </div>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group relative bg-surface-container-lowest rounded-3xl p-4 premium-shadow hover:scale-[1.02] transition-all duration-300">
+<div class="relative aspect-[4/5] rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="person using a seated cable row machine with professional posture in a bright luxury fitness center" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChIuUyl0W37BjPZ7R7oeula_ABD2iBZOEFkKpzsw1-9JrDuc6GTNIrnP7mIOrvGU3BIdeVWHFW7R_4sglDXno0re3T5JT9QCTIRAeEq9bX55b81uhdtwQ9ggyZTo2IugpY1RnKkI4NXeq7Qwojno-WC8yg4sk5mLuryg6j9WSYpAzCL54A5ACaAxHBzAJas42yOxRjjwq4Yofy53lLRCozvc3Kc5g_UzicUwEWxCBN0xVsfh2c2DfX49Rrcl44WaoI-6b_7zBKDso"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+<div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+<span class="material-symbols-outlined text-4xl" data-weight="fill">play_arrow</span>
+</div>
+</div>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur rounded-full text-[10px] font-black uppercase tracking-widest text-primary">Beginner</div>
+</div>
+<div class="px-2">
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">Back • Cables</span>
+<h4 class="text-xl font-headline font-extrabold text-on-surface mb-2">Seated Cable Row</h4>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">schedule</span> 0:55
+                            </div>
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">visibility</span> 6.4k
+                            </div>
+</div>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="group relative bg-surface-container-lowest rounded-3xl p-4 premium-shadow hover:scale-[1.02] transition-all duration-300">
+<div class="relative aspect-[4/5] rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="fitness athlete performing Bulgarian split squats with a single dumbbell focusing on balance and depth" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnczWM2Pn_Z-vosqfKyKVblbxTej5x23SmGicRYPIixBUfA8pYxGbxbom3Gp8AIJjs6VAt1HHEvIWVixMOvvexyjznQ8TvWOQ5dlszqycV9xhxMQ5vcUISmr4DdDiOzD6B69l9WL8HOcohipZhpmsPSOHg25uniHQBkLWhLpbNmqHUztC71GzzQ0q8VG6wUAuvBAg_IR-sohUEN-6iAHBFeiTwpGIZFXd2dNCdwFkEdRwfpJKux-UQpv2OO24ozEc0k-HuXjolC6Q"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+<div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+<span class="material-symbols-outlined text-4xl" data-weight="fill">play_arrow</span>
+</div>
+</div>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur rounded-full text-[10px] font-black uppercase tracking-widest text-primary">Advanced</div>
+</div>
+<div class="px-2">
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">Quads • Dumbbells</span>
+<h4 class="text-xl font-headline font-extrabold text-on-surface mb-2">Bulgarian Split Squat</h4>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">schedule</span> 0:40
+                            </div>
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">visibility</span> 18.2k
+                            </div>
+</div>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="group relative bg-surface-container-lowest rounded-3xl p-4 premium-shadow hover:scale-[1.02] transition-all duration-300">
+<div class="relative aspect-[4/5] rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="overhead view of a person doing pushups on a gym floor with strong form and focused energy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkzsYF8McWebBtyMl4nk05O4dZrryuYGuyPj4TKH9c7GKYmkrN1ND7rJhHgK1hNoip7hhcZukFMePPnMaPbUa_M7rkVVuPosmQQTgpetrl9OprES6rF7fl8M-A5mHCZObzfcImIr38LKQHud_qxn06HU4qdEiFjN_tOyFEQ9rOC3inYEBmriIGKTJas8rAdXBqPofg-aQibShhL99xIomkIzx_gm8KYaylKHB6K6x34_HX8sV2AI1BupSPACwWfN2DEiiBsDZwIXE"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+<div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+<span class="material-symbols-outlined text-4xl" data-weight="fill">play_arrow</span>
+</div>
+</div>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur rounded-full text-[10px] font-black uppercase tracking-widest text-primary">Beginner</div>
+</div>
+<div class="px-2">
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">Chest • Bodyweight</span>
+<h4 class="text-xl font-headline font-extrabold text-on-surface mb-2">Military Push-Up</h4>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">schedule</span> 0:25
+                            </div>
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">visibility</span> 4.2k
+                            </div>
+</div>
+</div>
+</div>
+<!-- Card 7 -->
+<div class="group relative bg-surface-container-lowest rounded-3xl p-4 premium-shadow hover:scale-[1.02] transition-all duration-300">
+<div class="relative aspect-[4/5] rounded-2xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="close up of a heavy barbell being lifted off the floor for a deadlift with chalk dust in the air" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvnC_QvXmcf3WrMpAo7H435RTIDPYq9bXmR7TJwXsulAwzoxEiF7CLv6dYvmOuZc1WWbRCxcKyMA5XpwQ1Dh1CTpGzqEJT5y2mYhdOnSFjPR4tteTTy6NyKcKJ1QO2QJx6rTKrR5YeiJDtrYt4NRo8G1OshBXKNEqHBZApJI_SPwQqX0BV5FZQPiJjZUUdyyBVkg1UmIODvJKTRIFq9Sp70EFGOakKjzMeU_bchSgROnZoeHTjL1gcBRSi5ppV-BP2hY8uffMhSz0"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+<div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
+<span class="material-symbols-outlined text-4xl" data-weight="fill">play_arrow</span>
+</div>
+</div>
+<div class="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur rounded-full text-[10px] font-black uppercase tracking-widest text-primary">Advanced</div>
+</div>
+<div class="px-2">
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 block">Posterior Chain • Barbell</span>
+<h4 class="text-xl font-headline font-extrabold text-on-surface mb-2">Conventional Deadlift</h4>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">schedule</span> 1:05
+                            </div>
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-base">visibility</span> 45.8k
+                            </div>
+</div>
+</div>
+</div>
+<!-- Upload Placeholder Card -->
+<div class="group relative bg-surface-container-low border-2 border-dashed border-slate-300 rounded-3xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all">
+<div class="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-4xl text-primary">add_a_photo</span>
+</div>
+<h4 class="text-lg font-headline font-bold text-on-surface mb-2">Expand the Database</h4>
+<p class="text-slate-500 text-sm max-w-[180px]">Upload a new demonstration or link a video asset</p>
+</div>
+</div>
+<!-- Load More -->
+<div class="mt-16 flex justify-center">
+<button class="flex items-center gap-3 px-8 py-4 bg-white border border-slate-100 rounded-2xl font-headline font-bold text-slate-600 hover:text-primary hover:border-primary transition-all premium-shadow active:scale-95">
+                    Explore More Movements
+                    <span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Floating Action Button (FAB) for Quick Upload -->
+<button class="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-tr from-primary to-primary-container text-white rounded-full flex items-center justify-center shadow-2xl shadow-primary/40 hover:scale-110 active:scale-90 transition-all z-50">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</body></html>

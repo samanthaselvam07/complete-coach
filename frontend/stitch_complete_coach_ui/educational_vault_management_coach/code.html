@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface-variant": "#474554",
+            "inverse-on-surface": "#f2f0f0",
+            "tertiary-container": "#585858",
+            "surface-tint": "#5547d5",
+            "on-error-container": "#93000a",
+            "error-container": "#ffdad6",
+            "primary": "#3620b8",
+            "on-tertiary": "#ffffff",
+            "surface-container-high": "#e9e8e7",
+            "secondary": "#9a4600",
+            "surface-container-lowest": "#ffffff",
+            "on-primary-fixed-variant": "#3c29bd",
+            "error": "#ba1a1a",
+            "on-primary": "#ffffff",
+            "on-primary-fixed": "#140067",
+            "on-primary-container": "#cfcaff",
+            "on-tertiary-fixed": "#1b1b1b",
+            "tertiary-fixed": "#e2e2e2",
+            "surface": "#fbf9f8",
+            "surface-variant": "#e4e2e2",
+            "primary-fixed-dim": "#c5c0ff",
+            "on-secondary-fixed": "#321200",
+            "on-error": "#ffffff",
+            "on-secondary-container": "#562500",
+            "surface-container-highest": "#e4e2e2",
+            "background": "#fbf9f8",
+            "on-secondary-fixed-variant": "#753400",
+            "outline": "#787586",
+            "secondary-container": "#f87600",
+            "outline-variant": "#c8c4d7",
+            "surface-bright": "#fbf9f8",
+            "secondary-fixed": "#ffdbc9",
+            "on-tertiary-fixed-variant": "#474747",
+            "primary-container": "#4f40cf",
+            "tertiary": "#414141",
+            "surface-dim": "#dbdad9",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "primary-fixed": "#e3dfff",
+            "on-secondary": "#ffffff",
+            "inverse-surface": "#303031",
+            "surface-container": "#efeded",
+            "on-tertiary-container": "#cfcfcf",
+            "surface-container-low": "#f5f3f3",
+            "secondary-fixed-dim": "#ffb68c",
+            "on-background": "#1b1c1c",
+            "inverse-primary": "#c5c0ff",
+            "on-surface": "#1b1c1c"
+          },
+          fontFamily: {
+            "headline": ["Plus Jakarta Sans"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .kinetic-gradient {
+      background: linear-gradient(135deg, #3620b8 0%, #4f40cf 100%);
+    }
+    .ghost-border {
+      outline: 1px solid rgba(200, 196, 215, 0.3);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex">
+<!-- SideNavBar Anchor -->
+<aside class="hidden md:flex flex-col h-screen w-64 bg-[#f5f3f3] dark:bg-slate-900 p-6 space-y-2 sticky top-0">
+<div class="mb-10 px-2">
+<h1 class="text-lg font-black text-[#1b1c1c] dark:text-white tracking-tighter">Kinetic Curator</h1>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 scale-[0.98] font-medium text-[14px]" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 scale-[0.98] font-medium text-[14px]" href="#">
+<span class="material-symbols-outlined">pill</span>
+<span>Supplements</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-[#4F40CF] dark:text-[#4F40CF] rounded-xl shadow-sm transition-transform duration-200 scale-[0.98] font-medium text-[14px]" href="#">
+<span class="material-symbols-outlined">auto_stories</span>
+<span>Education</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 scale-[0.98] font-medium text-[14px]" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 scale-[0.98] font-medium text-[14px]" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span>Resources</span>
+</a>
+</nav>
+<div class="pt-6">
+<button class="w-full kinetic-gradient text-white font-semibold py-3 px-4 rounded-xl shadow-lg flex items-center justify-center gap-2 hover:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined">add</span>
+<span>New Resource</span>
+</button>
+</div>
+<div class="mt-auto space-y-1 border-t border-outline-variant/10 pt-4">
+<div class="flex items-center gap-3 px-4 py-3 mb-4">
+<img class="w-10 h-10 rounded-full object-cover shadow-sm" data-alt="close-up portrait of a professional male athletic coach with a confident expression and athletic attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2G7F-gEGtUYxBp6eqHfeef95qiI4vrEVWyMfMGJ809wvOivpatmr-iKv2OkjP3Ph8T4pPgTCSe0KyRd83_I0ylo6tsglZIUKIW7HrNUtDZNxXzwVXXGBYG54rFuLFlmokdq6oUoWYZOCmASq6GbM1T_9vdFMNy-GkMwWXgpRSzi6k-eiBEd04yQUlIsKdSqR97Ke_tIpOOQRvLK3bjD0CysE8zspboxcx4WOWdNNCuGAFqM165m9L24wuY7ukww1BtUrC3cWwOsQ"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold text-on-surface truncate">Coach Alex</p>
+<p class="text-xs text-on-surface-variant truncate">Head Performance Coach</p>
+</div>
+</div>
+<a class="flex items-center gap-3 px-4 py-2 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 text-[14px]" href="#">
+<span class="material-symbols-outlined">help</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-[#1b1c1c]/70 dark:text-white/70 hover:bg-white/50 dark:hover:bg-slate-800/50 transition-transform duration-200 text-[14px]" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- TopNavBar Anchor -->
+<header class="w-full sticky top-0 z-40 bg-[#fbf9f8]/80 dark:bg-slate-950/80 backdrop-blur-2xl flex justify-between items-center px-8 py-4 w-full">
+<div class="flex items-center gap-8 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-high border-none rounded-full py-2 pl-10 pr-4 focus:ring-2 focus:ring-primary/20 transition-all text-sm" placeholder="Search educational vault..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-[#f5f3f3] dark:hover:bg-slate-800 transition-colors relative">
+<span class="material-symbols-outlined text-on-surface">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-secondary-container rounded-full"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#f5f3f3] dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-on-surface">settings</span>
+</button>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-8 space-y-10 max-w-7xl mx-auto w-full">
+<!-- Editorial Header Section -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<span class="text-primary font-bold tracking-widest uppercase text-xs">Curated Knowledge</span>
+<h2 class="text-4xl md:text-5xl font-black text-on-surface tracking-tighter mt-2">Educational Vault</h2>
+<p class="text-on-surface-variant max-w-xl mt-4 leading-relaxed">
+            Manage your coaching intellectual property. Organize high-impact resources and monitor client mastery levels across your performance pillars.
+          </p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-3 bg-surface-container-lowest ghost-border text-on-surface font-semibold rounded-xl flex items-center gap-2 hover:scale-95 transition-transform">
+<span class="material-symbols-outlined">upload_file</span>
+            Quick Upload
+           </button>
+<button class="px-6 py-3 kinetic-gradient text-white font-semibold rounded-xl shadow-xl flex items-center gap-2 hover:scale-95 transition-transform">
+<span class="material-symbols-outlined">auto_fix_high</span>
+            AI Curator
+           </button>
+</div>
+</section>
+<!-- Bento Grid: Stats & Management -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Quick Upload Area (Bento Item) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-low rounded-[2rem] p-8 relative overflow-hidden group">
+<div class="relative z-10">
+<h3 class="text-xl font-bold mb-6">Resource Library</h3>
+<!-- Filters -->
+<div class="flex flex-wrap gap-2 mb-8">
+<button class="px-5 py-2 rounded-full bg-secondary-container text-white text-sm font-semibold shadow-sm">All Resources</button>
+<button class="px-5 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-variant transition-colors">Nutrition</button>
+<button class="px-5 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-variant transition-colors">Training</button>
+<button class="px-5 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-variant transition-colors">Recovery</button>
+<button class="px-5 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-medium hover:bg-surface-variant transition-colors">Mindset</button>
+</div>
+<!-- Library Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Card 1: Video -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm hover:translate-y-[-4px] transition-all group/card">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">play_circle</span>
+</div>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Video • 12min</span>
+</div>
+<h4 class="font-bold text-on-surface mb-1">Hypertrophy Mechanics 101</h4>
+<p class="text-xs text-on-surface-variant line-clamp-2 mb-4">Deep dive into mechanical tension and metabolic stress for muscle growth.</p>
+<div class="flex items-center justify-between border-t border-outline-variant/20 pt-4">
+<span class="text-[10px] font-medium text-on-surface-variant">Assigned to 14 Clients</span>
+<button class="text-primary hover:underline text-xs font-bold flex items-center gap-1">
+                    Manage
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Card 2: PDF -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm hover:translate-y-[-4px] transition-all group/card">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">PDF • 4 Pages</span>
+</div>
+<h4 class="font-bold text-on-surface mb-1">Optimal Sleep Protocol</h4>
+<p class="text-xs text-on-surface-variant line-clamp-2 mb-4">Step-by-step guide to circadian rhythm alignment and supplementation.</p>
+<div class="flex items-center justify-between border-t border-outline-variant/20 pt-4">
+<span class="text-[10px] font-medium text-on-surface-variant">Assigned to 42 Clients</span>
+<button class="text-primary hover:underline text-xs font-bold flex items-center gap-1">
+                    Manage
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Card 3: Article -->
+<div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm hover:translate-y-[-4px] transition-all group/card">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 bg-tertiary/10 rounded-xl flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">article</span>
+</div>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Article • 5min Read</span>
+</div>
+<h4 class="font-bold text-on-surface mb-1">Protein Synthesis Mastery</h4>
+<p class="text-xs text-on-surface-variant line-clamp-2 mb-4">How to optimize leucine thresholds and nutrient timing for athletes.</p>
+<div class="flex items-center justify-between border-t border-outline-variant/20 pt-4">
+<span class="text-[10px] font-medium text-on-surface-variant">Assigned to 8 Clients</span>
+<button class="text-primary hover:underline text-xs font-bold flex items-center gap-1">
+                    Manage
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Card 4: Task/Assignment -->
+<div class="bg-primary/5 p-5 rounded-2xl shadow-sm hover:translate-y-[-4px] border border-primary/10 transition-all group/card flex flex-col items-center justify-center border-dashed">
+<span class="material-symbols-outlined text-3xl text-primary/40 mb-2">upload</span>
+<p class="text-sm font-bold text-primary">Add New Resource</p>
+<p class="text-[10px] text-primary/60">Drag &amp; drop files here</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Mastery Modules (Bento Item) -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<div class="bg-surface-container-lowest shadow-sm rounded-[2rem] p-8 border border-outline-variant/20">
+<h3 class="text-xl font-bold mb-6">Mastery Modules</h3>
+<div class="space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between items-center text-sm">
+<span class="font-bold text-on-surface">Foundation Phase</span>
+<span class="text-secondary font-bold">84% Engagement</span>
+</div>
+<div class="h-3 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container rounded-full" style="width: 84%"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant italic">12/14 active clients completed this month</p>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-sm">
+<span class="font-bold text-on-surface">Advanced Nutrition</span>
+<span class="text-primary font-bold">32% Engagement</span>
+</div>
+<div class="h-3 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full kinetic-gradient rounded-full" style="width: 32%"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant italic">High drop-off in 'Micro-nutrient' section</p>
+</div>
+</div>
+<button class="w-full mt-8 py-3 bg-surface-container-high rounded-xl text-sm font-bold text-on-surface hover:bg-surface-variant transition-colors">
+              View Detailed Analytics
+            </button>
+</div>
+<!-- Featured Assignment -->
+<div class="bg-inverse-surface rounded-[2rem] p-8 text-inverse-on-surface overflow-hidden relative group">
+<div class="absolute -right-10 -top-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+<div class="relative z-10">
+<span class="px-2 py-0.5 bg-white/10 rounded text-[9px] font-black tracking-widest uppercase mb-4 inline-block">Active Assignment</span>
+<h4 class="text-lg font-bold mb-2">Winter Shred Challenge</h4>
+<p class="text-xs text-inverse-on-surface/70 mb-6 leading-relaxed">Assigned to: <span class="font-bold text-secondary-container">Elite Group A</span> (24 Clients)</p>
+<div class="flex -space-x-2 mb-6">
+<img class="w-8 h-8 rounded-full border-2 border-inverse-surface" data-alt="avatar of a female client" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkMlqDk3xUxNeI1JQOTdn-nOzKnABc8ggnGiU4LXrnB5tka--dmD1zzQW8hKzyKGBExZKyoIvlG63PV28rJkubZk1T9tCpMdCLo34FnjtkIUEkZbxWBZS0nIVMCMEX74qSx4x1SLC8eNvkEUnHPOZRKpyD3suYAOa6lB2Rr_DLU-sKS3BGJ5WN4ldVjClJgL3A8Nge9UPrTGhHuGazrvX9NdkPCjMeeZUIPHphaN-E9xv2RxtCoRJXYl7v6T0U-0tkcOks_TYaIPA"/>
+<img class="w-8 h-8 rounded-full border-2 border-inverse-surface" data-alt="avatar of a male client" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEl5L9BBG_V8EEmlaiL6ZOQYvA--pLdoFGg2W5AzxANK8V8WNHzuBHebvkWM_7KfEev8G9FSasdZQurKbleBH3vJ7sUl6z7sj7wvnaJ9-jxp_gQz1AFjmG8ChSAaJHOBHvtaezYiWPnA7nU2wH5fvaOsspRb5WBw8Dvbu1Mrp087lrNl2AjHDg28hUiw2yiolgbRSz8Nkm2yURoUhydJN_760MyLvMIAV6rwXxhV3HaS08Sm284O0J3NeohTUhLAuz_FpZR_5nab8"/>
+<img class="w-8 h-8 rounded-full border-2 border-inverse-surface" data-alt="avatar of a female athlete" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdX1_BLXEbVWDP-0J-jIaxtTBoiMIM_UrLtfFgKlOAO1aPhT6SY5BPYfl670g6xlUAyM5Sp4RzzkxvW63Y8WhQKd3NGCpiJtVcJCS4WrA4Yt4iE-UP8-Sj6hCsO04nz_sOJrlhIDYffsfHysnDOdIoBD4NWeiS2Db4PdzvcXEGSvNVEVSa4f-X9kF9zkvJPIzj7Fl3dsybAwPxBPetL7dxpgiSHN24kEgukSRYOTVy_sTQ4ivSeLSH8K_knhCNuHksJFCK-0rgSb4"/>
+<div class="w-8 h-8 rounded-full border-2 border-inverse-surface bg-primary text-[10px] flex items-center justify-center font-bold">+21</div>
+</div>
+<button class="w-full py-3 bg-white text-on-surface text-xs font-black rounded-xl hover:bg-secondary-container hover:text-white transition-colors duration-300">
+                EDIT JOURNEY
+              </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions / Assignment Control -->
+<section class="bg-surface-container-low rounded-[2rem] p-10">
+<div class="flex flex-col md:flex-row gap-10">
+<div class="md:w-1/3">
+<h3 class="text-2xl font-black tracking-tighter mb-4">Bulk Assignments</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+              Instantly push educational tracks to specific groups or tags. Perfect for onboarding new cohorts or launching seasonal programs.
+            </p>
+</div>
+<div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-white p-6 rounded-2xl flex items-center gap-4 group cursor-pointer hover:shadow-md transition-shadow">
+<div class="w-12 h-12 bg-primary-container/10 rounded-full flex items-center justify-center text-primary-container group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">group_add</span>
+</div>
+<div>
+<h5 class="font-bold text-on-surface">Assign to New Group</h5>
+<p class="text-xs text-on-surface-variant">Create a custom learning path</p>
+</div>
+</div>
+<div class="bg-white p-6 rounded-2xl flex items-center gap-4 group cursor-pointer hover:shadow-md transition-shadow">
+<div class="w-12 h-12 bg-secondary-container/10 rounded-full flex items-center justify-center text-secondary-container group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">schedule_send</span>
+</div>
+<div>
+<h5 class="font-bold text-on-surface">Schedule Release</h5>
+<p class="text-xs text-on-surface-variant">Drip content over 30 days</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Mastery Trends -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-2xl font-black tracking-tighter">Engagement Velocity</h3>
+<div class="flex gap-2">
+<button class="px-4 py-1.5 bg-surface-container-high rounded-full text-xs font-bold">Last 30 Days</button>
+<button class="px-4 py-1.5 hover:bg-surface-container-high rounded-full text-xs font-bold transition-colors">Historical</button>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-[2rem] p-1 h-64 relative overflow-hidden">
+<!-- Abstract Graphic for Velocity -->
+<div class="absolute inset-0 flex items-end px-8 pb-8 gap-4">
+<div class="flex-1 bg-primary/20 rounded-t-xl hover:bg-primary/40 transition-colors" style="height: 40%"></div>
+<div class="flex-1 bg-primary/20 rounded-t-xl hover:bg-primary/40 transition-colors" style="height: 60%"></div>
+<div class="flex-1 bg-primary/20 rounded-t-xl hover:bg-primary/40 transition-colors" style="height: 55%"></div>
+<div class="flex-1 bg-primary/40 rounded-t-xl hover:bg-primary/60 transition-colors" style="height: 85%"></div>
+<div class="flex-1 bg-secondary-container/40 rounded-t-xl hover:bg-secondary-container/60 transition-colors" style="height: 95%"></div>
+<div class="flex-1 bg-primary/30 rounded-t-xl hover:bg-primary/50 transition-colors" style="height: 70%"></div>
+<div class="flex-1 bg-primary/20 rounded-t-xl hover:bg-primary/40 transition-colors" style="height: 50%"></div>
+<div class="flex-1 bg-primary/10 rounded-t-xl hover:bg-primary/30 transition-colors" style="height: 30%"></div>
+</div>
+<div class="absolute top-8 left-8">
+<p class="text-4xl font-black text-on-surface">+18%</p>
+<p class="text-xs text-on-surface-variant font-medium">Completion rate increase vs last period</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Notification Toast Example -->
+<div class="fixed bottom-8 right-8 bg-on-surface text-background px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-500 z-50">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm font-bold">check</span>
+</div>
+<div class="pr-4">
+<p class="text-sm font-bold">Resource Published</p>
+<p class="text-[10px] opacity-70">'Hypertrophy Mechanics' is now live for Elite Group A.</p>
+</div>
+<button class="text-xs font-black uppercase tracking-widest text-secondary-container">Undo</button>
+</div>
+</body></html>

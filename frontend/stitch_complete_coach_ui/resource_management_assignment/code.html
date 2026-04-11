@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Resource Management | Kinetic Curator</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-background": "#1b1c1c",
+              "surface-tint": "#5547d5",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "tertiary-fixed": "#e2e2e2",
+              "outline": "#787586",
+              "surface-container-low": "#f5f3f3",
+              "on-secondary-fixed": "#321200",
+              "error": "#ba1a1a",
+              "inverse-surface": "#303031",
+              "on-surface": "#1b1c1c",
+              "on-primary-container": "#cfcaff",
+              "primary-fixed-dim": "#c5c0ff",
+              "tertiary": "#414141",
+              "surface": "#fbf9f8",
+              "primary-container": "#4f40cf",
+              "on-secondary-container": "#562500",
+              "secondary": "#9a4600",
+              "primary-fixed": "#e3dfff",
+              "on-primary-fixed-variant": "#3c29bd",
+              "error-container": "#ffdad6",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-fixed": "#1b1b1b",
+              "inverse-primary": "#c5c0ff",
+              "surface-bright": "#fbf9f8",
+              "secondary-fixed": "#ffdbc9",
+              "on-error-container": "#93000a",
+              "outline-variant": "#c8c4d7",
+              "on-primary": "#ffffff",
+              "on-tertiary-container": "#cfcfcf",
+              "surface-variant": "#e4e2e2",
+              "surface-container-high": "#e9e8e7",
+              "tertiary-container": "#585858",
+              "surface-container-highest": "#e4e2e2",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-secondary-fixed-variant": "#753400",
+              "primary": "#3620b8",
+              "on-surface-variant": "#474554",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-fixed": "#140067",
+              "on-secondary": "#ffffff",
+              "background": "#fbf9f8",
+              "on-tertiary-fixed-variant": "#474747",
+              "on-tertiary": "#ffffff",
+              "on-error": "#ffffff",
+              "inverse-on-surface": "#f2f0f0",
+              "secondary-container": "#f87600",
+              "surface-container": "#efeded"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+      }
+      .premium-shadow {
+        box-shadow: 0px 10px 30px rgba(27, 28, 28, 0.06);
+      }
+      .kinetic-gradient {
+        background: linear-gradient(135deg, #3620b8 0%, #4f40cf 100%);
+      }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body antialiased">
+<!-- Top Navigation (Mobile/Header) -->
+<header class="fixed top-0 w-full z-50 bg-[#fbf9f8]/80 dark:bg-[#1b1c1c]/80 backdrop-blur-xl flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="text-xl font-extrabold text-[#1b1c1c] font-headline tracking-tight">Kinetic Curator</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center bg-surface-container-high px-4 py-2 rounded-full">
+<span class="material-symbols-outlined text-outline text-sm mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 placeholder-outline-variant" placeholder="Search resources..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:opacity-80 transition-opacity" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:opacity-80 transition-opacity" data-icon="settings">settings</button>
+</div>
+</header>
+<!-- Side Navigation Sidebar -->
+<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-[#f5f3f3] flex flex-col pt-20 pb-8 px-4 premium-shadow hidden md:flex">
+<div class="mb-8 px-4">
+<h2 class="text-lg font-black text-[#1b1c1c] font-headline">Coach Portal</h2>
+<p class="text-xs text-on-surface-variant/60 font-semibold uppercase tracking-widest">Manage Resources</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-[#1b1c1c]/50 font-semibold text-sm hover:bg-white/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span> Dashboard
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-[#1b1c1c]/50 font-semibold text-sm hover:bg-white/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span> Training
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-[#1b1c1c]/50 font-semibold text-sm hover:bg-white/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span> Nutrition
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-[#4F40CF] border-r-4 border-[#4F40CF] font-bold text-sm bg-white/50" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span> Education
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-[#1b1c1c]/50 font-semibold text-sm hover:bg-white/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="pill">pill</span> Supplementation
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-[#1b1c1c]/50 font-semibold text-sm hover:bg-white/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span> Clients
+            </a>
+<a class="flex items-center gap-3 py-3 px-4 rounded-xl text-[#1b1c1c]/50 font-semibold text-sm hover:bg-white/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span> Forms
+            </a>
+</nav>
+<div class="mt-auto space-y-4">
+<button class="w-full kinetic-gradient text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg" data-icon="add">add</span> + New Client
+            </button>
+<div class="flex items-center gap-3 p-3 rounded-xl bg-white/40">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a professional male fitness coach with a friendly confident expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnMJxBZHGC9P5PbyyU-EDY-BmLc8wV9UfwEjmmPWoKnfSFQqKRJj0sAYfk3g3rKG2fhrx0FqHkgRa6zoqA0yo5pM6P7vyEOMWp7bRWh0FzVQRBcBGP0vySBwJB_frX88smerJyrMcnON_R9zL027B20w3PkmYWj5GElFjXewxC8iu4jgz2LLhnB1OOTuYbH9MH6VhAXcQfQ3-RJrxlKiedMEcSQMaUCFtwdvTFAbe3aRSQfLrjxQrCawUIFuAEU-Y7guPsuPxmrQk"/>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold">Coach Profile</span>
+<span class="text-[10px] text-on-surface-variant">Admin Access</span>
+</div>
+<span class="material-symbols-outlined ml-auto text-on-surface-variant text-sm" data-icon="expand_less">expand_less</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:pl-64 pt-20 min-h-screen">
+<div class="max-w-7xl mx-auto p-6 md:p-10">
+<!-- Header Section -->
+<header class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+<div>
+<h1 class="text-4xl md:text-5xl font-extrabold font-headline tracking-tighter text-on-surface mb-2">Resource Inventory</h1>
+<p class="text-on-surface-variant max-w-md font-medium">Curate and distribute premium coaching protocols, nutrition guides, and educational media.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="bg-surface-container-high text-on-surface px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-surface-container-highest transition-all">
+<span class="material-symbols-outlined" data-icon="cloud_upload">cloud_upload</span> Upload Media
+                    </button>
+<button class="kinetic-gradient text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
+                        + New Folder
+                    </button>
+</div>
+</header>
+<!-- Resource Folders (Bento Grid Style) -->
+<section class="mb-12">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-bold font-headline">Managed Collections</h3>
+<button class="text-primary font-bold text-sm flex items-center gap-1">View All <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span></button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Folder Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl premium-shadow group cursor-pointer hover:-translate-y-1 transition-all duration-300">
+<div class="flex justify-between items-start mb-10">
+<div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl" data-icon="folder" style="font-variation-settings: 'FILL' 1;">folder</span>
+</div>
+<span class="text-xs font-bold bg-secondary-container/10 text-secondary px-3 py-1 rounded-full">12 Items</span>
+</div>
+<h4 class="text-lg font-extrabold mb-1">Core Protocols</h4>
+<p class="text-xs text-on-surface-variant font-medium">Updated 2 days ago</p>
+</div>
+<!-- Folder Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl premium-shadow group cursor-pointer hover:-translate-y-1 transition-all duration-300">
+<div class="flex justify-between items-start mb-10">
+<div class="w-14 h-14 rounded-2xl bg-secondary-container/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-3xl" data-icon="assignment_ind" style="font-variation-settings: 'FILL' 1;">assignment_ind</span>
+</div>
+<span class="text-xs font-bold bg-secondary-container/10 text-secondary px-3 py-1 rounded-full">8 Items</span>
+</div>
+<h4 class="text-lg font-extrabold mb-1">Onboarding</h4>
+<p class="text-xs text-on-surface-variant font-medium">Updated 1 week ago</p>
+</div>
+<!-- Folder Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl premium-shadow group cursor-pointer hover:-translate-y-1 transition-all duration-300">
+<div class="flex justify-between items-start mb-10">
+<div class="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-600">
+<span class="material-symbols-outlined text-3xl" data-icon="nutrition" style="font-variation-settings: 'FILL' 1;">nutrition</span>
+</div>
+<span class="text-xs font-bold bg-secondary-container/10 text-secondary px-3 py-1 rounded-full">45 Items</span>
+</div>
+<h4 class="text-lg font-extrabold mb-1">Premium Recipes</h4>
+<p class="text-xs text-on-surface-variant font-medium">Updated yesterday</p>
+</div>
+<!-- Folder Card 4 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl premium-shadow group cursor-pointer hover:-translate-y-1 transition-all duration-300">
+<div class="flex justify-between items-start mb-10">
+<div class="w-14 h-14 rounded-2xl bg-on-surface-variant/10 flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-3xl" data-icon="video_library" style="font-variation-settings: 'FILL' 1;">video_library</span>
+</div>
+<span class="text-xs font-bold bg-secondary-container/10 text-secondary px-3 py-1 rounded-full">5 Items</span>
+</div>
+<h4 class="text-lg font-extrabold mb-1">Client Education</h4>
+<p class="text-xs text-on-surface-variant font-medium">Updated 3 hours ago</p>
+</div>
+</div>
+</section>
+<!-- Bulk Action Bar -->
+<div class="mb-6 flex flex-wrap items-center justify-between gap-4 p-4 glass-card rounded-2xl border border-white/20 premium-shadow">
+<div class="flex items-center gap-4">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-sm font-bold text-on-surface">Select All (124)</span>
+</label>
+<div class="h-6 w-[1px] bg-outline-variant/30"></div>
+<span class="text-xs font-semibold text-on-surface-variant">3 Items Selected</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="bg-primary/10 text-primary px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-primary/20 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="group_add">group_add</span> Assign Bulk
+                    </button>
+<button class="bg-error/10 text-error px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-error/20 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span> Delete
+                    </button>
+<div class="h-6 w-[1px] bg-outline-variant/30 mx-2"></div>
+<button class="p-2 hover:bg-surface-container-high rounded-lg text-on-surface-variant transition-all">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Inventory List -->
+<section class="bg-surface-container-lowest rounded-2xl premium-shadow overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant uppercase text-[11px] tracking-widest font-bold">
+<th class="py-4 px-6 w-12"></th>
+<th class="py-4 px-6">Resource Name</th>
+<th class="py-4 px-6">Type</th>
+<th class="py-4 px-6">Folder</th>
+<th class="py-4 px-6">Assignments</th>
+<th class="py-4 px-6">Updated</th>
+<th class="py-4 px-6 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low">
+<!-- Resource Row 1 -->
+<tr class="group hover:bg-surface/50 transition-colors">
+<td class="py-5 px-6">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+</td>
+<td class="py-5 px-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+</div>
+<div>
+<div class="font-bold text-on-surface">Hypertrophy Master Guide</div>
+<div class="text-[10px] text-on-surface-variant">PDF • 12.4 MB</div>
+</div>
+</div>
+</td>
+<td class="py-5 px-6">
+<span class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Document</span>
+</td>
+<td class="py-5 px-6 text-sm font-medium text-on-surface-variant">Core Protocols</td>
+<td class="py-5 px-6">
+<div class="flex -space-x-2">
+<img class="w-7 h-7 rounded-full border-2 border-white object-cover" data-alt="headshot of a young athletic male client" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMIyXOqAvNBRNh17NE_RUsAS6gZq80C4VsF6pWsaSPsz5oeLDNmJ0J4zg7VVTkt_tVpSelvEFxTNSBnIePprpJ_I55Sx3A4q5eahCvYX1tMb4DQIdNPcpkBTagWAD2Mz_j1qhidFs5qrYO8OVetxkqR4J9MtpOsbjT5KI1EqOge_1xzrQ21ff0qil8IDV1bs5ZMxeu1-b9BAPboJQIrt89Xw86PpXmTtzgW7tPw-nAUtY-VmVOmkGCwEictwp3MKsTG7bFstlqG4M"/>
+<img class="w-7 h-7 rounded-full border-2 border-white object-cover" data-alt="portrait of a female athlete client smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzJsV7TTyRO-hGiemmybhPwsAhP44XvbVxqCh13ATmgFt9vgkcSGWyOB5lIzBVLzRD3InNfbaRSf-BK-2IAkWoZAhp52u_33K_ZcX2Efbf3rjZwuENE7waWSSrZnlHzo_CZhEFri9B-7ZAN57O_CceXxgneW9SrH-BV63sTlTCdK-QkZmGI58y8Ty1lkinE11EXgMdGJA27zRJXTMyqVuCOv-DQign5GYpa_8pqZUx2QpJC4TVehtavAAwN3RmzMRb2sRx31Oq7Kc"/>
+<div class="w-7 h-7 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold text-on-surface-variant">+8</div>
+</div>
+</td>
+<td class="py-5 px-6 text-sm font-medium text-on-surface-variant">Oct 24, 2023</td>
+<td class="py-5 px-6 text-right">
+<button class="text-primary-container font-bold text-sm hover:underline">Manage</button>
+</td>
+</tr>
+<!-- Resource Row 2 -->
+<tr class="group hover:bg-surface/50 transition-colors">
+<td class="py-5 px-6">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+</td>
+<td class="py-5 px-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/20 flex items-center justify-center text-secondary-container">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+</div>
+<div>
+<div class="font-bold text-on-surface">Squat Mechanics Workshop</div>
+<div class="text-[10px] text-on-surface-variant">Video • 45:12</div>
+</div>
+</div>
+</td>
+<td class="py-5 px-6">
+<span class="bg-orange-100 text-orange-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Education</span>
+</td>
+<td class="py-5 px-6 text-sm font-medium text-on-surface-variant">Training Vid</td>
+<td class="py-5 px-6">
+<div class="flex items-center gap-1 text-sm font-bold text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="person">person</span> 32
+                                </div>
+</td>
+<td class="py-5 px-6 text-sm font-medium text-on-surface-variant">Oct 20, 2023</td>
+<td class="py-5 px-6 text-right">
+<button class="text-primary-container font-bold text-sm hover:underline">Manage</button>
+</td>
+</tr>
+<!-- Resource Row 3 -->
+<tr class="group hover:bg-surface/50 transition-colors">
+<td class="py-5 px-6">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+</td>
+<td class="py-5 px-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" data-icon="audio_file">audio_file</span>
+</div>
+<div>
+<div class="font-bold text-on-surface">Mindset &amp; Recovery Protocol</div>
+<div class="text-[10px] text-on-surface-variant">Audio • 15:00</div>
+</div>
+</div>
+</td>
+<td class="py-5 px-6">
+<span class="bg-gray-100 text-gray-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Audio</span>
+</td>
+<td class="py-5 px-6 text-sm font-medium text-on-surface-variant">Onboarding</td>
+<td class="py-5 px-6">
+<div class="flex items-center gap-1 text-sm font-bold text-on-surface-variant">
+<span class="material-symbols-outlined text-sm text-error" data-icon="priority_high" style="font-variation-settings: 'wght' 700;">priority_high</span> Unassigned
+                                </div>
+</td>
+<td class="py-5 px-6 text-sm font-medium text-on-surface-variant">Oct 18, 2023</td>
+<td class="py-5 px-6 text-right">
+<button class="text-primary-container font-bold text-sm hover:underline">Manage</button>
+</td>
+</tr>
+<!-- Resource Row 4 -->
+<tr class="group hover:bg-surface/50 transition-colors">
+<td class="py-5 px-6">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+</td>
+<td class="py-5 px-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+</div>
+<div>
+<div class="font-bold text-on-surface">Phase 1: Strength Progression</div>
+<div class="text-[10px] text-on-surface-variant">Spreadsheet • 1.2 MB</div>
+</div>
+</div>
+</td>
+<td class="py-5 px-6">
+<span class="bg-green-100 text-green-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Sheet</span>
+</td>
+<td class="py-5 px-6 text-sm font-medium text-on-surface-variant">Core Protocols</td>
+<td class="py-5 px-6">
+<div class="flex items-center gap-1 text-sm font-bold text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="person">person</span> 114
+                                </div>
+</td>
+<td class="py-5 px-6 text-sm font-medium text-on-surface-variant">Oct 15, 2023</td>
+<td class="py-5 px-6 text-right">
+<button class="text-primary-container font-bold text-sm hover:underline">Manage</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-6 bg-surface-container-low/30 flex justify-between items-center">
+<span class="text-xs font-bold text-on-surface-variant">Showing 1-10 of 124 resources</span>
+<div class="flex gap-2">
+<button class="p-2 bg-white rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="p-2 bg-white rounded-lg border border-outline-variant/30 text-on-surface-variant hover:bg-surface transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Mobile Navigation Bottom Bar -->
+<nav class="md:hidden fixed bottom-0 w-full bg-surface-container-lowest/90 backdrop-blur-xl border-t border-outline-variant/20 flex justify-around items-center py-3 z-50">
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-[10px] font-bold">Clients</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" data-icon="school" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="text-[10px] font-bold">Resources</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="text-[10px] font-bold">Alerts</span>
+</button>
+</nav>
+<!-- Floating Action Button (Only relevant for core dashboard/home) - Suppressed here for focus -->
+</body></html>

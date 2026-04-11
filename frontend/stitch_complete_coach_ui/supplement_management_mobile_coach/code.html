@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Supplement Coach Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface-variant": "#474554",
+              "inverse-on-surface": "#f2f0f0",
+              "tertiary-container": "#585858",
+              "surface-tint": "#5547d5",
+              "on-error-container": "#93000a",
+              "error-container": "#ffdad6",
+              "primary": "#3620b8",
+              "on-tertiary": "#ffffff",
+              "surface-container-high": "#e9e8e7",
+              "secondary": "#9a4600",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-fixed-variant": "#3c29bd",
+              "error": "#ba1a1a",
+              "on-primary": "#ffffff",
+              "on-primary-fixed": "#140067",
+              "on-primary-container": "#cfcaff",
+              "on-tertiary-fixed": "#1b1b1b",
+              "tertiary-fixed": "#e2e2e2",
+              "surface": "#fbf9f8",
+              "surface-variant": "#e4e2e2",
+              "primary-fixed-dim": "#c5c0ff",
+              "on-secondary-fixed": "#321200",
+              "on-error": "#ffffff",
+              "on-secondary-container": "#562500",
+              "surface-container-highest": "#e4e2e2",
+              "background": "#fbf9f8",
+              "on-secondary-fixed-variant": "#753400",
+              "outline": "#787586",
+              "secondary-container": "#f87600",
+              "outline-variant": "#c8c4d7",
+              "surface-bright": "#fbf9f8",
+              "secondary-fixed": "#ffdbc9",
+              "on-tertiary-fixed-variant": "#474747",
+              "primary-container": "#4f40cf",
+              "tertiary": "#414141",
+              "surface-dim": "#dbdad9",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "primary-fixed": "#e3dfff",
+              "on-secondary": "#ffffff",
+              "inverse-surface": "#303031",
+              "surface-container": "#efeded",
+              "on-tertiary-container": "#cfcfcf",
+              "surface-container-low": "#f5f3f3",
+              "secondary-fixed-dim": "#ffb68c",
+              "on-background": "#1b1c1c",
+              "inverse-primary": "#c5c0ff",
+              "on-surface": "#1b1c1c"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .tonal-shift {
+            background-color: #f5f3f3;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body pb-32">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-[#fbf9f8]/80 dark:bg-zinc-950/80 backdrop-blur-xl flex justify-between items-center px-6 h-16 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="professional male fitness coach in black athletic wear with a confident smile in a bright gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGlOCqqPQomFlhXyc6g2SUuwAL32QIpsZFBbKFwmvkGU0xQYlaoSGbN8UknWWZfURXYpc8WJqQ3JbGdSiXjMsFnCKLBUJI8kXqF4JHaci7GVPmadhqzCkgegXcVqjB4N4AIQUn-eB1yP-td57VJd6u6FR8vqZTcRm928sMaUJjGRMEYb0L62-vMCtYxzl37idiZJc2gp2hezOqUFakxFFKovB_JPGNfIHGLdQLF36VdsPzZouiIIAYYCSEIfvJbtdJ5gXUSb8C1QE"/>
+</div>
+<h1 class="text-xl font-extrabold text-[#1b1c1c] dark:text-zinc-100 font-['Plus_Jakarta_Sans'] tracking-tight">Coach Portal</h1>
+</div>
+<div class="text-[#3620b8] dark:text-[#4F40CF] hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</div>
+</header>
+<main class="mt-20 px-4 space-y-8">
+<!-- Search & Quick Filter Section -->
+<section class="space-y-4">
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</div>
+<input class="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline/60" placeholder="Search athletes or supplements..." type="text"/>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+<span class="px-6 py-2 bg-secondary-container text-on-surface rounded-full text-sm font-semibold whitespace-nowrap">All Athletes</span>
+<span class="px-6 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-semibold whitespace-nowrap">Review Required (3)</span>
+<span class="px-6 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-semibold whitespace-nowrap">Active Stacks</span>
+</div>
+</section>
+<!-- Pending Compliance Review - Kinetic Glass Alert -->
+<section class="space-y-4">
+<div class="flex justify-between items-end px-2">
+<h2 class="text-2xl font-headline font-extrabold tracking-tight">Pending Reviews</h2>
+<span class="text-primary text-sm font-bold">View All</span>
+</div>
+<div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary-container p-[1px]">
+<div class="glass-card rounded-[23px] p-6 flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary-container" data-icon="priority_high">priority_high</span>
+</div>
+<div>
+<p class="text-xs font-bold text-outline uppercase tracking-widest">Compliance Alert</p>
+<h3 class="text-lg font-headline font-bold">Marcus Thorne</h3>
+</div>
+</div>
+<div class="bg-error/10 text-error px-3 py-1 rounded-full text-[10px] font-black uppercase">Urgent</div>
+</div>
+<p class="text-on-surface-variant text-sm leading-relaxed">Reported potential interaction between <span class="font-bold">Pre-Workout X</span> and prescription medication.</p>
+<button class="w-full py-4 bg-primary text-white rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="clinical_notes">clinical_notes</span>
+                        Review Interaction
+                    </button>
+</div>
+</div>
+</section>
+<!-- Athlete Supplement Stacks - Bento Style -->
+<section class="space-y-4">
+<h2 class="text-2xl font-headline font-extrabold tracking-tight px-2">Athlete Stacks</h2>
+<div class="grid grid-cols-1 gap-4">
+<!-- Athlete Card 1 -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] space-y-6">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="close up headshot of a fit young male athlete with a focused expression in soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNTJpMHx5cDFTxXcrcFhdo3l4L_hwNnOHtazB2_4V5grIpAGp1Twb5b4Fwv_iK8KlRKAgsASrVPYGjy9avA-Fm3Sr5EZAtu4lbrD71SKNFoiYZtrhfNui3h4oHiNKz7Jf_E3nCkZMNLmksASzdtEtWKMRcqaWPQ02iy5iuyl26LX7vVVHHEt_GZZR3PNOGe3vE75ZFe0bXJh5oohEEUG7z_HNQPZ6joOdtrgS9p-knFU-cUOF0N3Va5ZvN1DLLiJn7WzrOVBa-TO8"/>
+<div>
+<h4 class="font-headline font-bold">Leo Vance</h4>
+<p class="text-xs text-outline font-medium italic">Hypertrophy Phase</p>
+</div>
+</div>
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-primary active:scale-90 transition-all">
+<span class="material-symbols-outlined" data-icon="edit_square">edit_square</span>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="pill">pill</span>
+<span class="font-semibold text-sm">Creatine Monohydrate</span>
+</div>
+<span class="text-xs font-bold text-outline">5g / Daily</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="water_drop">water_drop</span>
+<span class="font-semibold text-sm">Whey Isolate</span>
+</div>
+<span class="text-xs font-bold text-outline">35g / Post</span>
+</div>
+</div>
+<div class="pt-2 flex justify-between items-center border-t border-surface-variant/30">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-green-100 flex items-center justify-center text-[10px] font-bold text-green-700">M</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-green-100 flex items-center justify-center text-[10px] font-bold text-green-700">T</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-green-100 flex items-center justify-center text-[10px] font-bold text-green-700">W</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold text-outline">T</div>
+</div>
+<span class="text-[10px] font-bold text-outline uppercase tracking-tighter">Compliance: 84%</span>
+</div>
+</div>
+<!-- Athlete Card 2 (Quick Add/Search UI Element) -->
+<div class="bg-surface-container-low border-2 border-dashed border-outline-variant/50 rounded-3xl p-8 flex flex-col items-center justify-center text-center space-y-4">
+<div class="w-14 h-14 rounded-full bg-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-3xl" data-icon="add_circle">add_circle</span>
+</div>
+<div>
+<h4 class="font-headline font-bold">Assign New Stack</h4>
+<p class="text-xs text-on-surface-variant max-w-[180px] mx-auto mt-1">Select an athlete to build a custom performance protocol.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Supplement Library Quick Access -->
+<section class="space-y-4">
+<div class="flex justify-between items-center px-2">
+<h2 class="text-2xl font-headline font-extrabold tracking-tight">Supp Library</h2>
+<span class="material-symbols-outlined text-outline" data-icon="tune">tune</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white p-4 rounded-3xl shadow-sm space-y-3">
+<div class="w-full h-24 rounded-2xl bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="clean minimal product shot of supplement capsules on a white surface with soft shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBa8LUnFmVTkBT05ezsx8TD3aWOJPjDyhx_q4XfNBaIA39En6xKjlMEKGBSj9g5-a7ns0rQ7LWWR0X0fR4VnZnqVDbttPGqagODl0JRH41_UDvJsC5zW1uKCAQancHJ8YkG3FhpAZ3DgVSOk2dk55n2jW2oyFVhK81ZwZfvJqKx-hpQB8xkd6uVGnVTrXxfff_5em9gq_27Vvrw3oNlgokvsfIg46OMWlFjcBMHICQ3LpPn6noNNaj_-wHt9H9F7w_F56vQvvzznmY"/>
+</div>
+<div>
+<h5 class="text-sm font-bold">Omega-3 Gold</h5>
+<p class="text-[10px] text-outline">Recovery &amp; Health</p>
+</div>
+</div>
+<div class="bg-white p-4 rounded-3xl shadow-sm space-y-3">
+<div class="w-full h-24 rounded-2xl bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="modern minimalist aesthetic showing scoops of white protein powder with organic textures" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCz5tyXxobMRCjuYWwudOzLSLcgjb7mvnVczXz8lDcUlsfFEfohEq7nhpWcEKdieTktTOlquSgszTMc4ttcStMHGX1ISUtncSAze3qxAIKlDhLfP-HDgOSYuPT24dR762NDQqqiSXMPWDfFbDvQwvwe_FJeufauz79BpZaejy1vc9l-rQFCPKh8EDoNJ78cM5lqK7UiA-2kMlJd83kdyKxWTTCeWfoJoVYndtMC_5WMhYnJlLNuhWHvOeYdrPNSxaUwMOf1k3e6D6w"/>
+</div>
+<div>
+<h5 class="text-sm font-bold">ZMA Night</h5>
+<p class="text-[10px] text-outline">Sleep Optimization</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-8 bg-[#fbf9f8]/80 dark:bg-zinc-950/80 backdrop-blur-3xl z-50 rounded-t-3xl shadow-[0px_-10px_30px_rgba(27,28,28,0.06)]">
+<a class="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-500 opacity-60 hover:scale-105 transition-transform active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-['Inter'] text-[11px] font-semibold uppercase tracking-wider mt-1">Athletes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#3620b8] dark:text-[#4F40CF] bg-gradient-to-br from-[#3620b8]/10 to-[#4F40CF]/10 rounded-2xl px-4 py-2 hover:scale-105 transition-transform active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-['Inter'] text-[11px] font-semibold uppercase tracking-wider mt-1">Workouts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-500 opacity-60 hover:scale-105 transition-transform active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="font-['Inter'] text-[11px] font-semibold uppercase tracking-wider mt-1">Insights</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-500 dark:text-zinc-500 opacity-60 hover:scale-105 transition-transform active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-['Inter'] text-[11px] font-semibold uppercase tracking-wider mt-1">Schedule</span>
+</a>
+</nav>
+<!-- Contextual FAB (Assign New) -->
+<button class="fixed bottom-24 right-6 w-16 h-16 bg-gradient-to-br from-primary to-primary-container text-white rounded-full shadow-xl flex items-center justify-center active:scale-90 transition-all z-40">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+</body></html>

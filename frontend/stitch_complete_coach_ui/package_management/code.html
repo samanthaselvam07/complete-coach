@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Package Management | Kinetic Curator</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#303031",
+                    "secondary-fixed": "#ffdbc9",
+                    "error-container": "#ffdad6",
+                    "surface-bright": "#fbf9f8",
+                    "surface": "#fbf9f8",
+                    "on-surface-variant": "#474554",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "surface-variant": "#e4e2e2",
+                    "on-secondary-fixed": "#321200",
+                    "tertiary-fixed": "#e2e2e2",
+                    "secondary-container": "#f87600",
+                    "on-background": "#1b1c1c",
+                    "on-secondary-container": "#562500",
+                    "tertiary-fixed-dim": "#c6c6c6",
+                    "primary": "#3620b8",
+                    "surface-container": "#efeded",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#c5c0ff",
+                    "surface-container-low": "#f5f3f3",
+                    "on-tertiary-container": "#cfcfcf",
+                    "surface-tint": "#5547d5",
+                    "secondary": "#9a4600",
+                    "primary-fixed": "#e3dfff",
+                    "on-primary-container": "#cfcaff",
+                    "on-error": "#ffffff",
+                    "surface-container-high": "#e9e8e7",
+                    "outline": "#787586",
+                    "on-tertiary-fixed": "#1b1b1b",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e4e2e2",
+                    "on-primary-fixed-variant": "#3c29bd",
+                    "tertiary": "#414141",
+                    "secondary-fixed-dim": "#ffb68c",
+                    "error": "#ba1a1a",
+                    "surface-dim": "#dbdad9",
+                    "outline-variant": "#c8c4d7",
+                    "on-secondary-fixed-variant": "#753400",
+                    "inverse-on-surface": "#f2f0f0",
+                    "tertiary-container": "#585858",
+                    "on-error-container": "#93000a",
+                    "background": "#fbf9f8",
+                    "primary-container": "#4f40cf",
+                    "on-surface": "#1b1c1c",
+                    "on-primary-fixed": "#140067",
+                    "on-tertiary-fixed-variant": "#474747"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .kinetic-glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #3620b8 0%, #4f40cf 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- Sidebar Component (Anchored) -->
+<aside class="h-screen w-64 fixed left-0 top-0 flex flex-col h-full py-8 px-6 border-r border-black/5 bg-[#fbf9f8] dark:bg-slate-950 z-50">
+<div class="mb-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 primary-gradient rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div>
+<h1 class="text-xl font-black text-[#1b1c1c] dark:text-white font-headline tracking-tight">Kinetic Curator</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Elite Coaching</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 font-medium hover:bg-[#f5f3f3] dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight">Dashboard</span>
+</a>
+<!-- Training -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 font-medium hover:bg-[#f5f3f3] dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="fitness_center">fitness_center</span>
+<span class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight">Training</span>
+</a>
+<!-- Nutrition -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 font-medium hover:bg-[#f5f3f3] dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+<span class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight">Nutrition</span>
+</a>
+<!-- Education -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 font-medium hover:bg-[#f5f3f3] dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight">Education</span>
+</a>
+<!-- Supplementation -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 font-medium hover:bg-[#f5f3f3] dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="medication">medication</span>
+<span class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight">Supplementation</span>
+</a>
+<!-- Clients (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-[#4F40CF] font-bold border-r-4 border-[#4F40CF] bg-white/50 dark:bg-white/5" href="#">
+<span class="material-symbols-outlined" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight">Clients</span>
+</a>
+<!-- Forms -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 font-medium hover:bg-[#f5f3f3] dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight">Forms</span>
+</a>
+</nav>
+<div class="mt-6 px-4">
+<button class="w-full py-3 primary-gradient text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+                + New Client
+            </button>
+</div>
+<div class="mt-auto pt-8">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-500 dark:text-slate-400 font-medium hover:bg-[#f5f3f3] dark:hover:bg-slate-800" href="#">
+<img class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="portrait of a professional fitness coach with a friendly smile, clean lighting, athletic build" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmoGIHlaEy62m1KFoYh2Lu11Ve-W2ssbXdyVC1OUxrhnviuw15cVjL6L7Z4ct3g9olRLicks8hTHhn164Vd_0wVTtdAzhY2VSks3rDnqhXUGKfbjobgnQkLrY5c79MECnnLWuK6X8HPH6NIdRkqLZgUSq40HNLgiAo_F-G-veSqzjreJ0uZQ7AXRvpwWNBYblTyzyWQPjKtk9RPmqSoPskUhbP9c6WIHKwy640A_QXkURHz5UdUbU-QtVtHKHYrcziik_8tl-lxr4"/>
+<span class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight">Profile</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-10 max-w-[1400px]">
+<!-- Header Section -->
+<header class="flex justify-between items-end mb-12">
+<div class="space-y-2">
+<h2 class="text-4xl font-black font-headline tracking-tighter text-on-surface">Package Ecosystem</h2>
+<p class="text-on-surface-variant font-medium">Design and deploy premium coaching protocols for your roster.</p>
+</div>
+<button class="flex items-center gap-2 px-8 py-4 primary-gradient text-on-primary rounded-xl font-bold shadow-xl shadow-primary/25 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">add_circle</span>
+                Create New Package
+            </button>
+</header>
+<!-- Stats Grid (Tonal Layering) -->
+<section class="grid grid-cols-4 gap-6 mb-12">
+<div class="bg-surface-container-low p-6 rounded-xl border border-transparent">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Active Subscriptions</p>
+<h3 class="text-3xl font-black font-headline">142</h3>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-transparent">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Portfolio Value</p>
+<h3 class="text-3xl font-black font-headline">$28.4k</h3>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-transparent">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Top Performer</p>
+<h3 class="text-3xl font-black font-headline text-primary-container">Elite Prep</h3>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-transparent">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">Retention Rate</p>
+<h3 class="text-3xl font-black font-headline text-secondary-container">94%</h3>
+</div>
+</section>
+<!-- Package Grid (Bento Style) -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Featured Package Card -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] overflow-hidden flex relative group">
+<div class="w-1/3 relative">
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="dynamic close-up of heavy dumbbells in a professional gym setting with dramatic high-contrast lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYVX3XykN2FSIRFrbyl4eVmDHYoMZ6IwBxbxrimZC9hvb8yQl9CHhy0M14a2rv2r1JXNz4SDOrLMkicvoz9u6g9dWhc4P5yGgWqfoC0F2btB4E0MtUqUgoJpByO6yYbKNbTeRcNczfy2jkWtacsTEOOVotc53slaOYXzIVMpIaIDz3BF1QXG-5snJTluGbT-FWKVJjwTo5oxu51Dl0Keu_fSIObNDMyWmznPKSGAV-w0nrJMDrnwWGAoiyYNaT_xI6fGQa8psDwGo"/>
+<div class="absolute inset-0 bg-gradient-to-r from-transparent to-surface-container-lowest"></div>
+</div>
+<div class="flex-1 p-10 flex flex-col justify-center">
+<div class="flex items-center gap-3 mb-4">
+<span class="bg-secondary-container/10 text-secondary-container text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Best Seller</span>
+<span class="text-on-surface-variant text-xs font-bold">128 Enrolled</span>
+</div>
+<h3 class="text-4xl font-black font-headline tracking-tighter mb-4">Elite Hypertrophy</h3>
+<p class="text-on-surface-variant leading-relaxed mb-8 max-w-md">Our flagship 16-week scientific mass-building protocol including daily check-ins and advanced biomechanical analysis.</p>
+<div class="flex items-center gap-12 mb-10">
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Investment</p>
+<p class="text-2xl font-black font-headline">$499<span class="text-sm font-medium text-on-surface-variant">/mo</span></p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Duration</p>
+<p class="text-2xl font-black font-headline">16 Weeks</p>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-3 primary-gradient text-on-primary rounded-xl font-bold active:scale-95 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">person_add</span>
+                            Assign to Client
+                        </button>
+<button class="px-6 py-3 bg-surface-container-high text-on-surface rounded-xl font-bold hover:bg-surface-variant active:scale-95 transition-all">
+                            Edit Details
+                        </button>
+</div>
+</div>
+<button class="absolute top-6 right-6 w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Side Card 1 -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest rounded-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] p-8 flex flex-col justify-between">
+<div>
+<div class="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-6">
+<span class="material-symbols-outlined">trophy</span>
+</div>
+<h3 class="text-2xl font-black font-headline tracking-tight mb-2">Contest Prep</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed mb-6">A rigorous 24-week peak performance protocol for stage competitors.</p>
+<div class="space-y-4 mb-8">
+<div class="flex justify-between items-center py-2 border-b border-surface-container">
+<span class="text-xs font-bold text-on-surface-variant">Price</span>
+<span class="font-bold">$1,200</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-surface-container">
+<span class="text-xs font-bold text-on-surface-variant">Term</span>
+<span class="font-bold">24 Weeks</span>
+</div>
+</div>
+</div>
+<button class="w-full py-3 bg-primary/5 text-primary rounded-xl font-bold hover:bg-primary/10 transition-colors border border-primary/10">
+                    Manage Package
+                </button>
+</div>
+<!-- Package Inventory Row -->
+<div class="col-span-12 bg-surface-container-lowest rounded-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] overflow-hidden">
+<div class="px-8 py-6 border-b border-surface-container flex justify-between items-center">
+<h4 class="font-black font-headline tracking-tight">Active Inventory</h4>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-on-surface-variant">Sort by:</span>
+<button class="text-xs font-black text-primary uppercase tracking-widest flex items-center gap-1">
+                            Newest First <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+</div>
+</div>
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Package Name</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pricing Model</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Clients</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue</th>
+<th class="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="vibrant image of healthy meal prep containers with fresh vegetables" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5Q6S9UqKBw06LbFkP8QmGRDZNxwGFrLhxE4UTlVNLffns2pifS6bDFpBWYGe7IudeXELPaFZsJVfOoroSiEkUL7FNLSc-NRxQAfkKbJKdsbjkyzb3Uqz0nJdKV1XltwBXxqT7fqgdzO96PDj6zyC7QoZsHd8_CS8inE8GweKc9d-T9pZYAEi-hhl17wALms7oBUPUQhdxwLCIJoULuPCssyGzRs2UNGJaO3zkrKg2xB3kmUctlx7-gAluHe_LtrwMOR3FBdhOTMI"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">Lifestyle Transformation</p>
+<p class="text-xs text-on-surface-variant">12 Week Sustainable Plan</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold">$299/mo</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex -space-x-2">
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-lowest object-cover" data-alt="profile photo of a young athletic woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQOrH_pxcacGLrLYgjxYNdpdZqe0iYyhGS2if1Tb2rW_TgAU-tOdcd04esoyBsoflSB67bPFFSGTk84_zfNaVgg2MQIiWWtiHWZIuo4pld6me6-_W5L_QXlTZFdWuUkVsEiLGouL8mBhA094DzYvFpixek2-wQeNN75T6LqHeLzwJ7gmvjPE1TRJftevp_I-oJO2qCiZlLofjBFatQ2FlRCKivjJGS5v9zpT-l0dVsYsGRpp21koE8Cmk_KQhod3abrCx2YvIAYY0"/>
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-lowest object-cover" data-alt="profile photo of a smiling man in activewear" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIBMh4BbP7__2OSe1LkgFX6W3lvA3q-RPnsIvWrAm68GqG4O3gTVcnNnATWdFtRlNCFzt5s9K4VfheD_dNsgErVaZpSGsZzNuovBmHIMxozAhm_7bnFwVij8mG1AfYWVo0Wusa8Y4N1EEsnFY-3UMMdVVrGIvYMuqFM2caksns6fTlBThTzrDxfvx4-1x7djrXp9eR5Pc1pFKt5ZXuUOofZO2c-l1BHJI5CYsHqThw3w2a6-ErdRncReSn0rTiK8WVglKXo1_Nyrk"/>
+<div class="w-7 h-7 rounded-full border-2 border-surface-container-lowest bg-surface-container-high flex items-center justify-center text-[10px] font-black text-on-surface-variant">+42</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="font-headline font-bold">$12,558</span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person_add</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="focused athlete sprinting on a blue track at sunset" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbG34cfCTUQsLoJCw40czwa4l9ZYbdn0zOmy15BuQ-80873txIMcoEkG4XSQy75m92uHkS66WK9W0DmfXgetrPUmUbB--KcZSIBu-ITgd-BQxdcB_T4d-jNfYOcBPlkix3gcxliR-DL07mE-G62aE_3u257ceuMXmMrMTqqXhW2l00IVOgQFuVSsx5AeNbwZXpvzz9oEtjGEHTJQ2m5oFgsgC8bxcU8uN6Zovo_1Nb3Y_oJxal4VXozYlHlgZwdAkjvrJ8zWExTMw"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">Functional Athleticism</p>
+<p class="text-xs text-on-surface-variant">Ongoing Performance Coaching</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold">$199/mo</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex -space-x-2">
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-lowest object-cover" data-alt="portrait of a man with athletic build" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAX_mOdAWmntCGtky6Dz9Z-iE_4k9Qs8J8WGfIsHswHdmdZ6srBvZvdhNuYRp-9wRUlsqkyoCdqoVA20KrxW27lThLqMsevJuYF2Iu356LPL_M9BCRTJOiFFVzzJfGb70cLHbUSeX117GR0St7QngaL50huAcZRsatuuBwi7lM3ZzSEx6iyMtE-HYktJN52Fgrw_Sw-NplTeVZ_CamcSQZg8lfmfKpwuVl9QKI-4VDBeFeaExu5iXJFCLc74I5Ax6JvTh8XGG5XnEo"/>
+<div class="w-7 h-7 rounded-full border-2 border-surface-container-lowest bg-surface-container-high flex items-center justify-center text-[10px] font-black text-on-surface-variant">+15</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="font-headline font-bold">$3,184</span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person_add</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/30 transition-colors group">
+<td class="px-8 py-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="top view of a colorful mediterranean bowl with fresh salmon and avocado" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbZf7-Y-ZFqvmMIVlHKbE1i4523utgv-mRhTnT258u3GHWYWsvwtSLHdGekfl1MdurKx50Zb_py6HnMq0p2anmEb6KU1_5gYCPTzc7c-CN7dXSAO-TZqWH_EiTXBedjN70FWz2s4xZAM0XDOD78Je1JGNQ8wjevvwzVH53EkYwoUqAwUNSlfPtYLdU-EiV3lFds4IRHKrLel3njm5o2cdttW6XZ4Re56KoEwFxQl-i6pWnbFRjS2Nh6uQQ7BBobn-t1WZ-4iDY17M"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">Nutrition Deep-Dive</p>
+<p class="text-xs text-on-surface-variant">4-Week Audit &amp; Optimization</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-xs font-bold">$450 Fixed</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex -space-x-2">
+<img class="w-7 h-7 rounded-full border-2 border-surface-container-lowest object-cover" data-alt="portrait of a woman in sports apparel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDk2MtqgYiH10UkFnIc-GWJrviWg48zVq6XP9XN9uCYTeJogCGQ3_1nWc0JOYDiRLOAvG1VM5aQMnFVbY-EMjPTIJRLFsD9drHKlW9fRIaKrLh3FGe6CRPnkAyu8r8vhjumjbFZHPtlXVruJjODx5s0XCuPSIXTtqpXziEiP02u205B89uMo4RnQHqBlVbjLwb-OBwMVFWna3jVqYPStwBKsCw7lCIr-C5WY-5mnmbdpqkYP3FAUzQUHCXcxZbgt-noZP6Kc1Y7shc"/>
+<div class="w-7 h-7 rounded-full border-2 border-surface-container-lowest bg-surface-container-high flex items-center justify-center text-[10px] font-black text-on-surface-variant">+8</div>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="font-headline font-bold">$3,600</span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person_add</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="px-8 py-4 bg-surface-container-low/30 text-center">
+<button class="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors">View All Archive</button>
+</div>
+</div>
+<!-- Creation Placeholder -->
+<div class="col-span-12 lg:col-span-4 bg-background border-2 border-dashed border-outline-variant/30 rounded-xl p-8 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl text-on-surface-variant">add</span>
+</div>
+<h4 class="font-black font-headline mb-2">Build New Protocol</h4>
+<p class="text-sm text-on-surface-variant max-w-[200px]">Define your pricing, duration, and curriculum for a new tier.</p>
+</div>
+<!-- Quick Template Action Cards -->
+<div class="col-span-12 lg:col-span-8 grid grid-cols-2 gap-6">
+<div class="bg-primary/5 p-6 rounded-xl border border-primary/10 flex items-center gap-6 group cursor-pointer hover:bg-primary/10 transition-colors">
+<div class="w-12 h-12 rounded-full primary-gradient flex items-center justify-center text-white shrink-0 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">content_copy</span>
+</div>
+<div>
+<h5 class="font-bold">Duplicate Package</h5>
+<p class="text-xs text-on-surface-variant">Start from an existing framework.</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-primary group-hover:translate-x-1 transition-transform">arrow_forward_ios</span>
+</div>
+<div class="bg-secondary/5 p-6 rounded-xl border border-secondary/10 flex items-center gap-6 group cursor-pointer hover:bg-secondary/10 transition-colors">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-white shrink-0 shadow-lg shadow-secondary/20">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div>
+<h5 class="font-bold">AI Builder</h5>
+<p class="text-xs text-on-surface-variant">Generate a protocol structure from goals.</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-secondary-container group-hover:translate-x-1 transition-transform">arrow_forward_ios</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual FAB (Hidden as per hierarchy on management pages, but present for quick add if needed elsewhere - suppressed here to prioritize canvas) -->
+</body></html>

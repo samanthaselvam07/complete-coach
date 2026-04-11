@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Complete Physique - Coach Calendar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-tertiary-container": "#cfcfcf",
+                        "on-secondary-container": "#562500",
+                        "tertiary": "#414141",
+                        "on-primary-fixed": "#140067",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#e9e8e7",
+                        "surface-container": "#efeded",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface": "#fbf9f8",
+                        "on-surface": "#1b1c1c",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#753400",
+                        "inverse-surface": "#303031",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#c5c0ff",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "on-background": "#1b1c1c",
+                        "inverse-on-surface": "#f2f0f0",
+                        "surface-dim": "#dbdad9",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "on-surface-variant": "#474554",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#4f40cf",
+                        "surface-variant": "#e4e2e2",
+                        "on-secondary-fixed": "#321200",
+                        "on-primary-container": "#cfcaff",
+                        "surface-container-highest": "#e4e2e2",
+                        "background": "#fbf9f8",
+                        "on-primary-fixed-variant": "#3c29bd",
+                        "secondary-fixed-dim": "#ffb68c",
+                        "primary": "#3620b8",
+                        "surface-tint": "#5547d5",
+                        "primary-fixed": "#e3dfff",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#fbf9f8",
+                        "outline": "#787586",
+                        "tertiary-container": "#585858",
+                        "secondary-container": "#f87600",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "outline-variant": "#c8c4d7",
+                        "surface-container-low": "#f5f3f3",
+                        "secondary": "#9a4600",
+                        "secondary-fixed": "#ffdbc9",
+                        "on-tertiary-fixed": "#1b1b1b"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .tonal-transition { background: linear-gradient(180deg, var(--tw-gradient-from) 0%, var(--tw-gradient-to) 100%); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/20">
+<!-- TopAppBar -->
+<header class="sticky top-0 w-full z-40 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex justify-between items-center px-6 py-3 border-b border-zinc-200/20">
+<div class="flex items-center gap-3">
+<span class="text-xl font-bold tracking-tighter text-zinc-900 dark:text-white font-headline">My Complete Physique</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-zinc-500 hover:bg-zinc-100 p-2 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+<img alt="Coach Profile Picture" class="w-full h-full object-cover" data-alt="Professional headshot of a fitness coach with athletic build and friendly expression, warm indoor lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRXQNIED3hnFpi69RkHREKrKNoOQaEeyDzNR94XSbwm435CYAuwCXoi86CIRZFCpGPAf1pRfXX93XnVRmKprCIsaGv2l34PNNKhw7DYZyvwb_gDiYSEmwgmkrNWduk7LPY_MGOJCN5a5L55MFCZtJZDrLdFmOPazpxfTD3OuJ1QV57Z9ZygZkAM92PGgNGm-uqHszv7cwOe5OLWAovZVzwFZd82DFpH96Vh1vvZyrtmEUJToQjyt5WaOI7PDLsCFVeN0Cw_r0Ta8c"/>
+</div>
+</div>
+</header>
+<main class="pb-28">
+<!-- Roster Adherence Swipeable Card (Insights) -->
+<section class="px-6 py-6">
+<div class="flex overflow-x-auto gap-4 no-scrollbar snap-x">
+<!-- Card 1: Adherence -->
+<div class="min-w-[85%] snap-center bg-surface-container-lowest rounded-xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-zinc-500 text-xs font-semibold tracking-wider uppercase">ROSTER ADHERENCE</p>
+<h3 class="text-3xl font-extrabold font-headline text-on-surface">94%</h3>
+</div>
+<div class="p-2 bg-secondary/10 rounded-lg text-secondary">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 94%"></div>
+</div>
+<p class="text-sm text-zinc-500">24/26 clients tracked macros today.</p>
+</div>
+<!-- Card 2: Active Plans -->
+<div class="min-w-[85%] snap-center bg-surface-container-lowest rounded-xl p-6 shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-zinc-500 text-xs font-semibold tracking-wider uppercase">ACTIVE PLANS</p>
+<h3 class="text-3xl font-extrabold font-headline text-on-surface">42</h3>
+</div>
+<div class="p-2 bg-primary/10 rounded-lg text-primary">
+<span class="material-symbols-outlined">assignment</span>
+</div>
+</div>
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border-2 border-white bg-zinc-200"></div>
+<div class="w-6 h-6 rounded-full border-2 border-white bg-zinc-300"></div>
+<div class="w-6 h-6 rounded-full border-2 border-white bg-zinc-400"></div>
+<div class="px-2 py-0.5 text-[10px] font-bold bg-surface-container-high rounded-full border-2 border-white">+39</div>
+</div>
+<p class="text-sm text-zinc-500">3 plans expiring this week.</p>
+</div>
+</div>
+</section>
+<!-- Condensed Monthly Calendar -->
+<section class="px-6 pb-6">
+<div class="bg-surface-container-low rounded-xl p-5">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-headline font-bold text-lg">October 2023</h2>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-zinc-400">chevron_left</span>
+<span class="material-symbols-outlined text-zinc-400">chevron_right</span>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-2 text-center mb-2">
+<span class="text-[10px] font-bold text-zinc-400">S</span>
+<span class="text-[10px] font-bold text-zinc-400">M</span>
+<span class="text-[10px] font-bold text-zinc-400">T</span>
+<span class="text-[10px] font-bold text-zinc-400">W</span>
+<span class="text-[10px] font-bold text-zinc-400">T</span>
+<span class="text-[10px] font-bold text-zinc-400">F</span>
+<span class="text-[10px] font-bold text-zinc-400">S</span>
+</div>
+<div class="grid grid-cols-7 gap-2">
+<div class="aspect-square flex items-center justify-center text-sm text-zinc-400">28</div>
+<div class="aspect-square flex items-center justify-center text-sm text-zinc-400">29</div>
+<div class="aspect-square flex items-center justify-center text-sm text-zinc-400">30</div>
+<div class="aspect-square flex items-center justify-center text-sm font-semibold text-on-surface">1</div>
+<div class="aspect-square flex flex-col items-center justify-center text-sm font-semibold text-on-surface relative">
+                        2
+                        <div class="absolute bottom-1 w-1 h-1 bg-secondary rounded-full"></div>
+</div>
+<div class="aspect-square flex items-center justify-center text-sm font-semibold text-on-surface">3</div>
+<div class="aspect-square flex flex-col items-center justify-center text-sm font-semibold text-white bg-primary rounded-full relative">
+                        4
+                        <div class="absolute bottom-1 w-1 h-1 bg-white rounded-full"></div>
+</div>
+<div class="aspect-square flex items-center justify-center text-sm font-semibold text-on-surface">5</div>
+<div class="aspect-square flex items-center justify-center text-sm font-semibold text-on-surface">6</div>
+<div class="aspect-square flex items-center justify-center text-sm font-semibold text-on-surface">7</div>
+<div class="aspect-square flex items-center justify-center text-sm font-semibold text-on-surface">8</div>
+<div class="aspect-square flex items-center justify-center text-sm font-semibold text-on-surface">9</div>
+<div class="aspect-square flex items-center justify-center text-sm font-semibold text-on-surface">10</div>
+<div class="aspect-square flex items-center justify-center text-sm font-semibold text-on-surface">11</div>
+</div>
+</div>
+</section>
+<!-- Today's Roster List -->
+<section class="px-6">
+<div class="flex justify-between items-end mb-4">
+<h2 class="font-headline font-extrabold text-2xl">Today's Roster</h2>
+<span class="text-sm font-medium text-primary">View All</span>
+</div>
+<div class="space-y-4">
+<!-- Milestone Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-4 border-l-4 border-primary">
+<div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+<img alt="Client Avatar" class="w-full h-full object-cover" data-alt="Portrait of a young male athlete, Alex Rivers, looking focused, clean gym lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBy_7Fs6e9GmXC2f5bTQxj7E3GAiR-z-NiDJjn1w4v8yBgiHGvfZ7_8YtLjvEn34b1-jjh9tEpcjjTjpfkNrjEGEeqfCuKl5uFiMYH4imcuPoYPGs-ISVVCBUVkb4WXSuZRTQNcEH41zs43HjdaRNtxX5qWlUnjR8lvGpAN0tm0AQNjjTfVHB7TYVj__1hiLLX6SPmVq-2rpeQuPFfqV_ch10vEdTqlDkH1G-CiCCxzakzNziXQK9ldAFEJ4UxcM9yDo7uEA2vUgEU"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<h4 class="font-bold text-on-surface">Alex Rivers</h4>
+<span class="text-[10px] font-bold text-zinc-400">9:00 AM</span>
+</div>
+<p class="text-sm text-primary font-semibold">Block End</p>
+<p class="text-xs text-zinc-500">Hypertrophy Ph. 2 Complete</p>
+</div>
+<span class="material-symbols-outlined text-zinc-300">chevron_right</span>
+</div>
+<!-- Milestone Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-4 border-l-4 border-secondary">
+<div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+<img alt="Client Avatar" class="w-full h-full object-cover" data-alt="Close-up portrait of Sammi, a fitness client smiling, natural outdoor park lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt1M7tH_rTJEaUcBmC5jO92NYuHBAjtsHLxDXlFf5EBibfkDI_W4EOhcvMxusFq_HGmNQixlS5Sqz5LxeEsYh1E8tb4R5IfTZ82pepkthkJEYgZY86CyXsDPVxPWqjPlovmexsK2bJgqwsuMtBSc2Qn9yfiPfkEylNPrPHWuY01InDrBpSOOKIz5wtP3oGSKIMwc2Q3EMKq1IKJWtm8Wvev1lW6WbnKaFNrMvk4lMpL_8GjplMOHoyJbDRqnCrfLMGcXuPGrAjr7Q"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<h4 class="font-bold text-on-surface">Sammi</h4>
+<span class="text-[10px] font-bold text-zinc-400">11:30 AM</span>
+</div>
+<p class="text-sm text-secondary font-semibold">New Macro Assignment</p>
+<p class="text-xs text-zinc-500">Shift to Maintenance (2,400 kcal)</p>
+</div>
+<span class="material-symbols-outlined text-zinc-300">chevron_right</span>
+</div>
+<!-- Milestone Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-4 border-l-4 border-zinc-200">
+<div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+<img alt="Client Avatar" class="w-full h-full object-cover" data-alt="Headshot of a middle-aged male client, Jordan, in fitness apparel, indoor studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0TPM9W1Kd8cS1AvdqjO8B8v6g0s9R8GhFGLX0vKYk7Azm7b6pB96szGI-VcgZzoUz6dwGspNSHFlssktvDRlQcSrunUVh-1NLSLWcrQNSdVQCF4Fq-8FN2ksARp0NioafFKRtfE3N3YMutcyFL-9squ223ucjgAgT46PPmpR7aa-x8G-tYQ35IbHQmvSJ9_W1MepXCLFr20UIbzoBD1y1I-Rp0JfDdkHj6cH3nkEQSXe4UvtuT2jkHM_YDa9QSVMXlj3HNMKfu-A"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<h4 class="font-bold text-on-surface">Jordan K.</h4>
+<span class="text-[10px] font-bold text-zinc-400">1:00 PM</span>
+</div>
+<p class="text-sm text-zinc-600 font-semibold">Check-in Due</p>
+<p class="text-xs text-zinc-500">Weekly progress photos pending</p>
+</div>
+<span class="material-symbols-outlined text-zinc-300">chevron_right</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-primary to-primary-container text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform z-30">
+<span class="material-symbols-outlined text-2xl">add</span>
+</button>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 md:hidden px-6 pb-6 pt-2 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl">
+<div class="flex justify-between items-center py-2">
+<div class="flex flex-col items-center gap-1 text-zinc-500 group">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] font-bold font-headline">Coach</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-zinc-500">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="text-[10px] font-bold font-headline">Clients</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-primary">
+<div class="bg-primary/10 px-4 py-1 rounded-full flex flex-col items-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+</div>
+<span class="text-[10px] font-extrabold font-headline">Calendar</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-zinc-500 relative">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="text-[10px] font-bold font-headline">Messages</span>
+<div class="absolute -top-1 right-1 w-2 h-2 bg-secondary rounded-full"></div>
+</div>
+</div>
+</nav>
+</body></html>

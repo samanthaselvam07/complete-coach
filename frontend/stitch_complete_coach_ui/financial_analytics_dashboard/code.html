@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Financial Analytics | Kinetic Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-container": "#4f40cf",
+              "outline-variant": "#c8c4d7",
+              "on-primary-fixed": "#140067",
+              "on-primary": "#ffffff",
+              "primary": "#3620b8",
+              "on-secondary-fixed-variant": "#753400",
+              "tertiary-fixed": "#e2e2e2",
+              "inverse-on-surface": "#f2f0f0",
+              "surface-container-highest": "#e4e2e2",
+              "on-primary-fixed-variant": "#3c29bd",
+              "surface-container-high": "#e9e8e7",
+              "on-tertiary-fixed-variant": "#474747",
+              "error-container": "#ffdad6",
+              "error": "#ba1a1a",
+              "surface": "#fbf9f8",
+              "surface-container": "#efeded",
+              "on-tertiary-fixed": "#1b1b1b",
+              "outline": "#787586",
+              "inverse-primary": "#c5c0ff",
+              "tertiary-container": "#585858",
+              "surface-container-lowest": "#ffffff",
+              "on-background": "#1b1c1c",
+              "secondary-container": "#f87600",
+              "surface-bright": "#fbf9f8",
+              "on-secondary-fixed": "#321200",
+              "surface-dim": "#dbdad9",
+              "inverse-surface": "#303031",
+              "on-tertiary-container": "#cfcfcf",
+              "tertiary": "#414141",
+              "primary-fixed": "#e3dfff",
+              "surface-variant": "#e4e2e2",
+              "on-secondary-container": "#562500",
+              "on-error-container": "#93000a",
+              "primary-fixed-dim": "#c5c0ff",
+              "on-error": "#ffffff",
+              "surface-container-low": "#f5f3f3",
+              "secondary-fixed-dim": "#ffb68c",
+              "secondary-fixed": "#ffdbc9",
+              "on-secondary": "#ffffff",
+              "on-surface-variant": "#474554",
+              "background": "#fbf9f8",
+              "secondary": "#9a4600",
+              "on-surface": "#1b1c1c",
+              "on-tertiary": "#ffffff",
+              "tertiary-fixed-dim": "#c6c6c6",
+              "surface-tint": "#5547d5",
+              "on-primary-container": "#cfcaff"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body { font-family: 'Inter', sans-serif; }
+      h1, h2, h3, .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar Shell -->
+<aside class="h-full w-64 fixed left-0 top-0 z-50 border-r-0 bg-[#fbf9f8]/80 backdrop-blur-3xl shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col p-6 gap-y-2 font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-sm">
+<div class="text-2xl font-black text-[#1b1c1c] tracking-tighter mb-8">Kinetic Dashboard</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/60 hover:text-[#4F40CF] hover:bg-white/40 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Overview
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#4F40CF] bg-white/50 rounded-xl transition-all duration-300 scale-[1.02] shadow-sm" href="#">
+<span class="material-symbols-outlined">payments</span>
+                Revenue
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/60 hover:text-[#4F40CF] hover:bg-white/40 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">subscriptions</span>
+                Subscriptions
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/60 hover:text-[#4F40CF] hover:bg-white/40 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">history</span>
+                Payments
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/60 hover:text-[#4F40CF] hover:bg-white/40 rounded-xl transition-all duration-200" href="#">
+<span class="material-symbols-outlined">person_search</span>
+                Client Billing
+            </a>
+</nav>
+<div class="mt-auto pt-6 space-y-1 border-t border-outline-variant/10">
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/60 hover:text-[#4F40CF] hover:bg-white/40 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1b1c1c]/60 hover:text-[#4F40CF] hover:bg-white/40 transition-all duration-200 rounded-xl" href="#">
+<span class="material-symbols-outlined">help</span>
+                Support
+            </a>
+</div>
+</aside>
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-40 bg-[#fbf9f8]/40 backdrop-blur-2xl flex justify-between items-center px-10 h-20 ml-64">
+<div class="flex items-center gap-8">
+<h1 class="font-headline font-extrabold text-2xl tracking-tight text-on-surface">Financial Analytics</h1>
+<nav class="hidden lg:flex items-center gap-6 font-['Plus_Jakarta_Sans'] font-semibold text-sm">
+<a class="text-[#4F40CF] border-b-2 border-[#4F40CF] py-1" href="#">Q1 Summary</a>
+<a class="text-[#1b1c1c]/70 hover:text-[#4F40CF] transition-colors py-1" href="#">Projections</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="bg-surface-container-high border-none rounded-full py-2 pl-10 pr-4 w-64 text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search transactions..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button class="ml-2 bg-gradient-to-r from-primary to-primary-container text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:scale-95 transition-transform">
+                    Add Transaction
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 pt-24 px-10 pb-12">
+<!-- Summary Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+<!-- Card 1 -->
+<div class="glass-card p-8 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col gap-4 overflow-hidden relative group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors"></div>
+<p class="text-on-surface-variant font-medium text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-size: 18px;">payments</span>
+                    Total Monthly Revenue
+                </p>
+<div class="flex items-end justify-between">
+<h3 class="text-4xl font-extrabold tracking-tight text-on-surface">$24,850</h3>
+<span class="text-secondary-container font-bold text-sm bg-secondary-container/10 px-2 py-1 rounded-full">+12.4%</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden mt-2">
+<div class="bg-gradient-to-r from-primary to-primary-container h-full w-[78%]"></div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="glass-card p-8 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col gap-4 overflow-hidden relative group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-secondary-container/5 rounded-full blur-2xl group-hover:bg-secondary-container/10 transition-colors"></div>
+<p class="text-on-surface-variant font-medium text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container" style="font-size: 18px;">autorenew</span>
+                    Subscription Retention
+                </p>
+<div class="flex items-end justify-between">
+<h3 class="text-4xl font-extrabold tracking-tight text-on-surface">92%</h3>
+<span class="text-primary font-bold text-sm bg-primary/10 px-2 py-1 rounded-full">Optimal</span>
+</div>
+<div class="flex gap-1 mt-2">
+<div class="h-1.5 flex-1 rounded-full bg-secondary-container"></div>
+<div class="h-1.5 flex-1 rounded-full bg-secondary-container"></div>
+<div class="h-1.5 flex-1 rounded-full bg-secondary-container"></div>
+<div class="h-1.5 flex-1 rounded-full bg-secondary-container/30"></div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="glass-card p-8 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col gap-4 overflow-hidden relative group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-tertiary-container/5 rounded-full blur-2xl group-hover:bg-tertiary-container/10 transition-colors"></div>
+<p class="text-on-surface-variant font-medium text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary" style="font-size: 18px;">leaderboard</span>
+                    Average Revenue Per User
+                </p>
+<div class="flex items-end justify-between">
+<h3 class="text-4xl font-extrabold tracking-tight text-on-surface">$182</h3>
+<span class="text-on-surface-variant/60 font-medium text-sm italic">Stable</span>
+</div>
+<div class="text-xs text-on-surface-variant/60 mt-2">Last calculated 2 hours ago</div>
+</div>
+</div>
+<!-- Charts Bento Grid -->
+<div class="grid grid-cols-12 gap-6 mb-10">
+<!-- Growth Chart (Large) -->
+<div class="col-span-12 lg:col-span-8 glass-card p-8 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] min-h-[400px] flex flex-col">
+<div class="flex justify-between items-start mb-8">
+<div>
+<h2 class="text-xl font-extrabold tracking-tight text-on-surface">Revenue Growth</h2>
+<p class="text-sm text-on-surface-variant">Trailing 6-month performance trend</p>
+</div>
+<div class="flex gap-2">
+<button class="text-xs font-bold px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant">Weekly</button>
+<button class="text-xs font-bold px-3 py-1.5 rounded-full bg-primary text-white">Monthly</button>
+</div>
+</div>
+<!-- Simulated High Fidelity Chart -->
+<div class="flex-1 w-full relative flex items-end justify-between px-2 pt-4">
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
+<div class="border-t border-on-surface w-full"></div>
+<div class="border-t border-on-surface w-full"></div>
+<div class="border-t border-on-surface w-full"></div>
+<div class="border-t border-on-surface w-full"></div>
+</div>
+<!-- Data Points Representation -->
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-gradient-to-t from-primary/5 to-primary/40 rounded-t-xl h-24 mb-4 transition-all group-hover:opacity-100 opacity-60"></div>
+<span class="text-xs font-bold text-on-surface-variant">SEP</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-gradient-to-t from-primary/5 to-primary/40 rounded-t-xl h-32 mb-4 transition-all group-hover:opacity-100 opacity-60"></div>
+<span class="text-xs font-bold text-on-surface-variant">OCT</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-gradient-to-t from-primary/5 to-primary/40 rounded-t-xl h-28 mb-4 transition-all group-hover:opacity-100 opacity-60"></div>
+<span class="text-xs font-bold text-on-surface-variant">NOV</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-gradient-to-t from-primary/5 to-primary/40 rounded-t-xl h-44 mb-4 transition-all group-hover:opacity-100 opacity-60"></div>
+<span class="text-xs font-bold text-on-surface-variant">DEC</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-gradient-to-t from-primary/5 to-primary/40 rounded-t-xl h-40 mb-4 transition-all group-hover:opacity-100 opacity-60"></div>
+<span class="text-xs font-bold text-on-surface-variant">JAN</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full bg-gradient-to-t from-primary/5 to-primary/40 rounded-t-xl h-56 mb-4 transition-all group-hover:opacity-100 opacity-60"></div>
+<span class="text-xs font-bold text-on-surface">FEB</span>
+</div>
+</div>
+</div>
+<!-- Distribution Pie (Small) -->
+<div class="col-span-12 lg:col-span-4 glass-card p-8 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col">
+<h2 class="text-xl font-extrabold tracking-tight text-on-surface mb-6">Plan Distribution</h2>
+<div class="flex-1 flex flex-col items-center justify-center">
+<div class="relative w-48 h-48 rounded-full border-[12px] border-surface-container-high flex items-center justify-center">
+<!-- Simulated Segment -->
+<div class="absolute inset-[-12px] rounded-full border-[12px] border-primary border-r-transparent border-b-transparent rotate-45"></div>
+<div class="text-center">
+<span class="text-2xl font-black text-on-surface">45%</span>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Elite</p>
+</div>
+</div>
+<div class="w-full space-y-4 mt-10">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+<span class="text-sm font-semibold">Elite Hypertrophy</span>
+</div>
+<span class="text-sm font-bold text-on-surface">$11,180</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary-container"></div>
+<span class="text-sm font-semibold">Strength Foundations</span>
+</div>
+<span class="text-sm font-bold text-on-surface">$8,690</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary"></div>
+<span class="text-sm font-semibold">Custom Coaching</span>
+</div>
+<span class="text-sm font-bold text-on-surface">$4,980</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Transactions & Billing Row -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Transactions Table -->
+<div class="col-span-12 lg:col-span-8 glass-card rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] overflow-hidden">
+<div class="p-8 pb-4 border-b border-outline-variant/10 flex justify-between items-center">
+<h2 class="text-xl font-extrabold tracking-tight text-on-surface">Recent Transactions</h2>
+<button class="text-primary font-bold text-sm hover:underline">View All</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="text-on-surface-variant/60 text-xs font-bold uppercase tracking-widest">
+<th class="px-8 py-5">Client Name</th>
+<th class="px-8 py-5">Plan Type</th>
+<th class="px-8 py-5">Status</th>
+<th class="px-8 py-5 text-right">Amount</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden">
+<img alt="" class="w-full h-full object-cover" data-alt="professional portrait of a middle-aged man with short hair and a clean look in soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAw5AFFSwlV_Laght0xRG3teatU4F3igHvxlnKKjwxksA5MTKhd_0KBMU8KkwrH_90whNHWU8uJJt2osW6vqzR2bCXKW03TRWUgqRz7gbu6ZwZm6qrS2b5GsbZENhbMuC8x8Agkz9Zwcqwm6hOpQ0i6vZhKccms5QZiB64w8XGzf7YthSp_IYhkcLntidi-p4vT_rbQMriD3UNnYM1dL4Vcm_YHD6bKDT07Hp1GDO_64zSkp5NniElLdCif-xuItwY34l7DLLso0TI"/>
+</div>
+<span class="font-bold text-on-surface">Marcus Thompson</span>
+</div>
+</td>
+<td class="px-8 py-5 text-on-surface-variant font-medium">Elite Hypertrophy</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        Success
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right font-black text-on-surface">$299.00</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden">
+<img alt="" class="w-full h-full object-cover" data-alt="close-up portrait of a young woman with a determined expression and soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnmZFLKWk3Izy0mF9oD6rdtIu2MwkfJZoz_ys6YiMKklfYjNAqelwSvIRvdwk5vVyCbKJF95OGeiWA8OWRIAH9OmQCuqY6x9AJrEGIiHe5FWruxlfN2u7fW6UzLLYzJW_Aa2TmlyhsdafAA8LsZauQpyWEHdH3upeQ4Q5zR_popMjhvvnkBxGZneew-yn1sULPqFgfHfcrkxS4U3A8wgH9iUxYUfY_to_C7ZkkeN_hSMtRF4KbSSSrioZ4J505m483cThuoFIROtA"/>
+</div>
+<span class="font-bold text-on-surface">Sarah Jenkins</span>
+</div>
+</td>
+<td class="px-8 py-5 text-on-surface-variant font-medium">Strength Foundations</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                        Pending
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right font-black text-on-surface">$149.00</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden">
+<img alt="" class="w-full h-full object-cover" data-alt="portrait of a confident woman smiling in an outdoor urban setting with soft blurred background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBV5Gm-BxqFgAIlqKuyi3wTcUmwJFAj8o6cQTaAXXioKWN9SGnv4SD7Jw6khP0aYx0OGY5xEyKOAV9P8Xq2CetWOF2n3XYuXC2glwHqKgbO5mXXnn_KoXHkvgkcFpShr7vSvas6ZWlFJOLHVDlr9Fjqv7sAbZQHiLI7RqZmWbS_qEPmZdfJyHQzz8Jk1BBRB93aigi_ozXytTEb-f2mItiPZLBk623qXIHEN0cAwJ6UAGdCxIW3115Bpwh65CBkDhDdsKe5tUybcAU"/>
+</div>
+<span class="font-bold text-on-surface">Elena Rodriguez</span>
+</div>
+</td>
+<td class="px-8 py-5 text-on-surface-variant font-medium">Custom Coaching</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        Success
+                                    </span>
+</td>
+<td class="px-8 py-5 text-right font-black text-on-surface">$450.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Upcoming Billing -->
+<div class="col-span-12 lg:col-span-4 glass-card p-8 rounded-[1.5rem] shadow-[0px_10px_30px_rgba(27,28,28,0.06)] flex flex-col">
+<h2 class="text-xl font-extrabold tracking-tight text-on-surface mb-6">Upcoming Billing</h2>
+<div class="space-y-6">
+<div class="bg-surface-container-low p-4 rounded-2xl flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-surface-variant uppercase">Next 7 Days</span>
+<span class="text-xl font-extrabold text-on-surface">$4,280</span>
+</div>
+<div class="bg-primary/10 p-2 rounded-xl">
+<span class="material-symbols-outlined text-primary">calendar_today</span>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-start gap-4 p-3 hover:bg-surface-container-high transition-colors rounded-xl group">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-bold text-xs">MA</div>
+<div>
+<h4 class="font-bold text-sm">Michael Adams</h4>
+<p class="text-xs text-on-surface-variant">Due in 2 days • Elite</p>
+</div>
+<div class="ml-auto font-bold text-sm">$299</div>
+</div>
+<div class="flex items-start gap-4 p-3 hover:bg-surface-container-high transition-colors rounded-xl group">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-bold text-xs">LW</div>
+<div>
+<h4 class="font-bold text-sm">Linda Wu</h4>
+<p class="text-xs text-on-surface-variant">Due in 5 days • Strength</p>
+</div>
+<div class="ml-auto font-bold text-sm">$149</div>
+</div>
+<div class="flex items-start gap-4 p-3 hover:bg-surface-container-high transition-colors rounded-xl group">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-bold text-xs">DK</div>
+<div>
+<h4 class="font-bold text-sm">David King</h4>
+<p class="text-xs text-on-surface-variant">Due in 6 days • Custom</p>
+</div>
+<div class="ml-auto font-bold text-sm">$600</div>
+</div>
+</div>
+<button class="w-full mt-auto py-3 bg-surface-container-high text-on-surface font-bold text-sm rounded-xl hover:bg-surface-container-highest transition-colors">
+                        View Full Forecast
+                    </button>
+</div>
+</div>
+</div>
+</main>
+</body></html>
