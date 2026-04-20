@@ -1,6 +1,6 @@
 # Complete Coach
 
-Multi-tenant SaaS fitness coaching platform — **My Complete Physique (MCP)**.
+Multi-tenant SaaS fitness coaching platform — **Complete Coach**.
 
 Two user portals in a single Next.js application:
 - **Coach Portal** — manage clients, programs, nutrition, supplements, scheduling, finances, messaging, and educational content
