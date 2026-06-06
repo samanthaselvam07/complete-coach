@@ -38,13 +38,6 @@ export function SidebarNav({ currentPath }: SidebarNavProps) {
   const [clientFormError, setClientFormError] = useState<string | null>(null);
   const [savingClient, setSavingClient] = useState(false);
 
-  const setGroupOpen = (href: string, open: boolean) => {
-    setOpenGroups((current) => ({
-      ...current,
-      [href]: open
-    }));
-  };
-
   const toggleGroup = (href: string) => {
     setOpenGroups((current) => ({
       ...current,
@@ -122,24 +115,24 @@ export function SidebarNav({ currentPath }: SidebarNavProps) {
             <div key={item.href}>
               <div className="flex items-center gap-1">
                 {hasChildren ? (
-                  <Link
-                    href={item.href as Route}
+                  <button
+                    type="button"
                     aria-current={active ? "page" : undefined}
                     aria-controls={groupId}
                     aria-expanded={open}
                     className={cn(
-                      "flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                      "flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
                       active
                         ? "bg-indigo-50 text-indigo-700"
                         : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     )}
                     onClick={() => {
-                      setGroupOpen(item.href, true);
+                      toggleGroup(item.href);
                     }}
                   >
                     <Icon className="size-4 shrink-0" aria-hidden="true" />
                     <span className="truncate">{item.label}</span>
-                  </Link>
+                  </button>
                 ) : (
                   <Link
                     href={item.href as Route}
