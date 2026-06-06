@@ -5,6 +5,7 @@ import type { Session } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 import { credentialsSchema } from "@/lib/auth/credentials";
+import { isLocalDevAuthBypassEnabled, localDevelopmentSession } from "@/lib/auth/local-dev-session";
 import type { MembershipRole } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db/prisma";
 import { getServerEnv } from "@/lib/env";
@@ -24,7 +25,7 @@ function isActiveOrganization(value: unknown): value is NonNullable<Session["act
   );
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth(() => {
+const nextAuth = NextAuth(() => {
   const env = getServerEnv();
 
   return {
@@ -114,3 +115,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
     }
   };
 });
+
+export const { handlers, signIn, signOut } = nextAuth;
+
+export async function auth() {
+  if (isLocalDevAuthBypassEnabled()) {
+    return localDevelopmentSession;
+  }
+
+  return nextAuth.auth();
+}

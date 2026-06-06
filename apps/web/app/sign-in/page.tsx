@@ -1,9 +1,15 @@
 import { ShieldCheck } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { Card, CardContent } from "@/components/ui/card";
+import { isLocalDevAuthBypassEnabled } from "@/lib/auth/local-dev-session";
 
 export default function SignInPage() {
+  if (isLocalDevAuthBypassEnabled()) {
+    redirect("/");
+  }
+
   return (
     <section className="min-h-[calc(100vh-5rem)] bg-[radial-gradient(circle_at_top_left,rgba(79,70,229,0.16),transparent_32rem),linear-gradient(135deg,#f8fafc_0%,#eef2ff_100%)] px-8 py-12">
       <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
