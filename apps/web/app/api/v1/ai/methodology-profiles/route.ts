@@ -9,8 +9,9 @@ import {
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
 
-export async function GET(_request?: Request) {
+export async function GET(request?: Request) {
   try {
+    void request;
     const actor = requireActiveActor(await auth(), "ai:read");
     const profiles = await prisma.aiMethodologyProfile.findMany({
       where: {

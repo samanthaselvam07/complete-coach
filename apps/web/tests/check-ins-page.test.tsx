@@ -204,6 +204,14 @@ describe("CheckInManagementPage", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
+            data: []
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
             data: {
               id: "checkin_api_1",
               name: "API Client",
@@ -303,6 +311,7 @@ describe("CheckInManagementPage", () => {
         )
       )
       .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -359,6 +368,129 @@ describe("CheckInManagementPage", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/ai/recommendations/ai_output_1/approve",
       expect.objectContaining({ method: "POST" })
+    );
+  });
+
+  it("creates a coach methodology profile and uses it for AI review generation", async () => {
+    const methodologyProfile = {
+      id: "methodology_1",
+      name: "Habit-first physique coaching",
+      methodology: "Habit-first",
+      tone: "calm, direct, no shame",
+      principles: ["Lead with pattern recognition"],
+      checkInSections: ["Wins", "Risks", "Next minimum effective change"],
+      redFlagRules: [],
+      adjustmentRules: ["Do not reduce calories until adherence is reviewed"],
+      forbiddenRecommendations: [],
+      isDefault: true,
+      isActive: true,
+      createdAt: "2026-06-06T08:00:00.000Z",
+      updatedAt: "2026-06-06T08:00:00.000Z"
+    };
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "checkin_api_1",
+                clientId: "client_1",
+                formSubmissionId: "submission_1",
+                name: "API Client",
+                initials: "AC",
+                status: "pending",
+                checkInStatus: "pending-review",
+                dueAt: "2026-05-14T00:00:00.000Z",
+                submittedAt: "2026-05-14T06:00:00.000Z",
+                assignedDay: "2026-05-14T00:00:00.000Z",
+                lastCheckIn: "Today"
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "checkin_api_1",
+              name: "API Client",
+              status: "pending",
+              checkInStatus: "pending-review",
+              submittedAt: "2026-05-14T06:00:00.000Z",
+              answers: {},
+              metrics: []
+            }
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: methodologyProfile }), { status: 201 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              outputs: [
+                {
+                  id: "ai_output_1",
+                  type: "check-in-summary",
+                  status: "pending-approval",
+                  severity: "medium",
+                  title: "Habit-first check-in summary",
+                  contentMarkdown: "Coaching lens: Habit-first physique coaching",
+                  requiresApproval: true
+                }
+              ]
+            }
+          }),
+          { status: 201 }
+        )
+      );
+
+    render(createElement(CheckInManagementPage));
+
+    expect(await screen.findByText("API Client")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /view full check-in for API Client/i }));
+    fireEvent.change(await screen.findByLabelText("Methodology profile name"), {
+      target: { value: "Habit-first physique coaching" }
+    });
+    fireEvent.change(screen.getByLabelText("Coaching methodology"), { target: { value: "Habit-first" } });
+    fireEvent.change(screen.getByLabelText("AI tone"), { target: { value: "calm, direct, no shame" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save methodology profile" }));
+
+    expect(await screen.findByText("AI methodology profile saved.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Generate AI review" }));
+
+    expect(await screen.findByText("Habit-first check-in summary")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/ai/methodology-profiles",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Habit-first physique coaching")
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/check-ins/checkin_api_1/ai-review",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ methodologyProfileId: "methodology_1" })
+      })
+    );
+  });
+
+  it("validates required methodology profile fields before saving", async () => {
+    render(createElement(CheckInManagementPage));
+
+    fireEvent.click(screen.getByRole("button", { name: /view full check-in for Sarah Williams/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Save methodology profile" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Methodology profile name and coaching methodology are required."
     );
   });
 });

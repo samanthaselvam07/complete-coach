@@ -60,6 +60,21 @@ interface AiRecommendation {
   requiresApproval: boolean;
 }
 
+interface AiMethodologyProfile {
+  id: string;
+  name: string;
+  methodology: string;
+  description?: string | null;
+  tone?: string | null;
+  principles?: string[];
+  checkInSections?: string[];
+  redFlagRules?: string[];
+  adjustmentRules?: string[];
+  forbiddenRecommendations?: string[];
+  isDefault: boolean;
+  isActive: boolean;
+}
+
 type DisplayCheckIn = CheckInRecord | ApiCheckInRecord;
 
 export function CheckInManagementPage() {
@@ -74,6 +89,12 @@ export function CheckInManagementPage() {
   const [reviewSummary, setReviewSummary] = useState("");
   const [coachNotes, setCoachNotes] = useState("");
   const [aiRecommendations, setAiRecommendations] = useState<AiRecommendation[]>([]);
+  const [methodologyProfiles, setMethodologyProfiles] = useState<AiMethodologyProfile[]>([]);
+  const [selectedMethodologyProfileId, setSelectedMethodologyProfileId] = useState("");
+  const [methodologyName, setMethodologyName] = useState("");
+  const [methodologyType, setMethodologyType] = useState("");
+  const [methodologyTone, setMethodologyTone] = useState("");
+  const [methodologySaving, setMethodologySaving] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -257,6 +278,12 @@ export function CheckInManagementPage() {
           actionMessage={actionMessage}
           actionError={actionError}
           aiRecommendations={aiRecommendations}
+          methodologyProfiles={methodologyProfiles}
+          selectedMethodologyProfileId={selectedMethodologyProfileId}
+          methodologyName={methodologyName}
+          methodologyType={methodologyType}
+          methodologyTone={methodologyTone}
+          methodologySaving={methodologySaving}
           aiLoading={aiLoading}
           onClose={() => setSelectedCheckIn(null)}
           onReviewSummaryChange={setReviewSummary}
@@ -264,6 +291,11 @@ export function CheckInManagementPage() {
           onReview={reviewSelectedCheckIn}
           onComplete={completeSelectedCheckIn}
           onGenerateAiReview={generateAiReview}
+          onMethodologyProfileChange={setSelectedMethodologyProfileId}
+          onMethodologyNameChange={setMethodologyName}
+          onMethodologyTypeChange={setMethodologyType}
+          onMethodologyToneChange={setMethodologyTone}
+          onSaveMethodologyProfile={saveMethodologyProfile}
           onApproveAiRecommendation={approveAiRecommendation}
           onRejectAiRecommendation={rejectAiRecommendation}
         />
@@ -277,6 +309,8 @@ export function CheckInManagementPage() {
     setReviewSummary("");
     setCoachNotes("");
     setAiRecommendations([]);
+    setMethodologyProfiles([]);
+    setSelectedMethodologyProfileId("");
 
     if (checkInSource === "fixture") {
       setSelectedCheckIn({
@@ -314,6 +348,7 @@ export function CheckInManagementPage() {
         setReviewSummary(payload.data.summary ?? "");
         setCoachNotes(payload.data.coachNotes ?? "");
         await loadAiRecommendations(payload.data);
+        await loadMethodologyProfiles();
       }
     } catch {
       setActionError("Check-in details could not be loaded.");
@@ -342,6 +377,74 @@ export function CheckInManagementPage() {
     }
   }
 
+  async function loadMethodologyProfiles() {
+    try {
+      const response = await fetch("/api/v1/ai/methodology-profiles");
+
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = (await response.json()) as { data?: unknown };
+      const profiles = Array.isArray(payload.data) ? (payload.data as AiMethodologyProfile[]) : [];
+      setMethodologyProfiles(profiles);
+      setSelectedMethodologyProfileId((current) => current || profiles.find((profile) => profile.isDefault)?.id || profiles[0]?.id || "");
+    } catch {
+      // Methodology profiles are optional; default AI review generation remains available.
+    }
+  }
+
+  async function saveMethodologyProfile() {
+    if (!methodologyName.trim() || !methodologyType.trim()) {
+      setActionError("Methodology profile name and coaching methodology are required.");
+      return;
+    }
+
+    setMethodologySaving(true);
+    setActionMessage(null);
+    setActionError(null);
+
+    try {
+      const response = await fetch("/api/v1/ai/methodology-profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: methodologyName.trim(),
+          methodology: methodologyType.trim(),
+          tone: methodologyTone.trim() || null,
+          principles: [],
+          checkInSections: ["Wins", "Risks", "Next minimum effective change"],
+          redFlagRules: [],
+          adjustmentRules: [],
+          forbiddenRecommendations: [],
+          isDefault: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Methodology profile request failed.");
+      }
+
+      const payload = (await response.json()) as { data?: AiMethodologyProfile };
+      if (payload.data) {
+        setMethodologyProfiles((current) => [
+          { ...payload.data!, isDefault: true },
+          ...current.map((profile) => ({ ...profile, isDefault: false })).filter((profile) => profile.id !== payload.data!.id)
+        ]);
+        setSelectedMethodologyProfileId(payload.data.id);
+        setMethodologyName("");
+        setMethodologyType("");
+        setMethodologyTone("");
+      }
+
+      setActionMessage("AI methodology profile saved.");
+    } catch {
+      setActionError("AI methodology profile could not be saved.");
+    } finally {
+      setMethodologySaving(false);
+    }
+  }
+
   async function generateAiReview() {
     if (!selectedCheckIn || checkInSource !== "api") {
       return;
@@ -352,7 +455,16 @@ export function CheckInManagementPage() {
     setActionError(null);
 
     try {
-      const response = await fetch(`/api/v1/check-ins/${selectedCheckIn.id}/ai-review`, { method: "POST" });
+      const response = await fetch(
+        `/api/v1/check-ins/${selectedCheckIn.id}/ai-review`,
+        selectedMethodologyProfileId
+          ? {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ methodologyProfileId: selectedMethodologyProfileId })
+            }
+          : { method: "POST" }
+      );
 
       if (!response.ok) {
         throw new Error("AI review request failed.");
@@ -514,6 +626,12 @@ function CheckInDetailDialog({
   actionMessage,
   actionError,
   aiRecommendations,
+  methodologyProfiles,
+  selectedMethodologyProfileId,
+  methodologyName,
+  methodologyType,
+  methodologyTone,
+  methodologySaving,
   aiLoading,
   onClose,
   onReviewSummaryChange,
@@ -521,6 +639,11 @@ function CheckInDetailDialog({
   onReview,
   onComplete,
   onGenerateAiReview,
+  onMethodologyProfileChange,
+  onMethodologyNameChange,
+  onMethodologyTypeChange,
+  onMethodologyToneChange,
+  onSaveMethodologyProfile,
   onApproveAiRecommendation,
   onRejectAiRecommendation
 }: {
@@ -531,6 +654,12 @@ function CheckInDetailDialog({
   actionMessage: string | null;
   actionError: string | null;
   aiRecommendations: AiRecommendation[];
+  methodologyProfiles: AiMethodologyProfile[];
+  selectedMethodologyProfileId: string;
+  methodologyName: string;
+  methodologyType: string;
+  methodologyTone: string;
+  methodologySaving: boolean;
   aiLoading: boolean;
   onClose: () => void;
   onReviewSummaryChange: (value: string) => void;
@@ -538,6 +667,11 @@ function CheckInDetailDialog({
   onReview: () => void;
   onComplete: () => void;
   onGenerateAiReview: () => void;
+  onMethodologyProfileChange: (profileId: string) => void;
+  onMethodologyNameChange: (value: string) => void;
+  onMethodologyTypeChange: (value: string) => void;
+  onMethodologyToneChange: (value: string) => void;
+  onSaveMethodologyProfile: () => void;
   onApproveAiRecommendation: (recommendationId: string) => void;
   onRejectAiRecommendation: (recommendationId: string) => void;
 }) {
@@ -624,6 +758,80 @@ function CheckInDetailDialog({
               >
                 {aiLoading ? "Generating..." : "Generate AI review"}
               </button>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-indigo-100 bg-white p-3">
+              <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+                <div>
+                  <label htmlFor="methodology-profile" className="block text-xs font-semibold uppercase tracking-wider text-indigo-900">
+                    AI methodology profile
+                  </label>
+                  <select
+                    id="methodology-profile"
+                    value={selectedMethodologyProfileId}
+                    className="mt-1 w-full rounded-lg border border-indigo-100 bg-white p-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onChange={(event) => onMethodologyProfileChange(event.target.value)}
+                  >
+                    <option value="">Use platform default review lens</option>
+                    {methodologyProfiles.map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.name}
+                        {profile.isDefault ? " (default)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-indigo-800">
+                    Tailor the report to your coaching tone and principles before generating recommendations.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-lg border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-900 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={methodologySaving}
+                  onClick={onSaveMethodologyProfile}
+                >
+                  {methodologySaving ? "Saving..." : "Save methodology profile"}
+                </button>
+              </div>
+
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <div>
+                  <label htmlFor="methodology-name" className="block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Methodology profile name
+                  </label>
+                  <input
+                    id="methodology-name"
+                    value={methodologyName}
+                    className="mt-1 w-full rounded-lg border border-gray-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Habit-first physique coaching"
+                    onChange={(event) => onMethodologyNameChange(event.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="methodology-type" className="block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Coaching methodology
+                  </label>
+                  <input
+                    id="methodology-type"
+                    value={methodologyType}
+                    className="mt-1 w-full rounded-lg border border-gray-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Habit-first"
+                    onChange={(event) => onMethodologyTypeChange(event.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="methodology-tone" className="block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    AI tone
+                  </label>
+                  <input
+                    id="methodology-tone"
+                    value={methodologyTone}
+                    className="mt-1 w-full rounded-lg border border-gray-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="calm, direct, no shame"
+                    onChange={(event) => onMethodologyToneChange(event.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
             {aiRecommendations.length ? (
