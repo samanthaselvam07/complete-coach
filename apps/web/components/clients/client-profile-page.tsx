@@ -13,6 +13,8 @@ type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "
 
 interface ClientProfilePageProps {
   clientId: string;
+  highlightedCheckInId?: string;
+  initialTab?: ProfileTab;
 }
 
 interface ApiClientProfile {
@@ -118,14 +120,14 @@ interface ClientProfileView extends ClientProfile {
 
 const tabs: ProfileTab[] = ["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Check-Ins"];
 
-export function ClientProfilePage({ clientId }: ClientProfilePageProps) {
+export function ClientProfilePage({ clientId, highlightedCheckInId, initialTab = "Dashboard" }: ClientProfilePageProps) {
   const [client, setClient] = useState<ClientProfileView | null>(() => {
     const fixtureClient = getClientById(clientId);
 
     return fixtureClient ? createProfileViewFromFixture(fixtureClient) : null;
   });
   const [loadingClient, setLoadingClient] = useState(!client);
-  const [activeTab, setActiveTab] = useState<ProfileTab>("Dashboard");
+  const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
 
   useEffect(() => {
     let active = true;
@@ -221,7 +223,7 @@ export function ClientProfilePage({ clientId }: ClientProfilePageProps) {
         </div>
       </div>
 
-      <ClientProfileTabPanel client={client} activeTab={activeTab} />
+      <ClientProfileTabPanel client={client} activeTab={activeTab} highlightedCheckInId={highlightedCheckInId} />
     </div>
   );
 }
@@ -536,7 +538,15 @@ function ProfileMetric({
   );
 }
 
-function ClientProfileTabPanel({ client, activeTab }: { client: ClientProfileView; activeTab: ProfileTab }) {
+function ClientProfileTabPanel({
+  client,
+  activeTab,
+  highlightedCheckInId
+}: {
+  client: ClientProfileView;
+  activeTab: ProfileTab;
+  highlightedCheckInId?: string;
+}) {
   if (activeTab === "Dashboard") {
     return (
       <section id="client-tab-Dashboard" role="tabpanel" aria-label="Dashboard">
@@ -556,7 +566,7 @@ function ClientProfileTabPanel({ client, activeTab }: { client: ClientProfileVie
       {activeTab === "Training" ? <TrainingPanel client={client} /> : null}
       {activeTab === "Nutrition" ? <NutritionPanel client={client} /> : null}
       {activeTab === "Supplementation" ? <SupplementationPanel client={client} /> : null}
-      {activeTab === "Check-Ins" ? <CheckInHistoryPanel clientId={client.id} /> : null}
+      {activeTab === "Check-Ins" ? <CheckInHistoryPanel clientId={client.id} highlightedCheckInId={highlightedCheckInId} /> : null}
     </section>
   );
 }

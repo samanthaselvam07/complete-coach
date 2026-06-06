@@ -209,6 +209,14 @@ describe("ClientProfilePage", () => {
     expect(screen.getAllByText("Main Challenge")).toHaveLength(3);
   });
 
+  it("can open directly to a highlighted check-in inside the client profile", () => {
+    render(createElement(ClientProfilePage, { clientId: "1", initialTab: "Check-Ins", highlightedCheckInId: "demo-weekly-check-in" }));
+
+    expect(screen.getByRole("tab", { name: "Check-Ins" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Check-Ins" })).toBeInTheDocument();
+    expect(screen.getByText("Selected check-in")).toBeInTheDocument();
+  });
+
   it("renders persisted client training assignments in the training tab", async () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(

@@ -18,7 +18,7 @@ describe("CheckInManagementPage", () => {
     expect(screen.queryByRole("button", { name: /view full check-in for Sarah Williams/i })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view full check-in for Sarah Williams/i })).toHaveAttribute(
       "href",
-      "/clients/1/check-ins/4"
+      "/clients/1?tab=check-ins&checkInId=4"
     );
   });
 
@@ -74,7 +74,7 @@ describe("CheckInManagementPage", () => {
     expect(screen.queryByText("Review Modal")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view full check-in for API Client/i })).toHaveAttribute(
       "href",
-      "/clients/client_1/check-ins/checkin_api_1"
+      "/clients/client_1?tab=check-ins&checkInId=checkin_api_1"
     );
   });
 
