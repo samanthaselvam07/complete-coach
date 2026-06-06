@@ -195,6 +195,31 @@ Query filters:
 - `POST /api/v1/notifications/{notification_id}/read`: marks one current-user tenant-scoped notification read.
 - `POST /api/v1/notifications/read`: marks all current-user unread notifications read.
 
+### Social
+- `GET /api/v1/social/connections`: lists active-organization social connections. Requires `social:read`. Response never includes encrypted access or refresh tokens.
+- `DELETE /api/v1/social/connections/{connection_id}`: locally revokes a social connection, sets `revokedAt`, and audits the action. Requires `social:manage`.
+- `GET /api/v1/social/connections/oauth/start`: creates a hashed OAuth state and redirects to the selected provider. Query: `provider` (`instagram`, `facebook`, `x`), optional safe relative `redirectTo`. Requires `social:manage`.
+- `GET /api/v1/social/connections/oauth/callback`: consumes a valid OAuth state, exchanges the code, encrypts provider tokens, upserts the connection, and redirects to the stored safe path.
+- `GET /api/v1/social/posts`: lists organization-scoped social posts with target summaries. Query: optional `status`, optional `limit`.
+- `POST /api/v1/social/posts`: creates a draft or scheduled social post. Body: `caption`, optional ISO `scheduledFor`, `targetConnectionIds`, optional `media` array with `url`, `mimeType`, and `sizeBytes`. Requires `social:manage`.
+- `POST /api/v1/social/posts/{post_id}/cancel`: cancels a non-published post and any pending targets. Requires `social:manage`.
+- `POST /api/v1/social/jobs/process`: processes due scheduled, queued, and retrying social targets. Body: optional `limit`. Provider responses are sanitized before persistence.
+- `POST /api/v1/social/analytics/ingest`: creates tenant-scoped analytics snapshots for active connections. Body: optional `connectionIds`, optional `postIds`, optional ISO `capturedAt`. In simulated mode the snapshot records safe placeholder metrics.
+
+Social provider identifiers:
+- `instagram`
+- `facebook`
+- `x`
+
+Social post statuses:
+- `draft`
+- `scheduled`
+- `queued`
+- `publishing`
+- `published`
+- `failed`
+- `cancelled`
+
 ### Files
 - `POST /api/v1/files/upload-url`: create signed R2 upload URL.
 - `POST /api/v1/files/{object_id}/download-url`: create signed R2 download URL.

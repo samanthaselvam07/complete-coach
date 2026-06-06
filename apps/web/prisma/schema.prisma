@@ -335,6 +335,46 @@ enum PaymentEventProcessingStatus {
   @@map("payment_event_processing_status")
 }
 
+enum SocialProvider {
+  META_INSTAGRAM @map("meta-instagram")
+  META_FACEBOOK  @map("meta-facebook")
+  X              @map("x")
+
+  @@map("social_provider")
+}
+
+enum SocialConnectionStatus {
+  ACTIVE  @map("active")
+  REVOKED @map("revoked")
+  ERROR   @map("error")
+
+  @@map("social_connection_status")
+}
+
+enum SocialPostStatus {
+  DRAFT      @map("draft")
+  SCHEDULED  @map("scheduled")
+  QUEUED     @map("queued")
+  PUBLISHING @map("publishing")
+  PUBLISHED  @map("published")
+  FAILED     @map("failed")
+  CANCELLED  @map("cancelled")
+
+  @@map("social_post_status")
+}
+
+enum SocialTargetStatus {
+  SCHEDULED  @map("scheduled")
+  QUEUED     @map("queued")
+  PUBLISHING @map("publishing")
+  PUBLISHED  @map("published")
+  RETRYING   @map("retrying")
+  FAILED     @map("failed")
+  CANCELLED  @map("cancelled")
+
+  @@map("social_target_status")
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String  @map("user_id")
@@ -410,6 +450,9 @@ model User {
   assignedTasks                Task[]                        @relation("TaskAssignedUser")
   createdTasks                 Task[]                        @relation("TaskCreator")
   createdPackages              CoachingPackage[]             @relation("PackageCreator")
+  socialConnections            SocialConnection[]            @relation("SocialConnectionCreator")
+  socialOAuthStates            SocialOAuthState[]            @relation("SocialOAuthStateCreator")
+  createdSocialPosts           SocialPost[]                  @relation("SocialPostCreator")
 
   @@unique([authProvider, authProviderAccountId])
   @@map("users")
@@ -473,6 +516,12 @@ model Organization {
   packages                     CoachingPackage[]
   clientSubscriptions          ClientSubscription[]
   paymentEvents                PaymentEvent[]
+  socialConnections            SocialConnection[]
+  socialOAuthStates            SocialOAuthState[]
+  socialPosts                  SocialPost[]
+  socialPostTargets            SocialPostTarget[]
+  socialPostAttempts           SocialPostAttempt[]
+  socialAnalyticsSnapshots     SocialAnalyticsSnapshot[]
 
   @@index([status])
   @@map("organizations")
@@ -554,6 +603,134 @@ model RateLimitBucket {
 
   @@index([expiresAt])
   @@map("rate_limit_buckets")
+}
+
+model SocialConnection {
+  id                    String                 @id @default(cuid())
+  organizationId        String                 @map("organization_id")
+  provider              SocialProvider
+  providerAccountId     String                 @map("provider_account_id")
+  accountName           String                 @map("account_name")
+  scopes                String[]
+  status                SocialConnectionStatus @default(ACTIVE)
+  encryptedAccessToken  String                 @map("encrypted_access_token") @db.Text
+  encryptedRefreshToken String?                @map("encrypted_refresh_token") @db.Text
+  tokenExpiresAt        DateTime?              @map("token_expires_at") @db.Timestamptz(6)
+  connectedAt           DateTime               @default(now()) @map("connected_at") @db.Timestamptz(6)
+  revokedAt             DateTime?              @map("revoked_at") @db.Timestamptz(6)
+  lastError             String?                @map("last_error")
+  createdByUserId       String                 @map("created_by_user_id")
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy             User                   @relation("SocialConnectionCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  postTargets           SocialPostTarget[]
+  analyticsSnapshots    SocialAnalyticsSnapshot[]
+
+  @@unique([organizationId, provider, providerAccountId])
+  @@index([organizationId, status])
+  @@index([createdByUserId])
+  @@map("social_connections")
+}
+
+model SocialOAuthState {
+  id              String         @id @default(cuid())
+  organizationId  String         @map("organization_id")
+  createdByUserId String         @map("created_by_user_id")
+  provider        SocialProvider
+  stateHash       String         @unique @map("state_hash")
+  codeVerifier    String?        @map("code_verifier")
+  redirectTo      String?        @map("redirect_to")
+  expiresAt       DateTime       @map("expires_at") @db.Timestamptz(6)
+  consumedAt      DateTime?      @map("consumed_at") @db.Timestamptz(6)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy       User           @relation("SocialOAuthStateCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, provider, createdAt])
+  @@index([expiresAt])
+  @@map("social_oauth_states")
+}
+
+model SocialPost {
+  id              String             @id @default(cuid())
+  organizationId  String             @map("organization_id")
+  caption         String             @db.Text
+  media           Json               @default("[]")
+  status          SocialPostStatus   @default(DRAFT)
+  scheduledFor    DateTime?          @map("scheduled_for") @db.Timestamptz(6)
+  publishedAt     DateTime?          @map("published_at") @db.Timestamptz(6)
+  cancelledAt     DateTime?          @map("cancelled_at") @db.Timestamptz(6)
+  createdByUserId String             @map("created_by_user_id")
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy       User               @relation("SocialPostCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  targets         SocialPostTarget[]
+
+  @@index([organizationId, status, scheduledFor])
+  @@index([createdByUserId])
+  @@map("social_posts")
+}
+
+model SocialPostTarget {
+  id              String              @id @default(cuid())
+  organizationId  String              @map("organization_id")
+  postId          String              @map("post_id")
+  connectionId    String              @map("connection_id")
+  provider        SocialProvider
+  status          SocialTargetStatus  @default(SCHEDULED)
+  attempts        Int                 @default(0)
+  providerPostId  String?             @map("provider_post_id")
+  lastError       String?             @map("last_error")
+  nextAttemptAt   DateTime?           @map("next_attempt_at") @db.Timestamptz(6)
+  publishedAt     DateTime?           @map("published_at") @db.Timestamptz(6)
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  post            SocialPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  connection      SocialConnection    @relation(fields: [connectionId], references: [id], onDelete: Restrict)
+  attemptsLog     SocialPostAttempt[]
+
+  @@unique([postId, connectionId])
+  @@index([organizationId, status, nextAttemptAt])
+  @@index([connectionId, status])
+  @@map("social_post_targets")
+}
+
+model SocialPostAttempt {
+  id               String             @id @default(cuid())
+  organizationId   String             @map("organization_id")
+  targetId         String             @map("target_id")
+  status           SocialTargetStatus
+  providerStatus   Int?               @map("provider_status")
+  providerResponse Json?              @map("provider_response")
+  errorCode        String?            @map("error_code")
+  errorMessage     String?            @map("error_message")
+  retryAt          DateTime?          @map("retry_at") @db.Timestamptz(6)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  target           SocialPostTarget   @relation(fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([targetId, createdAt])
+  @@map("social_post_attempts")
+}
+
+model SocialAnalyticsSnapshot {
+  id             String           @id @default(cuid())
+  organizationId String           @map("organization_id")
+  connectionId   String           @map("connection_id")
+  provider       SocialProvider
+  providerPostId String?          @map("provider_post_id")
+  metrics        Json
+  capturedAt     DateTime         @default(now()) @map("captured_at") @db.Timestamptz(6)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connection     SocialConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, provider, capturedAt])
+  @@index([connectionId, capturedAt])
+  @@map("social_analytics_snapshots")
 }
 
 model Client {

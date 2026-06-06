@@ -73,9 +73,20 @@
 
 ## Jobs
 - [ ] Inngest events have versioned payload schemas.
+- [x] Retry policies are defined for social posting provider failures and rate limits.
 - [ ] Retry policies are defined for emails, webhooks, imports, exports, and media processing.
 - [ ] Job failures are observable.
 - [ ] Long-running work does not block request/response paths.
+
+## Social Integrations
+- [x] Provider selection is captured in ADR-005.
+- [x] OAuth provider secrets are environment-only.
+- [x] OAuth tokens are encrypted at rest and redacted from API responses.
+- [x] Social tables are tenant-scoped with `organization_id`.
+- [x] Scheduled posts, cancellation, local revocation, attempts, retries, and analytics snapshots are persisted.
+- [x] Provider responses are sanitized before attempt persistence.
+- [ ] Meta/X app review, live OAuth redirect URLs, and production scopes are approved before live posting.
+- [ ] Advanced media transcoding is implemented before broad video publishing.
 
 ## Observability
 - [x] Sentry captures server/client errors.

@@ -488,4 +488,29 @@ Implementation slices:
 - Ticket 019D - Rate Limits And Security: Complete. Added durable PostgreSQL rate-limit buckets, policy-specific fail behavior, security headers, dependency remediation, and security tests.
 - Ticket 019E - Production Review Passes: Complete. Completed code-level performance and accessibility reviews, portable file-size enforcement, production deployment/rollback guidance, and the mandatory implementation gap review.
 - Ticket 019F - Final Environment Gate: Complete. Applied pending migrations through `20260606120000_team_invitations`, seeded the configured Neon database, and ran the full 67-test Playwright smoke suite successfully on June 6, 2026.
+
+## Ticket 020 - Full Social Functionality
+Status: Complete. M11 persistence, OAuth state handling, token encryption, scheduling, posting worker retries, cancellation, local revocation, analytics snapshots, UI persistence, provider ADR, docs, focused tests, coverage, build, and Playwright verification are complete. Live provider app approval is an external production gate.
+
+Scope:
+- Provider selection and ADR.
+- OAuth for Meta Instagram, Meta Facebook, and X.
+- Encrypted social connections.
+- Content scheduling and cancellation.
+- Posting worker with durable attempts and retries.
+- Provider policy/app-review documentation.
+- Analytics snapshots where APIs allow.
+
+Depends on:
+- Ticket 019.
+
+Tests:
+- Provider metadata, token encryption, redaction, and media validation.
+- OAuth start/callback route handlers with mocks.
+- Scheduled post creation, cancellation, worker retry, and due scheduled processing.
+- Social UI persistence and fallback behavior.
+
+Out of scope:
 - User-facing AI automation.
+- Real provider app approval.
+- Advanced media transcoding worker.

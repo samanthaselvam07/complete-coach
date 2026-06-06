@@ -369,6 +369,8 @@ Steps:
 - Close any gaps with code/docs/tests before M11 starts.
 
 ## M11 - Full Social Functionality
+Status: Complete. Ticket 020 is complete with social persistence, OAuth state handling, encrypted tokens, scheduling, cancellation, local revocation, posting retries, analytics snapshots, provider ADR, API-backed UI, documentation, coverage, build, and Playwright verification. Live Meta/X posting remains gated by external provider app approval and production credentials.
+
 Goal: move beyond content calendar into real social integrations.
 
 Scope:

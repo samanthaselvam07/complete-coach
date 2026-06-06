@@ -667,6 +667,135 @@ Indexes:
 - `organization_id,classification`.
 - `checksum_sha256`.
 
+## Social
+### `social_connections`
+Purpose: tenant-owned OAuth connection to a provider account.
+
+Fields:
+- `id`
+- `organization_id`
+- `provider`
+- `provider_account_id`
+- `account_name`
+- `scopes`
+- `status`
+- `encrypted_access_token`
+- `encrypted_refresh_token`
+- `token_expires_at`
+- `connected_at`
+- `revoked_at`
+- `last_error`
+- `created_by_user_id`
+- `created_at`
+- `updated_at`
+
+Security:
+- Access and refresh tokens are encrypted at rest.
+- API serializers must never return encrypted token fields.
+
+Indexes:
+- Unique `organization_id,provider,provider_account_id`.
+- `organization_id,status`.
+- `organization_id,provider`.
+
+### `social_oauth_states`
+Purpose: short-lived OAuth CSRF and PKCE state storage.
+
+Fields:
+- `id`
+- `organization_id`
+- `provider`
+- `state_hash`
+- `code_verifier`
+- `redirect_to`
+- `expires_at`
+- `consumed_at`
+- `created_by_user_id`
+- `created_at`
+
+Indexes:
+- Unique `state_hash`.
+- `organization_id,provider,expires_at`.
+
+### `social_posts`
+Purpose: scheduled or draft content created by a coach.
+
+Fields:
+- `id`
+- `organization_id`
+- `caption`
+- `media`
+- `status`
+- `scheduled_for`
+- `published_at`
+- `cancelled_at`
+- `created_by_user_id`
+- `created_at`
+- `updated_at`
+
+Indexes:
+- `organization_id,status,scheduled_for`.
+- `organization_id,created_at`.
+
+### `social_post_targets`
+Purpose: provider-specific delivery state for a social post.
+
+Fields:
+- `id`
+- `organization_id`
+- `post_id`
+- `connection_id`
+- `provider`
+- `status`
+- `attempts`
+- `provider_post_id`
+- `last_error`
+- `next_attempt_at`
+- `published_at`
+- `created_at`
+- `updated_at`
+
+Indexes:
+- Unique `post_id,connection_id`.
+- `organization_id,status,next_attempt_at`.
+- `organization_id,provider,status`.
+
+### `social_post_attempts`
+Purpose: immutable provider delivery attempt log.
+
+Fields:
+- `id`
+- `organization_id`
+- `target_id`
+- `status`
+- `provider_status`
+- `provider_response`
+- `error_code`
+- `error_message`
+- `retry_at`
+- `created_at`
+
+Indexes:
+- `organization_id,target_id,created_at`.
+- `organization_id,status,created_at`.
+
+### `social_analytics_snapshots`
+Purpose: point-in-time provider analytics metrics where provider APIs allow access.
+
+Fields:
+- `id`
+- `organization_id`
+- `connection_id`
+- `provider`
+- `provider_post_id`
+- `metrics`
+- `captured_at`
+- `created_at`
+
+Indexes:
+- `organization_id,connection_id,captured_at`.
+- `organization_id,provider,captured_at`.
+
 ## External API And Audit
 ### `api_keys`
 Fields:

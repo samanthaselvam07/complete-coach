@@ -33,6 +33,9 @@ Optional:
 - `SENTRY_ENVIRONMENT`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT`: explicit environment labels.
 - `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`: required only for source-map upload during builds.
 - `LOG_LEVEL`: structured Pino log level, default `info`.
+- `META_CLIENT_ID`, `META_CLIENT_SECRET`: required for Meta Instagram/Facebook OAuth and live posting.
+- `X_CLIENT_ID`, `X_CLIENT_SECRET`: required for X OAuth and live posting.
+- `SOCIAL_PROVIDER_MODE`: omit or set to `simulated` for preview verification; set to `live` only after provider app review, redirect URLs, scopes, and posting policies are approved.
 
 Never commit populated environment files or connection strings. Vercel environment variables must be configured through Vercel project settings.
 
@@ -61,12 +64,13 @@ The deployed preview should show:
 - Auth.js session endpoint returning `null` for unauthenticated users and session data after valid login.
 - API-backed clients/CRM, forms/check-ins, training, nutrition, operations messaging/tasks/notifications, packages/payments, education, and supplementation flows where persistence tickets are complete.
 - API-backed team invitations, role/status management, invitation acceptance, and audit log views.
+- API-backed social connection metadata, content scheduling, cancellation, simulated posting retries, and analytics snapshots where M11 is deployed.
 - `X-Request-Id`, security headers, durable API rate limits, structured JSON logs, and Sentry capture when configured.
 - Fixture-backed fallback behavior where implemented for user-facing resilience.
 - Local interactive behavior such as filters, tabs, drawers, and message sending.
 
 The deployed preview will not include:
-- Full social integrations.
+- Live social posting until Meta/X provider apps and scopes are approved.
 - User-facing AI automation.
 
 ## M10 Deployment Order
