@@ -77,7 +77,7 @@ export function EducationPage() {
         <div className="max-w-3xl">
           <h1 className="mb-3 text-4xl font-black tracking-tight">
             <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Educational Vault
+              Elevate Your Athletes.
             </span>
           </h1>
           <p className="text-sm leading-6 text-slate-600">
@@ -149,8 +149,14 @@ export function EducationPage() {
           <h2 id="latest-resources-heading" className="text-xl font-black">
             Latest Resources
           </h2>
-          <div className="text-sm font-bold text-indigo-600">
-            {resourceSource === "api" ? "Synced library" : "Preview library"}
+          <div className="flex items-center gap-4 text-sm font-bold text-indigo-600">
+            <a href="/education" className="inline-flex items-center gap-1 hover:text-indigo-700">
+              View archive
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </a>
+            <span>
+              {resourceSource === "api" ? "Synced library" : "Preview library"}
+            </span>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

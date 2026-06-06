@@ -1,145 +1,145 @@
-import { Filter, Package, Plus, Search, ShoppingCart, TrendingUp, Users } from "lucide-react";
-import { inventoryItems, supplementProtocols } from "@/fixtures/supplementation";
-
-const statCards = [
-  { label: "Active Protocols", value: "79", icon: Package, tone: "purple" },
-  { label: "Avg. Adherence", value: "86%", icon: TrendingUp, tone: "green" },
-  { label: "Athletes Enrolled", value: "79", icon: Users, tone: "indigo" },
-  { label: "Items Low Stock", value: "4", icon: ShoppingCart, tone: "orange" }
-] as const;
-
-const toneClasses = {
-  purple: "bg-purple-50 text-purple-600",
-  green: "bg-green-50 text-green-600",
-  indigo: "bg-indigo-50 text-indigo-600",
-  orange: "bg-orange-50 text-orange-600"
-};
+import { Edit3, MoreVertical, Plus, TrendingUp } from "lucide-react";
+import { activeSupplementProtocols } from "@/fixtures/supplementation";
 
 export function SupplementationPage() {
   return (
-    <main className="space-y-8 p-6 lg:p-8">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <main className="min-h-screen bg-gray-50 p-6 lg:p-8">
+      <header className="mb-9 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="mb-2 text-3xl font-black">Supplementation</h1>
-          <p className="text-sm text-slate-600">Manage supplement protocols and track athlete compliance</p>
+          <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-950">Supplementation Hub</h1>
+          <p className="text-base text-slate-600">Manage client protocols and track compliance</p>
         </div>
-        <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-700">
-          <Plus className="h-4 w-4" />
-          Create Protocol
+        <button
+          type="button"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600"
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Assign Plan
         </button>
       </header>
 
-      <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {statCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <article key={card.label} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${toneClasses[card.tone]}`}>
-                <Icon className="h-6 w-6" />
-              </div>
-              <div className="text-3xl font-black">{card.value}</div>
-              <div className="text-sm text-slate-600">{card.label}</div>
-            </article>
-          );
-        })}
+      <section aria-label="Supplementation summary" className="mb-8 grid gap-6 lg:grid-cols-3">
+        <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-7 flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500">Protocol Compliance</h2>
+            <TrendingUp className="h-4 w-4 text-indigo-600" aria-hidden="true" />
+          </div>
+          <p className="text-4xl font-black tracking-tight text-slate-950">94.2%</p>
+          <p className="mt-1 text-sm text-slate-600">37/39 clients adhering</p>
+          <p className="mt-3 text-xs font-bold text-green-600">+2.3% from last month (average protocol compliance)</p>
+        </article>
+
+        <MetricGradientCard
+          label="Active Plans"
+          value="5"
+          unit="Clients"
+          detail="Across 25% of total base"
+          className="from-indigo-600 to-violet-700"
+        />
+        <MetricGradientCard
+          label="Library"
+          value="12"
+          unit="Protocols"
+          detail="Pending review across clients"
+          className="from-purple-600 to-fuchsia-700"
+        />
       </section>
 
-      <section className="flex flex-col gap-4 lg:flex-row">
-        <label className="relative flex-1">
-          <span className="sr-only">Search protocols</span>
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="search"
-            placeholder="Search protocols..."
-            className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </label>
-        <button className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold transition hover:bg-slate-50">
-          <Filter className="h-4 w-4" />
-          Filters
-        </button>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-2">
-        {supplementProtocols.map((protocol) => (
-          <article key={protocol.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg">
-            <div className="relative h-40 bg-gradient-to-br from-purple-500 to-pink-600">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_30%,rgba(255,255,255,0.45),transparent_20%),radial-gradient(circle_at_70%_65%,rgba(255,255,255,0.25),transparent_24%)]" />
-              <span className="absolute left-4 top-4 rounded-full bg-white/20 px-3 py-1 text-sm font-bold text-white backdrop-blur">
-                {protocol.category}
-              </span>
-              <span className="absolute right-4 top-4 rounded-full bg-white/20 px-3 py-1 text-sm font-bold text-white backdrop-blur">
-                {protocol.clients} athletes
-              </span>
-            </div>
-            <div className="p-6">
-              <h2 className="mb-3 text-lg font-black">{protocol.name}</h2>
-              <div className="mb-4 rounded-xl bg-slate-50 p-4">
-                <div className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Supplements</div>
-                <div className="flex flex-wrap gap-2">
-                  {protocol.supplements.map((supplement) => (
-                    <span key={supplement} className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold">
-                      {supplement}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-4">
-                <div className="mb-2 flex justify-between text-sm">
-                  <span className="text-slate-600">Adherence Rate</span>
-                  <span className="font-bold text-green-600">{protocol.adherence}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-100">
-                  <div className="h-2 rounded-full bg-green-600" style={{ width: `${protocol.adherence}%` }} />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700">
-                  Manage Protocol
-                </button>
-                <button className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold transition hover:bg-slate-50">
-                  Edit
-                </button>
-              </div>
-            </div>
-          </article>
-        ))}
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-lg font-black">Inventory Status</h2>
-          <button className="text-sm font-bold text-indigo-600 hover:text-indigo-700">View Full Inventory</button>
+      <section className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div role="tablist" aria-label="Supplementation sections" className="flex border-b border-slate-200">
+          <button
+            type="button"
+            role="tab"
+            aria-selected="true"
+            className="border-b-2 border-indigo-600 px-0 py-3 pr-8 text-sm font-bold text-indigo-600"
+          >
+            Active Protocols
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected="false"
+            className="px-0 py-3 text-sm font-bold text-slate-600"
+          >
+            Protocol Library
+          </button>
         </div>
+        <a href="/supplementation/plans" className="text-sm font-bold text-indigo-600 hover:text-indigo-700">
+          View Detailed Reports
+        </a>
+      </section>
+
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-label="Active supplement protocols">
+        <div className="grid grid-cols-12 gap-4 border-b border-slate-200 bg-gray-50 px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+          <div className="col-span-3">Client</div>
+          <div className="col-span-3">Primary Protocol</div>
+          <div className="col-span-3">Daily Stack</div>
+          <div className="col-span-1">Status</div>
+          <div className="col-span-1">Compliance</div>
+          <div className="col-span-1">Actions</div>
+        </div>
+
         <div className="divide-y divide-slate-100">
-          {inventoryItems.map((item) => (
-            <div key={item.name} className="flex flex-col gap-4 py-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-                  <Package className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="font-bold">{item.name}</div>
-                  <div className="text-sm text-slate-500">
-                    Reorder at {item.reorder} {item.unit}
-                  </div>
-                </div>
+          {activeSupplementProtocols.map((protocol) => (
+            <article key={protocol.id} className="grid grid-cols-12 items-center gap-4 px-6 py-6 text-sm text-slate-700">
+              <div className="col-span-3 font-bold text-slate-950">{protocol.clientName}</div>
+              <div className="col-span-3">{protocol.protocol}</div>
+              <div className="col-span-3">{protocol.supplements.join(", ")}</div>
+              <div className="col-span-1">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold ${
+                    protocol.status === "Active"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-orange-100 text-orange-700"
+                  }`}
+                >
+                  {protocol.status}
+                </span>
               </div>
-              <div className="flex items-center gap-6">
-                <div className="text-right">
-                  <div className="text-lg font-black">{item.stock}</div>
-                  <div className="text-xs text-slate-500">{item.unit} in stock</div>
+              <div className="col-span-1 flex items-center gap-3">
+                <div className="h-2 w-24 rounded-full bg-slate-200">
+                  <div
+                    className={`h-2 rounded-full ${protocol.compliance >= 80 ? "bg-green-600" : "bg-orange-600"}`}
+                    style={{ width: `${protocol.compliance}%` }}
+                  />
                 </div>
-                {item.stock < item.reorder ? (
-                  <button className="rounded-xl bg-orange-100 px-4 py-2 text-sm font-bold text-orange-700">Reorder Now</button>
-                ) : (
-                  <span className="rounded-xl bg-green-100 px-4 py-2 text-sm font-bold text-green-700">In Stock</span>
-                )}
+                <span className="font-medium">{protocol.compliance}%</span>
               </div>
-            </div>
+              <div className="col-span-1 flex items-center gap-3 text-indigo-600">
+                <button type="button" aria-label={`Edit ${protocol.clientName} protocol`}>
+                  <Edit3 className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button type="button" aria-label={`More actions for ${protocol.clientName} protocol`}>
+                  <MoreVertical className="h-4 w-4 text-slate-500" aria-hidden="true" />
+                </button>
+              </div>
+            </article>
           ))}
         </div>
       </section>
     </main>
+  );
+}
+
+function MetricGradientCard({
+  label,
+  value,
+  unit,
+  detail,
+  className
+}: {
+  label: string;
+  value: string;
+  unit: string;
+  detail: string;
+  className: string;
+}) {
+  return (
+    <article className={`rounded-2xl bg-gradient-to-br p-6 text-white shadow-sm ${className}`}>
+      <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-white/80">{label}</h2>
+      <p className="text-4xl font-black tracking-tight">{value}</p>
+      <p className="mt-1 text-sm font-semibold text-white/90">{unit}</p>
+      <p className="mt-5 text-xs font-medium text-white/85">{detail}</p>
+    </article>
   );
 }

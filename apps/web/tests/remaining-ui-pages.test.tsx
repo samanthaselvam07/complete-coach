@@ -15,15 +15,16 @@ import { AddResourcePage } from "@/components/education/add-resource-page";
 import { EducationPage } from "@/components/education/education-page";
 import { SupplementDatabasePage } from "@/components/supplementation/supplement-database-page";
 import { SupplementPlansPage } from "@/components/supplementation/supplement-plans-page";
+import { SupplementationPage } from "@/components/supplementation/supplementation-page";
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
 const routeSmokeCases = [
-  ["education", EducationRoute, "Educational Vault"],
+  ["education", EducationRoute, "Elevate Your Athletes."],
   ["education add", AddResourceRoute, "Upload New Resource"],
-  ["supplementation", SupplementationRoute, "Supplementation"],
+  ["supplementation", SupplementationRoute, "Supplementation Hub"],
   ["supplement plans", SupplementPlansRoute, "Supplementation Hub"],
   ["supplement database", SupplementDatabaseRoute, "Supplementation Library"],
   ["messages", MessagesRoute, "Messages"],
@@ -37,6 +38,24 @@ describe("Ticket 009 route smoke", () => {
     render(createElement(RouteComponent));
 
     expect(screen.getByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
+  });
+});
+
+describe("SupplementationPage", () => {
+  it("renders the Figma supplementation hub surface", () => {
+    render(createElement(SupplementationPage));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Supplementation Hub" })).toBeInTheDocument();
+    expect(screen.getByText("Manage client protocols and track compliance")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Assign Plan/i })).toBeInTheDocument();
+    expect(screen.getByText("Protocol Compliance")).toBeInTheDocument();
+    expect(screen.getByText("94.2%")).toBeInTheDocument();
+    expect(screen.getByText("Active Plans")).toBeInTheDocument();
+    expect(screen.getByText("Protocol Library")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Active Protocols" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Protocol Library" })).toBeInTheDocument();
+    expect(screen.getByText("Alex Rivera")).toBeInTheDocument();
+    expect(screen.getByText("Vitamin D3 + K2")).toBeInTheDocument();
   });
 });
 
@@ -443,6 +462,23 @@ describe("SupplementPlansPage", () => {
 });
 
 describe("Education persistence pages", () => {
+  it("renders the Figma education library surface", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ data: [] }), { status: 200 })
+    );
+
+    render(createElement(EducationPage));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Elevate Your Athletes." })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Create New Resource/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "All Content" })).toBeInTheDocument();
+    expect(screen.getByText("Advanced Hypertrophy Mechanisms & Periodization")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Watch Video" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Assign to Client" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Assign Now/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /View archive/i })).toBeInTheDocument();
+  });
+
   it("loads education resources from the persistence API", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(

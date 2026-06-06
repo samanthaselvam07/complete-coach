@@ -24,6 +24,24 @@ describe("ClientsPage", () => {
     expect(screen.getByRole("link", { name: /view Emma Thompson profile/i })).toBeInTheDocument();
   });
 
+  it("renders the Figma client roster controls and table surface", () => {
+    render(createElement(ClientsPage));
+
+    expect(screen.getByText("New Clients This Week")).toBeInTheDocument();
+    expect(screen.getByText("Check-ins Due")).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: /search clients/i })).toHaveAttribute(
+      "placeholder",
+      "Search clients..."
+    );
+    expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Active" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Archived" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Deactivated" })).toBeInTheDocument();
+    expect(screen.getByText("Compliance Score")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /export or import clients/i })).toBeInTheDocument();
+  });
+
   it("searches clients by name", () => {
     render(createElement(ClientsPage));
 

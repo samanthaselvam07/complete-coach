@@ -25,7 +25,7 @@ This tracker keeps the Figma UI port aligned with the production Next.js app. Th
 | Figma Screen | Production Route | Production Component | Status |
 | --- | --- | --- | --- |
 | `dashboard-page.tsx` | `/` | `apps/web/components/dashboard/dashboard-page.tsx` | Pending |
-| `clients-page.tsx` | `/clients` | `apps/web/components/clients/clients-page.tsx` | Pending |
+| `clients-page.tsx` | `/clients` | `apps/web/components/clients/clients-page.tsx` | Started |
 | `client-profile.tsx` | `/clients/[id]` | `apps/web/components/clients/client-profile-page.tsx` | Started |
 | `check-in-management-page.tsx` | `/clients/check-ins` | `apps/web/components/check-ins/check-in-management-page.tsx` | Pending |
 | `messages-page.tsx` | `/messages` | `apps/web/components/messages/messages-page.tsx` | Pending |
@@ -35,9 +35,9 @@ This tracker keeps the Figma UI port aligned with the production Next.js app. Th
 | `nutrition-page.tsx` | `/nutrition` | `apps/web/components/nutrition/nutrition-page.tsx` | Pending |
 | `meal-plans-page.tsx` | `/nutrition/meal-plans` | `apps/web/components/nutrition/meal-plans-page.tsx` | Pending |
 | `food-database-page.tsx` | `/nutrition/food-database` | `apps/web/components/nutrition/food-database-page.tsx` | Started |
-| `education-page.tsx` | `/education` | `apps/web/components/education/education-page.tsx` | Pending |
+| `education-page.tsx` | `/education` | `apps/web/components/education/education-page.tsx` | Started |
 | `add-resource-page.tsx` | `/education/add` | `apps/web/components/education/add-resource-page.tsx` | Pending |
-| `supplementation-page.tsx` | `/supplementation` | `apps/web/components/supplementation/supplementation-page.tsx` | Pending |
+| `supplementation-page.tsx` | `/supplementation` | `apps/web/components/supplementation/supplementation-page.tsx` | Started |
 | `supplement-plans-page.tsx` | `/supplementation/plans` | `apps/web/components/supplementation/supplement-plans-page.tsx` | Pending |
 | `supplement-database-page.tsx` | `/supplementation/database` | `apps/web/components/supplementation/supplement-database-page.tsx` | Pending |
 | `forms-page.tsx` | `/forms` | `apps/web/components/forms/forms-page.tsx` | Pending |
@@ -56,6 +56,7 @@ This tracker keeps the Figma UI port aligned with the production Next.js app. Th
 
 - The updated client profile dashboard screenshot has been partially ported to `/clients/[id]`.
 - The Food Database screenshot has been partially ported to `/nutrition/food-database`, including source controls, search styling, promo card polish, and image-style ingredient cards.
+- The supplied UI screenshot batch is now being ported in route-sized slices. The first slice covers `/education`, `/supplementation`, and `/clients` roster parity.
 - Production deployment `26a3c28` contains the new client profile bundle strings.
 - Direct Figma Make resource links are visible through the Figma connector, but file reads currently fail from the MCP resource reader. Screenshots or a local exported reference repo/zip will speed up exact parity checks.
 

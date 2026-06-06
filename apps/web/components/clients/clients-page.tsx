@@ -263,6 +263,7 @@ export function ClientsPage() {
 
             <button
               type="button"
+              aria-label="Export or import clients"
               className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
             >
               <Upload className="size-4" aria-hidden="true" />
