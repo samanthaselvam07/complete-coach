@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { BarChart3, Calendar, Image, Share2 } from "lucide-react";
+import { Bell, Calendar, ChevronLeft, ChevronRight, Search, Settings, Share2 } from "lucide-react";
 
-import { scheduledPosts, socialAnalytics } from "@/fixtures/operations";
+import { scheduledPosts } from "@/fixtures/operations";
 
 type SocialConnection = {
   id: string;
@@ -34,18 +34,6 @@ const providerLabel = {
   instagram: "Instagram",
   facebook: "Facebook",
   x: "X"
-};
-
-const providerTone = {
-  instagram: "bg-pink-50 text-pink-600",
-  facebook: "bg-blue-50 text-blue-600",
-  x: "bg-sky-50 text-sky-500"
-};
-
-const fixturePlatformIcon = {
-  Instagram: Share2,
-  Facebook: Share2,
-  Twitter: Share2
 };
 
 export function SocialMediaPage() {
@@ -181,48 +169,55 @@ export function SocialMediaPage() {
   }
 
   return (
-    <main className="space-y-8 p-6 lg:p-8">
-      <header>
-        <h1 className="mb-2 text-3xl font-black">Social Media Hub</h1>
-        <p className="text-sm text-slate-600">Manage your social presence and track engagement across platforms.</p>
-      </header>
-
-      {isFallback ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
-          Social integrations are in read-only fallback mode until the API is available.
-        </div>
-      ) : null}
-
-      <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {socialAnalytics.map((stat) => (
-          <article key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{stat.label}</span>
-              <span className="text-xs font-bold text-green-600">{stat.change}</span>
-            </div>
-            <div className="text-2xl font-black">{stat.value}</div>
-          </article>
-        ))}
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-black">Scheduled Posts</h2>
-            <button
-              className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700"
-              type="button"
-              onClick={() => setIsComposerOpen((value) => !value)}
-            >
-              + New Post
+    <main className="min-h-screen bg-gray-50">
+      <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+        <h1 className="text-2xl font-black text-slate-950">Social Planner</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="relative">
+            <span className="sr-only">Search scheduled content</span>
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Search scheduled content..."
+              className="h-10 w-72 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </label>
+          <div className="rounded-xl bg-slate-100 p-1">
+            <button type="button" className="rounded-lg bg-white px-5 py-2 text-sm font-bold shadow-sm">
+              Month
+            </button>
+            <button type="button" className="rounded-lg px-5 py-2 text-sm font-bold text-slate-600">
+              Week
             </button>
           </div>
+          <Bell className="h-5 w-5 text-slate-600" aria-hidden="true" />
+          <Settings className="h-5 w-5 text-slate-600" aria-hidden="true" />
+        </div>
+      </header>
 
-          {isComposerOpen ? (
-            <form
-              className="mb-4 space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-              onSubmit={handleCreatePost}
-            >
+      <section className="p-6">
+        {isFallback ? (
+          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+            Social integrations are in read-only fallback mode until the API is available.
+          </div>
+        ) : null}
+
+        <div className="mb-6 flex items-center gap-6">
+          <button type="button" aria-label="Previous month">
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <h2 className="text-xl font-black text-slate-950">June 2026</h2>
+          <button type="button" aria-label="Next month">
+            <ChevronRight className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        {isComposerOpen ? (
+          <form
+            className="mb-6 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-[1fr_260px_auto]"
+            onSubmit={handleCreatePost}
+          >
+            <div>
               <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700" htmlFor="social-caption">
                   Caption
@@ -234,7 +229,8 @@ export function SocialMediaPage() {
                   onChange={(event) => setCaption(event.target.value)}
                 />
               </div>
-              <div>
+            </div>
+            <div>
                 <label className="mb-2 block text-sm font-bold text-slate-700" htmlFor="social-scheduled-for">
                   Schedule date
                 </label>
@@ -245,8 +241,8 @@ export function SocialMediaPage() {
                   value={scheduledFor}
                   onChange={(event) => setScheduledFor(event.target.value)}
                 />
-              </div>
-              <fieldset className="space-y-2">
+            </div>
+            <fieldset className="space-y-2">
                 <legend className="text-sm font-bold text-slate-700">Accounts</legend>
                 {connections.length > 0 ? (
                   connections.map((connection) => (
@@ -262,102 +258,111 @@ export function SocialMediaPage() {
                 ) : (
                   <p className="text-sm text-slate-500">Connect a social account before scheduling new posts.</p>
                 )}
-              </fieldset>
-              {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
+            </fieldset>
+            <div className="flex items-end">
               <button
                 className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700"
                 type="submit"
               >
                 Schedule post
               </button>
-            </form>
-          ) : null}
+            </div>
+            {error ? <p className="text-sm font-medium text-red-600 lg:col-span-3">{error}</p> : null}
+          </form>
+        ) : null}
 
-          <div className="space-y-4">
-            {displayedPosts.map((post) => (
-              <article key={post.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex gap-4">
-                  <div className="hidden h-24 w-24 shrink-0 rounded-xl bg-gradient-to-br from-indigo-600 to-orange-400 sm:block" />
-                  <div className="flex-1">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      {post.targets.map((target) => (
-                        <span key={target.id} className="inline-flex items-center gap-2 text-sm font-bold">
-                          <Share2 className="h-4 w-4" />
-                          {providerLabel[target.provider]}
-                        </span>
-                      ))}
-                      <span className="rounded-md bg-green-100 px-2 py-1 text-xs font-bold text-green-700">
-                        {post.status}
-                      </span>
-                    </div>
-                    <p className="mb-2 text-sm text-slate-700">{post.caption}</p>
-                    <span className="inline-flex items-center gap-2 text-xs text-slate-500">
-                      <Calendar className="h-3 w-3" />
-                      {formatScheduledDate(post.scheduledFor)}
-                    </span>
-                  </div>
-                  <button className="text-sm font-bold text-indigo-600 hover:text-indigo-700" type="button">
-                    Edit
-                  </button>
+        <div className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white md:grid-cols-7">
+          {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => (
+            <div key={day} className="border-b border-slate-200 py-3 text-center text-xs font-bold uppercase tracking-widest text-slate-400">
+              {day}
+            </div>
+          ))}
+          {calendarDays.map((day) => (
+            <div key={`${day.label}-${day.date}`} className="min-h-28 border-b border-r border-slate-200 p-3 last:border-r-0">
+              <div className={day.today ? "mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 font-bold text-white" : "mb-3 text-slate-700"}>
+                {day.date}
+              </div>
+              {day.events.map((event) => (
+                <div key={event.title} className={`mb-2 truncate rounded-lg px-2 py-1 text-xs font-bold ${event.className}`}>
+                  {event.title}
                 </div>
-              </article>
-            ))}
-          </div>
+              ))}
+            </div>
+          ))}
         </div>
 
-        <aside>
-          <h2 className="mb-4 text-xl font-black">Platform Overview</h2>
-          <div className="mb-6 space-y-4">
-            {isFallback
-              ? (["Instagram", "Facebook", "Twitter"] as const).map((platform) => {
-                  const Icon = fixturePlatformIcon[platform];
-                  return (
-                    <article key={platform} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <div className="mb-3 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-600">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold">{platform}</div>
-                          <div className="text-xs text-slate-500">Fixture overview</div>
-                        </div>
-                      </div>
-                      <div className="text-xs text-slate-600">Read-only social planning data.</div>
-                    </article>
-                  );
-                })
-              : connections.map((connection) => (
-                  <article key={connection.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="mb-3 flex items-center gap-3">
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full ${providerTone[connection.provider]}`}
-                      >
-                        <Share2 className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold">{connection.accountName}</div>
-                        <div className="text-xs text-slate-500">{providerLabel[connection.provider]}</div>
-                      </div>
-                    </div>
-                    <div className="text-xs text-slate-600">Status: {connection.status}</div>
-                  </article>
+        <section className="mt-6 grid gap-3 md:grid-cols-3" aria-label="Scheduled queue">
+          {displayedPosts.map((post) => (
+            <article key={post.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                {post.targets.map((target) => (
+                  <span key={target.id} className="inline-flex items-center gap-2 text-xs font-bold text-slate-600">
+                    <Share2 className="h-3 w-3" aria-hidden="true" />
+                    {target.accountName || providerLabel[target.provider]}
+                  </span>
                 ))}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button className="rounded-xl border border-slate-200 bg-white p-4 text-center transition hover:bg-slate-50" type="button">
-              <BarChart3 className="mx-auto mb-2 h-5 w-5 text-indigo-600" />
-              <span className="text-xs font-bold">Analytics</span>
-            </button>
-            <button className="rounded-xl border border-slate-200 bg-white p-4 text-center transition hover:bg-slate-50" type="button">
-              <Image className="mx-auto mb-2 h-5 w-5 text-purple-600" />
-              <span className="text-xs font-bold">Media</span>
-            </button>
-          </div>
-        </aside>
+                <span className="rounded-md bg-blue-100 px-2 py-1 text-xs font-bold text-blue-700">{post.status}</span>
+              </div>
+              <p className="text-sm font-semibold text-slate-800">{post.caption}</p>
+              <span className="mt-2 inline-flex items-center gap-2 text-xs text-slate-500">
+                <Calendar className="h-3 w-3" aria-hidden="true" />
+                {formatScheduledDate(post.scheduledFor)}
+              </span>
+            </article>
+          ))}
+        </section>
+
+        <div className="fixed bottom-6 right-6">
+          <button
+            className="rounded-full bg-indigo-600 px-7 py-4 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-700"
+            type="button"
+            onClick={() => setIsComposerOpen((value) => !value)}
+          >
+            + Schedule Post
+          </button>
+        </div>
       </section>
     </main>
   );
 }
+
+const calendarDays = [
+  { label: "prev", date: "31", today: false, events: [] },
+  { label: "day", date: "1", today: false, events: [] },
+  { label: "day", date: "2", today: false, events: [{ title: "Morning Routine", className: "bg-slate-100 text-slate-600" }] },
+  { label: "day", date: "3", today: false, events: [] },
+  { label: "day", date: "4", today: true, events: [{ title: "Reels: HIIT Circuit", className: "bg-slate-100 text-slate-600" }] },
+  { label: "day", date: "5", today: false, events: [] },
+  { label: "day", date: "6", today: false, events: [] },
+  { label: "day", date: "7", today: false, events: [] },
+  { label: "day", date: "8", today: false, events: [{ title: "TikTok Viral...", className: "bg-black text-white" }, { title: "Republish: FB", className: "bg-blue-600 text-white" }] },
+  { label: "day", date: "9", today: false, events: [] },
+  { label: "day", date: "10", today: false, events: [] },
+  { label: "day", date: "11", today: false, events: [] },
+  { label: "day", date: "12", today: false, events: [] },
+  { label: "day", date: "13", today: false, events: [] },
+  { label: "day", date: "14", today: false, events: [] },
+  { label: "day", date: "15", today: false, events: [{ title: "Nutrition Spotlight", className: "bg-orange-100 text-orange-700" }] },
+  { label: "day", date: "16", today: false, events: [] },
+  { label: "day", date: "17", today: false, events: [] },
+  { label: "day", date: "18", today: false, events: [] },
+  { label: "day", date: "19", today: false, events: [] },
+  { label: "day", date: "20", today: false, events: [] },
+  { label: "day", date: "21", today: false, events: [] },
+  { label: "day", date: "22", today: false, events: [] },
+  { label: "day", date: "23", today: false, events: [] },
+  { label: "day", date: "24", today: false, events: [] },
+  { label: "day", date: "25", today: false, events: [] },
+  { label: "day", date: "26", today: false, events: [] },
+  { label: "day", date: "27", today: false, events: [] },
+  { label: "day", date: "28", today: false, events: [] },
+  { label: "day", date: "29", today: false, events: [] },
+  { label: "day", date: "30", today: false, events: [] },
+  { label: "next", date: "1", today: false, events: [] },
+  { label: "next", date: "2", today: false, events: [] },
+  { label: "next", date: "3", today: false, events: [] },
+  { label: "next", date: "4", today: false, events: [] }
+];
 
 function normalizeDateTimeLocal(value: string) {
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {

@@ -233,10 +233,20 @@ export function PackagesPage() {
   }
 
   return (
-    <main className="space-y-8 p-6 lg:p-8">
-      <header>
-        <h1 className="mb-2 text-3xl font-black">Packages & Pricing</h1>
-        <p className="text-sm text-slate-600">Manage your coaching packages and track revenue performance.</p>
+    <main className="min-h-screen space-y-8 bg-gray-50 p-6 lg:p-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-950">Package Ecosystem</h1>
+          <p className="text-base text-slate-600">Design and deploy premium coaching protocols for your roster.</p>
+        </div>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700"
+          onClick={openCreateForm}
+        >
+          <Package className="h-4 w-4" aria-hidden="true" />
+          Create New Package
+        </button>
       </header>
 
       <section aria-label="Package revenue summary" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
@@ -254,17 +264,45 @@ export function PackagesPage() {
         })}
       </section>
 
+      <section className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-2">
+        <div className="relative min-h-72 bg-gradient-to-br from-slate-300 via-slate-200 to-slate-500">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_20%,rgba(255,255,255,0.5),transparent_25%),linear-gradient(120deg,rgba(15,23,42,0.05),rgba(15,23,42,0.65))]" />
+          <div className="absolute bottom-7 left-7 text-white">
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-indigo-200">Elite Prep - 38 enrolled</p>
+            <h2 className="text-3xl font-black">Elite Hypertrophy</h2>
+          </div>
+        </div>
+        <div className="p-7">
+          <p className="mb-6 text-sm leading-6 text-slate-700">
+            Our flagship 16-week muscle-building protocol featuring daily check-ins and advanced biomarker analysis.
+          </p>
+          <div className="mb-6 flex flex-wrap items-center gap-4">
+            <span className="text-4xl font-black">$499<span className="text-base font-medium text-slate-500">/mo</span></span>
+            <span className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white">16 Weeks</span>
+            <span className="text-sm text-slate-600">+35 clients enrolled</span>
+          </div>
+          <div className="mb-4 rounded-2xl border border-slate-200 bg-gray-50 p-5">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Contest Prep</p>
+            <div className="mt-2 grid gap-1 text-sm font-bold text-slate-800">
+              <span>Price $1,200</span>
+              <span>Term 24 Weeks</span>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button type="button" className="flex-1 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white">
+              Assign to Client
+            </button>
+            <button type="button" className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700">
+              Edit Details
+            </button>
+          </div>
+        </div>
+      </section>
+
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-black">All Packages</h2>
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700"
-            onClick={openCreateForm}
-          >
-            <Package className="h-4 w-4" />
-            Create Package
-          </button>
+          <h2 className="text-xl font-black">Active Inventory</h2>
+          <p className="text-sm font-bold uppercase tracking-wide text-slate-600">Sort by Newest First</p>
         </div>
         <div className="grid gap-6 xl:grid-cols-2">
           {packages.map((coachingPackage) => (
@@ -513,18 +551,21 @@ async function fetchPackages() {
 }
 
 function buildPackageStats(packages: ApiPackage[]) {
-  const monthlyPackages = packages.filter((coachingPackage) => coachingPackage.billingInterval === "monthly");
   const totalRevenue = packages.reduce((sum, coachingPackage) => sum + coachingPackage.projectedMonthlyRevenue, 0);
   const totalClients = packages.reduce((sum, coachingPackage) => sum + coachingPackage.activeSubscriptions, 0);
-  const averageMonthlyPrice = monthlyPackages.length
-    ? Math.round(monthlyPackages.reduce((sum, coachingPackage) => sum + coachingPackage.priceAmount, 0) / monthlyPackages.length)
-    : 0;
+  const topPackage = packages.reduce<ApiPackage | null>(
+    (currentTop, coachingPackage) =>
+      !currentTop || coachingPackage.projectedMonthlyRevenue > currentTop.projectedMonthlyRevenue
+        ? coachingPackage
+        : currentTop,
+    null
+  );
 
   return [
-    { label: "Total Packages", value: packages.length, icon: Package },
-    { label: "Monthly Revenue", value: formatCents(totalRevenue), icon: DollarSign },
-    { label: "Active Clients", value: totalClients, icon: Users },
-    { label: "Avg. Package Price", value: formatCents(averageMonthlyPrice), icon: TrendingUp }
+    { label: "Active Subscriptions", value: totalClients, icon: Package },
+    { label: "Portfolio Value", value: formatCents(totalRevenue), icon: DollarSign },
+    { label: "Top Performer", value: topPackage?.name ?? "No packages", icon: Users },
+    { label: "Retention Rate", value: "94%", icon: TrendingUp }
   ];
 }
 

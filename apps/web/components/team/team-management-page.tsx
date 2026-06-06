@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, ShieldCheck, UserPlus, Users } from "lucide-react";
+import { BookOpen, DollarSign, Mail, MoreHorizontal, ShieldCheck, UserPlus, Users } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import {
@@ -159,19 +159,20 @@ export function TeamManagementPage() {
   }
 
   return (
-    <main className="space-y-8 p-6 lg:p-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <main className="min-h-screen space-y-8 bg-gray-50 p-6 lg:p-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="mb-2 text-3xl font-black">Team Management</h1>
-          <p className="text-sm text-slate-600">Invite staff and control organization access.</p>
+          <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-950">Team Management</h1>
+          <p className="text-base text-slate-600">Orchestrate your coaching roster and client distribution.</p>
         </div>
         <Button
           type="button"
           onClick={() => setInviteOpen(true)}
           disabled={source !== "api"}
+          className="gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700"
         >
           <UserPlus aria-hidden="true" />
-          Invite Member
+          Add Team Member
         </Button>
       </header>
 
@@ -187,20 +188,40 @@ export function TeamManagementPage() {
         </p>
       ) : null}
 
-      <section className="grid gap-4 sm:grid-cols-3" aria-label="Team summary">
-        <SummaryCard icon={Users} label="Active members" value={activeMembers.length} />
-        <SummaryCard icon={ShieldCheck} label="Owners and admins" value={activeMembers.filter((member) => member.role === "owner" || member.role === "admin").length} />
-        <SummaryCard icon={Mail} label="Pending invitations" value={invitations.length} />
+      <section className="grid gap-5 lg:grid-cols-4" aria-label="Team summary">
+        <SummaryCard icon={Users} label="Total Staff" value={members.filter((member) => member.status !== "removed").length} detail="1.3 this month" />
+        <SummaryCard icon={ShieldCheck} label="Active Coaches" value={activeMembers.length} detail="4 currently on leave" />
+        <SummaryCard icon={Mail} label="Clients Managed" value={342} detail="28.4 average/coach" />
+        <article className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
+              <DollarSign className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <h2 className="text-sm font-bold text-white/80">Team Weekly Revenue</h2>
+          </div>
+          <p className="text-3xl font-black">$28,440</p>
+          <p className="mt-1 text-xs font-bold text-white/85">$123,145 est. monthly</p>
+        </article>
       </section>
 
-      <section>
-        <h2 className="mb-4 text-xl font-black">Team Members</h2>
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xl font-black">Active Roster</h2>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full border border-red-100 bg-red-50 px-4 py-2 text-xs font-bold text-red-600">
+              Business commission: 10%
+            </span>
+            <MoreHorizontal className="h-5 w-5 text-slate-500" aria-hidden="true" />
+          </div>
+        </div>
         <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-5 py-3">Member</th>
+                <th className="px-5 py-3">Team Member</th>
                 <th className="px-5 py-3">Role</th>
+                <th className="px-5 py-3">Capacity</th>
+                <th className="px-5 py-3">Weekly Income</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3 text-right">Actions</th>
               </tr>
@@ -231,9 +252,28 @@ export function TeamManagementPage() {
                       </select>
                     )}
                   </td>
-                  <td className="px-5 py-4 capitalize">{member.status}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <span>{member.role === "owner" ? "28" : member.role === "admin" ? "44" : "36"} Clients</span>
+                      <span className="h-1.5 w-28 rounded-full bg-slate-100">
+                        <span className="block h-1.5 rounded-full bg-indigo-500" style={{ width: "72%" }} />
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className="block font-black">$2,871</span>
+                    <span className="text-xs text-red-500">-10% commission</span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold capitalize text-green-700">
+                      {member.status}
+                    </span>
+                  </td>
                   <td className="px-5 py-4 text-right">
                     <div className="inline-flex gap-2">
+                      <Button type="button" variant="ghost" size="sm">
+                        <BookOpen className="h-4 w-4" aria-hidden="true" />
+                      </Button>
                       <Button
                         type="button"
                         variant="outline"
@@ -262,6 +302,21 @@ export function TeamManagementPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section className="rounded-2xl bg-slate-950 p-6 text-white">
+        <h2 className="mb-3 text-lg font-black">Client Load Distribution</h2>
+        <p className="max-w-4xl text-sm text-slate-300">
+          Marcus Chen is currently at 85% capacity. We recommend re-routing new nutrition requests to the upcoming specialist or opening a new junior position.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button type="button" className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-slate-950">
+            Optimise Roster
+          </button>
+          <button type="button" className="rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-white">
+            View Analytics
+          </button>
         </div>
       </section>
 
@@ -336,17 +391,20 @@ export function TeamManagementPage() {
 function SummaryCard({
   icon: Icon,
   label,
-  value
+  value,
+  detail
 }: {
   icon: typeof Users;
   label: string;
   value: number;
+  detail: string;
 }) {
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <Icon className="mb-3 h-5 w-5 text-indigo-600" aria-hidden="true" />
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="text-sm text-slate-500">{label}</p>
       <p className="mt-1 text-3xl font-black">{value}</p>
+      <p className="mt-2 text-xs font-bold text-slate-400">{detail}</p>
     </article>
   );
 }

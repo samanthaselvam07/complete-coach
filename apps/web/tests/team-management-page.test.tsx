@@ -60,7 +60,12 @@ describe("TeamManagementPage", () => {
     render(<TeamManagementPage />);
 
     expect(await screen.findByText("Owner Coach")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Invite Member" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Team Management" })).toBeInTheDocument();
+    expect(screen.getByText("Orchestrate your coaching roster and client distribution.")).toBeInTheDocument();
+    expect(screen.getByText("Team Weekly Revenue")).toBeInTheDocument();
+    expect(screen.getByText("Active Roster")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Team Member" }));
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "new@example.com" }
     });
@@ -83,7 +88,7 @@ describe("TeamManagementPage", () => {
     await waitFor(() =>
       expect(screen.getByText(/read-only fallback mode/i)).toBeInTheDocument()
     );
-    expect(screen.getByRole("button", { name: "Invite Member" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add Team Member" })).toBeDisabled();
   });
 
   it("updates roles and removes persisted members", async () => {

@@ -56,16 +56,20 @@ describe("PackagesPage", () => {
 
     render(createElement(PackagesPage));
 
-    expect(await screen.findByText("API Platinum")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Package Ecosystem" })).toBeInTheDocument();
+    expect(await screen.findAllByText("API Platinum")).toHaveLength(2);
     expect(screen.queryByText("Platinum Elite")).not.toBeInTheDocument();
     expect(screen.getByText("Synced")).toBeInTheDocument();
     expect(screen.getByText("Needs sync")).toBeInTheDocument();
 
     const stats = screen.getByLabelText("Package revenue summary");
-    expect(within(stats).getByText("2")).toBeInTheDocument();
-    expect(within(stats).getByText("$1,797")).toBeInTheDocument();
+    expect(within(stats).getByText("Active Subscriptions")).toBeInTheDocument();
     expect(within(stats).getByText("4")).toBeInTheDocument();
-    expect(within(stats).getByText("$599")).toBeInTheDocument();
+    expect(within(stats).getByText("Portfolio Value")).toBeInTheDocument();
+    expect(within(stats).getByText("$1,797")).toBeInTheDocument();
+    expect(within(stats).getByText("Top Performer")).toBeInTheDocument();
+    expect(within(stats).getByText("API Platinum")).toBeInTheDocument();
+    expect(within(stats).getByText("Retention Rate")).toBeInTheDocument();
   });
 
   it("creates packages through the persistence API", async () => {
@@ -98,7 +102,7 @@ describe("PackagesPage", () => {
     render(createElement(PackagesPage));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/packages?status=active&limit=100"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Create Package" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create New Package" }));
     fireEvent.change(screen.getByLabelText("Package Name"), { target: { value: "Created Package" } });
     fireEvent.change(screen.getByLabelText("Description"), { target: { value: "New coaching offer" } });
     fireEvent.change(screen.getByLabelText("Price"), { target: { value: "249" } });
@@ -122,7 +126,7 @@ describe("PackagesPage", () => {
         })
       )
     );
-    expect(await screen.findByText("Created Package")).toBeInTheDocument();
+    expect(await screen.findAllByText("Created Package")).toHaveLength(2);
     expect(screen.queryByRole("dialog", { name: "Create Package" })).not.toBeInTheDocument();
   });
 
@@ -143,7 +147,7 @@ describe("PackagesPage", () => {
 
     render(createElement(PackagesPage));
 
-    expect(await screen.findByText("API Platinum")).toBeInTheDocument();
+    expect(await screen.findAllByText("API Platinum")).toHaveLength(2);
     fireEvent.click(screen.getByRole("button", { name: "Archive API Platinum" }));
 
     await waitFor(() =>
@@ -185,7 +189,7 @@ describe("PackagesPage", () => {
 
     render(createElement(PackagesPage));
 
-    expect(await screen.findByText("API Platinum")).toBeInTheDocument();
+    expect(await screen.findAllByText("API Platinum")).toHaveLength(2);
     fireEvent.click(screen.getByRole("button", { name: "Edit API Platinum" }));
     fireEvent.change(screen.getByLabelText("Package Name"), { target: { value: "Updated Platinum" } });
     fireEvent.change(screen.getByLabelText("Price"), { target: { value: "699" } });
@@ -208,7 +212,7 @@ describe("PackagesPage", () => {
         })
       )
     );
-    expect(await screen.findByText("Updated Platinum")).toBeInTheDocument();
+    expect(await screen.findAllByText("Updated Platinum")).toHaveLength(2);
     expect(screen.queryByText("API Platinum")).not.toBeInTheDocument();
   });
 
@@ -253,8 +257,8 @@ describe("PackagesPage", () => {
 
     render(createElement(PackagesPage));
 
-    expect(await screen.findByText("Platinum Elite")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Create Package" }));
+    expect(await screen.findAllByText("Platinum Elite")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Create New Package" }));
     fireEvent.click(screen.getByRole("button", { name: "Save Package" }));
 
     expect(screen.getByText("Enter a package name and a valid price.")).toBeInTheDocument();

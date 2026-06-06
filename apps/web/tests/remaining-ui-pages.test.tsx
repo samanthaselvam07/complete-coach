@@ -28,9 +28,9 @@ const routeSmokeCases = [
   ["supplement plans", SupplementPlansRoute, "Supplementation Hub"],
   ["supplement database", SupplementDatabaseRoute, "Supplementation Library"],
   ["messages", MessagesRoute, "Messages"],
-  ["packages", PackagesRoute, "Packages & Pricing"],
+  ["packages", PackagesRoute, "Package Ecosystem"],
   ["team management", TeamManagementRoute, "Team Management"],
-  ["social media", SocialMediaRoute, "Social Media Hub"]
+  ["social media", SocialMediaRoute, "Social Planner"]
 ] as const;
 
 describe("Ticket 009 route smoke", () => {

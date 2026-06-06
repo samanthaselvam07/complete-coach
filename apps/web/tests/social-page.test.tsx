@@ -9,9 +9,12 @@ describe("SocialMediaPage", () => {
 
     render(<SocialMediaPage />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Social Media Hub" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Social Planner" })).toBeInTheDocument();
     expect(await screen.findByText(/read-only fallback/i)).toBeInTheDocument();
-    expect(screen.getByText("Platform Overview")).toBeInTheDocument();
+    expect(screen.getByText("June 2026")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Month" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Week" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Schedule Post/i })).toBeInTheDocument();
   });
 
   it("loads persisted social connections and scheduled posts", async () => {
@@ -133,7 +136,7 @@ describe("SocialMediaPage", () => {
 
     render(<SocialMediaPage />);
 
-    fireEvent.click(await screen.findByRole("button", { name: /new post/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /schedule post/i }));
     fireEvent.change(screen.getByLabelText(/caption/i), {
       target: { value: "Persisted social launch" }
     });
@@ -141,7 +144,7 @@ describe("SocialMediaPage", () => {
       target: { value: "2026-06-08T09:00" }
     });
     fireEvent.click(screen.getByLabelText(/Coach X/i));
-    fireEvent.click(screen.getByRole("button", { name: /schedule post/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Schedule post$/i }));
 
     expect(await screen.findByText("Persisted social launch")).toBeInTheDocument();
     await waitFor(() =>
