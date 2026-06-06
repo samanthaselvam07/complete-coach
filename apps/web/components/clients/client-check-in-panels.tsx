@@ -98,7 +98,7 @@ export function DailyCheckInsPanel() {
   );
 }
 
-export function CheckInHistoryPanel({ clientId, highlightedCheckInId }: { clientId: string; highlightedCheckInId?: string }) {
+export function CheckInHistoryPanel({ clientId }: { clientId: string }) {
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -106,30 +106,26 @@ export function CheckInHistoryPanel({ clientId, highlightedCheckInId }: { client
         <p className="text-sm text-slate-500">View all weekly check-ins and progress over time</p>
       </section>
 
-      {history.map((entry) => {
-        const selected = highlightedCheckInId === entry.id;
-
-        return (
-          <article key={entry.week} className={`rounded-2xl border bg-white p-6 shadow-sm ${selected ? "border-indigo-500 ring-2 ring-indigo-100" : "border-slate-200"}`}>
-            <div className="mb-5 flex items-start justify-between">
-              <div>
-                <h3 className="text-xl font-black text-slate-950">
-                  {entry.week}
-                  <span className={`ml-3 rounded-full px-3 py-1 text-xs font-bold ${entry.status === "Late" ? "bg-red-50 text-red-600" : entry.status === "Early" ? "bg-blue-50 text-blue-600" : "bg-green-50 text-green-600"}`}>
-                    {entry.status}
-                  </span>
-                  {selected ? <span className="ml-3 rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-600">Selected check-in</span> : null}
-                </h3>
-                <p className="mt-2 text-sm text-slate-500">{entry.date}</p>
-              </div>
-              <Link
-                href={`/clients/${clientId}/check-ins/${entry.week.toLowerCase().replace(/\s+/g, "-")}`}
-                aria-label={`Open ${entry.week} check-in`}
-                className="text-2xl text-slate-400 hover:text-indigo-600"
-              >
-                &gt;
-              </Link>
+      {history.map((entry) => (
+        <article key={entry.week} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-5 flex items-start justify-between">
+            <div>
+              <h3 className="text-xl font-black text-slate-950">
+                {entry.week}
+                <span className={`ml-3 rounded-full px-3 py-1 text-xs font-bold ${entry.status === "Late" ? "bg-red-50 text-red-600" : entry.status === "Early" ? "bg-blue-50 text-blue-600" : "bg-green-50 text-green-600"}`}>
+                  {entry.status}
+                </span>
+              </h3>
+              <p className="mt-2 text-sm text-slate-500">{entry.date}</p>
             </div>
+            <Link
+              href={`/clients/${clientId}/check-ins/${entry.week.toLowerCase().replace(/\s+/g, "-")}`}
+              aria-label={`Open ${entry.week} check-in`}
+              className="text-2xl text-slate-400 hover:text-indigo-600"
+            >
+              &gt;
+            </Link>
+          </div>
 
           <div className="mb-5 grid gap-4 md:grid-cols-4">
             <HistoryMetric label="Avg Body Weight" value={entry.weight} />
@@ -155,9 +151,8 @@ export function CheckInHistoryPanel({ clientId, highlightedCheckInId }: { client
           >
             View Check-In Recording
           </Link>
-          </article>
-        );
-      })}
+        </article>
+      ))}
     </div>
   );
 }

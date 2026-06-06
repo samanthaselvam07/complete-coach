@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 
 const currentCheckIn = {
   week: "Week 24",
@@ -49,31 +50,41 @@ const previousCheckIn = {
 export function CheckInDetailPage({
   clientId = "1",
   checkInId,
-  compare = false
+  compare = false,
+  embedded = false
 }: {
   clientId?: string;
   checkInId: string;
   compare?: boolean;
+  embedded?: boolean;
 }) {
+  const currentHref = embedded
+    ? `/clients/${clientId}?tab=check-ins&checkInId=${encodeURIComponent(checkInId)}`
+    : `/clients/${clientId}/check-ins/${checkInId}`;
+  const compareHref = embedded
+    ? `/clients/${clientId}?tab=check-ins&checkInId=${encodeURIComponent(checkInId)}&compare=previous`
+    : `/clients/${clientId}/check-ins/${checkInId}?compare=previous`;
+  const backHref = embedded ? `/clients/${clientId}?tab=check-ins` : `/clients/${clientId}`;
+
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className={embedded ? "overflow-hidden rounded-xl border border-slate-200 bg-white" : "min-h-screen bg-gray-50"}>
       <header className="flex flex-col gap-3 border-b border-slate-200 bg-white px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
         <nav className="flex flex-wrap items-center gap-4 text-sm font-bold text-slate-600" aria-label="Check-in actions">
-          <Link href={`/clients/${clientId}/check-ins/${checkInId}`} className="hover:text-indigo-600">
+          <Link href={currentHref as Route} className="hover:text-indigo-600">
             Reply
           </Link>
           <Link
-            href={`/clients/${clientId}/check-ins/${checkInId}?compare=previous`}
+            href={compareHref as Route}
             className={compare ? "rounded-lg bg-indigo-600 px-4 py-2 text-white" : "hover:text-indigo-600"}
           >
             Compare With Previous Checkin
           </Link>
           {compare ? (
-            <Link href={`/clients/${clientId}/check-ins/${checkInId}`} className="hover:text-indigo-600">
+            <Link href={currentHref as Route} className="hover:text-indigo-600">
               Close
             </Link>
           ) : null}
-          <Link href={`/clients/${clientId}`} className="hover:text-indigo-600">
+          <Link href={backHref as Route} className="hover:text-indigo-600">
             Go Back
           </Link>
         </nav>

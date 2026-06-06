@@ -32,4 +32,15 @@ describe("CheckInDetailPage", () => {
       "/clients/1/check-ins/week-24"
     );
   });
+
+  it("keeps detail actions inside the client profile when embedded", () => {
+    render(createElement(CheckInDetailPage, { clientId: "1", checkInId: "demo-weekly-check-in", embedded: true }));
+
+    expect(screen.getByRole("heading", { name: "Current Checkin" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Compare With Previous Checkin" })).toHaveAttribute(
+      "href",
+      "/clients/1?tab=check-ins&checkInId=demo-weekly-check-in&compare=previous"
+    );
+    expect(screen.getByRole("link", { name: "Go Back" })).toHaveAttribute("href", "/clients/1?tab=check-ins");
+  });
 });

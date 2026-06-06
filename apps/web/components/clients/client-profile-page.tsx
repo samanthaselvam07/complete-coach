@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronLeft, MessageSquare, Pencil, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { CheckInDetailPage } from "@/components/check-ins/check-in-detail-page";
 import { CheckInHistoryPanel, DailyCheckInsPanel } from "@/components/clients/client-check-in-panels";
 import { ClientProfileDashboard } from "@/components/clients/client-profile-dashboard";
 import { getClientById, type ClientProfile, type ClientSummary } from "@/fixtures/clients";
@@ -13,6 +14,7 @@ type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "
 
 interface ClientProfilePageProps {
   clientId: string;
+  highlightedCheckInCompare?: boolean;
   highlightedCheckInId?: string;
   initialTab?: ProfileTab;
 }
@@ -120,7 +122,12 @@ interface ClientProfileView extends ClientProfile {
 
 const tabs: ProfileTab[] = ["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Check-Ins"];
 
-export function ClientProfilePage({ clientId, highlightedCheckInId, initialTab = "Dashboard" }: ClientProfilePageProps) {
+export function ClientProfilePage({
+  clientId,
+  highlightedCheckInCompare = false,
+  highlightedCheckInId,
+  initialTab = "Dashboard"
+}: ClientProfilePageProps) {
   const [client, setClient] = useState<ClientProfileView | null>(() => {
     const fixtureClient = getClientById(clientId);
 
@@ -223,7 +230,12 @@ export function ClientProfilePage({ clientId, highlightedCheckInId, initialTab =
         </div>
       </div>
 
-      <ClientProfileTabPanel client={client} activeTab={activeTab} highlightedCheckInId={highlightedCheckInId} />
+      <ClientProfileTabPanel
+        client={client}
+        activeTab={activeTab}
+        highlightedCheckInCompare={highlightedCheckInCompare}
+        highlightedCheckInId={highlightedCheckInId}
+      />
     </div>
   );
 }
@@ -541,10 +553,12 @@ function ProfileMetric({
 function ClientProfileTabPanel({
   client,
   activeTab,
+  highlightedCheckInCompare,
   highlightedCheckInId
 }: {
   client: ClientProfileView;
   activeTab: ProfileTab;
+  highlightedCheckInCompare?: boolean;
   highlightedCheckInId?: string;
 }) {
   if (activeTab === "Dashboard") {
@@ -560,13 +574,20 @@ function ClientProfileTabPanel({
       id={`client-tab-${activeTab}`}
       role="tabpanel"
       aria-label={activeTab}
-      className="rounded-xl border border-gray-200 bg-white p-6"
+      className={cn(
+        activeTab === "Check-Ins" && highlightedCheckInId
+          ? "bg-transparent"
+          : "rounded-xl border border-gray-200 bg-white p-6"
+      )}
     >
       {activeTab === "Daily Check-Ins" ? <DailyCheckInsPanel /> : null}
       {activeTab === "Training" ? <TrainingPanel client={client} /> : null}
       {activeTab === "Nutrition" ? <NutritionPanel client={client} /> : null}
       {activeTab === "Supplementation" ? <SupplementationPanel client={client} /> : null}
-      {activeTab === "Check-Ins" ? <CheckInHistoryPanel clientId={client.id} highlightedCheckInId={highlightedCheckInId} /> : null}
+      {activeTab === "Check-Ins" && highlightedCheckInId ? (
+        <CheckInDetailPage clientId={client.id} checkInId={highlightedCheckInId} compare={highlightedCheckInCompare} embedded />
+      ) : null}
+      {activeTab === "Check-Ins" && !highlightedCheckInId ? <CheckInHistoryPanel clientId={client.id} /> : null}
     </section>
   );
 }

@@ -209,12 +209,18 @@ describe("ClientProfilePage", () => {
     expect(screen.getAllByText("Main Challenge")).toHaveLength(3);
   });
 
-  it("can open directly to a highlighted check-in inside the client profile", () => {
+  it("can open directly to the current check-in inside the client profile", () => {
     render(createElement(ClientProfilePage, { clientId: "1", initialTab: "Check-Ins", highlightedCheckInId: "demo-weekly-check-in" }));
 
     expect(screen.getByRole("tab", { name: "Check-Ins" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "Check-Ins" })).toBeInTheDocument();
-    expect(screen.getByText("Selected check-in")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Current Checkin" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Check-In History" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Compare With Previous Checkin" })).toHaveAttribute(
+      "href",
+      "/clients/1?tab=check-ins&checkInId=demo-weekly-check-in&compare=previous"
+    );
+    expect(screen.getByRole("link", { name: "Go Back" })).toHaveAttribute("href", "/clients/1?tab=check-ins");
   });
 
   it("renders persisted client training assignments in the training tab", async () => {
