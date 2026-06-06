@@ -401,6 +401,8 @@ Steps:
 - Close any gaps with code/docs/tests before M12 starts.
 
 ## M12 - AI-Assisted Coaching
+Status: Complete. Ticket 021 is complete with CHFI-style check-in review generation, approval-gated AI outputs, prompt/version registry, usage/cost reporting, redaction/minimization, docs, and focused verification.
+
 Goal: add user-facing AI features with safety, audit, and cost controls.
 
 Scope:

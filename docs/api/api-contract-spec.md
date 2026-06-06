@@ -133,6 +133,29 @@ Query filters:
 - `POST /api/v1/check-ins/{check_in_id}/review`: transitions a pending check-in to reviewed. Body: optional `summary`, optional `coachNotes`.
 - `POST /api/v1/check-ins/{check_in_id}/complete`: transitions a check-in to completed.
 - `GET /api/v1/check-ins/{check_in_id}/extracted-metrics`: returns metrics extracted from the check-in submission.
+- `POST /api/v1/check-ins/{check_in_id}/ai-review`: generates a CHFI-style AI-assisted review for one organization-scoped check-in. Requires `ai:generate`. Creates an `ai_generation`, pending `ai_outputs`, and an audit event. Response includes serialized generation usage and pending outputs; it never includes raw provider output or unsafe input.
+
+### AI-Assisted Coaching
+- `GET /api/v1/ai/recommendations`: returns organization-scoped AI outputs. Query: optional `clientId`, `targetType`, `targetId`, `status`, `limit`. Requires `ai:read`.
+- `POST /api/v1/ai/recommendations/{recommendation_id}/approve`: approves a pending AI output. Requires `ai:approve`. Writes an audit event.
+- `POST /api/v1/ai/recommendations/{recommendation_id}/reject`: rejects a pending AI output. Requires `ai:approve`. Body: `reason`. Writes an audit event with reason length only.
+- `GET /api/v1/ai/usage`: returns organization-level generation counts, token totals, estimated cost cents, and status breakdowns. Query: optional `dateFrom`, `dateTo`. Requires `ai:read`.
+
+AI output types:
+- `check-in-summary`
+- `risk-flag`
+- `workout-suggestion`
+- `nutrition-suggestion`
+- `message-draft`
+- `resource-recommendation`
+- `extraction-enhancement`
+
+AI output statuses:
+- `pending-approval`
+- `approved`
+- `rejected`
+- `applied`
+- `discarded`
 
 ### Client Metrics
 - `GET /api/v1/clients/{client_id}/metrics`: returns active-organization client measurements. Query: `metricKey`, `dateFrom`, `dateTo`, `limit`.

@@ -128,6 +128,14 @@ describe("CheckInManagementPage", () => {
           }),
           { status: 200 }
         )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: []
+          }),
+          { status: 200 }
+        )
       );
 
     render(createElement(CheckInManagementPage));
@@ -138,7 +146,10 @@ describe("CheckInManagementPage", () => {
     expect(await screen.findByRole("dialog", { name: /check-in detail for API Client/i })).toBeInTheDocument();
     expect(screen.getByText("body-weight")).toBeInTheDocument();
     expect(screen.getByText("82.5 kg")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenLastCalledWith("/api/v1/check-ins/checkin_api_1");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/check-ins/checkin_api_1");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/ai/recommendations?targetType=check_in&targetId=checkin_api_1&limit=25"
+    );
   });
 
   it("reviews and completes an API-backed check-in", async () => {
@@ -178,6 +189,14 @@ describe("CheckInManagementPage", () => {
               answers: {},
               metrics: []
             }
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: []
           }),
           { status: 200 }
         )
@@ -240,5 +259,106 @@ describe("CheckInManagementPage", () => {
     await waitFor(() => {
       expect(within(screen.getByRole("region", { name: "Check-in list" })).getByText("API Client")).toBeInTheDocument();
     });
+  });
+
+  it("generates, displays, and approves AI-assisted recommendations", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "checkin_api_1",
+                clientId: "client_1",
+                formSubmissionId: "submission_1",
+                name: "API Client",
+                initials: "AC",
+                status: "pending",
+                checkInStatus: "pending-review",
+                dueAt: "2026-05-14T00:00:00.000Z",
+                submittedAt: "2026-05-14T06:00:00.000Z",
+                assignedDay: "2026-05-14T00:00:00.000Z",
+                lastCheckIn: "Today"
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "checkin_api_1",
+              name: "API Client",
+              status: "pending",
+              checkInStatus: "pending-review",
+              submittedAt: "2026-05-14T06:00:00.000Z",
+              answers: {},
+              metrics: []
+            }
+          }),
+          { status: 200 }
+        )
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              outputs: [
+                {
+                  id: "ai_output_1",
+                  type: "check-in-summary",
+                  status: "pending-approval",
+                  severity: "high",
+                  title: "CHFI weekly check-in summary",
+                  contentMarkdown: "## 1. Weight / Waist\nStrong progress.",
+                  requiresApproval: true
+                }
+              ]
+            }
+          }),
+          { status: 201 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "ai_output_1",
+              type: "check-in-summary",
+              status: "approved",
+              severity: "high",
+              title: "CHFI weekly check-in summary",
+              contentMarkdown: "## 1. Weight / Waist\nStrong progress.",
+              requiresApproval: true
+            }
+          }),
+          { status: 200 }
+        )
+      );
+
+    render(createElement(CheckInManagementPage));
+
+    expect(await screen.findByText("API Client")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /view full check-in for API Client/i }));
+    fireEvent.click(await screen.findByRole("button", { name: "Generate AI review" }));
+
+    expect(await screen.findByText("CHFI weekly check-in summary")).toBeInTheDocument();
+    expect(screen.getByLabelText("Review summary")).toHaveValue("## 1. Weight / Waist\nStrong progress.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+
+    expect(await screen.findByText("AI recommendation approved.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/check-ins/checkin_api_1/ai-review",
+      expect.objectContaining({ method: "POST" })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/ai/recommendations/ai_output_1/approve",
+      expect.objectContaining({ method: "POST" })
+    );
   });
 });

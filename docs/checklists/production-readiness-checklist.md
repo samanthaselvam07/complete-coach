@@ -88,6 +88,15 @@
 - [ ] Meta/X app review, live OAuth redirect URLs, and production scopes are approved before live posting.
 - [ ] Advanced media transcoding is implemented before broad video publishing.
 
+## AI-Assisted Coaching
+- [x] AI provider/prompt policy is captured in ADR-006.
+- [x] Prompt versions are persisted for generated coaching outputs.
+- [x] AI inputs are minimized and redacted before persistence/audit logging.
+- [x] Client-impacting AI outputs require human approval before use.
+- [x] Check-in summaries, risk flags, workout/nutrition suggestions, message drafts, resource recommendation output types, and extraction-enhancement output types are represented.
+- [x] Organization-level token and estimated cost reporting is available.
+- [ ] Live external LLM provider credentials, budgets, and incident runbooks are configured before enabling non-heuristic generation.
+
 ## Observability
 - [x] Sentry captures server/client errors.
 - [x] Structured logs include request ids.

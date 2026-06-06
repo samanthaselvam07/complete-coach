@@ -164,6 +164,105 @@ Indexes:
 - `organization_id,client_id,metric_key,measured_at`.
 - `organization_id,source_type,source_id`.
 
+## AI-Assisted Coaching
+### `ai_prompt_versions`
+Purpose: immutable prompt/model registry for AI workflows.
+
+Fields:
+- `id`
+- `organization_id` nullable for platform defaults.
+- `workflow` check-in review, message draft, resource recommendation, or extraction enhancement.
+- `version`
+- `name`
+- `provider`
+- `model`
+- `system_prompt`
+- `user_prompt_template`
+- `output_schema`
+- `is_active`
+- `created_by_user_id`
+- `created_at`
+
+Indexes:
+- Unique `organization_id,workflow,version`.
+- `organization_id,workflow,is_active`.
+- `created_by_user_id`.
+
+### `ai_generations`
+Purpose: durable audit/cost record for each AI run.
+
+Fields:
+- `id`
+- `organization_id`
+- `workflow`
+- `status`
+- `prompt_version_id`
+- `provider`
+- `model`
+- `client_id`
+- `target_type`
+- `target_id`
+- `input_hash`
+- `input_summary`
+- `redacted_input`
+- `output_json`
+- `error_message`
+- `input_tokens`
+- `output_tokens`
+- `estimated_cost_cents`
+- `requested_by_user_id`
+- `created_at`
+- `updated_at`
+
+Security:
+- Store minimized/redacted input only.
+- Do not expose `redacted_input` or raw `output_json` in app API responses.
+
+Indexes:
+- `organization_id,workflow,created_at`.
+- `organization_id,client_id,created_at`.
+- `organization_id,target_type,target_id`.
+- `prompt_version_id`.
+- `requested_by_user_id`.
+
+### `ai_outputs`
+Purpose: generated summaries, risk flags, suggestions, drafts, resource recommendations, and extraction enhancements awaiting human approval.
+
+Fields:
+- `id`
+- `organization_id`
+- `generation_id`
+- `client_id`
+- `target_type`
+- `target_id`
+- `type`
+- `status`
+- `severity`
+- `title`
+- `content_markdown`
+- `data_json`
+- `requires_approval`
+- `approved_by_user_id`
+- `approved_at`
+- `rejected_by_user_id`
+- `rejected_at`
+- `rejection_reason`
+- `created_at`
+- `updated_at`
+
+Rules:
+- Client-impacting outputs default to `pending-approval`.
+- Approval/rejection writes audit events.
+- Rejection audit metadata records reason length, not the raw reason text.
+
+Indexes:
+- `organization_id,status,created_at`.
+- `organization_id,client_id,status`.
+- `organization_id,target_type,target_id`.
+- `generation_id`.
+- `approved_by_user_id`.
+- `rejected_by_user_id`.
+
 ## CRM
 ### `leads`
 Fields:

@@ -514,3 +514,29 @@ Out of scope:
 - User-facing AI automation.
 - Real provider app approval.
 - Advanced media transcoding worker.
+
+## Ticket 021 - AI-Assisted Coaching
+Status: Complete. M12 AI-assisted coaching persistence, CHFI-style check-in review generation, prompt/version registry, redaction/minimization, approval-gated recommendations, usage/cost reporting, check-in UI integration, ADR/API/schema docs, and focused tests are complete.
+
+Scope:
+- Check-in summaries.
+- Risk flags.
+- Workout and nutrition suggestions.
+- Message drafts.
+- Resource recommendation and extraction-enhancement output types.
+- Prompt/version registry.
+- Human approval and rejection workflows.
+- Organization usage and cost tracking.
+
+Depends on:
+- Ticket 020.
+
+Tests:
+- AI domain rules, redaction, cost estimation, and CHFI-style output structure.
+- AI API generation, authorization, prompt tracking, approval/rejection, and usage reporting.
+- Check-in UI generation and approval flow.
+
+Out of scope:
+- Live external LLM provider calls.
+- Automatic client-facing sending or application of AI recommendations.
+- Copying Kahunas credentials or CHFI source PDFs into the repository.

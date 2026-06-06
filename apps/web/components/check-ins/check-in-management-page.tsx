@@ -50,6 +50,16 @@ interface CheckInDetail extends ApiCheckInRecord {
   metrics?: CheckInMetric[];
 }
 
+interface AiRecommendation {
+  id: string;
+  type: string;
+  status: "pending-approval" | "approved" | "rejected" | "applied" | "discarded";
+  severity?: string | null;
+  title: string;
+  contentMarkdown: string;
+  requiresApproval: boolean;
+}
+
 type DisplayCheckIn = CheckInRecord | ApiCheckInRecord;
 
 export function CheckInManagementPage() {
@@ -63,6 +73,8 @@ export function CheckInManagementPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [reviewSummary, setReviewSummary] = useState("");
   const [coachNotes, setCoachNotes] = useState("");
+  const [aiRecommendations, setAiRecommendations] = useState<AiRecommendation[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -244,11 +256,16 @@ export function CheckInManagementPage() {
           coachNotes={coachNotes}
           actionMessage={actionMessage}
           actionError={actionError}
+          aiRecommendations={aiRecommendations}
+          aiLoading={aiLoading}
           onClose={() => setSelectedCheckIn(null)}
           onReviewSummaryChange={setReviewSummary}
           onCoachNotesChange={setCoachNotes}
           onReview={reviewSelectedCheckIn}
           onComplete={completeSelectedCheckIn}
+          onGenerateAiReview={generateAiReview}
+          onApproveAiRecommendation={approveAiRecommendation}
+          onRejectAiRecommendation={rejectAiRecommendation}
         />
       ) : null}
     </div>
@@ -259,6 +276,7 @@ export function CheckInManagementPage() {
     setActionError(null);
     setReviewSummary("");
     setCoachNotes("");
+    setAiRecommendations([]);
 
     if (checkInSource === "fixture") {
       setSelectedCheckIn({
@@ -295,11 +313,101 @@ export function CheckInManagementPage() {
         setSelectedCheckIn(payload.data);
         setReviewSummary(payload.data.summary ?? "");
         setCoachNotes(payload.data.coachNotes ?? "");
+        await loadAiRecommendations(payload.data);
       }
     } catch {
       setActionError("Check-in details could not be loaded.");
     } finally {
       setLoadingDetail(false);
+    }
+  }
+
+  async function loadAiRecommendations(checkIn: CheckInDetail) {
+    try {
+      const search = new URLSearchParams({
+        targetType: "check_in",
+        targetId: checkIn.id,
+        limit: "25"
+      });
+      const response = await fetch(`/api/v1/ai/recommendations?${search.toString()}`);
+
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = (await response.json()) as { data?: AiRecommendation[] };
+      setAiRecommendations(payload.data ?? []);
+    } catch {
+      // AI recommendations are optional; keep the check-in review usable if this call fails.
+    }
+  }
+
+  async function generateAiReview() {
+    if (!selectedCheckIn || checkInSource !== "api") {
+      return;
+    }
+
+    setAiLoading(true);
+    setActionMessage(null);
+    setActionError(null);
+
+    try {
+      const response = await fetch(`/api/v1/check-ins/${selectedCheckIn.id}/ai-review`, { method: "POST" });
+
+      if (!response.ok) {
+        throw new Error("AI review request failed.");
+      }
+
+      const payload = (await response.json()) as {
+        data?: { outputs?: AiRecommendation[] };
+      };
+
+      setAiRecommendations(payload.data?.outputs ?? []);
+      const summary = payload.data?.outputs?.find((output) => output.type === "check-in-summary");
+      if (summary) {
+        setReviewSummary(summary.contentMarkdown);
+      }
+      setActionMessage("AI review generated. Review and approve any client-facing recommendations before using them.");
+    } catch {
+      setActionError("AI review could not be generated.");
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  async function approveAiRecommendation(recommendationId: string) {
+    await updateAiRecommendationStatus(recommendationId, "approve");
+  }
+
+  async function rejectAiRecommendation(recommendationId: string) {
+    await updateAiRecommendationStatus(recommendationId, "reject");
+  }
+
+  async function updateAiRecommendationStatus(recommendationId: string, action: "approve" | "reject") {
+    setActionMessage(null);
+    setActionError(null);
+
+    try {
+      const response = await fetch(`/api/v1/ai/recommendations/${recommendationId}/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        ...(action === "reject" ? { body: JSON.stringify({ reason: "Rejected during check-in review." }) } : {})
+      });
+
+      if (!response.ok) {
+        throw new Error("Recommendation update failed.");
+      }
+
+      const payload = (await response.json()) as { data?: AiRecommendation };
+      if (payload.data) {
+        setAiRecommendations((current) =>
+          current.map((recommendation) => (recommendation.id === recommendationId ? payload.data! : recommendation))
+        );
+      }
+
+      setActionMessage(action === "approve" ? "AI recommendation approved." : "AI recommendation rejected.");
+    } catch {
+      setActionError("AI recommendation could not be updated.");
     }
   }
 
@@ -405,11 +513,16 @@ function CheckInDetailDialog({
   coachNotes,
   actionMessage,
   actionError,
+  aiRecommendations,
+  aiLoading,
   onClose,
   onReviewSummaryChange,
   onCoachNotesChange,
   onReview,
-  onComplete
+  onComplete,
+  onGenerateAiReview,
+  onApproveAiRecommendation,
+  onRejectAiRecommendation
 }: {
   checkIn: CheckInDetail;
   loadingDetail: boolean;
@@ -417,11 +530,16 @@ function CheckInDetailDialog({
   coachNotes: string;
   actionMessage: string | null;
   actionError: string | null;
+  aiRecommendations: AiRecommendation[];
+  aiLoading: boolean;
   onClose: () => void;
   onReviewSummaryChange: (value: string) => void;
   onCoachNotesChange: (value: string) => void;
   onReview: () => void;
   onComplete: () => void;
+  onGenerateAiReview: () => void;
+  onApproveAiRecommendation: (recommendationId: string) => void;
+  onRejectAiRecommendation: (recommendationId: string) => void;
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/40 p-4">
@@ -490,6 +608,70 @@ function CheckInDetailDialog({
         </section>
 
         <section className="space-y-3 border-t border-gray-200 pt-4">
+          <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+            <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-900">AI-Assisted Coaching</h3>
+                <p className="mt-1 text-sm text-indigo-800">
+                  Generate a CHFI-style review, then approve or reject recommendations before using them with a client.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={aiLoading}
+                onClick={onGenerateAiReview}
+              >
+                {aiLoading ? "Generating..." : "Generate AI review"}
+              </button>
+            </div>
+
+            {aiRecommendations.length ? (
+              <div className="mt-4 space-y-3">
+                {aiRecommendations.map((recommendation) => (
+                  <article key={recommendation.id} className="rounded-lg border border-indigo-100 bg-white p-3">
+                    <div className="flex flex-col justify-between gap-2 md:flex-row md:items-start">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="font-semibold text-gray-900">{recommendation.title}</h4>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                            {recommendation.status}
+                          </span>
+                          {recommendation.severity ? (
+                            <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">
+                              {recommendation.severity}
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{recommendation.contentMarkdown}</p>
+                      </div>
+                      {recommendation.status === "pending-approval" ? (
+                        <div className="flex shrink-0 gap-2">
+                          <button
+                            type="button"
+                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white"
+                            onClick={() => onApproveAiRecommendation(recommendation.id)}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700"
+                            onClick={() => onRejectAiRecommendation(recommendation.id)}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-indigo-800">No AI recommendations have been generated for this check-in yet.</p>
+            )}
+          </div>
+
           <label htmlFor="review-summary" className="block text-sm font-medium text-gray-700">
             Review summary
           </label>

@@ -375,6 +375,45 @@ enum SocialTargetStatus {
   @@map("social_target_status")
 }
 
+enum AiWorkflowType {
+  CHECK_IN_REVIEW         @map("check-in-review")
+  MESSAGE_DRAFT           @map("message-draft")
+  RESOURCE_RECOMMENDATION @map("resource-recommendation")
+  EXTRACTION_ENHANCEMENT  @map("extraction-enhancement")
+
+  @@map("ai_workflow_type")
+}
+
+enum AiGenerationStatus {
+  RUNNING   @map("running")
+  SUCCEEDED @map("succeeded")
+  FAILED    @map("failed")
+
+  @@map("ai_generation_status")
+}
+
+enum AiOutputType {
+  CHECK_IN_SUMMARY        @map("check-in-summary")
+  RISK_FLAG               @map("risk-flag")
+  WORKOUT_SUGGESTION      @map("workout-suggestion")
+  NUTRITION_SUGGESTION    @map("nutrition-suggestion")
+  MESSAGE_DRAFT           @map("message-draft")
+  RESOURCE_RECOMMENDATION @map("resource-recommendation")
+  EXTRACTION_ENHANCEMENT  @map("extraction-enhancement")
+
+  @@map("ai_output_type")
+}
+
+enum AiOutputStatus {
+  PENDING_APPROVAL @map("pending-approval")
+  APPROVED         @map("approved")
+  REJECTED         @map("rejected")
+  APPLIED          @map("applied")
+  DISCARDED        @map("discarded")
+
+  @@map("ai_output_status")
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String  @map("user_id")
@@ -453,6 +492,10 @@ model User {
   socialConnections            SocialConnection[]            @relation("SocialConnectionCreator")
   socialOAuthStates            SocialOAuthState[]            @relation("SocialOAuthStateCreator")
   createdSocialPosts           SocialPost[]                  @relation("SocialPostCreator")
+  createdAiPromptVersions      AiPromptVersion[]             @relation("AiPromptVersionCreator")
+  requestedAiGenerations       AiGeneration[]                @relation("AiGenerationRequester")
+  approvedAiOutputs            AiOutput[]                    @relation("AiOutputApprover")
+  rejectedAiOutputs            AiOutput[]                    @relation("AiOutputRejecter")
 
   @@unique([authProvider, authProviderAccountId])
   @@map("users")
@@ -522,6 +565,9 @@ model Organization {
   socialPostTargets            SocialPostTarget[]
   socialPostAttempts           SocialPostAttempt[]
   socialAnalyticsSnapshots     SocialAnalyticsSnapshot[]
+  aiPromptVersions             AiPromptVersion[]
+  aiGenerations                AiGeneration[]
+  aiOutputs                    AiOutput[]
 
   @@index([status])
   @@map("organizations")
@@ -733,6 +779,102 @@ model SocialAnalyticsSnapshot {
   @@map("social_analytics_snapshots")
 }
 
+model AiPromptVersion {
+  id                 String         @id @default(cuid())
+  organizationId     String?        @map("organization_id")
+  workflow           AiWorkflowType
+  version            String
+  name               String
+  provider           String
+  model              String
+  systemPrompt       String         @map("system_prompt") @db.Text
+  userPromptTemplate String         @map("user_prompt_template") @db.Text
+  outputSchema       Json?          @map("output_schema")
+  isActive           Boolean        @default(true) @map("is_active")
+  createdByUserId    String?        @map("created_by_user_id")
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization       Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy          User?          @relation("AiPromptVersionCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  generations        AiGeneration[]
+
+  @@unique([organizationId, workflow, version])
+  @@index([organizationId, workflow, isActive])
+  @@index([createdByUserId])
+  @@map("ai_prompt_versions")
+}
+
+model AiGeneration {
+  id                 String             @id @default(cuid())
+  organizationId     String             @map("organization_id")
+  workflow           AiWorkflowType
+  status             AiGenerationStatus @default(RUNNING)
+  promptVersionId    String             @map("prompt_version_id")
+  provider           String
+  model              String
+  clientId           String?            @map("client_id")
+  targetType         String?            @map("target_type")
+  targetId           String?            @map("target_id")
+  inputHash          String             @map("input_hash")
+  inputSummary       Json               @map("input_summary")
+  redactedInput      Json?              @map("redacted_input")
+  outputJson         Json?              @map("output_json")
+  errorMessage       String?            @map("error_message") @db.Text
+  inputTokens        Int                @default(0) @map("input_tokens")
+  outputTokens       Int                @default(0) @map("output_tokens")
+  estimatedCostCents Decimal            @default(0) @map("estimated_cost_cents") @db.Decimal(10, 4)
+  requestedByUserId  String             @map("requested_by_user_id")
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  promptVersion      AiPromptVersion    @relation(fields: [promptVersionId], references: [id], onDelete: Restrict)
+  client             Client?            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  requestedBy        User               @relation("AiGenerationRequester", fields: [requestedByUserId], references: [id], onDelete: Restrict)
+  outputs            AiOutput[]
+
+  @@index([organizationId, workflow, createdAt])
+  @@index([organizationId, clientId, createdAt])
+  @@index([organizationId, targetType, targetId])
+  @@index([promptVersionId])
+  @@index([requestedByUserId])
+  @@map("ai_generations")
+}
+
+model AiOutput {
+  id               String         @id @default(cuid())
+  organizationId   String         @map("organization_id")
+  generationId     String         @map("generation_id")
+  clientId         String?        @map("client_id")
+  targetType       String?        @map("target_type")
+  targetId         String?        @map("target_id")
+  type             AiOutputType
+  status           AiOutputStatus @default(PENDING_APPROVAL)
+  severity         String?
+  title            String
+  contentMarkdown  String         @map("content_markdown") @db.Text
+  dataJson         Json?          @map("data_json")
+  requiresApproval Boolean        @default(true) @map("requires_approval")
+  approvedByUserId String?        @map("approved_by_user_id")
+  approvedAt       DateTime?      @map("approved_at") @db.Timestamptz(6)
+  rejectedByUserId String?        @map("rejected_by_user_id")
+  rejectedAt       DateTime?      @map("rejected_at") @db.Timestamptz(6)
+  rejectionReason  String?        @map("rejection_reason") @db.Text
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization     Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  generation       AiGeneration   @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  client           Client?        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  approvedBy       User?          @relation("AiOutputApprover", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  rejectedBy       User?          @relation("AiOutputRejecter", fields: [rejectedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, clientId, status])
+  @@index([organizationId, targetType, targetId])
+  @@index([generationId])
+  @@index([approvedByUserId])
+  @@index([rejectedByUserId])
+  @@map("ai_outputs")
+}
+
 model Client {
   id                           String                        @id @default(cuid())
   organizationId               String                        @map("organization_id")
@@ -773,6 +915,8 @@ model Client {
   clientNotifications          Notification[]                @relation("NotificationRecipientClient")
   tasks                        Task[]
   subscriptions                ClientSubscription[]
+  aiGenerations                AiGeneration[]
+  aiOutputs                    AiOutput[]
 
   @@unique([organizationId, externalClientId])
   @@index([organizationId, status])
