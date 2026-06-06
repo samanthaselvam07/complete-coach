@@ -1,72 +1,128 @@
-import { Award, Brain, CheckCircle2, Sparkles } from "lucide-react";
+import { Mail, Phone, Plus, Users } from "lucide-react";
 
-const profileSections = [
-  {
-    title: "Coaching Identity",
-    body: "Positioning, audience fit, specialities, and the language clients should see when they join your coaching ecosystem.",
-    icon: Award
-  },
-  {
-    title: "Methodology Profile",
-    body: "Your coaching principles, decision rules, and preferred check-in style feed the AI review context used across client reporting.",
-    icon: Brain
-  },
-  {
-    title: "Client Experience",
-    body: "Set expectations for feedback cadence, accountability tone, training review depth, and nutrition education style.",
-    icon: Sparkles
-  }
+const credentials = [
+  ["CSCS", "Certified Strength & Conditioning Specialist"],
+  ["PN Level 2", "Precision Nutrition Certified Coach"],
+  ["ISSN Sport Nutrition", "Sports Nutrition Specialist"],
+  ["FMS Level 2", "Functional Movement Screening"]
 ];
 
 export function CoachProfilePage() {
   return (
-    <main className="space-y-8 p-6 lg:p-8">
-      <header className="overflow-hidden rounded-3xl bg-slate-950 p-8 text-white shadow-sm">
-        <p className="mb-3 text-xs font-bold uppercase tracking-wide text-indigo-200">Operating profile</p>
-        <h1 className="mb-3 text-3xl font-black">Coach Profile</h1>
-        <p className="max-w-3xl text-sm leading-6 text-slate-200">
-          Centralize how the coach shows up in the product: brand voice, methodology, feedback standards, and the
-          principles that should guide AI-assisted check-ins.
-        </p>
+    <main className="min-h-screen bg-gray-50">
+      <header className="relative min-h-64 overflow-hidden bg-slate-950 p-8 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_0%,rgba(255,255,255,0.22),transparent_28%),linear-gradient(120deg,rgba(15,23,42,0.05),rgba(15,23,42,0.9))]" />
+        <div className="relative flex min-h-48 flex-col justify-end">
+          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-indigo-200">Master Level Coach</p>
+          <h1 className="text-4xl font-black tracking-tight">Marcus Chen-Patterson</h1>
+          <p className="mt-2 text-lg font-semibold">Head Performance Coach | MCP Coaching</p>
+        </div>
       </header>
 
-      <section className="grid gap-6 lg:grid-cols-3">
-        {profileSections.map((section) => {
-          const Icon = section.icon;
+      <div className="grid gap-6 p-6 lg:grid-cols-[0.48fr_1fr] lg:p-8">
+        <aside className="space-y-5">
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="grid grid-cols-2 gap-6 border-b border-slate-100 pb-5 text-center">
+              <Metric value="140+" label="Clients Coached" />
+              <Metric value="94%" label="Goal Achievement" />
+            </div>
+            <div className="pt-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Retention Rate</p>
+              <p className="mt-2 text-3xl font-black">98.2%</p>
+            </div>
+          </section>
 
-          return (
-            <article key={section.title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-                <Icon className="h-6 w-6" aria-hidden="true" />
-              </div>
-              <h2 className="mb-2 text-lg font-black text-slate-950">{section.title}</h2>
-              <p className="text-sm leading-6 text-slate-600">{section.body}</p>
-            </article>
-          );
-        })}
-      </section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-xl font-black">+ Contact Information</h2>
+            <p className="mb-3 flex items-center gap-3 text-sm text-slate-600">
+              <Mail className="h-4 w-4" aria-hidden="true" />
+              m.chen@mcpcoaching.com
+            </p>
+            <p className="flex items-center gap-3 text-sm text-slate-600">
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              +1 (555) 012-9988
+            </p>
+          </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-black text-slate-950">Profile Completion</h2>
-          <div className="space-y-3">
-            {["Public bio drafted", "AI methodology profile active", "Check-in reporting principles reviewed"].map((item) => (
-              <div key={item} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-700">
-                <CheckCircle2 className="h-5 w-5 text-green-600" aria-hidden="true" />
-                {item}
-              </div>
-            ))}
-          </div>
-        </article>
+          <button type="button" className="flex w-full items-center justify-center gap-3 rounded-2xl bg-indigo-600 px-5 py-4 text-base font-bold text-white shadow-sm">
+            <Plus className="h-5 w-5" aria-hidden="true" />
+            New Program
+          </button>
 
-        <aside className="rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
-          <h2 className="mb-2 text-lg font-black text-indigo-950">Next best edit</h2>
-          <p className="text-sm leading-6 text-indigo-900">
-            Review the check-in reporting principles before moving this from a profile shell into persistent
-            organization settings.
-          </p>
+          <section className="rounded-2xl bg-slate-950 p-6 text-white">
+            <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-400">Coaching Philosophy</h2>
+            <p className="text-sm font-semibold italic leading-6">
+              We do not chase fatigue, we create performance. If it is not measurable, it is not manageable.
+            </p>
+          </section>
         </aside>
-      </section>
+
+        <section className="space-y-5">
+          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-xl font-black">Professional Bio</h2>
+            <div className="space-y-3 text-sm leading-7 text-slate-700">
+              <p>
+                With over 12 years of experience in high-performance sports and specialised metabolic conditioning,
+                Marcus has carved a unique space in the coaching world. His philosophy, The Kinetic Curator, focuses
+                on meticulous movement selection that maximises output while minimising systemic fatigue.
+              </p>
+              <p>
+                Formerly a strength coach for elite European cycling teams, he transitioned to private coaching to
+                bring world-class methodologies to ambitious professionals.
+              </p>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {["AI-First Sport Science", "Metabolic Analytics", "Behavioral Coaching"].map((tag) => (
+                <span key={tag} className="rounded-full bg-indigo-50 px-4 py-1 text-xs font-bold uppercase tracking-widest text-indigo-600">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </article>
+
+          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="mb-4 text-xl font-black">Next Training Session</h2>
+                <div className="flex items-center gap-4">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                    <Users className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <p className="font-bold">Team Power Alpha</p>
+                    <p className="text-sm text-slate-500">Today, 2:00 PM - 75 min</p>
+                    <p className="text-sm font-semibold text-indigo-600">Upper Hypertrophy Block</p>
+                  </div>
+                </div>
+              </div>
+              <button type="button" className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white">
+                View Session
+              </button>
+            </div>
+          </article>
+
+          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-xl font-black">Certifications & Credentials</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {credentials.map(([title, detail]) => (
+                <div key={title} className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+                  <p className="font-bold text-indigo-700">{title}</p>
+                  <p className="text-sm text-slate-500">{detail}</p>
+                </div>
+              ))}
+            </div>
+          </article>
+        </section>
+      </div>
     </main>
+  );
+}
+
+function Metric({ value, label }: { value: string; label: string }) {
+  return (
+    <div>
+      <p className="text-3xl font-black text-slate-950">{value}</p>
+      <p className="mt-2 text-xs font-bold uppercase tracking-widest text-slate-500">{label}</p>
+    </div>
   );
 }

@@ -177,14 +177,18 @@ describe("Figma update pages", () => {
 
   it("renders the new shell pages from the Figma update", () => {
     const { rerender } = render(<CoachProfilePage />);
-    expect(screen.getByRole("heading", { name: "Coach Profile" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Marcus Chen-Patterson" })).toBeInTheDocument();
+    expect(screen.getByText("Professional Bio")).toBeInTheDocument();
+    expect(screen.getByText("Coaching Philosophy")).toBeInTheDocument();
 
     rerender(<SchedulingPage />);
-    expect(screen.getByRole("heading", { name: "Scheduling" })).toBeInTheDocument();
-    expect(screen.getByText("Weekly check-in rhythm")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Scheduling & Events" })).toBeInTheDocument();
+    expect(screen.getByText("Schedule Coaching Call")).toBeInTheDocument();
+    expect(screen.getByText("Upcoming Events")).toBeInTheDocument();
 
     rerender(<SettingsPage />);
-    expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Business timezone")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Account Profile" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Full Name")).toBeInTheDocument();
+    expect(screen.getByText("Platform Customization")).toBeInTheDocument();
   });
 });

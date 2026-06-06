@@ -48,9 +48,9 @@ This tracker keeps the Figma UI port aligned with the production Next.js app. Th
 | `team-management-page.tsx` | `/team-management` | `apps/web/components/team/team-management-page.tsx` | Started |
 | `packages-page.tsx` | `/packages` | `apps/web/components/packages/packages-page.tsx` | Started |
 | `create-package-page.tsx` | `/packages/create` | `apps/web/components/packages/create-package-page.tsx` | Pending |
-| `coach-profile-page.tsx` | `/coach-profile` | `apps/web/components/coach/coach-profile-page.tsx` | Pending |
-| `scheduling-page.tsx` | `/schedule` | `apps/web/components/scheduling/scheduling-page.tsx` | Pending |
-| `settings-page.tsx` | `/settings` | `apps/web/components/settings/settings-page.tsx` | Pending |
+| `coach-profile-page.tsx` | `/coach-profile` | `apps/web/components/coach/coach-profile-page.tsx` | Started |
+| `scheduling-page.tsx` | `/schedule` | `apps/web/components/scheduling/scheduling-page.tsx` | Started |
+| `settings-page.tsx` | `/settings` | `apps/web/components/settings/settings-page.tsx` | Started |
 
 ## Current Evidence
 
@@ -58,6 +58,7 @@ This tracker keeps the Figma UI port aligned with the production Next.js app. Th
 - The Food Database screenshot has been partially ported to `/nutrition/food-database`, including source controls, search styling, promo card polish, and image-style ingredient cards.
 - The supplied UI screenshot batch is now being ported in route-sized slices. The first slice covers `/education`, `/supplementation`, and `/clients` roster parity.
 - The second screenshot slice covers `/social-media`, `/team-management`, and `/packages` visual parity while preserving the existing scheduling, invitation, and package persistence flows.
+- The third screenshot slice covers `/schedule`, `/settings`, and `/coach-profile` as static parity surfaces pending persistence prioritization.
 - Production deployment `26a3c28` contains the new client profile bundle strings.
 - Direct Figma Make resource links are visible through the Figma connector, but file reads currently fail from the MCP resource reader. Screenshots or a local exported reference repo/zip will speed up exact parity checks.
 
