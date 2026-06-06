@@ -21,6 +21,22 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("Recovery Score")).toBeInTheDocument();
   });
 
+  it("renders the updated Figma client dashboard surface", () => {
+    render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    expect(screen.getByText("Active Protocol: Hypertrophy II")).toBeInTheDocument();
+    expect(screen.getByText("Assigned Check-In: Every Monday")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Trellis" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit Protocol" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Daily Check-Ins" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Progress Analytics" })).toBeInTheDocument();
+    expect(screen.getByText("Weekly Check-In History")).toBeInTheDocument();
+    expect(screen.getByText("Calendar")).toBeInTheDocument();
+    expect(screen.getByText("Goals & Countdowns")).toBeInTheDocument();
+    expect(screen.getByText("Account Activity Log")).toBeInTheDocument();
+    expect(screen.getByText("Competition Day - Natural Pro Show")).toBeInTheDocument();
+  });
+
   it("shows a deterministic fallback for an unknown client id", async () => {
     render(createElement(ClientProfilePage, { clientId: "missing" }));
 

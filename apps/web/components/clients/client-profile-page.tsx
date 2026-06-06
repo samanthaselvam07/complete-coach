@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, MessageSquare, Pencil } from "lucide-react";
+import { ChevronLeft, MessageSquare, Pencil, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { ClientProfileDashboard } from "@/components/clients/client-profile-dashboard";
 import { getClientById, type ClientProfile, type ClientSummary } from "@/fixtures/clients";
 import { cn } from "@/lib/utils";
 
-type ProfileTab = "Dashboard" | "Training" | "Nutrition" | "Supplementation";
+type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "Supplementation" | "Check-Ins";
 
 interface ClientProfilePageProps {
   clientId: string;
@@ -114,7 +115,7 @@ interface ClientProfileView extends ClientProfile {
   nutritionSource: "api" | "fixtures";
 }
 
-const tabs: ProfileTab[] = ["Dashboard", "Training", "Nutrition", "Supplementation"];
+const tabs: ProfileTab[] = ["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Check-Ins"];
 
 export function ClientProfilePage({ clientId }: ClientProfilePageProps) {
   const [client, setClient] = useState<ClientProfileView | null>(() => {
@@ -188,16 +189,18 @@ export function ClientProfilePage({ clientId }: ClientProfilePageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8">
-      <Link href="/clients" className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-indigo-600">
-        <ChevronLeft className="size-4" aria-hidden="true" />
-        Back to clients
-      </Link>
+      <nav className="mb-6 flex items-center gap-2 text-sm text-slate-500" aria-label="Breadcrumb">
+        <Link href="/clients" className="font-medium text-slate-500 hover:text-indigo-600">
+          Clients
+        </Link>
+        <span aria-hidden="true">/</span>
+        <span className="font-semibold text-slate-900">{client.name}</span>
+      </nav>
 
       <ClientProfileHeader client={client} />
-      <ClientMetricCards client={client} />
 
-      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-2">
-        <div role="tablist" aria-label="Client profile sections" className="flex flex-wrap gap-2">
+      <div className="mb-6 max-w-5xl rounded-xl border border-gray-200 bg-white p-1">
+        <div role="tablist" aria-label="Client profile sections" className="grid grid-cols-2 gap-1 md:grid-cols-6">
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -206,8 +209,8 @@ export function ClientProfilePage({ clientId }: ClientProfilePageProps) {
               aria-selected={activeTab === tab}
               aria-controls={`client-tab-${tab}`}
               className={cn(
-                "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                activeTab === tab ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100"
+                "rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors",
+                activeTab === tab ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
               )}
               onClick={() => setActiveTab(tab)}
             >
@@ -447,68 +450,100 @@ function getAge(dateOfBirth?: string | null) {
 }
 
 function ClientProfileHeader({ client }: { client: ClientProfile }) {
-  return (
-    <section className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white">
-      <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-indigo-800 p-6 text-white">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div className="flex items-center gap-4">
-            <div className={cn("flex size-20 items-center justify-center rounded-2xl text-2xl font-bold", client.avatarColor)}>
-              {client.initials}
-            </div>
-            <div>
-              <p className="mb-1 text-xs uppercase tracking-[0.24em] text-indigo-200">{client.packageName}</p>
-              <h1 className="text-3xl font-bold">{client.name}</h1>
-              <p className="mt-2 max-w-2xl text-sm text-indigo-100">{client.bio}</p>
-            </div>
-          </div>
+  const weight = findMetric(client, "Current Weight")?.value ?? "0";
+  const bodyFat = findMetric(client, "Body Fat")?.value ?? "0%";
+  const habitStreak = findMetric(client, "Habit Streak")?.value ?? "0";
+  const recoveryScore = findMetric(client, "Recovery Score")?.value ?? "0";
 
-          <div className="flex gap-2">
-            <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/20">
-              <MessageSquare className="size-4" aria-hidden="true" />
-              Message
-            </button>
-            <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-950 transition-colors hover:bg-indigo-50">
-              <Pencil className="size-4" aria-hidden="true" />
-              Edit
-            </button>
+  return (
+    <section className="mb-6 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+      <div className="flex flex-col justify-between gap-6 lg:flex-row">
+        <div className="flex flex-col gap-6 md:flex-row">
+          <div className="h-32 w-32 shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(135deg,#1f2937,#84cc16)]">
+            <div className="flex h-full items-end justify-end p-4 text-3xl font-black text-white/90">{client.initials}</div>
           </div>
+          <div>
+            <div className="mb-3 flex flex-wrap gap-2">
+              <span className="rounded-lg bg-indigo-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-indigo-700">
+                Active Protocol: {client.protocol}
+              </span>
+              <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700">
+                Assigned Check-In: Every {client.checkInDay}
+              </span>
+            </div>
+            <h1 className="text-4xl font-black tracking-tight text-slate-950">{client.name}</h1>
+            <span className="sr-only">{client.protocol}</span>
+            <p className="mt-2 text-sm font-semibold text-slate-600">{client.packageName}</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{client.bio}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-start gap-3">
+          <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            <MessageSquare className="size-4" aria-hidden="true" />
+            Message
+          </button>
+          <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-violet-300 bg-white px-5 py-3 text-sm font-semibold text-violet-700 transition hover:bg-violet-50">
+            <Video className="size-4" aria-hidden="true" />
+            Open Trellis
+          </button>
+          <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-700">
+            <Pencil className="size-4" aria-hidden="true" />
+            Edit Protocol
+          </button>
         </div>
       </div>
 
-      <div className="grid gap-4 p-6 text-sm md:grid-cols-4">
-        <ProfileFact label="Age" value={`${client.age}`} />
-        <ProfileFact label="Weeks with coach" value={`${client.weeksWithCoach}`} />
-        <ProfileFact label="Check-in day" value={client.checkInDay} />
-        <ProfileFact label="Current protocol" value={client.protocol} />
+      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-6">
+        <ProfileMetric accent="border-indigo-500" label="Current Weight" value={weight} suffix="kg" detail="Down 0.4kg" />
+        <ProfileMetric accent="border-orange-500" label="Body Fat %" value={bodyFat} detail="Down 0.2%" />
+        <ProfileMetric accent="border-green-500" label="Daily Habit Streak" value={habitStreak} suffix="days" detail="Consistent" />
+        <ProfileMetric accent="border-violet-500" label="Recovery Score" value={recoveryScore} suffix="/100" detail="Ready" />
+        <ProfileMetric accent="border-blue-500" label="Time With Coach" value={`${client.weeksWithCoach}`} suffix="wks" detail="6mo" />
+        <ProfileMetric accent="border-pink-500" label="Age" value={`${client.age}`} suffix="yrs" detail="Born 1994" />
       </div>
     </section>
   );
 }
 
-function ProfileFact({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="mb-1 text-xs uppercase tracking-wider text-gray-500">{label}</div>
-      <div className="font-semibold text-gray-900">{value}</div>
-    </div>
-  );
+function findMetric(client: ClientProfile, label: string) {
+  return client.metrics.find((metric) => metric.label.toLowerCase().includes(label.toLowerCase()));
 }
 
-function ClientMetricCards({ client }: { client: ClientProfile }) {
+function ProfileMetric({
+  accent,
+  label,
+  value,
+  suffix,
+  detail
+}: {
+  accent: string;
+  label: string;
+  value: string;
+  suffix?: string;
+  detail: string;
+}) {
   return (
-    <div className="mb-6 grid gap-4 md:grid-cols-4">
-      {client.metrics.map((metric) => (
-        <section key={metric.label} className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="mb-1 text-xs uppercase text-gray-500">{metric.label}</div>
-          <div className={cn("mb-1 text-2xl font-bold", metric.tone)}>{metric.value}</div>
-          <div className="text-xs text-gray-500">{metric.detail}</div>
-        </section>
-      ))}
+    <div className={cn("border-l-4 pl-4", accent)}>
+      <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-2xl font-black text-slate-950">
+        {value}
+        {suffix ? <span className="ml-1 text-xs font-bold text-slate-600">{suffix}</span> : null}
+      </div>
+      <div className="mt-1 text-xs font-medium text-green-600">{detail}</div>
     </div>
   );
 }
 
 function ClientProfileTabPanel({ client, activeTab }: { client: ClientProfileView; activeTab: ProfileTab }) {
+  if (activeTab === "Dashboard") {
+    return (
+      <section id="client-tab-Dashboard" role="tabpanel" aria-label="Dashboard">
+        <DashboardPanel client={client} />
+      </section>
+    );
+  }
+
   return (
     <section
       id={`client-tab-${activeTab}`}
@@ -516,34 +551,26 @@ function ClientProfileTabPanel({ client, activeTab }: { client: ClientProfileVie
       aria-label={activeTab}
       className="rounded-xl border border-gray-200 bg-white p-6"
     >
-      {activeTab === "Dashboard" ? <DashboardPanel client={client} /> : null}
+      {activeTab === "Daily Check-Ins" ? <PlaceholderPanel title="Daily Check-Ins" /> : null}
       {activeTab === "Training" ? <TrainingPanel client={client} /> : null}
       {activeTab === "Nutrition" ? <NutritionPanel client={client} /> : null}
       {activeTab === "Supplementation" ? <SupplementationPanel client={client} /> : null}
+      {activeTab === "Check-Ins" ? <PlaceholderPanel title="Check-Ins" /> : null}
     </section>
   );
 }
 
-function DashboardPanel({ client }: { client: ClientProfile }) {
+function PlaceholderPanel({ title }: { title: string }) {
   return (
     <div>
-      <h2 className="mb-4 text-xl font-bold">Progress Overview</h2>
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-xl bg-indigo-50 p-4">
-          <div className="text-xs uppercase text-indigo-700">Compliance</div>
-          <div className="mt-2 text-3xl font-bold text-indigo-700">{client.compliance}%</div>
-        </div>
-        <div className="rounded-xl bg-orange-50 p-4">
-          <div className="text-xs uppercase text-orange-700">Latest Check-In</div>
-          <div className="mt-2 text-lg font-semibold text-orange-700">{client.latestCheckIn}</div>
-        </div>
-        <div className="rounded-xl bg-gray-50 p-4">
-          <div className="text-xs uppercase text-gray-600">Status</div>
-          <div className="mt-2 text-lg font-semibold capitalize text-gray-900">{client.status}</div>
-        </div>
-      </div>
+      <h2 className="mb-2 text-xl font-bold">{title}</h2>
+      <p className="text-sm text-slate-600">This section is ready for the next persistence-backed view.</p>
     </div>
   );
+}
+
+function DashboardPanel({ client }: { client: ClientProfile }) {
+  return <ClientProfileDashboard client={client} />;
 }
 
 function TrainingPanel({ client }: { client: ClientProfileView }) {
