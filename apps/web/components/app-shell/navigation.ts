@@ -1,6 +1,7 @@
 import {
   Apple,
   BookOpen,
+  CalendarDays,
   ClipboardCheck,
   Database,
   Dumbbell,
@@ -11,8 +12,12 @@ import {
   MessageSquare,
   Package,
   Pill,
+  PlusCircle,
   Share2,
   ShieldCheck,
+  Settings,
+  UserCircle,
+  UserPlus,
   Users,
   Users2,
   Utensils
@@ -66,16 +71,36 @@ export const navigationItems = [
     icon: Users,
     children: [
       { href: "/clients", label: "Client Roster", icon: Users },
+      { href: "/clients/new", label: "New Client Intake", icon: UserPlus },
       { href: "/clients/check-ins", label: "Check-ins", icon: ClipboardCheck },
       { href: "/clients/crm", label: "CRM", icon: Share2 }
     ]
   },
   { href: "/forms", label: "Forms", icon: FileText },
   { href: "/messages", label: "Messages", icon: MessageSquare },
-  { href: "/social-media", label: "Social Media", icon: Share2 },
+  {
+    href: "/social-media",
+    label: "Social Media",
+    icon: Share2,
+    children: [
+      { href: "/social-media", label: "Social Hub", icon: Share2 },
+      { href: "/social-media/create", label: "Create Post", icon: PlusCircle }
+    ]
+  },
+  { href: "/schedule", label: "Scheduling", icon: CalendarDays },
   { href: "/team-management", label: "Team Management", icon: Users2 },
   { href: "/audit-logs", label: "Audit Log", icon: ShieldCheck },
-  { href: "/packages", label: "Packages", icon: Package }
+  {
+    href: "/packages",
+    label: "Packages",
+    icon: Package,
+    children: [
+      { href: "/packages", label: "Package Library", icon: Package },
+      { href: "/packages/create", label: "Create Package", icon: PlusCircle }
+    ]
+  },
+  { href: "/coach-profile", label: "Coach Profile", icon: UserCircle },
+  { href: "/settings", label: "Settings", icon: Settings }
 ] satisfies ReadonlyArray<NavigationItem>;
 
 export function isActivePath(currentPath: string, href: string) {
