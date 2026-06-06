@@ -20,6 +20,12 @@ interface ApiFood {
 
 type FoodSource = "api" | "fixtures";
 
+const databaseSources = [
+  { id: "usda", label: "USDA", detail: "600,000+ items", active: true },
+  { id: "aus-nz", label: "Aus & NZ", detail: "", active: false },
+  { id: "eu", label: "EU", detail: "", active: false }
+] as const;
+
 export function FoodDatabasePage() {
   const [selectedCategory, setSelectedCategory] = useState("All Ingredients");
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,22 +125,22 @@ export function FoodDatabasePage() {
   }
 
   return (
-    <div className="p-6 md:p-8">
+    <div className="min-h-screen bg-gray-50 p-6 md:p-8">
       <div className="mb-8">
         <div className="mb-2 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <h1 className="mb-2 text-3xl font-bold">Food Database</h1>
-            <p className="text-gray-600">Curate your custom ingredients or import from verified global libraries.</p>
+            <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-950">Food Database</h1>
+            <p className="text-slate-600">Curate your custom ingredients or import from verified global libraries.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 rounded-lg border border-indigo-600 bg-white px-5 py-2.5 text-indigo-600 transition-colors hover:bg-indigo-50">
+            <button className="flex items-center gap-2 rounded-lg border border-indigo-600 bg-white px-5 py-3 font-semibold text-indigo-600 transition-colors hover:bg-indigo-50">
               <Download className="size-4" aria-hidden="true" />
               Import
             </button>
             <button
               type="button"
               disabled={savingFood}
-              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
               onClick={createFood}
             >
               <Plus className="size-4" aria-hidden="true" />
@@ -167,9 +173,32 @@ export function FoodDatabasePage() {
           type="search"
           value={searchQuery}
           placeholder="Search thousands of ingredients..."
-          className="w-full rounded-lg border border-gray-200 py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           onChange={(event) => setSearchQuery(event.target.value)}
         />
+      </div>
+
+      <div className="mb-5 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-2 text-xs font-bold uppercase tracking-wider text-slate-500">Source:</span>
+          {databaseSources.map((source) => (
+            <button
+              key={source.id}
+              type="button"
+              aria-label={source.detail ? `${source.label} ${source.detail}` : source.label}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold shadow-sm transition",
+                source.active
+                  ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                  : "border-gray-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-indigo-50"
+              )}
+            >
+              {source.label}
+              {source.detail ? <span className="text-[10px] font-medium text-indigo-500">{source.detail}</span> : null}
+            </button>
+          ))}
+        </div>
+        <span className="text-xs font-medium text-slate-400">USDA FoodData Central</span>
       </div>
 
       <div className="mb-8 flex flex-wrap items-center gap-3">
@@ -178,10 +207,10 @@ export function FoodDatabasePage() {
             key={category}
             type="button"
             className={cn(
-              "rounded-full px-4 py-2 text-sm font-medium transition-all",
+              "rounded-full px-4 py-2 text-sm font-semibold transition-all",
               selectedCategory === category
-                ? "bg-orange-500 text-white"
-                : "border border-gray-200 bg-white text-gray-700 hover:border-orange-300"
+                ? "bg-orange-500 text-white shadow-sm"
+                : "border border-gray-200 bg-white text-slate-700 hover:border-orange-300"
             )}
             onClick={() => setSelectedCategory(category)}
           >
@@ -190,7 +219,7 @@ export function FoodDatabasePage() {
         ))}
       </div>
 
-      <section className="mb-8 flex items-center justify-between rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 p-6">
+      <section className="mb-8 flex items-center justify-between rounded-xl bg-gradient-to-r from-indigo-600 to-violet-700 p-6 shadow-sm">
         <div className="flex-1 text-white">
           <h2 className="mb-2 text-xl font-bold">Unlock Global Food Database</h2>
           <p className="mb-4 text-sm text-indigo-100">
@@ -200,7 +229,7 @@ export function FoodDatabasePage() {
             Sync Now
           </button>
         </div>
-        <div className="flex size-24 items-center justify-center rounded-full bg-white/10">
+        <div className="hidden size-24 items-center justify-center rounded-full bg-white/15 md:flex">
           <Database className="size-12 text-white" aria-hidden="true" />
         </div>
       </section>
@@ -214,10 +243,12 @@ export function FoodDatabasePage() {
         <section aria-label="Food grid" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {filteredFoods.map((food) => (
             <article key={food.id} className="group rounded-xl border border-gray-200 bg-white p-5 transition-all hover:border-indigo-300 hover:shadow-lg">
-              <div className="relative mb-4">
-                <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-gray-100 text-xl font-bold text-gray-500">
-                  {food.name[0]}
-                </div>
+              <div className="relative mb-5">
+                <img
+                  src={getFoodImageSrc(food.name)}
+                  alt={food.name}
+                  className="mx-auto size-20 rounded-full object-cover"
+                />
                 <button
                   aria-label={`Add ${food.name}`}
                   className="absolute right-0 top-0 flex size-8 items-center justify-center rounded-full border border-gray-200 bg-white opacity-0 transition-colors hover:border-indigo-300 hover:bg-indigo-50 group-hover:opacity-100"
@@ -303,6 +334,26 @@ function getFoodMacro(food: ApiFood | Food, macro: "protein" | "carbs" | "fats")
   }
 
   return macro === "protein" ? food.proteinGrams : macro === "carbs" ? food.carbsGrams : food.fatGrams;
+}
+
+function getFoodImageSrc(name: string) {
+  const palettes: Record<string, { bg: string; fg: string }> = {
+    "Chicken Breast": { bg: "#f3d4d4", fg: "#9f1239" },
+    "Basmati Rice": { bg: "#eee5d1", fg: "#92400e" },
+    "Raw Avocado": { bg: "#f4b6cf", fg: "#15803d" },
+    "Boiled Oats": { bg: "#1f2937", fg: "#f8fafc" },
+    "Whey Isolate": { bg: "#f3f4f6", fg: "#111827" }
+  };
+  const palette = palettes[name] ?? { bg: "#eef2ff", fg: "#4f46e5" };
+  const initials = name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" rx="48" fill="${palette.bg}"/><text x="48" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="${palette.fg}">${initials}</text></svg>`;
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 function FoodMacro({ label, value, tone }: { label: string; value: string; tone: string }) {

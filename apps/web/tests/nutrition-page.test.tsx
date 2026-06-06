@@ -464,6 +464,24 @@ describe("meal plan view model helpers", () => {
 });
 
 describe("FoodDatabasePage", () => {
+  it("renders the Figma food database search and source controls", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(null, { status: 503 }));
+
+    render(createElement(FoodDatabasePage));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Food Database" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: /search foods/i })).toHaveAttribute(
+      "placeholder",
+      "Search thousands of ingredients..."
+    );
+    expect(screen.getByText("Source:")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /USDA 600,000\+ items/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Aus & NZ" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "EU" })).toBeInTheDocument();
+    expect(screen.getByText("USDA FoodData Central")).toBeInTheDocument();
+    expect(screen.getByAltText("Chicken Breast")).toBeInTheDocument();
+  });
+
   it("loads API-backed foods when persistence is available", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(
