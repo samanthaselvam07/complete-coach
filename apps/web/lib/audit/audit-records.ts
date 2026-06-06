@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const auditLogQuerySchema = z.object({
   action: z.string().trim().min(1).max(120).optional(),
+  targetType: z.string().trim().min(1).max(120).optional(),
+  targetId: z.string().trim().min(1).max(160).optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50)
 });

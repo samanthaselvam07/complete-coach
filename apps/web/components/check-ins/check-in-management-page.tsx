@@ -1,8 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
-
 import {
   checkIns,
   formatSubmittedAt,
@@ -243,14 +243,14 @@ export function CheckInManagementPage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  aria-label={`View full check-in for ${checkIn.name}`}
-                  className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-gray-50"
-                  onClick={() => openCheckInDetail(checkIn)}
-                >
-                  View Full Check-In
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" aria-label={`View full check-in for ${checkIn.name}`} className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-gray-50" onClick={() => openCheckInDetail(checkIn)}>
+                    Review Modal
+                  </button>
+                  <Link href={`/clients/check-ins/${checkIn.id}`} aria-label={`Open detailed check-in page for ${checkIn.name}`} className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700">
+                    View Full Check-In
+                  </Link>
+                </div>
               </div>
             </article>
           );

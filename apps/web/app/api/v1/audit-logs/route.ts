@@ -17,6 +17,8 @@ export async function GET(request: Request) {
       where: {
         organizationId: actor.organizationId,
         ...(query.action ? { action: query.action } : {}),
+        ...(query.targetType ? { targetType: query.targetType } : {}),
+        ...(query.targetId ? { targetId: query.targetId } : {}),
         ...buildAuditCursorWhere(query.cursor)
       },
       include: {

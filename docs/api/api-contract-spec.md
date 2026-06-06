@@ -261,7 +261,7 @@ Social post statuses:
 - `POST /api/v1/client-subscriptions`: creates a Stripe Checkout subscription session for an active-organization client and synced monthly package. Body: `clientId`, `packageId`, optional `successUrl`, optional `cancelUrl`. Local status starts as `incomplete`; final subscription/payment status is webhook-driven.
 
 ### Audit
-- `GET /api/v1/audit-logs`: returns organization-scoped, newest-first audit records with sanitized metadata. Query: optional `action`, optional opaque `cursor`, optional `limit` (max 100). Pagination headers: `X-Has-More`, `X-Next-Cursor`.
+- `GET /api/v1/audit-logs`: returns organization-scoped, newest-first audit records with sanitized metadata. Query: optional `action`, optional `targetType`, optional `targetId`, optional opaque `cursor`, optional `limit` (max 100). Pagination headers: `X-Has-More`, `X-Next-Cursor`.
 
 Owner/admin-only by default.
 

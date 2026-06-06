@@ -556,7 +556,7 @@ function ClientProfileTabPanel({ client, activeTab }: { client: ClientProfileVie
       {activeTab === "Training" ? <TrainingPanel client={client} /> : null}
       {activeTab === "Nutrition" ? <NutritionPanel client={client} /> : null}
       {activeTab === "Supplementation" ? <SupplementationPanel client={client} /> : null}
-      {activeTab === "Check-Ins" ? <CheckInHistoryPanel /> : null}
+      {activeTab === "Check-Ins" ? <CheckInHistoryPanel clientId={client.id} /> : null}
     </section>
   );
 }

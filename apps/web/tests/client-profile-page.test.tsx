@@ -34,6 +34,11 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("Calendar")).toBeInTheDocument();
     expect(screen.getByText("Goals & Countdowns")).toBeInTheDocument();
     expect(screen.getByText("Account Activity Log")).toBeInTheDocument();
+    expect(screen.getAllByText("Check-in submitted")).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: /Week 24/i })[0]).toHaveAttribute(
+      "href",
+      "/clients/1/check-ins/week-24"
+    );
     expect(screen.getByText("Competition Day - Natural Pro Show")).toBeInTheDocument();
   });
 
@@ -196,6 +201,10 @@ describe("ClientProfilePage", () => {
 
     expect(screen.getByRole("heading", { name: "Check-In History" })).toBeInTheDocument();
     expect(screen.getByText("Week 24")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open Week 24 check-in" })).toHaveAttribute(
+      "href",
+      "/clients/1/check-ins/week-24"
+    );
     expect(screen.getAllByText("View Check-In Recording")).toHaveLength(3);
     expect(screen.getAllByText("Main Challenge")).toHaveLength(3);
   });

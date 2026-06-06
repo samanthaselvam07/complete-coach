@@ -15,6 +15,9 @@ describe("CheckInManagementPage", () => {
     expect(screen.getByRole("region", { name: "Check-in list" })).toHaveTextContent("Sarah Williams");
     expect(screen.getAllByText("On Time").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Late").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("link", { name: /open detailed check-in page for Sarah Williams/i })
+    ).toHaveAttribute("href", "/clients/check-ins/4");
   });
 
   it("switches to completed check-ins", () => {

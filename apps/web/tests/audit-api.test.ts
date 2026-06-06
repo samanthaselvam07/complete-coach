@@ -76,6 +76,26 @@ describe("audit log API", () => {
     expect(response.headers.get("x-next-cursor")).toBeTruthy();
   });
 
+  it("filters events by target type and target id", async () => {
+    mocks.prisma.auditLog.findMany.mockResolvedValue([]);
+
+    const response = await listAuditLogs(
+      new Request("http://test.local/api/v1/audit-logs?targetType=client&targetId=client_1&limit=7")
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.auditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: "org_1",
+          targetType: "client",
+          targetId: "client_1"
+        }),
+        take: 8
+      })
+    );
+  });
+
   it("blocks roles without audit access", async () => {
     mocks.auth.mockResolvedValue({
       ...ownerSession,

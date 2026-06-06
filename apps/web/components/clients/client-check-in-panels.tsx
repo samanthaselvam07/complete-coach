@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const checkInDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
 
 const dailyRows = [
@@ -93,7 +95,7 @@ export function DailyCheckInsPanel() {
   );
 }
 
-export function CheckInHistoryPanel() {
+export function CheckInHistoryPanel({ clientId }: { clientId: string }) {
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -113,7 +115,13 @@ export function CheckInHistoryPanel() {
               </h3>
               <p className="mt-2 text-sm text-slate-500">{entry.date}</p>
             </div>
-            <span className="text-2xl text-slate-400">&gt;</span>
+            <Link
+              href={`/clients/${clientId}/check-ins/${entry.week.toLowerCase().replace(/\s+/g, "-")}`}
+              aria-label={`Open ${entry.week} check-in`}
+              className="text-2xl text-slate-400 hover:text-indigo-600"
+            >
+              &gt;
+            </Link>
           </div>
 
           <div className="mb-5 grid gap-4 md:grid-cols-4">
@@ -134,7 +142,12 @@ export function CheckInHistoryPanel() {
             </div>
           </div>
 
-          <button type="button" className="mt-4 text-sm font-bold text-indigo-600">View Check-In Recording</button>
+          <Link
+            href={`/clients/${clientId}/check-ins/${entry.week.toLowerCase().replace(/\s+/g, "-")}`}
+            className="mt-4 inline-block text-sm font-bold text-indigo-600"
+          >
+            View Check-In Recording
+          </Link>
         </article>
       ))}
     </div>

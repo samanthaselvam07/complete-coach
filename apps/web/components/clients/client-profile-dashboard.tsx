@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { CalendarDays, CircleDollarSign, Clock3, Edit3, Target } from "lucide-react";
 
+import { getRecentClientActivity, type ClientActivityEvent } from "@/fixtures/client-activity";
 import type { ClientProfile } from "@/fixtures/clients";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +17,7 @@ export function ClientProfileDashboard({ client }: { client: ClientProfile }) {
       <aside className="space-y-6">
         <CheckInHistoryCard client={client} />
         <GoalsCountdownsCard />
-        <ActivityLogCard />
+        <ActivityLogCard clientId={client.id} />
       </aside>
     </div>
   );
@@ -165,14 +167,18 @@ function CheckInHistoryCard({ client }: { client: ClientProfile }) {
       <p className="mb-5 text-sm text-slate-600">Recent coach check-ins</p>
       <div className="space-y-5">
         {entries.map(([date, week, body]) => (
-          <article key={week} className="border-b border-slate-100 pb-5 last:border-0 last:pb-0">
+          <Link
+            key={week}
+            href={`/clients/${client.id}/check-ins/${week.toLowerCase().replace(/\s+/g, "-")}`}
+            className="block border-b border-slate-100 pb-5 transition hover:text-indigo-700 last:border-0 last:pb-0"
+          >
             <div className="mb-2 flex justify-between gap-4 text-sm">
               <span className="font-medium text-slate-600">{date}</span>
               <span className="font-bold text-indigo-600">{week}</span>
             </div>
             <p className="mb-1 text-sm font-semibold text-slate-900">Weight: {client.metrics[0]?.value ?? "88.4"}kg</p>
             <p className="text-sm leading-6 text-slate-700">{body}</p>
-          </article>
+          </Link>
         ))}
       </div>
     </section>
@@ -218,7 +224,9 @@ function GoalsCountdownsCard() {
   );
 }
 
-function ActivityLogCard() {
+function ActivityLogCard({ clientId }: { clientId: string }) {
+  const events = getRecentClientActivity(clientId, 7);
+
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center justify-between">
@@ -231,27 +239,36 @@ function ActivityLogCard() {
         </button>
       </div>
       <div className="space-y-3">
-        <article className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-          <div className="flex gap-3">
-            <Edit3 className="mt-1 size-4" aria-hidden="true" />
-            <div>
-              <p className="font-bold">Training program updated</p>
-              <p>Upper/Lower 4-Day Split assigned</p>
-              <p className="mt-1 text-xs">Jun 05, 2026 at 2:30PM</p>
-            </div>
-          </div>
-        </article>
-        <article className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-          <div className="flex gap-3">
-            <CircleDollarSign className="mt-1 size-4" aria-hidden="true" />
-            <div>
-              <p className="font-bold">Payment successful</p>
-              <p>$299.00 charged for Premium Coaching</p>
-              <p className="mt-1 text-xs">Jun 05, 2026 at 9:15AM</p>
-            </div>
-          </div>
-        </article>
+        {events.map((event) => (
+          <ActivityEventRow key={event.id} event={event} />
+        ))}
       </div>
     </section>
+  );
+}
+
+const activityToneClasses = {
+  blue: "border-blue-200 bg-blue-50 text-blue-700",
+  green: "border-green-200 bg-green-50 text-green-700",
+  orange: "border-orange-200 bg-orange-50 text-orange-700",
+  red: "border-red-200 bg-red-50 text-red-700",
+  slate: "border-slate-200 bg-slate-50 text-slate-700"
+};
+
+function ActivityEventRow({ event }: { event: ClientActivityEvent }) {
+  const Icon = event.action.startsWith("billing") ? CircleDollarSign : Edit3;
+
+  return (
+    <details className={cn("rounded-xl border p-4 text-sm", activityToneClasses[event.tone])}>
+      <summary className="flex cursor-pointer list-none gap-3">
+        <Icon className="mt-1 size-4 shrink-0" aria-hidden="true" />
+        <span>
+          <span className="block font-bold">{event.title}</span>
+          <span className="block">{event.summary}</span>
+          <span className="mt-1 block text-xs">{event.occurredAt}</span>
+        </span>
+      </summary>
+      <p className="mt-3 border-t border-current/15 pt-3 text-xs leading-5">{event.detail}</p>
+    </details>
   );
 }
