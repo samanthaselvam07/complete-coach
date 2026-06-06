@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronLeft, MessageSquare, Pencil, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { CheckInHistoryPanel, DailyCheckInsPanel } from "@/components/clients/client-check-in-panels";
 import { ClientProfileDashboard } from "@/components/clients/client-profile-dashboard";
 import { getClientById, type ClientProfile, type ClientSummary } from "@/fixtures/clients";
 import { cn } from "@/lib/utils";
@@ -551,21 +552,12 @@ function ClientProfileTabPanel({ client, activeTab }: { client: ClientProfileVie
       aria-label={activeTab}
       className="rounded-xl border border-gray-200 bg-white p-6"
     >
-      {activeTab === "Daily Check-Ins" ? <PlaceholderPanel title="Daily Check-Ins" /> : null}
+      {activeTab === "Daily Check-Ins" ? <DailyCheckInsPanel /> : null}
       {activeTab === "Training" ? <TrainingPanel client={client} /> : null}
       {activeTab === "Nutrition" ? <NutritionPanel client={client} /> : null}
       {activeTab === "Supplementation" ? <SupplementationPanel client={client} /> : null}
-      {activeTab === "Check-Ins" ? <PlaceholderPanel title="Check-Ins" /> : null}
+      {activeTab === "Check-Ins" ? <CheckInHistoryPanel /> : null}
     </section>
-  );
-}
-
-function PlaceholderPanel({ title }: { title: string }) {
-  return (
-    <div>
-      <h2 className="mb-2 text-xl font-bold">{title}</h2>
-      <p className="text-sm text-slate-600">This section is ready for the next persistence-backed view.</p>
-    </div>
   );
 }
 

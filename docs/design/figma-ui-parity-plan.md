@@ -59,6 +59,7 @@ This tracker keeps the Figma UI port aligned with the production Next.js app. Th
 - The supplied UI screenshot batch is now being ported in route-sized slices. The first slice covers `/education`, `/supplementation`, and `/clients` roster parity.
 - The second screenshot slice covers `/social-media`, `/team-management`, and `/packages` visual parity while preserving the existing scheduling, invitation, and package persistence flows.
 - The third screenshot slice covers `/schedule`, `/settings`, and `/coach-profile` as static parity surfaces pending persistence prioritization.
+- The fourth screenshot slice begins the `/clients/[id]` tab work by replacing the Daily Check-Ins and Check-Ins placeholders with Figma-aligned matrix/history panels.
 - Production deployment `26a3c28` contains the new client profile bundle strings.
 - Direct Figma Make resource links are visible through the Figma connector, but file reads currently fail from the MCP resource reader. Screenshots or a local exported reference repo/zip will speed up exact parity checks.
 

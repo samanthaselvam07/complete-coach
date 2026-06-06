@@ -182,6 +182,24 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("Upper Power")).toBeInTheDocument();
   });
 
+  it("renders the Figma daily check-in matrix and check-in history tabs", () => {
+    render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    fireEvent.click(screen.getByRole("tab", { name: "Daily Check-Ins" }));
+
+    expect(screen.getByRole("heading", { name: "Daily Check-Ins" })).toBeInTheDocument();
+    expect(screen.getByText("Form configured by coaching team")).toBeInTheDocument();
+    expect(screen.getByText("Energy Level")).toBeInTheDocument();
+    expect(screen.getByText("Coach Note:")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Check-Ins" }));
+
+    expect(screen.getByRole("heading", { name: "Check-In History" })).toBeInTheDocument();
+    expect(screen.getByText("Week 24")).toBeInTheDocument();
+    expect(screen.getAllByText("View Check-In Recording")).toHaveLength(3);
+    expect(screen.getAllByText("Main Challenge")).toHaveLength(3);
+  });
+
   it("renders persisted client training assignments in the training tab", async () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(
