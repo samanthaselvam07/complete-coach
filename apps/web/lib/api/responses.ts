@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { ZodError } from "zod";
 
 import {
@@ -6,6 +7,7 @@ import {
   AuthenticationRequiredError
 } from "@/lib/auth/session-guards";
 import { ForbiddenError } from "@/lib/auth/permissions";
+import { logger, redactLogValue } from "@/lib/observability/logger";
 
 export function dataResponse<T>(data: T, init?: ResponseInit) {
   return NextResponse.json({ data }, init);
@@ -44,14 +46,34 @@ export function handleApiError(error: unknown) {
   const databaseError = getKnownDatabaseError(error);
 
   if (databaseError) {
-    console.warn(databaseError.logMessage);
+    logger.warn({
+      event: "api.database_unavailable",
+      errorCode: databaseError.code,
+      message: databaseError.logMessage
+    });
 
     return errorResponse(databaseError.code, databaseError.message, 503);
   }
 
-  console.error(error);
+  Sentry.captureException(error);
+  logger.error({
+    event: "api.unexpected_error",
+    error: redactLogValue(serializeError(error))
+  });
 
   return errorResponse("internal_error", "An unexpected error occurred.", 500);
+}
+
+function serializeError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    };
+  }
+
+  return { name: "UnknownError" };
 }
 
 function getKnownDatabaseError(error: unknown) {

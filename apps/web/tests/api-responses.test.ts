@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { handleApiError } from "@/lib/api/responses";
 import {
@@ -25,25 +25,12 @@ describe("API response helpers", () => {
   });
 
   it("maps unexpected errors without exposing raw details", async () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
-
     await expectJson(handleApiError(new Error("database password leaked")), 500, "internal_error");
-
-    consoleError.mockRestore();
   });
 
   it("maps known database setup and connectivity errors without stack traces", async () => {
-    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
-
     await expectJson(handleApiError({ code: "P2021" }), 503, "database_schema_unavailable");
     await expectJson(handleApiError({ code: "ETIMEDOUT" }), 503, "database_unavailable");
-
-    expect(consoleWarn).toHaveBeenCalledTimes(2);
-    expect(consoleError).not.toHaveBeenCalled();
-
-    consoleWarn.mockRestore();
-    consoleError.mockRestore();
   });
 });
 

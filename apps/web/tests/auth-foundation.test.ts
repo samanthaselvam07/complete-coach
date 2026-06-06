@@ -30,12 +30,14 @@ describe("server environment validation", () => {
       AUTH_SECRET: "a".repeat(32),
       DATABASE_URL: "postgresql://user:pass@example.com/neondb?sslmode=require",
       DIRECT_URL: "postgresql://user:pass@direct.example.com/neondb?sslmode=require",
-      NEXTAUTH_URL: "http://localhost:3000"
+      NEXTAUTH_URL: "http://localhost:3000",
+      SENTRY_DSN: "https://public@example.ingest.sentry.io/123"
     });
 
     expect(env.AUTH_SECRET).toHaveLength(32);
     expect(env.DATABASE_URL).toContain("postgresql://");
     expect(env.DIRECT_URL).toContain("direct.example.com");
+    expect(env.SENTRY_DSN).toContain("sentry.io");
   });
 
   it("rejects missing secrets and non-PostgreSQL database URLs", () => {

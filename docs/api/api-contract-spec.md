@@ -79,10 +79,11 @@ Default:
 - `PATCH /api/v1/organizations/current`: update organization settings.
 
 ### Team
-- `GET /api/v1/team-members`
-- `POST /api/v1/team-members/invitations`
-- `PATCH /api/v1/team-members/{membership_id}`
-- `DELETE /api/v1/team-members/{membership_id}`
+- `GET /api/v1/team-members`: returns organization-scoped memberships and pending invitations. Requires `team:read`.
+- `POST /api/v1/team-members/invitations`: creates a seven-day invitation for `admin`, `coach`, or `assistant`, stores only a SHA-256 token hash, queues a Resend email, and audits the action. Requires `team:manage`. Production responses do not return the raw token.
+- `POST /api/v1/team-invitations/accept`: accepts a pending invitation for the authenticated user's matching email, activates the membership atomically, consumes the invitation, and audits acceptance. Body: `token`.
+- `PATCH /api/v1/team-members/{membership_id}`: updates `role` and/or `status`. The last active owner cannot be demoted. Requires `team:manage`.
+- `DELETE /api/v1/team-members/{membership_id}`: marks the membership removed. The last active owner cannot be removed. Requires `team:manage`.
 
 ### Clients
 - `GET /api/v1/clients`
@@ -209,9 +210,16 @@ Query filters:
 - `POST /api/v1/client-subscriptions`: creates a Stripe Checkout subscription session for an active-organization client and synced monthly package. Body: `clientId`, `packageId`, optional `successUrl`, optional `cancelUrl`. Local status starts as `incomplete`; final subscription/payment status is webhook-driven.
 
 ### Audit
-- `GET /api/v1/audit-logs`
+- `GET /api/v1/audit-logs`: returns organization-scoped, newest-first audit records with sanitized metadata. Query: optional `action`, optional opaque `cursor`, optional `limit` (max 100). Pagination headers: `X-Has-More`, `X-Next-Cursor`.
 
 Owner/admin-only by default.
+
+### Request Protection And Traceability
+- API responses include `X-Request-Id`; a valid inbound id is preserved and otherwise a UUID is generated.
+- Auth mutations: 10 requests per minute per hashed IP/path identity.
+- External APIs: 60 requests per minute per hashed IP/path identity.
+- Internal mutations and provider webhooks: 120 requests per minute per hashed IP/path identity.
+- `429` responses use the standard error envelope and include `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset`.
 
 ## External Analysis APIs
 External APIs are intended for analytics and external data science systems. They are de-identified by default.

@@ -2,7 +2,9 @@ import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
-const authStorageState = "test-results/.auth/payments-user.json";
+const authStorageState = `test-results/.auth/payments-user-${process.pid}.json`;
+
+test.describe.configure({ mode: "serial" });
 
 interface E2ePackage {
   id: string;

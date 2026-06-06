@@ -6,7 +6,7 @@ cd "$root"
 
 limit="${MAX_FILE_LINES:-800}"
 
-mapfile -t oversized < <(
+oversized="$(
   find apps/web docs scripts .github \
     -path 'apps/web/.next' -prune -o \
     -path 'apps/web/app/generated' -prune -o \
@@ -24,14 +24,13 @@ mapfile -t oversized < <(
       -name '*.sh' -o \
       -name '*.yml' -o \
       -name '*.yaml' \
-    \) -print |
-    xargs -r wc -l |
+    \) -exec wc -l {} + |
     awk -v limit="$limit" '$1 > limit && $2 != "total" { print $1 " " $2 }'
-)
+)"
 
-if (( ${#oversized[@]} > 0 )); then
+if [[ -n "$oversized" ]]; then
   printf 'check-file-size failed: files over %s lines:\n' "$limit" >&2
-  printf '%s\n' "${oversized[@]}" >&2
+  printf '%s\n' "$oversized" >&2
   exit 1
 fi
 

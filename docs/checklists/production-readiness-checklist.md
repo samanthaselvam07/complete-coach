@@ -1,7 +1,7 @@
 # Production Readiness Checklist
 
 ## Repository And Process
-- [ ] Work occurs on feature branches, never directly on main.
+- [x] Work occurs on feature branches, never directly on main.
 - [x] Every implementation ticket states assumptions, scope boundary, and out-of-scope items before coding.
 - [x] Tests are written before implementation.
 - [x] Docs, schemas, migrations, and API contracts are updated with code.
@@ -29,9 +29,9 @@
 - [x] Tenant isolation tests exist for protected resources.
 - [ ] External API keys are hashed and scoped.
 - [ ] Webhook signatures are verified.
-- [ ] Rate limiting is enabled for auth-sensitive and external APIs.
+- [x] Rate limiting is enabled for auth-sensitive and external APIs.
 - [ ] Signed file URLs have short TTLs.
-- [ ] Logs redact secrets, PII, raw health notes, and tokens.
+- [x] Logs redact secrets, PII, raw health notes, and tokens.
 
 ## Database
 - [x] Migrations are versioned.
@@ -42,7 +42,7 @@
 - [x] `timestamptz` is used for timestamps.
 - [ ] Money and measurements use precise numeric types.
 - [ ] Soft-delete or archival strategy is explicit.
-- [ ] Migration rollback/forward plan is documented.
+- [x] Migration rollback/forward plan is documented.
 
 ## APIs
 - [ ] Endpoints follow `/api/v1` resource naming.
@@ -78,18 +78,18 @@
 - [ ] Long-running work does not block request/response paths.
 
 ## Observability
-- [ ] Sentry captures server/client errors.
-- [ ] Structured logs include request ids.
-- [ ] Logs include organization/actor ids where safe.
-- [ ] Logs exclude secrets, tokens, raw PII, raw health notes.
-- [ ] Audit logs exist for sensitive actions.
+- [x] Sentry captures server/client errors.
+- [x] Structured logs include request ids.
+- [x] Logs include organization/actor ids where safe.
+- [x] Logs exclude secrets, tokens, raw PII, raw health notes.
+- [x] Audit logs exist for sensitive actions.
 - [ ] Webhook events and job runs are traceable.
 
 ## Testing
 - [x] Unit tests cover validation, authorization, domain logic, and mappers.
 - [ ] Integration tests cover route handlers and database operations.
 - [ ] E2E tests cover critical coach/client workflows.
-- [ ] Accessibility tests cover shell, forms, dialogs, and keyboard interactions.
+- [x] Accessibility tests cover shell, forms, dialogs, and keyboard interactions.
 - [x] Coverage is at least 80% for touched code.
 - [x] Build, lint, typecheck, tests, and E2E pass before merge.
 
@@ -99,4 +99,4 @@
 - [ ] Neon databases/branches are environment-specific.
 - [ ] Stripe/R2/Resend/Inngest credentials are environment-specific.
 - [x] Vercel environment variables are configured without committing secrets.
-- [ ] Rollback strategy is documented.
+- [x] Rollback strategy is documented.

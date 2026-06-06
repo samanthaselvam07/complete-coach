@@ -12,6 +12,7 @@ import {
   Package,
   Pill,
   Share2,
+  ShieldCheck,
   Users,
   Users2,
   Utensils
@@ -73,6 +74,7 @@ export const navigationItems = [
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/social-media", label: "Social Media", icon: Share2 },
   { href: "/team-management", label: "Team Management", icon: Users2 },
+  { href: "/audit-logs", label: "Audit Log", icon: ShieldCheck },
   { href: "/packages", label: "Packages", icon: Package }
 ] satisfies ReadonlyArray<NavigationItem>;
 

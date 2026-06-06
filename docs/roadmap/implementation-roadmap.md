@@ -334,6 +334,8 @@ Steps:
 - Close any gaps with code/docs/tests before M10 starts.
 
 ## M10 - Team, Observability, Hardening
+Status: Complete. Ticket 019 is complete with team invitations and role management, audit views, Sentry, structured request-aware logging, durable rate limits, security/performance/accessibility reviews, deployment docs, clean Neon migration/seed verification, full Playwright smoke coverage, and the mandatory M10 review gate.
+
 Goal: production readiness for core product.
 
 Scope:

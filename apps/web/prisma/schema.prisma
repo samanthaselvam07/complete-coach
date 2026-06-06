@@ -34,6 +34,15 @@ enum MembershipStatus {
   @@map("membership_status")
 }
 
+enum TeamInvitationStatus {
+  PENDING  @map("pending")
+  ACCEPTED @map("accepted")
+  REVOKED  @map("revoked")
+  EXPIRED  @map("expired")
+
+  @@map("team_invitation_status")
+}
+
 enum ClientStatus {
   ACTIVE      @map("active")
   ARCHIVED    @map("archived")
@@ -372,6 +381,7 @@ model User {
   sessions                     Session[]
   memberships                  OrganizationMembership[]      @relation("MembershipUser")
   invitedMemberships           OrganizationMembership[]      @relation("MembershipInviter")
+  sentTeamInvitations          TeamInvitation[]               @relation("TeamInvitationInviter")
   auditLogs                    AuditLog[]
   clients                      Client[]                      @relation("ClientPortalUser")
   coachedClients               Client[]                      @relation("ClientPrimaryCoach")
@@ -426,6 +436,7 @@ model Organization {
   updatedAt                    DateTime                      @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                    DateTime?                     @map("deleted_at") @db.Timestamptz(6)
   memberships                  OrganizationMembership[]
+  teamInvitations              TeamInvitation[]
   auditLogs                    AuditLog[]
   clients                      Client[]
   clientProfiles               ClientProfile[]
@@ -488,6 +499,28 @@ model OrganizationMembership {
   @@map("organization_memberships")
 }
 
+model TeamInvitation {
+  id              String               @id @default(cuid())
+  organizationId  String               @map("organization_id")
+  email           String
+  role            MembershipRole
+  status          TeamInvitationStatus @default(PENDING)
+  tokenHash       String               @unique @map("token_hash")
+  invitedByUserId String?              @map("invited_by_user_id")
+  expiresAt       DateTime             @map("expires_at") @db.Timestamptz(6)
+  acceptedAt      DateTime?            @map("accepted_at") @db.Timestamptz(6)
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization    Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy       User?                @relation("TeamInvitationInviter", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, email, status])
+  @@index([invitedByUserId])
+  @@index([expiresAt])
+  @@map("team_invitations")
+}
+
 model AuditLog {
   id             String          @id @default(cuid())
   organizationId String?         @map("organization_id")
@@ -509,6 +542,18 @@ model AuditLog {
   @@index([actorApiKeyId, createdAt])
   @@index([action, createdAt])
   @@map("audit_logs")
+}
+
+model RateLimitBucket {
+  keyHash     String   @id @map("key_hash")
+  scope       String
+  count       Int
+  windowStart DateTime @map("window_start") @db.Timestamptz(6)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([expiresAt])
+  @@map("rate_limit_buckets")
 }
 
 model Client {

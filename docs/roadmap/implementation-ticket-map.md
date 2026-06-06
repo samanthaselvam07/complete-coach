@@ -458,6 +458,8 @@ Implementation slices:
 - Ticket 018F - M9 Review Gate: Complete. Ran the mandatory phase review against specs, checklist, code, clean database migrations/seed, education/supplement/storage tests, E2E flows, and full app check.
 
 ## Ticket 019 - Production Hardening
+Status: Complete. Implementation, docs, clean Neon migration/seed, critical Playwright smoke tests, dependency audit, and the mandatory M10 review gate are complete.
+
 Scope:
 - Sentry.
 - Structured logging.
@@ -478,4 +480,12 @@ Tests:
 
 Out of scope:
 - Full social integrations.
+
+Implementation slices:
+- Ticket 019A - Team Management: Complete. Added tenant-scoped invitations, authenticated acceptance, role/status management, last-owner protection, Resend delivery, and audit events.
+- Ticket 019B - Audit Visibility: Complete. Added owner/admin cursor-paginated audit APIs and UI with sanitized metadata.
+- Ticket 019C - Observability: Complete. Added Sentry server/edge/browser instrumentation, Pino structured logs, request ids, and recursive sensitive-field redaction.
+- Ticket 019D - Rate Limits And Security: Complete. Added durable PostgreSQL rate-limit buckets, policy-specific fail behavior, security headers, dependency remediation, and security tests.
+- Ticket 019E - Production Review Passes: Complete. Completed code-level performance and accessibility reviews, portable file-size enforcement, production deployment/rollback guidance, and the mandatory implementation gap review.
+- Ticket 019F - Final Environment Gate: Complete. Applied pending migrations through `20260606120000_team_invitations`, seeded the configured Neon database, and ran the full 67-test Playwright smoke suite successfully on June 6, 2026.
 - User-facing AI automation.

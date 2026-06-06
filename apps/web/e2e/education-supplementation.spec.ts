@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
-const authStorageState = "test-results/.auth/education-supplementation-user.json";
+const authStorageState = `test-results/.auth/education-supplementation-user-${process.pid}.json`;
 
 test.describe.configure({ mode: "serial" });
 

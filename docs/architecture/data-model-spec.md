@@ -67,6 +67,33 @@ Indexes:
 - `organization_id,role`.
 - `user_id,status`.
 
+### `team_invitations`
+Purpose: one-time organization invitation lifecycle before membership activation.
+
+Fields:
+- `id`
+- `organization_id`
+- `email`
+- `role`
+- `status` pending/accepted/revoked/expired.
+- `token_hash`
+- `invited_by_user_id`
+- `expires_at`
+- `accepted_at`
+- `created_at`
+- `updated_at`
+
+Security:
+- Store only the SHA-256 token hash.
+- Invitations expire after seven days.
+- Acceptance requires an authenticated user with the exact invited email.
+
+Indexes:
+- Unique `token_hash`.
+- `organization_id,status,created_at`.
+- `organization_id,email,status`.
+- `expires_at`.
+
 ## Clients
 ### `clients`
 Purpose: organization-owned coaching client.
@@ -701,3 +728,20 @@ Indexes:
 - `organization_id,created_at`.
 - `organization_id,entity_type,entity_id`.
 - `organization_id,actor_user_id,created_at`.
+
+### `rate_limit_buckets`
+Purpose: durable fixed-window counters shared across Vercel instances.
+
+Fields:
+- `key_hash`
+- `scope`
+- `count`
+- `window_start`
+- `expires_at`
+- `updated_at`
+
+Security:
+- Identity values such as IP address and route are SHA-256 hashed before storage.
+
+Indexes:
+- `expires_at` for periodic cleanup.
