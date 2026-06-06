@@ -133,9 +133,12 @@ Query filters:
 - `POST /api/v1/check-ins/{check_in_id}/review`: transitions a pending check-in to reviewed. Body: optional `summary`, optional `coachNotes`.
 - `POST /api/v1/check-ins/{check_in_id}/complete`: transitions a check-in to completed.
 - `GET /api/v1/check-ins/{check_in_id}/extracted-metrics`: returns metrics extracted from the check-in submission.
-- `POST /api/v1/check-ins/{check_in_id}/ai-review`: generates a CHFI-style AI-assisted review for one organization-scoped check-in. Requires `ai:generate`. Creates an `ai_generation`, pending `ai_outputs`, and an audit event. Response includes serialized generation usage and pending outputs; it never includes raw provider output or unsafe input.
+- `POST /api/v1/check-ins/{check_in_id}/ai-review`: generates a CHFI-style AI-assisted review for one organization-scoped check-in. Requires `ai:generate`. Optional body: `methodologyProfileId` to use a specific active organization methodology profile; otherwise the organization default profile is used when present. Creates an `ai_generation`, pending `ai_outputs`, and an audit event. Response includes serialized generation usage and pending outputs; it never includes raw provider output or unsafe input.
 
 ### AI-Assisted Coaching
+- `GET /api/v1/ai/methodology-profiles`: returns active organization-scoped coach methodology profiles. Requires `ai:read`.
+- `POST /api/v1/ai/methodology-profiles`: creates a coach methodology profile. Requires `ai:approve`. Body: `name`, `methodology`, optional `description`, optional `tone`, optional arrays `principles`, `checkInSections`, `redFlagRules`, `adjustmentRules`, `forbiddenRecommendations`, and optional `isDefault`. If `isDefault` is true, existing organization defaults are unset. Writes an audit event with counts only.
+- `POST /api/v1/ai/methodology-profiles/{profile_id}/default`: sets an active organization profile as the default for future AI check-in reviews. Requires `ai:approve`. Writes an audit event.
 - `GET /api/v1/ai/recommendations`: returns organization-scoped AI outputs. Query: optional `clientId`, `targetType`, `targetId`, `status`, `limit`. Requires `ai:read`.
 - `POST /api/v1/ai/recommendations/{recommendation_id}/approve`: approves a pending AI output. Requires `ai:approve`. Writes an audit event.
 - `POST /api/v1/ai/recommendations/{recommendation_id}/reject`: rejects a pending AI output. Requires `ai:approve`. Body: `reason`. Writes an audit event with reason length only.

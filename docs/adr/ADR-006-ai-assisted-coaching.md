@@ -11,21 +11,26 @@ The external skill established several product requirements:
 - The preferred report is a concise five-section review: Weight / Waist, Training & Progression, Fatigue / Recovery, Nutrition, and Goals for Next Week.
 - Injury, stress, fatigue, nutrition compliance, mobility, measurement, and plateau flags must be prioritized.
 - Client-impacting recommendations must remain human-reviewed before they are sent or applied.
+- Coaches need a way to tailor AI review emphasis to their coaching methodology, tone, principles, and adjustment rules without creating uncontrolled prompts.
 - Secrets, contact details, raw medical notes, and provider payloads must not be written to unsafe logs.
 
 ## Decision
 Complete Coach stores AI work as durable, auditable records:
 - `ai_prompt_versions` tracks workflow, provider, model, prompt text, output schema, and active version.
+- `ai_methodology_profiles` stores organization-scoped coach methodology guidance: principles, tone, check-in section emphasis, red-flag rules, adjustment rules, and forbidden recommendation patterns.
 - `ai_generations` tracks each run, target record, redacted/minimized input, output metadata, status, usage, and estimated cost.
 - `ai_outputs` stores generated summaries, risk flags, suggestions, drafts, resource recommendations, and extraction enhancements in approval states.
 
 The first M12 provider is a deterministic `complete-coach/heuristic-v1` engine implementing CHFI-style rules. It is intentionally conservative and avoids external model calls until provider credentials, budgets, and live approval policy are explicitly configured.
+
+AI check-in reviews use the organization's default methodology profile when present, or an explicitly requested active organization profile. Methodology profiles are structured product settings, not raw prompt text.
 
 ## Safety Rules
 - Use minimized check-in inputs. Do not include direct email, phone, raw medical notes, or emergency-contact data in AI input.
 - All generated outputs default to `pending-approval`.
 - Coach/admin/owner approval is required before client-impacting recommendations are considered usable.
 - Audit logs capture metadata only: workflow, prompt version, generation id, counts, target ids, and status changes.
+- Methodology profile audit metadata captures ids, names, and counts only; forbidden recommendation text is not echoed into generated output or audit records.
 - API responses never expose raw redacted input or raw provider output JSON.
 - Usage reports aggregate token and cost estimates per organization.
 

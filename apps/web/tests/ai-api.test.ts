@@ -8,6 +8,8 @@ import {
   CheckInStatus
 } from "@/app/generated/prisma/enums";
 import { POST as generateCheckInReview } from "@/app/api/v1/check-ins/[checkInId]/ai-review/route";
+import { GET as listMethodologyProfiles, POST as createMethodologyProfile } from "@/app/api/v1/ai/methodology-profiles/route";
+import { POST as setDefaultMethodologyProfile } from "@/app/api/v1/ai/methodology-profiles/[profileId]/default/route";
 import { GET as listRecommendations } from "@/app/api/v1/ai/recommendations/route";
 import { GET as getAiUsage } from "@/app/api/v1/ai/usage/route";
 import { POST as approveRecommendation } from "@/app/api/v1/ai/recommendations/[recommendationId]/approve/route";
@@ -19,6 +21,7 @@ const mocks = vi.hoisted(() => ({
     $transaction: vi.fn(),
     auditLog: { create: vi.fn() },
     aiPromptVersion: { findFirst: vi.fn(), create: vi.fn() },
+    aiMethodologyProfile: { create: vi.fn(), findMany: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn(), update: vi.fn() },
     aiGeneration: { create: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     aiOutput: { createMany: vi.fn(), findMany: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
     checkIn: { findFirst: vi.fn() },
@@ -115,6 +118,7 @@ const generationRecord = {
   workflow: AiWorkflowType.CHECK_IN_REVIEW,
   status: AiGenerationStatus.SUCCEEDED,
   promptVersionId: "prompt_1",
+  methodologyProfileId: "methodology_1",
   provider: "complete-coach",
   model: "heuristic-v1",
   clientId: "client_1",
@@ -157,6 +161,25 @@ const recommendationRecord = {
   generation: generationRecord
 };
 
+const methodologyProfileRecord = {
+  id: "methodology_1",
+  organizationId: "org_1",
+  name: "Habit-first physique coaching",
+  methodology: "Habit-first",
+  description: "Use minimum effective change and calm direct feedback.",
+  tone: "calm, direct, no shame",
+  principlesJson: ["Lead with pattern recognition"],
+  checkInSectionsJson: ["Wins", "Risks", "Next minimum effective change"],
+  redFlagRulesJson: ["Treat stress above 6/10 as a recovery constraint"],
+  adjustmentRulesJson: ["Do not reduce calories until adherence is reviewed"],
+  forbiddenRecommendationsJson: ["Never use compensation language"],
+  isDefault: true,
+  isActive: true,
+  createdByUserId: "user_1",
+  createdAt: new Date("2026-06-06T08:00:00.000Z"),
+  updatedAt: new Date("2026-06-06T08:00:00.000Z")
+};
+
 describe("AI-assisted coaching APIs", () => {
   beforeEach(() => {
     mocks.auth.mockReset();
@@ -178,6 +201,7 @@ describe("AI-assisted coaching APIs", () => {
     mocks.prisma.checkIn.findFirst.mockResolvedValue(checkInRecord);
     mocks.prisma.clientMeasurement.findMany.mockResolvedValue([]);
     mocks.prisma.aiPromptVersion.findFirst.mockResolvedValue(promptVersion);
+    mocks.prisma.aiMethodologyProfile.findFirst.mockResolvedValue(methodologyProfileRecord);
     mocks.prisma.aiGeneration.create.mockResolvedValue({ ...generationRecord, status: AiGenerationStatus.RUNNING });
     mocks.prisma.aiGeneration.update.mockResolvedValue(generationRecord);
     mocks.prisma.aiOutput.createMany.mockResolvedValue({ count: 5 });
@@ -203,6 +227,7 @@ describe("AI-assisted coaching APIs", () => {
         workflow: AiWorkflowType.CHECK_IN_REVIEW,
         status: AiGenerationStatus.RUNNING,
         promptVersionId: "prompt_1",
+        methodologyProfileId: "methodology_1",
         clientId: "client_1",
         targetType: "check_in",
         targetId: "checkin_1",
@@ -220,6 +245,84 @@ describe("AI-assisted coaching APIs", () => {
     });
     expect(JSON.stringify(mocks.prisma.auditLog.create.mock.calls)).not.toContain("michal@example.com");
     expect(JSON.stringify(mocks.prisma.auditLog.create.mock.calls)).not.toContain("Private medical notes");
+    expect(JSON.stringify(mocks.prisma.auditLog.create.mock.calls)).toContain("methodology_1");
+  });
+
+  it("creates, lists, and sets default coach methodology profiles", async () => {
+    mocks.prisma.aiMethodologyProfile.create.mockResolvedValue(methodologyProfileRecord);
+    mocks.prisma.aiMethodologyProfile.findMany.mockResolvedValue([methodologyProfileRecord]);
+    mocks.prisma.aiMethodologyProfile.findFirst.mockResolvedValue(methodologyProfileRecord);
+    mocks.prisma.aiMethodologyProfile.updateMany.mockResolvedValue({ count: 1 });
+    mocks.prisma.aiMethodologyProfile.update.mockResolvedValue({ ...methodologyProfileRecord, isDefault: true });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const createResponse = await createMethodologyProfile(
+      new Request("http://test.local/api/v1/ai/methodology-profiles", {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Habit-first physique coaching",
+          methodology: "Habit-first",
+          tone: "calm, direct, no shame",
+          principles: ["Lead with pattern recognition"],
+          checkInSections: ["Wins", "Risks", "Next minimum effective change"],
+          redFlagRules: ["Treat stress above 6/10 as a recovery constraint"],
+          adjustmentRules: ["Do not reduce calories until adherence is reviewed"],
+          forbiddenRecommendations: ["Never use compensation language"],
+          isDefault: true
+        })
+      })
+    );
+
+    expect(createResponse.status).toBe(201);
+    expect(mocks.prisma.aiMethodologyProfile.updateMany).toHaveBeenCalledWith({
+      where: { organizationId: "org_1", isDefault: true },
+      data: { isDefault: false }
+    });
+    expect(mocks.prisma.aiMethodologyProfile.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        organizationId: "org_1",
+        name: "Habit-first physique coaching",
+        principlesJson: ["Lead with pattern recognition"],
+        isDefault: true,
+        createdByUserId: "user_1"
+      })
+    });
+
+    const listResponse = await listMethodologyProfiles(new Request("http://test.local/api/v1/ai/methodology-profiles"));
+    const listPayload = await listResponse.json();
+    expect(listResponse.status).toBe(200);
+    expect(listPayload.data[0]).toEqual(expect.objectContaining({ id: "methodology_1", isDefault: true }));
+    expect(JSON.stringify(listPayload)).not.toContain("coach@example.com");
+
+    const defaultResponse = await setDefaultMethodologyProfile(
+      new Request("http://test.local/api/v1/ai/methodology-profiles/methodology_1/default", { method: "POST" }),
+      { params: Promise.resolve({ profileId: "methodology_1" }) }
+    );
+    expect(defaultResponse.status).toBe(200);
+    expect(mocks.prisma.aiMethodologyProfile.update).toHaveBeenCalledWith({
+      where: { id: "methodology_1" },
+      data: { isDefault: true }
+    });
+  });
+
+  it("rejects check-in review generation when a requested methodology profile is outside the tenant", async () => {
+    mocks.prisma.checkIn.findFirst.mockResolvedValue(checkInRecord);
+    mocks.prisma.clientMeasurement.findMany.mockResolvedValue([]);
+    mocks.prisma.aiPromptVersion.findFirst.mockResolvedValue(promptVersion);
+    mocks.prisma.aiMethodologyProfile.findFirst.mockResolvedValue(null);
+
+    const response = await generateCheckInReview(
+      new Request("http://test.local/api/v1/check-ins/checkin_1/ai-review", {
+        method: "POST",
+        body: JSON.stringify({ methodologyProfileId: "missing_profile" })
+      }),
+      {
+        params: Promise.resolve({ checkInId: "checkin_1" })
+      }
+    );
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.aiGeneration.create).not.toHaveBeenCalled();
   });
 
   it("blocks read-only assistants from generating AI recommendations", async () => {

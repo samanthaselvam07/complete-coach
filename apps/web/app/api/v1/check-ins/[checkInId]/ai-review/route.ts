@@ -12,6 +12,7 @@ import {
   buildCheckInReviewInput,
   generateHeuristicCheckInReview,
   hashAiInput,
+  normalizeMethodologyProfile,
   redactAiInput
 } from "@/lib/ai/ai-review";
 import {
@@ -21,15 +22,21 @@ import {
   toPrismaAiOutputType
 } from "@/lib/ai/ai-records";
 import { prisma } from "@/lib/db/prisma";
+import { z } from "zod";
 
 interface AiReviewRouteContext {
   params: Promise<{ checkInId: string }>;
 }
 
-export async function POST(_request: Request, context: AiReviewRouteContext) {
+const aiReviewRequestSchema = z.object({
+  methodologyProfileId: z.string().min(1).optional()
+});
+
+export async function POST(request: Request, context: AiReviewRouteContext) {
   try {
     const actor = requireActiveActor(await auth(), "ai:generate");
     const { checkInId } = await context.params;
+    const body = await parseAiReviewRequest(request);
 
     const checkIn = await prisma.checkIn.findFirst({
       where: {
@@ -65,7 +72,12 @@ export async function POST(_request: Request, context: AiReviewRouteContext) {
     const redactedInput = redactAiInput(reviewInput);
     const inputHash = hashAiInput(reviewInput);
     const promptVersion = await ensurePromptVersion(actor.organizationId, actor.userId);
-    const review = generateHeuristicCheckInReview(reviewInput);
+    const methodologyProfile = await findMethodologyProfile(actor.organizationId, body.methodologyProfileId);
+    if (body.methodologyProfileId && !methodologyProfile) {
+      return errorResponse("not_found", "AI methodology profile not found.", 404);
+    }
+    const methodology = normalizeMethodologyProfile(methodologyProfile);
+    const review = generateHeuristicCheckInReview(reviewInput, methodology);
 
     const createdGeneration = await prisma.aiGeneration.create({
       data: {
@@ -73,6 +85,7 @@ export async function POST(_request: Request, context: AiReviewRouteContext) {
         workflow: AiWorkflowType.CHECK_IN_REVIEW,
         status: AiGenerationStatus.RUNNING,
         promptVersionId: promptVersion.id,
+        methodologyProfileId: methodologyProfile?.id ?? null,
         provider: promptVersion.provider,
         model: promptVersion.model,
         clientId: checkIn.clientId,
@@ -84,7 +97,9 @@ export async function POST(_request: Request, context: AiReviewRouteContext) {
           clientId: checkIn.clientId,
           answersCount: reviewInput.answers.length,
           metricsCount: reviewInput.metrics.length,
-          flagsCount: review.flags.length
+          flagsCount: review.flags.length,
+          methodologyProfileId: methodologyProfile?.id ?? null,
+          methodologyName: methodologyProfile?.name ?? null
         },
         redactedInput: redactedInput as InputJsonValue,
         requestedByUserId: actor.userId
@@ -140,6 +155,7 @@ export async function POST(_request: Request, context: AiReviewRouteContext) {
         metadata: {
           generationId: generation.id,
           promptVersionId: promptVersion.id,
+          methodologyProfileId: methodologyProfile?.id ?? null,
           workflow: "check-in-review",
           outputCount: outputs.length,
           flagsCount: review.flags.length,
@@ -161,6 +177,36 @@ export async function POST(_request: Request, context: AiReviewRouteContext) {
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+async function parseAiReviewRequest(request: Request) {
+  const text = await request.text();
+
+  if (!text.trim()) {
+    return {};
+  }
+
+  return aiReviewRequestSchema.parse(JSON.parse(text));
+}
+
+async function findMethodologyProfile(organizationId: string, methodologyProfileId?: string) {
+  if (methodologyProfileId) {
+    return prisma.aiMethodologyProfile.findFirst({
+      where: {
+        id: methodologyProfileId,
+        organizationId,
+        isActive: true
+      }
+    });
+  }
+
+  return prisma.aiMethodologyProfile.findFirst({
+    where: {
+      organizationId,
+      isDefault: true,
+      isActive: true
+    }
+  });
 }
 
 async function ensurePromptVersion(organizationId: string, userId: string) {

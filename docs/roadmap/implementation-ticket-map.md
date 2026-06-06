@@ -516,7 +516,7 @@ Out of scope:
 - Advanced media transcoding worker.
 
 ## Ticket 021 - AI-Assisted Coaching
-Status: Complete. M12 AI-assisted coaching persistence, CHFI-style check-in review generation, prompt/version registry, redaction/minimization, approval-gated recommendations, usage/cost reporting, check-in UI integration, ADR/API/schema docs, and focused tests are complete.
+Status: Complete. M12 AI-assisted coaching persistence, CHFI-style check-in review generation, coach methodology profiles, prompt/version registry, redaction/minimization, approval-gated recommendations, usage/cost reporting, check-in UI integration, ADR/API/schema docs, and focused tests are complete.
 
 Scope:
 - Check-in summaries.
@@ -525,6 +525,7 @@ Scope:
 - Message drafts.
 - Resource recommendation and extraction-enhancement output types.
 - Prompt/version registry.
+- Coach methodology profiles for organization-specific review tone, principles, sections, red-flag rules, and adjustment rules.
 - Human approval and rejection workflows.
 - Organization usage and cost tracking.
 

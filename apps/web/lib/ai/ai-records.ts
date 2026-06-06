@@ -33,6 +33,24 @@ export const rejectRecommendationSchema = z.object({
   reason: z.string().trim().min(1).max(1000)
 });
 
+const methodologyListSchema = z
+  .array(z.string().trim().min(1).max(300))
+  .max(20)
+  .default([]);
+
+export const aiMethodologyProfileCreateSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  methodology: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(2000).optional().nullable(),
+  tone: z.string().trim().max(240).optional().nullable(),
+  principles: methodologyListSchema,
+  checkInSections: methodologyListSchema,
+  redFlagRules: methodologyListSchema,
+  adjustmentRules: methodologyListSchema,
+  forbiddenRecommendations: methodologyListSchema,
+  isDefault: z.boolean().default(false)
+});
+
 export const CHFI_CHECK_IN_PROMPT = {
   workflow: AiWorkflowType.CHECK_IN_REVIEW,
   version: "chfi-17-step-v1",
@@ -104,6 +122,26 @@ interface AiGenerationRecord {
   outputTokens: number;
   estimatedCostCents: number | string | { toString: () => string };
   promptVersionId: string;
+  methodologyProfileId?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+interface AiMethodologyProfileRecord {
+  id: string;
+  organizationId: string;
+  name: string;
+  methodology: string;
+  description: string | null;
+  tone: string | null;
+  principlesJson: unknown;
+  checkInSectionsJson: unknown;
+  redFlagRulesJson: unknown;
+  adjustmentRulesJson: unknown;
+  forbiddenRecommendationsJson: unknown;
+  isDefault: boolean;
+  isActive: boolean;
+  createdByUserId: string;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -147,6 +185,7 @@ export function serializeAiGeneration(record: AiGenerationRecord) {
     provider: record.provider,
     model: record.model,
     promptVersionId: record.promptVersionId,
+    methodologyProfileId: record.methodologyProfileId ?? null,
     clientId: record.clientId,
     targetType: record.targetType,
     targetId: record.targetId,
@@ -155,6 +194,26 @@ export function serializeAiGeneration(record: AiGenerationRecord) {
       outputTokens: record.outputTokens,
       estimatedCostCents: Number(record.estimatedCostCents)
     },
+    createdAt: toIsoString(record.createdAt),
+    updatedAt: toIsoString(record.updatedAt)
+  };
+}
+
+export function serializeAiMethodologyProfile(record: AiMethodologyProfileRecord) {
+  return {
+    id: record.id,
+    organizationId: record.organizationId,
+    name: record.name,
+    methodology: record.methodology,
+    description: record.description,
+    tone: record.tone,
+    principles: toStringList(record.principlesJson),
+    checkInSections: toStringList(record.checkInSectionsJson),
+    redFlagRules: toStringList(record.redFlagRulesJson),
+    adjustmentRules: toStringList(record.adjustmentRulesJson),
+    forbiddenRecommendations: toStringList(record.forbiddenRecommendationsJson),
+    isDefault: record.isDefault,
+    isActive: record.isActive,
     createdAt: toIsoString(record.createdAt),
     updatedAt: toIsoString(record.updatedAt)
   };
@@ -198,4 +257,12 @@ function serializeWorkflow(workflow: AiWorkflowType | string) {
 
 function toIsoString(value: Date | string) {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+}
+
+function toStringList(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is string => typeof item === "string");
 }

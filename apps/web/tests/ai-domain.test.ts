@@ -5,6 +5,7 @@ import {
   estimateAiCostCents,
   generateHeuristicCheckInReview,
   hashAiInput,
+  normalizeMethodologyProfile,
   redactAiInput
 } from "@/lib/ai/ai-review";
 
@@ -114,6 +115,31 @@ describe("AI-assisted coaching domain", () => {
         expect.objectContaining({ type: "message-draft", requiresApproval: true })
       ])
     );
+  });
+
+  it("tailors review language and goals with a coach methodology profile", () => {
+    const input = buildCheckInReviewInput(checkInRecord, metrics);
+    const methodology = normalizeMethodologyProfile({
+      name: "Habit-first physique coaching",
+      methodology: "Habit-first",
+      tone: "calm, direct, no shame",
+      principles: ["Lead with pattern recognition", "Use minimum effective change before aggressive macro changes"],
+      checkInSections: ["Wins", "Risks", "Next minimum effective change"],
+      redFlagRules: ["Treat stress above 6/10 as a recovery constraint"],
+      adjustmentRules: ["Do not reduce calories until adherence is reviewed"],
+      forbiddenRecommendations: ["Never use compensation language"]
+    });
+
+    const review = generateHeuristicCheckInReview(input, methodology);
+
+    expect(review.summaryMarkdown).toContain("Coaching lens: Habit-first physique coaching");
+    expect(review.summaryMarkdown).toContain("Next minimum effective change");
+    expect(review.outputs.find((output) => output.type === "nutrition-suggestion")).toEqual(
+      expect.objectContaining({
+        contentMarkdown: expect.stringContaining("Do not reduce calories until adherence is reviewed")
+      })
+    );
+    expect(JSON.stringify(review)).not.toContain("compensation");
   });
 
   it("uses stable content hashes and tracks estimated provider cost", () => {

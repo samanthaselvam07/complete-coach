@@ -188,6 +188,37 @@ Indexes:
 - `organization_id,workflow,is_active`.
 - `created_by_user_id`.
 
+### `ai_methodology_profiles`
+Purpose: organization-scoped coach methodology profiles used to tailor AI-assisted check-in reviews to a coach's principles, tone, section emphasis, red-flag rules, and adjustment rules without allowing unsafe free-form prompt control.
+
+Fields:
+- `id`
+- `organization_id`
+- `name`
+- `methodology`
+- `description`
+- `tone`
+- `principles_json`
+- `check_in_sections_json`
+- `red_flag_rules_json`
+- `adjustment_rules_json`
+- `forbidden_recommendations_json`
+- `is_default`
+- `is_active`
+- `created_by_user_id`
+- `created_at`
+- `updated_at`
+
+Rules:
+- Profiles are organization-scoped.
+- At most one active profile should be treated as the default by application code; setting a default unsets previous defaults for the organization.
+- Forbidden recommendations guide generation constraints but should not be echoed back into generated output text or audit metadata.
+
+Indexes:
+- `organization_id,is_active,is_default`.
+- `organization_id,name`.
+- `created_by_user_id`.
+
 ### `ai_generations`
 Purpose: durable audit/cost record for each AI run.
 
@@ -197,6 +228,7 @@ Fields:
 - `workflow`
 - `status`
 - `prompt_version_id`
+- `methodology_profile_id`
 - `provider`
 - `model`
 - `client_id`
@@ -223,6 +255,7 @@ Indexes:
 - `organization_id,client_id,created_at`.
 - `organization_id,target_type,target_id`.
 - `prompt_version_id`.
+- `methodology_profile_id`.
 - `requested_by_user_id`.
 
 ### `ai_outputs`

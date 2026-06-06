@@ -83,6 +83,19 @@ export interface HeuristicCheckInReview {
   };
 }
 
+export interface CoachMethodologyProfile {
+  id?: string;
+  name: string;
+  methodology: string;
+  description?: string | null;
+  tone?: string | null;
+  principles: string[];
+  checkInSections: string[];
+  redFlagRules: string[];
+  adjustmentRules: string[];
+  forbiddenRecommendations: string[];
+}
+
 export function buildCheckInReviewInput(checkIn: CheckInRecord, metrics: MetricRecord[]): CheckInReviewInput {
   const firstName = checkIn.client?.firstName?.trim() || "Client";
   const lastInitial = checkIn.client?.lastName?.trim()?.[0];
@@ -107,7 +120,38 @@ export function buildCheckInReviewInput(checkIn: CheckInRecord, metrics: MetricR
   };
 }
 
-export function generateHeuristicCheckInReview(input: CheckInReviewInput): HeuristicCheckInReview {
+export function normalizeMethodologyProfile(input: unknown): CoachMethodologyProfile | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  const record = input as Record<string, unknown>;
+  const name = normalizeString(record.name);
+  const methodology = normalizeString(record.methodology);
+
+  if (!name || !methodology) {
+    return null;
+  }
+
+  return {
+    id: normalizeString(record.id) ?? undefined,
+    name,
+    methodology,
+    description: normalizeString(record.description),
+    tone: normalizeString(record.tone),
+    principles: normalizeStringList(record.principles ?? record.principlesJson),
+    checkInSections: normalizeStringList(record.checkInSections ?? record.checkInSectionsJson),
+    redFlagRules: normalizeStringList(record.redFlagRules ?? record.redFlagRulesJson),
+    adjustmentRules: normalizeStringList(record.adjustmentRules ?? record.adjustmentRulesJson),
+    forbiddenRecommendations: normalizeStringList(record.forbiddenRecommendations ?? record.forbiddenRecommendationsJson)
+  };
+}
+
+export function generateHeuristicCheckInReview(
+  input: CheckInReviewInput,
+  methodologyProfile?: CoachMethodologyProfile | null
+): HeuristicCheckInReview {
+  const methodology = methodologyProfile ? normalizeMethodologyProfile(methodologyProfile) : null;
   const answerText = input.answers.map((answer) => `${answer.question}: ${answer.answer}`).join("\n");
   const bodyWeight = findMetric(input, "body_weight");
   const waist = findMetric(input, "waist") ?? findAnswerNumber(input, /waist/i);
@@ -152,9 +196,27 @@ export function generateHeuristicCheckInReview(input: CheckInReviewInput): Heuri
     });
   }
 
+  const methodologyLines = buildMethodologySummaryLines(methodology);
+  const goalLines = methodology?.checkInSections.length
+    ? methodology.checkInSections.map((section) => `- ${section}: review through the coach methodology before changing the plan.`)
+    : [
+        "- Resolve urgent injury flags before progressing load.",
+        "- Keep nutrition targets specific to the reported barrier.",
+        "- Review stress, sleep, and mobility before adding training volume."
+      ];
+  const nutritionGuidance = [
+    nutritionAnswer
+      ? "Create a concrete plan for the reported nutrition barrier before changing calories."
+      : "Maintain current nutrition targets unless trend data shows a two-week stall.",
+    methodology?.adjustmentRules.length ? `Coach rule: ${methodology.adjustmentRules[0]}` : null
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
   const summaryMarkdown = [
     "# Weekly Fitness Review",
     `**Client:** ${input.client.displayName}`,
+    ...methodologyLines,
     "",
     "## 1. Weight / Waist",
     `- Body weight: ${bodyWeight !== null ? `${bodyWeight} kg` : "not supplied"}.`,
@@ -173,9 +235,7 @@ export function generateHeuristicCheckInReview(input: CheckInReviewInput): Heuri
     hydration ? `- Hydration note: ${truncate(hydration, 100)}` : "- Hydration was not supplied.",
     "",
     "## 5. Goals for Next Week",
-    "- Resolve urgent injury flags before progressing load.",
-    "- Keep nutrition targets specific to the reported barrier.",
-    "- Review stress, sleep, and mobility before adding training volume."
+    ...goalLines
   ].join("\n");
 
   const outputs: AiReviewOutputDraft[] = [
@@ -208,9 +268,7 @@ export function generateHeuristicCheckInReview(input: CheckInReviewInput): Heuri
       type: "nutrition-suggestion",
       severity: flags.some((flag) => flag.category === "nutrition") ? "high" : "low",
       title: "Nutrition adjustment suggestion",
-      contentMarkdown: nutritionAnswer
-        ? "Create a concrete plan for the reported nutrition barrier before changing calories."
-        : "Maintain current nutrition targets unless trend data shows a two-week stall.",
+      contentMarkdown: nutritionGuidance,
       data: { source: "chfi-17-step" },
       requiresApproval: true
     },
@@ -242,6 +300,19 @@ export function generateHeuristicCheckInReview(input: CheckInReviewInput): Heuri
       })
     }
   };
+}
+
+function buildMethodologySummaryLines(methodology: CoachMethodologyProfile | null) {
+  if (!methodology) {
+    return [];
+  }
+
+  return [
+    `Coaching lens: ${methodology.name}`,
+    methodology.tone ? `Tone: ${methodology.tone}` : null,
+    methodology.principles.length ? `Principles: ${methodology.principles.slice(0, 3).join("; ")}` : null,
+    methodology.redFlagRules.length ? `Red flag lens: ${methodology.redFlagRules.slice(0, 2).join("; ")}` : null
+  ].filter((line): line is string => Boolean(line));
 }
 
 export function redactAiInput(value: unknown): unknown {
@@ -340,6 +411,26 @@ function buildDraftReply(clientName: string, flags: AiReviewFlag[]) {
 
 function estimateTokens(value: string) {
   return Math.max(1, Math.ceil(value.length / 4));
+}
+
+function normalizeString(value: unknown) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function normalizeStringList(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map(normalizeString)
+    .filter((item): item is string => Boolean(item))
+    .slice(0, 20);
 }
 
 function stableStringify(value: unknown): string {

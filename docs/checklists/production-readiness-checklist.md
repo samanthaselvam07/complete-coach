@@ -91,6 +91,7 @@
 ## AI-Assisted Coaching
 - [x] AI provider/prompt policy is captured in ADR-006.
 - [x] Prompt versions are persisted for generated coaching outputs.
+- [x] Organization-scoped coach methodology profiles can tailor AI check-in review tone, sections, principles, red-flag rules, and adjustment rules.
 - [x] AI inputs are minimized and redacted before persistence/audit logging.
 - [x] Client-impacting AI outputs require human approval before use.
 - [x] Check-in summaries, risk flags, workout/nutrition suggestions, message drafts, resource recommendation output types, and extraction-enhancement output types are represented.
