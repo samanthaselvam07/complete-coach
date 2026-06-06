@@ -14,19 +14,21 @@ describe("CheckInDetailPage", () => {
     expect(screen.getByText("Well-being")).toBeInTheDocument();
     expect(screen.getByText("Wins")).toBeInTheDocument();
     expect(screen.getByText("Struggles")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Compare With Previous Checkin" })).toHaveAttribute(
-      "href",
-      "/clients/1/check-ins/week-24?compare=previous"
-    );
+    expect(screen.getByRole("combobox", { name: "Current check-in" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Compare against" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Compare" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Compare against" })).toHaveValue("week-23");
+    expect(screen.queryByRole("link", { name: "Compare With Previous Checkin" })).not.toBeInTheDocument();
   });
 
   it("renders the previous/current comparison surface", () => {
-    render(createElement(CheckInDetailPage, { clientId: "1", checkInId: "week-24", compare: true }));
+    render(createElement(CheckInDetailPage, { clientId: "1", checkInId: "week-24", compare: "week-23" }));
 
     expect(screen.getByRole("heading", { name: "Previous Check in" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Current Checkin" })).toBeInTheDocument();
     expect(screen.getByText("-0.8kg")).toBeInTheDocument();
     expect(screen.getByText("+12")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Compare against" })).toHaveValue("week-23");
     expect(screen.getByRole("link", { name: "Close" })).toHaveAttribute(
       "href",
       "/clients/1/check-ins/week-24"
@@ -37,10 +39,9 @@ describe("CheckInDetailPage", () => {
     render(createElement(CheckInDetailPage, { clientId: "1", checkInId: "demo-weekly-check-in", embedded: true }));
 
     expect(screen.getByRole("heading", { name: "Current Checkin" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Compare With Previous Checkin" })).toHaveAttribute(
-      "href",
-      "/clients/1?tab=check-ins&checkInId=demo-weekly-check-in&compare=previous"
-    );
+    expect(screen.getByRole("button", { name: "Compare" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("check-ins")).toHaveAttribute("name", "tab");
+    expect(screen.getByDisplayValue("demo-weekly-check-in")).toHaveAttribute("name", "checkInId");
     expect(screen.getByRole("link", { name: "Go Back" })).toHaveAttribute("href", "/clients/1?tab=check-ins");
   });
 });

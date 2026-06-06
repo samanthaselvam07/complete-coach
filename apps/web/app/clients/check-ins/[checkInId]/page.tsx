@@ -12,5 +12,5 @@ export default async function ReviewCenterCheckInDetailRoute({
   const { checkInId } = await params;
   const { compare } = await searchParams;
 
-  return <CheckInDetailPage checkInId={checkInId} compare={compare === "previous"} />;
+  return <CheckInDetailPage checkInId={checkInId} compare={compare} />;
 }

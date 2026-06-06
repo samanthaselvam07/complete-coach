@@ -14,7 +14,7 @@ type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "
 
 interface ClientProfilePageProps {
   clientId: string;
-  highlightedCheckInCompare?: boolean;
+  highlightedCheckInCompare?: string;
   highlightedCheckInId?: string;
   initialTab?: ProfileTab;
 }
@@ -124,7 +124,7 @@ const tabs: ProfileTab[] = ["Dashboard", "Daily Check-Ins", "Training", "Nutriti
 
 export function ClientProfilePage({
   clientId,
-  highlightedCheckInCompare = false,
+  highlightedCheckInCompare,
   highlightedCheckInId,
   initialTab = "Dashboard"
 }: ClientProfilePageProps) {
@@ -558,7 +558,7 @@ function ClientProfileTabPanel({
 }: {
   client: ClientProfileView;
   activeTab: ProfileTab;
-  highlightedCheckInCompare?: boolean;
+  highlightedCheckInCompare?: string;
   highlightedCheckInId?: string;
 }) {
   if (activeTab === "Dashboard") {

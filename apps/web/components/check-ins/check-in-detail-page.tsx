@@ -47,6 +47,15 @@ const previousCheckIn = {
   dietNotes: "Struggled this week. Work was stressful and missed two meal preps. Protein was low on 3 days."
 };
 
+const checkInOptions = [
+  { id: "week-24", label: "Week 24 - April 18, 2026" },
+  { id: "demo-weekly-check-in", label: "Week 24 - April 18, 2026" },
+  { id: "week-23", label: "Week 23 - April 11, 2026" },
+  { id: "week-22", label: "Week 22 - April 04, 2026" }
+] as const;
+
+const compareOptions = checkInOptions.filter((option) => option.id !== "week-24" && option.id !== "demo-weekly-check-in");
+
 export function CheckInDetailPage({
   clientId = "1",
   checkInId,
@@ -55,15 +64,16 @@ export function CheckInDetailPage({
 }: {
   clientId?: string;
   checkInId: string;
-  compare?: boolean;
+  compare?: boolean | string;
   embedded?: boolean;
 }) {
+  const selectedComparisonId = typeof compare === "string" && compare !== "previous" ? compare : "week-23";
+  const isComparing = Boolean(compare);
+  const currentCheckInValue = checkInOptions.some((option) => option.id === checkInId) ? checkInId : "week-24";
+  const compareFormAction = embedded ? `/clients/${clientId}` : `/clients/${clientId}/check-ins/${checkInId}`;
   const currentHref = embedded
     ? `/clients/${clientId}?tab=check-ins&checkInId=${encodeURIComponent(checkInId)}`
     : `/clients/${clientId}/check-ins/${checkInId}`;
-  const compareHref = embedded
-    ? `/clients/${clientId}?tab=check-ins&checkInId=${encodeURIComponent(checkInId)}&compare=previous`
-    : `/clients/${clientId}/check-ins/${checkInId}?compare=previous`;
   const backHref = embedded ? `/clients/${clientId}?tab=check-ins` : `/clients/${clientId}`;
 
   return (
@@ -73,13 +83,7 @@ export function CheckInDetailPage({
           <Link href={currentHref as Route} className="hover:text-indigo-600">
             Reply
           </Link>
-          <Link
-            href={compareHref as Route}
-            className={compare ? "rounded-lg bg-indigo-600 px-4 py-2 text-white" : "hover:text-indigo-600"}
-          >
-            Compare With Previous Checkin
-          </Link>
-          {compare ? (
+          {isComparing ? (
             <Link href={currentHref as Route} className="hover:text-indigo-600">
               Close
             </Link>
@@ -88,13 +92,46 @@ export function CheckInDetailPage({
             Go Back
           </Link>
         </nav>
-        <select className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700">
-          <option>Week 24 - April 18, 2026</option>
-          <option>Week 23 - April 11, 2026</option>
-        </select>
+        <form action={compareFormAction} method="get" className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {embedded ? (
+            <>
+              <input type="hidden" name="tab" value="check-ins" />
+              <input type="hidden" name="checkInId" value={checkInId} />
+            </>
+          ) : null}
+          <label className="sr-only" htmlFor="current-check-in-select">Current check-in</label>
+          <select
+            id="current-check-in-select"
+            aria-label="Current check-in"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700"
+            defaultValue={currentCheckInValue}
+          >
+            {checkInOptions.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
+          <label className="sr-only" htmlFor="compare-check-in-select">Compare against</label>
+          <select
+            id="compare-check-in-select"
+            aria-label="Compare against"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700"
+            name="compare"
+            defaultValue={selectedComparisonId}
+          >
+            {compareOptions.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className={isComparing ? "rounded-lg bg-indigo-600 px-4 py-3 text-sm font-bold text-white" : "rounded-lg border border-indigo-200 px-4 py-3 text-sm font-bold text-indigo-600 hover:bg-indigo-50"}
+          >
+            Compare
+          </button>
+        </form>
       </header>
 
-      {compare ? (
+      {isComparing ? (
         <div className="grid divide-y divide-slate-200 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
           <CheckInColumn title="Previous Check in" checkIn={previousCheckIn} muted />
           <CheckInColumn title="Current Checkin" checkIn={currentCheckIn} showDeltas />

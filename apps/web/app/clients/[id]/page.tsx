@@ -20,7 +20,7 @@ export default async function ClientProfileRoute({ params, searchParams }: Clien
       clientId={id}
       initialTab={tab === "check-ins" ? "Check-Ins" : undefined}
       highlightedCheckInId={checkInId}
-      highlightedCheckInCompare={compare === "previous"}
+      highlightedCheckInCompare={compare}
     />
   );
 }

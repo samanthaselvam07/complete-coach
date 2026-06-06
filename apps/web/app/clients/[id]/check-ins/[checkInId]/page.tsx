@@ -12,5 +12,5 @@ export default async function ClientCheckInDetailRoute({
   const { id, checkInId } = await params;
   const { compare } = await searchParams;
 
-  return <CheckInDetailPage clientId={id} checkInId={checkInId} compare={compare === "previous"} />;
+  return <CheckInDetailPage clientId={id} checkInId={checkInId} compare={compare} />;
 }

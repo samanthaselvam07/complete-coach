@@ -216,10 +216,10 @@ describe("ClientProfilePage", () => {
     expect(screen.getByRole("tabpanel", { name: "Check-Ins" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Current Checkin" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Check-In History" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Compare With Previous Checkin" })).toHaveAttribute(
-      "href",
-      "/clients/1?tab=check-ins&checkInId=demo-weekly-check-in&compare=previous"
-    );
+    expect(screen.getByRole("combobox", { name: "Compare against" })).toHaveValue("week-23");
+    expect(screen.getByRole("button", { name: "Compare" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("check-ins")).toHaveAttribute("name", "tab");
+    expect(screen.getByDisplayValue("demo-weekly-check-in")).toHaveAttribute("name", "checkInId");
     expect(screen.getByRole("link", { name: "Go Back" })).toHaveAttribute("href", "/clients/1?tab=check-ins");
   });
 
