@@ -38,6 +38,9 @@ describe("TrainingProgramsPage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Master Templates" }));
 
     expect(screen.getByRole("tabpanel", { name: "Master Templates" })).toHaveTextContent("Body Recomp v3");
+    expect(screen.queryByRole("button", { name: "All" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Strength" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Endurance" })).not.toBeInTheDocument();
     expect(screen.queryByText("Hypertrophy Phase II")).not.toBeInTheDocument();
   });
 

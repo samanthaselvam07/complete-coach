@@ -418,14 +418,6 @@ function TemplatesPanel({
 }) {
   return (
     <section role="tabpanel" aria-label="Master Templates">
-      <div className="mb-6 flex items-center gap-3">
-        {["All", "Strength", "Endurance"].map((filter) => (
-          <button key={filter} className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm transition-colors hover:bg-gray-50">
-            {filter}
-          </button>
-        ))}
-      </div>
-
       <div className="grid gap-6 md:grid-cols-3">
         {templates.map((template) => (
           <article key={template.id} className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg">
