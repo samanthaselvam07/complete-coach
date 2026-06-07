@@ -279,12 +279,26 @@ describe("PackagesPage", () => {
 });
 
 describe("DashboardPage payment revenue", () => {
-  it("loads monthly revenue from persisted package subscription data", async () => {
+  it("loads monthly revenue from the Stripe financial reporting API", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
-      if (url === "/api/v1/packages?status=active&limit=100") {
-        return Promise.resolve(new Response(JSON.stringify({ data: persistedPackages }), { status: 200 }));
+      if (url === "/api/v1/dashboard/financial-reporting?period=monthly") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                period: "monthly",
+                label: "Monthly Revenue",
+                amount: 179700,
+                currency: "usd",
+                change: "Stripe reported",
+                bars: [30, 42, 55, 70]
+              }
+            }),
+            { status: 200 }
+          )
+        );
       }
 
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
@@ -294,5 +308,6 @@ describe("DashboardPage payment revenue", () => {
 
     expect(await screen.findByText("$1,797")).toBeInTheDocument();
     expect(screen.getByText("Monthly Revenue")).toBeInTheDocument();
+    expect(screen.getByText("Stripe reported")).toBeInTheDocument();
   });
 });

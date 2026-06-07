@@ -35,6 +35,82 @@ describe("DashboardPage", () => {
     expect(screen.queryByText("Monthly Revenue")).not.toBeInTheDocument();
   });
 
+  it("loads dashboard financial reporting from the Stripe reporting API", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/dashboard/financial-reporting?period=monthly") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                period: "monthly",
+                label: "Monthly Revenue",
+                amount: 319000,
+                currency: "usd",
+                change: "Stripe live",
+                bars: [30, 35, 40, 48, 52, 61, 72]
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+
+    expect(await screen.findByText("$3,190")).toBeInTheDocument();
+    expect(screen.getByText("Stripe live")).toBeInTheDocument();
+  });
+
+  it("uses custom calendar dates when requesting a Stripe revenue report", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (
+        url ===
+        "/api/v1/dashboard/financial-reporting?period=custom&startDate=2026-06-01&endDate=2026-06-15"
+      ) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                period: "custom",
+                label: "Custom Revenue",
+                amount: 128500,
+                currency: "usd",
+                change: "Stripe custom range",
+                bars: [35, 50, 65, 80]
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+
+    fireEvent.click(screen.getByRole("button", { name: /change revenue period/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Custom" }));
+    fireEvent.change(screen.getByLabelText("Custom revenue start date"), { target: { value: "2026-06-01" } });
+    fireEvent.change(screen.getByLabelText("Custom revenue end date"), { target: { value: "2026-06-15" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apply custom dates" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/dashboard/financial-reporting?period=custom&startDate=2026-06-01&endDate=2026-06-15"
+      )
+    );
+    expect(await screen.findByText("$1,285")).toBeInTheDocument();
+    expect(screen.getByText("Stripe custom range")).toBeInTheDocument();
+  });
+
   it("toggles local work tasks as complete", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 

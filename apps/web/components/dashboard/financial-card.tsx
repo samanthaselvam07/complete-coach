@@ -12,16 +12,26 @@ interface FinancialCardProps {
   currentPeriod: RevenuePeriod;
   metric: RevenueMetric;
   open: boolean;
+  customStartDate: string;
+  customEndDate: string;
   onToggleOpen: () => void;
   onSelectPeriod: (period: RevenuePeriod) => void;
+  onCustomStartDateChange: (date: string) => void;
+  onCustomEndDateChange: (date: string) => void;
+  onApplyCustomRange: () => void;
 }
 
 export function FinancialCard({
   currentPeriod,
   metric,
   open,
+  customStartDate,
+  customEndDate,
   onToggleOpen,
-  onSelectPeriod
+  onSelectPeriod,
+  onCustomStartDateChange,
+  onCustomEndDateChange,
+  onApplyCustomRange
 }: FinancialCardProps) {
   return (
     <section className="relative rounded-xl border border-gray-200 bg-white p-6" aria-label="Revenue analytics">
@@ -48,7 +58,7 @@ export function FinancialCard({
               <div
                 role="menu"
                 aria-label="Revenue period"
-                className="absolute right-0 top-full z-20 mt-1 min-w-32 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                className="absolute right-0 top-full z-20 mt-1 min-w-72 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
               >
                 {revenuePeriodOptions.map((option) => (
                   <button
@@ -64,6 +74,39 @@ export function FinancialCard({
                     {option.label}
                   </button>
                 ))}
+                {currentPeriod === "custom" ? (
+                  <div className="border-t border-gray-100 p-3" aria-label="Custom revenue date range">
+                    <div className="grid gap-2">
+                      <label className="grid gap-1 text-xs font-medium text-gray-700">
+                        Custom revenue start date
+                        <input
+                          type="date"
+                          value={customStartDate}
+                          className="rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                          onChange={(event) => onCustomStartDateChange(event.target.value)}
+                        />
+                      </label>
+                      <label className="grid gap-1 text-xs font-medium text-gray-700">
+                        Custom revenue end date
+                        <input
+                          type="date"
+                          value={customEndDate}
+                          className="rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                          onChange={(event) => onCustomEndDateChange(event.target.value)}
+                        />
+                      </label>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="mt-1 h-8 rounded-md bg-indigo-600 text-xs text-white hover:bg-indigo-700"
+                        disabled={!customStartDate || !customEndDate}
+                        onClick={onApplyCustomRange}
+                      >
+                        Apply custom dates
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>

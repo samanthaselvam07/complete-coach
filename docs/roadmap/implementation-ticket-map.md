@@ -426,7 +426,7 @@ Implementation slices:
 - Ticket 017C - Package Stripe Product/Price Sync: Complete. Added trusted package-to-Stripe product/price sync, Connect setup guard, docs, and API tests.
 - Ticket 017D - Client Subscription Creation: Complete. Added subscription list/create APIs, Stripe Checkout subscription session creation, local incomplete subscription mirrors, docs, and API tests.
 - Ticket 017E - Stripe Webhook Processing: Complete. Added signature verification, redacted payment event persistence, duplicate event idempotency, subscription state transitions, Connect account status refresh, docs, and API tests.
-- Ticket 017F - Packages UI And Revenue Persistence: Complete. Wired package management to persisted package APIs with fixture fallback, added create/edit/archive/sync UI controls, and connected dashboard monthly revenue to package subscription-derived API data.
+- Ticket 017F - Packages UI And Revenue Persistence: Complete. Wired package management to persisted package APIs with fixture fallback, added create/edit/archive/sync UI controls, and connected dashboard financial reporting to Stripe-backed subscription records rather than package projection fixtures.
 - Ticket 017G - Payments E2E Coverage: Complete. Added Playwright package/subscription/payment smoke flows covering API-backed package management, Stripe sync initiation, Checkout creation, and duplicate webhook handling.
 - Ticket 017H - M8 Review Gate: Complete. Ran the mandatory phase review against specs, checklist, code, clean database migrations/seed, targeted tests, payments E2E, and the full app check gate.
 

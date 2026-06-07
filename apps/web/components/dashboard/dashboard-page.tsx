@@ -12,6 +12,7 @@ import {
   revenueMetrics,
   type DashboardTask,
   type DashboardTaskCategory,
+  type RevenueMetric,
   type RevenuePeriod
 } from "@/fixtures/dashboard";
 
@@ -31,13 +32,20 @@ interface ApiCheckIn {
   id: string;
 }
 
-interface ApiPackage {
-  projectedMonthlyRevenue: number;
+interface ApiFinancialReport {
+  label: string;
+  amount: number;
+  currency: string;
+  change: string;
+  bars: number[];
 }
 
 export function DashboardPage() {
+  const defaultCustomRange = getDefaultCustomDateRange();
   const [period, setPeriod] = useState<RevenuePeriod>("monthly");
   const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState(defaultCustomRange.startDate);
+  const [customEndDate, setCustomEndDate] = useState(defaultCustomRange.endDate);
   const [taskPanelOpen, setTaskPanelOpen] = useState(false);
   const [taskSource, setTaskSource] = useState<"api" | "fixture">("fixture");
   const [tasks, setTasks] = useState<Record<DashboardTaskCategory, DashboardTask[]>>(dashboardTasks);
@@ -53,7 +61,7 @@ export function DashboardPage() {
         loadPersistedTasks(),
         loadCount<ApiClient>("/api/v1/clients?status=active&limit=100"),
         loadCount<ApiCheckIn>("/api/v1/check-ins?status=pending-review&limit=100"),
-        loadPackageRevenueMetric()
+        loadStripeFinancialMetric("monthly")
       ]);
 
       if (!isActive) {
@@ -76,14 +84,10 @@ export function DashboardPage() {
         setPendingCheckInCount(pendingCheckIns);
       }
 
-      if (packageRevenue !== null) {
+      if (packageRevenue) {
         setRevenueMetricSource((currentMetrics) => ({
           ...currentMetrics,
-          monthly: {
-            ...currentMetrics.monthly,
-            value: formatCents(packageRevenue),
-            change: "Stripe-derived"
-          }
+          monthly: packageRevenue
         }));
       }
     }
@@ -199,10 +203,25 @@ export function DashboardPage() {
           currentPeriod={period}
           metric={revenueMetricSource[period]}
           open={periodMenuOpen}
+          customStartDate={customStartDate}
+          customEndDate={customEndDate}
           onToggleOpen={() => setPeriodMenuOpen((open) => !open)}
           onSelectPeriod={(nextPeriod) => {
             setPeriod(nextPeriod);
+            if (nextPeriod === "custom") {
+              setPeriodMenuOpen(true);
+              return;
+            }
+
             setPeriodMenuOpen(false);
+            void refreshFinancialMetric(nextPeriod);
+          }}
+          onCustomStartDateChange={setCustomStartDate}
+          onCustomEndDateChange={setCustomEndDate}
+          onApplyCustomRange={() => {
+            setPeriod("custom");
+            setPeriodMenuOpen(false);
+            void refreshFinancialMetric("custom", customStartDate, customEndDate);
           }}
         />
         <ClientCapacityCard activeClients={activeClientCount} />
@@ -225,6 +244,19 @@ export function DashboardPage() {
       />
     </div>
   );
+
+  async function refreshFinancialMetric(nextPeriod: RevenuePeriod, startDate?: string, endDate?: string) {
+    const financialMetric = await loadStripeFinancialMetric(nextPeriod, startDate, endDate);
+
+    if (!financialMetric) {
+      return;
+    }
+
+    setRevenueMetricSource((currentMetrics) => ({
+      ...currentMetrics,
+      [nextPeriod]: financialMetric
+    }));
+  }
 }
 
 async function loadPersistedTasks() {
@@ -267,19 +299,43 @@ async function loadCount<T>(url: string) {
   }
 }
 
-async function loadPackageRevenueMetric() {
+async function loadStripeFinancialMetric(period: RevenuePeriod, startDate?: string, endDate?: string) {
   try {
-    const response = await fetch("/api/v1/packages?status=active&limit=100");
+    const response = await fetch(buildFinancialReportingUrl(period, startDate, endDate));
 
     if (!response.ok) {
-      throw new Error("Packages API unavailable.");
+      throw new Error("Stripe financial reporting API unavailable.");
     }
 
-    const payload = (await response.json()) as { data: ApiPackage[] };
-    return payload.data.reduce((sum, coachingPackage) => sum + coachingPackage.projectedMonthlyRevenue, 0);
+    const payload = (await response.json()) as { data: ApiFinancialReport };
+    return mapFinancialReport(payload.data);
   } catch {
     return null;
   }
+}
+
+function buildFinancialReportingUrl(period: RevenuePeriod, startDate?: string, endDate?: string) {
+  const params = new URLSearchParams({ period });
+
+  if (period === "custom" && startDate && endDate) {
+    params.set("startDate", startDate);
+    params.set("endDate", endDate);
+  }
+
+  return `/api/v1/dashboard/financial-reporting?${params.toString()}`;
+}
+
+function mapFinancialReport(report: ApiFinancialReport): RevenueMetric | null {
+  if (!report || typeof report.amount !== "number" || !Array.isArray(report.bars)) {
+    return null;
+  }
+
+  return {
+    label: report.label,
+    value: formatCents(report.amount, report.currency),
+    change: report.change,
+    bars: report.bars
+  };
 }
 
 function mapApiTask(task: ApiTask): DashboardTask {
@@ -291,10 +347,21 @@ function mapApiTask(task: ApiTask): DashboardTask {
   };
 }
 
-function formatCents(amount: number) {
+function formatCents(amount: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: currency.toUpperCase(),
     maximumFractionDigits: amount % 100 === 0 ? 0 : 2
   }).format(amount / 100);
+}
+
+function getDefaultCustomDateRange() {
+  const now = new Date();
+  const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
+
+  return {
+    startDate: startDate.toISOString().slice(0, 10),
+    endDate: endDate.toISOString().slice(0, 10)
+  };
 }
