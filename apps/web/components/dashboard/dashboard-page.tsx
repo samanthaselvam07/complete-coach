@@ -282,9 +282,13 @@ export function DashboardPage() {
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-3">
-        <WorkTodoSection tasks={tasks} onToggleTask={toggleTask} />
+        <WorkTodoSection
+          tasks={tasks}
+          onToggleTask={toggleTask}
+          onAddTask={() => setTaskPanelOpen(true)}
+        />
         <div className="space-y-6">
-          <LivePipeline onAddTask={() => setTaskPanelOpen(true)} />
+          <LivePipeline />
           <TeamSnapshotCard members={teamCapacityMembers ?? undefined} />
         </div>
       </div>

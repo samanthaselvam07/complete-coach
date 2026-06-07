@@ -166,6 +166,23 @@ describe("DashboardPage", () => {
     expect(screen.queryByRole("dialog", { name: "Create New Task" })).not.toBeInTheDocument();
   });
 
+  it("places the add task action inside the final work to-do card", () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+
+    render(createElement(DashboardPage));
+
+    const businessOpsCard = screen.getByRole("region", { name: "Business Ops/Admin" });
+    const addTaskButton = within(businessOpsCard).getByRole("button", { name: "Add Task" });
+    const crmPipeline = screen.getByRole("region", { name: "CRM Pipeline" });
+
+    expect(addTaskButton).toBeInTheDocument();
+    expect(within(crmPipeline).queryByRole("button", { name: "Add Task" })).not.toBeInTheDocument();
+
+    fireEvent.click(addTaskButton);
+
+    expect(screen.getByRole("dialog", { name: "Create New Task" })).toBeInTheDocument();
+  });
+
   it("loads persisted dashboard tasks and live summary counts when APIs are available", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);

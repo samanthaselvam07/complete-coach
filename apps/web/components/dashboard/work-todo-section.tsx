@@ -10,9 +10,10 @@ import { cn } from "@/lib/utils";
 interface WorkTodoSectionProps {
   tasks: Record<DashboardTaskCategory, DashboardTask[]>;
   onToggleTask: (category: DashboardTaskCategory, taskId: string) => void;
+  onAddTask: () => void;
 }
 
-export function WorkTodoSection({ tasks, onToggleTask }: WorkTodoSectionProps) {
+export function WorkTodoSection({ tasks, onToggleTask, onAddTask }: WorkTodoSectionProps) {
   return (
     <section className="col-span-1 lg:col-span-2">
       <div className="mb-4 flex items-center justify-between">
@@ -20,10 +21,11 @@ export function WorkTodoSection({ tasks, onToggleTask }: WorkTodoSectionProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {dashboardTaskCategories.map((category) => {
+        {dashboardTaskCategories.map((category, categoryIndex) => {
           const categoryTasks = tasks[category.id];
           const visibleTasks = categoryTasks.filter((task) => !task.completed);
           const openTaskCount = visibleTasks.length;
+          const isLastTaskCard = categoryIndex === dashboardTaskCategories.length - 1;
 
           return (
             <section
@@ -74,6 +76,15 @@ export function WorkTodoSection({ tasks, onToggleTask }: WorkTodoSectionProps) {
                     No open tasks.
                   </p>
                 )}
+                {isLastTaskCard ? (
+                  <button
+                    type="button"
+                    className="mt-3 w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-100"
+                    onClick={onAddTask}
+                  >
+                    Add Task
+                  </button>
+                ) : null}
               </div>
             </section>
           );
