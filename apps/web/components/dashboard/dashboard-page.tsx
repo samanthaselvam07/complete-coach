@@ -275,6 +275,7 @@ async function loadPersistedTasks() {
       },
       {
         "current-client-care": [],
+        "new-client-onboarding": [],
         "social-media": [],
         "business-operations": []
       }

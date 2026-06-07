@@ -2,7 +2,11 @@ import type { LucideIcon } from "lucide-react";
 import { CalendarDays, CreditCard, FileText } from "lucide-react";
 
 export type RevenuePeriod = "weekly" | "monthly" | "quarterly" | "yearly" | "custom";
-export type DashboardTaskCategory = "current-client-care" | "social-media" | "business-operations";
+export type DashboardTaskCategory =
+  | "current-client-care"
+  | "new-client-onboarding"
+  | "social-media"
+  | "business-operations";
 export type DashboardTaskPriority = "high" | "medium" | "low";
 
 export interface RevenueMetric {
@@ -84,6 +88,11 @@ export const dashboardTasks: Record<DashboardTaskCategory, DashboardTask[]> = {
     { id: "client-3", text: "Schedule call with Sarah J.", completed: false },
     { id: "client-4", text: "Send workout adjustments to Emma", completed: false }
   ],
+  "new-client-onboarding": [
+    { id: "onboarding-1", text: "Send intake form to new lead", completed: false },
+    { id: "onboarding-2", text: "Create welcome message sequence", completed: false },
+    { id: "onboarding-3", text: "Confirm onboarding call details", completed: true }
+  ],
   "social-media": [
     { id: "social-1", text: "Post transformation Tuesday content", completed: false },
     { id: "social-2", text: "Respond to DM inquiries", completed: true },
@@ -109,6 +118,12 @@ export const dashboardTaskCategories: Array<{
     label: "Client Work",
     badgeClassName: "bg-indigo-100 text-indigo-700",
     hoverClassName: "group-hover:text-indigo-400"
+  },
+  {
+    id: "new-client-onboarding",
+    label: "New Client/Onboarding",
+    badgeClassName: "bg-blue-100 text-blue-700",
+    hoverClassName: "group-hover:text-blue-400"
   },
   {
     id: "social-media",

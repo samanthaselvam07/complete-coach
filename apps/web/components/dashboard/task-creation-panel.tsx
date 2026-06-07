@@ -21,6 +21,7 @@ interface TaskCreationPanelProps {
 
 const categories: Array<{ value: DashboardTaskCategory; label: string }> = [
   { value: "current-client-care", label: "Current Client Care" },
+  { value: "new-client-onboarding", label: "New client/ Onboarding" },
   { value: "business-operations", label: "Business / Operations" },
   { value: "social-media", label: "Social Media" }
 ];

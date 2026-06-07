@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { TaskCategory, TaskPriority, TaskStatus } from "@/app/generated/prisma/enums";
 import {
   buildConversationWhere,
+  getTaskCreateData,
   buildTaskWhere,
   getTaskUpdateData,
   serializeConversation,
@@ -40,6 +41,23 @@ describe("operation record helpers", () => {
       clientId: "client_1"
     });
     expect(buildTaskWhere("org_1", { limit: 50 })).toEqual({ organizationId: "org_1" });
+  });
+
+  it("maps new client onboarding tasks to the persisted enum", () => {
+    expect(
+      getTaskCreateData("org_1", "user_1", {
+        title: "Send onboarding questionnaire",
+        category: "new-client-onboarding",
+        priority: "medium"
+      })
+    ).toEqual(
+      expect.objectContaining({
+        organizationId: "org_1",
+        createdByUserId: "user_1",
+        category: TaskCategory.NEW_CLIENT_ONBOARDING,
+        priority: TaskPriority.MEDIUM
+      })
+    );
   });
 
   it("serializes conversations with and without optional related records", () => {

@@ -726,6 +726,12 @@ Fields:
 - `created_at`
 - `updated_at`
 
+Allowed `category` values:
+- `current-client-care`
+- `new-client-onboarding`
+- `social-media`
+- `business-operations`
+
 Indexes:
 - `organization_id,status,due_at`.
 - `organization_id,assigned_user_id,status`.

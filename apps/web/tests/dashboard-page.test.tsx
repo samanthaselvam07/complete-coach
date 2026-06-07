@@ -20,6 +20,7 @@ describe("DashboardPage", () => {
     expect(screen.getByText("42")).toBeInTheDocument();
     expect(screen.getByText("Payment Secured")).toBeInTheDocument();
     expect(screen.getByText("Coach Team")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "New Client/Onboarding" })).toBeInTheDocument();
   });
 
   it("updates the displayed revenue period from the selector", () => {
@@ -253,6 +254,61 @@ describe("DashboardPage", () => {
       )
     );
     expect(await screen.findByText("Persisted dashboard task")).toBeInTheDocument();
+  });
+
+  it("creates new client onboarding tasks from the side panel", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/tasks?limit=100") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/tasks" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "task_onboarding",
+                title: "Send onboarding questionnaire",
+                category: "new-client-onboarding",
+                priority: "medium",
+                status: "open"
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/tasks?limit=100"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Task" }));
+    fireEvent.change(screen.getByLabelText("Task Description"), {
+      target: { value: "Send onboarding questionnaire" }
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "New client/ Onboarding" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create Task" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/tasks",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            title: "Send onboarding questionnaire",
+            category: "new-client-onboarding",
+            priority: "medium"
+          })
+        })
+      )
+    );
+    const onboardingModule = screen.getByRole("region", { name: "New Client/Onboarding" });
+    expect(within(onboardingModule).getByText("Send onboarding questionnaire")).toBeInTheDocument();
   });
 
   it("completes persisted dashboard tasks through the task API", async () => {

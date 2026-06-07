@@ -2,7 +2,12 @@ import { z } from "zod";
 
 import { TaskCategory, TaskPriority, TaskStatus } from "@/app/generated/prisma/enums";
 
-export const taskCategoryValues = ["current-client-care", "social-media", "business-operations"] as const;
+export const taskCategoryValues = [
+  "current-client-care",
+  "new-client-onboarding",
+  "social-media",
+  "business-operations"
+] as const;
 export const taskPriorityValues = ["high", "medium", "low"] as const;
 export const taskStatusValues = ["open", "completed", "cancelled"] as const;
 
@@ -12,12 +17,14 @@ export type ApiTaskStatus = (typeof taskStatusValues)[number];
 
 const taskCategoryToPrisma: Record<ApiTaskCategory, TaskCategory> = {
   "current-client-care": TaskCategory.CURRENT_CLIENT_CARE,
+  "new-client-onboarding": TaskCategory.NEW_CLIENT_ONBOARDING,
   "social-media": TaskCategory.SOCIAL_MEDIA,
   "business-operations": TaskCategory.BUSINESS_OPERATIONS
 };
 
 const taskCategoryFromPrisma: Record<TaskCategory, ApiTaskCategory> = {
   [TaskCategory.CURRENT_CLIENT_CARE]: "current-client-care",
+  [TaskCategory.NEW_CLIENT_ONBOARDING]: "new-client-onboarding",
   [TaskCategory.SOCIAL_MEDIA]: "social-media",
   [TaskCategory.BUSINESS_OPERATIONS]: "business-operations"
 };

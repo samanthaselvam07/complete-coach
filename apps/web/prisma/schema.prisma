@@ -266,6 +266,7 @@ enum EducationResourceAssignmentStatus {
 
 enum TaskCategory {
   CURRENT_CLIENT_CARE @map("current-client-care")
+  NEW_CLIENT_ONBOARDING @map("new-client-onboarding")
   SOCIAL_MEDIA        @map("social-media")
   BUSINESS_OPERATIONS @map("business-operations")
 

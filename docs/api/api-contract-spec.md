@@ -216,6 +216,8 @@ AI output statuses:
 - `PATCH /api/v1/tasks/{task_id}`: updates mutable task fields and status for an organization-scoped task.
 - `POST /api/v1/tasks/{task_id}/complete`: marks an organization-scoped task completed.
 
+Task categories: `current-client-care`, `new-client-onboarding`, `social-media`, `business-operations`.
+
 ### Notifications
 - `GET /api/v1/notifications`: returns current-user tenant-scoped notifications. Query: `unreadOnly`, `limit`.
 - `POST /api/v1/notifications/{notification_id}/read`: marks one current-user tenant-scoped notification read.

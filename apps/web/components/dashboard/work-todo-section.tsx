@@ -19,7 +19,7 @@ export function WorkTodoSection({ tasks, onToggleTask }: WorkTodoSectionProps) {
         <h2 className="text-xl font-bold">Work To-Do</h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardTaskCategories.map((category) => {
           const categoryTasks = tasks[category.id];
           const openTaskCount = categoryTasks.filter((task) => !task.completed).length;
