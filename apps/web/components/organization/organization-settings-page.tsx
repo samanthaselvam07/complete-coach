@@ -4,10 +4,11 @@ import Link from "next/link";
 import { CreditCard, ShieldCheck, UsersRound } from "lucide-react";
 import { useState } from "react";
 
+import { AuditLogPage } from "@/components/audit/audit-log-page";
 import { ALL_CAPABILITIES, getCapabilitiesForRole, type Capability, type MembershipRole } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils";
 
-type OrganizationSettingsTab = "billing" | "team" | "permissions";
+type OrganizationSettingsTab = "billing" | "team" | "permissions" | "audit";
 
 const tabs: Array<{
   id: OrganizationSettingsTab;
@@ -28,6 +29,11 @@ const tabs: Array<{
     id: "permissions",
     label: "Role Permissions",
     description: "Review the capabilities granted to each organisation role."
+  },
+  {
+    id: "audit",
+    label: "Audit Log",
+    description: "Review sensitive organisation actions and account-level activity events."
   }
 ];
 
@@ -90,6 +96,7 @@ export function OrganizationSettingsPage() {
         {activeTab === "billing" ? <SubscriptionBillingPanel /> : null}
         {activeTab === "team" ? <TeamManagementPanel /> : null}
         {activeTab === "permissions" ? <RolePermissionsPanel /> : null}
+        {activeTab === "audit" ? <AuditLogPage embedded /> : null}
       </section>
     </main>
   );

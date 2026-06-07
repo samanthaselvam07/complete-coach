@@ -16,7 +16,11 @@ interface AuditRecord {
   createdAt: string;
 }
 
-export function AuditLogPage() {
+interface AuditLogPageProps {
+  embedded?: boolean;
+}
+
+export function AuditLogPage({ embedded = false }: AuditLogPageProps) {
   const [records, setRecords] = useState<AuditRecord[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -63,24 +67,28 @@ export function AuditLogPage() {
     };
   }, [cursor]);
 
+  const Container = embedded ? "div" : "main";
+
   return (
-    <main className="space-y-8 p-6 lg:p-8">
-      <header>
-        <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
-          <ShieldCheck aria-hidden="true" />
-        </div>
-        <h1 className="mb-2 text-3xl font-black">Audit Log</h1>
-        <p className="text-sm text-slate-600">
-          Review sensitive organization actions and access events.
-        </p>
-      </header>
+    <Container className={embedded ? "space-y-6" : "space-y-8 p-6 lg:p-8"}>
+      {!embedded ? (
+        <header>
+          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+            <ShieldCheck aria-hidden="true" />
+          </div>
+          <h1 className="mb-2 text-3xl font-black">Audit Log</h1>
+          <p className="text-sm text-slate-600">
+            Review sensitive organization actions and access events.
+          </p>
+        </header>
+      ) : null}
 
       {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
       {loading ? <p role="status" className="text-sm text-slate-500">Loading audit events...</p> : null}
 
       {!loading && !error ? (
         <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[800px] text-left text-sm">
+          <table className="w-full min-w-[800px] text-left text-sm" aria-label="Audit events">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-5 py-3">Time</th>
@@ -120,6 +128,6 @@ export function AuditLogPage() {
           Load older events
         </Button>
       ) : null}
-    </main>
+    </Container>
   );
 }

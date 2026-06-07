@@ -14,7 +14,6 @@ import {
   Pill,
   PlusCircle,
   Share2,
-  ShieldCheck,
   Settings,
   UserCircle,
   UserPlus,
@@ -89,7 +88,6 @@ export const navigationItems = [
   },
   { href: "/schedule", label: "Scheduling", icon: CalendarDays },
   { href: "/team-management", label: "Team Management", icon: Users2 },
-  { href: "/audit-logs", label: "Audit Log", icon: ShieldCheck },
   {
     href: "/packages",
     label: "Packages",

@@ -47,6 +47,7 @@ describe("app shell navigation", () => {
     const nav = screen.getByRole("navigation", { name: /primary navigation/i });
 
     expect(within(nav).getByRole("link", { name: /^dashboard$/i })).toHaveAttribute("href", "/");
+    expect(within(nav).queryByRole("link", { name: /^audit log$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^training$/i })).not.toBeInTheDocument();
     expect(within(nav).getByRole("button", { name: /^training$/i })).toHaveAttribute(
       "aria-expanded",

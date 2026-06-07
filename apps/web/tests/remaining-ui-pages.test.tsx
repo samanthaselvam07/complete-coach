@@ -79,6 +79,36 @@ describe("OrganizationSettingsPage", () => {
     expect(screen.getByRole("table", { name: "Role permissions matrix" })).toBeInTheDocument();
     expect(screen.getByText("payments:manage")).toBeInTheDocument();
   });
+
+  it("keeps audit logs inside organization settings instead of the main navigation", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "audit_settings_1",
+              action: "client.training_plan.updated",
+              actor: { id: "user_1", name: "Demo Coach" },
+              targetType: "client",
+              targetId: "client_1",
+              metadata: { plan: "Hypertrophy II" },
+              ipAddress: "127.0.0.1",
+              createdAt: "2026-06-07T10:00:00.000Z"
+            }
+          ]
+        }),
+        { status: 200 }
+      )
+    );
+
+    render(createElement(OrganizationSettingsPage));
+
+    fireEvent.click(screen.getByRole("tab", { name: "Audit Log" }));
+
+    expect(screen.getByRole("tab", { name: "Audit Log" })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByRole("table", { name: "Audit events" })).toBeInTheDocument();
+    expect(screen.getByText("client.training_plan.updated")).toBeInTheDocument();
+  });
 });
 
 describe("MessagesPage", () => {
