@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 
 import { FinancialCard } from "./financial-card";
 import { LivePipeline } from "./live-pipeline";
-import { ClientCapacityCard, PriorityTasksCard, TeamSnapshotCard, type TeamCapacityMember } from "./metric-cards";
+import {
+  ClientCapacityCard,
+  PriorityTasksCard,
+  TeamSnapshotCard,
+  TodaysCheckInsCard,
+  type TeamCapacityMember
+} from "./metric-cards";
 import { TaskCreationPanel } from "./task-creation-panel";
 import { WorkTodoSection } from "./work-todo-section";
 import {
@@ -15,6 +21,7 @@ import {
   type RevenueMetric,
   type RevenuePeriod
 } from "@/fixtures/dashboard";
+import { clients as fixtureClients } from "@/fixtures/clients";
 
 interface ApiTask {
   id: string;
@@ -29,6 +36,13 @@ interface ApiCheckIn {
   id: string;
   status?: string;
   checkInStatus?: string;
+}
+
+interface ApiClientSummary {
+  id: string;
+  name: string;
+  checkInDay?: string | null;
+  status?: string;
 }
 
 interface ApiFinancialReport {
@@ -54,6 +68,7 @@ export function DashboardPage() {
   const [tasks, setTasks] = useState<Record<DashboardTaskCategory, DashboardTask[]>>(dashboardTasks);
   const [teamCapacityMembers, setTeamCapacityMembers] = useState<TeamCapacityMember[] | null>(null);
   const [pendingCheckInCount, setPendingCheckInCount] = useState(5);
+  const [activeClients, setActiveClients] = useState<ApiClientSummary[]>(getFixtureActiveClients());
   const [revenueMetricSource, setRevenueMetricSource] = useState(revenueMetrics);
   const [coachTimezone, setCoachTimezone] = useState(getBrowserTimezone());
   const [now, setNow] = useState(() => new Date());
@@ -62,10 +77,11 @@ export function DashboardPage() {
     let isActive = true;
 
     async function loadDashboardData() {
-      const [tasksLoaded, teamCapacityLoaded, pendingCheckIns, packageRevenue, dashboardMetadata] = await Promise.all([
+      const [tasksLoaded, teamCapacityLoaded, pendingCheckIns, activeClientsLoaded, packageRevenue, dashboardMetadata] = await Promise.all([
         loadPersistedTasks(),
         loadTeamCapacityMembers(),
         loadUncompletedCheckInCount(),
+        loadActiveClients(),
         loadStripeFinancialMetric("monthly"),
         loadDashboardMetadata()
       ]);
@@ -88,6 +104,10 @@ export function DashboardPage() {
 
       if (pendingCheckIns !== null) {
         setPendingCheckInCount(pendingCheckIns);
+      }
+
+      if (activeClientsLoaded) {
+        setActiveClients(activeClientsLoaded);
       }
 
       if (packageRevenue) {
@@ -116,6 +136,8 @@ export function DashboardPage() {
   }, []);
 
   const activeTaskCount = getActiveTaskCount(tasks);
+  const dashboardWeekday = getDashboardWeekday(now, coachTimezone);
+  const todaysCheckInClients = getClientsCheckingInOnDay(activeClients, dashboardWeekday);
   const dashboardSubtitle = `${formatDashboardDate(now, coachTimezone)} - ${activeTaskCount} ${activeTaskCount === 1 ? "pipeline action requires" : "pipeline actions require"} attention.`;
 
   const toggleTask = async (category: DashboardTaskCategory, taskId: string) => {
@@ -228,7 +250,7 @@ export function DashboardPage() {
         <p className="text-gray-600">{dashboardSubtitle}</p>
       </div>
 
-      <div className="mb-8 grid gap-6 lg:grid-cols-3">
+      <div className="mb-8 grid gap-6 lg:grid-cols-4">
         <FinancialCard
           currentPeriod={period}
           metric={revenueMetricSource[period]}
@@ -256,6 +278,7 @@ export function DashboardPage() {
         />
         <ClientCapacityCard members={teamCapacityMembers ?? undefined} />
         <PriorityTasksCard pendingCheckIns={pendingCheckInCount} />
+        <TodaysCheckInsCard weekday={dashboardWeekday} clients={todaysCheckInClients} />
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-3">
@@ -332,6 +355,31 @@ async function loadUncompletedCheckInCount() {
   } catch {
     return null;
   }
+}
+
+async function loadActiveClients() {
+  try {
+    const response = await fetch("/api/v1/clients?status=active&limit=100");
+
+    if (!response.ok) {
+      throw new Error("Clients API unavailable.");
+    }
+
+    const payload = (await response.json()) as { data?: ApiClientSummary[] };
+    return (payload.data ?? []).filter(isApiClientSummary);
+  } catch {
+    return null;
+  }
+}
+
+function isApiClientSummary(value: unknown): value is ApiClientSummary {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<ApiClientSummary>;
+
+  return typeof candidate.id === "string" && typeof candidate.name === "string";
 }
 
 async function loadTeamCapacityMembers() {
@@ -487,6 +535,24 @@ function formatDashboardDate(date: Date, timezone: string) {
   return `${weekday}, ${month} ${day}${getOrdinalSuffix(day)}`;
 }
 
+function getDashboardWeekday(date: Date, timezone: string) {
+  return getDashboardDateParts(date, timezone).find((part) => part.type === "weekday")?.value ?? "Today";
+}
+
+function getClientsCheckingInOnDay(clients: ApiClientSummary[], weekday: string) {
+  return clients
+    .filter((client) => normalizeWeekday(client.checkInDay) === normalizeWeekday(weekday))
+    .map((client) => ({
+      id: client.id,
+      name: client.name,
+      checkInDay: client.checkInDay ?? weekday
+    }));
+}
+
+function normalizeWeekday(value?: string | null) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
 function getDashboardDateParts(date: Date, timezone: string) {
   try {
     return new Intl.DateTimeFormat("en-US", {
@@ -543,4 +609,15 @@ function getDefaultCustomDateRange() {
     startDate: startDate.toISOString().slice(0, 10),
     endDate: endDate.toISOString().slice(0, 10)
   };
+}
+
+function getFixtureActiveClients(): ApiClientSummary[] {
+  return fixtureClients
+    .filter((client) => client.status === "active")
+    .map((client) => ({
+      id: client.id,
+      name: client.name,
+      checkInDay: client.checkInDay,
+      status: client.status
+    }));
 }

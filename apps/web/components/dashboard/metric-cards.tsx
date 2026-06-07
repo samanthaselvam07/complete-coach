@@ -23,6 +23,11 @@ interface PriorityTasksCardProps {
   pendingCheckIns?: number;
 }
 
+interface TodaysCheckInsCardProps {
+  weekday: string;
+  clients: Array<{ id: string; name: string; checkInDay: string }>;
+}
+
 export function ClientCapacityCard({ members = fallbackCapacityMembers }: ClientCapacityCardProps) {
   const coachMembers = members.filter((member) => member.status === "active" && member.capacityLimit > 0);
   const activeClients = coachMembers.reduce((total, member) => total + member.activeClientCount, 0);
@@ -100,6 +105,36 @@ export function PriorityTasksCard({ pendingCheckIns = 5 }: PriorityTasksCardProp
         <div className="mb-1 text-2xl font-bold text-orange-600">{pendingCheckIns}</div>
         <div className="text-xs uppercase tracking-wider text-gray-600">{checkInLabel}</div>
       </div>
+    </Link>
+  );
+}
+
+export function TodaysCheckInsCard({ weekday, clients }: TodaysCheckInsCardProps) {
+  const clientCount = clients.length;
+  const clientLabel = clientCount === 1 ? "Client" : "Clients";
+  const previewNames = clients.slice(0, 3).map((client) => client.name).join(", ");
+  const remainingCount = Math.max(clientCount - 3, 0);
+  const previewText =
+    clientCount === 0
+      ? "No assigned check-ins today."
+      : `${previewNames}${remainingCount > 0 ? ` +${remainingCount} more` : ""}`;
+
+  return (
+    <Link
+      href="/clients/check-ins"
+      aria-label={`Today's expected check-ins - ${clientCount} ${clientLabel}`}
+      className="block rounded-xl border border-gray-200 bg-white p-6 transition-all hover:border-blue-200 hover:shadow-lg"
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-xs uppercase tracking-wider text-gray-500">Today&apos;s Check-Ins</span>
+        <span className="rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">{weekday}</span>
+      </div>
+      <p className="mb-2 text-sm font-semibold text-gray-700">{weekday} Check-Ins</p>
+      <div className="mb-2">
+        <span className="text-3xl font-bold text-blue-600">{clientCount}</span>
+        <span className="ml-2 text-sm text-gray-500">{clientLabel}</span>
+      </div>
+      <p className="text-xs text-gray-500">{previewText}</p>
     </Link>
   );
 }

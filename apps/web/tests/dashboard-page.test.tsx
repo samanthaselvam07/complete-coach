@@ -229,6 +229,48 @@ describe("DashboardPage", () => {
     expect(within(checkInsCard).queryByText("Pending")).not.toBeInTheDocument();
   });
 
+  it("shows how many active clients are scheduled to check in today", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-06-07T13:30:00.000Z"));
+
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/dashboard/metadata") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { timezone: "Pacific/Auckland" } }), { status: 200 })
+        );
+      }
+
+      if (url === "/api/v1/clients?status=active&limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                { id: "client_1", name: "Maya Monday", checkInDay: "Monday", status: "active" },
+                { id: "client_2", name: "Marcus Monday", checkInDay: "Monday", status: "active" },
+                { id: "client_3", name: "Tara Tuesday", checkInDay: "Tuesday", status: "active" }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+
+    const todaysCheckInsCard = await screen.findByRole("link", { name: /today's expected check-ins/i });
+
+    expect(todaysCheckInsCard).toHaveAttribute("href", "/clients/check-ins");
+    expect(within(todaysCheckInsCard).getByText("Monday Check-Ins")).toBeInTheDocument();
+    expect(within(todaysCheckInsCard).getByText("2")).toBeInTheDocument();
+    expect(within(todaysCheckInsCard).getByText("Maya Monday, Marcus Monday")).toBeInTheDocument();
+    expect(within(todaysCheckInsCard).queryByText("Tara Tuesday")).not.toBeInTheDocument();
+  });
+
   it("links client capacity to the client roster and reflects individual coach capacity", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
