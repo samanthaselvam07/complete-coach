@@ -172,6 +172,9 @@ describe("TrainingProgramsPage", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/clients?status=active&limit=100"));
     fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
+    fireEvent.change(screen.getByLabelText(/Program Title/i), { target: { value: "Strength Template 1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save & Close" }));
 
     expect(await screen.findByText("Program template saved to persistence API.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
@@ -182,6 +185,148 @@ describe("TrainingProgramsPage", () => {
       })
     );
     expect(screen.getByRole("tabpanel", { name: "Master Templates" })).toHaveTextContent("Strength Template 1");
+  });
+
+  it("opens a create-program chooser and saves a from-scratch program builder", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/training-program-templates" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "template_created",
+                name: "Lower Strength Build",
+                description: "Four week lower body progression.",
+                goal: "custom",
+                durationWeeks: 1,
+                status: "draft",
+                template: { days: [] },
+                updatedAt: "2026-05-14T00:00:00.000Z"
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(TrainingProgramsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
+    expect(screen.getByRole("dialog", { name: "How do you want to create this program?" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Create a Program" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Program Title/i), { target: { value: "Lower Strength Build" } });
+    fireEvent.change(screen.getByLabelText(/Program Overview/i), { target: { value: "Four week lower body progression." } });
+    fireEvent.change(screen.getByLabelText(/Day Name/i), { target: { value: "Lower Day" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
+    fireEvent.change(screen.getByLabelText("Exercise name"), { target: { value: "Back Squat" } });
+    fireEvent.change(screen.getByLabelText("Sets"), { target: { value: "4" } });
+    fireEvent.change(screen.getByLabelText("Reps"), { target: { value: "6-8" } });
+    fireEvent.change(screen.getByLabelText("RPE"), { target: { value: "8" } });
+    fireEvent.change(screen.getByLabelText("RIR"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("Rest time"), { target: { value: "150" } });
+    fireEvent.change(screen.getByLabelText(/Workout Instructions/i), {
+      target: { value: "Progress only if reps stay crisp." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Add training day" }));
+
+    expect(screen.getByRole("tab", { name: "Day 2" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save & Close" }));
+
+    expect(await screen.findByText("Program template saved to persistence API.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/training-program-templates",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Lower Strength Build")
+      })
+    );
+    const postBody = JSON.parse(
+      String(fetchMock.mock.calls.find(([url, init]) => url === "/api/v1/training-program-templates" && init?.method === "POST")?.[1]?.body)
+    );
+    expect(postBody.template.days[0].exercises[0]).toMatchObject({
+      exerciseName: "Back Squat",
+      sets: 4,
+      reps: "6-8",
+      rpe: "8",
+      rir: "2",
+      restSeconds: 150,
+      section: "workout"
+    });
+    expect(postBody.template.instructions).toBe("Progress only if reps stay crisp.");
+  });
+
+  it("duplicates an existing template into an editable program builder", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/v1/training-program-templates")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "template_api",
+                  name: "Persisted Strength Foundation",
+                  description: "API-backed training template",
+                  goal: "strength",
+                  durationWeeks: 8,
+                  status: "published",
+                  template: {
+                    days: [
+                      {
+                        name: "Upper Strength",
+                        exercises: [
+                          {
+                            exerciseId: "bench_press",
+                            exerciseName: "Bench Press",
+                            sets: 3,
+                            reps: "5",
+                            restSeconds: 180,
+                            rpe: "8",
+                            rir: "2",
+                            section: "workout"
+                          }
+                        ]
+                      }
+                    ],
+                    instructions: "Keep one rep in reserve."
+                  },
+                  updatedAt: "2026-05-14T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(TrainingProgramsPage));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/training-program-templates?limit=100"));
+    fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create From Template" }));
+    fireEvent.click(screen.getByRole("button", { name: "Duplicate Persisted Strength Foundation" }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Create a Program" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Persisted Strength Foundation Copy")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Bench Press")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("3")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("5")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Sets"), { target: { value: "4" } });
+    expect(screen.getByDisplayValue("4")).toBeInTheDocument();
   });
 
   it("assigns a persisted template to a client", async () => {

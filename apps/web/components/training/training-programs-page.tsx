@@ -1,11 +1,32 @@
 "use client";
 
-import { Calendar, ClipboardCopy, Edit, Filter, MoreVertical, Plus, Search, Trash2, Users, UserPlus, Zap } from "lucide-react";
+import {
+  Calendar,
+  ClipboardCopy,
+  Edit,
+  Filter,
+  MoreVertical,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+  UserPlus,
+  Zap
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
 import { assignedPrograms, programTemplates } from "@/fixtures/training";
 import { cn } from "@/lib/utils";
+
+import {
+  CreateProgramDialog,
+  createBlankTrainingProgramDraft,
+  createTrainingProgramDraftFromTemplate,
+  getTrainingProgramTemplatePayload,
+  TrainingProgramBuilder
+} from "./training-program-builder";
+import type { CreationDialogMode, TrainingProgramDraft, TrainingProgramSection } from "./training-program-builder";
 
 type ProgramTab = "Active Client Programs" | "Master Templates";
 export type ProgramSource = "api" | "fixtures";
@@ -26,8 +47,12 @@ export interface ApiTrainingTemplate {
         sets: number;
         reps: string;
         restSeconds?: number;
+        rpe?: string;
+        rir?: string;
+        section?: TrainingProgramSection;
       }>;
     }>;
+    instructions?: string;
   };
   updatedAt: string;
 }
@@ -89,6 +114,8 @@ export function TrainingProgramsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<ApiTrainingTemplate | null>(null);
   const [selectedClientId, setSelectedClientId] = useState("");
+  const [creationDialogMode, setCreationDialogMode] = useState<CreationDialogMode | null>(null);
+  const [programDraft, setProgramDraft] = useState<TrainingProgramDraft | null>(null);
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -144,7 +171,7 @@ export function TrainingProgramsPage() {
   const templateCards = useMemo(() => getProgramTemplateCards(source, templates, assignments), [assignments, source, templates]);
   const assignmentRows = useMemo(() => getProgramAssignmentRows(source, assignments), [assignments, source]);
 
-  async function createTemplate() {
+  async function createTemplateFromDraft(draft: TrainingProgramDraft) {
     setSaving(true);
     setStatusMessage(null);
     setErrorMessage(null);
@@ -153,29 +180,7 @@ export function TrainingProgramsPage() {
       const response = await fetch("/api/v1/training-program-templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: `Strength Template ${templates.length + 1}`,
-          description: "Coach-created template from the program library.",
-          goal: "strength",
-          durationWeeks: 8,
-          status: "draft",
-          template: {
-            days: [
-              {
-                name: "Day 1",
-                exercises: [
-                  {
-                    exerciseId: "manual-entry",
-                    exerciseName: "Manual Exercise",
-                    sets: 3,
-                    reps: "8-10",
-                    restSeconds: 120
-                  }
-                ]
-              }
-            ]
-          }
-        })
+        body: JSON.stringify(getTrainingProgramTemplatePayload(draft, templates.length + 1))
       });
 
       const payload = await response.json();
@@ -187,12 +192,33 @@ export function TrainingProgramsPage() {
       setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
       setSource("api");
       setActiveTab("Master Templates");
+      setProgramDraft(null);
+      setCreationDialogMode(null);
       setStatusMessage("Program template saved to persistence API.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Template could not be saved.");
     } finally {
       setSaving(false);
     }
+  }
+
+  function openScratchBuilder() {
+    setProgramDraft(createBlankTrainingProgramDraft());
+    setCreationDialogMode(null);
+    setStatusMessage(null);
+    setErrorMessage(null);
+  }
+
+  function openTemplateBuilder(template: ProgramTemplateCard) {
+    if (!template.apiTemplate) {
+      setErrorMessage("Persisted templates are required before duplicating a program.");
+      return;
+    }
+
+    setProgramDraft(createTrainingProgramDraftFromTemplate(template.apiTemplate));
+    setCreationDialogMode(null);
+    setStatusMessage(null);
+    setErrorMessage(null);
   }
 
   async function assignTemplate() {
@@ -236,6 +262,18 @@ export function TrainingProgramsPage() {
     }
   }
 
+  if (programDraft) {
+    return (
+      <TrainingProgramBuilder
+        draft={programDraft}
+        saving={saving}
+        onDraftChange={setProgramDraft}
+        onCancel={() => setProgramDraft(null)}
+        onSave={() => createTemplateFromDraft(programDraft)}
+      />
+    );
+  }
+
   return (
     <div className="p-6 md:p-8">
       <div className="mb-8">
@@ -248,7 +286,7 @@ export function TrainingProgramsPage() {
             type="button"
             className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
             disabled={saving}
-            onClick={createTemplate}
+            onClick={() => setCreationDialogMode("choice")}
           >
             <Plus className="size-4" aria-hidden="true" />
             {saving ? "Saving..." : "Create New Program"}
@@ -310,6 +348,18 @@ export function TrainingProgramsPage() {
             setSelectedClientId("");
           }}
           onSubmit={assignTemplate}
+        />
+      ) : null}
+
+      {creationDialogMode ? (
+        <CreateProgramDialog
+          mode={creationDialogMode}
+          templates={templateCards}
+          canUseTemplates={source === "api"}
+          onModeChange={setCreationDialogMode}
+          onClose={() => setCreationDialogMode(null)}
+          onStartScratch={openScratchBuilder}
+          onUseTemplate={openTemplateBuilder}
         />
       ) : null}
     </div>

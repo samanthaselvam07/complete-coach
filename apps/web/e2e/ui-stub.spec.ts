@@ -680,6 +680,9 @@ test.describe("M5 training persistence smoke", () => {
 
     await page.goto("/training/programs");
     await page.getByRole("button", { name: "Create New Program" }).click();
+    await page.getByRole("button", { name: "Start From Scratch" }).click();
+    await page.getByLabel(/Program Title/).fill("Strength Template 1");
+    await page.getByRole("button", { name: "Save & Close" }).click();
 
     await expect(page.getByText("Program template saved to persistence API.")).toBeVisible();
     await expect(page.getByRole("tabpanel", { name: "Master Templates" })).toContainText("Strength Template 1");
@@ -698,7 +701,7 @@ test.describe("M5 training persistence smoke", () => {
     await page.getByRole("button", { name: "Assign Program" }).click();
 
     await expect(page.getByText("Program assigned to client.")).toBeVisible();
-    await expect(page.getByRole("tabpanel", { name: "Active Client Programs" })).toContainText("E2E Training Client");
+    await expect(page.getByRole("tabpanel", { name: "Active Client Programs" })).toContainText("1 active client");
     await expect(page.getByRole("tabpanel", { name: "Active Client Programs" })).toContainText("Strength Template 1");
     expect(createdAssignmentBody).toMatchObject({
       clientId: "client_training_e2e",
