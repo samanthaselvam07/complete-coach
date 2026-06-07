@@ -29,6 +29,7 @@ export interface AssignedProgram {
   id: string;
   name: string;
   clientName: string;
+  activeClientCount: number;
   progress: number;
   weeksTotal: number;
   startDate: string;
@@ -109,6 +110,7 @@ export const assignedPrograms: AssignedProgram[] = [
     id: "hypertrophy-phase-ii",
     name: "Hypertrophy Phase II",
     clientName: "Marcus Chen",
+    activeClientCount: 5,
     progress: 65,
     weeksTotal: 8,
     startDate: "Oct 15, 2023",
@@ -120,6 +122,7 @@ export const assignedPrograms: AssignedProgram[] = [
     id: "functional-power",
     name: "Functional Power",
     clientName: "Sarah Jenkins",
+    activeClientCount: 3,
     progress: 45,
     weeksTotal: 12,
     startDate: "Oct 20, 2023",
@@ -131,6 +134,7 @@ export const assignedPrograms: AssignedProgram[] = [
     id: "metabolic-reset",
     name: "Metabolic Reset",
     clientName: "David Miller",
+    activeClientCount: 2,
     progress: 80,
     weeksTotal: 6,
     startDate: "Sep 28, 2023",

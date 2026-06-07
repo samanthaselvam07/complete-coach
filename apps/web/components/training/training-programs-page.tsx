@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Edit, Filter, MoreVertical, Plus, Search, Users, Zap } from "lucide-react";
+import { Calendar, ClipboardCopy, Edit, Filter, MoreVertical, Plus, Search, Trash2, Users, UserPlus, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
@@ -71,6 +71,7 @@ export interface ProgramAssignmentRow {
   id: string;
   name: string;
   clientName: string;
+  activeClientCount: number;
   progress: number;
   weeksTotal: number;
   startDate: string;
@@ -316,6 +317,8 @@ export function TrainingProgramsPage() {
 }
 
 function ActiveProgramsPanel({ programs }: { programs: ProgramAssignmentRow[] }) {
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+
   return (
     <section role="tabpanel" aria-label="Active Client Programs">
       <div className="mb-6 flex items-center gap-4">
@@ -337,7 +340,7 @@ function ActiveProgramsPanel({ programs }: { programs: ProgramAssignmentRow[] })
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600">
           <div className="col-span-4">Program Name</div>
-          <div className="col-span-3">Assigned Client</div>
+          <div className="col-span-3">Assigned To</div>
           <div className="col-span-2">Progress</div>
           <div className="col-span-2">Last Edited</div>
           <div className="col-span-1">Actions</div>
@@ -355,7 +358,9 @@ function ActiveProgramsPanel({ programs }: { programs: ProgramAssignmentRow[] })
                 </div>
               </div>
             </div>
-            <div className="col-span-3 text-sm text-gray-700">{program.clientName}</div>
+            <div className="col-span-3 text-sm font-medium text-gray-700">
+              {program.activeClientCount} active {program.activeClientCount === 1 ? "client" : "clients"}
+            </div>
             <div className="col-span-2 flex items-center gap-2">
               <div className="h-2 max-w-28 flex-1 rounded-full bg-gray-200">
                 <div className="h-2 rounded-full bg-indigo-600" style={{ width: `${program.progress}%` }} />
@@ -363,13 +368,23 @@ function ActiveProgramsPanel({ programs }: { programs: ProgramAssignmentRow[] })
               <span className="text-xs text-gray-600">{program.progress}%</span>
             </div>
             <div className="col-span-2 text-sm text-gray-600">{program.lastEdited}</div>
-            <div className="col-span-1 flex items-center gap-2">
+            <div className="relative col-span-1 flex items-center gap-2">
               <button aria-label={`Edit ${program.name}`} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50">
                 <Edit className="size-4" aria-hidden="true" />
               </button>
-              <button aria-label={`More actions for ${program.name}`} className="rounded-lg p-2 text-gray-600 hover:bg-gray-100">
+              <button
+                type="button"
+                aria-label={`More actions for ${program.name}`}
+                aria-expanded={openActionMenuId === program.id}
+                aria-controls={`training-program-actions-${program.id}`}
+                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+                onClick={() => setOpenActionMenuId((currentMenuId) => (currentMenuId === program.id ? null : program.id))}
+              >
                 <MoreVertical className="size-4" aria-hidden="true" />
               </button>
+              {openActionMenuId === program.id ? (
+                <TrainingProgramActionsMenu program={program} />
+              ) : null}
             </div>
           </article>
         ))}
@@ -378,6 +393,36 @@ function ActiveProgramsPanel({ programs }: { programs: ProgramAssignmentRow[] })
         ) : null}
       </div>
     </section>
+  );
+}
+
+function TrainingProgramActionsMenu({ program }: { program: ProgramAssignmentRow }) {
+  const actions = [
+    { label: "Edit", icon: Edit },
+    { label: "Delete", icon: Trash2 },
+    { label: "Assign to", icon: UserPlus },
+    { label: "Copy", icon: ClipboardCopy }
+  ];
+
+  return (
+    <div
+      id={`training-program-actions-${program.id}`}
+      role="menu"
+      aria-label={`Actions for ${program.name}`}
+      className="absolute right-0 top-10 z-20 w-40 rounded-xl border border-gray-200 bg-white py-2 shadow-lg"
+    >
+      {actions.map(({ label, icon: Icon }) => (
+        <button
+          key={label}
+          type="button"
+          role="menuitem"
+          className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+        >
+          <Icon className="size-4 text-gray-500" aria-hidden="true" />
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -562,17 +607,29 @@ export function getProgramAssignmentRows(
     return assignedPrograms;
   }
 
-  return assignments.map((assignment, index) => ({
-    id: assignment.id,
-    name: assignment.name,
-    clientName: assignment.clientName || "Unassigned client",
-    progress: getAssignmentProgress(assignment.startsOn, assignment.endsOn),
-    weeksTotal: assignment.snapshot.durationWeeks ?? getWeeksBetween(assignment.startsOn, assignment.endsOn),
-    startDate: formatDisplayDate(assignment.startsOn),
-    lastEdited: formatRelativeDate(assignment.updatedAt),
-    color: assignmentColors[index % assignmentColors.length],
-    icon: assignment.clientName?.[0]?.toUpperCase() ?? "P"
-  }));
+  const assignmentGroups = new Map<string, ApiTrainingAssignment[]>();
+
+  assignments.forEach((assignment) => {
+    const assignmentKey = assignment.templateId ?? assignment.id;
+    assignmentGroups.set(assignmentKey, [...(assignmentGroups.get(assignmentKey) ?? []), assignment]);
+  });
+
+  return Array.from(assignmentGroups.entries()).map(([programKey, group], index) => {
+    const assignment = group.find((entry) => entry.status === "active") ?? group[0];
+
+    return {
+      id: programKey,
+      name: assignment.name,
+      clientName: assignment.clientName || "Unassigned client",
+      activeClientCount: group.filter((entry) => entry.status === "active").length,
+      progress: getAssignmentProgress(assignment.startsOn, assignment.endsOn),
+      weeksTotal: assignment.snapshot.durationWeeks ?? getWeeksBetween(assignment.startsOn, assignment.endsOn),
+      startDate: formatDisplayDate(assignment.startsOn),
+      lastEdited: formatRelativeDate(assignment.updatedAt),
+      color: assignmentColors[index % assignmentColors.length],
+      icon: assignment.clientName?.[0]?.toUpperCase() ?? "P"
+    };
+  });
 }
 
 export function getAssignmentProgress(startsOn: string, endsOn: string | null) {

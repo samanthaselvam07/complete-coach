@@ -83,6 +83,30 @@ describe("TrainingProgramsPage", () => {
                   endsOn: "2026-06-26",
                   snapshot: { durationWeeks: 8 },
                   updatedAt: "2026-05-14T00:00:00.000Z"
+                },
+                {
+                  id: "assignment_api_2",
+                  clientId: "client_api_2",
+                  clientName: "Second Persisted Client",
+                  templateId: "template_api",
+                  name: "Persisted Strength Foundation",
+                  status: "active",
+                  startsOn: "2026-05-03",
+                  endsOn: "2026-06-28",
+                  snapshot: { durationWeeks: 8 },
+                  updatedAt: "2026-05-14T00:00:00.000Z"
+                },
+                {
+                  id: "assignment_api_completed",
+                  clientId: "client_api_3",
+                  clientName: "Completed Persisted Client",
+                  templateId: "template_api",
+                  name: "Persisted Strength Foundation",
+                  status: "completed",
+                  startsOn: "2026-04-01",
+                  endsOn: "2026-05-01",
+                  snapshot: { durationWeeks: 4 },
+                  updatedAt: "2026-05-14T00:00:00.000Z"
                 }
               ]
             }),
@@ -97,7 +121,17 @@ describe("TrainingProgramsPage", () => {
     render(createElement(TrainingProgramsPage));
 
     expect(await screen.findByText("Persisted Strength Foundation")).toBeInTheDocument();
-    expect(screen.getByText("Persisted Client")).toBeInTheDocument();
+    expect(screen.getByText("2 active clients")).toBeInTheDocument();
+    expect(screen.queryByText("Persisted Client")).not.toBeInTheDocument();
+    expect(screen.queryByText("Second Persisted Client")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /more actions for persisted strength foundation/i }));
+
+    const actions = screen.getByRole("menu", { name: /actions for persisted strength foundation/i });
+    expect(within(actions).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+    expect(within(actions).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
+    expect(within(actions).getByRole("menuitem", { name: "Assign to" })).toBeInTheDocument();
+    expect(within(actions).getByRole("menuitem", { name: "Copy" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Master Templates" }));
 
@@ -240,7 +274,9 @@ describe("TrainingProgramsPage", () => {
         body: expect.stringContaining("client_api")
       })
     );
-    expect(screen.getByRole("tabpanel", { name: "Active Client Programs" })).toHaveTextContent("Persisted Client");
+    const activeProgramsPanel = screen.getByRole("tabpanel", { name: "Active Client Programs" });
+    expect(activeProgramsPanel).toHaveTextContent("1 active client");
+    expect(activeProgramsPanel).not.toHaveTextContent("Persisted Client");
   });
 });
 
@@ -326,6 +362,7 @@ describe("training program view model helpers", () => {
     ).toMatchObject([
       {
         clientName: "Unassigned client",
+        activeClientCount: 1,
         progress: 50,
         weeksTotal: 4,
         icon: "P",
@@ -333,6 +370,7 @@ describe("training program view model helpers", () => {
       },
       {
         clientName: "Persisted Client",
+        activeClientCount: 0,
         progress: 0,
         weeksTotal: 12,
         icon: "P",
