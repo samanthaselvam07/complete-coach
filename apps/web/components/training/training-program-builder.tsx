@@ -56,6 +56,9 @@ export interface TrainingProgramTemplateDraftSource {
   };
 }
 
+const builderFieldClassName =
+  "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-normal text-slate-950 placeholder:text-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+
 export function CreateProgramDialog({
   mode,
   templates,
@@ -219,61 +222,77 @@ export function TrainingProgramBuilder({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button type="button" aria-label="Back to program library" className="rounded-lg p-2 hover:bg-gray-100" onClick={onCancel}>
-            <ArrowLeft className="size-5" aria-hidden="true" />
+    <div className="min-h-screen bg-slate-50 p-4 text-slate-950 md:p-8">
+      <div className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div className="flex items-start gap-4">
+            <button
+              type="button"
+              aria-label="Back to program library"
+              className="rounded-xl border border-slate-200 p-2 text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              onClick={onCancel}
+            >
+              <ArrowLeft className="size-5" aria-hidden="true" />
+            </button>
+            <div>
+              <p className="mb-2 text-xs font-black uppercase tracking-[0.22em] text-indigo-600">Complete Coach Builder</p>
+              <h1 className="text-3xl font-black tracking-tight text-slate-950">Create a Program</h1>
+              <p className="mt-2 max-w-2xl text-sm text-slate-500">
+                Design a branded training blueprint with editable days, sections, exercises, sets, reps, RPE, RIR and rest timing.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+          >
+            <Upload className="size-4" aria-hidden="true" />
+            Upload doc
           </button>
-          <h1 className="text-2xl font-semibold text-gray-900">Create a Program</h1>
         </div>
-        <button type="button" className="flex items-center gap-2 text-sm font-medium text-gray-900">
-          <Upload className="size-4" aria-hidden="true" />
-          Upload doc
-        </button>
       </div>
 
       <form
-        className="rounded-xl border border-gray-200 bg-white p-5"
+        className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
         onSubmit={(event) => {
           event.preventDefault();
           onSave();
         }}
       >
-        <div className="grid gap-3 md:grid-cols-2">
-          <label className="text-sm font-semibold text-gray-900">
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="text-sm font-bold text-slate-800">
             Program Title <span className="text-red-500">*</span>
             <input
               required
               value={draft.title}
               placeholder="Enter Program Title"
-              className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={builderFieldClassName}
               onChange={(event) => updateDraft({ title: event.target.value })}
             />
           </label>
-          <label className="text-sm font-semibold text-gray-900">
+          <label className="text-sm font-bold text-slate-800">
             Tags
             <input
               value={draft.tags}
               placeholder="Enter Tags"
-              className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={builderFieldClassName}
               onChange={(event) => updateDraft({ tags: event.target.value })}
             />
           </label>
         </div>
 
-        <label className="mt-4 block text-sm font-semibold text-gray-900">
+        <label className="mt-5 block text-sm font-bold text-slate-800">
           Program Overview
           <textarea
             value={draft.overview}
             placeholder="Enter Program Overview"
             rows={4}
-            className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={builderFieldClassName}
             onChange={(event) => updateDraft({ overview: event.target.value })}
           />
         </label>
 
-        <div role="tablist" aria-label="Training days" className="mt-4 flex items-center bg-blue-50">
+        <div role="tablist" aria-label="Training days" className="mt-5 flex items-center overflow-hidden rounded-2xl border border-indigo-100 bg-indigo-50/70 p-1">
           {draft.days.map((day, dayIndex) => (
             <button
               key={day.id}
@@ -281,26 +300,31 @@ export function TrainingProgramBuilder({
               role="tab"
               aria-selected={day.id === draft.activeDayId}
               className={cn(
-                "border-b-2 px-4 py-3 text-sm font-medium",
-                day.id === draft.activeDayId ? "border-blue-500 text-blue-600" : "border-transparent text-gray-600"
+                "rounded-xl px-4 py-2.5 text-sm font-bold transition-colors",
+                day.id === draft.activeDayId ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-900"
               )}
               onClick={() => updateDraft({ activeDayId: day.id })}
             >
               {day.name || `Day ${dayIndex + 1}`}
             </button>
           ))}
-          <button type="button" aria-label="Add training day" className="ml-2 rounded p-2 text-blue-600" onClick={addTrainingDay}>
+          <button
+            type="button"
+            aria-label="Add training day"
+            className="ml-2 rounded-xl p-2 text-indigo-600 transition-colors hover:bg-white"
+            onClick={addTrainingDay}
+          >
             <Plus className="size-4" aria-hidden="true" />
           </button>
         </div>
 
-        <label className="mt-4 block max-w-2xl text-sm font-semibold text-gray-900">
+        <label className="mt-5 block max-w-2xl text-sm font-bold text-slate-800">
           Day Name <span className="text-red-500">*</span>
           <input
             required
             value={activeDay.name}
             placeholder="Enter Day Name"
-            className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={builderFieldClassName}
             onChange={(event) => updateActiveDay({ name: event.target.value })}
           />
         </label>
@@ -315,19 +339,23 @@ export function TrainingProgramBuilder({
           />
         ))}
 
-        <label className="mt-4 block text-sm font-semibold text-gray-900">
+        <label className="mt-5 block text-sm font-bold text-slate-800">
           Workout Instructions
           <textarea
             value={draft.instructions}
             placeholder="Enter Workout Instructions"
             rows={5}
-            className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={builderFieldClassName}
             onChange={(event) => updateDraft({ instructions: event.target.value })}
           />
         </label>
 
         <div className="mt-6 flex justify-end">
-          <button type="submit" className="rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60" disabled={saving}>
+          <button
+            type="submit"
+            className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-60"
+            disabled={saving}
+          >
             {saving ? "Saving..." : "Save & Close"}
           </button>
         </div>
@@ -422,11 +450,11 @@ function ProgramBuilderSection({
   const sectionLabel = getProgramSectionLabel(section);
 
   return (
-    <div className="mt-4">
-      <h2 className="mb-3 text-sm font-semibold text-gray-900">{sectionLabel}</h2>
+    <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+      <h2 className="mb-3 text-sm font-black text-slate-900">{sectionLabel}</h2>
       <div className="space-y-3">
         {exercises.map((exercise) => (
-          <div key={exercise.id} className="grid gap-3 rounded-xl border border-blue-100 bg-blue-50/50 p-3 md:grid-cols-6">
+          <div key={exercise.id} className="grid gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm md:grid-cols-6">
             <ExerciseField label="Exercise name" value={exercise.exerciseName} onChange={(exerciseName) => onExerciseChange(exercise.id, { exerciseName })} />
             <ExerciseField label="Sets" value={exercise.sets} inputMode="numeric" onChange={(sets) => onExerciseChange(exercise.id, { sets })} />
             <ExerciseField label="Reps" value={exercise.reps} onChange={(reps) => onExerciseChange(exercise.id, { reps })} />
@@ -439,7 +467,7 @@ function ProgramBuilderSection({
       <button
         type="button"
         aria-label={`Add ${sectionLabel.toLowerCase()} exercise`}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-4 text-sm font-semibold text-blue-600"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-200 bg-indigo-50 px-4 py-4 text-sm font-bold text-indigo-700 transition-colors hover:border-indigo-400 hover:bg-indigo-100"
         onClick={onAddExercise}
       >
         <Plus className="size-4" aria-hidden="true" />
@@ -461,12 +489,12 @@ function ExerciseField({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className={cn("text-xs font-semibold uppercase tracking-wide text-gray-500", label === "Exercise name" ? "md:col-span-2" : "")}>
+    <label className={cn("text-xs font-bold uppercase tracking-wide text-slate-500", label === "Exercise name" ? "md:col-span-2" : "")}>
       {label}
       <input
         value={value}
         inputMode={inputMode}
-        className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-normal normal-case text-gray-900"
+        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-950 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
         onChange={(event) => onChange(event.target.value)}
       />
     </label>

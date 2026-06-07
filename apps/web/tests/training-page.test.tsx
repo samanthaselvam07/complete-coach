@@ -317,6 +317,7 @@ describe("TrainingProgramsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
 
     expect(screen.getByRole("heading", { level: 1, name: "Create a Program" })).toBeInTheDocument();
+    expect(screen.getByText("Complete Coach Builder")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/Program Title/i), { target: { value: "Lower Strength Build" } });
     fireEvent.change(screen.getByLabelText(/Program Overview/i), { target: { value: "Four week lower body progression." } });
     fireEvent.change(screen.getByLabelText(/Day Name/i), { target: { value: "Lower Day" } });
