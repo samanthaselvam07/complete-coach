@@ -73,11 +73,11 @@ export const navigationItems = [
       { href: "/clients", label: "Client Roster", icon: Users },
       { href: "/clients/new", label: "New Client Intake", icon: UserPlus },
       { href: "/clients/check-ins", label: "Check-ins", icon: ClipboardCheck },
-      { href: "/clients/crm", label: "CRM", icon: Share2 }
+      { href: "/clients/crm", label: "CRM", icon: Share2 },
+      { href: "/messages", label: "Messages", icon: MessageSquare }
     ]
   },
   { href: "/forms", label: "Forms", icon: FileText },
-  { href: "/messages", label: "Messages", icon: MessageSquare },
   {
     href: "/social-media",
     label: "Social Media",

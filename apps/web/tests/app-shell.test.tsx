@@ -3,6 +3,7 @@ import { createElement } from "react";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardShell } from "@/components/app-shell/dashboard-shell";
+import { MessageMenu } from "@/components/app-shell/message-menu";
 import { NotificationMenu } from "@/components/app-shell/notification-menu";
 import { SidebarNav } from "@/components/app-shell/sidebar-nav";
 import { TopSearch } from "@/components/app-shell/top-search";
@@ -72,6 +73,11 @@ describe("app shell navigation", () => {
       "href",
       "/clients/check-ins"
     );
+    expect(within(nav).getByRole("link", { name: /^messages$/i })).toHaveAttribute(
+      "href",
+      "/messages"
+    );
+    expect(within(nav).queryAllByRole("link", { name: /^messages$/i })).toHaveLength(1);
   });
 
   it("marks the active route for nested navigation", () => {
@@ -280,6 +286,8 @@ describe("dashboard shell auth boundary", () => {
 
     expect(screen.getByRole("navigation", { name: /primary navigation/i })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: /search tasks/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /messages/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /notifications/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /open account menu for demo coach/i }));
     expect(screen.getByText("Complete Coach Demo · owner")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
@@ -410,5 +418,66 @@ describe("notifications", () => {
     expect(within(menu).getByText("2 minutes ago")).toBeInTheDocument();
     expect(within(menu).getByText("2 hours ago")).toBeInTheDocument();
     expect(within(menu).getByText("2 days ago")).toBeInTheDocument();
+  });
+});
+
+describe("messages menu", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("opens recent messages inline from the top bar", () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+
+    render(createElement(MessageMenu));
+
+    const trigger = screen.getByRole("button", { name: /messages/i });
+    fireEvent.click(trigger);
+
+    const menu = screen.getByRole("region", { name: "Messages" });
+    expect(within(menu).getByText("Sarah Johnson")).toBeInTheDocument();
+    expect(within(menu).getByText("Thanks for the updated meal plan!")).toBeInTheDocument();
+    expect(within(menu).getByRole("link", { name: "Open full inbox" })).toHaveAttribute("href", "/messages");
+  });
+
+  it("loads persisted conversations in the inline messages window", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/conversations?limit=20") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "conversation_api",
+                  clientName: "Persisted Client",
+                  title: null,
+                  latestMessage: {
+                    id: "message_api",
+                    senderType: "client",
+                    body: "Can you review my check-in?",
+                    createdAt: "2026-06-07T08:00:00.000Z"
+                  },
+                  updatedAt: "2026-06-07T08:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(MessageMenu));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: /messages/i })).toHaveTextContent("1"));
+    fireEvent.click(screen.getByRole("button", { name: /messages/i }));
+
+    const menu = screen.getByRole("region", { name: "Messages" });
+    expect(within(menu).getByText("Persisted Client")).toBeInTheDocument();
+    expect(within(menu).getByText("Can you review my check-in?")).toBeInTheDocument();
   });
 });
