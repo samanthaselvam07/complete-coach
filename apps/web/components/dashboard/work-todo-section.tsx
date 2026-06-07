@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle } from "lucide-react";
+import { Circle } from "lucide-react";
 
 import {
   dashboardTaskCategories,
@@ -22,7 +22,8 @@ export function WorkTodoSection({ tasks, onToggleTask }: WorkTodoSectionProps) {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardTaskCategories.map((category) => {
           const categoryTasks = tasks[category.id];
-          const openTaskCount = categoryTasks.filter((task) => !task.completed).length;
+          const visibleTasks = categoryTasks.filter((task) => !task.completed);
+          const openTaskCount = visibleTasks.length;
 
           return (
             <section
@@ -38,24 +39,20 @@ export function WorkTodoSection({ tasks, onToggleTask }: WorkTodoSectionProps) {
               </div>
 
               <div className="space-y-2">
-                {categoryTasks.map((task) => (
+                {visibleTasks.length > 0 ? visibleTasks.map((task) => (
                   <button
                     key={task.id}
                     type="button"
                     className="group flex w-full items-start gap-2 text-left"
-                    aria-label={`Mark ${task.text} ${task.completed ? "incomplete" : "complete"}`}
+                    aria-label={`Mark ${task.text} complete`}
                     onClick={() => onToggleTask(category.id, task.id)}
                   >
-                    {task.completed ? (
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-600" aria-hidden="true" />
-                    ) : (
-                      <Circle
-                        className={cn("mt-0.5 size-4 shrink-0 text-gray-300", category.hoverClassName)}
-                        aria-hidden="true"
-                      />
-                    )}
+                    <Circle
+                      className={cn("mt-0.5 size-4 shrink-0 text-gray-300", category.hoverClassName)}
+                      aria-hidden="true"
+                    />
                     <span className="min-w-0 flex-1">
-                      <span className={cn("block text-xs", task.completed ? "text-gray-400 line-through" : "text-gray-700")}>
+                      <span className="block text-xs text-gray-700">
                         {task.text}
                       </span>
                       <span className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -72,7 +69,11 @@ export function WorkTodoSection({ tasks, onToggleTask }: WorkTodoSectionProps) {
                       </span>
                     </span>
                   </button>
-                ))}
+                )) : (
+                  <p className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                    No open tasks.
+                  </p>
+                )}
               </div>
             </section>
           );

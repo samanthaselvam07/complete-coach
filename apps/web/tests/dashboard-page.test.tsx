@@ -119,7 +119,7 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Stripe custom range")).toBeInTheDocument();
   });
 
-  it("toggles local work tasks as complete", () => {
+  it("removes local work tasks from the board when completed", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 
     render(createElement(DashboardPage));
@@ -131,11 +131,12 @@ describe("DashboardPage", () => {
 
     fireEvent.click(reviewTask);
 
+    expect(within(clientWork).queryByText("Review Jordan's progress check-in")).not.toBeInTheDocument();
     expect(
-      within(clientWork).getByRole("button", {
+      within(clientWork).queryByRole("button", {
         name: /mark review jordan's progress check-in incomplete/i
       })
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
   });
 
   it("adds a local task through the task creation panel", () => {
@@ -674,7 +675,7 @@ describe("DashboardPage", () => {
     expect(within(onboardingModule).getByText("Due Jun 18")).toBeInTheDocument();
   });
 
-  it("completes persisted dashboard tasks through the task API", async () => {
+  it("completes persisted dashboard tasks through the task API and removes them from view", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
@@ -727,10 +728,11 @@ describe("DashboardPage", () => {
     fireEvent.click(reviewTask);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/tasks/task_api_1/complete", { method: "POST" }));
+    expect(screen.queryByText("Persisted client review")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", {
+      screen.queryByRole("button", {
         name: /mark persisted client review incomplete/i
       })
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
   });
 });
