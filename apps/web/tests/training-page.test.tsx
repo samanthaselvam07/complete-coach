@@ -144,6 +144,98 @@ describe("TrainingProgramsPage", () => {
     expect(screen.queryByText("Body Recomp v3")).not.toBeInTheDocument();
   });
 
+  it("opens the workout builder from an active client program edit action", async () => {
+    const templateJson = {
+      days: [
+        {
+          name: "Upper Strength",
+          exercises: [
+            {
+              exerciseId: "bench_press",
+              exerciseName: "Bench Press",
+              sets: 3,
+              reps: "5",
+              restSeconds: 180,
+              rpe: "8",
+              rir: "2",
+              section: "workout"
+            }
+          ]
+        }
+      ],
+      instructions: "Keep one rep in reserve."
+    };
+
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/v1/training-program-templates")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "template_api",
+                  name: "Persisted Strength Foundation",
+                  description: "API-backed training template",
+                  goal: "strength",
+                  durationWeeks: 8,
+                  status: "published",
+                  template: templateJson,
+                  updatedAt: "2026-05-14T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url.startsWith("/api/v1/training-program-assignments")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "assignment_api",
+                  clientId: "client_api",
+                  clientName: "Persisted Client",
+                  templateId: "template_api",
+                  name: "Persisted Strength Foundation",
+                  status: "active",
+                  startsOn: "2026-05-01",
+                  endsOn: "2026-06-26",
+                  snapshot: {
+                    templateId: "template_api",
+                    templateName: "Persisted Strength Foundation",
+                    goal: "strength",
+                    durationWeeks: 8,
+                    template: templateJson
+                  },
+                  updatedAt: "2026-05-14T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(TrainingProgramsPage));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Persisted Strength Foundation" }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Create a Program" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Persisted Strength Foundation")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("Persisted Strength Foundation Copy")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("Bench Press")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("3")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("5")).toBeInTheDocument();
+  });
+
   it("creates a persisted template from the program library", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);

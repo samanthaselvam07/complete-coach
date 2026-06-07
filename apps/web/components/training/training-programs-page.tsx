@@ -25,7 +25,12 @@ import {
   getTrainingProgramTemplatePayload,
   TrainingProgramBuilder
 } from "./training-program-builder";
-import type { CreationDialogMode, TrainingProgramDraft, TrainingProgramSection } from "./training-program-builder";
+import type {
+  CreationDialogMode,
+  TrainingProgramDraft,
+  TrainingProgramSection,
+  TrainingProgramTemplateDraftSource
+} from "./training-program-builder";
 
 type ProgramTab = "Active Client Programs" | "Master Templates";
 export type ProgramSource = "api" | "fixtures";
@@ -66,7 +71,11 @@ export interface ApiTrainingAssignment {
   startsOn: string;
   endsOn: string | null;
   snapshot: {
+    templateId?: string;
+    templateName?: string;
+    goal?: string | null;
     durationWeeks?: number;
+    template?: ApiTrainingTemplate["template"];
   };
   updatedAt: string;
 }
@@ -102,6 +111,7 @@ export interface ProgramAssignmentRow {
   lastEdited: string;
   color: string;
   icon: string;
+  apiTemplate: TrainingProgramTemplateDraftSource | null;
 }
 
 export function TrainingProgramsPage() {
@@ -161,7 +171,7 @@ export function TrainingProgramsPage() {
   }, []);
 
   const templateCards = useMemo(() => getProgramTemplateCards(source, templates, assignments), [assignments, source, templates]);
-  const assignmentRows = useMemo(() => getProgramAssignmentRows(source, assignments), [assignments, source]);
+  const assignmentRows = useMemo(() => getProgramAssignmentRows(source, assignments, templates), [assignments, source, templates]);
 
   async function createTemplateFromDraft(draft: TrainingProgramDraft) {
     setSaving(true);
@@ -208,6 +218,20 @@ export function TrainingProgramsPage() {
     }
 
     setProgramDraft(createTrainingProgramDraftFromTemplate(template.apiTemplate));
+    setCreationDialogMode(null);
+    setStatusMessage(null);
+    setErrorMessage(null);
+  }
+
+  function openAssignedProgramBuilder(program: ProgramAssignmentRow) {
+    const sourceTemplate = program.apiTemplate;
+    const fallbackDraft = createBlankTrainingProgramDraft();
+
+    setProgramDraft(
+      sourceTemplate
+        ? createTrainingProgramDraftFromTemplate(sourceTemplate, { copy: false })
+        : { ...fallbackDraft, title: program.name }
+    );
     setCreationDialogMode(null);
     setStatusMessage(null);
     setErrorMessage(null);
@@ -273,7 +297,7 @@ export function TrainingProgramsPage() {
       </div>
 
       {activeTab === "Active Client Programs" ? (
-        <ActiveProgramsPanel programs={assignmentRows} />
+        <ActiveProgramsPanel programs={assignmentRows} onEditProgram={openAssignedProgramBuilder} />
       ) : (
         <TemplatesPanel
           templates={templateCards}
@@ -297,7 +321,13 @@ export function TrainingProgramsPage() {
   );
 }
 
-function ActiveProgramsPanel({ programs }: { programs: ProgramAssignmentRow[] }) {
+function ActiveProgramsPanel({
+  programs,
+  onEditProgram
+}: {
+  programs: ProgramAssignmentRow[];
+  onEditProgram: (program: ProgramAssignmentRow) => void;
+}) {
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
   return (
@@ -350,7 +380,12 @@ function ActiveProgramsPanel({ programs }: { programs: ProgramAssignmentRow[] })
             </div>
             <div className="col-span-2 text-sm text-gray-600">{program.lastEdited}</div>
             <div className="relative col-span-1 flex items-center gap-2">
-              <button aria-label={`Edit ${program.name}`} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50">
+              <button
+                type="button"
+                aria-label={`Edit ${program.name}`}
+                className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
+                onClick={() => onEditProgram(program)}
+              >
                 <Edit className="size-4" aria-hidden="true" />
               </button>
               <button
@@ -364,7 +399,7 @@ function ActiveProgramsPanel({ programs }: { programs: ProgramAssignmentRow[] })
                 <MoreVertical className="size-4" aria-hidden="true" />
               </button>
               {openActionMenuId === program.id ? (
-                <TrainingProgramActionsMenu program={program} />
+                <TrainingProgramActionsMenu program={program} onEditProgram={onEditProgram} />
               ) : null}
             </div>
           </article>
@@ -377,7 +412,13 @@ function ActiveProgramsPanel({ programs }: { programs: ProgramAssignmentRow[] })
   );
 }
 
-function TrainingProgramActionsMenu({ program }: { program: ProgramAssignmentRow }) {
+function TrainingProgramActionsMenu({
+  program,
+  onEditProgram
+}: {
+  program: ProgramAssignmentRow;
+  onEditProgram: (program: ProgramAssignmentRow) => void;
+}) {
   const actions = [
     { label: "Edit", icon: Edit },
     { label: "Delete", icon: Trash2 },
@@ -398,6 +439,11 @@ function TrainingProgramActionsMenu({ program }: { program: ProgramAssignmentRow
           type="button"
           role="menuitem"
           className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+          onClick={() => {
+            if (label === "Edit") {
+              onEditProgram(program);
+            }
+          }}
         >
           <Icon className="size-4 text-gray-500" aria-hidden="true" />
           {label}
@@ -497,10 +543,11 @@ export function getProgramTemplateCards(
 
 export function getProgramAssignmentRows(
   source: ProgramSource,
-  assignments: ApiTrainingAssignment[]
+  assignments: ApiTrainingAssignment[],
+  templates: ApiTrainingTemplate[] = []
 ): ProgramAssignmentRow[] {
   if (source === "fixtures") {
-    return assignedPrograms;
+    return assignedPrograms.map((program) => ({ ...program, apiTemplate: null }));
   }
 
   const assignmentGroups = new Map<string, ApiTrainingAssignment[]>();
@@ -512,6 +559,7 @@ export function getProgramAssignmentRows(
 
   return Array.from(assignmentGroups.entries()).map(([programKey, group], index) => {
     const assignment = group.find((entry) => entry.status === "active") ?? group[0];
+    const template = getAssignmentTemplateDraftSource(assignment, templates);
 
     return {
       id: programKey,
@@ -523,9 +571,35 @@ export function getProgramAssignmentRows(
       startDate: formatDisplayDate(assignment.startsOn),
       lastEdited: formatRelativeDate(assignment.updatedAt),
       color: assignmentColors[index % assignmentColors.length],
-      icon: assignment.clientName?.[0]?.toUpperCase() ?? "P"
+      icon: assignment.clientName?.[0]?.toUpperCase() ?? "P",
+      apiTemplate: template
     };
   });
+}
+
+function getAssignmentTemplateDraftSource(
+  assignment: ApiTrainingAssignment,
+  templates: ApiTrainingTemplate[]
+): TrainingProgramTemplateDraftSource | null {
+  if (assignment.snapshot.template) {
+    return {
+      name: assignment.name,
+      description: null,
+      goal: assignment.snapshot.goal ?? null,
+      template: assignment.snapshot.template
+    };
+  }
+
+  const template = templates.find((entry) => entry.id === assignment.templateId);
+
+  if (!template) {
+    return null;
+  }
+
+  return {
+    ...template,
+    name: assignment.name
+  };
 }
 
 export function getAssignmentProgress(startsOn: string, endsOn: string | null) {

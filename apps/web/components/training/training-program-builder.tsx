@@ -4,7 +4,7 @@ import { ArrowLeft, Copy, Plus, Upload } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import type { ApiTrainingTemplate, ProgramTemplateCard } from "./training-programs-page";
+import type { ProgramTemplateCard } from "./training-programs-page";
 
 export type CreationDialogMode = "choice" | "template";
 export type TrainingProgramSection = "warmUp" | "workout" | "coolDown";
@@ -33,6 +33,27 @@ export interface TrainingProgramDraft {
   instructions: string;
   activeDayId: string;
   days: TrainingProgramDayDraft[];
+}
+
+export interface TrainingProgramTemplateDraftSource {
+  name: string;
+  description?: string | null;
+  goal?: string | null;
+  template: {
+    days?: Array<{
+      name: string;
+      exercises: Array<{
+        exerciseName: string;
+        sets: number;
+        reps: string;
+        restSeconds?: number;
+        rpe?: string;
+        rir?: string;
+        section?: TrainingProgramSection;
+      }>;
+    }>;
+    instructions?: string;
+  };
 }
 
 export function CreateProgramDialog({
@@ -328,7 +349,10 @@ export function createBlankTrainingProgramDraft(): TrainingProgramDraft {
   };
 }
 
-export function createTrainingProgramDraftFromTemplate(template: ApiTrainingTemplate): TrainingProgramDraft {
+export function createTrainingProgramDraftFromTemplate(
+  template: TrainingProgramTemplateDraftSource,
+  options: { copy?: boolean } = {}
+): TrainingProgramDraft {
   const days =
     template.template.days?.map((day, dayIndex) => ({
       id: `day-${dayIndex + 1}`,
@@ -347,7 +371,7 @@ export function createTrainingProgramDraftFromTemplate(template: ApiTrainingTemp
   const firstDay = days[0] ?? createBlankTrainingDay(1);
 
   return {
-    title: `${template.name} Copy`,
+    title: options.copy === false ? template.name : `${template.name} Copy`,
     tags: template.goal ?? "",
     overview: template.description ?? "",
     instructions: template.template.instructions ?? "",
