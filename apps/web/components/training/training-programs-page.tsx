@@ -348,7 +348,7 @@ function ActiveProgramsPanel({
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <div className="overflow-visible rounded-xl border border-gray-200 bg-white">
         <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600">
           <div className="col-span-4">Program Name</div>
           <div className="col-span-3">Assigned To</div>
@@ -357,7 +357,7 @@ function ActiveProgramsPanel({
           <div className="col-span-1">Actions</div>
         </div>
         {programs.map((program) => (
-          <article key={program.id} className="grid grid-cols-12 items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-0 hover:bg-gray-50">
+          <article key={program.id} className="relative grid grid-cols-12 items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-0 hover:bg-gray-50">
             <div className="col-span-4 flex items-center gap-3">
               <div className={cn("flex size-10 items-center justify-center rounded-lg font-bold", program.color)}>
                 {program.icon}
@@ -379,7 +379,7 @@ function ActiveProgramsPanel({
               <span className="text-xs text-gray-600">{program.progress}%</span>
             </div>
             <div className="col-span-2 text-sm text-gray-600">{program.lastEdited}</div>
-            <div className="relative col-span-1 flex items-center gap-2">
+            <div className="relative z-30 col-span-1 flex items-center gap-2">
               <button
                 type="button"
                 aria-label={`Edit ${program.name}`}
@@ -431,7 +431,7 @@ function TrainingProgramActionsMenu({
       id={`training-program-actions-${program.id}`}
       role="menu"
       aria-label={`Actions for ${program.name}`}
-      className="absolute right-0 top-10 z-20 w-40 rounded-xl border border-gray-200 bg-white py-2 shadow-lg"
+      className="absolute right-0 top-10 z-50 w-40 rounded-xl border border-gray-200 bg-white py-2 shadow-xl"
     >
       {actions.map(({ label, icon: Icon }) => (
         <button

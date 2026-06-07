@@ -131,6 +131,7 @@ describe("TrainingProgramsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /more actions for persisted strength foundation/i }));
 
     const actions = screen.getByRole("menu", { name: /actions for persisted strength foundation/i });
+    expect(actions.closest(".overflow-visible")).toBeInTheDocument();
     expect(within(actions).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
     expect(within(actions).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
     expect(within(actions).getByRole("menuitem", { name: "Assign to" })).toBeInTheDocument();
