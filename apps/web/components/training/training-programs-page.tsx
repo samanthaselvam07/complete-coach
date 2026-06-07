@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import type { ClientSummary } from "@/fixtures/clients";
 import { assignedPrograms, programTemplates } from "@/fixtures/training";
 import { cn } from "@/lib/utils";
 
@@ -109,11 +108,8 @@ export function TrainingProgramsPage() {
   const [activeTab, setActiveTab] = useState<ProgramTab>("Active Client Programs");
   const [templates, setTemplates] = useState<ApiTrainingTemplate[]>([]);
   const [assignments, setAssignments] = useState<ApiTrainingAssignment[]>([]);
-  const [clients, setClients] = useState<ClientSummary[]>([]);
   const [source, setSource] = useState<ProgramSource>("fixtures");
   const [loading, setLoading] = useState(true);
-  const [selectedTemplate, setSelectedTemplate] = useState<ApiTrainingTemplate | null>(null);
-  const [selectedClientId, setSelectedClientId] = useState("");
   const [creationDialogMode, setCreationDialogMode] = useState<CreationDialogMode | null>(null);
   const [programDraft, setProgramDraft] = useState<TrainingProgramDraft | null>(null);
   const [saving, setSaving] = useState(false);
@@ -125,33 +121,29 @@ export function TrainingProgramsPage() {
 
     async function loadProgramLibrary() {
       try {
-        const [templatesResponse, assignmentsResponse, clientsResponse] = await Promise.all([
+        const [templatesResponse, assignmentsResponse] = await Promise.all([
           fetch("/api/v1/training-program-templates?limit=100"),
-          fetch("/api/v1/training-program-assignments?limit=100"),
-          fetch("/api/v1/clients?status=active&limit=100")
+          fetch("/api/v1/training-program-assignments?limit=100")
         ]);
 
-        if (!templatesResponse.ok || !assignmentsResponse.ok || !clientsResponse.ok) {
+        if (!templatesResponse.ok || !assignmentsResponse.ok) {
           throw new Error("Training program API unavailable.");
         }
 
-        const [templatesPayload, assignmentsPayload, clientsPayload] = await Promise.all([
+        const [templatesPayload, assignmentsPayload] = await Promise.all([
           templatesResponse.json(),
-          assignmentsResponse.json(),
-          clientsResponse.json()
+          assignmentsResponse.json()
         ]);
 
         if (!cancelled) {
           setTemplates(Array.isArray(templatesPayload.data) ? templatesPayload.data : []);
           setAssignments(Array.isArray(assignmentsPayload.data) ? assignmentsPayload.data : []);
-          setClients(Array.isArray(clientsPayload.data) ? clientsPayload.data : []);
           setSource("api");
         }
       } catch {
         if (!cancelled) {
           setTemplates([]);
           setAssignments([]);
-          setClients([]);
           setSource("fixtures");
         }
       } finally {
@@ -221,47 +213,6 @@ export function TrainingProgramsPage() {
     setErrorMessage(null);
   }
 
-  async function assignTemplate() {
-    if (!selectedTemplate || !selectedClientId) {
-      setErrorMessage("Select a client before assigning the template.");
-      return;
-    }
-
-    setSaving(true);
-    setStatusMessage(null);
-    setErrorMessage(null);
-
-    try {
-      const startsOn = new Date().toISOString().slice(0, 10);
-      const response = await fetch("/api/v1/training-program-assignments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: selectedClientId,
-          templateId: selectedTemplate.id,
-          name: selectedTemplate.name,
-          startsOn
-        })
-      });
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.error?.message ?? "Program could not be assigned.");
-      }
-
-      setAssignments((currentAssignments) => [payload.data, ...currentAssignments]);
-      setSelectedTemplate(null);
-      setSelectedClientId("");
-      setActiveTab("Active Client Programs");
-      setStatusMessage("Program assigned to client.");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Program could not be assigned.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   if (programDraft) {
     return (
       <TrainingProgramBuilder
@@ -326,30 +277,10 @@ export function TrainingProgramsPage() {
       ) : (
         <TemplatesPanel
           templates={templateCards}
-          canAssign={source === "api"}
-          onUseTemplate={(template) => {
-            if (template.apiTemplate) {
-              setSelectedTemplate(template.apiTemplate);
-              setErrorMessage(null);
-            }
-          }}
+          canUseTemplates={source === "api"}
+          onUseTemplate={openTemplateBuilder}
         />
       )}
-
-      {selectedTemplate ? (
-        <TemplateAssignmentDialog
-          clients={clients}
-          templateName={selectedTemplate.name}
-          selectedClientId={selectedClientId}
-          saving={saving}
-          onClientChange={setSelectedClientId}
-          onClose={() => {
-            setSelectedTemplate(null);
-            setSelectedClientId("");
-          }}
-          onSubmit={assignTemplate}
-        />
-      ) : null}
 
       {creationDialogMode ? (
         <CreateProgramDialog
@@ -478,11 +409,11 @@ function TrainingProgramActionsMenu({ program }: { program: ProgramAssignmentRow
 
 function TemplatesPanel({
   templates,
-  canAssign,
+  canUseTemplates,
   onUseTemplate
 }: {
   templates: ProgramTemplateCard[];
-  canAssign: boolean;
+  canUseTemplates: boolean;
   onUseTemplate: (template: ProgramTemplateCard) => void;
 }) {
   return (
@@ -522,7 +453,7 @@ function TemplatesPanel({
               <button
                 type="button"
                 className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300"
-                disabled={!canAssign}
+                disabled={!canUseTemplates}
                 onClick={() => onUseTemplate(template)}
               >
                 Use Template
@@ -537,83 +468,6 @@ function TemplatesPanel({
         ) : null}
       </div>
     </section>
-  );
-}
-
-function TemplateAssignmentDialog({
-  clients,
-  templateName,
-  selectedClientId,
-  saving,
-  onClientChange,
-  onClose,
-  onSubmit
-}: {
-  clients: ClientSummary[];
-  templateName: string;
-  selectedClientId: string;
-  saving: boolean;
-  onClientChange: (clientId: string) => void;
-  onClose: () => void;
-  onSubmit: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <form
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="assign-template-title"
-        className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-xl"
-        onSubmit={(event) => {
-          event.preventDefault();
-          onSubmit();
-        }}
-      >
-        <h2 id="assign-template-title" className="text-2xl font-bold text-gray-900">
-          Assign Program Template
-        </h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Assign <span className="font-medium text-gray-900">{templateName}</span> to an active client.
-        </p>
-
-        <label htmlFor="assignment-client" className="mt-6 block text-sm font-medium text-gray-700">
-          Client
-        </label>
-        <select
-          id="assignment-client"
-          required
-          value={selectedClientId}
-          className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          onChange={(event) => onClientChange(event.target.value)}
-        >
-          <option value="">Select a client</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>
-              {client.name}
-            </option>
-          ))}
-        </select>
-
-        {clients.length === 0 ? (
-          <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-            No active clients are available for assignment.
-          </p>
-        ) : null}
-
-        <div className="mt-6 flex justify-end gap-3">
-          <button type="button" className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            disabled={saving || clients.length === 0}
-          >
-            Assign Program
-          </button>
-        </div>
-      </form>
-    </div>
   );
 }
 

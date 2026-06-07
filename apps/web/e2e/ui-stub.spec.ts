@@ -572,10 +572,9 @@ test.describe("M5 training persistence smoke", () => {
     });
   });
 
-  test("coach creates a training template and assigns it to a client", async ({ page }) => {
+  test("coach creates a training template and duplicates it into the builder", async ({ page }) => {
     const now = "2026-05-14T00:00:00.000Z";
     let createdTemplateBody: Record<string, unknown> | null = null;
-    let createdAssignmentBody: Record<string, unknown> = {};
 
     const template = {
       id: "template_e2e",
@@ -630,52 +629,7 @@ test.describe("M5 training persistence smoke", () => {
         return;
       }
 
-      if (request.method() === "POST" && url.pathname === "/api/v1/training-program-assignments") {
-        createdAssignmentBody = request.postDataJSON() as Record<string, unknown>;
-        await route.fulfill({
-          status: 201,
-          json: {
-            data: {
-              id: "assignment_e2e_training",
-              clientId: "client_training_e2e",
-              clientName: "E2E Training Client",
-              templateId: "template_e2e",
-              name: "Strength Template 1",
-              status: "active",
-              startsOn: "2026-05-14",
-              endsOn: null,
-              snapshot: {
-                durationWeeks: 8
-              },
-              updatedAt: now
-            }
-          }
-        });
-        return;
-      }
-
       await route.fallback();
-    });
-
-    await page.route("**/api/v1/clients?status=active&limit=100", async (route) => {
-      await route.fulfill({
-        json: {
-          data: [
-            {
-              id: "client_training_e2e",
-              name: "E2E Training Client",
-              packageName: "Persisted Coaching",
-              compliance: 94,
-              checkInDay: "Thursday",
-              latestCheckIn: "May 14, 2026",
-              status: "active",
-              startDate: "May 1, 2026",
-              initials: "ET",
-              avatarColor: "bg-slate-900"
-            }
-          ]
-        }
-      });
     });
 
     await page.goto("/training/programs");
@@ -695,19 +649,8 @@ test.describe("M5 training persistence smoke", () => {
     });
 
     await page.getByRole("button", { name: "Use Template" }).click();
-    const assignmentDialog = page.getByRole("dialog", { name: "Assign Program Template" });
-    await expect(assignmentDialog).toBeVisible();
-    await assignmentDialog.getByLabel("Client").selectOption("client_training_e2e");
-    await page.getByRole("button", { name: "Assign Program" }).click();
-
-    await expect(page.getByText("Program assigned to client.")).toBeVisible();
-    await expect(page.getByRole("tabpanel", { name: "Active Client Programs" })).toContainText("1 active client");
-    await expect(page.getByRole("tabpanel", { name: "Active Client Programs" })).toContainText("Strength Template 1");
-    expect(createdAssignmentBody).toMatchObject({
-      clientId: "client_training_e2e",
-      templateId: "template_e2e",
-      name: "Strength Template 1"
-    });
-    expect(createdAssignmentBody.startsOn).toEqual(expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/));
+    await expect(page.getByRole("heading", { name: "Create a Program" })).toBeVisible();
+    await expect(page.locator('input[value="Strength Template 1 Copy"]')).toBeVisible();
+    await expect(page.locator('input[value="Manual Exercise"]')).toBeVisible();
   });
 });

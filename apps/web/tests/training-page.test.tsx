@@ -170,7 +170,7 @@ describe("TrainingProgramsPage", () => {
 
     render(createElement(TrainingProgramsPage));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/clients?status=active&limit=100"));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/training-program-templates?limit=100"));
     fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
     fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
     fireEvent.change(screen.getByLabelText(/Program Title/i), { target: { value: "Strength Template 1" } });
@@ -329,8 +329,8 @@ describe("TrainingProgramsPage", () => {
     expect(screen.getByDisplayValue("4")).toBeInTheDocument();
   });
 
-  it("assigns a persisted template to a client", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+  it("duplicates a persisted template from the master template use action", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
       if (url.startsWith("/api/v1/training-program-templates")) {
@@ -345,7 +345,26 @@ describe("TrainingProgramsPage", () => {
                   goal: "strength",
                   durationWeeks: 8,
                   status: "published",
-                  template: { days: [] },
+                  template: {
+                    days: [
+                      {
+                        name: "Upper Strength",
+                        exercises: [
+                          {
+                            exerciseId: "bench_press",
+                            exerciseName: "Bench Press",
+                            sets: 3,
+                            reps: "5",
+                            restSeconds: 180,
+                            rpe: "8",
+                            rir: "2",
+                            section: "workout"
+                          }
+                        ]
+                      }
+                    ],
+                    instructions: "Keep one rep in reserve."
+                  },
                   updatedAt: "2026-05-14T00:00:00.000Z"
                 }
               ]
@@ -355,73 +374,23 @@ describe("TrainingProgramsPage", () => {
         );
       }
 
-      if (url === "/api/v1/training-program-assignments" && init?.method === "POST") {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: {
-                id: "assignment_created",
-                clientId: "client_api",
-                clientName: "Persisted Client",
-                templateId: "template_api",
-                name: "Persisted Strength Foundation",
-                status: "active",
-                startsOn: "2026-05-14",
-                endsOn: null,
-                snapshot: { durationWeeks: 8 },
-                updatedAt: "2026-05-14T00:00:00.000Z"
-              }
-            }),
-            { status: 201 }
-          )
-        );
-      }
-
       if (url.startsWith("/api/v1/training-program-assignments")) {
         return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
       }
 
-      return Promise.resolve(
-        new Response(
-          JSON.stringify({
-            data: [
-              {
-                id: "client_api",
-                name: "Persisted Client",
-                packageName: "Strength",
-                compliance: 90,
-                checkInDay: "Monday",
-                latestCheckIn: "Today",
-                status: "active",
-                startDate: "May 1, 2026",
-                initials: "PC",
-                avatarColor: "bg-slate-900"
-              }
-            ]
-          }),
-          { status: 200 }
-        )
-      );
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     });
 
     render(createElement(TrainingProgramsPage));
 
     fireEvent.click(await screen.findByRole("tab", { name: "Master Templates" }));
     fireEvent.click(screen.getByRole("button", { name: "Use Template" }));
-    fireEvent.change(screen.getByLabelText("Client"), { target: { value: "client_api" } });
-    fireEvent.click(screen.getByRole("button", { name: "Assign Program" }));
 
-    expect(await screen.findByText("Program assigned to client.")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/training-program-assignments",
-      expect.objectContaining({
-        method: "POST",
-        body: expect.stringContaining("client_api")
-      })
-    );
-    const activeProgramsPanel = screen.getByRole("tabpanel", { name: "Active Client Programs" });
-    expect(activeProgramsPanel).toHaveTextContent("1 active client");
-    expect(activeProgramsPanel).not.toHaveTextContent("Persisted Client");
+    expect(screen.getByRole("heading", { level: 1, name: "Create a Program" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Persisted Strength Foundation Copy")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Bench Press")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Assign Program Template" })).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/training-program-assignments", expect.objectContaining({ method: "POST" }));
   });
 });
 
