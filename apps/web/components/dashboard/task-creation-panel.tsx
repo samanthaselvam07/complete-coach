@@ -11,6 +11,7 @@ interface NewDashboardTask {
   text: string;
   category: DashboardTaskCategory;
   priority: DashboardTaskPriority;
+  dueDate: string;
 }
 
 interface TaskCreationPanelProps {
@@ -36,6 +37,7 @@ export function TaskCreationPanel({ open, onClose, onCreateTask }: TaskCreationP
   const [text, setText] = useState("");
   const [category, setCategory] = useState<DashboardTaskCategory>("current-client-care");
   const [priority, setPriority] = useState<DashboardTaskPriority>("medium");
+  const [dueDate, setDueDate] = useState("");
 
   if (!open) {
     return null;
@@ -48,10 +50,11 @@ export function TaskCreationPanel({ open, onClose, onCreateTask }: TaskCreationP
       return;
     }
 
-    onCreateTask({ text: trimmedText, category, priority });
+    onCreateTask({ text: trimmedText, category, priority, dueDate });
     setText("");
     setCategory("current-client-care");
     setPriority("medium");
+    setDueDate("");
     onClose();
   };
 
@@ -146,6 +149,19 @@ export function TaskCreationPanel({ open, onClose, onCreateTask }: TaskCreationP
               ))}
             </div>
           </fieldset>
+
+          <div>
+            <label htmlFor="task-due-date" className="mb-2 block text-sm font-semibold text-gray-700">
+              Due Date
+            </label>
+            <input
+              id="task-due-date"
+              type="date"
+              value={dueDate}
+              className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-orange-500"
+              onChange={(event) => setDueDate(event.target.value)}
+            />
+          </div>
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 bg-gray-50 p-6">

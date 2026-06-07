@@ -54,8 +54,22 @@ export function WorkTodoSection({ tasks, onToggleTask }: WorkTodoSectionProps) {
                         aria-hidden="true"
                       />
                     )}
-                    <span className={cn("text-xs", task.completed ? "text-gray-400 line-through" : "text-gray-700")}>
-                      {task.text}
+                    <span className="min-w-0 flex-1">
+                      <span className={cn("block text-xs", task.completed ? "text-gray-400 line-through" : "text-gray-700")}>
+                        {task.text}
+                      </span>
+                      <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                        {task.dueAt ? (
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                            Due {formatTaskDueDate(task.dueAt)}
+                          </span>
+                        ) : null}
+                        {task.priority ? (
+                          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", priorityClassNames[task.priority])}>
+                            {priorityLabels[task.priority]}
+                          </span>
+                        ) : null}
+                      </span>
                     </span>
                   </button>
                 ))}
@@ -66,4 +80,30 @@ export function WorkTodoSection({ tasks, onToggleTask }: WorkTodoSectionProps) {
       </div>
     </section>
   );
+}
+
+const priorityLabels: Record<NonNullable<DashboardTask["priority"]>, string> = {
+  high: "High",
+  medium: "Medium",
+  low: "Low"
+};
+
+const priorityClassNames: Record<NonNullable<DashboardTask["priority"]>, string> = {
+  high: "bg-red-50 text-red-700",
+  medium: "bg-yellow-50 text-yellow-700",
+  low: "bg-green-50 text-green-700"
+};
+
+function formatTaskDueDate(dueAt: string) {
+  const date = new Date(dueAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unscheduled";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC"
+  }).format(date);
 }

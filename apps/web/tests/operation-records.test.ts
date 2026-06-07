@@ -29,6 +29,9 @@ describe("operation record helpers", () => {
       buildTaskWhere("org_1", {
         category: "social-media",
         status: "completed",
+        priority: "high",
+        dueFrom: "2026-06-01T00:00:00.000Z",
+        dueTo: "2026-06-30T23:59:59.999Z",
         assignedUserId: "user_1",
         clientId: "client_1",
         limit: 50
@@ -37,6 +40,11 @@ describe("operation record helpers", () => {
       organizationId: "org_1",
       category: TaskCategory.SOCIAL_MEDIA,
       status: TaskStatus.COMPLETED,
+      priority: TaskPriority.HIGH,
+      dueAt: {
+        gte: new Date("2026-06-01T00:00:00.000Z"),
+        lte: new Date("2026-06-30T23:59:59.999Z")
+      },
       assignedUserId: "user_1",
       clientId: "client_1"
     });

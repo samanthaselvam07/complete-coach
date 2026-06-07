@@ -22,6 +22,7 @@ interface ApiTask {
   category: DashboardTaskCategory;
   priority: "high" | "medium" | "low";
   status: "open" | "completed" | "cancelled";
+  dueAt: string | null;
 }
 
 interface ApiClient {
@@ -144,7 +145,10 @@ export function DashboardPage() {
     text: string;
     category: DashboardTaskCategory;
     priority: "high" | "medium" | "low";
+    dueDate: string;
   }) => {
+    const dueAt = getDueAtFromDateInput(task.dueDate);
+
     if (taskSource === "api") {
       try {
         const response = await fetch("/api/v1/tasks", {
@@ -153,7 +157,8 @@ export function DashboardPage() {
           body: JSON.stringify({
             title: task.text,
             category: task.category,
-            priority: task.priority
+            priority: task.priority,
+            ...(dueAt ? { dueAt } : {})
           })
         });
 
@@ -165,12 +170,12 @@ export function DashboardPage() {
         appendTask(mapApiTask(payload.data));
         return;
       } catch {
-        appendTask(createLocalDashboardTask(task.text, task.category), task.category);
+        appendTask(createLocalDashboardTask(task.text, task.category, task.priority, dueAt), task.category);
         return;
       }
     }
 
-    appendTask(createLocalDashboardTask(task.text, task.category), task.category);
+    appendTask(createLocalDashboardTask(task.text, task.category, task.priority, dueAt), task.category);
   };
 
   function appendTask(nextTask: DashboardTask, category?: DashboardTaskCategory) {
@@ -178,16 +183,23 @@ export function DashboardPage() {
 
     setTasks((currentTasks) => ({
       ...currentTasks,
-      [targetCategory]: [...currentTasks[targetCategory], nextTask]
+      [targetCategory]: sortDashboardTasks([...currentTasks[targetCategory], nextTask])
     }));
   }
 
-  function createLocalDashboardTask(text: string, category: DashboardTaskCategory): DashboardTask {
+  function createLocalDashboardTask(
+    text: string,
+    category: DashboardTaskCategory,
+    priority: DashboardTask["priority"],
+    dueAt: string | null
+  ): DashboardTask {
     return {
       id: `local-${Date.now()}`,
       text,
       completed: false,
-      category
+      category,
+      priority,
+      dueAt
     };
   }
 
@@ -268,7 +280,7 @@ async function loadPersistedTasks() {
     }
 
     const payload = (await response.json()) as { data: ApiTask[] };
-    return payload.data.reduce<Record<DashboardTaskCategory, DashboardTask[]>>(
+    const grouped = payload.data.reduce<Record<DashboardTaskCategory, DashboardTask[]>>(
       (groupedTasks, task) => {
         groupedTasks[task.category].push(mapApiTask(task));
         return groupedTasks;
@@ -280,6 +292,10 @@ async function loadPersistedTasks() {
         "business-operations": []
       }
     );
+
+    return Object.fromEntries(
+      Object.entries(grouped).map(([category, categoryTasks]) => [category, sortDashboardTasks(categoryTasks)])
+    ) as Record<DashboardTaskCategory, DashboardTask[]>;
   } catch {
     return null;
   }
@@ -344,8 +360,49 @@ function mapApiTask(task: ApiTask): DashboardTask {
     id: task.id,
     text: task.title,
     completed: task.status === "completed",
-    category: task.category
+    category: task.category,
+    priority: task.priority,
+    dueAt: task.dueAt
   };
+}
+
+function sortDashboardTasks(tasks: DashboardTask[]) {
+  return [...tasks].sort((firstTask, secondTask) => {
+    if (firstTask.completed !== secondTask.completed) {
+      return firstTask.completed ? 1 : -1;
+    }
+
+    const dueComparison = getDueTimestamp(firstTask.dueAt) - getDueTimestamp(secondTask.dueAt);
+
+    if (dueComparison !== 0) {
+      return dueComparison;
+    }
+
+    return getPriorityRank(firstTask.priority) - getPriorityRank(secondTask.priority);
+  });
+}
+
+function getDueTimestamp(dueAt?: string | null) {
+  if (!dueAt) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const timestamp = new Date(dueAt).getTime();
+  return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
+}
+
+function getPriorityRank(priority?: DashboardTask["priority"]) {
+  const priorityRanks: Record<NonNullable<DashboardTask["priority"]>, number> = {
+    high: 0,
+    medium: 1,
+    low: 2
+  };
+
+  return priority ? priorityRanks[priority] : 3;
+}
+
+function getDueAtFromDateInput(dueDate: string) {
+  return dueDate ? `${dueDate}T00:00:00.000Z` : null;
 }
 
 function formatCents(amount: number, currency = "USD") {

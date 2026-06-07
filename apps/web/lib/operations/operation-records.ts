@@ -75,6 +75,9 @@ export const createMessageSchema = z.object({
 export const taskListQuerySchema = z.object({
   category: z.enum(taskCategoryValues).optional(),
   status: z.enum(taskStatusValues).optional(),
+  priority: z.enum(taskPriorityValues).optional(),
+  dueFrom: z.string().datetime().optional(),
+  dueTo: z.string().datetime().optional(),
   assignedUserId: z.string().min(1).optional(),
   clientId: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50)
@@ -169,6 +172,15 @@ export function buildTaskWhere(organizationId: string, query: TaskListQuery) {
     organizationId,
     ...(query.category ? { category: taskCategoryToPrisma[query.category] } : {}),
     ...(query.status ? { status: taskStatusToPrisma[query.status] } : {}),
+    ...(query.priority ? { priority: taskPriorityToPrisma[query.priority] } : {}),
+    ...(query.dueFrom || query.dueTo
+      ? {
+          dueAt: {
+            ...(query.dueFrom ? { gte: new Date(query.dueFrom) } : {}),
+            ...(query.dueTo ? { lte: new Date(query.dueTo) } : {})
+          }
+        }
+      : {}),
     ...(query.assignedUserId ? { assignedUserId: query.assignedUserId } : {}),
     ...(query.clientId ? { clientId: query.clientId } : {})
   };

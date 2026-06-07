@@ -140,13 +140,21 @@ describe("DashboardPage", () => {
     fireEvent.change(screen.getByLabelText("Task Description"), {
       target: { value: "Prepare onboarding packet" }
     });
+    fireEvent.change(screen.getByLabelText("Due Date"), {
+      target: { value: "2026-06-12" }
+    });
     fireEvent.click(screen.getByRole("radio", { name: "Current Client Care" }));
     fireEvent.click(screen.getByRole("radio", { name: "High" }));
     fireEvent.click(screen.getByRole("button", { name: "Create Task" }));
 
     const clientWork = screen.getByRole("region", { name: "Client Work" });
+    const createdTask = within(clientWork).getByRole("button", {
+      name: /mark prepare onboarding packet complete/i
+    });
 
     expect(within(clientWork).getByText("Prepare onboarding packet")).toBeInTheDocument();
+    expect(within(createdTask).getByText("Due Jun 12")).toBeInTheDocument();
+    expect(within(createdTask).getByText("High")).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "Create New Task" })).not.toBeInTheDocument();
   });
 
@@ -164,7 +172,8 @@ describe("DashboardPage", () => {
                   title: "Persisted client review",
                   category: "current-client-care",
                   priority: "high",
-                  status: "open"
+                  status: "open",
+                  dueAt: "2026-06-14T00:00:00.000Z"
                 }
               ]
             }),
@@ -193,6 +202,7 @@ describe("DashboardPage", () => {
     render(createElement(DashboardPage));
 
     expect(await screen.findByText("Persisted client review")).toBeInTheDocument();
+    expect(screen.getByText("Due Jun 14")).toBeInTheDocument();
     expect(screen.getByText("4% LOAD")).toBeInTheDocument();
     expect(screen.getByText("Room for 81 more premium athletes")).toBeInTheDocument();
     const checkInsCard = screen.getByText("Check Ins").closest("section");
@@ -258,7 +268,8 @@ describe("DashboardPage", () => {
                 title: "Persisted dashboard task",
                 category: "current-client-care",
                 priority: "high",
-                status: "open"
+                status: "open",
+                dueAt: "2026-06-20T00:00:00.000Z"
               }
             }),
             { status: 201 }
@@ -276,6 +287,9 @@ describe("DashboardPage", () => {
     fireEvent.change(screen.getByLabelText("Task Description"), {
       target: { value: "Persisted dashboard task" }
     });
+    fireEvent.change(screen.getByLabelText("Due Date"), {
+      target: { value: "2026-06-20" }
+    });
     fireEvent.click(screen.getByRole("radio", { name: "Current Client Care" }));
     fireEvent.click(screen.getByRole("radio", { name: "High" }));
     fireEvent.click(screen.getByRole("button", { name: "Create Task" }));
@@ -288,12 +302,71 @@ describe("DashboardPage", () => {
           body: JSON.stringify({
             title: "Persisted dashboard task",
             category: "current-client-care",
-            priority: "high"
+            priority: "high",
+            dueAt: "2026-06-20T00:00:00.000Z"
           })
         })
       )
     );
     expect(await screen.findByText("Persisted dashboard task")).toBeInTheDocument();
+    expect(screen.getByText("Due Jun 20")).toBeInTheDocument();
+  });
+
+  it("orders all dashboard tasks by due date and then priority", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/tasks?limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "task_low_early",
+                  title: "Low priority early task",
+                  category: "current-client-care",
+                  priority: "low",
+                  status: "open",
+                  dueAt: "2026-06-10T00:00:00.000Z"
+                },
+                {
+                  id: "task_high_early",
+                  title: "High priority early task",
+                  category: "current-client-care",
+                  priority: "high",
+                  status: "open",
+                  dueAt: "2026-06-10T00:00:00.000Z"
+                },
+                {
+                  id: "task_high_later",
+                  title: "High priority later task",
+                  category: "current-client-care",
+                  priority: "high",
+                  status: "open",
+                  dueAt: "2026-06-12T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+
+    await screen.findByText("High priority early task");
+
+    const clientWork = screen.getByRole("region", { name: "Client Work" });
+    const taskButtons = within(clientWork).getAllByRole("button");
+
+    expect(taskButtons.map((button) => button.textContent)).toEqual([
+      expect.stringContaining("High priority early task"),
+      expect.stringContaining("Low priority early task"),
+      expect.stringContaining("High priority later task")
+    ]);
   });
 
   it("creates new client onboarding tasks from the side panel", async () => {
@@ -313,7 +386,8 @@ describe("DashboardPage", () => {
                 title: "Send onboarding questionnaire",
                 category: "new-client-onboarding",
                 priority: "medium",
-                status: "open"
+                status: "open",
+                dueAt: "2026-06-18T00:00:00.000Z"
               }
             }),
             { status: 201 }
@@ -331,6 +405,9 @@ describe("DashboardPage", () => {
     fireEvent.change(screen.getByLabelText("Task Description"), {
       target: { value: "Send onboarding questionnaire" }
     });
+    fireEvent.change(screen.getByLabelText("Due Date"), {
+      target: { value: "2026-06-18" }
+    });
     fireEvent.click(screen.getByRole("radio", { name: "New client/ Onboarding" }));
     fireEvent.click(screen.getByRole("button", { name: "Create Task" }));
 
@@ -342,13 +419,15 @@ describe("DashboardPage", () => {
           body: JSON.stringify({
             title: "Send onboarding questionnaire",
             category: "new-client-onboarding",
-            priority: "medium"
+            priority: "medium",
+            dueAt: "2026-06-18T00:00:00.000Z"
           })
         })
       )
     );
     const onboardingModule = screen.getByRole("region", { name: "New Client/Onboarding" });
     expect(within(onboardingModule).getByText("Send onboarding questionnaire")).toBeInTheDocument();
+    expect(within(onboardingModule).getByText("Due Jun 18")).toBeInTheDocument();
   });
 
   it("completes persisted dashboard tasks through the task API", async () => {
@@ -365,7 +444,8 @@ describe("DashboardPage", () => {
                   title: "Persisted client review",
                   category: "current-client-care",
                   priority: "high",
-                  status: "open"
+                  status: "open",
+                  dueAt: "2026-06-14T00:00:00.000Z"
                 }
               ]
             }),
@@ -383,7 +463,8 @@ describe("DashboardPage", () => {
                 title: "Persisted client review",
                 category: "current-client-care",
                 priority: "high",
-                status: "completed"
+                status: "completed",
+                dueAt: "2026-06-14T00:00:00.000Z"
               }
             }),
             { status: 200 }

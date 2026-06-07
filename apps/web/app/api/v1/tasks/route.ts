@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const query = taskListQuerySchema.parse(Object.fromEntries(new URL(request.url).searchParams));
     const tasks = await prisma.task.findMany({
       where: buildTaskWhere(actor.organizationId, query),
-      orderBy: [{ status: "asc" }, { dueAt: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ status: "asc" }, { dueAt: "asc" }, { priority: "asc" }, { createdAt: "desc" }],
       take: query.limit
     });
 

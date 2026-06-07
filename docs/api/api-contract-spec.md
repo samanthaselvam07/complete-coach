@@ -211,7 +211,7 @@ AI output statuses:
 - `POST /api/v1/messages/attachment-upload-url`: creates a short-lived signed R2 `PUT` URL for message attachments. Body: `filename`, `contentType`, `byteSize`, optional `checksumSha256`. Returns `objectKey`, `uploadUrl`, `expiresAt`, `method`, required headers, and max bytes. Object keys are generated as `organizations/{organization_id}/messages/attachments/{uuid}.{extension}`.
 
 ### Tasks
-- `GET /api/v1/tasks`: returns organization-scoped tasks. Query: `category`, `status`, `assignedUserId`, `clientId`, `limit`.
+- `GET /api/v1/tasks`: returns organization-scoped tasks ordered by status, due date, priority, then newest created. Query: `category`, `status`, `priority`, `dueFrom`, `dueTo`, `assignedUserId`, `clientId`, `limit`.
 - `POST /api/v1/tasks`: creates a task. Body: `title`, optional `description`, `category`, optional `priority`, optional `dueAt`, optional `assignedUserId`, optional `clientId`.
 - `PATCH /api/v1/tasks/{task_id}`: updates mutable task fields and status for an organization-scoped task.
 - `POST /api/v1/tasks/{task_id}/complete`: marks an organization-scoped task completed.

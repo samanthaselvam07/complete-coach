@@ -397,7 +397,11 @@ describe("operations persistence APIs", () => {
         })
       })
     );
-    const listResponse = await getTasks(new Request("http://test.local/api/v1/tasks?status=open"));
+    const listResponse = await getTasks(
+      new Request(
+        "http://test.local/api/v1/tasks?status=open&priority=high&dueFrom=2026-05-01T00:00:00.000Z&dueTo=2026-05-31T23:59:59.999Z"
+      )
+    );
     const listPayload = (await listResponse.json()) as { data: Array<{ id: string; category: string }> };
 
     expect(createResponse.status).toBe(201);
@@ -411,6 +415,18 @@ describe("operations persistence APIs", () => {
           category: TaskCategory.CURRENT_CLIENT_CARE,
           priority: TaskPriority.HIGH
         })
+      })
+    );
+    expect(mocks.prisma.task.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          priority: TaskPriority.HIGH,
+          dueAt: {
+            gte: new Date("2026-05-01T00:00:00.000Z"),
+            lte: new Date("2026-05-31T23:59:59.999Z")
+          }
+        }),
+        orderBy: [{ status: "asc" }, { dueAt: "asc" }, { priority: "asc" }, { createdAt: "desc" }]
       })
     );
   });

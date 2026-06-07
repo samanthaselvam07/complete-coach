@@ -21,6 +21,8 @@ export interface DashboardTask {
   text: string;
   completed: boolean;
   category?: DashboardTaskCategory;
+  priority?: DashboardTaskPriority;
+  dueAt?: string | null;
 }
 
 export interface PipelineItem {
@@ -83,27 +85,27 @@ export const revenuePeriodOptions: Array<{ value: RevenuePeriod; label: string }
 
 export const dashboardTasks: Record<DashboardTaskCategory, DashboardTask[]> = {
   "current-client-care": [
-    { id: "client-1", text: "Review Jordan's progress check-in", completed: false },
-    { id: "client-2", text: "Update Marcus's meal plan", completed: true },
-    { id: "client-3", text: "Schedule call with Sarah J.", completed: false },
-    { id: "client-4", text: "Send workout adjustments to Emma", completed: false }
+    { id: "client-1", text: "Review Jordan's progress check-in", completed: false, priority: "high", dueAt: "2026-06-10T00:00:00.000Z" },
+    { id: "client-2", text: "Update Marcus's meal plan", completed: true, priority: "medium", dueAt: "2026-06-12T00:00:00.000Z" },
+    { id: "client-3", text: "Schedule call with Sarah J.", completed: false, priority: "medium", dueAt: "2026-06-14T00:00:00.000Z" },
+    { id: "client-4", text: "Send workout adjustments to Emma", completed: false, priority: "low", dueAt: "2026-06-18T00:00:00.000Z" }
   ],
   "new-client-onboarding": [
-    { id: "onboarding-1", text: "Send intake form to new lead", completed: false },
-    { id: "onboarding-2", text: "Create welcome message sequence", completed: false },
-    { id: "onboarding-3", text: "Confirm onboarding call details", completed: true }
+    { id: "onboarding-1", text: "Send intake form to new lead", completed: false, priority: "high", dueAt: "2026-06-11T00:00:00.000Z" },
+    { id: "onboarding-2", text: "Create welcome message sequence", completed: false, priority: "medium", dueAt: "2026-06-13T00:00:00.000Z" },
+    { id: "onboarding-3", text: "Confirm onboarding call details", completed: true, priority: "low", dueAt: "2026-06-15T00:00:00.000Z" }
   ],
   "social-media": [
-    { id: "social-1", text: "Post transformation Tuesday content", completed: false },
-    { id: "social-2", text: "Respond to DM inquiries", completed: true },
-    { id: "social-3", text: "Schedule week's Instagram stories", completed: false },
-    { id: "social-4", text: "Film testimonial video", completed: false }
+    { id: "social-1", text: "Post transformation Tuesday content", completed: false, priority: "high", dueAt: "2026-06-10T00:00:00.000Z" },
+    { id: "social-2", text: "Respond to DM inquiries", completed: true, priority: "medium", dueAt: "2026-06-11T00:00:00.000Z" },
+    { id: "social-3", text: "Schedule week's Instagram stories", completed: false, priority: "medium", dueAt: "2026-06-16T00:00:00.000Z" },
+    { id: "social-4", text: "Film testimonial video", completed: false, priority: "low", dueAt: "2026-06-19T00:00:00.000Z" }
   ],
   "business-operations": [
-    { id: "ops-1", text: "Process monthly invoices", completed: false },
-    { id: "ops-2", text: "Update CRM database", completed: true },
-    { id: "ops-3", text: "Review supplement inventory", completed: false },
-    { id: "ops-4", text: "Quarterly tax prep review", completed: false }
+    { id: "ops-1", text: "Process monthly invoices", completed: false, priority: "high", dueAt: "2026-06-09T00:00:00.000Z" },
+    { id: "ops-2", text: "Update CRM database", completed: true, priority: "medium", dueAt: "2026-06-11T00:00:00.000Z" },
+    { id: "ops-3", text: "Review supplement inventory", completed: false, priority: "medium", dueAt: "2026-06-17T00:00:00.000Z" },
+    { id: "ops-4", text: "Quarterly tax prep review", completed: false, priority: "low", dueAt: "2026-06-21T00:00:00.000Z" }
   ]
 };
 
