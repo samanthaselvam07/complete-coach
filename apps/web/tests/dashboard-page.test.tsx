@@ -166,16 +166,18 @@ describe("DashboardPage", () => {
     expect(screen.queryByRole("dialog", { name: "Create New Task" })).not.toBeInTheDocument();
   });
 
-  it("places the add task action inside the final work to-do card", () => {
+  it("places the add task action above the business admin card", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 
     render(createElement(DashboardPage));
 
     const businessOpsCard = screen.getByRole("region", { name: "Business Ops/Admin" });
-    const addTaskButton = within(businessOpsCard).getByRole("button", { name: "Add Task" });
+    const addTaskButton = screen.getByRole("button", { name: "Add Task" });
     const crmPipeline = screen.getByRole("region", { name: "CRM Pipeline" });
 
     expect(addTaskButton).toBeInTheDocument();
+    expect(within(businessOpsCard).queryByRole("button", { name: "Add Task" })).not.toBeInTheDocument();
+    expect(addTaskButton.compareDocumentPosition(businessOpsCard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(crmPipeline).queryByRole("button", { name: "Add Task" })).not.toBeInTheDocument();
 
     fireEvent.click(addTaskButton);

@@ -28,65 +28,66 @@ export function WorkTodoSection({ tasks, onToggleTask, onAddTask }: WorkTodoSect
           const isLastTaskCard = categoryIndex === dashboardTaskCategories.length - 1;
 
           return (
-            <section
-              key={category.id}
-              aria-label={category.label}
-              className="rounded-xl border border-gray-200 bg-white p-5"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-sm font-semibold">{category.label}</h3>
-                <span className={cn("rounded px-2 py-1 text-xs", category.badgeClassName)}>
-                  {openTaskCount}
-                </span>
-              </div>
+            <div key={category.id} className="space-y-3">
+              {isLastTaskCard ? (
+                <button
+                  type="button"
+                  className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-100"
+                  onClick={onAddTask}
+                >
+                  Add Task
+                </button>
+              ) : null}
+              <section
+                aria-label={category.label}
+                className="rounded-xl border border-gray-200 bg-white p-5"
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">{category.label}</h3>
+                  <span className={cn("rounded px-2 py-1 text-xs", category.badgeClassName)}>
+                    {openTaskCount}
+                  </span>
+                </div>
 
-              <div className="space-y-2">
-                {visibleTasks.length > 0 ? visibleTasks.map((task) => (
-                  <button
-                    key={task.id}
-                    type="button"
-                    className="group flex w-full items-start gap-2 text-left"
-                    aria-label={`Mark ${task.text} complete`}
-                    onClick={() => onToggleTask(category.id, task.id)}
-                  >
-                    <Circle
-                      className={cn("mt-0.5 size-4 shrink-0 text-gray-300", category.hoverClassName)}
-                      aria-hidden="true"
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-xs text-gray-700">
-                        {task.text}
+                <div className="space-y-2">
+                  {visibleTasks.length > 0 ? visibleTasks.map((task) => (
+                    <button
+                      key={task.id}
+                      type="button"
+                      className="group flex w-full items-start gap-2 text-left"
+                      aria-label={`Mark ${task.text} complete`}
+                      onClick={() => onToggleTask(category.id, task.id)}
+                    >
+                      <Circle
+                        className={cn("mt-0.5 size-4 shrink-0 text-gray-300", category.hoverClassName)}
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-xs text-gray-700">
+                          {task.text}
+                        </span>
+                        <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                          {task.dueAt ? (
+                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                              Due {formatTaskDueDate(task.dueAt)}
+                            </span>
+                          ) : null}
+                          {task.priority ? (
+                            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", priorityClassNames[task.priority])}>
+                              {priorityLabels[task.priority]}
+                            </span>
+                          ) : null}
+                        </span>
                       </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-1.5">
-                        {task.dueAt ? (
-                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
-                            Due {formatTaskDueDate(task.dueAt)}
-                          </span>
-                        ) : null}
-                        {task.priority ? (
-                          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", priorityClassNames[task.priority])}>
-                            {priorityLabels[task.priority]}
-                          </span>
-                        ) : null}
-                      </span>
-                    </span>
-                  </button>
-                )) : (
-                  <p className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">
-                    No open tasks.
-                  </p>
-                )}
-                {isLastTaskCard ? (
-                  <button
-                    type="button"
-                    className="mt-3 w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-100"
-                    onClick={onAddTask}
-                  >
-                    Add Task
-                  </button>
-                ) : null}
-              </div>
-            </section>
+                    </button>
+                  )) : (
+                    <p className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                      No open tasks.
+                    </p>
+                  )}
+                </div>
+              </section>
+            </div>
           );
         })}
       </div>
