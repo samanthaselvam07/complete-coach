@@ -27,6 +27,8 @@ interface ApiTask {
 
 interface ApiCheckIn {
   id: string;
+  status?: string;
+  checkInStatus?: string;
 }
 
 interface ApiFinancialReport {
@@ -63,7 +65,7 @@ export function DashboardPage() {
       const [tasksLoaded, teamCapacityLoaded, pendingCheckIns, packageRevenue, dashboardMetadata] = await Promise.all([
         loadPersistedTasks(),
         loadTeamCapacityMembers(),
-        loadCount<ApiCheckIn>("/api/v1/check-ins?status=pending-review&limit=100"),
+        loadUncompletedCheckInCount(),
         loadStripeFinancialMetric("monthly"),
         loadDashboardMetadata()
       ]);
@@ -317,16 +319,17 @@ async function loadPersistedTasks() {
   }
 }
 
-async function loadCount<T>(url: string) {
+async function loadUncompletedCheckInCount() {
   try {
-    const response = await fetch(url);
+    const response = await fetch("/api/v1/check-ins?limit=100");
 
     if (!response.ok) {
-      throw new Error("Dashboard count API unavailable.");
+      throw new Error("Check-ins API unavailable.");
     }
 
-    const payload = (await response.json()) as { data: T[] };
-    return payload.data.length;
+    const payload = (await response.json()) as { data?: ApiCheckIn[] };
+    const checkIns = payload.data ?? [];
+    return checkIns.filter((checkIn) => (checkIn.checkInStatus ?? checkIn.status) !== "completed").length;
   } catch {
     return null;
   }

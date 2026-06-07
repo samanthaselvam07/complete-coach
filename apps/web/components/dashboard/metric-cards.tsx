@@ -83,21 +83,23 @@ const fallbackCapacityMembers = operationTeamMembers
   }));
 
 export function PriorityTasksCard({ pendingCheckIns = 5 }: PriorityTasksCardProps) {
+  const checkInLabel = pendingCheckIns === 1 ? "Check In" : "Check Ins";
+
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-6 transition-all hover:border-indigo-200 hover:shadow-lg">
+    <Link
+      href="/clients/check-ins"
+      aria-label={`View client check-ins - ${pendingCheckIns} ${checkInLabel}`}
+      className="block rounded-xl border border-gray-200 bg-white p-6 transition-all hover:border-orange-200 hover:shadow-lg"
+    >
       <div className="mb-4 flex items-center justify-between">
         <span className="text-xs uppercase tracking-wider text-gray-500">Check Ins</span>
         <span className="size-2 rounded-full bg-orange-500" aria-label="Needs attention" />
       </div>
-      <div className="mb-6">
-        <span className="text-3xl font-bold">{pendingCheckIns}</span>
-        <span className="text-xl text-gray-400"> Pending</span>
-      </div>
       <div className="rounded-lg bg-orange-50 p-3 text-center">
         <div className="mb-1 text-2xl font-bold text-orange-600">{pendingCheckIns}</div>
-        <div className="text-xs uppercase tracking-wider text-gray-600">Checks</div>
+        <div className="text-xs uppercase tracking-wider text-gray-600">{checkInLabel}</div>
       </div>
-    </section>
+    </Link>
   );
 }
 

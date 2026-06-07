@@ -22,6 +22,9 @@ describe("DashboardPage", () => {
     expect(capacityCard).toHaveAttribute("href", "/clients");
     expect(within(capacityCard).getByText("Team Capacity")).toBeInTheDocument();
     expect(within(capacityCard).getByText("57")).toBeInTheDocument();
+    const checkInsCard = screen.getByRole("link", { name: /view client check-ins/i });
+    expect(checkInsCard).toHaveAttribute("href", "/clients/check-ins");
+    expect(within(checkInsCard).queryByText("Pending")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "CRM Pipeline" })).toBeInTheDocument();
     expect(screen.getByText("Coach Team")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "New Client/Onboarding" })).toBeInTheDocument();
@@ -194,9 +197,18 @@ describe("DashboardPage", () => {
         );
       }
 
-      if (url === "/api/v1/check-ins?status=pending-review&limit=100") {
+      if (url === "/api/v1/check-ins?limit=100") {
         return Promise.resolve(
-          new Response(JSON.stringify({ data: [{ id: "checkin_1" }, { id: "checkin_2" }] }), { status: 200 })
+          new Response(
+            JSON.stringify({
+              data: [
+                { id: "checkin_1", checkInStatus: "pending-review", status: "pending" },
+                { id: "checkin_2", checkInStatus: "reviewed", status: "pending" },
+                { id: "checkin_3", checkInStatus: "completed", status: "completed" }
+              ]
+            }),
+            { status: 200 }
+          )
         );
       }
 
@@ -209,10 +221,11 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Due Jun 14")).toBeInTheDocument();
     expect(screen.getByText("76% LOAD")).toBeInTheDocument();
     expect(screen.getByText("Room for 18 more premium athletes across 3 coaches")).toBeInTheDocument();
-    const checkInsCard = screen.getByText("Check Ins").closest("section");
-    expect(checkInsCard).not.toBeNull();
-    expect(within(checkInsCard as HTMLElement).getAllByText("2")).toHaveLength(2);
-    expect(within(checkInsCard as HTMLElement).getByText("Pending")).toBeInTheDocument();
+    const checkInsCard = screen.getByRole("link", { name: /view client check-ins/i });
+    expect(checkInsCard).toHaveAttribute("href", "/clients/check-ins");
+    expect(within(checkInsCard).getByText("2")).toBeInTheDocument();
+    expect(within(checkInsCard).getAllByText("Check Ins")).toHaveLength(2);
+    expect(within(checkInsCard).queryByText("Pending")).not.toBeInTheDocument();
   });
 
   it("links client capacity to the client roster and reflects individual coach capacity", async () => {
