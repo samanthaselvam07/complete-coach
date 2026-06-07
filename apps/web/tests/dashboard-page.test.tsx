@@ -18,7 +18,7 @@ describe("DashboardPage", () => {
     expect(screen.getByText("$24,850")).toBeInTheDocument();
     expect(screen.getByText("Client Capacity")).toBeInTheDocument();
     expect(screen.getByText("42")).toBeInTheDocument();
-    expect(screen.getByText("Payment Secured")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "CRM Pipeline" })).toBeInTheDocument();
     expect(screen.getByText("Coach Team")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "New Client/Onboarding" })).toBeInTheDocument();
   });
@@ -199,6 +199,46 @@ describe("DashboardPage", () => {
     expect(checkInsCard).not.toBeNull();
     expect(within(checkInsCard as HTMLElement).getAllByText("2")).toHaveLength(2);
     expect(within(checkInsCard as HTMLElement).getByText("Pending")).toBeInTheDocument();
+  });
+
+  it("replaces client activity with a live CRM stage summary", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/dashboard/crm-summary") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                newLeadsLastFiveDays: 6,
+                totalLeadsAndCustomers: 18,
+                stageBreakdown: [
+                  { stage: "initial-contact", label: "Initial Contact", count: 5 },
+                  { stage: "consultation", label: "Consultation Scheduled", count: 4 },
+                  { stage: "proposal", label: "Proposal Sent", count: 3 },
+                  { stage: "negotiation", label: "In Negotiation", count: 2 },
+                  { stage: "closed-won", label: "Closed - Won", count: 4 }
+                ],
+                updatedAt: "2026-06-07T07:00:00.000Z"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+
+    const crmModule = await screen.findByRole("region", { name: "CRM Pipeline" });
+    expect(within(crmModule).getByText("6")).toBeInTheDocument();
+    expect(within(crmModule).getByText("new leads in the last 5 days")).toBeInTheDocument();
+    expect(within(crmModule).getByText("Closed - Won")).toBeInTheDocument();
+    expect(within(crmModule).getByText("18 total")).toBeInTheDocument();
+    expect(within(crmModule).getByRole("link", { name: "Open CRM" })).toHaveAttribute("href", "/clients/crm");
+    expect(screen.queryByText("Payment Secured")).not.toBeInTheDocument();
   });
 
   it("creates dashboard tasks through the task API when persistence is available", async () => {

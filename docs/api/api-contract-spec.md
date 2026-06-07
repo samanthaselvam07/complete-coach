@@ -218,6 +218,9 @@ AI output statuses:
 
 Task categories: `current-client-care`, `new-client-onboarding`, `social-media`, `business-operations`.
 
+### Dashboard CRM
+- `GET /api/v1/dashboard/crm-summary`: returns role-gated CRM dashboard metrics for the active organization. Requires `clients:read`. Response includes `newLeadsLastFiveDays`, `totalLeadsAndCustomers`, `stageBreakdown` with stage id/label/count for every CRM stage, and `updatedAt`.
+
 ### Notifications
 - `GET /api/v1/notifications`: returns current-user tenant-scoped notifications. Query: `unreadOnly`, `limit`.
 - `POST /api/v1/notifications/{notification_id}/read`: marks one current-user tenant-scoped notification read.
