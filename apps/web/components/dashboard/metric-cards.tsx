@@ -152,10 +152,10 @@ export function TeamSnapshotCard({ members = fallbackCapacityMembers }: TeamSnap
   const visibleMembers = coachMembers.slice(0, 3);
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5" aria-label="Coach Team">
+    <section className="rounded-xl border border-gray-200 bg-white p-5" aria-label="Coaching Team">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold">Coach Team</h2>
+          <h2 className="text-sm font-semibold">Coaching Team</h2>
           <p className="text-xs text-gray-500">{coachMembers.length} active coaches</p>
         </div>
         <Link href="/team-management" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">

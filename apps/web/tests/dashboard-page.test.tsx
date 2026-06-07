@@ -26,7 +26,7 @@ describe("DashboardPage", () => {
     expect(checkInsCard).toHaveAttribute("href", "/clients/check-ins");
     expect(within(checkInsCard).queryByText("Pending")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "CRM Pipeline" })).toBeInTheDocument();
-    expect(screen.getByText("Coach Team")).toBeInTheDocument();
+    expect(screen.getByText("Coaching Team")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "New Client/Onboarding" })).toBeInTheDocument();
   });
 
@@ -361,7 +361,7 @@ describe("DashboardPage", () => {
     expect(within(capacityCard).queryByText("Ops Assistant")).not.toBeInTheDocument();
   });
 
-  it("stacks coach team under CRM and limits coach quick access to three members", async () => {
+  it("stacks coaching team under CRM and limits coach quick access to three members", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
@@ -434,7 +434,7 @@ describe("DashboardPage", () => {
     render(createElement(DashboardPage));
 
     const crmModule = await screen.findByRole("region", { name: "CRM Pipeline" });
-    const coachTeam = await screen.findByRole("region", { name: "Coach Team" });
+    const coachTeam = await screen.findByRole("region", { name: "Coaching Team" });
 
     expect(
       crmModule.compareDocumentPosition(coachTeam) & Node.DOCUMENT_POSITION_FOLLOWING
