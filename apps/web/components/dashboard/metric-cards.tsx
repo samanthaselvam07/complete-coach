@@ -1,12 +1,13 @@
 import Link from "next/link";
 
-import { dashboardTeamMembers } from "@/fixtures/dashboard";
 import { teamMembers as operationTeamMembers } from "@/fixtures/operations";
-import { cn } from "@/lib/utils";
 
 export interface TeamCapacityMember {
   id: string;
+  userId?: string;
   name: string | null;
+  email?: string | null;
+  image?: string | null;
   role: string;
   status: string;
   activeClientCount: number;
@@ -103,30 +104,80 @@ export function PriorityTasksCard({ pendingCheckIns = 5 }: PriorityTasksCardProp
   );
 }
 
-export function TeamSnapshotCard() {
+interface TeamSnapshotCardProps {
+  members?: TeamCapacityMember[];
+}
+
+const coachAvatarColors = ["bg-indigo-600", "bg-orange-500", "bg-slate-900"];
+
+export function TeamSnapshotCard({ members = fallbackCapacityMembers }: TeamSnapshotCardProps) {
+  const coachMembers = members
+    .filter((member) => member.status === "active" && member.capacityLimit > 0)
+    .sort((firstMember, secondMember) => secondMember.capacityPercent - firstMember.capacityPercent);
+  const visibleMembers = coachMembers.slice(0, 3);
+
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-5" aria-label="Coach Team">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Coach Team</h2>
-        <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
-          {dashboardTeamMembers.length} active
-        </span>
+        <div>
+          <h2 className="text-sm font-semibold">Coach Team</h2>
+          <p className="text-xs text-gray-500">{coachMembers.length} active coaches</p>
+        </div>
+        <Link href="/team-management" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">
+          View all coaches
+        </Link>
       </div>
-      <div className="flex -space-x-3">
-        {dashboardTeamMembers.map((member) => (
-          <div
-            key={member.id}
-            title={`${member.name}, ${member.role}`}
-            className={cn(
-              "flex size-11 items-center justify-center rounded-full border-2 border-white text-xs font-semibold text-white shadow-sm",
-              member.color
-            )}
-          >
-            {member.initials}
+
+      <div className="space-y-3">
+        {visibleMembers.map((member, index) => (
+          <div key={member.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+            <div className="flex items-start gap-3">
+              <div
+                className={`flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${coachAvatarColors[index % coachAvatarColors.length]}`}
+              >
+                {getInitials(member.name)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-gray-900">{member.name ?? "Unnamed coach"}</p>
+                    <p className="truncate text-xs capitalize text-gray-500">{member.role}</p>
+                  </div>
+                  <p className="shrink-0 text-xs font-semibold text-gray-700">
+                    {member.activeClientCount}/{member.capacityLimit}
+                  </p>
+                </div>
+                <div className="mt-2 h-1.5 rounded-full bg-gray-200">
+                  <div className="h-1.5 rounded-full bg-indigo-600" style={{ width: `${member.capacityPercent}%` }} />
+                </div>
+                <div className="mt-2 flex items-center gap-3 text-xs">
+                  <Link href={`/coach-profile?member=${member.id}`} aria-label={`Open profile for ${member.name ?? "coach"}`} className="font-medium text-indigo-600 hover:text-indigo-700">
+                    Profile
+                  </Link>
+                  <Link href={`/team-management?member=${member.id}`} aria-label={`Open settings for ${member.name ?? "coach"}`} className="font-medium text-gray-600 hover:text-gray-900">
+                    Settings
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
-      <p className="mt-4 text-xs text-gray-500">Coverage is balanced across nutrition, care, and performance.</p>
+
+      <p className="mt-4 text-xs text-gray-500">Showing the three coaches closest to capacity.</p>
     </section>
   );
+}
+
+function getInitials(name: string | null) {
+  if (!name) {
+    return "CC";
+  }
+
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }

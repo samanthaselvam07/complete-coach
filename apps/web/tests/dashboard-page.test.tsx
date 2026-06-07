@@ -299,6 +299,102 @@ describe("DashboardPage", () => {
     expect(within(capacityCard).queryByText("Ops Assistant")).not.toBeInTheDocument();
   });
 
+  it("stacks coach team under CRM and limits coach quick access to three members", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/team-members") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                members: [
+                  {
+                    id: "membership_alex",
+                    userId: "coach_alex",
+                    name: "Alex Coach",
+                    email: "alex@example.com",
+                    image: null,
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 18,
+                    capacityLimit: 40,
+                    capacityPercent: 45
+                  },
+                  {
+                    id: "membership_maya",
+                    userId: "coach_maya",
+                    name: "Maya Nutrition",
+                    email: "maya@example.com",
+                    image: null,
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 32,
+                    capacityLimit: 40,
+                    capacityPercent: 80
+                  },
+                  {
+                    id: "membership_jules",
+                    userId: "coach_jules",
+                    name: "Jules Strength",
+                    email: "jules@example.com",
+                    image: null,
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 21,
+                    capacityLimit: 40,
+                    capacityPercent: 53
+                  },
+                  {
+                    id: "membership_lee",
+                    userId: "coach_lee",
+                    name: "Lee Fourth",
+                    email: "lee@example.com",
+                    image: null,
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 10,
+                    capacityLimit: 40,
+                    capacityPercent: 25
+                  }
+                ],
+                invitations: []
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+
+    const crmModule = await screen.findByRole("region", { name: "CRM Pipeline" });
+    const coachTeam = await screen.findByRole("region", { name: "Coach Team" });
+
+    expect(
+      crmModule.compareDocumentPosition(coachTeam) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(within(coachTeam).getByText("Maya Nutrition")).toBeInTheDocument();
+    expect(within(coachTeam).getByText("Jules Strength")).toBeInTheDocument();
+    expect(within(coachTeam).getByText("Alex Coach")).toBeInTheDocument();
+    expect(within(coachTeam).queryByText("Lee Fourth")).not.toBeInTheDocument();
+    expect(within(coachTeam).getByRole("link", { name: "View all coaches" })).toHaveAttribute(
+      "href",
+      "/team-management"
+    );
+    expect(within(coachTeam).getByRole("link", { name: "Open profile for Maya Nutrition" })).toHaveAttribute(
+      "href",
+      "/coach-profile?member=membership_maya"
+    );
+    expect(within(coachTeam).getByRole("link", { name: "Open settings for Maya Nutrition" })).toHaveAttribute(
+      "href",
+      "/team-management?member=membership_maya"
+    );
+  });
+
   it("renders the dashboard subtitle from the coach timezone and active dashboard task count", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-06-07T13:30:00.000Z"));
