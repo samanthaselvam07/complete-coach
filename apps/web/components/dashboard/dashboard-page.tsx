@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { FinancialCard } from "./financial-card";
 import { LivePipeline } from "./live-pipeline";
-import { ClientCapacityCard, PriorityTasksCard, TeamSnapshotCard } from "./metric-cards";
+import { ClientCapacityCard, PriorityTasksCard, TeamSnapshotCard, type TeamCapacityMember } from "./metric-cards";
 import { TaskCreationPanel } from "./task-creation-panel";
 import { WorkTodoSection } from "./work-todo-section";
 import {
@@ -23,10 +23,6 @@ interface ApiTask {
   priority: "high" | "medium" | "low";
   status: "open" | "completed" | "cancelled";
   dueAt: string | null;
-}
-
-interface ApiClient {
-  id: string;
 }
 
 interface ApiCheckIn {
@@ -54,7 +50,7 @@ export function DashboardPage() {
   const [taskPanelOpen, setTaskPanelOpen] = useState(false);
   const [taskSource, setTaskSource] = useState<"api" | "fixture">("fixture");
   const [tasks, setTasks] = useState<Record<DashboardTaskCategory, DashboardTask[]>>(dashboardTasks);
-  const [activeClientCount, setActiveClientCount] = useState(42);
+  const [teamCapacityMembers, setTeamCapacityMembers] = useState<TeamCapacityMember[] | null>(null);
   const [pendingCheckInCount, setPendingCheckInCount] = useState(5);
   const [revenueMetricSource, setRevenueMetricSource] = useState(revenueMetrics);
   const [coachTimezone, setCoachTimezone] = useState(getBrowserTimezone());
@@ -64,9 +60,9 @@ export function DashboardPage() {
     let isActive = true;
 
     async function loadDashboardData() {
-      const [tasksLoaded, activeClients, pendingCheckIns, packageRevenue, dashboardMetadata] = await Promise.all([
+      const [tasksLoaded, teamCapacityLoaded, pendingCheckIns, packageRevenue, dashboardMetadata] = await Promise.all([
         loadPersistedTasks(),
-        loadCount<ApiClient>("/api/v1/clients?status=active&limit=100"),
+        loadTeamCapacityMembers(),
         loadCount<ApiCheckIn>("/api/v1/check-ins?status=pending-review&limit=100"),
         loadStripeFinancialMetric("monthly"),
         loadDashboardMetadata()
@@ -84,8 +80,8 @@ export function DashboardPage() {
         setTasks(dashboardTasks);
       }
 
-      if (activeClients !== null) {
-        setActiveClientCount(activeClients);
+      if (teamCapacityLoaded) {
+        setTeamCapacityMembers(teamCapacityLoaded);
       }
 
       if (pendingCheckIns !== null) {
@@ -118,7 +114,7 @@ export function DashboardPage() {
   }, []);
 
   const activeTaskCount = getActiveTaskCount(tasks);
-  const dashboardSubtitle = `${formatDashboardDate(now, coachTimezone)} - ${activeTaskCount} ${activeTaskCount === 1 ? "pipeline action" : "pipeline actions"} require attention.`;
+  const dashboardSubtitle = `${formatDashboardDate(now, coachTimezone)} - ${activeTaskCount} ${activeTaskCount === 1 ? "pipeline action requires" : "pipeline actions require"} attention.`;
 
   const toggleTask = async (category: DashboardTaskCategory, taskId: string) => {
     const targetTask = tasks[category].find((task) => task.id === taskId);
@@ -256,7 +252,7 @@ export function DashboardPage() {
             void refreshFinancialMetric("custom", customStartDate, customEndDate);
           }}
         />
-        <ClientCapacityCard activeClients={activeClientCount} />
+        <ClientCapacityCard members={teamCapacityMembers ?? undefined} />
         <PriorityTasksCard pendingCheckIns={pendingCheckInCount} />
       </div>
 
@@ -334,6 +330,39 @@ async function loadCount<T>(url: string) {
   } catch {
     return null;
   }
+}
+
+async function loadTeamCapacityMembers() {
+  try {
+    const response = await fetch("/api/v1/team-members");
+
+    if (!response.ok) {
+      throw new Error("Team members API unavailable.");
+    }
+
+    const payload = (await response.json()) as { data?: { members?: TeamCapacityMember[] } };
+    const members = payload.data?.members?.filter(isTeamCapacityMember) ?? [];
+    return members.length ? members : null;
+  } catch {
+    return null;
+  }
+}
+
+function isTeamCapacityMember(value: unknown): value is TeamCapacityMember {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<TeamCapacityMember>;
+
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.role === "string" &&
+    typeof candidate.status === "string" &&
+    typeof candidate.activeClientCount === "number" &&
+    typeof candidate.capacityLimit === "number" &&
+    typeof candidate.capacityPercent === "number"
+  );
 }
 
 async function loadStripeFinancialMetric(period: RevenuePeriod, startDate?: string, endDate?: string) {

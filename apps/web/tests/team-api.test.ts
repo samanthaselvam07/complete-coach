@@ -27,6 +27,9 @@ const mocks = vi.hoisted(() => ({
       findMany: vi.fn(),
       update: vi.fn()
     },
+    client: {
+      groupBy: vi.fn()
+    },
     $transaction: vi.fn()
   }
 }));
@@ -84,20 +87,52 @@ describe("team management APIs", () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.randomBytes.mockReturnValue(Buffer.from("a".repeat(32)));
     mocks.sendTransactionalEmail.mockResolvedValue({ status: "sent" });
+    mocks.prisma.client.groupBy.mockReset();
   });
 
-  it("lists organization-scoped members and pending invitations", async () => {
+  it("lists organization-scoped members with active client capacity and pending invitations", async () => {
     mocks.prisma.organizationMembership.findMany.mockResolvedValue([membershipRecord]);
     mocks.prisma.teamInvitation.findMany.mockResolvedValue([]);
+    mocks.prisma.client.groupBy.mockResolvedValue([
+      { primaryCoachUserId: "user_2", _count: { _all: 18 } }
+    ]);
 
     const response = await listTeamMembers();
-    const payload = (await response.json()) as { data: { members: unknown[]; invitations: unknown[] } };
+    const payload = (await response.json()) as {
+      data: {
+        members: Array<{
+          userId: string;
+          activeClientCount: number;
+          capacityLimit: number;
+          capacityPercent: number;
+        }>;
+        invitations: unknown[];
+      };
+    };
 
     expect(response.status).toBe(200);
     expect(payload.data.members).toHaveLength(1);
+    expect(payload.data.members[0]).toEqual(
+      expect.objectContaining({
+        userId: "user_2",
+        activeClientCount: 18,
+        capacityLimit: 40,
+        capacityPercent: 45
+      })
+    );
     expect(mocks.prisma.organizationMembership.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { organizationId: "org_1" } })
     );
+    expect(mocks.prisma.client.groupBy).toHaveBeenCalledWith({
+      by: ["primaryCoachUserId"],
+      where: {
+        organizationId: "org_1",
+        status: "ACTIVE",
+        deletedAt: null,
+        primaryCoachUserId: { not: null }
+      },
+      _count: { _all: true }
+    });
     expect(mocks.prisma.teamInvitation.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ organizationId: "org_1" })

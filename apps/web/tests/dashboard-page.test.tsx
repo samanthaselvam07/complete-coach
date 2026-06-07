@@ -18,7 +18,10 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Monthly Revenue")).toBeInTheDocument();
     expect(screen.getByText("$24,850")).toBeInTheDocument();
     expect(screen.getByText("Client Capacity")).toBeInTheDocument();
-    expect(screen.getByText("42")).toBeInTheDocument();
+    const capacityCard = screen.getByRole("link", { name: /client capacity/i });
+    expect(capacityCard).toHaveAttribute("href", "/clients");
+    expect(within(capacityCard).getByText("Team Capacity")).toBeInTheDocument();
+    expect(within(capacityCard).getByText("57")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "CRM Pipeline" })).toBeInTheDocument();
     expect(screen.getByText("Coach Team")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "New Client/Onboarding" })).toBeInTheDocument();
@@ -204,12 +207,83 @@ describe("DashboardPage", () => {
 
     expect(await screen.findByText("Persisted client review")).toBeInTheDocument();
     expect(screen.getByText("Due Jun 14")).toBeInTheDocument();
-    expect(screen.getByText("4% LOAD")).toBeInTheDocument();
-    expect(screen.getByText("Room for 81 more premium athletes")).toBeInTheDocument();
+    expect(screen.getByText("76% LOAD")).toBeInTheDocument();
+    expect(screen.getByText("Room for 18 more premium athletes across 3 coaches")).toBeInTheDocument();
     const checkInsCard = screen.getByText("Check Ins").closest("section");
     expect(checkInsCard).not.toBeNull();
     expect(within(checkInsCard as HTMLElement).getAllByText("2")).toHaveLength(2);
     expect(within(checkInsCard as HTMLElement).getByText("Pending")).toBeInTheDocument();
+  });
+
+  it("links client capacity to the client roster and reflects individual coach capacity", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/team-members") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                members: [
+                  {
+                    id: "membership_alex",
+                    userId: "coach_alex",
+                    name: "Alex Coach",
+                    email: "alex@example.com",
+                    image: null,
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 18,
+                    capacityLimit: 40,
+                    capacityPercent: 45
+                  },
+                  {
+                    id: "membership_maya",
+                    userId: "coach_maya",
+                    name: "Maya Nutrition",
+                    email: "maya@example.com",
+                    image: null,
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 32,
+                    capacityLimit: 40,
+                    capacityPercent: 80
+                  },
+                  {
+                    id: "membership_assistant",
+                    userId: "assistant_1",
+                    name: "Ops Assistant",
+                    email: "ops@example.com",
+                    image: null,
+                    role: "assistant",
+                    status: "active",
+                    activeClientCount: 0,
+                    capacityLimit: 0,
+                    capacityPercent: 0
+                  }
+                ],
+                invitations: []
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+
+    const capacityCard = await screen.findByRole("link", { name: /client capacity/i });
+
+    expect(capacityCard).toHaveAttribute("href", "/clients");
+    expect(within(capacityCard).getByText("Team Capacity")).toBeInTheDocument();
+    expect(within(capacityCard).getByText("50")).toBeInTheDocument();
+    expect(within(capacityCard).getByText("/80")).toBeInTheDocument();
+    expect(within(capacityCard).getByText("Maya Nutrition")).toBeInTheDocument();
+    expect(within(capacityCard).getByText("32/40")).toBeInTheDocument();
+    expect(within(capacityCard).queryByText("Ops Assistant")).not.toBeInTheDocument();
   });
 
   it("renders the dashboard subtitle from the coach timezone and active dashboard task count", async () => {

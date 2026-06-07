@@ -79,7 +79,7 @@ Default:
 - `PATCH /api/v1/organizations/current`: update organization settings.
 
 ### Team
-- `GET /api/v1/team-members`: returns organization-scoped memberships and pending invitations. Requires `team:read`.
+- `GET /api/v1/team-members`: returns organization-scoped memberships with `activeClientCount`, `capacityLimit`, `capacityPercent`, and pending invitations. Requires `team:read`.
 - `POST /api/v1/team-members/invitations`: creates a seven-day invitation for `admin`, `coach`, or `assistant`, stores only a SHA-256 token hash, queues a Resend email, and audits the action. Requires `team:manage`. Production responses do not return the raw token.
 - `POST /api/v1/team-invitations/accept`: accepts a pending invitation for the authenticated user's matching email, activates the membership atomically, consumes the invitation, and audits acceptance. Body: `token`.
 - `PATCH /api/v1/team-members/{membership_id}`: updates `role` and/or `status`. The last active owner cannot be demoted. Requires `team:manage`.
