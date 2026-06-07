@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { MessageSquare } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { leads as leadFixtures, pipelineStages, type LeadStageId } from "@/fixtures/leads";
-import { cn } from "@/lib/utils";
 
 interface CrmStageSummary {
   stage: LeadStageId;
@@ -128,19 +126,6 @@ export function LivePipeline() {
           </div>
 
           <p className="mt-3 text-[11px] text-gray-400">Updates every 30 seconds while the dashboard is open.</p>
-        </div>
-
-        <div className="mt-4">
-          <Link
-            href="/messages"
-            className={cn(
-              "block rounded-lg border border-gray-200 bg-white p-3 text-center transition-colors",
-              "hover:border-indigo-300 hover:bg-indigo-50"
-            )}
-          >
-            <MessageSquare className="mx-auto mb-2 size-5 text-indigo-600" aria-hidden="true" />
-            <span className="text-xs font-medium">Messages</span>
-          </Link>
         </div>
       </div>
     </section>

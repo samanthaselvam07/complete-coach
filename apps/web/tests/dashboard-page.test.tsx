@@ -554,6 +554,7 @@ describe("DashboardPage", () => {
     expect(within(crmModule).getByText("Closed - Won")).toBeInTheDocument();
     expect(within(crmModule).getByText("18 total")).toBeInTheDocument();
     expect(within(crmModule).getByRole("link", { name: "Open CRM" })).toHaveAttribute("href", "/clients/crm");
+    expect(within(crmModule).queryByRole("link", { name: "Messages" })).not.toBeInTheDocument();
     expect(screen.queryByText("Payment Secured")).not.toBeInTheDocument();
   });
 
