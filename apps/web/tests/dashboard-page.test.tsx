@@ -282,8 +282,8 @@ describe("DashboardPage", () => {
     render(createElement(DashboardPage));
 
     const todaysCheckInsCard = await screen.findByRole("link", { name: /today's expected check-ins/i });
-
     expect(todaysCheckInsCard).toHaveAttribute("href", "/clients/check-ins");
+    expect(within(todaysCheckInsCard).getByText("Today's Expected Check Ins")).toBeInTheDocument();
     expect(within(todaysCheckInsCard).getByText("Monday Check-Ins")).toBeInTheDocument();
     expect(within(todaysCheckInsCard).getByText("2")).toBeInTheDocument();
     expect(within(todaysCheckInsCard).getByText("Maya Monday, Marcus Monday")).toBeInTheDocument();
