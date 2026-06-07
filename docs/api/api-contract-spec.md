@@ -220,6 +220,7 @@ Task categories: `current-client-care`, `new-client-onboarding`, `social-media`,
 
 ### Dashboard CRM
 - `GET /api/v1/dashboard/crm-summary`: returns role-gated CRM dashboard metrics for the active organization. Requires `clients:read`. Response includes `newLeadsLastFiveDays`, `totalLeadsAndCustomers`, `stageBreakdown` with stage id/label/count for every CRM stage, and `updatedAt`.
+- `GET /api/v1/dashboard/metadata`: returns role-gated dashboard metadata for the active organization. Requires `tasks:read`. Response includes the organization `timezone` used for dashboard-local date rendering.
 
 ### Notifications
 - `GET /api/v1/notifications`: returns current-user tenant-scoped notifications. Query: `unreadOnly`, `limit`.

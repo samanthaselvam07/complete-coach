@@ -41,6 +41,10 @@ interface ApiFinancialReport {
   bars: number[];
 }
 
+interface ApiDashboardMetadata {
+  timezone: string;
+}
+
 export function DashboardPage() {
   const defaultCustomRange = getDefaultCustomDateRange();
   const [period, setPeriod] = useState<RevenuePeriod>("monthly");
@@ -53,16 +57,19 @@ export function DashboardPage() {
   const [activeClientCount, setActiveClientCount] = useState(42);
   const [pendingCheckInCount, setPendingCheckInCount] = useState(5);
   const [revenueMetricSource, setRevenueMetricSource] = useState(revenueMetrics);
+  const [coachTimezone, setCoachTimezone] = useState(getBrowserTimezone());
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     let isActive = true;
 
     async function loadDashboardData() {
-      const [tasksLoaded, activeClients, pendingCheckIns, packageRevenue] = await Promise.all([
+      const [tasksLoaded, activeClients, pendingCheckIns, packageRevenue, dashboardMetadata] = await Promise.all([
         loadPersistedTasks(),
         loadCount<ApiClient>("/api/v1/clients?status=active&limit=100"),
         loadCount<ApiCheckIn>("/api/v1/check-ins?status=pending-review&limit=100"),
-        loadStripeFinancialMetric("monthly")
+        loadStripeFinancialMetric("monthly"),
+        loadDashboardMetadata()
       ]);
 
       if (!isActive) {
@@ -91,6 +98,10 @@ export function DashboardPage() {
           monthly: packageRevenue
         }));
       }
+
+      if (dashboardMetadata) {
+        setCoachTimezone(dashboardMetadata.timezone);
+      }
     }
 
     void loadDashboardData();
@@ -99,6 +110,15 @@ export function DashboardPage() {
       isActive = false;
     };
   }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(new Date()), 60_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  const activeTaskCount = getActiveTaskCount(tasks);
+  const dashboardSubtitle = `${formatDashboardDate(now, coachTimezone)} - ${activeTaskCount} ${activeTaskCount === 1 ? "pipeline action" : "pipeline actions"} require attention.`;
 
   const toggleTask = async (category: DashboardTaskCategory, taskId: string) => {
     const targetTask = tasks[category].find((task) => task.id === taskId);
@@ -207,7 +227,7 @@ export function DashboardPage() {
     <div className="p-6 md:p-8">
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold">Coach Operations Dashboard</h1>
-        <p className="text-gray-600">Monday, October 24th — 12 pipeline actions require attention.</p>
+        <p className="text-gray-600">{dashboardSubtitle}</p>
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-3">
@@ -331,6 +351,21 @@ async function loadStripeFinancialMetric(period: RevenuePeriod, startDate?: stri
   }
 }
 
+async function loadDashboardMetadata() {
+  try {
+    const response = await fetch("/api/v1/dashboard/metadata");
+
+    if (!response.ok) {
+      throw new Error("Dashboard metadata API unavailable.");
+    }
+
+    const payload = (await response.json()) as { data: ApiDashboardMetadata };
+    return payload.data;
+  } catch {
+    return null;
+  }
+}
+
 function buildFinancialReportingUrl(period: RevenuePeriod, startDate?: string, endDate?: string) {
   const params = new URLSearchParams({ period });
 
@@ -403,6 +438,61 @@ function getPriorityRank(priority?: DashboardTask["priority"]) {
 
 function getDueAtFromDateInput(dueDate: string) {
   return dueDate ? `${dueDate}T00:00:00.000Z` : null;
+}
+
+function getActiveTaskCount(tasks: Record<DashboardTaskCategory, DashboardTask[]>) {
+  return Object.values(tasks).reduce(
+    (total, categoryTasks) => total + categoryTasks.filter((task) => !task.completed).length,
+    0
+  );
+}
+
+function formatDashboardDate(date: Date, timezone: string) {
+  const parts = getDashboardDateParts(date, timezone);
+  const weekday = parts.find((part) => part.type === "weekday")?.value ?? "";
+  const month = parts.find((part) => part.type === "month")?.value ?? "";
+  const day = Number(parts.find((part) => part.type === "day")?.value ?? "0");
+
+  return `${weekday}, ${month} ${day}${getOrdinalSuffix(day)}`;
+}
+
+function getDashboardDateParts(date: Date, timezone: string) {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      timeZone: timezone
+    }).formatToParts(date);
+  } catch {
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC"
+    }).formatToParts(date);
+  }
+}
+
+function getOrdinalSuffix(day: number) {
+  if (day >= 11 && day <= 13) {
+    return "th";
+  }
+
+  switch (day % 10) {
+    case 1:
+      return "st";
+    case 2:
+      return "nd";
+    case 3:
+      return "rd";
+    default:
+      return "th";
+  }
+}
+
+function getBrowserTimezone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 
 function formatCents(amount: number, currency = "USD") {

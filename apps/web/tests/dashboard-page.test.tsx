@@ -5,6 +5,7 @@ import { DashboardPage } from "@/components/dashboard/dashboard-page";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe("DashboardPage", () => {
@@ -209,6 +210,66 @@ describe("DashboardPage", () => {
     expect(checkInsCard).not.toBeNull();
     expect(within(checkInsCard as HTMLElement).getAllByText("2")).toHaveLength(2);
     expect(within(checkInsCard as HTMLElement).getByText("Pending")).toBeInTheDocument();
+  });
+
+  it("renders the dashboard subtitle from the coach timezone and active dashboard task count", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-06-07T13:30:00.000Z"));
+
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/dashboard/metadata") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { timezone: "Pacific/Auckland" } }), { status: 200 })
+        );
+      }
+
+      if (url === "/api/v1/tasks?limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "task_open_1",
+                  title: "Review onboarding form",
+                  category: "new-client-onboarding",
+                  priority: "high",
+                  status: "open",
+                  dueAt: "2026-06-08T00:00:00.000Z"
+                },
+                {
+                  id: "task_open_2",
+                  title: "Reply to client check-in",
+                  category: "current-client-care",
+                  priority: "medium",
+                  status: "open",
+                  dueAt: "2026-06-08T00:00:00.000Z"
+                },
+                {
+                  id: "task_completed",
+                  title: "Completed task",
+                  category: "business-operations",
+                  priority: "low",
+                  status: "completed",
+                  dueAt: "2026-06-08T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+
+    expect(
+      await screen.findByText("Monday, June 8th - 2 pipeline actions require attention.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Monday, October 24th/i)).not.toBeInTheDocument();
   });
 
   it("replaces client activity with a live CRM stage summary", async () => {
