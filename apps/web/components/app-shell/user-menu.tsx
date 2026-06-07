@@ -2,6 +2,7 @@
 
 import { Building2, CreditCard, LogOut, UsersRound } from "lucide-react";
 import Link from "next/link";
+import type { Route } from "next";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -127,7 +128,7 @@ export function UserMenu() {
               Team management
             </Link>
             <Link
-              href="/packages"
+              href={"/organization-settings" as Route}
               role="menuitem"
               className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
               onClick={() => {
@@ -135,7 +136,7 @@ export function UserMenu() {
               }}
             >
               <CreditCard className="size-4 text-slate-500" aria-hidden="true" />
-              Packages and billing
+              Subscription and billing
             </Link>
           </div>
 

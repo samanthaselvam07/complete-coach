@@ -54,9 +54,9 @@ describe("auth UI", () => {
       "href",
       "/team-management"
     );
-    expect(screen.getByRole("menuitem", { name: /packages and billing/i })).toHaveAttribute(
+    expect(screen.getByRole("menuitem", { name: /subscription and billing/i })).toHaveAttribute(
       "href",
-      "/packages"
+      "/organization-settings"
     );
 
     fireEvent.click(within(menu).getByRole("menuitem", { name: /sign out/i }));

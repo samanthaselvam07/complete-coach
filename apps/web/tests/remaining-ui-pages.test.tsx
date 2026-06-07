@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import AddResourceRoute from "@/app/education/add/page";
 import EducationRoute from "@/app/education/page";
 import MessagesRoute from "@/app/messages/page";
+import OrganizationSettingsRoute from "@/app/organization-settings/page";
 import PackagesRoute from "@/app/packages/page";
 import SocialMediaRoute from "@/app/social-media/page";
 import SupplementDatabaseRoute from "@/app/supplementation/database/page";
@@ -13,6 +14,7 @@ import TeamManagementRoute from "@/app/team-management/page";
 import { MessagesPage } from "@/components/messages/messages-page";
 import { AddResourcePage } from "@/components/education/add-resource-page";
 import { EducationPage } from "@/components/education/education-page";
+import { OrganizationSettingsPage } from "@/components/organization/organization-settings-page";
 import { SupplementDatabasePage } from "@/components/supplementation/supplement-database-page";
 import { SupplementPlansPage } from "@/components/supplementation/supplement-plans-page";
 import { SupplementationPage } from "@/components/supplementation/supplementation-page";
@@ -28,6 +30,7 @@ const routeSmokeCases = [
   ["supplement plans", SupplementPlansRoute, "Supplementation Hub"],
   ["supplement database", SupplementDatabaseRoute, "Supplementation Library"],
   ["messages", MessagesRoute, "Messages"],
+  ["organization settings", OrganizationSettingsRoute, "Organisation Settings"],
   ["packages", PackagesRoute, "Package Ecosystem"],
   ["team management", TeamManagementRoute, "Team Management"],
   ["social media", SocialMediaRoute, "Social Planner"]
@@ -56,6 +59,25 @@ describe("SupplementationPage", () => {
     expect(screen.getByRole("tab", { name: "Protocol Library" })).toBeInTheDocument();
     expect(screen.getByText("Alex Rivera")).toBeInTheDocument();
     expect(screen.getByText("Vitamin D3 + K2")).toBeInTheDocument();
+  });
+});
+
+describe("OrganizationSettingsPage", () => {
+  it("separates operating system billing from coaching package management", () => {
+    render(createElement(OrganizationSettingsPage));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Organisation Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Subscription & Billing" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("Complete Coach Operating System")).toBeInTheDocument();
+    expect(screen.getByText(/This is your organisation subscription/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Manage coaching packages" })).toHaveAttribute("href", "/packages");
+
+    fireEvent.click(screen.getByRole("tab", { name: "Team Management" }));
+    expect(screen.getByRole("link", { name: "Open team management" })).toHaveAttribute("href", "/team-management");
+
+    fireEvent.click(screen.getByRole("tab", { name: "Role Permissions" }));
+    expect(screen.getByRole("table", { name: "Role permissions matrix" })).toBeInTheDocument();
+    expect(screen.getByText("payments:manage")).toBeInTheDocument();
   });
 });
 
