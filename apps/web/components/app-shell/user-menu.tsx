@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CreditCard, LogOut, UsersRound } from "lucide-react";
+import { Building2, LogOut } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { signOut, useSession } from "next-auth/react";
@@ -117,17 +117,6 @@ export function UserMenu() {
 
           <div className="space-y-1">
             <Link
-              href="/team-management"
-              role="menuitem"
-              className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-              onClick={() => {
-                setMenuOpen(false);
-              }}
-            >
-              <UsersRound className="size-4 text-slate-500" aria-hidden="true" />
-              Team management
-            </Link>
-            <Link
               href={"/organization-settings" as Route}
               role="menuitem"
               className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
@@ -135,8 +124,8 @@ export function UserMenu() {
                 setMenuOpen(false);
               }}
             >
-              <CreditCard className="size-4 text-slate-500" aria-hidden="true" />
-              Subscription and billing
+              <Building2 className="size-4 text-slate-500" aria-hidden="true" />
+              Organisation Settings
             </Link>
           </div>
 

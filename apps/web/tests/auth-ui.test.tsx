@@ -50,14 +50,12 @@ describe("auth UI", () => {
 
     expect(screen.getByText("Demo Coach")).toBeInTheDocument();
     expect(screen.getByText("Complete Coach Demo · owner")).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: /team management/i })).toHaveAttribute(
-      "href",
-      "/team-management"
-    );
-    expect(screen.getByRole("menuitem", { name: /subscription and billing/i })).toHaveAttribute(
+    expect(screen.getByRole("menuitem", { name: /organisation settings/i })).toHaveAttribute(
       "href",
       "/organization-settings"
     );
+    expect(screen.queryByRole("menuitem", { name: /team management/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /subscription and billing/i })).not.toBeInTheDocument();
 
     fireEvent.click(within(menu).getByRole("menuitem", { name: /sign out/i }));
 

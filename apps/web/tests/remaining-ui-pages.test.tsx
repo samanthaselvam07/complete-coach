@@ -77,7 +77,14 @@ describe("OrganizationSettingsPage", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "Role Permissions" }));
     expect(screen.getByRole("table", { name: "Role permissions matrix" })).toBeInTheDocument();
-    expect(screen.getByText("payments:manage")).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Team member feature permissions" })).toBeInTheDocument();
+    expect(screen.getAllByText("payments:manage")).toHaveLength(2);
+    expect(screen.getAllByText("api_keys:manage")).toHaveLength(2);
+    expect(screen.getByLabelText("Toggle payments:manage for Marcus Chen")).toHaveAttribute("aria-checked", "false");
+
+    fireEvent.click(screen.getByLabelText("Toggle payments:manage for Marcus Chen"));
+
+    expect(screen.getByLabelText("Toggle payments:manage for Marcus Chen")).toHaveAttribute("aria-checked", "true");
   });
 
   it("keeps audit logs inside organization settings instead of the main navigation", async () => {

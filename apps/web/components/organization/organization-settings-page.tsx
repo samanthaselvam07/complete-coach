@@ -37,19 +37,32 @@ const tabs: Array<{
   }
 ];
 
-const permissionRows: Capability[] = [
-  "clients:read",
-  "clients:write",
-  "submissions:review",
-  "training:assign",
-  "nutrition:assign",
-  "payments:read",
-  "payments:manage",
-  "team:manage",
-  "audit:read"
+const visibleRoles: MembershipRole[] = ["owner", "admin", "coach", "assistant"];
+
+const permissionTeamMembers: Array<{
+  id: string;
+  name: string;
+  role: Exclude<MembershipRole, "client">;
+}> = [
+  { id: "sarah", name: "Sarah Jenkins", role: "admin" },
+  { id: "marcus", name: "Marcus Chen", role: "coach" },
+  { id: "derek", name: "Derek Vance", role: "coach" },
+  { id: "elena", name: "Elena Rodriguez", role: "assistant" }
 ];
 
-const visibleRoles: MembershipRole[] = ["owner", "admin", "coach", "assistant"];
+function buildInitialMemberPermissions() {
+  return Object.fromEntries(
+    permissionTeamMembers.map((member) => [
+      member.id,
+      Object.fromEntries(
+        ALL_CAPABILITIES.map((capability) => [
+          capability,
+          getCapabilitiesForRole(member.role).includes(capability)
+        ])
+      ) as Record<Capability, boolean>
+    ])
+  ) as Record<string, Record<Capability, boolean>>;
+}
 
 export function OrganizationSettingsPage() {
   const [activeTab, setActiveTab] = useState<OrganizationSettingsTab>("billing");
@@ -191,39 +204,110 @@ function TeamManagementPanel() {
 }
 
 function RolePermissionsPanel() {
-  return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200">
-      <table className="w-full min-w-[720px] text-left text-sm" aria-label="Role permissions matrix">
-        <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-          <tr>
-            <th className="px-4 py-3">Capability</th>
-            {visibleRoles.map((role) => (
-              <th key={role} className="px-4 py-3 capitalize">{role}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {permissionRows.map((capability) => (
-            <tr key={capability}>
-              <td className="px-4 py-3 font-mono text-xs text-slate-700">{capability}</td>
-              {visibleRoles.map((role) => {
-                const enabled = getCapabilitiesForRole(role).includes(capability);
+  const [memberPermissions, setMemberPermissions] = useState(buildInitialMemberPermissions);
 
-                return (
-                  <td key={`${role}-${capability}`} className="px-4 py-3">
-                    <span className={cn("rounded-full px-2 py-1 text-xs font-bold", enabled ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-400")}>
-                      {enabled ? "Allowed" : "Blocked"}
-                    </span>
-                  </td>
-                );
-              })}
+  const toggleMemberPermission = (memberId: string, capability: Capability) => {
+    setMemberPermissions((currentPermissions) => ({
+      ...currentPermissions,
+      [memberId]: {
+        ...currentPermissions[memberId],
+        [capability]: !currentPermissions[memberId][capability]
+      }
+    }));
+  };
+
+  return (
+    <div className="space-y-6">
+      <section className="overflow-x-auto rounded-2xl border border-slate-200">
+        <table className="w-full min-w-[720px] text-left text-sm" aria-label="Role permissions matrix">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3">Capability</th>
+              {visibleRoles.map((role) => (
+                <th key={role} className="px-4 py-3 capitalize">{role}</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
-        Matrix excerpt from {ALL_CAPABILITIES.length} tracked application capabilities.
-      </p>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {ALL_CAPABILITIES.map((capability) => (
+              <tr key={capability}>
+                <td className="px-4 py-3 font-mono text-xs text-slate-700">{capability}</td>
+                {visibleRoles.map((role) => {
+                  const enabled = getCapabilitiesForRole(role).includes(capability);
+
+                  return (
+                    <td key={`${role}-${capability}`} className="px-4 py-3">
+                      <span className={cn("rounded-full px-2 py-1 text-xs font-bold", enabled ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-400")}>
+                        {enabled ? "Allowed" : "Blocked"}
+                      </span>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+          Default role matrix covering all {ALL_CAPABILITIES.length} tracked application capabilities.
+        </p>
+      </section>
+
+      <section className="overflow-x-auto rounded-2xl border border-slate-200">
+        <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+          <h3 className="text-sm font-black text-slate-950">Team member feature permissions</h3>
+          <p className="mt-1 text-xs text-slate-500">
+            Toggle individual feature access for each team member. Role defaults are used as the starting point.
+          </p>
+        </div>
+        <table className="w-full min-w-[920px] text-left text-sm" aria-label="Team member feature permissions">
+          <thead className="border-b border-slate-200 bg-white text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="sticky left-0 z-10 bg-white px-4 py-3">Feature</th>
+              {permissionTeamMembers.map((member) => (
+                <th key={member.id} className="px-4 py-3">
+                  <span className="block text-slate-700">{member.name}</span>
+                  <span className="block text-[10px] capitalize text-slate-400">{member.role}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {ALL_CAPABILITIES.map((capability) => (
+              <tr key={`member-${capability}`}>
+                <td className="sticky left-0 z-10 bg-white px-4 py-3 font-mono text-xs text-slate-700">
+                  {capability}
+                </td>
+                {permissionTeamMembers.map((member) => {
+                  const enabled = memberPermissions[member.id][capability];
+
+                  return (
+                    <td key={`${member.id}-${capability}`} className="px-4 py-3">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={enabled}
+                        aria-label={`Toggle ${capability} for ${member.name}`}
+                        className={cn(
+                          "inline-flex h-6 w-11 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+                          enabled ? "bg-indigo-600" : "bg-slate-200"
+                        )}
+                        onClick={() => toggleMemberPermission(member.id, capability)}
+                      >
+                        <span
+                          className={cn(
+                            "size-5 rounded-full bg-white shadow-sm transition-transform",
+                            enabled ? "translate-x-5" : "translate-x-0"
+                          )}
+                        />
+                      </button>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
     </div>
   );
 }
