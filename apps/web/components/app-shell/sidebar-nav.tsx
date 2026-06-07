@@ -4,16 +4,8 @@ import Link from "next/link";
 import { ChevronDown, Zap } from "lucide-react";
 import type { Route } from "next";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
-import type { ClientSummary } from "@/fixtures/clients";
 import { cn } from "@/lib/utils";
-import {
-  ClientFormDialog,
-  createClientMutationBody,
-  emptyClientForm,
-  type ClientFormState
-} from "@/components/clients/client-form-dialog";
 import { isActivePath, navigationItems } from "./navigation";
 
 interface SidebarNavProps {
@@ -31,60 +23,13 @@ function createInitialOpenGroups() {
 }
 
 export function SidebarNav({ currentPath }: SidebarNavProps) {
-  const router = useRouter();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(createInitialOpenGroups);
-  const [clientFormOpen, setClientFormOpen] = useState(false);
-  const [clientForm, setClientForm] = useState<ClientFormState>(emptyClientForm);
-  const [clientFormError, setClientFormError] = useState<string | null>(null);
-  const [savingClient, setSavingClient] = useState(false);
 
   const toggleGroup = (href: string) => {
     setOpenGroups((current) => ({
       ...current,
       [href]: !(current[href] ?? currentPath === href)
     }));
-  };
-
-  const openClientForm = () => {
-    setClientForm(emptyClientForm);
-    setClientFormError(null);
-    setClientFormOpen(true);
-  };
-
-  const closeClientForm = () => {
-    setClientFormOpen(false);
-    setClientForm(emptyClientForm);
-    setClientFormError(null);
-  };
-
-  const saveClient = async () => {
-    setSavingClient(true);
-    setClientFormError(null);
-
-    try {
-      const response = await fetch("/api/v1/clients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(createClientMutationBody(clientForm))
-      });
-
-      if (!response.ok) {
-        throw new Error("Client could not be saved.");
-      }
-
-      const payload = (await response.json()) as { data?: ClientSummary };
-      const savedClient = payload.data;
-
-      closeClientForm();
-
-      if (savedClient) {
-        router.push(`/clients/${savedClient.id}`);
-      }
-    } catch {
-      setClientFormError("Client could not be saved. Check the details and try again.");
-    } finally {
-      setSavingClient(false);
-    }
   };
 
   return (
@@ -205,30 +150,11 @@ export function SidebarNav({ currentPath }: SidebarNavProps) {
       </nav>
 
       <div className="border-t border-sidebar-border p-4">
-        <button
-          type="button"
-          className="mb-4 w-full rounded-xl bg-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-800"
-          onClick={openClientForm}
-        >
-          + New Client
-        </button>
         <div className="rounded-xl border border-sidebar-border bg-white p-3">
           <p className="font-semibold">Coach Marcus</p>
           <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Head Curator</p>
         </div>
       </div>
-
-      {clientFormOpen ? (
-        <ClientFormDialog
-          editingClient={null}
-          form={clientForm}
-          error={clientFormError}
-          saving={savingClient}
-          onChange={(field, value) => setClientForm((currentForm) => ({ ...currentForm, [field]: value }))}
-          onClose={closeClientForm}
-          onSubmit={() => void saveClient()}
-        />
-      ) : null}
     </aside>
   );
 }

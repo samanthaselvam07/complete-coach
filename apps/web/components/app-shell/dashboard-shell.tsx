@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 
 import { AuthSessionProvider } from "@/components/auth/auth-session-provider";
 import { MessageMenu } from "./message-menu";
+import { NewClientButton } from "./new-client-button";
 import { NotificationMenu } from "./notification-menu";
 import { SidebarNav } from "./sidebar-nav";
 import { TopSearch } from "./top-search";
@@ -68,6 +69,7 @@ function DashboardShellContent({ children }: DashboardShellProps) {
         <header className="sticky top-0 z-40 flex h-20 items-center justify-between gap-4 border-b border-border bg-white/95 px-8 backdrop-blur">
           <TopSearch />
           <div className="flex items-center gap-3">
+            <NewClientButton />
             <MessageMenu />
             <NotificationMenu />
             <UserMenu />

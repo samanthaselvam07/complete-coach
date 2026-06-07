@@ -4,6 +4,7 @@ import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardShell } from "@/components/app-shell/dashboard-shell";
 import { MessageMenu } from "@/components/app-shell/message-menu";
+import { NewClientButton } from "@/components/app-shell/new-client-button";
 import { NotificationMenu } from "@/components/app-shell/notification-menu";
 import { SidebarNav } from "@/components/app-shell/sidebar-nav";
 import { TopSearch } from "@/components/app-shell/top-search";
@@ -202,7 +203,16 @@ describe("app shell navigation", () => {
     );
   });
 
-  it("creates a new client from the sidebar quick action", async () => {
+  it("keeps the sidebar focused on navigation without the new client action", () => {
+    render(createElement(SidebarNav, { currentPath: "/" }));
+    const nav = screen.getByRole("navigation", { name: /primary navigation/i });
+
+    expect(within(nav).getByRole("link", { name: /^dashboard$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "New Client" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "+ New Client" })).not.toBeInTheDocument();
+  });
+
+  it("creates a new client from the top navigation quick action", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -223,9 +233,9 @@ describe("app shell navigation", () => {
       )
     );
 
-    render(createElement(SidebarNav, { currentPath: "/" }));
+    render(createElement(NewClientButton));
 
-    fireEvent.click(screen.getByRole("button", { name: "+ New Client" }));
+    fireEvent.click(screen.getByRole("button", { name: "New Client" }));
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Sidebar" } });
     fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Client" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "sidebar@example.com" } });
@@ -240,8 +250,7 @@ describe("app shell navigation", () => {
         body: expect.stringContaining("sidebar@example.com")
       })
     );
-    expect(await screen.findByRole("navigation", { name: /primary navigation/i })).toBeInTheDocument();
-    expect(navigationMocks.push).toHaveBeenCalledWith("/clients/client_sidebar_1");
+    await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/clients/client_sidebar_1"));
   });
 });
 
@@ -287,6 +296,7 @@ describe("dashboard shell auth boundary", () => {
 
     expect(screen.getByRole("navigation", { name: /primary navigation/i })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: /search tasks/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New Client" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /messages/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /notifications/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /open account menu for demo coach/i }));
