@@ -6,6 +6,7 @@ import { DashboardShell } from "@/components/app-shell/dashboard-shell";
 import { MessageMenu } from "@/components/app-shell/message-menu";
 import { NewClientButton } from "@/components/app-shell/new-client-button";
 import { NotificationMenu } from "@/components/app-shell/notification-menu";
+import { ScheduleEventButton } from "@/components/app-shell/schedule-event-button";
 import { SidebarNav } from "@/components/app-shell/sidebar-nav";
 import { TopSearch } from "@/components/app-shell/top-search";
 
@@ -296,6 +297,7 @@ describe("dashboard shell auth boundary", () => {
 
     expect(screen.getByRole("navigation", { name: /primary navigation/i })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: /search tasks/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Schedule Event / Call" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "New Client" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /messages/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /notifications/i })).toBeInTheDocument();
@@ -312,6 +314,20 @@ describe("topbar controls", () => {
     expect(
       screen.getByRole("searchbox", { name: /search tasks, clients, or pipeline/i })
     ).toBeInTheDocument();
+  });
+
+  it("opens a mini scheduling flow from the top navigation", () => {
+    render(createElement(ScheduleEventButton));
+
+    fireEvent.click(screen.getByRole("button", { name: "Schedule Event / Call" }));
+
+    expect(screen.getByRole("dialog", { name: "Schedule Event or Coaching Call" })).toBeInTheDocument();
+    expect(screen.getByText("Google Meet Integration")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View Calendar" })).toHaveAttribute("href", "/schedule");
+
+    fireEvent.click(screen.getByRole("button", { name: "Close schedule event" }));
+
+    expect(screen.queryByRole("dialog", { name: "Schedule Event or Coaching Call" })).not.toBeInTheDocument();
   });
 });
 
@@ -335,6 +351,18 @@ describe("notifications", () => {
     fireEvent.click(within(menu).getByRole("button", { name: /mark all as read/i }));
 
     expect(screen.getByRole("button", { name: /notifications/i })).toHaveTextContent("0");
+  });
+
+  it("closes the notification popup when clicking outside it", () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+    render(createElement(NotificationMenu));
+
+    fireEvent.click(screen.getByRole("button", { name: /notifications/i }));
+    expect(screen.getByRole("region", { name: /notifications/i })).toBeInTheDocument();
+
+    fireEvent.pointerDown(document.body);
+
+    expect(screen.queryByRole("region", { name: /notifications/i })).not.toBeInTheDocument();
   });
 
   it("loads persisted notifications and marks them read through the API", async () => {
@@ -449,6 +477,18 @@ describe("messages menu", () => {
     expect(within(menu).getByText("Sarah Johnson")).toBeInTheDocument();
     expect(within(menu).getByText("Thanks for the updated meal plan!")).toBeInTheDocument();
     expect(within(menu).getByRole("link", { name: "Open full inbox" })).toHaveAttribute("href", "/messages");
+  });
+
+  it("closes the messages popup when clicking outside it", () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+    render(createElement(MessageMenu));
+
+    fireEvent.click(screen.getByRole("button", { name: /messages/i }));
+    expect(screen.getByRole("region", { name: "Messages" })).toBeInTheDocument();
+
+    fireEvent.pointerDown(document.body);
+
+    expect(screen.queryByRole("region", { name: "Messages" })).not.toBeInTheDocument();
   });
 
   it("loads persisted conversations in the inline messages window", async () => {

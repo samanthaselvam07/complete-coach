@@ -25,15 +25,15 @@ describe("NutritionPage", () => {
 });
 
 describe("MealPlansPage", () => {
-  it("switches between active assignments and master templates", () => {
+  it("switches between meal plans and meal templates", () => {
     render(createElement(MealPlansPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Meal Plan Library" })).toBeInTheDocument();
     expect(screen.getByText("James S. Miller")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Master Nutrition Templates" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
 
-    expect(screen.getByRole("tabpanel", { name: "Master Nutrition Templates" })).toHaveTextContent(
+    expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent(
       "High-Protein Breakfast Bowl"
     );
     expect(screen.queryByText("James S. Miller")).not.toBeInTheDocument();
@@ -42,10 +42,27 @@ describe("MealPlansPage", () => {
   it("renders meal-plan actions", () => {
     render(createElement(MealPlansPage));
 
-    expect(screen.getByRole("button", { name: "Recipes" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Access Protocol" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Recipes" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Access Protocol" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Master Nutrition Protocol 2024")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "View All Active" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create Meal Template" })).toBeInTheDocument();
+  });
+
+  it("opens the meal plan quick action menu and closes it from the page overlay", () => {
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(screen.getAllByRole("button", { name: /more actions for/i })[0]);
+
+    const menu = screen.getByRole("menu", { name: /meal plan actions/i });
+    expect(within(menu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Assign to" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Copy" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close meal plan actions" }));
+
+    expect(screen.queryByRole("menu", { name: /meal plan actions/i })).not.toBeInTheDocument();
   });
 
   it("loads persisted meal templates and assignments when the API is available", async () => {
@@ -118,9 +135,9 @@ describe("MealPlansPage", () => {
     expect(await screen.findByText("Persisted Nutrition Client")).toBeInTheDocument();
     expect(screen.getByText("Persisted Hypertrophy Fuel")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Master Nutrition Templates" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
 
-    expect(screen.getByRole("tabpanel", { name: "Master Nutrition Templates" })).toHaveTextContent(
+    expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent(
       "Hypertrophy protocol"
     );
     expect(screen.queryByText("High-Protein Breakfast Bowl")).not.toBeInTheDocument();
@@ -168,7 +185,7 @@ describe("MealPlansPage", () => {
         body: expect.stringContaining("Performance Meal Template 1")
       })
     );
-    expect(screen.getByRole("tabpanel", { name: "Master Nutrition Templates" })).toHaveTextContent(
+    expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent(
       "Performance Meal Template 1"
     );
   });
@@ -262,7 +279,7 @@ describe("MealPlansPage", () => {
 
     render(createElement(MealPlansPage));
 
-    fireEvent.click(await screen.findByRole("tab", { name: "Master Nutrition Templates" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
     fireEvent.click(screen.getByRole("button", { name: "Use Template" }));
     fireEvent.change(screen.getByLabelText("Client"), { target: { value: "client_api" } });
     fireEvent.click(screen.getByRole("button", { name: "Assign Meal Plan" }));
@@ -275,7 +292,7 @@ describe("MealPlansPage", () => {
         body: expect.stringContaining("client_api")
       })
     );
-    expect(screen.getByRole("tabpanel", { name: "Active Client Assignments" })).toHaveTextContent(
+    expect(screen.getByRole("tabpanel", { name: "Meal Plans" })).toHaveTextContent(
       "Persisted Nutrition Client"
     );
   });
@@ -298,7 +315,7 @@ describe("MealPlansPage", () => {
 
     expect(await screen.findByText("No active meal plans have been assigned yet.")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Master Nutrition Templates" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
 
     expect(screen.getByText("No meal plan templates exist yet. Create a new template to start the library.")).toBeInTheDocument();
   });
@@ -388,7 +405,7 @@ describe("MealPlansPage", () => {
 
     render(createElement(MealPlansPage));
 
-    fireEvent.click(await screen.findByRole("tab", { name: "Master Nutrition Templates" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
     fireEvent.click(screen.getByRole("button", { name: "Use Template" }));
     fireEvent.change(screen.getByLabelText("Client"), { target: { value: "client_api" } });
     fireEvent.click(screen.getByRole("button", { name: "Assign Meal Plan" }));

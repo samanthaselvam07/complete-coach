@@ -37,6 +37,22 @@ export function AddExercisePage() {
     );
   };
 
+  const updateTargetRepRange = (rangeIndex: 0 | 1, rawValue: string) => {
+    const parsedValue = Number(rawValue);
+
+    if (!Number.isFinite(parsedValue)) {
+      return;
+    }
+
+    const nextValue = Math.max(1, Math.min(50, parsedValue));
+
+    setTargetReps(([lowerRange, upperRange]) =>
+      rangeIndex === 0
+        ? [Math.min(nextValue, upperRange), upperRange]
+        : [lowerRange, Math.max(nextValue, lowerRange)]
+    );
+  };
+
   const addCoachingCue = () => {
     const trimmedCue = newCue.trim();
 
@@ -264,23 +280,37 @@ export function AddExercisePage() {
 
                 <div>
                   <div className="mb-3 flex items-center justify-between">
-                    <label htmlFor="target-reps" className="text-sm font-medium text-gray-700">
-                      Target Reps
-                    </label>
+                    <p className="text-sm font-medium text-gray-700">Target Reps</p>
                     <span className="text-sm font-bold text-gray-900">
                       {targetReps[0]} - {targetReps[1]}
                     </span>
                   </div>
-                  <input
-                    id="target-reps"
-                    type="range"
-                    aria-label="Target reps upper range"
-                    min="1"
-                    max="20"
-                    value={targetReps[1]}
-                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-indigo-600"
-                    onChange={(event) => setTargetReps([targetReps[0], Number(event.target.value)])}
-                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label htmlFor="target-reps-lower" className="grid gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Lower range
+                      <input
+                        id="target-reps-lower"
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={targetReps[0]}
+                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        onChange={(event) => updateTargetRepRange(0, event.target.value)}
+                      />
+                    </label>
+                    <label htmlFor="target-reps-upper" className="grid gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Upper range
+                      <input
+                        id="target-reps-upper"
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={targetReps[1]}
+                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        onChange={(event) => updateTargetRepRange(1, event.target.value)}
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
             </section>

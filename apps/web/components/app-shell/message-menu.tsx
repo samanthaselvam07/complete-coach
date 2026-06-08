@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { MessageSquare } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { conversations } from "@/fixtures/operations";
+import { useCloseOnOutsideClick } from "./use-close-on-outside-click";
 
 interface ApiConversation {
   id: string;
@@ -34,9 +35,13 @@ interface UiConversation {
 const fixtureConversations = conversations.slice(0, 4);
 
 export function MessageMenu() {
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [conversationList, setConversationList] = useState<UiConversation[]>(fixtureConversations);
   const messageCount = conversationList.reduce((total, conversation) => total + conversation.unread, 0) || conversationList.length;
+  const closeMenu = useCallback(() => setIsOpen(false), []);
+
+  useCloseOnOutsideClick(menuRef, isOpen, closeMenu);
 
   useEffect(() => {
     let isActive = true;
@@ -70,7 +75,7 @@ export function MessageMenu() {
   }, []);
 
   return (
-    <div className="relative">
+    <div ref={menuRef} className="relative">
       <Button
         type="button"
         variant="ghost"

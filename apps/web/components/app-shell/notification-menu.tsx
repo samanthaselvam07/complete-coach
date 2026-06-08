@@ -1,11 +1,12 @@
 "use client";
 
 import { Bell, CheckCircle2, ClipboardCheck, FileText, MessageCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { initialNotifications } from "./notifications";
+import { useCloseOnOutsideClick } from "./use-close-on-outside-click";
 
 const notificationIconClass = {
   "check-in": "bg-green-50 text-green-700",
@@ -22,10 +23,14 @@ const notificationIcons = {
 };
 
 export function NotificationMenu() {
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [notificationSource, setNotificationSource] = useState<"api" | "fixture">("fixture");
   const [notifications, setNotifications] = useState(initialNotifications);
   const unreadCount = notifications.filter((notification) => notification.unread).length;
+  const closeMenu = useCallback(() => setIsOpen(false), []);
+
+  useCloseOnOutsideClick(menuRef, isOpen, closeMenu);
 
   useEffect(() => {
     let isActive = true;
@@ -84,7 +89,7 @@ export function NotificationMenu() {
   };
 
   return (
-    <div className="relative">
+    <div ref={menuRef} className="relative">
       <Button
         type="button"
         variant="ghost"

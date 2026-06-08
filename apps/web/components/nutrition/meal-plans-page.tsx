@@ -1,13 +1,13 @@
 "use client";
 
-import { Calendar, Download, Edit, MoreVertical, Plus } from "lucide-react";
+import { Calendar, ClipboardCopy, Edit, MoreVertical, Plus, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
 import { mealAssignments, mealTemplates } from "@/fixtures/nutrition";
 import { cn } from "@/lib/utils";
 
-type MealPlanTab = "Active Client Assignments" | "Master Nutrition Templates";
+type MealPlanTab = "Meal Plans" | "Meal Templates";
 export type MealPlanSource = "api" | "fixtures";
 
 export interface ApiMealPlanTemplate {
@@ -87,7 +87,7 @@ export interface MealAssignmentRow {
 }
 
 export function MealPlansPage() {
-  const [activeTab, setActiveTab] = useState<MealPlanTab>("Active Client Assignments");
+  const [activeTab, setActiveTab] = useState<MealPlanTab>("Meal Plans");
   const [templates, setTemplates] = useState<ApiMealPlanTemplate[]>([]);
   const [assignments, setAssignments] = useState<ApiMealPlanAssignment[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
@@ -200,7 +200,7 @@ export function MealPlansPage() {
 
       setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
       setSource("api");
-      setActiveTab("Master Nutrition Templates");
+      setActiveTab("Meal Templates");
       setStatusMessage("Meal plan template saved to persistence API.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Meal template could not be saved.");
@@ -241,7 +241,7 @@ export function MealPlansPage() {
       setAssignments((currentAssignments) => [payload.data, ...currentAssignments]);
       setSelectedTemplate(null);
       setSelectedClientId("");
-      setActiveTab("Active Client Assignments");
+      setActiveTab("Meal Plans");
       setStatusMessage("Meal plan assigned to client.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Meal plan could not be assigned.");
@@ -259,20 +259,6 @@ export function MealPlansPage() {
             <p className="text-gray-600">Manage client nutrition protocols</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {["Recipes", "Keto", "Low", "Moderate", "High"].map((label) => (
-              <button
-                key={label}
-                type="button"
-                className={cn(
-                  "rounded-lg px-4 py-2.5 text-sm transition-colors",
-                  label === "Recipes"
-                    ? "bg-orange-500 text-white hover:bg-orange-600"
-                    : "border border-gray-200 bg-white hover:bg-gray-50"
-                )}
-              >
-                {label}
-              </button>
-            ))}
             <button
               type="button"
               className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
@@ -284,17 +270,6 @@ export function MealPlansPage() {
             </button>
           </div>
         </div>
-
-        <section className="mb-8 flex h-64 items-center justify-between overflow-hidden rounded-2xl bg-gradient-to-r from-green-600 to-green-700 p-8">
-          <div className="text-white">
-            <h2 className="mb-2 text-3xl font-bold">Master Nutrition Protocol 2024</h2>
-            <p className="text-lg text-green-100">Complete evidence-based meal planning system</p>
-          </div>
-          <button className="flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-green-700 transition-colors hover:bg-green-50">
-            <Download className="size-4" aria-hidden="true" />
-            Access Protocol
-          </button>
-        </section>
       </div>
 
       {loading ? <p className="mb-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">Loading persisted meal plan library...</p> : null}
@@ -308,7 +283,7 @@ export function MealPlansPage() {
 
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div role="tablist" aria-label="Meal plan sections" className="flex items-center gap-8 border-b border-gray-200">
-          {(["Active Client Assignments", "Master Nutrition Templates"] as MealPlanTab[]).map((tab) => (
+          {(["Meal Plans", "Meal Templates"] as MealPlanTab[]).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -324,12 +299,12 @@ export function MealPlansPage() {
             </button>
           ))}
         </div>
-        {activeTab === "Active Client Assignments" ? (
+        {activeTab === "Meal Plans" ? (
           <button className="text-sm font-medium text-indigo-600 hover:text-indigo-700">View All Active</button>
         ) : null}
       </div>
 
-      {activeTab === "Active Client Assignments" ? (
+      {activeTab === "Meal Plans" ? (
         <ActiveAssignmentsPanel assignments={assignmentRows} />
       ) : (
         <MasterTemplatesPanel
@@ -363,8 +338,18 @@ export function MealPlansPage() {
 }
 
 function ActiveAssignmentsPanel({ assignments }: { assignments: MealAssignmentRow[] }) {
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+
   return (
-    <section role="tabpanel" aria-label="Active Client Assignments" className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <section role="tabpanel" aria-label="Meal Plans" className="relative overflow-visible rounded-xl border border-gray-200 bg-white">
+      {openActionMenuId ? (
+        <button
+          type="button"
+          aria-label="Close meal plan actions"
+          className="fixed inset-0 z-20 cursor-default bg-transparent"
+          onClick={() => setOpenActionMenuId(null)}
+        />
+      ) : null}
       <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600">
         <div className="col-span-3">Assigned Client</div>
         <div className="col-span-3">Meal Plan Protocol</div>
@@ -384,13 +369,20 @@ function ActiveAssignmentsPanel({ assignments }: { assignments: MealAssignmentRo
           <div className="col-span-1 text-sm font-medium text-green-600">{assignment.carbs}g</div>
           <div className="col-span-1 text-sm font-medium text-orange-600">{assignment.fats}g</div>
           <div className="col-span-1 text-sm text-gray-600">{assignment.started}</div>
-          <div className="col-span-1 flex items-center gap-2">
+          <div className="relative z-30 col-span-1 flex items-center gap-2">
             <button aria-label={`Edit ${assignment.planName}`} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50">
               <Edit className="size-4" aria-hidden="true" />
             </button>
-            <button aria-label={`More actions for ${assignment.planName}`} className="rounded-lg p-2 text-gray-600 hover:bg-gray-100">
+            <button
+              type="button"
+              aria-label={`More actions for ${assignment.planName}`}
+              aria-expanded={openActionMenuId === assignment.id}
+              className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+              onClick={() => setOpenActionMenuId((currentId) => (currentId === assignment.id ? null : assignment.id))}
+            >
               <MoreVertical className="size-4" aria-hidden="true" />
             </button>
+            {openActionMenuId === assignment.id ? <MealPlanActionMenu planName={assignment.planName} /> : null}
           </div>
         </article>
       ))}
@@ -398,6 +390,39 @@ function ActiveAssignmentsPanel({ assignments }: { assignments: MealAssignmentRo
         <p className="px-6 py-8 text-center text-sm text-gray-600">No active meal plans have been assigned yet.</p>
       ) : null}
     </section>
+  );
+}
+
+function MealPlanActionMenu({ planName }: { planName: string }) {
+  const actions = [
+    { label: "Edit", icon: Edit },
+    { label: "Delete", icon: Trash2 },
+    { label: "Assign to", icon: UserPlus },
+    { label: "Copy", icon: ClipboardCopy }
+  ];
+
+  return (
+    <div
+      role="menu"
+      aria-label={`Meal plan actions for ${planName}`}
+      className="absolute right-0 top-10 z-50 w-44 rounded-xl border border-gray-200 bg-white py-2 shadow-xl"
+    >
+      {actions.map((action) => {
+        const Icon = action.icon;
+
+        return (
+          <button
+            key={action.label}
+            type="button"
+            role="menuitem"
+            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <Icon className="size-4 text-slate-500" aria-hidden="true" />
+            {action.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -411,18 +436,7 @@ function MasterTemplatesPanel({
   onUseTemplate: (template: MealTemplateCard) => void;
 }) {
   return (
-    <section role="tabpanel" aria-label="Master Nutrition Templates">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {["All", "Strength", "Endurance"].map((filter) => (
-            <button key={filter} className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm transition-colors hover:bg-gray-50">
-              {filter}
-            </button>
-          ))}
-        </div>
-        <button className="text-sm font-medium text-indigo-600 hover:text-indigo-700">View All</button>
-      </div>
-
+    <section role="tabpanel" aria-label="Meal Templates">
       <div className="grid gap-6 md:grid-cols-3">
         {templates.map((template) => (
           <article key={template.id} className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg">
