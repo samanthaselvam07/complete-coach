@@ -237,7 +237,7 @@ describe("DashboardPage", () => {
 
     render(createElement(DashboardPage));
 
-    expect(await screen.findByText("Persisted client review")).toBeInTheDocument();
+    expect(await screen.findAllByText("Persisted client review")).toHaveLength(2);
     expect(screen.getByText("Due Jun 14")).toBeInTheDocument();
     expect(screen.getByText("76% LOAD")).toBeInTheDocument();
     expect(screen.getByText("Room for 18 more premium athletes across 3 coaches")).toBeInTheDocument();
@@ -664,7 +664,7 @@ describe("DashboardPage", () => {
 
     render(createElement(DashboardPage));
 
-    await screen.findByText("High priority early task");
+    await screen.findAllByText("High priority early task");
 
     const clientWork = screen.getByRole("region", { name: "Client Work" });
     const taskButtons = within(clientWork).getAllByRole("button");

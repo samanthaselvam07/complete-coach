@@ -12,6 +12,7 @@ import {
   type TeamCapacityMember
 } from "./metric-cards";
 import { TaskCreationPanel } from "./task-creation-panel";
+import { getWeeklyScheduleDays, WeeklyScheduleCalendar } from "./weekly-schedule-calendar";
 import { WorkTodoSection } from "./work-todo-section";
 import {
   dashboardTasks,
@@ -139,6 +140,7 @@ export function DashboardPage() {
   const dashboardWeekday = getDashboardWeekday(now, coachTimezone);
   const todaysCheckInClients = getClientsCheckingInOnDay(activeClients, dashboardWeekday);
   const dashboardSubtitle = `${formatDashboardDate(now, coachTimezone)} - ${activeTaskCount} ${activeTaskCount === 1 ? "pipeline action requires" : "pipeline actions require"} attention.`;
+  const weeklyScheduleDays = getWeeklyScheduleDays(tasks, now, coachTimezone);
 
   const toggleTask = async (category: DashboardTaskCategory, taskId: string) => {
     const targetTask = tasks[category].find((task) => task.id === taskId);
@@ -249,6 +251,8 @@ export function DashboardPage() {
         <h1 className="mb-2 text-3xl font-bold">Coach Operations Dashboard</h1>
         <p className="text-gray-600">{dashboardSubtitle}</p>
       </div>
+
+      <WeeklyScheduleCalendar days={weeklyScheduleDays} />
 
       <div className="mb-8 grid gap-6 lg:grid-cols-4">
         <FinancialCard
