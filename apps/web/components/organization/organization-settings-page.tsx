@@ -1,14 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { CreditCard, ShieldCheck, UsersRound } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, CheckCircle2, Copy, CreditCard, Globe2, RefreshCw, ShieldCheck, UsersRound } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { AuditLogPage } from "@/components/audit/audit-log-page";
 import { ALL_CAPABILITIES, getCapabilitiesForRole, type Capability, type MembershipRole } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils";
 
-type OrganizationSettingsTab = "billing" | "team" | "permissions" | "audit";
+type OrganizationSettingsTab = "billing" | "email" | "team" | "permissions" | "audit";
+
+interface SenderDomainDnsRecord {
+  record: string;
+  name: string;
+  type: string;
+  value: string;
+  ttl?: string;
+  status?: string;
+  priority?: number;
+}
+
+interface SenderDomain {
+  id: string;
+  domain: string;
+  provider: string;
+  status: string;
+  fromEmail: string;
+  fromLocalPart: string;
+  senderName: string;
+  dnsRecords: SenderDomainDnsRecord[];
+  verifiedAt: string | null;
+}
 
 const tabs: Array<{
   id: OrganizationSettingsTab;
@@ -19,6 +41,11 @@ const tabs: Array<{
     id: "billing",
     label: "Subscription & Billing",
     description: "Operating system plan, billing owner, invoices, and renewals."
+  },
+  {
+    id: "email",
+    label: "Email DNS",
+    description: "Verify sender domains so client emails can come from your organisation address."
   },
   {
     id: "team",
@@ -107,6 +134,7 @@ export function OrganizationSettingsPage() {
         </div>
 
         {activeTab === "billing" ? <SubscriptionBillingPanel /> : null}
+        {activeTab === "email" ? <EmailDnsPanel /> : null}
         {activeTab === "team" ? <TeamManagementPanel /> : null}
         {activeTab === "permissions" ? <RolePermissionsPanel /> : null}
         {activeTab === "audit" ? <AuditLogPage embedded /> : null}
@@ -169,6 +197,237 @@ function BillingMetric({ label, value, detail }: { label: string; value: string;
       <p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
       <p className="mt-1 text-xs text-slate-500">{detail}</p>
     </div>
+  );
+}
+
+function EmailDnsPanel() {
+  const [domains, setDomains] = useState<SenderDomain[]>([]);
+  const [formState, setFormState] = useState({
+    domain: "",
+    fromLocalPart: "hello",
+    senderName: "Complete Coach"
+  });
+  const [statusMessage, setStatusMessage] = useState("Loading sender domains...");
+  const [isSaving, setIsSaving] = useState(false);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetch("/api/v1/organizations/current/email-domains")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Sender domain API unavailable.");
+        }
+
+        return response.json() as Promise<{ data: SenderDomain[] }>;
+      })
+      .then((payload) => {
+        if (mounted) {
+          setDomains(payload.data);
+          setStatusMessage(payload.data.length > 0 ? "Sender domains loaded." : "Add a sender domain to get DNS records.");
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setStatusMessage("Sender domains could not be loaded. Check Resend and database configuration.");
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const createDomain = async () => {
+    setIsSaving(true);
+    setStatusMessage("Creating Resend DNS records...");
+
+    try {
+      const response = await fetch("/api/v1/organizations/current/email-domains", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formState)
+      });
+      const payload = (await response.json()) as { data?: SenderDomain; error?: { message: string } };
+
+      if (!response.ok || !payload.data) {
+        throw new Error(payload.error?.message ?? "Could not create sender domain.");
+      }
+
+      setDomains((currentDomains) => [payload.data as SenderDomain, ...currentDomains]);
+      setStatusMessage("DNS records created. Add them with your domain host, then verify.");
+      setFormState({ domain: "", fromLocalPart: "hello", senderName: formState.senderName });
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Could not create sender domain.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const verifyDomain = async (domain: SenderDomain) => {
+    setVerifyingId(domain.id);
+    setStatusMessage(`Checking DNS records for ${domain.domain}...`);
+
+    try {
+      const response = await fetch(`/api/v1/organizations/current/email-domains/${domain.id}/verify`, {
+        method: "POST"
+      });
+      const payload = (await response.json()) as { data?: SenderDomain; error?: { message: string } };
+
+      if (!response.ok || !payload.data) {
+        throw new Error(payload.error?.message ?? "Could not verify sender domain.");
+      }
+
+      setDomains((currentDomains) =>
+        currentDomains.map((currentDomain) => (currentDomain.id === domain.id ? payload.data as SenderDomain : currentDomain))
+      );
+      setStatusMessage(payload.data.status === "verified" ? "Sender domain verified." : `Resend status: ${payload.data.status}.`);
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Could not verify sender domain.");
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+      <aside className="rounded-2xl border border-slate-200 p-5">
+        <Globe2 className="mb-4 h-6 w-6 text-indigo-600" aria-hidden="true" />
+        <h3 className="text-lg font-black text-slate-950">Add sender domain</h3>
+        <p className="mt-2 text-sm text-slate-500">
+          Use a domain or subdomain your organisation owns. Complete Coach will request Resend DNS records and only use
+          this sender once Resend reports it as verified.
+        </p>
+        <div className="mt-5 space-y-4">
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Domain or subdomain</span>
+            <input
+              value={formState.domain}
+              onChange={(event) => setFormState({ ...formState, domain: event.target.value })}
+              placeholder="mail.yourdomain.com"
+              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">From address</span>
+            <div className="mt-2 flex overflow-hidden rounded-xl border border-slate-200 focus-within:border-indigo-500">
+              <input
+                value={formState.fromLocalPart}
+                onChange={(event) => setFormState({ ...formState, fromLocalPart: event.target.value })}
+                aria-label="Sender email username"
+                className="w-28 border-0 px-4 py-3 text-sm outline-none"
+              />
+              <span className="flex-1 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                @{formState.domain || "mail.yourdomain.com"}
+              </span>
+            </div>
+          </label>
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Sender name</span>
+            <input
+              value={formState.senderName}
+              onChange={(event) => setFormState({ ...formState, senderName: event.target.value })}
+              placeholder="Your Coaching Team"
+              className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={createDomain}
+            className="w-full rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700 disabled:bg-slate-300"
+          >
+            {isSaving ? "Creating records..." : "Create DNS records"}
+          </button>
+        </div>
+        <p role="status" className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+          {statusMessage}
+        </p>
+      </aside>
+
+      <section className="space-y-4">
+        {domains.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+            <p className="text-sm font-bold text-slate-700">No sender domains configured yet.</p>
+            <p className="mt-2 text-sm text-slate-500">Add a domain to generate MX, TXT, CNAME, and tracking records.</p>
+          </div>
+        ) : null}
+        {domains.map((domain) => (
+          <SenderDomainCard
+            key={domain.id}
+            domain={domain}
+            isVerifying={verifyingId === domain.id}
+            onVerify={() => verifyDomain(domain)}
+          />
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function SenderDomainCard({ domain, isVerifying, onVerify }: { domain: SenderDomain; isVerifying: boolean; onVerify: () => void }) {
+  const isVerified = domain.status === "verified";
+
+  return (
+    <article className="rounded-2xl border border-slate-200 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-black text-slate-950">{domain.domain}</h3>
+          <p className="mt-1 text-sm text-slate-500">Emails will send from {domain.fromEmail} once verified.</p>
+        </div>
+        <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold", isVerified ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700")}>
+          {isVerified ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+          {domain.status.replace(/_/gu, " ")}
+        </span>
+      </div>
+
+      <div className="mt-5 overflow-x-auto rounded-xl border border-slate-200">
+        <table className="w-full min-w-[720px] text-left text-xs" aria-label={`DNS records for ${domain.domain}`}>
+          <thead className="bg-slate-50 text-slate-500">
+            <tr>
+              <th className="px-3 py-2">Purpose</th>
+              <th className="px-3 py-2">Type</th>
+              <th className="px-3 py-2">Name</th>
+              <th className="px-3 py-2">Value</th>
+              <th className="px-3 py-2">Priority</th>
+              <th className="px-3 py-2">Copy</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {domain.dnsRecords.map((record) => (
+              <tr key={`${record.record}-${record.type}-${record.name}`}>
+                <td className="px-3 py-2 font-bold text-slate-700">{record.record}</td>
+                <td className="px-3 py-2 text-slate-600">{record.type}</td>
+                <td className="px-3 py-2 font-mono text-slate-700">{record.name}</td>
+                <td className="max-w-[260px] truncate px-3 py-2 font-mono text-slate-700">{record.value}</td>
+                <td className="px-3 py-2 text-slate-500">{record.priority ?? "-"}</td>
+                <td className="px-3 py-2">
+                  <button
+                    type="button"
+                    aria-label={`Copy DNS value for ${record.record}`}
+                    onClick={() => void navigator.clipboard?.writeText(record.value)}
+                    className="rounded-lg p-1.5 text-indigo-600 hover:bg-indigo-50"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <button
+        type="button"
+        disabled={isVerifying}
+        onClick={onVerify}
+        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:bg-slate-300"
+      >
+        <RefreshCw className={cn("h-4 w-4", isVerifying ? "animate-spin" : "")} />
+        {isVerifying ? "Checking DNS..." : "Verify DNS records"}
+      </button>
+    </article>
   );
 }
 

@@ -28,7 +28,7 @@ Optional:
 - `DEMO_COACH_PASSWORD`: demo owner seed password for local/preview smoke tests.
 - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`: required for R2-backed upload URL endpoints.
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`: required for live Stripe package/payment flows.
-- `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_WEBHOOK_SECRET`: required to deliver team invitations and process Resend delivery events.
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_WEBHOOK_SECRET`: required to deliver team invitations, manage organisation sender-domain DNS records, and process Resend delivery events. Keep `RESEND_FROM_EMAIL` as the platform fallback sender for organisations without a verified domain.
 - `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`: enable server and browser error reporting.
 - `SENTRY_ENVIRONMENT`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT`: explicit environment labels.
 - `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`: required only for source-map upload during builds.

@@ -77,6 +77,9 @@ Default:
 - `GET /api/v1/organizations`: list organizations available to current user.
 - `GET /api/v1/organizations/current`: get active organization context.
 - `PATCH /api/v1/organizations/current`: update organization settings.
+- `GET /api/v1/organizations/current/email-domains`: list organisation sender domains and provider DNS records. Requires `team:manage`.
+- `POST /api/v1/organizations/current/email-domains`: creates a Resend sender domain for the active organisation and returns DNS records. Body: `domain`, `fromLocalPart`, `senderName`. Requires `team:manage`.
+- `POST /api/v1/organizations/current/email-domains/{sender_domain_id}/verify`: asks Resend to verify DNS records and refreshes stored record/status data. Requires `team:manage`.
 
 ### Team
 - `GET /api/v1/team-members`: returns organization-scoped memberships with `activeClientCount`, `capacityLimit`, `capacityPercent`, and pending invitations. Requires `team:read`.
@@ -494,6 +497,7 @@ Requirements:
 - Verify signature if configured.
 - Persist delivery/bounce/complaint events.
 - Update notification/email delivery status.
+- Verified organisation sender domains are created through Resend Domains. DNS records returned by Resend are stored on organisation sender-domain records and displayed in Organisation Settings.
 
 ### Inngest
 Endpoint: `/api/inngest` or provider-required route.

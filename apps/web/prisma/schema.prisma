@@ -490,6 +490,7 @@ model User {
   assignedTasks                Task[]                        @relation("TaskAssignedUser")
   createdTasks                 Task[]                        @relation("TaskCreator")
   createdPackages              CoachingPackage[]             @relation("PackageCreator")
+  createdSenderDomains         OrganizationSenderDomain[]    @relation("OrganizationSenderDomainCreator")
   socialConnections            SocialConnection[]            @relation("SocialConnectionCreator")
   socialOAuthStates            SocialOAuthState[]            @relation("SocialOAuthStateCreator")
   createdSocialPosts           SocialPost[]                  @relation("SocialPostCreator")
@@ -558,6 +559,7 @@ model Organization {
   notifications                Notification[]
   tasks                        Task[]
   emailDeliveries              EmailDelivery[]
+  senderDomains                OrganizationSenderDomain[]
   packages                     CoachingPackage[]
   clientSubscriptions          ClientSubscription[]
   paymentEvents                PaymentEvent[]
@@ -574,6 +576,30 @@ model Organization {
 
   @@index([status])
   @@map("organizations")
+}
+
+model OrganizationSenderDomain {
+  id               String       @id @default(cuid())
+  organizationId   String       @map("organization_id")
+  domain           String
+  provider         String       @default("resend")
+  providerDomainId String?      @map("provider_domain_id")
+  status           String       @default("not_started")
+  fromLocalPart    String       @default("hello") @map("from_local_part")
+  senderName       String       @map("sender_name")
+  recordsJson      Json?        @map("records_json")
+  verifiedAt       DateTime?    @map("verified_at") @db.Timestamptz(6)
+  createdByUserId  String?      @map("created_by_user_id")
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy        User?        @relation("OrganizationSenderDomainCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, domain])
+  @@index([organizationId, status])
+  @@index([providerDomainId])
+  @@index([createdByUserId])
+  @@map("organization_sender_domains")
 }
 
 model OrganizationMembership {

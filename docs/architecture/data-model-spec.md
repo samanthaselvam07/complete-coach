@@ -709,6 +709,27 @@ Fields:
 - `created_at`
 - `updated_at`
 
+### `organization_sender_domains`
+Fields:
+- `id`
+- `organization_id`
+- `domain`
+- `provider`
+- `provider_domain_id`
+- `status`
+- `from_local_part`
+- `sender_name`
+- `records_json`
+- `verified_at`
+- `created_by_user_id`
+- `created_at`
+- `updated_at`
+
+Notes:
+- Unique `(organization_id, domain)`.
+- Stores Resend-returned DNS records for owner-managed sender verification.
+- Transactional email uses the newest verified sender domain; otherwise it falls back to `RESEND_FROM_EMAIL`.
+
 ## Tasks And Dashboard
 ### `tasks`
 Fields:

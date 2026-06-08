@@ -24,6 +24,9 @@ const mocks = vi.hoisted(() => ({
       findFirst: vi.fn(),
       update: vi.fn()
     },
+    organizationSenderDomain: {
+      findFirst: vi.fn()
+    },
     notification: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -94,6 +97,7 @@ describe("notification APIs and Resend email workflows", () => {
     mocks.prisma.emailDelivery.create.mockReset();
     mocks.prisma.emailDelivery.findFirst.mockReset();
     mocks.prisma.emailDelivery.update.mockReset();
+    mocks.prisma.organizationSenderDomain.findFirst.mockReset();
     mocks.prisma.notification.findMany.mockReset();
     mocks.prisma.notification.findFirst.mockReset();
     mocks.prisma.notification.update.mockReset();
@@ -174,6 +178,7 @@ describe("notification APIs and Resend email workflows", () => {
   it("records queued and sent statuses when Resend accepts an email", async () => {
     process.env.RESEND_API_KEY = "test_resend_key";
     process.env.RESEND_FROM_EMAIL = "Complete Coach <noreply@example.com>";
+    mocks.prisma.organizationSenderDomain.findFirst.mockResolvedValue(null);
     mocks.prisma.emailDelivery.create.mockResolvedValue(emailDeliveryRecord);
     mocks.prisma.emailDelivery.update.mockResolvedValue({
       ...emailDeliveryRecord,
@@ -221,9 +226,54 @@ describe("notification APIs and Resend email workflows", () => {
     );
   });
 
+  it("uses a verified organization sender domain when sending Resend emails", async () => {
+    process.env.RESEND_API_KEY = "test_resend_key";
+    process.env.RESEND_FROM_EMAIL = "Complete Coach <noreply@example.com>";
+    mocks.prisma.organizationSenderDomain.findFirst.mockResolvedValue({
+      id: "sender_domain_1",
+      domain: "mail.example.com",
+      fromLocalPart: "coach",
+      senderName: "Example Coaching"
+    });
+    mocks.prisma.emailDelivery.create.mockResolvedValue(emailDeliveryRecord);
+    mocks.prisma.emailDelivery.update.mockResolvedValue({
+      ...emailDeliveryRecord,
+      providerEmailId: "resend_email_1",
+      status: EmailDeliveryStatus.SENT,
+      eventType: "email.sent"
+    });
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ id: "resend_email_1" }), { status: 200 })
+    );
+
+    await sendTransactionalEmail({
+      organizationId: "org_1",
+      toEmail: "client@example.com",
+      subject: "New message from your coach",
+      text: "You have a new message."
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.resend.com/emails",
+      expect.objectContaining({
+        body: expect.stringContaining("\"from\":\"Example Coaching <coach@mail.example.com>\"")
+      })
+    );
+    expect(mocks.prisma.organizationSenderDomain.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId: "org_1",
+          provider: "resend",
+          status: "verified"
+        }
+      })
+    );
+  });
+
   it("records failed status without leaking email body when Resend rejects an email", async () => {
     process.env.RESEND_API_KEY = "test_resend_key";
     process.env.RESEND_FROM_EMAIL = "Complete Coach <noreply@example.com>";
+    mocks.prisma.organizationSenderDomain.findFirst.mockResolvedValue(null);
     mocks.prisma.emailDelivery.create.mockResolvedValue(emailDeliveryRecord);
     mocks.prisma.emailDelivery.update.mockResolvedValue({
       ...emailDeliveryRecord,

@@ -1,6 +1,7 @@
 import { EmailDeliveryStatus } from "@/app/generated/prisma/enums";
 import type { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { buildSenderFromAddress } from "@/lib/email/sender-domains";
 import { serializeEmailDelivery } from "@/lib/operations/notification-records";
 
 interface SendTransactionalEmailInput {
@@ -32,7 +33,7 @@ export async function sendTransactionalEmail(input: SendTransactionalEmailInput)
   });
 
   const apiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL;
+  const fromEmail = await getTransactionalFromAddress(input.organizationId);
 
   if (!apiKey || !fromEmail) {
     const failedDelivery = await prisma.emailDelivery.update({
@@ -94,4 +95,17 @@ export async function sendTransactionalEmail(input: SendTransactionalEmailInput)
 
     return serializeEmailDelivery(failedDelivery);
   }
+}
+
+async function getTransactionalFromAddress(organizationId: string) {
+  const configuredDomain = await prisma.organizationSenderDomain.findFirst({
+    where: {
+      organizationId,
+      provider: "resend",
+      status: "verified"
+    },
+    orderBy: [{ verifiedAt: "desc" }, { updatedAt: "desc" }]
+  });
+
+  return configuredDomain ? buildSenderFromAddress(configuredDomain) : process.env.RESEND_FROM_EMAIL;
 }

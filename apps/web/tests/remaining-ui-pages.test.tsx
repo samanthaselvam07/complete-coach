@@ -64,6 +64,7 @@ describe("SupplementationPage", () => {
 
 describe("OrganizationSettingsPage", () => {
   it("separates operating system billing from coaching package management", () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     render(createElement(OrganizationSettingsPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Organisation Settings" })).toBeInTheDocument();
@@ -71,6 +72,10 @@ describe("OrganizationSettingsPage", () => {
     expect(screen.getByText("Complete Coach Operating System")).toBeInTheDocument();
     expect(screen.getByText(/This is your organisation subscription/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Manage coaching packages" })).toHaveAttribute("href", "/packages");
+
+    fireEvent.click(screen.getByRole("tab", { name: "Email DNS" }));
+    expect(screen.getByRole("heading", { level: 3, name: "Add sender domain" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create DNS records" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Team Management" }));
     expect(screen.getByRole("link", { name: "Open team management" })).toHaveAttribute("href", "/team-management");
@@ -115,6 +120,70 @@ describe("OrganizationSettingsPage", () => {
     expect(screen.getByRole("tab", { name: "Audit Log" })).toHaveAttribute("aria-selected", "true");
     expect(await screen.findByRole("table", { name: "Audit events" })).toBeInTheDocument();
     expect(screen.getByText("client.training_plan.updated")).toBeInTheDocument();
+  });
+
+  it("creates sender DNS records inside organization settings", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/organizations/current/email-domains" && !init) {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/organizations/current/email-domains" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "sender_domain_1",
+                domain: "mail.example.com",
+                provider: "resend",
+                status: "not_started",
+                fromEmail: "coach@mail.example.com",
+                fromLocalPart: "coach",
+                senderName: "Example Coaching",
+                dnsRecords: [
+                  {
+                    record: "SPF",
+                    name: "send",
+                    type: "TXT",
+                    value: "\"v=spf1 include:amazonses.com ~all\"",
+                    ttl: "Auto",
+                    status: "not_started"
+                  }
+                ],
+                verifiedAt: null
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(OrganizationSettingsPage));
+
+    fireEvent.click(screen.getByRole("tab", { name: "Email DNS" }));
+    fireEvent.change(screen.getByPlaceholderText("mail.yourdomain.com"), {
+      target: { value: "mail.example.com" }
+    });
+    fireEvent.change(screen.getByLabelText("Sender email username"), {
+      target: { value: "coach" }
+    });
+    fireEvent.change(screen.getByPlaceholderText("Your Coaching Team"), {
+      target: { value: "Example Coaching" }
+    });
+    await waitFor(() => expect(screen.getByPlaceholderText("mail.yourdomain.com")).toHaveValue("mail.example.com"));
+    fireEvent.click(screen.getByRole("button", { name: "Create DNS records" }));
+
+    expect(await screen.findByText("mail.example.com")).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "DNS records for mail.example.com" })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/organizations/current/email-domains",
+      expect.objectContaining({ method: "POST" })
+    );
   });
 });
 
