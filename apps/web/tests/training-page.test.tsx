@@ -273,6 +273,8 @@ describe("TrainingProgramsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save & Close" }));
 
     expect(await screen.findByText("Program template saved to persistence API.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Program Library" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: "Create a Program" })).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/training-program-templates",
       expect.objectContaining({

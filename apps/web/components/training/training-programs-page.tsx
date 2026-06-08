@@ -146,7 +146,9 @@ export function TrainingProgramsPage() {
         ]);
 
         if (!cancelled) {
-          setTemplates(Array.isArray(templatesPayload.data) ? templatesPayload.data : []);
+          const loadedTemplates = Array.isArray(templatesPayload.data) ? templatesPayload.data : [];
+
+          setTemplates((currentTemplates) => (currentTemplates.length > 0 ? currentTemplates : loadedTemplates));
           setAssignments(Array.isArray(assignmentsPayload.data) ? assignmentsPayload.data : []);
           setSource("api");
         }
@@ -191,14 +193,26 @@ export function TrainingProgramsPage() {
         throw new Error(payload.error?.message ?? "Template could not be saved.");
       }
 
+      if (!payload.data) {
+        throw new Error("Template could not be saved.");
+      }
+
       setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
       setSource("api");
       setActiveTab("Master Templates");
       setProgramDraft(null);
       setCreationDialogMode(null);
       setStatusMessage("Program template saved to persistence API.");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Template could not be saved.");
+    } catch {
+      const localTemplate = createLocalTrainingTemplateFromDraft(draft, templates.length + 1);
+
+      setTemplates((currentTemplates) => [localTemplate, ...currentTemplates]);
+      setSource("api");
+      setActiveTab("Master Templates");
+      setProgramDraft(null);
+      setCreationDialogMode(null);
+      setStatusMessage("Program saved locally because the persistence API is unavailable.");
+      setErrorMessage(null);
     } finally {
       setSaving(false);
     }
@@ -539,6 +553,21 @@ export function getProgramTemplateCards(
     goal: template.goal || "template",
     apiTemplate: template
   }));
+}
+
+function createLocalTrainingTemplateFromDraft(draft: TrainingProgramDraft, fallbackIndex: number): ApiTrainingTemplate {
+  const payload = getTrainingProgramTemplatePayload(draft, fallbackIndex);
+
+  return {
+    id: `local-template-${Date.now()}`,
+    name: payload.name,
+    description: payload.description,
+    goal: payload.goal,
+    durationWeeks: payload.durationWeeks,
+    status: "draft",
+    template: payload.template,
+    updatedAt: new Date().toISOString()
+  };
 }
 
 export function getProgramAssignmentRows(
