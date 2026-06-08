@@ -1,14 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, Copy, CreditCard, Globe2, RefreshCw, ShieldCheck, UsersRound } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Copy,
+  CreditCard,
+  Globe2,
+  Link2,
+  RefreshCw,
+  ShieldCheck,
+  Share2,
+  UsersRound,
+  WalletCards
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { AuditLogPage } from "@/components/audit/audit-log-page";
 import { ALL_CAPABILITIES, getCapabilitiesForRole, type Capability, type MembershipRole } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils";
 
-type OrganizationSettingsTab = "billing" | "email" | "team" | "permissions" | "audit";
+type OrganizationSettingsTab = "billing" | "integrations" | "email" | "team" | "permissions" | "audit";
 
 interface SenderDomainDnsRecord {
   record: string;
@@ -32,6 +44,13 @@ interface SenderDomain {
   verifiedAt: string | null;
 }
 
+interface SocialConnection {
+  id: string;
+  provider: "instagram" | "facebook" | "x";
+  accountName: string;
+  status: string;
+}
+
 const tabs: Array<{
   id: OrganizationSettingsTab;
   label: string;
@@ -41,6 +60,11 @@ const tabs: Array<{
     id: "billing",
     label: "Subscription & Billing",
     description: "Operating system plan, billing owner, invoices, and renewals."
+  },
+  {
+    id: "integrations",
+    label: "Integrations",
+    description: "Connect Stripe payments and social channels for this organisation."
   },
   {
     id: "email",
@@ -134,6 +158,7 @@ export function OrganizationSettingsPage() {
         </div>
 
         {activeTab === "billing" ? <SubscriptionBillingPanel /> : null}
+        {activeTab === "integrations" ? <IntegrationsPanel /> : null}
         {activeTab === "email" ? <EmailDnsPanel /> : null}
         {activeTab === "team" ? <TeamManagementPanel /> : null}
         {activeTab === "permissions" ? <RolePermissionsPanel /> : null}
@@ -196,6 +221,164 @@ function BillingMetric({ label, value, detail }: { label: string; value: string;
       <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
       <p className="mt-1 text-xs text-slate-500">{detail}</p>
+    </div>
+  );
+}
+
+function IntegrationsPanel() {
+  const [stripeStatus, setStripeStatus] = useState("Not connected");
+  const [stripeOnboardingUrl, setStripeOnboardingUrl] = useState<string | null>(null);
+  const [isConnectingStripe, setIsConnectingStripe] = useState(false);
+  const [connections, setConnections] = useState<SocialConnection[]>([]);
+  const [socialStatusMessage, setSocialStatusMessage] = useState("Loading social channels...");
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetch("/api/v1/social/connections")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Social connection API unavailable.");
+        }
+
+        return response.json() as Promise<{ data: SocialConnection[] }>;
+      })
+      .then((payload) => {
+        if (mounted) {
+          setConnections(payload.data);
+          setSocialStatusMessage(payload.data.length > 0 ? "Social channels loaded." : "No social channels connected yet.");
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setSocialStatusMessage("Social channels could not be loaded.");
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const connectStripe = async () => {
+    setIsConnectingStripe(true);
+    setStripeStatus("Creating Stripe onboarding link...");
+
+    try {
+      const response = await fetch("/api/v1/stripe/connect/account-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          returnUrl: "/organization-settings",
+          refreshUrl: "/organization-settings"
+        })
+      });
+      const payload = (await response.json()) as {
+        data?: { status: string; onboardingUrl: string };
+        error?: { message: string };
+      };
+
+      if (!response.ok || !payload.data?.onboardingUrl) {
+        throw new Error(payload.error?.message ?? "Could not create Stripe onboarding link.");
+      }
+
+      setStripeStatus(payload.data.status);
+      setStripeOnboardingUrl(payload.data.onboardingUrl);
+    } catch (error) {
+      setStripeStatus(error instanceof Error ? error.message : "Could not create Stripe onboarding link.");
+    } finally {
+      setIsConnectingStripe(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+        <article className="rounded-2xl border border-slate-200 p-6">
+          <WalletCards className="mb-4 h-6 w-6 text-indigo-600" aria-hidden="true" />
+          <h3 className="text-xl font-black text-slate-950">Stripe account</h3>
+          <p className="mt-2 text-sm text-slate-500">
+            Connect the organisation&apos;s Stripe account so packages, subscriptions, payouts, and payment reporting can
+            run through the coaching business.
+          </p>
+          <div className="mt-5 rounded-xl bg-slate-50 p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Connection status</p>
+            <p className="mt-1 text-sm font-bold text-slate-800">{stripeStatus}</p>
+          </div>
+          <button
+            type="button"
+            disabled={isConnectingStripe}
+            onClick={connectStripe}
+            className="mt-5 w-full rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700 disabled:bg-slate-300"
+          >
+            {isConnectingStripe ? "Creating link..." : "Connect Stripe account"}
+          </button>
+          {stripeOnboardingUrl ? (
+            <a
+              href={stripeOnboardingUrl}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 px-5 py-3 text-sm font-bold text-indigo-700 transition-colors hover:bg-indigo-50"
+            >
+              Continue Stripe onboarding
+              <Link2 className="h-4 w-4" aria-hidden="true" />
+            </a>
+          ) : null}
+        </article>
+
+        <article className="rounded-2xl border border-slate-200 p-6">
+          <Share2 className="mb-4 h-6 w-6 text-indigo-600" aria-hidden="true" />
+          <h3 className="text-xl font-black text-slate-950">Social channels</h3>
+          <p className="mt-2 text-sm text-slate-500">
+            Connect Instagram, Facebook, and X accounts for scheduled content, publishing, and social planner reporting.
+          </p>
+          <p role="status" className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+            {socialStatusMessage}
+          </p>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {socialChannels.map((channel) => (
+              <SocialChannelCard
+                key={channel.provider}
+                channel={channel}
+                connection={connections.find((connection) => connection.provider === channel.provider)}
+              />
+            ))}
+          </div>
+        </article>
+      </section>
+    </div>
+  );
+}
+
+const socialChannels: Array<{ provider: SocialConnection["provider"]; label: string; description: string }> = [
+  { provider: "instagram", label: "Instagram", description: "Reels, posts, and visual content." },
+  { provider: "facebook", label: "Facebook", description: "Pages, community updates, and republishing." },
+  { provider: "x", label: "X", description: "Short-form posts and announcements." }
+];
+
+function SocialChannelCard({ channel, connection }: { channel: (typeof socialChannels)[number]; connection?: SocialConnection }) {
+  const isConnected = connection?.status === "active";
+
+  return (
+    <div className="rounded-xl border border-slate-200 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-black text-slate-950">{channel.label}</p>
+          <p className="mt-1 text-xs text-slate-500">{channel.description}</p>
+        </div>
+        <span className={cn("rounded-full px-2 py-1 text-[10px] font-bold uppercase", isConnected ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500")}>
+          {isConnected ? "Connected" : "Not connected"}
+        </span>
+      </div>
+      {connection ? (
+        <p className="mt-4 text-sm font-bold text-slate-700">{connection.accountName}</p>
+      ) : (
+        <p className="mt-4 text-sm text-slate-500">No account connected.</p>
+      )}
+      <a
+        href={`/api/v1/social/connections/oauth/start?provider=${channel.provider}&redirectTo=/organization-settings`}
+        className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-800"
+      >
+        {isConnected ? "Reconnect" : "Connect"} {channel.label}
+      </a>
     </div>
   );
 }
