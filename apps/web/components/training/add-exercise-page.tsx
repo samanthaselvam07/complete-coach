@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, Minus, Plus, Upload } from "lucide-react";
 import { useState } from "react";
 
@@ -8,6 +9,7 @@ import { muscleGroups } from "@/fixtures/training";
 import { cn } from "@/lib/utils";
 
 export function AddExercisePage() {
+  const router = useRouter();
   const [exerciseName, setExerciseName] = useState("");
   const [category, setCategory] = useState("Compound");
   const [equipment, setEquipment] = useState("Dumbbells");
@@ -73,7 +75,7 @@ export function AddExercisePage() {
         throw new Error("Exercise save failed.");
       }
 
-      setStatusMessage("Exercise saved to persistence API.");
+      router.push("/training/exercises");
     } catch {
       setErrorMessage("Exercise could not be saved. Check the details and try again.");
     } finally {

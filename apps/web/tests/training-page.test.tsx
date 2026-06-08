@@ -13,8 +13,12 @@ import {
 } from "@/components/training/training-programs-page";
 import { TrainingPage } from "@/components/training/training-page";
 
+const navigationMocks = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: navigationMocks.push }) }));
+
 afterEach(() => {
   vi.restoreAllMocks();
+  navigationMocks.push.mockReset();
 });
 
 describe("TrainingPage", () => {
@@ -712,7 +716,7 @@ describe("AddExercisePage", () => {
     });
     fireEvent.click(screen.getAllByRole("button", { name: "Save Exercise" })[0]);
 
-    expect(await screen.findByText("Exercise saved to persistence API.")).toBeInTheDocument();
+    await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/training/exercises"));
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/exercises",
       expect.objectContaining({
@@ -780,7 +784,7 @@ describe("AddExercisePage", () => {
     });
     fireEvent.click(screen.getAllByRole("button", { name: "Save Exercise" })[0]);
 
-    expect(await screen.findByText("Exercise saved to persistence API.")).toBeInTheDocument();
+    await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/training/exercises"));
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/exercises",
       expect.objectContaining({
