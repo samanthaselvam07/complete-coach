@@ -1,7 +1,9 @@
 "use client";
 
-import { ArrowLeft, Copy, Plus, Upload } from "lucide-react";
+import { ArrowLeft, Copy, GripVertical, Plus, Search, Upload, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
+import { exercises as fixtureExercises, type Exercise } from "@/fixtures/training";
 import { cn } from "@/lib/utils";
 
 import type { ProgramTemplateCard } from "./training-programs-page";
@@ -55,6 +57,19 @@ export interface TrainingProgramTemplateDraftSource {
     instructions?: string;
   };
 }
+
+interface ApiExercise {
+  id: string;
+  name: string;
+  category: string;
+  scope: "global" | "private";
+  equipment: string | null;
+  difficulty: "beginner" | "intermediate" | "advanced";
+  videoObjectKey: string | null;
+  primaryMuscles: string[];
+}
+
+type BuilderExerciseLibraryItem = ApiExercise | Exercise;
 
 const builderFieldClassName =
   "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-normal text-slate-950 placeholder:text-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
@@ -173,6 +188,7 @@ export function TrainingProgramBuilder({
   onSave: () => void;
 }) {
   const activeDay = draft.days.find((day) => day.id === draft.activeDayId) ?? draft.days[0];
+  const [exercisePanelSection, setExercisePanelSection] = useState<TrainingProgramSection | null>(null);
 
   function updateDraft(updates: Partial<TrainingProgramDraft>) {
     onDraftChange({ ...draft, ...updates });
@@ -195,7 +211,7 @@ export function TrainingProgramBuilder({
     });
   }
 
-  function addExercise(section: TrainingProgramSection) {
+  function addExercise(section: TrainingProgramSection, exerciseName = "") {
     const sectionExerciseCount = activeDay.exercises.filter((exercise) => exercise.section === section).length + 1;
 
     updateActiveDay({
@@ -204,7 +220,7 @@ export function TrainingProgramBuilder({
         {
           id: `${activeDay.id}-${section}-${sectionExerciseCount}`,
           section,
-          exerciseName: "",
+          exerciseName,
           sets: "3",
           reps: "8-10",
           rpe: "",
@@ -213,6 +229,14 @@ export function TrainingProgramBuilder({
         }
       ]
     });
+  }
+
+  function openExercisePanel(section: TrainingProgramSection) {
+    setExercisePanelSection(section);
+  }
+
+  function addLibraryExercise(section: TrainingProgramSection, exercise: BuilderExerciseLibraryItem) {
+    addExercise(section, exercise.name);
   }
 
   function updateExercise(exerciseId: string, updates: Partial<TrainingProgramExerciseDraft>) {
@@ -252,114 +276,133 @@ export function TrainingProgramBuilder({
         </div>
       </div>
 
-      <form
-        className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
-        onSubmit={(event) => {
-          event.preventDefault();
-          onSave();
-        }}
+      <div
+        className={cn(
+          "grid items-start gap-5 transition-[grid-template-columns]",
+          exercisePanelSection ? "xl:grid-cols-[minmax(0,1fr)_380px]" : "xl:grid-cols-1"
+        )}
       >
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="text-sm font-bold text-slate-800">
-            Program Title <span className="text-red-500">*</span>
+        <form
+          role="main"
+          aria-label="Program builder canvas"
+          className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSave();
+          }}
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="text-sm font-bold text-slate-800">
+              Program Title <span className="text-red-500">*</span>
+              <input
+                required
+                value={draft.title}
+                placeholder="Enter Program Title"
+                className={builderFieldClassName}
+                onChange={(event) => updateDraft({ title: event.target.value })}
+              />
+            </label>
+            <label className="text-sm font-bold text-slate-800">
+              Tags
+              <input
+                value={draft.tags}
+                placeholder="Enter Tags"
+                className={builderFieldClassName}
+                onChange={(event) => updateDraft({ tags: event.target.value })}
+              />
+            </label>
+          </div>
+
+          <label className="mt-5 block text-sm font-bold text-slate-800">
+            Program Overview
+            <textarea
+              value={draft.overview}
+              placeholder="Enter Program Overview"
+              rows={4}
+              className={builderFieldClassName}
+              onChange={(event) => updateDraft({ overview: event.target.value })}
+            />
+          </label>
+
+          <div role="tablist" aria-label="Training days" className="mt-5 flex items-center overflow-hidden rounded-2xl border border-indigo-100 bg-indigo-50/70 p-1">
+            {draft.days.map((day, dayIndex) => (
+              <button
+                key={day.id}
+                type="button"
+                role="tab"
+                aria-selected={day.id === draft.activeDayId}
+                className={cn(
+                  "rounded-xl px-4 py-2.5 text-sm font-bold transition-colors",
+                  day.id === draft.activeDayId ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-900"
+                )}
+                onClick={() => updateDraft({ activeDayId: day.id })}
+              >
+                {day.name || `Day ${dayIndex + 1}`}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-label="Add training day"
+              className="ml-2 rounded-xl p-2 text-indigo-600 transition-colors hover:bg-white"
+              onClick={addTrainingDay}
+            >
+              <Plus className="size-4" aria-hidden="true" />
+            </button>
+          </div>
+
+          <label className="mt-5 block max-w-2xl text-sm font-bold text-slate-800">
+            Day Name <span className="text-red-500">*</span>
             <input
               required
-              value={draft.title}
-              placeholder="Enter Program Title"
+              value={activeDay.name}
+              placeholder="Enter Day Name"
               className={builderFieldClassName}
-              onChange={(event) => updateDraft({ title: event.target.value })}
+              onChange={(event) => updateActiveDay({ name: event.target.value })}
             />
           </label>
-          <label className="text-sm font-bold text-slate-800">
-            Tags
-            <input
-              value={draft.tags}
-              placeholder="Enter Tags"
-              className={builderFieldClassName}
-              onChange={(event) => updateDraft({ tags: event.target.value })}
+
+          {(["warmUp", "workout", "coolDown"] as TrainingProgramSection[]).map((section) => (
+            <ProgramBuilderSection
+              key={section}
+              section={section}
+              exercises={activeDay.exercises.filter((exercise) => exercise.section === section)}
+              onAddExercise={() => openExercisePanel(section)}
+              onExerciseChange={updateExercise}
+              onExerciseDrop={(exerciseName) => addExercise(section, exerciseName)}
             />
-          </label>
-        </div>
-
-        <label className="mt-5 block text-sm font-bold text-slate-800">
-          Program Overview
-          <textarea
-            value={draft.overview}
-            placeholder="Enter Program Overview"
-            rows={4}
-            className={builderFieldClassName}
-            onChange={(event) => updateDraft({ overview: event.target.value })}
-          />
-        </label>
-
-        <div role="tablist" aria-label="Training days" className="mt-5 flex items-center overflow-hidden rounded-2xl border border-indigo-100 bg-indigo-50/70 p-1">
-          {draft.days.map((day, dayIndex) => (
-            <button
-              key={day.id}
-              type="button"
-              role="tab"
-              aria-selected={day.id === draft.activeDayId}
-              className={cn(
-                "rounded-xl px-4 py-2.5 text-sm font-bold transition-colors",
-                day.id === draft.activeDayId ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-900"
-              )}
-              onClick={() => updateDraft({ activeDayId: day.id })}
-            >
-              {day.name || `Day ${dayIndex + 1}`}
-            </button>
           ))}
-          <button
-            type="button"
-            aria-label="Add training day"
-            className="ml-2 rounded-xl p-2 text-indigo-600 transition-colors hover:bg-white"
-            onClick={addTrainingDay}
-          >
-            <Plus className="size-4" aria-hidden="true" />
-          </button>
-        </div>
 
-        <label className="mt-5 block max-w-2xl text-sm font-bold text-slate-800">
-          Day Name <span className="text-red-500">*</span>
-          <input
-            required
-            value={activeDay.name}
-            placeholder="Enter Day Name"
-            className={builderFieldClassName}
-            onChange={(event) => updateActiveDay({ name: event.target.value })}
+          <label className="mt-5 block text-sm font-bold text-slate-800">
+            Workout Instructions
+            <textarea
+              value={draft.instructions}
+              placeholder="Enter Workout Instructions"
+              rows={5}
+              className={builderFieldClassName}
+              onChange={(event) => updateDraft({ instructions: event.target.value })}
+            />
+          </label>
+
+          <div className="mt-6 flex justify-end">
+            <button
+              type="submit"
+              className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-60"
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save & Close"}
+            </button>
+          </div>
+        </form>
+
+        {exercisePanelSection ? (
+          <ExerciseDatabaseSidePanel
+            activeSection={exercisePanelSection}
+            onClose={() => setExercisePanelSection(null)}
+            onAddManual={() => addExercise(exercisePanelSection)}
+            onAddExercise={(exercise) => addLibraryExercise(exercisePanelSection, exercise)}
           />
-        </label>
-
-        {(["warmUp", "workout", "coolDown"] as TrainingProgramSection[]).map((section) => (
-          <ProgramBuilderSection
-            key={section}
-            section={section}
-            exercises={activeDay.exercises.filter((exercise) => exercise.section === section)}
-            onAddExercise={() => addExercise(section)}
-            onExerciseChange={updateExercise}
-          />
-        ))}
-
-        <label className="mt-5 block text-sm font-bold text-slate-800">
-          Workout Instructions
-          <textarea
-            value={draft.instructions}
-            placeholder="Enter Workout Instructions"
-            rows={5}
-            className={builderFieldClassName}
-            onChange={(event) => updateDraft({ instructions: event.target.value })}
-          />
-        </label>
-
-        <div className="mt-6 flex justify-end">
-          <button
-            type="submit"
-            className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-60"
-            disabled={saving}
-          >
-            {saving ? "Saving..." : "Save & Close"}
-          </button>
-        </div>
-      </form>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -440,17 +483,30 @@ function ProgramBuilderSection({
   section,
   exercises,
   onAddExercise,
+  onExerciseDrop,
   onExerciseChange
 }: {
   section: TrainingProgramSection;
   exercises: TrainingProgramExerciseDraft[];
   onAddExercise: () => void;
+  onExerciseDrop: (exerciseName: string) => void;
   onExerciseChange: (exerciseId: string, updates: Partial<TrainingProgramExerciseDraft>) => void;
 }) {
   const sectionLabel = getProgramSectionLabel(section);
 
   return (
-    <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+    <div
+      className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4"
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault();
+        const exerciseName = event.dataTransfer.getData("text/plain");
+
+        if (exerciseName) {
+          onExerciseDrop(exerciseName);
+        }
+      }}
+    >
       <h2 className="mb-3 text-sm font-black text-slate-900">{sectionLabel}</h2>
       <div className="space-y-3">
         {exercises.map((exercise) => (
@@ -474,6 +530,148 @@ function ProgramBuilderSection({
         Add an Exercise
       </button>
     </div>
+  );
+}
+
+function ExerciseDatabaseSidePanel({
+  activeSection,
+  onClose,
+  onAddManual,
+  onAddExercise
+}: {
+  activeSection: TrainingProgramSection;
+  onClose: () => void;
+  onAddManual: () => void;
+  onAddExercise: (exercise: BuilderExerciseLibraryItem) => void;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [apiExercises, setApiExercises] = useState<ApiExercise[]>([]);
+  const [exerciseSource, setExerciseSource] = useState<"api" | "fixture">("fixture");
+  const [loadingExercises, setLoadingExercises] = useState(true);
+  const sectionLabel = getProgramSectionLabel(activeSection);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadExercises() {
+      try {
+        const response = await fetch("/api/v1/exercises?limit=100");
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as { data?: ApiExercise[] };
+
+        if (active && payload.data && payload.data.length > 0) {
+          setApiExercises(payload.data);
+          setExerciseSource("api");
+        }
+      } catch {
+        // Keep fixture exercises available when persistence is unavailable.
+      } finally {
+        if (active) {
+          setLoadingExercises(false);
+        }
+      }
+    }
+
+    void loadExercises();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const sourceExercises: BuilderExerciseLibraryItem[] = exerciseSource === "api" ? apiExercises : fixtureExercises;
+  const filteredExercises = useMemo(
+    () =>
+      sourceExercises.filter((exercise) => {
+        const query = searchQuery.trim().toLowerCase();
+
+        if (!query) {
+          return true;
+        }
+
+        return exercise.name.toLowerCase().includes(query) || exercise.category.toLowerCase().includes(query);
+      }),
+    [searchQuery, sourceExercises]
+  );
+
+  return (
+    <aside
+      role="complementary"
+      aria-label="Exercise database panel"
+      className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
+    >
+      <div className="border-b border-slate-200 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">Add to {sectionLabel}</p>
+            <h2 className="mt-1 text-xl font-black text-slate-950">Exercise Database</h2>
+            <p className="mt-1 text-sm text-slate-500">Search, drag, or tap to add exercises without covering the builder.</p>
+          </div>
+          <button type="button" aria-label="Close exercise database" className="rounded-xl p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <label className="relative mt-4 block">
+          <span className="sr-only">Search exercise database</span>
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <input
+            type="search"
+            value={searchQuery}
+            placeholder="Search movements..."
+            className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
+        </label>
+
+        <button
+          type="button"
+          className="mt-3 w-full rounded-xl border border-dashed border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 hover:border-indigo-400 hover:bg-indigo-100"
+          onClick={onAddManual}
+        >
+          Add manual {sectionLabel.toLowerCase()} row
+        </button>
+      </div>
+
+      <div className="max-h-[calc(100vh-18rem)] space-y-3 overflow-y-auto p-4">
+        {loadingExercises ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Loading exercise database...</p> : null}
+        {!loadingExercises && filteredExercises.length === 0 ? (
+          <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">No exercises match that search.</p>
+        ) : null}
+        {filteredExercises.map((exercise) => (
+          <article key={exercise.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <button
+              type="button"
+              draggable
+              aria-label={`Drag ${exercise.name} into ${sectionLabel}`}
+              className="flex w-full cursor-grab items-start gap-3 text-left"
+              onDragStart={(event) => {
+                event.dataTransfer.setData("text/plain", exercise.name);
+                event.dataTransfer.effectAllowed = "copy";
+              }}
+            >
+              <GripVertical className="mt-1 size-4 shrink-0 text-slate-400" aria-hidden="true" />
+              <span>
+                <span className="block font-black text-slate-900">{exercise.name}</span>
+                <span className="mt-1 block text-xs text-slate-500">{getBuilderExerciseMeta(exercise)}</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-label={`Add ${exercise.name} to ${sectionLabel}`}
+              className="mt-3 w-full rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
+              onClick={() => onAddExercise(exercise)}
+            >
+              Add to {sectionLabel}
+            </button>
+          </article>
+        ))}
+      </div>
+    </aside>
   );
 }
 
@@ -522,4 +720,15 @@ function getProgramSectionLabel(section: TrainingProgramSection) {
   };
 
   return labels[section];
+}
+
+function getBuilderExerciseMeta(exercise: BuilderExerciseLibraryItem) {
+  if ("variations" in exercise) {
+    return `${exercise.category} - ${exercise.variations} variations`;
+  }
+
+  const muscles = exercise.primaryMuscles.length > 0 ? exercise.primaryMuscles.join(", ") : "No muscles tagged";
+  const equipment = exercise.equipment ? `${exercise.equipment} - ` : "";
+
+  return `${exercise.category} - ${equipment}${muscles}`;
 }
