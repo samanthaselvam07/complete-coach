@@ -341,6 +341,8 @@ describe("topbar controls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Schedule Event / Call" }));
 
     expect(screen.getByRole("dialog", { name: "Schedule Event or Coaching Call" })).toBeInTheDocument();
+    expect(screen.getByTestId("schedule-event-backdrop").parentElement).toBe(document.body);
+    expect(screen.getByTestId("schedule-event-backdrop")).toHaveClass("z-[100]");
     expect(screen.getByText("Google Meet Integration")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View Calendar" })).toHaveAttribute("href", "/schedule");
 
