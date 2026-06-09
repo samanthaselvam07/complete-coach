@@ -31,6 +31,7 @@ export interface TrainingProgramDayDraft {
 export interface TrainingProgramDraft {
   title: string;
   tags: string;
+  durationWeeks: string;
   overview: string;
   instructions: string;
   activeDayId: string;
@@ -41,6 +42,7 @@ export interface TrainingProgramTemplateDraftSource {
   name: string;
   description?: string | null;
   goal?: string | null;
+  durationWeeks?: number;
   template: {
     days?: Array<{
       name: string;
@@ -313,6 +315,20 @@ export function TrainingProgramBuilder({
             </label>
           </div>
 
+          <label className="mt-5 block max-w-xs text-sm font-bold text-slate-800">
+            Program Duration
+            <span className="ml-1 text-xs font-medium text-slate-500">(weeks)</span>
+            <input
+              type="number"
+              min="1"
+              max="104"
+              value={draft.durationWeeks}
+              placeholder="Enter duration"
+              className={builderFieldClassName}
+              onChange={(event) => updateDraft({ durationWeeks: event.target.value })}
+            />
+          </label>
+
           <label className="mt-5 block text-sm font-bold text-slate-800">
             Program Overview
             <textarea
@@ -383,7 +399,15 @@ export function TrainingProgramBuilder({
             />
           </label>
 
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex flex-col justify-end gap-3 sm:flex-row">
+            <button
+              type="button"
+              className="rounded-xl border border-indigo-200 bg-white px-5 py-3 text-sm font-bold text-indigo-700 shadow-sm transition-colors hover:bg-indigo-50 disabled:opacity-60"
+              disabled={saving}
+              onClick={onSave}
+            >
+              {saving ? "Saving..." : "Save as Template"}
+            </button>
             <button
               type="submit"
               className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-60"
@@ -413,6 +437,7 @@ export function createBlankTrainingProgramDraft(): TrainingProgramDraft {
   return {
     title: "",
     tags: "",
+    durationWeeks: "8",
     overview: "",
     instructions: "",
     activeDayId: firstDay.id,
@@ -444,6 +469,7 @@ export function createTrainingProgramDraftFromTemplate(
   return {
     title: options.copy === false ? template.name : `${template.name} Copy`,
     tags: template.goal ?? "",
+    durationWeeks: String(template.durationWeeks ?? Math.max(1, days.length)),
     overview: template.description ?? "",
     instructions: template.template.instructions ?? "",
     activeDayId: firstDay.id,
@@ -458,7 +484,7 @@ export function getTrainingProgramTemplatePayload(draft: TrainingProgramDraft, f
     name: title,
     description: draft.overview.trim() || "Coach-created template from the program library.",
     goal: draft.tags.trim() || "custom",
-    durationWeeks: Math.max(1, draft.days.length),
+    durationWeeks: parsePositiveInteger(draft.durationWeeks, Math.max(1, draft.days.length)),
     status: "draft",
     template: {
       days: draft.days.map((day, dayIndex) => ({

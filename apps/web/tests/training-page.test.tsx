@@ -33,15 +33,15 @@ describe("TrainingPage", () => {
 });
 
 describe("TrainingProgramsPage", () => {
-  it("switches between active programs and master templates", () => {
+  it("switches between custom programs and program templates", () => {
     render(createElement(TrainingProgramsPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Program Library" })).toBeInTheDocument();
     expect(screen.getByText("Hypertrophy Phase II")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Master Templates" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Program templates" }));
 
-    expect(screen.getByRole("tabpanel", { name: "Master Templates" })).toHaveTextContent("Body Recomp v3");
+    expect(screen.getByRole("tabpanel", { name: "Program templates" })).toHaveTextContent("Body Recomp v3");
     expect(screen.queryByRole("button", { name: "All" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Strength" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Endurance" })).not.toBeInTheDocument();
@@ -141,9 +141,9 @@ describe("TrainingProgramsPage", () => {
     expect(within(actions).getByRole("menuitem", { name: "Assign to" })).toBeInTheDocument();
     expect(within(actions).getByRole("menuitem", { name: "Copy" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Master Templates" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Program templates" }));
 
-    expect(screen.getByRole("tabpanel", { name: "Master Templates" })).toHaveTextContent(
+    expect(screen.getByRole("tabpanel", { name: "Program templates" })).toHaveTextContent(
       "API-backed training template"
     );
     expect(screen.queryByText("Body Recomp v3")).not.toBeInTheDocument();
@@ -286,7 +286,7 @@ describe("TrainingProgramsPage", () => {
         body: expect.stringContaining("Strength Template 1")
       })
     );
-    expect(screen.getByRole("tabpanel", { name: "Master Templates" })).toHaveTextContent("Strength Template 1");
+    expect(screen.getByRole("tabpanel", { name: "Program templates" })).toHaveTextContent("Strength Template 1");
   });
 
   it("opens a create-program chooser and saves a from-scratch program builder", async () => {
@@ -487,7 +487,7 @@ describe("TrainingProgramsPage", () => {
 
     render(createElement(TrainingProgramsPage));
 
-    fireEvent.click(await screen.findByRole("tab", { name: "Master Templates" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Program templates" }));
     fireEvent.click(screen.getByRole("button", { name: "Use Template" }));
 
     expect(screen.getByRole("heading", { level: 1, name: "Create a Program" })).toBeInTheDocument();

@@ -11,6 +11,7 @@ export const libraryScopeValues = ["global", "private"] as const;
 export const exerciseDifficultyValues = ["beginner", "intermediate", "advanced"] as const;
 export const trainingTemplateStatusValues = ["draft", "published", "archived"] as const;
 export const trainingAssignmentStatusValues = ["active", "paused", "completed", "cancelled"] as const;
+export const trainingProgramSectionValues = ["warmUp", "workout", "coolDown"] as const;
 
 export type ApiLibraryScope = (typeof libraryScopeValues)[number];
 export type ApiExerciseDifficulty = (typeof exerciseDifficultyValues)[number];
@@ -103,6 +104,9 @@ export const trainingTemplateExerciseSchema = z.object({
   reps: z.string().trim().min(1).max(40),
   tempo: z.string().trim().max(40).optional(),
   restSeconds: z.number().int().min(0).max(3600).optional(),
+  rpe: z.string().trim().max(20).optional(),
+  rir: z.string().trim().max(20).optional(),
+  section: z.enum(trainingProgramSectionValues).optional(),
   cues: jsonStringArraySchema.optional(),
   notes: z.string().trim().max(1000).optional()
 });

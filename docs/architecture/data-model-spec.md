@@ -208,6 +208,7 @@ Fields:
 - `created_by_user_id`
 - `created_at`
 - `updated_at`
+- `deleted_at`
 
 Rules:
 - Profiles are organization-scoped.
@@ -496,7 +497,7 @@ Fields:
 - `created_at`
 - `updated_at`
 
-Snapshot stores exercises, sets, reps, tempo, rest, cues, and notes at assignment time.
+Snapshot stores template identity, duration, exercises, sets, reps, RPE, RIR, section, tempo, rest, cues, and notes at assignment time so access expiry and renewal tasks can be driven from `ends_on`.
 
 ## Nutrition
 ### `food_library_items`

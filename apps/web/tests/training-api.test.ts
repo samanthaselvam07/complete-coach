@@ -12,6 +12,7 @@ import {
   GET as getTrainingTemplates,
   POST as createTrainingTemplate
 } from "@/app/api/v1/training-program-templates/route";
+import { DELETE as deleteTrainingTemplate } from "@/app/api/v1/training-program-templates/[templateId]/route";
 import {
   GET as getTrainingAssignments,
   POST as createTrainingAssignment
@@ -33,7 +34,8 @@ const mocks = vi.hoisted(() => ({
     trainingProgramTemplate: {
       create: vi.fn(),
       findMany: vi.fn(),
-      findFirst: vi.fn()
+      findFirst: vi.fn(),
+      update: vi.fn()
     },
     trainingProgramAssignment: {
       create: vi.fn(),
@@ -152,6 +154,7 @@ describe("training persistence APIs", () => {
     mocks.prisma.trainingProgramTemplate.create.mockReset();
     mocks.prisma.trainingProgramTemplate.findMany.mockReset();
     mocks.prisma.trainingProgramTemplate.findFirst.mockReset();
+    mocks.prisma.trainingProgramTemplate.update.mockReset();
     mocks.prisma.trainingProgramAssignment.create.mockReset();
     mocks.prisma.trainingProgramAssignment.findMany.mockReset();
     process.env.R2_ACCOUNT_ID = "account_123";
@@ -321,6 +324,52 @@ describe("training persistence APIs", () => {
 
     expect(listResponse.status).toBe(200);
     expect(payload.data[0]).toEqual(expect.objectContaining({ id: "template_1", status: "published" }));
+  });
+
+  it("soft deletes tenant training program templates and audit logs the change", async () => {
+    mocks.prisma.trainingProgramTemplate.findFirst.mockResolvedValue(templateRecord);
+    mocks.prisma.trainingProgramTemplate.update.mockResolvedValue({ ...templateRecord, deletedAt: new Date() });
+
+    const response = await deleteTrainingTemplate(
+      new Request("http://test.local/api/v1/training-program-templates/template_1", { method: "DELETE" }),
+      { params: Promise.resolve({ templateId: "template_1" }) }
+    );
+    const payload = (await response.json()) as { data: { id: string; deleted: boolean } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual({ id: "template_1", deleted: true });
+    expect(mocks.prisma.trainingProgramTemplate.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "template_1",
+        organizationId: "org_1",
+        deletedAt: null
+      }
+    });
+    expect(mocks.prisma.trainingProgramTemplate.update).toHaveBeenCalledWith({
+      where: { id: "template_1" },
+      data: { deletedAt: expect.any(Date) }
+    });
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "training_template.deleted",
+          targetId: "template_1"
+        })
+      })
+    );
+  });
+
+  it("returns not found when deleting a template outside the active organization", async () => {
+    mocks.prisma.trainingProgramTemplate.findFirst.mockResolvedValue(null);
+
+    const response = await deleteTrainingTemplate(
+      new Request("http://test.local/api/v1/training-program-templates/missing", { method: "DELETE" }),
+      { params: Promise.resolve({ templateId: "missing" }) }
+    );
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.trainingProgramTemplate.update).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
   });
 
   it("creates immutable assignment snapshots from templates", async () => {

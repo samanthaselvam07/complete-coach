@@ -1,20 +1,9 @@
 "use client";
 
-import {
-  Calendar,
-  ClipboardCopy,
-  Edit,
-  Filter,
-  MoreVertical,
-  Plus,
-  Search,
-  Trash2,
-  Users,
-  UserPlus,
-  Zap
-} from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import type { ClientSummary } from "@/fixtures/clients";
 import { assignedPrograms, programTemplates } from "@/fixtures/training";
 import { cn } from "@/lib/utils";
 
@@ -31,8 +20,14 @@ import type {
   TrainingProgramSection,
   TrainingProgramTemplateDraftSource
 } from "./training-program-builder";
+import {
+  ActiveProgramsPanel,
+  TemplatesPanel,
+  TrainingProgramAssignmentDialog,
+  type AssignableProgramTarget
+} from "./training-program-library-panels";
 
-type ProgramTab = "Active Client Programs" | "Master Templates";
+type ProgramTab = "Custom programs" | "Program templates";
 export type ProgramSource = "api" | "fixtures";
 
 export interface ApiTrainingTemplate {
@@ -112,12 +107,19 @@ export interface ProgramAssignmentRow {
   color: string;
   icon: string;
   apiTemplate: TrainingProgramTemplateDraftSource | null;
+  templateId: string | null;
 }
 
 export function TrainingProgramsPage() {
-  const [activeTab, setActiveTab] = useState<ProgramTab>("Active Client Programs");
+  const [activeTab, setActiveTab] = useState<ProgramTab>("Custom programs");
   const [templates, setTemplates] = useState<ApiTrainingTemplate[]>([]);
   const [assignments, setAssignments] = useState<ApiTrainingAssignment[]>([]);
+  const [localProgramRows, setLocalProgramRows] = useState<ProgramAssignmentRow[]>([]);
+  const [localTemplateCards, setLocalTemplateCards] = useState<ProgramTemplateCard[]>([]);
+  const [hiddenProgramIds, setHiddenProgramIds] = useState<string[]>([]);
+  const [hiddenTemplateIds, setHiddenTemplateIds] = useState<string[]>([]);
+  const [programSearchQuery, setProgramSearchQuery] = useState("");
+  const [assignmentTarget, setAssignmentTarget] = useState<AssignableProgramTarget | null>(null);
   const [source, setSource] = useState<ProgramSource>("fixtures");
   const [loading, setLoading] = useState(true);
   const [creationDialogMode, setCreationDialogMode] = useState<CreationDialogMode | null>(null);
@@ -174,6 +176,23 @@ export function TrainingProgramsPage() {
 
   const templateCards = useMemo(() => getProgramTemplateCards(source, templates, assignments), [assignments, source, templates]);
   const assignmentRows = useMemo(() => getProgramAssignmentRows(source, assignments, templates), [assignments, source, templates]);
+  const visibleTemplateCards = useMemo(
+    () => [...localTemplateCards, ...templateCards.filter((template) => !hiddenTemplateIds.includes(template.id))],
+    [hiddenTemplateIds, localTemplateCards, templateCards]
+  );
+  const visibleAssignmentRows = useMemo(
+    () =>
+      [...localProgramRows, ...assignmentRows.filter((program) => !hiddenProgramIds.includes(program.id))].filter((program) => {
+        const query = programSearchQuery.trim().toLowerCase();
+
+        if (!query) {
+          return true;
+        }
+
+        return program.name.toLowerCase().includes(query);
+      }),
+    [assignmentRows, hiddenProgramIds, localProgramRows, programSearchQuery]
+  );
 
   async function createTemplateFromDraft(draft: TrainingProgramDraft) {
     setSaving(true);
@@ -199,7 +218,7 @@ export function TrainingProgramsPage() {
 
       setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
       setSource("api");
-      setActiveTab("Master Templates");
+      setActiveTab("Program templates");
       setProgramDraft(null);
       setCreationDialogMode(null);
       setStatusMessage("Program template saved to persistence API.");
@@ -208,7 +227,7 @@ export function TrainingProgramsPage() {
 
       setTemplates((currentTemplates) => [localTemplate, ...currentTemplates]);
       setSource("api");
-      setActiveTab("Master Templates");
+      setActiveTab("Program templates");
       setProgramDraft(null);
       setCreationDialogMode(null);
       setStatusMessage("Program saved locally because the persistence API is unavailable.");
@@ -226,12 +245,14 @@ export function TrainingProgramsPage() {
   }
 
   function openTemplateBuilder(template: ProgramTemplateCard) {
-    if (!template.apiTemplate) {
-      setErrorMessage("Persisted templates are required before duplicating a program.");
-      return;
-    }
+    setProgramDraft(createTrainingProgramDraftFromTemplate(getTemplateDraftSource(template)));
+    setCreationDialogMode(null);
+    setStatusMessage(null);
+    setErrorMessage(null);
+  }
 
-    setProgramDraft(createTrainingProgramDraftFromTemplate(template.apiTemplate));
+  function editTemplate(template: ProgramTemplateCard) {
+    setProgramDraft(createTrainingProgramDraftFromTemplate(getTemplateDraftSource(template), { copy: false }));
     setCreationDialogMode(null);
     setStatusMessage(null);
     setErrorMessage(null);
@@ -249,6 +270,136 @@ export function TrainingProgramsPage() {
     setCreationDialogMode(null);
     setStatusMessage(null);
     setErrorMessage(null);
+  }
+
+  async function deleteTrainingProgram(target: AssignableProgramTarget) {
+    setStatusMessage(null);
+    setErrorMessage(null);
+
+    if (target.templateId && !target.templateId.startsWith("local-")) {
+      try {
+        const response = await fetch(`/api/v1/training-program-templates/${target.templateId}`, {
+          method: "DELETE"
+        });
+
+        if (!response.ok) {
+          throw new Error("Training program could not be deleted.");
+        }
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Training program could not be deleted.");
+        return;
+      }
+    }
+
+    setHiddenProgramIds((currentIds) => [...currentIds, target.id]);
+
+    if (target.templateId) {
+      const templateId = target.templateId;
+
+      setHiddenTemplateIds((currentIds) => [...currentIds, templateId]);
+      setTemplates((currentTemplates) => currentTemplates.filter((template) => template.id !== templateId));
+      setLocalTemplateCards((currentTemplates) => currentTemplates.filter((template) => template.id !== templateId));
+      setAssignments((currentAssignments) => currentAssignments.filter((assignment) => assignment.templateId !== templateId));
+    }
+
+    setLocalProgramRows((currentRows) => currentRows.filter((program) => program.id !== target.id));
+    setStatusMessage(`${target.name} deleted from the training library.`);
+  }
+
+  function copyProgram(program: ProgramAssignmentRow) {
+    const copiedProgram: ProgramAssignmentRow = {
+      ...program,
+      id: `local-program-copy-${Date.now()}`,
+      name: `${program.name} (copy)`,
+      activeClientCount: 0,
+      progress: 0,
+      lastEdited: "Just now",
+      templateId: program.templateId?.startsWith("local-") ? program.templateId : null
+    };
+
+    setLocalProgramRows((currentRows) => [copiedProgram, ...currentRows]);
+    setActiveTab("Custom programs");
+    setStatusMessage(`${copiedProgram.name} added to Custom programs.`);
+  }
+
+  function copyTemplate(template: ProgramTemplateCard) {
+    const localTemplateId = `local-template-copy-${Date.now()}`;
+    const sourceTemplate = getTemplateDraftSource(template);
+    const copiedTemplate: ProgramTemplateCard = {
+      ...template,
+      id: localTemplateId,
+      name: `${template.name} (copy)`,
+      uses: 0,
+      badge: "COPY",
+      apiTemplate: {
+        id: localTemplateId,
+        name: `${template.name} (copy)`,
+        description: template.description,
+        goal: template.goal,
+        durationWeeks: template.weeks,
+        status: "draft",
+        template: getApiTemplateJson(sourceTemplate),
+        updatedAt: new Date().toISOString()
+      }
+    };
+
+    setLocalTemplateCards((currentTemplates) => [copiedTemplate, ...currentTemplates]);
+    setActiveTab("Program templates");
+    setStatusMessage(`${copiedTemplate.name} added to Program templates.`);
+  }
+
+  async function assignTrainingProgram(target: AssignableProgramTarget, client: ClientSummary, durationWeeks: number) {
+    const startsOn = new Date().toISOString().slice(0, 10);
+    const endsOn = getAssignmentEndDate(startsOn, durationWeeks);
+
+    if (target.templateId && !target.templateId.startsWith("local-")) {
+      try {
+        const response = await fetch("/api/v1/training-program-assignments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId: client.id,
+            templateId: target.templateId,
+            name: target.name,
+            startsOn,
+            endsOn
+          })
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.error?.message ?? "Training program could not be assigned.");
+        }
+
+        if (payload.data) {
+          setAssignments((currentAssignments) => [payload.data, ...currentAssignments]);
+        }
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Training program could not be assigned.");
+        return;
+      }
+    } else {
+      const localAssignment: ProgramAssignmentRow = {
+        id: `local-assignment-${Date.now()}`,
+        name: target.name,
+        clientName: client.name,
+        activeClientCount: 1,
+        progress: 0,
+        weeksTotal: durationWeeks,
+        startDate: formatDisplayDate(startsOn),
+        lastEdited: "Just now",
+        color: "bg-indigo-100 text-indigo-700",
+        icon: client.initials.slice(0, 1),
+        apiTemplate: null,
+        templateId: target.templateId
+      };
+
+      setLocalProgramRows((currentRows) => [localAssignment, ...currentRows]);
+    }
+
+    setAssignmentTarget(null);
+    setActiveTab("Custom programs");
+    setStatusMessage(`${target.name} assigned to ${client.name}.`);
   }
 
   if (programDraft) {
@@ -293,7 +444,7 @@ export function TrainingProgramsPage() {
       {errorMessage ? <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p> : null}
 
       <div role="tablist" aria-label="Program library sections" className="mb-8 flex items-center gap-8 border-b border-gray-200">
-        {(["Active Client Programs", "Master Templates"] as ProgramTab[]).map((tab) => (
+        {(["Custom programs", "Program templates"] as ProgramTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -310,216 +461,48 @@ export function TrainingProgramsPage() {
         ))}
       </div>
 
-      {activeTab === "Active Client Programs" ? (
-        <ActiveProgramsPanel programs={assignmentRows} onEditProgram={openAssignedProgramBuilder} />
+      {activeTab === "Custom programs" ? (
+        <ActiveProgramsPanel
+          programs={visibleAssignmentRows}
+          searchQuery={programSearchQuery}
+          onSearchChange={setProgramSearchQuery}
+          onEditProgram={openAssignedProgramBuilder}
+          onDeleteProgram={(program) => void deleteTrainingProgram(programToAssignableTarget(program))}
+          onCopyProgram={copyProgram}
+          onAssignProgram={(program) => setAssignmentTarget(programToAssignableTarget(program))}
+        />
       ) : (
         <TemplatesPanel
-          templates={templateCards}
-          canUseTemplates={source === "api"}
+          templates={visibleTemplateCards}
+          canUseTemplates={true}
           onUseTemplate={openTemplateBuilder}
+          onEditTemplate={editTemplate}
+          onDeleteTemplate={(template) => void deleteTrainingProgram(templateToAssignableTarget(template))}
+          onCopyTemplate={copyTemplate}
+          onAssignTemplate={(template) => setAssignmentTarget(templateToAssignableTarget(template))}
         />
       )}
 
       {creationDialogMode ? (
         <CreateProgramDialog
           mode={creationDialogMode}
-          templates={templateCards}
-          canUseTemplates={source === "api"}
+          templates={visibleTemplateCards}
+          canUseTemplates={true}
           onModeChange={setCreationDialogMode}
           onClose={() => setCreationDialogMode(null)}
           onStartScratch={openScratchBuilder}
           onUseTemplate={openTemplateBuilder}
         />
       ) : null}
+
+      {assignmentTarget ? (
+        <TrainingProgramAssignmentDialog
+          target={assignmentTarget}
+          onClose={() => setAssignmentTarget(null)}
+          onAssign={(client, durationWeeks) => void assignTrainingProgram(assignmentTarget, client, durationWeeks)}
+        />
+      ) : null}
     </div>
-  );
-}
-
-function ActiveProgramsPanel({
-  programs,
-  onEditProgram
-}: {
-  programs: ProgramAssignmentRow[];
-  onEditProgram: (program: ProgramAssignmentRow) => void;
-}) {
-  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
-
-  return (
-    <section role="tabpanel" aria-label="Active Client Programs">
-      <div className="mb-6 flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
-          <input
-            type="search"
-            aria-label="Search active programs"
-            placeholder="Search programs..."
-            className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm transition-colors hover:bg-gray-50">
-          <Filter className="size-4" aria-hidden="true" />
-          Filters
-        </button>
-      </div>
-
-      <div className="overflow-visible rounded-xl border border-gray-200 bg-white">
-        <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600">
-          <div className="col-span-4">Program Name</div>
-          <div className="col-span-3">Assigned To</div>
-          <div className="col-span-2">Progress</div>
-          <div className="col-span-2">Last Edited</div>
-          <div className="col-span-1">Actions</div>
-        </div>
-        {programs.map((program) => (
-          <article key={program.id} className="relative grid grid-cols-12 items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-0 hover:bg-gray-50">
-            <div className="col-span-4 flex items-center gap-3">
-              <div className={cn("flex size-10 items-center justify-center rounded-lg font-bold", program.color)}>
-                {program.icon}
-              </div>
-              <div>
-                <div className="font-medium text-gray-900">{program.name}</div>
-                <div className="text-xs text-gray-500">
-                  {program.weeksTotal} weeks - Started {program.startDate}
-                </div>
-              </div>
-            </div>
-            <div className="col-span-3 text-sm font-medium text-gray-700">
-              {program.activeClientCount} active {program.activeClientCount === 1 ? "client" : "clients"}
-            </div>
-            <div className="col-span-2 flex items-center gap-2">
-              <div className="h-2 max-w-28 flex-1 rounded-full bg-gray-200">
-                <div className="h-2 rounded-full bg-indigo-600" style={{ width: `${program.progress}%` }} />
-              </div>
-              <span className="text-xs text-gray-600">{program.progress}%</span>
-            </div>
-            <div className="col-span-2 text-sm text-gray-600">{program.lastEdited}</div>
-            <div className="relative z-30 col-span-1 flex items-center gap-2">
-              <button
-                type="button"
-                aria-label={`Edit ${program.name}`}
-                className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
-                onClick={() => onEditProgram(program)}
-              >
-                <Edit className="size-4" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                aria-label={`More actions for ${program.name}`}
-                aria-expanded={openActionMenuId === program.id}
-                aria-controls={`training-program-actions-${program.id}`}
-                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-                onClick={() => setOpenActionMenuId((currentMenuId) => (currentMenuId === program.id ? null : program.id))}
-              >
-                <MoreVertical className="size-4" aria-hidden="true" />
-              </button>
-              {openActionMenuId === program.id ? (
-                <TrainingProgramActionsMenu program={program} onEditProgram={onEditProgram} />
-              ) : null}
-            </div>
-          </article>
-        ))}
-        {programs.length === 0 ? (
-          <p className="px-6 py-8 text-center text-sm text-gray-600">No active client programs have been assigned yet.</p>
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
-function TrainingProgramActionsMenu({
-  program,
-  onEditProgram
-}: {
-  program: ProgramAssignmentRow;
-  onEditProgram: (program: ProgramAssignmentRow) => void;
-}) {
-  const actions = [
-    { label: "Edit", icon: Edit },
-    { label: "Delete", icon: Trash2 },
-    { label: "Assign to", icon: UserPlus },
-    { label: "Copy", icon: ClipboardCopy }
-  ];
-
-  return (
-    <div
-      id={`training-program-actions-${program.id}`}
-      role="menu"
-      aria-label={`Actions for ${program.name}`}
-      className="absolute right-0 top-10 z-50 w-40 rounded-xl border border-gray-200 bg-white py-2 shadow-xl"
-    >
-      {actions.map(({ label, icon: Icon }) => (
-        <button
-          key={label}
-          type="button"
-          role="menuitem"
-          className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
-          onClick={() => {
-            if (label === "Edit") {
-              onEditProgram(program);
-            }
-          }}
-        >
-          <Icon className="size-4 text-gray-500" aria-hidden="true" />
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function TemplatesPanel({
-  templates,
-  canUseTemplates,
-  onUseTemplate
-}: {
-  templates: ProgramTemplateCard[];
-  canUseTemplates: boolean;
-  onUseTemplate: (template: ProgramTemplateCard) => void;
-}) {
-  return (
-    <section role="tabpanel" aria-label="Master Templates">
-      <div className="grid gap-6 md:grid-cols-3">
-        {templates.map((template) => (
-          <article key={template.id} className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg">
-            <div className={cn("relative p-6 text-white", template.color)}>
-              <div className="absolute right-3 top-3 rounded bg-white/20 px-2 py-1 text-xs font-medium backdrop-blur-sm">
-                {template.badge}
-              </div>
-              <div className="mb-2 flex items-center gap-2">
-                <Zap className="size-5" aria-hidden="true" />
-                <h2 className="text-lg font-bold">{template.name}</h2>
-              </div>
-              <p className="text-sm text-white/90">{template.description}</p>
-            </div>
-            <div className="p-5">
-              <div className="mb-4 flex items-center justify-between text-sm">
-                <div className="flex items-center gap-1 text-gray-600">
-                  <Users className="size-4" aria-hidden="true" />
-                  {template.uses} clients
-                </div>
-                <div className="flex items-center gap-1 text-gray-600">
-                  <Calendar className="size-4" aria-hidden="true" />
-                  {template.weeks} weeks
-                </div>
-              </div>
-              <button
-                type="button"
-                className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300"
-                disabled={!canUseTemplates}
-                onClick={() => onUseTemplate(template)}
-              >
-                Use Template
-              </button>
-            </div>
-          </article>
-        ))}
-        {templates.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
-            No program templates exist yet. Create a new program to start the library.
-          </p>
-        ) : null}
-      </div>
-    </section>
   );
 }
 
@@ -570,13 +553,83 @@ function createLocalTrainingTemplateFromDraft(draft: TrainingProgramDraft, fallb
   };
 }
 
+function getTemplateDraftSource(template: ProgramTemplateCard): TrainingProgramTemplateDraftSource {
+  if (template.apiTemplate) {
+    return {
+      ...template.apiTemplate,
+      durationWeeks: template.apiTemplate.durationWeeks
+    };
+  }
+
+  return {
+    name: template.name,
+    description: template.description,
+    goal: template.goal,
+    durationWeeks: template.weeks,
+    template: {
+      days: [
+        {
+          name: "Day 1",
+          exercises: [
+            {
+              exerciseName: "Manual Exercise",
+              sets: 3,
+              reps: "8-10",
+              restSeconds: 120,
+              section: "workout"
+            }
+          ]
+        }
+      ],
+      instructions: ""
+    }
+  };
+}
+
+function getApiTemplateJson(source: TrainingProgramTemplateDraftSource): ApiTrainingTemplate["template"] {
+  return {
+    days: source.template.days?.map((day, dayIndex) => ({
+      name: day.name,
+      exercises: day.exercises.map((exercise, exerciseIndex) => ({
+        exerciseId: `manual-entry-${dayIndex + 1}-${exerciseIndex + 1}`,
+        ...exercise
+      }))
+    })),
+    instructions: source.template.instructions
+  };
+}
+
+function programToAssignableTarget(program: ProgramAssignmentRow): AssignableProgramTarget {
+  return {
+    id: program.id,
+    name: program.name,
+    templateId: program.templateId,
+    durationWeeks: program.weeksTotal
+  };
+}
+
+function templateToAssignableTarget(template: ProgramTemplateCard): AssignableProgramTarget {
+  return {
+    id: template.id,
+    name: template.name,
+    templateId: template.id,
+    durationWeeks: template.weeks
+  };
+}
+
+function getAssignmentEndDate(startsOn: string, durationWeeks: number) {
+  const startDate = new Date(`${startsOn}T00:00:00.000Z`);
+  startDate.setUTCDate(startDate.getUTCDate() + durationWeeks * 7);
+  return startDate.toISOString().slice(0, 10);
+}
+
 export function getProgramAssignmentRows(
   source: ProgramSource,
   assignments: ApiTrainingAssignment[],
   templates: ApiTrainingTemplate[] = []
 ): ProgramAssignmentRow[] {
   if (source === "fixtures") {
-    return assignedPrograms.map((program) => ({ ...program, apiTemplate: null }));
+    return assignedPrograms.map((program) => ({ ...program, apiTemplate: null, templateId: null }));
   }
 
   const assignmentGroups = new Map<string, ApiTrainingAssignment[]>();
@@ -601,7 +654,8 @@ export function getProgramAssignmentRows(
       lastEdited: formatRelativeDate(assignment.updatedAt),
       color: assignmentColors[index % assignmentColors.length],
       icon: assignment.clientName?.[0]?.toUpperCase() ?? "P",
-      apiTemplate: template
+      apiTemplate: template,
+      templateId: assignment.templateId
     };
   });
 }
@@ -615,6 +669,7 @@ function getAssignmentTemplateDraftSource(
       name: assignment.name,
       description: null,
       goal: assignment.snapshot.goal ?? null,
+      durationWeeks: assignment.snapshot.durationWeeks,
       template: assignment.snapshot.template
     };
   }

@@ -173,9 +173,10 @@ AI output statuses:
 - `PATCH /api/v1/exercises/{exercise_id}`: updates private organization-owned exercises only; global exercises are read-only to tenant users.
 - `POST /api/v1/exercises/media-upload-url`: creates a short-lived signed R2 `PUT` URL for exercise image/video uploads. Body: `mediaType` (`video` or `image`), `filename`, `contentType`, `byteSize`, optional `checksumSha256`. Returns `objectKey`, `uploadUrl`, `expiresAt`, `method`, required headers, max bytes, and media type. Object keys are generated as `organizations/{organization_id}/training/exercises/{media_type}/{uuid}.{extension}`.
 - `GET /api/v1/training-program-templates`: returns organization-owned templates. Query: `status`, `limit`.
-- `POST /api/v1/training-program-templates`: creates a template with validated JSON days/exercises.
+- `POST /api/v1/training-program-templates`: creates a template with validated JSON days/exercises. Body includes `name`, optional `description`, optional `goal`, `durationWeeks`, `status`, and `template.days[].exercises[]` entries with `exerciseId`, `exerciseName`, `sets`, `reps`, optional `restSeconds`, optional `rpe`, optional `rir`, optional `section` (`warmUp`, `workout`, `coolDown`), optional `tempo`, optional `cues`, and optional `notes`.
+- `DELETE /api/v1/training-program-templates/{template_id}`: soft-deletes an organization-owned template and writes an audit event.
 - `GET /api/v1/training-program-assignments`: returns organization-scoped assignments. Query: `clientId`, `limit`.
-- `POST /api/v1/training-program-assignments`: assigns a template to a scoped client and writes immutable `snapshot_json`.
+- `POST /api/v1/training-program-assignments`: assigns a template to a scoped client and writes immutable `snapshot_json`. Body: `clientId`, `templateId`, optional `name`, `startsOn`, optional `endsOn`.
 - `GET /api/v1/clients/{client_id}/training-programs`: returns training assignments for one organization-scoped client.
 
 ### Nutrition
