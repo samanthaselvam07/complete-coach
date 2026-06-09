@@ -237,6 +237,17 @@ export function TrainingProgramsPage() {
     }
   }
 
+  function saveCustomProgramFromDraft(draft: TrainingProgramDraft) {
+    const customProgram = createLocalTrainingProgramFromDraft(draft);
+
+    setLocalProgramRows((currentRows) => [customProgram, ...currentRows]);
+    setActiveTab("Custom programs");
+    setProgramDraft(null);
+    setCreationDialogMode(null);
+    setStatusMessage(`${customProgram.name} saved to Custom programs.`);
+    setErrorMessage(null);
+  }
+
   function openScratchBuilder() {
     setProgramDraft(createBlankTrainingProgramDraft());
     setCreationDialogMode(null);
@@ -409,7 +420,8 @@ export function TrainingProgramsPage() {
         saving={saving}
         onDraftChange={setProgramDraft}
         onCancel={() => setProgramDraft(null)}
-        onSave={() => createTemplateFromDraft(programDraft)}
+        onSave={() => saveCustomProgramFromDraft(programDraft)}
+        onSaveAsTemplate={() => createTemplateFromDraft(programDraft)}
       />
     );
   }
@@ -551,6 +563,50 @@ function createLocalTrainingTemplateFromDraft(draft: TrainingProgramDraft, fallb
     template: payload.template,
     updatedAt: new Date().toISOString()
   };
+}
+
+function createLocalTrainingProgramFromDraft(draft: TrainingProgramDraft): ProgramAssignmentRow {
+  const durationWeeks = parseDraftDurationWeeks(draft);
+  const title = draft.title.trim() || `Custom Program ${Date.now()}`;
+
+  return {
+    id: `local-program-${Date.now()}`,
+    name: title,
+    clientName: "Unassigned",
+    activeClientCount: 0,
+    progress: 0,
+    weeksTotal: durationWeeks,
+    startDate: "Draft",
+    lastEdited: "Just now",
+    color: "bg-indigo-100 text-indigo-700",
+    icon: title.charAt(0).toUpperCase(),
+    apiTemplate: createTrainingProgramDraftSourceFromDraft(draft, title, durationWeeks),
+    templateId: null
+  };
+}
+
+function createTrainingProgramDraftSourceFromDraft(
+  draft: TrainingProgramDraft,
+  title: string,
+  durationWeeks: number
+): TrainingProgramTemplateDraftSource {
+  const payload = getTrainingProgramTemplatePayload(draft, 1);
+
+  return {
+    name: title,
+    description: draft.overview.trim() || payload.description,
+    goal: draft.tags.trim() || payload.goal,
+    durationWeeks,
+    template: payload.template
+  };
+}
+
+function parseDraftDurationWeeks(draft: TrainingProgramDraft) {
+  const parsedDuration = Number.parseInt(draft.durationWeeks, 10);
+
+  return Number.isFinite(parsedDuration) && parsedDuration > 0
+    ? parsedDuration
+    : Math.max(1, draft.days.length);
 }
 
 function getTemplateDraftSource(template: ProgramTemplateCard): TrainingProgramTemplateDraftSource {

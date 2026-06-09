@@ -181,13 +181,15 @@ export function TrainingProgramBuilder({
   saving,
   onDraftChange,
   onCancel,
-  onSave
+  onSave,
+  onSaveAsTemplate
 }: {
   draft: TrainingProgramDraft;
   saving: boolean;
   onDraftChange: (draft: TrainingProgramDraft) => void;
   onCancel: () => void;
   onSave: () => void;
+  onSaveAsTemplate: () => void;
 }) {
   const activeDay = draft.days.find((day) => day.id === draft.activeDayId) ?? draft.days[0];
   const [exercisePanelSection, setExercisePanelSection] = useState<TrainingProgramSection | null>(null);
@@ -404,7 +406,7 @@ export function TrainingProgramBuilder({
               type="button"
               className="rounded-xl border border-indigo-200 bg-white px-5 py-3 text-sm font-bold text-indigo-700 shadow-sm transition-colors hover:bg-indigo-50 disabled:opacity-60"
               disabled={saving}
-              onClick={onSave}
+              onClick={onSaveAsTemplate}
             >
               {saving ? "Saving..." : "Save as Template"}
             </button>

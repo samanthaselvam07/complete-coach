@@ -274,7 +274,7 @@ describe("TrainingProgramsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
     fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
     fireEvent.change(screen.getByLabelText(/Program Title/i), { target: { value: "Strength Template 1" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save & Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save as Template" }));
 
     expect(await screen.findByText("Program template saved to persistence API.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Program Library" })).toBeInTheDocument();
@@ -289,7 +289,7 @@ describe("TrainingProgramsPage", () => {
     expect(screen.getByRole("tabpanel", { name: "Program templates" })).toHaveTextContent("Strength Template 1");
   });
 
-  it("opens a create-program chooser and saves a from-scratch program builder", async () => {
+  it("opens a create-program chooser and saves a from-scratch program to custom programs", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
@@ -345,27 +345,20 @@ describe("TrainingProgramsPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Save & Close" }));
 
-    expect(await screen.findByText("Program template saved to persistence API.")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(await screen.findByText("Lower Strength Build saved to Custom programs.")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Custom programs" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Custom programs" })).toHaveTextContent("Lower Strength Build");
+    expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/v1/training-program-templates",
-      expect.objectContaining({
-        method: "POST",
-        body: expect.stringContaining("Lower Strength Build")
-      })
+      expect.objectContaining({ method: "POST" })
     );
-    const postBody = JSON.parse(
-      String(fetchMock.mock.calls.find(([url, init]) => url === "/api/v1/training-program-templates" && init?.method === "POST")?.[1]?.body)
-    );
-    expect(postBody.template.days[0].exercises[0]).toMatchObject({
-      exerciseName: "Back Squat",
-      sets: 4,
-      reps: "6-8",
-      rpe: "8",
-      rir: "2",
-      restSeconds: 150,
-      section: "workout"
-    });
-    expect(postBody.template.instructions).toBe("Progress only if reps stay crisp.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Lower Strength Build" }));
+
+    expect(screen.getByDisplayValue("Back Squat")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("4")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("6-8")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Progress only if reps stay crisp.")).toBeInTheDocument();
   });
 
   it("duplicates an existing template into an editable program builder", async () => {
