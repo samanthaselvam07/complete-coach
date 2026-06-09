@@ -22,12 +22,21 @@ export function ScheduleEventButton() {
       </Button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/40 p-4 sm:p-6"
+          data-testid="schedule-event-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setOpen(false);
+            }
+          }}
+        >
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="schedule-event-title"
-            className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl"
+            className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl sm:p-6"
+            onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>

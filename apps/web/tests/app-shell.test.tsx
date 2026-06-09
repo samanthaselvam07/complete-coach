@@ -348,6 +348,17 @@ describe("topbar controls", () => {
 
     expect(screen.queryByRole("dialog", { name: "Schedule Event or Coaching Call" })).not.toBeInTheDocument();
   });
+
+  it("closes the mini scheduling flow when clicking outside it", () => {
+    render(createElement(ScheduleEventButton));
+
+    fireEvent.click(screen.getByRole("button", { name: "Schedule Event / Call" }));
+    expect(screen.getByRole("dialog", { name: "Schedule Event or Coaching Call" })).toBeInTheDocument();
+
+    fireEvent.mouseDown(screen.getByTestId("schedule-event-backdrop"));
+
+    expect(screen.queryByRole("dialog", { name: "Schedule Event or Coaching Call" })).not.toBeInTheDocument();
+  });
 });
 
 describe("notifications", () => {
