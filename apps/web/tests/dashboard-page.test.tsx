@@ -28,6 +28,7 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("heading", { name: "CRM Pipeline" })).toBeInTheDocument();
     expect(screen.getByText("Coaching Team")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "New Client/Onboarding" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: /weekly schedule/i })).not.toBeInTheDocument();
   });
 
   it("updates the displayed revenue period from the selector", () => {
@@ -237,7 +238,7 @@ describe("DashboardPage", () => {
 
     render(createElement(DashboardPage));
 
-    expect(await screen.findAllByText("Persisted client review")).toHaveLength(2);
+    expect(await screen.findAllByText("Persisted client review")).toHaveLength(1);
     expect(screen.getByText("Due Jun 10")).toBeInTheDocument();
     expect(screen.getByText("76% LOAD")).toBeInTheDocument();
     expect(screen.getByText("Room for 18 more premium athletes across 3 coaches")).toBeInTheDocument();

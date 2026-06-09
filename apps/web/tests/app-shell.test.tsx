@@ -6,7 +6,6 @@ import { DashboardShell } from "@/components/app-shell/dashboard-shell";
 import { MessageMenu } from "@/components/app-shell/message-menu";
 import { NewClientButton } from "@/components/app-shell/new-client-button";
 import { NotificationMenu } from "@/components/app-shell/notification-menu";
-import { ScheduleEventButton } from "@/components/app-shell/schedule-event-button";
 import { SidebarNav } from "@/components/app-shell/sidebar-nav";
 import { TopSearch } from "@/components/app-shell/top-search";
 
@@ -50,6 +49,7 @@ describe("app shell navigation", () => {
 
     expect(within(nav).getByRole("link", { name: /^dashboard$/i })).toHaveAttribute("href", "/");
     expect(within(nav).queryByRole("link", { name: /^audit log$/i })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole("link", { name: /^scheduling$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^training$/i })).not.toBeInTheDocument();
     expect(within(nav).getByRole("button", { name: /^training$/i })).toHaveAttribute(
       "aria-expanded",
@@ -297,7 +297,7 @@ describe("dashboard shell auth boundary", () => {
 
     expect(screen.getByRole("navigation", { name: /primary navigation/i })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: /search tasks/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Schedule Event / Call" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Schedule Event / Call" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "New Client" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /messages/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /notifications/i })).toBeInTheDocument();
@@ -333,33 +333,6 @@ describe("topbar controls", () => {
     expect(
       screen.getByRole("searchbox", { name: /search tasks, clients, or pipeline/i })
     ).toBeInTheDocument();
-  });
-
-  it("opens a mini scheduling flow from the top navigation", () => {
-    render(createElement(ScheduleEventButton));
-
-    fireEvent.click(screen.getByRole("button", { name: "Schedule Event / Call" }));
-
-    expect(screen.getByRole("dialog", { name: "Schedule Event or Coaching Call" })).toBeInTheDocument();
-    expect(screen.getByTestId("schedule-event-backdrop").parentElement).toBe(document.body);
-    expect(screen.getByTestId("schedule-event-backdrop")).toHaveClass("z-[100]");
-    expect(screen.getByText("Google Meet Integration")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "View Calendar" })).toHaveAttribute("href", "/schedule");
-
-    fireEvent.click(screen.getByRole("button", { name: "Close schedule event" }));
-
-    expect(screen.queryByRole("dialog", { name: "Schedule Event or Coaching Call" })).not.toBeInTheDocument();
-  });
-
-  it("closes the mini scheduling flow when clicking outside it", () => {
-    render(createElement(ScheduleEventButton));
-
-    fireEvent.click(screen.getByRole("button", { name: "Schedule Event / Call" }));
-    expect(screen.getByRole("dialog", { name: "Schedule Event or Coaching Call" })).toBeInTheDocument();
-
-    fireEvent.mouseDown(screen.getByTestId("schedule-event-backdrop"));
-
-    expect(screen.queryByRole("dialog", { name: "Schedule Event or Coaching Call" })).not.toBeInTheDocument();
   });
 });
 

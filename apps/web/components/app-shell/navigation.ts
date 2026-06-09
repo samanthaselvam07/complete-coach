@@ -1,7 +1,6 @@
 import {
   Apple,
   BookOpen,
-  CalendarDays,
   ClipboardCheck,
   Database,
   Dumbbell,
@@ -86,7 +85,6 @@ export const navigationItems = [
       { href: "/social-media/create", label: "Create Post", icon: PlusCircle }
     ]
   },
-  { href: "/schedule", label: "Scheduling", icon: CalendarDays },
   { href: "/team-management", label: "Team Management", icon: Users2 },
   {
     href: "/packages",
