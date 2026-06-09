@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Zap } from "lucide-react";
+import { ChevronDown, Settings, UserCircle, Zap } from "lucide-react";
 import type { Route } from "next";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 
 import { cn } from "@/lib/utils";
 import { isActivePath, navigationItems } from "./navigation";
@@ -24,6 +25,10 @@ function createInitialOpenGroups() {
 
 export function SidebarNav({ currentPath }: SidebarNavProps) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(createInitialOpenGroups);
+  const [coachMenuOpen, setCoachMenuOpen] = useState(false);
+  const { data: session } = useSession();
+  const coachName = session?.user?.name ?? "Coach Marcus";
+  const coachTitle = session?.user?.email ?? "Head Curator";
 
   const toggleGroup = (href: string) => {
     setOpenGroups((current) => ({
@@ -150,11 +155,78 @@ export function SidebarNav({ currentPath }: SidebarNavProps) {
       </nav>
 
       <div className="border-t border-sidebar-border p-4">
-        <div className="rounded-xl border border-sidebar-border bg-white p-3">
-          <p className="font-semibold">Coach Marcus</p>
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Head Curator</p>
+        <div className="relative">
+          {coachMenuOpen ? (
+            <div
+              id="sidebar-coach-menu"
+              className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-sidebar-border bg-white p-2 shadow-lg"
+              aria-label="Coach module links"
+            >
+              <Link
+                href={"/coach-profile" as Route}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  isActivePath(currentPath, "/coach-profile")
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+                aria-current={isActivePath(currentPath, "/coach-profile") ? "page" : undefined}
+              >
+                <UserCircle className="size-4" aria-hidden="true" />
+                <span>Coach Profile</span>
+              </Link>
+              <Link
+                href={"/settings" as Route}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  isActivePath(currentPath, "/settings")
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+                aria-current={isActivePath(currentPath, "/settings") ? "page" : undefined}
+              >
+                <Settings className="size-4" aria-hidden="true" />
+                <span>Individual Coach Settings</span>
+              </Link>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            className={cn(
+              "flex w-full items-center gap-3 rounded-xl border border-sidebar-border bg-white p-3 text-left transition-colors hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+              (isActivePath(currentPath, "/coach-profile") || isActivePath(currentPath, "/settings")) &&
+                "border-indigo-200 bg-indigo-50"
+            )}
+            aria-expanded={coachMenuOpen}
+            aria-controls="sidebar-coach-menu"
+            aria-label={`Open coach module for ${coachName}`}
+            onClick={() => setCoachMenuOpen((open) => !open)}
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
+              {getInitials(coachName)}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-semibold">{coachName}</span>
+              <span className="block truncate text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                {coachTitle}
+              </span>
+            </span>
+            <ChevronDown
+              className={cn("size-4 shrink-0 text-muted-foreground transition-transform", coachMenuOpen && "rotate-180")}
+              aria-hidden="true"
+            />
+          </button>
         </div>
       </div>
     </aside>
   );
+}
+
+function getInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "C";
 }

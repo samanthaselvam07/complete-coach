@@ -51,6 +51,8 @@ describe("app shell navigation", () => {
     expect(within(nav).queryByRole("link", { name: /^audit log$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^scheduling$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^education$/i })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole("link", { name: /^coach profile$/i })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole("link", { name: /^settings$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^training$/i })).not.toBeInTheDocument();
     expect(within(nav).getByRole("button", { name: /^training$/i })).toHaveAttribute(
       "aria-expanded",
@@ -228,6 +230,35 @@ describe("app shell navigation", () => {
     expect(within(nav).getByRole("link", { name: /^dashboard$/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "New Client" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "+ New Client" })).not.toBeInTheDocument();
+  });
+
+  it("moves coach profile and individual settings into the bottom coach module", () => {
+    useSessionMock.mockReturnValue({
+      data: {
+        user: { id: "user_1", name: "Demo Coach", email: "coach@example.com" },
+        activeOrganization: { name: "Complete Coach Demo", role: "owner" }
+      },
+      status: "authenticated"
+    });
+
+    render(createElement(SidebarNav, { currentPath: "/" }));
+    const nav = screen.getByRole("navigation", { name: /primary navigation/i });
+
+    expect(within(nav).queryByRole("link", { name: /^coach profile$/i })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole("link", { name: /^settings$/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Coach module links")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /open coach module for demo coach/i }));
+
+    const coachModule = screen.getByLabelText("Coach module links");
+    expect(within(coachModule).getByRole("link", { name: "Coach Profile" })).toHaveAttribute(
+      "href",
+      "/coach-profile"
+    );
+    expect(within(coachModule).getByRole("link", { name: "Individual Coach Settings" })).toHaveAttribute(
+      "href",
+      "/settings"
+    );
   });
 
   it("creates a new client from the top navigation quick action", async () => {

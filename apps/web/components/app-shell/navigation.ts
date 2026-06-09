@@ -11,8 +11,6 @@ import {
   Package,
   Pill,
   Share2,
-  Settings,
-  UserCircle,
   UserPlus,
   Users,
   Users2,
@@ -86,8 +84,6 @@ export const navigationItems = [
     icon: Package,
     children: [{ href: "/packages", label: "Package Library", icon: Package }]
   },
-  { href: "/coach-profile", label: "Coach Profile", icon: UserCircle },
-  { href: "/settings", label: "Settings", icon: Settings }
 ] satisfies ReadonlyArray<NavigationItem>;
 
 export function isActivePath(currentPath: string, href: string) {
