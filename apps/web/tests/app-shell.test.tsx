@@ -81,6 +81,22 @@ describe("app shell navigation", () => {
       "/messages"
     );
     expect(within(nav).queryAllByRole("link", { name: /^messages$/i })).toHaveLength(1);
+
+    fireEvent.click(within(nav).getByRole("button", { name: /expand social media menu/i }));
+
+    expect(within(nav).getByRole("link", { name: /^social hub$/i })).toHaveAttribute(
+      "href",
+      "/social-media"
+    );
+    expect(within(nav).queryByRole("link", { name: /^create post$/i })).not.toBeInTheDocument();
+
+    fireEvent.click(within(nav).getByRole("button", { name: /expand packages menu/i }));
+
+    expect(within(nav).getByRole("link", { name: /^package library$/i })).toHaveAttribute(
+      "href",
+      "/packages"
+    );
+    expect(within(nav).queryByRole("link", { name: /^create package$/i })).not.toBeInTheDocument();
   });
 
   it("marks the active route for nested navigation", () => {

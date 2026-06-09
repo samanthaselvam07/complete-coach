@@ -11,7 +11,6 @@ import {
   MessageSquare,
   Package,
   Pill,
-  PlusCircle,
   Share2,
   Settings,
   UserCircle,
@@ -80,20 +79,14 @@ export const navigationItems = [
     href: "/social-media",
     label: "Social Media",
     icon: Share2,
-    children: [
-      { href: "/social-media", label: "Social Hub", icon: Share2 },
-      { href: "/social-media/create", label: "Create Post", icon: PlusCircle }
-    ]
+    children: [{ href: "/social-media", label: "Social Hub", icon: Share2 }]
   },
   { href: "/team-management", label: "Team Management", icon: Users2 },
   {
     href: "/packages",
     label: "Packages",
     icon: Package,
-    children: [
-      { href: "/packages", label: "Package Library", icon: Package },
-      { href: "/packages/create", label: "Create Package", icon: PlusCircle }
-    ]
+    children: [{ href: "/packages", label: "Package Library", icon: Package }]
   },
   { href: "/coach-profile", label: "Coach Profile", icon: UserCircle },
   { href: "/settings", label: "Settings", icon: Settings }
