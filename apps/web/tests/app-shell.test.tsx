@@ -305,6 +305,25 @@ describe("dashboard shell auth boundary", () => {
     expect(screen.getByText("Complete Coach Demo · owner")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
   });
+
+  it("keeps the left navigation fixed while main page content scrolls", () => {
+    useSessionMock.mockReturnValue({
+      data: {
+        user: { id: "user_1", name: "Demo Coach", email: "coach@example.com" },
+        activeOrganization: { name: "Complete Coach Demo", role: "owner" }
+      },
+      status: "authenticated"
+    });
+
+    render(createElement(DashboardShell, null, createElement("h1", null, "Dashboard")));
+
+    const nav = screen.getByRole("navigation", { name: /primary navigation/i });
+    const sidebar = nav.closest("aside");
+    const main = screen.getByRole("main");
+
+    expect(sidebar).toHaveClass("sticky", "top-0", "h-screen");
+    expect(main).toHaveClass("min-h-0", "overflow-y-auto");
+  });
 });
 
 describe("topbar controls", () => {

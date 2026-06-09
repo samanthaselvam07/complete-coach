@@ -33,7 +33,7 @@ export function SidebarNav({ currentPath }: SidebarNavProps) {
   };
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar">
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="border-b border-sidebar-border p-5">
         <Link href="/" className="flex items-center gap-3" aria-label="Complete Coach dashboard">
           <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-sm">

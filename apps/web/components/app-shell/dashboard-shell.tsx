@@ -64,9 +64,9 @@ function DashboardShellContent({ children }: DashboardShellProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50 text-foreground">
+    <div className="flex h-screen overflow-hidden bg-gray-50 text-foreground">
       <SidebarNav currentPath={pathname} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-40 flex h-20 items-center justify-between gap-4 border-b border-border bg-white/95 px-8 backdrop-blur">
           <TopSearch />
           <div className="flex items-center gap-3">
@@ -77,7 +77,7 @@ function DashboardShellContent({ children }: DashboardShellProps) {
             <UserMenu />
           </div>
         </header>
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
