@@ -76,13 +76,13 @@ export interface MealTemplateCard {
 
 export interface MealAssignmentRow {
   id: string;
-  clientName: string;
   planName: string;
+  activeClientCount: number;
   calories: number;
   protein: number;
   carbs: number;
   fats: number;
-  started: string;
+  lastEdited: string;
   status: string;
 }
 
@@ -351,13 +351,10 @@ function ActiveAssignmentsPanel({ assignments }: { assignments: MealAssignmentRo
         />
       ) : null}
       <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600">
-        <div className="col-span-3">Assigned Client</div>
-        <div className="col-span-3">Meal Plan Protocol</div>
-        <div className="col-span-1">Calories</div>
-        <div className="col-span-1">Protein</div>
-        <div className="col-span-1">Carbs</div>
-        <div className="col-span-1">Fats</div>
-        <div className="col-span-1">Started</div>
+        <div className="col-span-4">Meal Plan Name</div>
+        <div className="col-span-2">Assigned To</div>
+        <div className="col-span-3">Calories / Macros</div>
+        <div className="col-span-2">Last Edited</div>
         <div className="col-span-1">Actions</div>
       </div>
       {assignments.map((assignment) => {
@@ -371,13 +368,20 @@ function ActiveAssignmentsPanel({ assignments }: { assignments: MealAssignmentRo
               menuOpen ? "z-40" : "z-0"
             )}
           >
-            <div className="col-span-3 font-medium text-gray-900">{assignment.clientName}</div>
-            <div className="col-span-3 text-sm text-gray-700">{assignment.planName}</div>
-            <div className="col-span-1 text-sm text-gray-700">{assignment.calories}</div>
-            <div className="col-span-1 text-sm font-medium text-blue-600">{assignment.protein}g</div>
-            <div className="col-span-1 text-sm font-medium text-green-600">{assignment.carbs}g</div>
-            <div className="col-span-1 text-sm font-medium text-orange-600">{assignment.fats}g</div>
-            <div className="col-span-1 text-sm text-gray-600">{assignment.started}</div>
+            <div className="col-span-4">
+              <div className="font-medium text-gray-900">{assignment.planName}</div>
+              <div className="text-xs text-gray-500">{assignment.status}</div>
+            </div>
+            <div className="col-span-2 text-sm font-medium text-gray-700">
+              {assignment.activeClientCount} active {assignment.activeClientCount === 1 ? "client" : "clients"}
+            </div>
+            <div className="col-span-3 text-sm text-gray-700">
+              <span className="font-medium text-gray-900">{assignment.calories} cal</span>
+              <span className="ml-3 font-medium text-blue-600">P {assignment.protein}g</span>
+              <span className="ml-2 font-medium text-green-600">C {assignment.carbs}g</span>
+              <span className="ml-2 font-medium text-orange-600">F {assignment.fats}g</span>
+            </div>
+            <div className="col-span-2 text-sm text-gray-600">{assignment.lastEdited}</div>
             <div className="relative col-span-1 flex items-center gap-2">
               <button aria-label={`Edit ${assignment.planName}`} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50">
                 <Edit className="size-4" aria-hidden="true" />
@@ -608,22 +612,43 @@ export function getMealTemplateCards(source: MealPlanSource, templates: ApiMealP
 export function getMealAssignmentRows(source: MealPlanSource, assignments: ApiMealPlanAssignment[]): MealAssignmentRow[] {
   if (source === "fixtures") {
     return mealAssignments.map((assignment) => ({
-      ...assignment,
+      id: assignment.id,
+      planName: assignment.planName,
+      activeClientCount: 1,
+      calories: assignment.calories,
+      protein: assignment.protein,
+      carbs: assignment.carbs,
+      fats: assignment.fats,
+      lastEdited: assignment.started,
       status: "active"
     }));
   }
 
-  return assignments.map((assignment) => ({
-    id: assignment.id,
-    clientName: assignment.clientName || "Unassigned client",
-    planName: assignment.name,
-    calories: assignment.snapshot.targetCalories ?? assignment.targetCalories,
-    protein: assignment.snapshot.proteinGrams ?? assignment.proteinGrams,
-    carbs: assignment.snapshot.carbsGrams ?? assignment.carbsGrams,
-    fats: assignment.snapshot.fatGrams ?? assignment.fatGrams,
-    started: formatDisplayDate(assignment.startsOn),
-    status: assignment.status
-  }));
+  const assignmentGroups = new Map<string, ApiMealPlanAssignment[]>();
+
+  assignments.forEach((assignment) => {
+    const assignmentKey = assignment.templateId ?? assignment.id;
+    assignmentGroups.set(assignmentKey, [...(assignmentGroups.get(assignmentKey) ?? []), assignment]);
+  });
+
+  return Array.from(assignmentGroups.entries()).map(([assignmentKey, group]) => {
+    const sortedGroup = [...group].sort(
+      (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
+    );
+    const assignment = sortedGroup.find((entry) => entry.status === "active") ?? sortedGroup[0];
+
+    return {
+      id: assignmentKey,
+      planName: assignment.name,
+      activeClientCount: group.filter((entry) => entry.status === "active").length,
+      calories: assignment.snapshot.targetCalories ?? assignment.targetCalories,
+      protein: assignment.snapshot.proteinGrams ?? assignment.proteinGrams,
+      carbs: assignment.snapshot.carbsGrams ?? assignment.carbsGrams,
+      fats: assignment.snapshot.fatGrams ?? assignment.fatGrams,
+      lastEdited: formatDisplayDate(assignment.updatedAt),
+      status: assignment.status
+    };
+  });
 }
 
 export function formatDisplayDate(value: string) {

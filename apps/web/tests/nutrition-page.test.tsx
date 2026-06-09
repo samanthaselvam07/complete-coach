@@ -29,14 +29,14 @@ describe("MealPlansPage", () => {
     render(createElement(MealPlansPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Meal Plan Library" })).toBeInTheDocument();
-    expect(screen.getByText("James S. Miller")).toBeInTheDocument();
+    expect(screen.getByText("Hypertrophy Phase II")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
 
     expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent(
       "High-Protein Breakfast Bowl"
     );
-    expect(screen.queryByText("James S. Miller")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hypertrophy Phase II")).not.toBeInTheDocument();
   });
 
   it("renders meal-plan actions", () => {
@@ -134,8 +134,11 @@ describe("MealPlansPage", () => {
 
     render(createElement(MealPlansPage));
 
-    expect(await screen.findByText("Persisted Nutrition Client")).toBeInTheDocument();
-    expect(screen.getByText("Persisted Hypertrophy Fuel")).toBeInTheDocument();
+    expect(await screen.findByText("Persisted Hypertrophy Fuel")).toBeInTheDocument();
+    expect(screen.getByText("1 active client")).toBeInTheDocument();
+    expect(screen.getByText("2900 cal")).toBeInTheDocument();
+    expect(screen.getByText("P 215g")).toBeInTheDocument();
+    expect(screen.queryByText("Persisted Nutrition Client")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
 
@@ -295,7 +298,7 @@ describe("MealPlansPage", () => {
       })
     );
     expect(screen.getByRole("tabpanel", { name: "Meal Plans" })).toHaveTextContent(
-      "Persisted Nutrition Client"
+      "Persisted Hypertrophy Fuel"
     );
   });
 
@@ -305,7 +308,7 @@ describe("MealPlansPage", () => {
     render(createElement(MealPlansPage));
 
     expect(await screen.findByText("Meal plan persistence API unavailable. Showing fixture meal plan library.")).toBeInTheDocument();
-    expect(screen.getByText("James S. Miller")).toBeInTheDocument();
+    expect(screen.getByText("Hypertrophy Phase II")).toBeInTheDocument();
   });
 
   it("handles non-array meal plan API payloads as empty persisted state", async () => {
@@ -448,6 +451,7 @@ describe("meal plan view model helpers", () => {
   it("maps fixture and API assignments into active nutrition rows", () => {
     expect(getMealAssignmentRows("fixtures", [])[0]).toMatchObject({
       planName: "Hypertrophy Phase II",
+      activeClientCount: 1,
       status: "active"
     });
 
@@ -469,15 +473,34 @@ describe("meal plan view model helpers", () => {
           startsOn: "2026-05-01",
           endsOn: null,
           updatedAt: "2026-05-18T00:00:00.000Z"
+        },
+        {
+          id: "meal_assignment_api_2",
+          clientId: "client_api_2",
+          clientName: "Second Client",
+          templateId: "meal_template_api",
+          name: "Persisted Hypertrophy Fuel",
+          phase: "Hypertrophy",
+          targetCalories: 2800,
+          proteinGrams: 210,
+          carbsGrams: 280,
+          fatGrams: 93,
+          status: "active",
+          snapshot: { targetCalories: 2900, proteinGrams: 215 },
+          startsOn: "2026-05-03",
+          endsOn: null,
+          updatedAt: "2026-05-19T00:00:00.000Z"
         }
       ])[0]
     ).toMatchObject({
-      clientName: "Unassigned client",
+      id: "meal_template_api",
+      planName: "Persisted Hypertrophy Fuel",
+      activeClientCount: 2,
       calories: 2900,
       protein: 215,
       carbs: 280,
       fats: 93,
-      started: "May 1, 2026"
+      lastEdited: "May 19, 2026"
     });
   });
 });
