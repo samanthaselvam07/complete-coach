@@ -5,7 +5,6 @@ import {
   Database,
   Dumbbell,
   FileText,
-  GraduationCap,
   LayoutGrid,
   Library,
   MessageSquare,
@@ -52,7 +51,6 @@ export const navigationItems = [
       { href: "/nutrition/food-database", label: "Food Database", icon: Database }
     ]
   },
-  { href: "/education", label: "Education", icon: GraduationCap },
   {
     href: "/supplementation",
     label: "Supplementation",

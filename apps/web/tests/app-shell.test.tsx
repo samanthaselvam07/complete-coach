@@ -50,6 +50,7 @@ describe("app shell navigation", () => {
     expect(within(nav).getByRole("link", { name: /^dashboard$/i })).toHaveAttribute("href", "/");
     expect(within(nav).queryByRole("link", { name: /^audit log$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^scheduling$/i })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole("link", { name: /^education$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^training$/i })).not.toBeInTheDocument();
     expect(within(nav).getByRole("button", { name: /^training$/i })).toHaveAttribute(
       "aria-expanded",
