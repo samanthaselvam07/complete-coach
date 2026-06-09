@@ -52,6 +52,22 @@ interface SocialConnection {
   status: string;
 }
 
+type TeamRole = "owner" | "admin" | "coach" | "assistant";
+type TeamStatus = "invited" | "active" | "suspended" | "removed";
+
+interface TeamMember {
+  id: string;
+  userId: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  role: TeamRole;
+  status: TeamStatus;
+  activeClientCount?: number;
+  capacityLimit?: number;
+  capacityPercent?: number;
+}
+
 const tabs: Array<{
   id: OrganizationSettingsTab;
   label: string;
@@ -115,6 +131,45 @@ function buildInitialMemberPermissions() {
     ])
   ) as Record<string, Record<Capability, boolean>>;
 }
+
+const fallbackTeamMembers: TeamMember[] = [
+  {
+    id: "membership_sarah",
+    userId: "user_sarah",
+    name: "Sarah Jenkins",
+    email: "sarah@kineticcurator.com",
+    image: null,
+    role: "admin",
+    status: "active",
+    activeClientCount: 28,
+    capacityLimit: 40,
+    capacityPercent: 70
+  },
+  {
+    id: "membership_marcus",
+    userId: "user_marcus",
+    name: "Marcus Chen",
+    email: "marcus@kineticcurator.com",
+    image: null,
+    role: "coach",
+    status: "active",
+    activeClientCount: 34,
+    capacityLimit: 40,
+    capacityPercent: 85
+  },
+  {
+    id: "membership_elena",
+    userId: "user_elena",
+    name: "Elena Rodriguez",
+    email: "elena@kineticcurator.com",
+    image: null,
+    role: "assistant",
+    status: "suspended",
+    activeClientCount: 0,
+    capacityLimit: 0,
+    capacityPercent: 0
+  }
+];
 
 export function OrganizationSettingsPage() {
   const [activeTab, setActiveTab] = useState<OrganizationSettingsTab>("billing");
@@ -623,32 +678,331 @@ function SenderDomainCard({ domain, isVerifying, onVerify }: { domain: SenderDom
 }
 
 function TeamManagementPanel() {
+  const [members, setMembers] = useState<TeamMember[]>(fallbackTeamMembers);
+  const [source, setSource] = useState<"api" | "fallback">("fallback");
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const visibleMembers = members.filter((member) => member.status !== "removed");
+  const activeMembers = visibleMembers.filter((member) => member.status === "active");
+  const reviewMembers = visibleMembers.filter((member) => member.status !== "active");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadTeamMembers() {
+      try {
+        const response = await fetch("/api/v1/team-members");
+
+        if (!response.ok) {
+          throw new Error("Team API unavailable.");
+        }
+
+        const payload = (await response.json()) as {
+          data?: { members?: TeamMember[] };
+        };
+        const apiMembers = payload.data?.members;
+
+        if (!apiMembers?.length) {
+          throw new Error("No team members returned.");
+        }
+
+        if (active) {
+          setMembers(apiMembers);
+          setSource("api");
+        }
+      } catch {
+        if (active) {
+          setSource("fallback");
+        }
+      }
+    }
+
+    void loadTeamMembers();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function updateMember(member: TeamMember, input: Partial<Pick<TeamMember, "role" | "status">>) {
+    if (source !== "api") {
+      setFeedback("Connect the team API to update member access.");
+      return;
+    }
+
+    setFeedback(null);
+
+    try {
+      const response = await fetch(`/api/v1/team-members/${member.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input)
+      });
+
+      if (!response.ok) {
+        throw new Error("Team member could not be updated.");
+      }
+
+      const payload = (await response.json()) as { data: TeamMember };
+      setMembers((currentMembers) =>
+        currentMembers.map((candidate) => (candidate.id === member.id ? payload.data : candidate))
+      );
+      setEditingMember((currentMember) => (currentMember?.id === member.id ? payload.data : currentMember));
+      setFeedback(`${payload.data.name ?? payload.data.email ?? "Team member"} updated.`);
+    } catch {
+      setFeedback("Team member could not be updated. The last owner cannot be changed.");
+    }
+  }
+
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <article className="rounded-2xl border border-slate-200 p-5">
-        <UsersRound className="mb-4 h-6 w-6 text-indigo-600" aria-hidden="true" />
-        <p className="text-sm font-bold text-slate-500">Active team members</p>
-        <p className="mt-2 text-3xl font-black text-slate-950">18</p>
-        <p className="mt-1 text-sm text-slate-500">Owners, admins, coaches, and assistants.</p>
-      </article>
-      <article className="rounded-2xl border border-slate-200 p-5">
-        <ShieldCheck className="mb-4 h-6 w-6 text-indigo-600" aria-hidden="true" />
-        <p className="text-sm font-bold text-slate-500">Seats requiring review</p>
-        <p className="mt-2 text-3xl font-black text-slate-950">4</p>
-        <p className="mt-1 text-sm text-slate-500">Review leave, suspended, or pending access.</p>
-      </article>
-      <article className="rounded-2xl border border-slate-200 p-5">
-        <p className="text-lg font-black text-slate-950">Open the roster</p>
-        <p className="mt-2 text-sm text-slate-500">
-          Use the full team management page to invite members, update roles, and remove access.
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <article className="rounded-2xl border border-slate-200 p-5">
+          <UsersRound className="mb-4 h-6 w-6 text-indigo-600" aria-hidden="true" />
+          <p className="text-sm font-bold text-slate-500">Active team members</p>
+          <p className="mt-2 text-3xl font-black text-slate-950">{activeMembers.length}</p>
+          <p className="mt-1 text-sm text-slate-500">Owners, admins, coaches, and assistants.</p>
+        </article>
+        <article className="rounded-2xl border border-slate-200 p-5">
+          <ShieldCheck className="mb-4 h-6 w-6 text-indigo-600" aria-hidden="true" />
+          <p className="text-sm font-bold text-slate-500">Seats requiring review</p>
+          <p className="mt-2 text-3xl font-black text-slate-950">{reviewMembers.length}</p>
+          <p className="mt-1 text-sm text-slate-500">Review suspended, invited, or restricted access.</p>
+        </article>
+        <article className="rounded-2xl border border-slate-200 p-5">
+          <p className="text-lg font-black text-slate-950">Full roster tools</p>
+          <p className="mt-2 text-sm text-slate-500">
+            Use the full team management page for invitations and deeper roster reporting.
+          </p>
+          <Link
+            href="/team-management"
+            className="mt-5 inline-flex rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700"
+          >
+            Open team management
+          </Link>
+        </article>
+      </div>
+
+      {feedback ? (
+        <p role="status" className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-800">
+          {feedback}
         </p>
-        <Link
-          href="/team-management"
-          className="mt-5 inline-flex rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700"
-        >
-          Open team management
-        </Link>
-      </article>
+      ) : null}
+
+      {source === "fallback" ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Showing sample team access until the team API is available.
+        </p>
+      ) : null}
+
+      <section className="overflow-hidden rounded-2xl border border-slate-200">
+        <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-lg font-black text-slate-950">Team member access</h3>
+            <p className="text-sm text-slate-500">
+              Activate, deactivate, and edit profiles for everyone with organisation access.
+            </p>
+          </div>
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600">
+            {visibleMembers.length} members
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[860px] text-left text-sm" aria-label="Organisation team members">
+            <thead className="border-b border-slate-200 bg-white text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Team Member</th>
+                <th className="px-4 py-3">Role</th>
+                <th className="px-4 py-3">Client Capacity</th>
+                <th className="px-4 py-3">Account Status</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {visibleMembers.map((member) => (
+                <tr key={member.id}>
+                  <td className="px-4 py-4">
+                    <span className="block font-bold text-slate-950">{member.name ?? "Unnamed member"}</span>
+                    <span className="text-slate-500">{member.email ?? "No email on file"}</span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold capitalize text-indigo-700">
+                      {member.role}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    {member.capacityLimit ? (
+                      <div className="flex items-center gap-3">
+                        <span className="text-slate-700">
+                          {member.activeClientCount ?? 0}/{member.capacityLimit} clients
+                        </span>
+                        <span className="h-1.5 w-28 rounded-full bg-slate-100">
+                          <span
+                            className="block h-1.5 rounded-full bg-indigo-500"
+                            style={{ width: `${member.capacityPercent ?? 0}%` }}
+                          />
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-500">No client capacity</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4">
+                    <TeamStatusPill status={member.status} />
+                  </td>
+                  <td className="px-4 py-4 text-right">
+                    <div className="inline-flex flex-wrap justify-end gap-2">
+                      <button
+                        type="button"
+                        disabled={source !== "api" || member.role === "owner"}
+                        onClick={() =>
+                          void updateMember(member, {
+                            status: member.status === "active" ? "suspended" : "active"
+                          })
+                        }
+                        className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {member.status === "active" ? "Deactivate" : "Activate"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={source !== "api"}
+                        onClick={() => setEditingMember(member)}
+                        className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                      >
+                        Edit profile
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {editingMember ? (
+        <TeamMemberEditDialog
+          member={editingMember}
+          onClose={() => setEditingMember(null)}
+          onSave={(input) => void updateMember(editingMember, input)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function TeamStatusPill({ status }: { status: TeamStatus }) {
+  return (
+    <span
+      className={cn(
+        "rounded-full px-3 py-1 text-xs font-bold capitalize",
+        status === "active"
+          ? "bg-green-100 text-green-700"
+          : status === "suspended"
+            ? "bg-amber-100 text-amber-700"
+            : "bg-slate-100 text-slate-600"
+      )}
+    >
+      {status === "suspended" ? "Deactivated" : status}
+    </span>
+  );
+}
+
+function TeamMemberEditDialog({
+  member,
+  onClose,
+  onSave
+}: {
+  member: TeamMember;
+  onClose: () => void;
+  onSave: (input: Partial<Pick<TeamMember, "role" | "status">>) => void;
+}) {
+  const [role, setRole] = useState<TeamRole>(member.role);
+  const [status, setStatus] = useState<TeamStatus>(member.status);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="presentation">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="team-member-edit-title"
+        className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Edit team profile</p>
+            <h3 id="team-member-edit-title" className="mt-1 text-2xl font-black text-slate-950">
+              {member.name ?? member.email ?? "Team member"}
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">{member.email ?? "No email on file"}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            aria-label="Close team member editor"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-4">
+          <label className="grid gap-2 text-sm font-bold text-slate-700">
+            Role
+            <select
+              value={role}
+              disabled={member.role === "owner"}
+              onChange={(event) => setRole(event.target.value as TeamRole)}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900"
+            >
+              {member.role === "owner" ? <option value="owner">Owner</option> : null}
+              <option value="admin">Admin</option>
+              <option value="coach">Coach</option>
+              <option value="assistant">Assistant</option>
+            </select>
+          </label>
+          <label className="grid gap-2 text-sm font-bold text-slate-700">
+            Account status
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value as TeamStatus)}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900"
+            >
+              <option value="active">Active</option>
+              <option value="suspended">Deactivated</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const input = {
+                ...(member.role !== "owner" && role !== member.role ? { role } : {}),
+                ...(status !== member.status ? { status } : {})
+              };
+
+              if (Object.keys(input).length > 0) {
+                onSave(input);
+              }
+
+              onClose();
+            }}
+            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-indigo-700"
+          >
+            Save profile
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

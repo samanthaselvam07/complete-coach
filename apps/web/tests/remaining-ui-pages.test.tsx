@@ -122,6 +122,101 @@ describe("OrganizationSettingsPage", () => {
     expect(screen.getByText("client.training_plan.updated")).toBeInTheDocument();
   });
 
+  it("manages team member account status and profiles inside organization settings", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/team-members" && !init?.method) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                members: [
+                  {
+                    id: "membership_alex",
+                    userId: "user_alex",
+                    name: "Alex Coach",
+                    email: "alex@example.com",
+                    image: null,
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 12,
+                    capacityLimit: 40,
+                    capacityPercent: 30
+                  }
+                ],
+                invitations: []
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/team-members/membership_alex" && init?.method === "PATCH") {
+        const body = JSON.parse(String(init.body)) as { role?: string; status?: string };
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "membership_alex",
+                userId: "user_alex",
+                name: "Alex Coach",
+                email: "alex@example.com",
+                image: null,
+                role: body.role ?? "coach",
+                status: body.status ?? "suspended",
+                activeClientCount: 12,
+                capacityLimit: 40,
+                capacityPercent: 30
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(OrganizationSettingsPage));
+
+    fireEvent.click(screen.getByRole("tab", { name: "Team Management" }));
+
+    const memberRow = (await screen.findByText("Alex Coach")).closest("tr");
+    expect(memberRow).not.toBeNull();
+    expect(screen.getByRole("table", { name: "Organisation team members" })).toBeInTheDocument();
+    expect(within(memberRow as HTMLTableRowElement).getByText("12/40 clients")).toBeInTheDocument();
+
+    fireEvent.click(within(memberRow as HTMLTableRowElement).getByRole("button", { name: "Deactivate" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/team-members/membership_alex",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ status: "suspended" })
+        })
+      )
+    );
+    expect(await screen.findByText("Deactivated")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit profile" }));
+    fireEvent.change(screen.getByLabelText("Role"), { target: { value: "admin" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/team-members/membership_alex",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ role: "admin" })
+        })
+      )
+    );
+  });
+
   it("creates sender DNS records inside organization settings", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
