@@ -877,6 +877,61 @@ Indexes:
 - Unique `state_hash`.
 - `organization_id,provider,expires_at`.
 
+## Calendar Connections
+### `calendar_connections`
+Purpose: tenant-owned Apple, Google, or Outlook calendar connection for shared organisation calendars or individual coach calendars.
+
+Fields:
+- `id`
+- `organization_id`
+- `provider`
+- `scope`
+- `provider_account_id`
+- `account_name`
+- `calendar_name`
+- `scopes`
+- `status`
+- `encrypted_access_token`
+- `encrypted_refresh_token`
+- `token_expires_at`
+- `connected_at`
+- `revoked_at`
+- `last_error`
+- `created_by_user_id`
+- `created_at`
+- `updated_at`
+
+Security:
+- Google and Outlook access and refresh tokens are encrypted at rest.
+- Apple Calendar setup is tracked as pending CalDAV configuration and does not require OAuth token fields.
+- API serializers must never return encrypted token fields.
+
+Indexes:
+- Unique `organization_id,scope,provider,provider_account_id,created_by_user_id`.
+- `organization_id,scope,status`.
+- `created_by_user_id`.
+
+### `calendar_oauth_states`
+Purpose: short-lived OAuth CSRF state storage for Google and Outlook calendar connection flows.
+
+Fields:
+- `id`
+- `organization_id`
+- `created_by_user_id`
+- `provider`
+- `scope`
+- `state_hash`
+- `code_verifier`
+- `redirect_to`
+- `expires_at`
+- `consumed_at`
+- `created_at`
+
+Indexes:
+- Unique `state_hash`.
+- `organization_id,scope,provider,created_at`.
+- `expires_at`.
+
 ### `social_posts`
 Purpose: scheduled or draft content created by a coach.
 

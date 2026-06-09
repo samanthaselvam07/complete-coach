@@ -256,6 +256,22 @@ Social post statuses:
 - `failed`
 - `cancelled`
 
+### Calendar Connections
+- `GET /api/v1/calendar/connections`: lists active-organization calendar connections. Query: `scope` (`organization` or `coach`, default `coach`). Coach scope returns the current coach's connections; organization scope is owner/admin only. Requires `calendar:read`. Response never includes encrypted access or refresh tokens.
+- `POST /api/v1/calendar/connections`: creates or refreshes an Apple Calendar CalDAV setup record. Body: `scope` (`organization` or `coach`, default `coach`). Organization scope is owner/admin only. Requires `calendar:manage`.
+- `POST /api/v1/calendar/connections/apple`: alias for Apple Calendar setup.
+- `GET /api/v1/calendar/connections/oauth/start`: creates a hashed OAuth state and redirects to Google or Outlook. Query: `provider` (`google` or `outlook`), `scope` (`organization` or `coach`), optional safe relative `redirectTo`. Requires `calendar:manage`.
+- `GET /api/v1/calendar/connections/oauth/callback`: consumes a valid OAuth state, exchanges the code, encrypts provider tokens, upserts the calendar connection, audits the action, and redirects to the stored safe path.
+
+Calendar provider identifiers:
+- `apple`
+- `google`
+- `outlook`
+
+Calendar connection scopes:
+- `organization`
+- `coach`
+
 ### Files
 - `POST /api/v1/files/upload-url`: create signed R2 upload URL.
 - `POST /api/v1/files/{object_id}/download-url`: create signed R2 download URL.

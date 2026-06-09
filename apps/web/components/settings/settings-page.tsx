@@ -2,6 +2,8 @@
 
 import { Bell, Eye, Globe2, LockKeyhole, Monitor, Shield, Smartphone } from "lucide-react";
 
+import { CalendarConnectionsPanel } from "./calendar-connections-panel";
+
 export function SettingsPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6 lg:p-8">
@@ -87,6 +89,15 @@ export function SettingsPage() {
           </label>
         </div>
       </section>
+
+      <div className="mt-6 max-w-5xl">
+        <CalendarConnectionsPanel
+          scope="coach"
+          redirectTo="/settings"
+          title="Coach Calendar Connections"
+          description="Connect your own Apple, Google, and Outlook calendars for personal coaching calls and reminders."
+        />
+      </div>
 
       <div className="mt-6 flex max-w-5xl justify-end gap-3">
         <button type="button" className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold">

@@ -252,8 +252,6 @@ export function DashboardPage() {
         <p className="text-gray-600">{dashboardSubtitle}</p>
       </div>
 
-      <WeeklyScheduleCalendar days={weeklyScheduleDays} />
-
       <div className="mb-8 grid gap-6 lg:grid-cols-4">
         <FinancialCard
           currentPeriod={period}
@@ -286,11 +284,14 @@ export function DashboardPage() {
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-3">
-        <WorkTodoSection
-          tasks={tasks}
-          onToggleTask={toggleTask}
-          onAddTask={() => setTaskPanelOpen(true)}
-        />
+        <div className="space-y-6 lg:col-span-2">
+          <WorkTodoSection
+            tasks={tasks}
+            onToggleTask={toggleTask}
+            onAddTask={() => setTaskPanelOpen(true)}
+          />
+          <WeeklyScheduleCalendar days={weeklyScheduleDays} />
+        </div>
         <div className="space-y-6">
           <LivePipeline />
           <TeamSnapshotCard members={teamCapacityMembers ?? undefined} />

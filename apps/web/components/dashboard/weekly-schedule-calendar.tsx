@@ -45,7 +45,7 @@ export function WeeklyScheduleCalendar({ days }: { days: WeeklyScheduleDay[] }) 
           {scheduledItemCount} scheduled {scheduledItemCount === 1 ? "item" : "items"}
         </p>
       </div>
-      <div className="grid gap-3 md:grid-cols-7">
+      <div className="grid gap-3 md:grid-cols-3">
         {days.map((day) => (
           <article
             key={day.dateKey}
@@ -83,10 +83,10 @@ export function WeeklyScheduleCalendar({ days }: { days: WeeklyScheduleDay[] }) 
 
 export function getWeeklyScheduleDays(tasks: Record<DashboardTaskCategory, DashboardTask[]>, date: Date, timezone: string) {
   const todayKey = getDashboardDateKey(date, timezone);
-  const weekStart = getWeekStartDate(todayKey);
+  const today = new Date(`${todayKey}T00:00:00.000Z`);
 
-  return Array.from({ length: 7 }, (_, dayOffset) => {
-    const dayDate = addUtcDays(weekStart, dayOffset);
+  return Array.from({ length: 3 }, (_, dayOffset) => {
+    const dayDate = addUtcDays(today, dayOffset);
     const dateKey = formatUtcDateKey(dayDate);
 
     return {
@@ -170,14 +170,6 @@ function getDashboardNumericDateParts(date: Date, timezone: string) {
       timeZone: "UTC"
     }).formatToParts(date);
   }
-}
-
-function getWeekStartDate(dateKey: string) {
-  const date = new Date(`${dateKey}T00:00:00.000Z`);
-  const day = date.getUTCDay();
-  const mondayOffset = day === 0 ? -6 : 1 - day;
-
-  return addUtcDays(date, mondayOffset);
 }
 
 function addUtcDays(date: Date, dayOffset: number) {

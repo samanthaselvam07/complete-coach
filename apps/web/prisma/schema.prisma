@@ -376,6 +376,30 @@ enum SocialTargetStatus {
   @@map("social_target_status")
 }
 
+enum CalendarProvider {
+  APPLE   @map("apple")
+  GOOGLE  @map("google")
+  OUTLOOK @map("outlook")
+
+  @@map("calendar_provider")
+}
+
+enum CalendarConnectionScope {
+  ORGANIZATION @map("organization")
+  COACH        @map("coach")
+
+  @@map("calendar_connection_scope")
+}
+
+enum CalendarConnectionStatus {
+  PENDING @map("pending")
+  ACTIVE  @map("active")
+  REVOKED @map("revoked")
+  ERROR   @map("error")
+
+  @@map("calendar_connection_status")
+}
+
 enum AiWorkflowType {
   CHECK_IN_REVIEW         @map("check-in-review")
   MESSAGE_DRAFT           @map("message-draft")
@@ -493,6 +517,8 @@ model User {
   createdSenderDomains         OrganizationSenderDomain[]    @relation("OrganizationSenderDomainCreator")
   socialConnections            SocialConnection[]            @relation("SocialConnectionCreator")
   socialOAuthStates            SocialOAuthState[]            @relation("SocialOAuthStateCreator")
+  calendarConnections          CalendarConnection[]          @relation("CalendarConnectionCreator")
+  calendarOAuthStates          CalendarOAuthState[]          @relation("CalendarOAuthStateCreator")
   createdSocialPosts           SocialPost[]                  @relation("SocialPostCreator")
   createdAiPromptVersions      AiPromptVersion[]             @relation("AiPromptVersionCreator")
   createdAiMethodologyProfiles AiMethodologyProfile[]        @relation("AiMethodologyProfileCreator")
@@ -565,6 +591,8 @@ model Organization {
   paymentEvents                PaymentEvent[]
   socialConnections            SocialConnection[]
   socialOAuthStates            SocialOAuthState[]
+  calendarConnections          CalendarConnection[]
+  calendarOAuthStates          CalendarOAuthState[]
   socialPosts                  SocialPost[]
   socialPostTargets            SocialPostTarget[]
   socialPostAttempts           SocialPostAttempt[]
@@ -725,6 +753,54 @@ model SocialOAuthState {
   @@index([organizationId, provider, createdAt])
   @@index([expiresAt])
   @@map("social_oauth_states")
+}
+
+model CalendarConnection {
+  id                    String                   @id @default(cuid())
+  organizationId        String                   @map("organization_id")
+  provider              CalendarProvider
+  scope                 CalendarConnectionScope
+  providerAccountId     String                   @map("provider_account_id")
+  accountName           String                   @map("account_name")
+  calendarName          String?                  @map("calendar_name")
+  scopes                String[]
+  status                CalendarConnectionStatus @default(ACTIVE)
+  encryptedAccessToken  String?                  @map("encrypted_access_token") @db.Text
+  encryptedRefreshToken String?                  @map("encrypted_refresh_token") @db.Text
+  tokenExpiresAt        DateTime?                @map("token_expires_at") @db.Timestamptz(6)
+  connectedAt           DateTime                 @default(now()) @map("connected_at") @db.Timestamptz(6)
+  revokedAt             DateTime?                @map("revoked_at") @db.Timestamptz(6)
+  lastError             String?                  @map("last_error")
+  createdByUserId       String                   @map("created_by_user_id")
+  createdAt             DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization          Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy             User                     @relation("CalendarConnectionCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, scope, provider, providerAccountId, createdByUserId])
+  @@index([organizationId, scope, status])
+  @@index([createdByUserId])
+  @@map("calendar_connections")
+}
+
+model CalendarOAuthState {
+  id              String                  @id @default(cuid())
+  organizationId  String                  @map("organization_id")
+  createdByUserId String                  @map("created_by_user_id")
+  provider        CalendarProvider
+  scope           CalendarConnectionScope
+  stateHash       String                  @unique @map("state_hash")
+  codeVerifier    String?                 @map("code_verifier")
+  redirectTo      String?                 @map("redirect_to")
+  expiresAt       DateTime                @map("expires_at") @db.Timestamptz(6)
+  consumedAt      DateTime?               @map("consumed_at") @db.Timestamptz(6)
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization    Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy       User                    @relation("CalendarOAuthStateCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, scope, provider, createdAt])
+  @@index([expiresAt])
+  @@map("calendar_oauth_states")
 }
 
 model SocialPost {

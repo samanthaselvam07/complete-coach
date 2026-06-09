@@ -68,13 +68,18 @@ describe("Dashboard weekly calendar strip", () => {
 
     const calendar = await screen.findByRole("region", { name: "Weekly schedule calendar" });
     expect(within(calendar).getByText("This Week")).toBeInTheDocument();
+    expect(within(calendar).getAllByRole("article")).toHaveLength(3);
     expect(within(calendar).getByText("Call with Sarah J.")).toBeInTheDocument();
     expect(within(calendar).queryByText("Completed billing review")).not.toBeInTheDocument();
     expect(within(calendar).queryByText("Next week strategy session")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Work To-Do" }).compareDocumentPosition(calendar) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Add Task" }));
     fireEvent.change(screen.getByLabelText("Task Description"), { target: { value: "Schedule onboarding call" } });
-    fireEvent.change(screen.getByLabelText("Due Date"), { target: { value: "2026-06-12" } });
+    fireEvent.change(screen.getByLabelText("Due Date"), { target: { value: "2026-06-11" } });
     fireEvent.click(screen.getByRole("radio", { name: "New client/ Onboarding" }));
     fireEvent.click(screen.getByRole("button", { name: "Create Task" }));
 

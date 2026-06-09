@@ -200,7 +200,7 @@ describe("DashboardPage", () => {
                   category: "current-client-care",
                   priority: "high",
                   status: "open",
-                  dueAt: "2026-06-14T00:00:00.000Z"
+                  dueAt: "2026-06-10T00:00:00.000Z"
                 }
               ]
             }),
@@ -238,7 +238,7 @@ describe("DashboardPage", () => {
     render(createElement(DashboardPage));
 
     expect(await screen.findAllByText("Persisted client review")).toHaveLength(2);
-    expect(screen.getByText("Due Jun 14")).toBeInTheDocument();
+    expect(screen.getByText("Due Jun 10")).toBeInTheDocument();
     expect(screen.getByText("76% LOAD")).toBeInTheDocument();
     expect(screen.getByText("Room for 18 more premium athletes across 3 coaches")).toBeInTheDocument();
     const checkInsCard = screen.getByRole("link", { name: /view client check-ins/i });

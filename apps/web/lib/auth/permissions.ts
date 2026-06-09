@@ -30,6 +30,8 @@ export const ALL_CAPABILITIES = [
   "ai:approve",
   "social:read",
   "social:manage",
+  "calendar:read",
+  "calendar:manage",
   "payments:read",
   "payments:manage",
   "team:read",
@@ -77,6 +79,8 @@ const roleCapabilities: Record<MembershipRole, readonly Capability[]> = {
     "ai:approve",
     "social:read",
     "social:manage",
+    "calendar:read",
+    "calendar:manage",
     "payments:read",
     "team:read",
     "exports:read"
@@ -96,7 +100,8 @@ const roleCapabilities: Record<MembershipRole, readonly Capability[]> = {
     "tasks:read",
     "tasks:write",
     "ai:read",
-    "social:read"
+    "social:read",
+    "calendar:read"
   ],
   client: [
     "forms:read",

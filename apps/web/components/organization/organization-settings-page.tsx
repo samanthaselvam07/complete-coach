@@ -17,6 +17,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { AuditLogPage } from "@/components/audit/audit-log-page";
+import { CalendarConnectionsPanel } from "@/components/settings/calendar-connections-panel";
 import { ALL_CAPABILITIES, getCapabilitiesForRole, type Capability, type MembershipRole } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils";
 
@@ -344,6 +345,13 @@ function IntegrationsPanel() {
           </div>
         </article>
       </section>
+
+      <CalendarConnectionsPanel
+        scope="organization"
+        redirectTo="/organization-settings"
+        title="Organisation Calendar Connections"
+        description="Connect Apple, Google, and Outlook calendars for shared team events, coaching calls, and schedule sync."
+      />
     </div>
   );
 }

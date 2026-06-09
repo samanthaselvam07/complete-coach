@@ -9,21 +9,27 @@ afterEach(() => {
 
 describe("OrganizationSettingsPage integrations panel", () => {
   it("shows connected social channels and OAuth links", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: [
-            {
-              id: "connection_1",
-              provider: "instagram",
-              accountName: "Complete Coach IG",
-              status: "active"
-            }
-          ]
-        }),
-        { status: 200 }
-      )
-    );
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      if (String(input).startsWith("/api/v1/calendar/connections")) {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "connection_1",
+                provider: "instagram",
+                accountName: "Complete Coach IG",
+                status: "active"
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+      );
+    });
 
     render(<OrganizationSettingsPage />);
 
@@ -38,6 +44,81 @@ describe("OrganizationSettingsPage integrations panel", () => {
     expect(screen.getByRole("link", { name: "Connect Facebook" })).toHaveAttribute(
       "href",
       "/api/v1/social/connections/oauth/start?provider=facebook&redirectTo=/organization-settings"
+    );
+  });
+
+  it("sets up organisation calendar connections for Apple, Google, and Outlook", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/social/connections") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/calendar/connections?scope=organization") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "calendar_1",
+                  provider: "google",
+                  scope: "organization",
+                  accountName: "ops@completecoach.fit",
+                  calendarName: "Complete Coach HQ",
+                  status: "active"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/calendar/connections/apple" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "calendar_apple",
+                provider: "apple",
+                scope: "organization",
+                accountName: "Apple Calendar setup",
+                calendarName: "Apple Calendar",
+                status: "pending"
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(<OrganizationSettingsPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Integrations" }));
+
+    expect(await screen.findByText("ops@completecoach.fit")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Connect Google Calendar" })).toHaveAttribute(
+      "href",
+      "/api/v1/calendar/connections/oauth/start?provider=google&scope=organization&redirectTo=/organization-settings"
+    );
+    expect(screen.getByRole("link", { name: "Connect Outlook Calendar" })).toHaveAttribute(
+      "href",
+      "/api/v1/calendar/connections/oauth/start?provider=outlook&scope=organization&redirectTo=/organization-settings"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Set up Apple Calendar" }));
+
+    expect(await screen.findByText("Apple Calendar setup")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/calendar/connections/apple",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ scope: "organization" })
+      })
     );
   });
 

@@ -17,7 +17,12 @@ beforeEach(() => {
 });
 
 describe("Figma update pages", () => {
+  beforeEach(() => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+  });
+
   it("creates a client from the new intake page", async () => {
+    fetchMock.mockReset();
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ id: "client_created_1" }), { status: 201 }),
     );
@@ -59,6 +64,7 @@ describe("Figma update pages", () => {
   });
 
   it("creates a package from the dedicated package builder page", async () => {
+    fetchMock.mockReset();
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ id: "package_created_1" }), { status: 201 }),
     );
@@ -107,6 +113,7 @@ describe("Figma update pages", () => {
   });
 
   it("schedules a social post from the create post page", async () => {
+    fetchMock.mockReset();
     fetchMock
       .mockResolvedValueOnce(
         new Response(
@@ -148,6 +155,7 @@ describe("Figma update pages", () => {
   });
 
   it("handles social post connection loading failures", async () => {
+    fetchMock.mockReset();
     fetchMock.mockRejectedValueOnce(new Error("network down"));
 
     render(<CreatePostPage />);
@@ -157,6 +165,7 @@ describe("Figma update pages", () => {
   });
 
   it("validates social post requirements before submitting", async () => {
+    fetchMock.mockReset();
     fetchMock.mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -190,5 +199,10 @@ describe("Figma update pages", () => {
     expect(screen.getByRole("heading", { name: "Account Profile" })).toBeInTheDocument();
     expect(screen.getByLabelText("Full Name")).toBeInTheDocument();
     expect(screen.getByText("Platform Customization")).toBeInTheDocument();
+    expect(screen.getByText("Coach Calendar Connections")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Connect Google Calendar" })).toHaveAttribute(
+      "href",
+      "/api/v1/calendar/connections/oauth/start?provider=google&scope=coach&redirectTo=/settings"
+    );
   });
 });
