@@ -360,32 +360,42 @@ function ActiveAssignmentsPanel({ assignments }: { assignments: MealAssignmentRo
         <div className="col-span-1">Started</div>
         <div className="col-span-1">Actions</div>
       </div>
-      {assignments.map((assignment) => (
-        <article key={assignment.id} className="grid grid-cols-12 items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-0 hover:bg-gray-50">
-          <div className="col-span-3 font-medium text-gray-900">{assignment.clientName}</div>
-          <div className="col-span-3 text-sm text-gray-700">{assignment.planName}</div>
-          <div className="col-span-1 text-sm text-gray-700">{assignment.calories}</div>
-          <div className="col-span-1 text-sm font-medium text-blue-600">{assignment.protein}g</div>
-          <div className="col-span-1 text-sm font-medium text-green-600">{assignment.carbs}g</div>
-          <div className="col-span-1 text-sm font-medium text-orange-600">{assignment.fats}g</div>
-          <div className="col-span-1 text-sm text-gray-600">{assignment.started}</div>
-          <div className="relative z-30 col-span-1 flex items-center gap-2">
-            <button aria-label={`Edit ${assignment.planName}`} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50">
-              <Edit className="size-4" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              aria-label={`More actions for ${assignment.planName}`}
-              aria-expanded={openActionMenuId === assignment.id}
-              className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-              onClick={() => setOpenActionMenuId((currentId) => (currentId === assignment.id ? null : assignment.id))}
-            >
-              <MoreVertical className="size-4" aria-hidden="true" />
-            </button>
-            {openActionMenuId === assignment.id ? <MealPlanActionMenu planName={assignment.planName} /> : null}
-          </div>
-        </article>
-      ))}
+      {assignments.map((assignment) => {
+        const menuOpen = openActionMenuId === assignment.id;
+
+        return (
+          <article
+            key={assignment.id}
+            className={cn(
+              "relative grid grid-cols-12 items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-0 hover:bg-gray-50",
+              menuOpen ? "z-40" : "z-0"
+            )}
+          >
+            <div className="col-span-3 font-medium text-gray-900">{assignment.clientName}</div>
+            <div className="col-span-3 text-sm text-gray-700">{assignment.planName}</div>
+            <div className="col-span-1 text-sm text-gray-700">{assignment.calories}</div>
+            <div className="col-span-1 text-sm font-medium text-blue-600">{assignment.protein}g</div>
+            <div className="col-span-1 text-sm font-medium text-green-600">{assignment.carbs}g</div>
+            <div className="col-span-1 text-sm font-medium text-orange-600">{assignment.fats}g</div>
+            <div className="col-span-1 text-sm text-gray-600">{assignment.started}</div>
+            <div className="relative col-span-1 flex items-center gap-2">
+              <button aria-label={`Edit ${assignment.planName}`} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50">
+                <Edit className="size-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                aria-label={`More actions for ${assignment.planName}`}
+                aria-expanded={openActionMenuId === assignment.id}
+                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+                onClick={() => setOpenActionMenuId((currentId) => (currentId === assignment.id ? null : assignment.id))}
+              >
+                <MoreVertical className="size-4" aria-hidden="true" />
+              </button>
+              {menuOpen ? <MealPlanActionMenu planName={assignment.planName} /> : null}
+            </div>
+          </article>
+        );
+      })}
       {assignments.length === 0 ? (
         <p className="px-6 py-8 text-center text-sm text-gray-600">No active meal plans have been assigned yet.</p>
       ) : null}
@@ -405,7 +415,7 @@ function MealPlanActionMenu({ planName }: { planName: string }) {
     <div
       role="menu"
       aria-label={`Meal plan actions for ${planName}`}
-      className="absolute right-0 top-10 z-50 w-44 rounded-xl border border-gray-200 bg-white py-2 shadow-xl"
+      className="absolute right-0 top-10 z-[60] w-44 rounded-xl border border-gray-200 bg-white py-2 shadow-xl"
     >
       {actions.map((action) => {
         const Icon = action.icon;

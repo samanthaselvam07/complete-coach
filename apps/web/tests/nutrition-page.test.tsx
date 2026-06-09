@@ -55,6 +55,8 @@ describe("MealPlansPage", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /more actions for/i })[0]);
 
     const menu = screen.getByRole("menu", { name: /meal plan actions/i });
+    expect(menu).toHaveClass("z-[60]");
+    expect(menu.closest("article")).toHaveClass("z-40");
     expect(within(menu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Assign to" })).toBeInTheDocument();
