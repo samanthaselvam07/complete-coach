@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, Settings, UserCircle, Zap } from "lucide-react";
+import { ChevronDown, Settings, UserCircle } from "lucide-react";
 import type { Route } from "next";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
@@ -41,13 +42,20 @@ export function SidebarNav({ currentPath }: SidebarNavProps) {
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="border-b border-sidebar-border p-5">
         <Link href="/" className="flex items-center gap-3" aria-label="Complete Coach dashboard">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-sm">
-            <Zap className="size-5" aria-hidden="true" />
+          <span className="flex size-10 items-center justify-center rounded-xl border border-indigo-100 bg-white shadow-sm">
+            <Image
+              src="/brand/favicon.svg"
+              alt="Complete Coach icon"
+              width={28}
+              height={28}
+              className="size-7"
+              priority
+            />
           </span>
           <span>
             <span className="block text-base font-bold tracking-tight">Complete Coach</span>
             <span className="block text-xs uppercase tracking-[0.22em] text-muted-foreground">
-              Elite Performance
+              Business OS for Fitness Professionals
             </span>
           </span>
         </Link>

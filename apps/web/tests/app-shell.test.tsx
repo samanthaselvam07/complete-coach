@@ -46,7 +46,14 @@ describe("app shell navigation", () => {
   it("renders primary and nested navigation links", () => {
     render(createElement(SidebarNav, { currentPath: "/training/exercises" }));
     const nav = screen.getByRole("navigation", { name: /primary navigation/i });
+    const brandLink = screen.getByRole("link", { name: "Complete Coach dashboard" });
 
+    expect(within(brandLink).getByAltText("Complete Coach icon")).toHaveAttribute(
+      "src",
+      expect.stringContaining("/brand/favicon.svg")
+    );
+    expect(screen.getByText("Business OS for Fitness Professionals")).toBeInTheDocument();
+    expect(screen.queryByText("Elite Performance")).not.toBeInTheDocument();
     expect(within(nav).getByRole("link", { name: /^dashboard$/i })).toHaveAttribute("href", "/");
     expect(within(nav).queryByRole("link", { name: /^audit log$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^scheduling$/i })).not.toBeInTheDocument();
