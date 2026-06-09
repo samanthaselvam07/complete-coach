@@ -4,7 +4,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Complete Coach",
-  description: "Coaching operations platform"
+  description: "Coaching operations platform",
+  icons: {
+    icon: "/brand/favicon.svg"
+  }
 };
 
 interface RootLayoutProps {
