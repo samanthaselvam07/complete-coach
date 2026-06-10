@@ -300,6 +300,7 @@ function IntegrationsPanel() {
   const [stripeStatus, setStripeStatus] = useState("Not connected");
   const [stripeOnboardingUrl, setStripeOnboardingUrl] = useState<string | null>(null);
   const [isConnectingStripe, setIsConnectingStripe] = useState(false);
+  const [isOpeningStripeDashboard, setIsOpeningStripeDashboard] = useState(false);
   const [connections, setConnections] = useState<SocialConnection[]>([]);
   const [socialStatusMessage, setSocialStatusMessage] = useState("Loading social channels...");
 
@@ -362,6 +363,32 @@ function IntegrationsPanel() {
     }
   };
 
+  const openStripeDashboard = async () => {
+    setIsOpeningStripeDashboard(true);
+    setStripeStatus("Creating Stripe dashboard link...");
+
+    try {
+      const response = await fetch("/api/v1/stripe/connect/dashboard-link", {
+        method: "POST"
+      });
+      const payload = (await response.json()) as {
+        data?: { status: string; dashboardUrl: string };
+        error?: { message: string };
+      };
+
+      if (!response.ok || !payload.data?.dashboardUrl) {
+        throw new Error(payload.error?.message ?? "Could not create Stripe dashboard link.");
+      }
+
+      setStripeStatus(payload.data.status);
+      window.open(payload.data.dashboardUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      setStripeStatus(error instanceof Error ? error.message : "Could not create Stripe dashboard link.");
+    } finally {
+      setIsOpeningStripeDashboard(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
@@ -393,6 +420,14 @@ function IntegrationsPanel() {
               <Link2 className="h-4 w-4" aria-hidden="true" />
             </a>
           ) : null}
+          <button
+            type="button"
+            disabled={isOpeningStripeDashboard}
+            onClick={openStripeDashboard}
+            className="mt-3 w-full rounded-xl border border-indigo-200 px-5 py-3 text-sm font-bold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:border-slate-200 disabled:text-slate-400"
+          >
+            {isOpeningStripeDashboard ? "Creating dashboard link..." : "Open Stripe dashboard"}
+          </button>
         </article>
 
         <article className="rounded-2xl border border-slate-200 p-6">

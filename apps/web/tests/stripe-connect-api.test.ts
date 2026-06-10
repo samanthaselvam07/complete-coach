@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as createStripeConnectAccountLink } from "@/app/api/v1/stripe/connect/account-link/route";
+import { POST as createStripeConnectDashboardLink } from "@/app/api/v1/stripe/connect/dashboard-link/route";
 import { deriveConnectStatus } from "@/lib/payments/stripe-connect";
 
 const mocks = vi.hoisted(() => ({
@@ -224,6 +225,112 @@ describe("Stripe Connect account-link API", () => {
 
     expect(response.status).toBe(403);
     expect(mocks.prisma.organization.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("resolves safe relative account-link redirects against the request origin", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    process.env.STRIPE_API_BASE_URL = "https://stripe.test";
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        object: "account_link",
+        created: 1_779_033_600,
+        expires_at: 1_779_034_200,
+        url: "https://connect.stripe.test/setup/acct_existing"
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    mocks.prisma.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      name: "Complete Coach Demo",
+      stripeConnectAccountId: "acct_existing",
+      stripeConnectStatus: "pending-review"
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await createStripeConnectAccountLink(
+      new Request("https://app.example.com/api/v1/stripe/connect/account-link", {
+        method: "POST",
+        body: JSON.stringify({
+          returnUrl: "/organization-settings",
+          refreshUrl: "/organization-settings?stripe=refresh"
+        })
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(String(fetchMock.mock.calls[0][1].body)).toContain(
+      "return_url=https%3A%2F%2Fapp.example.com%2Forganization-settings"
+    );
+    expect(String(fetchMock.mock.calls[0][1].body)).toContain(
+      "refresh_url=https%3A%2F%2Fapp.example.com%2Forganization-settings%3Fstripe%3Drefresh"
+    );
+  });
+});
+
+describe("Stripe Connect dashboard-link API", () => {
+  beforeEach(() => {
+    delete process.env.STRIPE_SECRET_KEY;
+    delete process.env.STRIPE_API_BASE_URL;
+    vi.unstubAllGlobals();
+    mocks.auth.mockReset();
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.auditLog.create.mockReset();
+    mocks.prisma.organization.findUnique.mockReset();
+    mocks.prisma.organization.update.mockReset();
+  });
+
+  it("creates an on-demand Express dashboard login link", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    process.env.STRIPE_API_BASE_URL = "https://stripe.test";
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        object: "login_link",
+        created: 1_779_033_600,
+        url: "https://stripe.com/express/test-login"
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    mocks.prisma.organization.findUnique.mockResolvedValue({
+      stripeConnectAccountId: "acct_existing",
+      stripeConnectStatus: "active"
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await createStripeConnectDashboardLink();
+    const payload = (await response.json()) as { data: { dashboardUrl: string; status: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual({
+      accountId: "acct_existing",
+      status: "active",
+      dashboardUrl: "https://stripe.com/express/test-login"
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://stripe.test/v1/accounts/acct_existing/login_links",
+      expect.objectContaining({ method: "POST" })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "stripe_connect.dashboard_link_created",
+          targetId: "acct_existing"
+        })
+      })
+    );
+  });
+
+  it("requires a connected account before creating a dashboard link", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    mocks.prisma.organization.findUnique.mockResolvedValue({
+      stripeConnectAccountId: null,
+      stripeConnectStatus: null
+    });
+
+    const response = await createStripeConnectDashboardLink();
+    const payload = (await response.json()) as { error: { code: string } };
+
+    expect(response.status).toBe(409);
+    expect(payload.error.code).toBe("stripe_connect_required");
   });
 });
 

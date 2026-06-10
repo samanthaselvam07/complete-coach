@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, DollarSign, Edit, Package, Star, Trash2, TrendingUp, Users } from "lucide-react";
+import { Copy, DollarSign, Edit, ExternalLink, Package, Search, Star, Trash2, TrendingUp, Users } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import {
@@ -42,6 +42,13 @@ interface PackageFormState {
   color: string;
 }
 
+interface AssignableClient {
+  id: string;
+  name: string;
+  packageName: string;
+  status: string;
+}
+
 const defaultFormState: PackageFormState = {
   name: "",
   description: "",
@@ -65,6 +72,14 @@ export function PackagesPage() {
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
   const [formState, setFormState] = useState<PackageFormState>(defaultFormState);
   const [formError, setFormError] = useState<string | null>(null);
+  const [assigningPackage, setAssigningPackage] = useState<ApiPackage | null>(null);
+  const [clients, setClients] = useState<AssignableClient[]>([]);
+  const [clientSearch, setClientSearch] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
+  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -94,6 +109,15 @@ export function PackagesPage() {
 
   const stats = useMemo(() => buildPackageStats(packages), [packages]);
   const editingPackage = editingPackageId ? packages.find((coachingPackage) => coachingPackage.id === editingPackageId) : null;
+  const filteredClients = useMemo(() => {
+    const normalizedSearch = clientSearch.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return clients;
+    }
+
+    return clients.filter((client) => client.name.toLowerCase().includes(normalizedSearch));
+  }, [clientSearch, clients]);
 
   function openCreateForm() {
     setEditingPackageId(null);
@@ -205,6 +229,69 @@ export function PackagesPage() {
     }
   }
 
+  async function openAssignForm(coachingPackage: ApiPackage) {
+    setAssigningPackage(coachingPackage);
+    setClientSearch("");
+    setSelectedClientId(null);
+    setAssignmentError(null);
+    setCheckoutUrl(null);
+    setIsLoadingClients(true);
+
+    try {
+      const response = await fetch("/api/v1/clients?status=active&limit=100");
+
+      if (!response.ok) {
+        throw new Error("Client API unavailable.");
+      }
+
+      const payload = (await response.json()) as { data?: AssignableClient[] };
+      setClients(payload.data ?? []);
+    } catch {
+      setClients([]);
+      setAssignmentError("Client roster could not be loaded. Try again.");
+    } finally {
+      setIsLoadingClients(false);
+    }
+  }
+
+  async function handleCreateCheckoutLink() {
+    if (!assigningPackage || !selectedClientId) {
+      setAssignmentError("Select a client before creating a payment link.");
+      return;
+    }
+
+    setIsCreatingCheckout(true);
+    setAssignmentError(null);
+
+    try {
+      const origin = window.location.origin;
+      const response = await fetch("/api/v1/client-subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: selectedClientId,
+          packageId: assigningPackage.id,
+          successUrl: `${origin}/packages?payment=success`,
+          cancelUrl: `${origin}/packages?payment=cancelled`
+        })
+      });
+      const payload = (await response.json()) as {
+        data?: { checkoutUrl: string };
+        error?: { message: string };
+      };
+
+      if (!response.ok || !payload.data?.checkoutUrl) {
+        throw new Error(payload.error?.message ?? "Could not create payment link.");
+      }
+
+      setCheckoutUrl(payload.data.checkoutUrl);
+    } catch (error) {
+      setAssignmentError(error instanceof Error ? error.message : "Could not create payment link.");
+    } finally {
+      setIsCreatingCheckout(false);
+    }
+  }
+
   function upsertLocalPackage(payload: NonNullable<ReturnType<typeof formStateToPayload>>) {
     const nextPackage: ApiPackage = {
       id: editingPackageId ?? `local-package-${Date.now()}`,
@@ -289,7 +376,23 @@ export function PackagesPage() {
             </div>
           </div>
           <div className="flex gap-3">
-            <button type="button" className="flex-1 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white">
+            <button
+              type="button"
+              className="flex-1 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white"
+              onClick={() => {
+                const firstMonthlySyncedPackage = packages.find(
+                  (coachingPackage) =>
+                    coachingPackage.billingInterval === "monthly" &&
+                    Boolean(coachingPackage.stripeProductId && coachingPackage.stripePriceId)
+                );
+
+                if (firstMonthlySyncedPackage) {
+                  void openAssignForm(firstMonthlySyncedPackage);
+                } else {
+                  setFormError("Sync a monthly package to Stripe before assigning a payment link.");
+                }
+              }}
+            >
               Assign to Client
             </button>
             <button type="button" className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700">
@@ -312,6 +415,7 @@ export function PackagesPage() {
               onArchive={handleArchivePackage}
               onDuplicate={openDuplicateForm}
               onEdit={openEditForm}
+              onAssign={openAssignForm}
               onStripeSync={handleStripeSync}
             />
           ))}
@@ -327,6 +431,27 @@ export function PackagesPage() {
         onSave={handleSavePackage}
         onUpdateForm={setFormState}
       />
+      <PackageAssignmentDialog
+        checkoutUrl={checkoutUrl}
+        clients={filteredClients}
+        error={assignmentError}
+        isCreatingCheckout={isCreatingCheckout}
+        isLoadingClients={isLoadingClients}
+        open={Boolean(assigningPackage)}
+        selectedClientId={selectedClientId}
+        targetPackage={assigningPackage}
+        search={clientSearch}
+        onCreateCheckoutLink={handleCreateCheckoutLink}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAssigningPackage(null);
+            setCheckoutUrl(null);
+            setAssignmentError(null);
+          }
+        }}
+        onSearchChange={setClientSearch}
+        onSelectClient={setSelectedClientId}
+      />
     </main>
   );
 }
@@ -334,18 +459,21 @@ export function PackagesPage() {
 function PackageCard({
   coachingPackage,
   onArchive,
+  onAssign,
   onDuplicate,
   onEdit,
   onStripeSync
 }: {
   coachingPackage: ApiPackage;
   onArchive: (coachingPackage: ApiPackage) => void;
+  onAssign: (coachingPackage: ApiPackage) => void;
   onDuplicate: (coachingPackage: ApiPackage) => void;
   onEdit: (coachingPackage: ApiPackage) => void;
   onStripeSync: (coachingPackage: ApiPackage) => void;
 }) {
   const colorClass = colorClasses[(coachingPackage.color ?? "gray") as keyof typeof colorClasses] ?? colorClasses.gray;
   const isStripeSynced = Boolean(coachingPackage.stripeProductId && coachingPackage.stripePriceId);
+  const canAssignPaymentLink = isStripeSynced && coachingPackage.billingInterval === "monthly";
 
   return (
     <article className={cn("rounded-2xl border-2 p-6 shadow-sm", colorClass)}>
@@ -422,7 +550,150 @@ function PackageCard({
           Sync Stripe
         </button>
       ) : null}
+      <button
+        type="button"
+        disabled={!canAssignPaymentLink}
+        className="mt-3 w-full rounded-lg bg-slate-950 px-3 py-2 text-sm font-bold text-white transition hover:bg-slate-800 disabled:bg-slate-300"
+        onClick={() => onAssign(coachingPackage)}
+      >
+        {canAssignPaymentLink ? "Assign to Client" : "Sync monthly package to assign"}
+      </button>
     </article>
+  );
+}
+
+function PackageAssignmentDialog({
+  checkoutUrl,
+  clients,
+  error,
+  isCreatingCheckout,
+  isLoadingClients,
+  open,
+  selectedClientId,
+  targetPackage,
+  search,
+  onCreateCheckoutLink,
+  onOpenChange,
+  onSearchChange,
+  onSelectClient
+}: {
+  checkoutUrl: string | null;
+  clients: AssignableClient[];
+  error: string | null;
+  isCreatingCheckout: boolean;
+  isLoadingClients: boolean;
+  open: boolean;
+  selectedClientId: string | null;
+  targetPackage: ApiPackage | null;
+  search: string;
+  onCreateCheckoutLink: () => void;
+  onOpenChange: (open: boolean) => void;
+  onSearchChange: (value: string) => void;
+  onSelectClient: (clientId: string) => void;
+}) {
+  const selectedClient = clients.find((client) => client.id === selectedClientId);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Assign Package Payment</DialogTitle>
+          <DialogDescription>
+            Create a Stripe Checkout link for {targetPackage?.name ?? "this package"} and attach the subscription to a client.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">Selected package</p>
+            <p className="mt-1 text-lg font-black text-slate-950">{targetPackage?.name}</p>
+            <p className="mt-1 text-sm text-slate-600">
+              {targetPackage ? `${formatCents(targetPackage.priceAmount)} / month` : "No package selected"}
+            </p>
+          </div>
+
+          <label className="block text-sm font-bold text-slate-700">
+            Search client roster
+            <span className="mt-1 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+              <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />
+              <input
+                value={search}
+                placeholder="Search active clients..."
+                className="w-full bg-transparent text-sm outline-none"
+                onChange={(event) => onSearchChange(event.target.value)}
+              />
+            </span>
+          </label>
+
+          <div className="max-h-56 space-y-2 overflow-auto rounded-xl border border-slate-200 p-2">
+            {isLoadingClients ? <p className="p-3 text-sm text-slate-500">Loading clients...</p> : null}
+            {!isLoadingClients && clients.length === 0 ? (
+              <p className="p-3 text-sm text-slate-500">No active clients found.</p>
+            ) : null}
+            {clients.map((client) => (
+              <button
+                key={client.id}
+                type="button"
+                className={cn(
+                  "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition",
+                  selectedClientId === client.id ? "bg-indigo-600 text-white" : "hover:bg-slate-50"
+                )}
+                onClick={() => onSelectClient(client.id)}
+              >
+                <span>
+                  <span className="block text-sm font-bold">{client.name}</span>
+                  <span className={cn("text-xs", selectedClientId === client.id ? "text-indigo-100" : "text-slate-500")}>
+                    {client.packageName}
+                  </span>
+                </span>
+                <span className="text-xs font-bold uppercase">{client.status}</span>
+              </button>
+            ))}
+          </div>
+
+          {selectedClient ? (
+            <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+              Payment link will be created for <span className="font-bold text-slate-950">{selectedClient.name}</span>.
+            </p>
+          ) : null}
+
+          {error ? <p className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}
+
+          {checkoutUrl ? (
+            <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+              <p className="text-sm font-bold text-green-800">Payment link created.</p>
+              <a
+                href={checkoutUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-bold text-white"
+              >
+                Open Checkout
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+            </div>
+          ) : null}
+        </div>
+
+        <DialogFooter>
+          <button
+            type="button"
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700"
+            onClick={() => onOpenChange(false)}
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            disabled={!selectedClientId || isCreatingCheckout}
+            className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white disabled:bg-slate-300"
+            onClick={onCreateCheckoutLink}
+          >
+            {isCreatingCheckout ? "Creating link..." : "Create payment link"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -53,9 +53,15 @@ interface StripeCheckoutSession {
   url: string | null;
 }
 
+interface StripeLoginLink {
+  object: "login_link";
+  created: number;
+  url: string;
+}
+
 export const stripeAccountLinkSchema = z.object({
-  returnUrl: z.string().url().optional(),
-  refreshUrl: z.string().url().optional()
+  returnUrl: z.string().trim().min(1).refine(isSafeRedirectUrl, "Must be an absolute URL or safe relative path.").optional(),
+  refreshUrl: z.string().trim().min(1).refine(isSafeRedirectUrl, "Must be an absolute URL or safe relative path.").optional()
 });
 
 export type StripeAccountLinkInput = z.infer<typeof stripeAccountLinkSchema>;
@@ -98,6 +104,10 @@ export async function createAccountLink(
     refresh_url: input.refreshUrl,
     type: "account_onboarding"
   });
+}
+
+export async function createExpressDashboardLoginLink(config: StripeConfig, input: { accountId: string }) {
+  return postStripeForm<StripeLoginLink>(config, `/v1/accounts/${encodeURIComponent(input.accountId)}/login_links`, {});
 }
 
 export async function createStripeProduct(
@@ -200,6 +210,18 @@ export function buildDefaultConnectReturnUrls(requestUrl: string) {
   };
 }
 
+export function resolveConnectRedirectUrl(requestUrl: string, value: string | undefined, fallback: string) {
+  if (!value) {
+    return fallback;
+  }
+
+  if (value.startsWith("/")) {
+    return new URL(value, new URL(requestUrl).origin).toString();
+  }
+
+  return value;
+}
+
 async function postStripeForm<T>(config: StripeConfig, path: string, fields: Record<string, string | undefined>) {
   const body = new URLSearchParams();
 
@@ -225,6 +247,19 @@ async function postStripeForm<T>(config: StripeConfig, path: string, fields: Rec
   }
 
   return payload as T;
+}
+
+function isSafeRedirectUrl(value: string) {
+  if (value.startsWith("/")) {
+    return !value.startsWith("//");
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
 }
 
 function getStripeErrorMessage(payload: unknown) {

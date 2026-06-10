@@ -252,6 +252,72 @@ describe("PackagesPage", () => {
     expect(screen.getAllByText("Synced")).toHaveLength(2);
   });
 
+  it("creates a client Checkout payment link from a synced monthly package", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/packages?status=active&limit=100" && !init) {
+        return Promise.resolve(new Response(JSON.stringify({ data: [persistedPackages[0]] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/clients?status=active&limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "client_1",
+                  name: "Sarah Johnson",
+                  packageName: "Unassigned",
+                  status: "active"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/client-subscriptions" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { checkoutUrl: "https://checkout.stripe.test/session_1" } }), {
+            status: 201
+          })
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(PackagesPage));
+
+    expect(await screen.findAllByText("API Platinum")).toHaveLength(2);
+    fireEvent.click(screen.getAllByRole("button", { name: "Assign to Client" }).at(-1)!);
+
+    expect(await screen.findByRole("dialog", { name: "Assign Package Payment" })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: /Sarah Johnson/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Create payment link" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/client-subscriptions",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            clientId: "client_1",
+            packageId: "package_api_1",
+            successUrl: "http://localhost:3000/packages?payment=success",
+            cancelUrl: "http://localhost:3000/packages?payment=cancelled"
+          })
+        })
+      )
+    );
+    expect(await screen.findByRole("link", { name: "Open Checkout" })).toHaveAttribute(
+      "href",
+      "https://checkout.stripe.test/session_1"
+    );
+  });
+
   it("keeps fixture fallback package management when the API is unavailable", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 

@@ -139,6 +139,43 @@ describe("OrganizationSettingsPage integrations panel", () => {
     );
   });
 
+  it("creates an on-demand Stripe dashboard link from organization settings", async () => {
+    const openMock = vi.spyOn(window, "open").mockImplementation(() => null);
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/social/connections") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/stripe/connect/dashboard-link" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                accountId: "acct_1",
+                status: "active",
+                dashboardUrl: "https://stripe.com/express/test-login"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(<OrganizationSettingsPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Integrations" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Stripe dashboard" }));
+
+    expect(await screen.findByText("active")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/stripe/connect/dashboard-link", { method: "POST" });
+    expect(openMock).toHaveBeenCalledWith("https://stripe.com/express/test-login", "_blank", "noopener,noreferrer");
+  });
+
   it("shows integration loading errors without blocking the settings page", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 

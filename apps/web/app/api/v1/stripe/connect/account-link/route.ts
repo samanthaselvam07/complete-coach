@@ -7,6 +7,7 @@ import {
   createAccountLink,
   createConnectedAccount,
   getStripeConfig,
+  resolveConnectRedirectUrl,
   StripeApiError,
   StripeConfigurationError,
   stripeAccountLinkSchema
@@ -53,8 +54,8 @@ export async function POST(request: Request) {
     const defaults = buildDefaultConnectReturnUrls(request.url);
     const accountLink = await createAccountLink(config, {
       accountId,
-      returnUrl: input.returnUrl ?? defaults.returnUrl,
-      refreshUrl: input.refreshUrl ?? defaults.refreshUrl
+      returnUrl: resolveConnectRedirectUrl(request.url, input.returnUrl, defaults.returnUrl),
+      refreshUrl: resolveConnectRedirectUrl(request.url, input.refreshUrl, defaults.refreshUrl)
     });
 
     await prisma.auditLog.create({
