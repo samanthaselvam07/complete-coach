@@ -3,12 +3,21 @@
 import Link from "next/link";
 import {
   AlertTriangle,
+  ArrowLeft,
+  Bell,
   CheckCircle2,
+  ChevronDown,
   Copy,
   CreditCard,
+  Edit3,
   Globe2,
   Link2,
+  Mail,
+  Paperclip,
+  Plus,
   RefreshCw,
+  Save,
+  Send,
   ShieldCheck,
   Share2,
   UsersRound,
@@ -17,11 +26,10 @@ import {
 import { useEffect, useState } from "react";
 
 import { AuditLogPage } from "@/components/audit/audit-log-page";
-import { CalendarConnectionsPanel } from "@/components/settings/calendar-connections-panel";
 import { ALL_CAPABILITIES, getCapabilitiesForRole, type Capability, type MembershipRole } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils";
 
-type OrganizationSettingsTab = "billing" | "integrations" | "email" | "team" | "permissions" | "audit";
+type OrganizationSettingsTab = "billing" | "integrations" | "email" | "automations" | "team" | "permissions" | "audit";
 
 interface SenderDomainDnsRecord {
   record: string;
@@ -87,6 +95,11 @@ const tabs: Array<{
     id: "email",
     label: "Email DNS",
     description: "Verify sender domains so client emails can come from your organisation address."
+  },
+  {
+    id: "automations",
+    label: "Automations",
+    description: "Configure email and push notification workflows for client and coaching events."
   },
   {
     id: "team",
@@ -216,6 +229,7 @@ export function OrganizationSettingsPage() {
         {activeTab === "billing" ? <SubscriptionBillingPanel /> : null}
         {activeTab === "integrations" ? <IntegrationsPanel /> : null}
         {activeTab === "email" ? <EmailDnsPanel /> : null}
+        {activeTab === "automations" ? <AutomationsPanel /> : null}
         {activeTab === "team" ? <TeamManagementPanel /> : null}
         {activeTab === "permissions" ? <RolePermissionsPanel /> : null}
         {activeTab === "audit" ? <AuditLogPage embedded /> : null}
@@ -401,12 +415,6 @@ function IntegrationsPanel() {
         </article>
       </section>
 
-      <CalendarConnectionsPanel
-        scope="organization"
-        redirectTo="/organization-settings"
-        title="Organisation Calendar Connections"
-        description="Connect Apple, Google, and Outlook calendars for shared team events, coaching calls, and schedule sync."
-      />
     </div>
   );
 }
@@ -442,6 +450,443 @@ function SocialChannelCard({ channel, connection }: { channel: (typeof socialCha
       >
         {isConnected ? "Reconnect" : "Connect"} {channel.label}
       </a>
+    </div>
+  );
+}
+
+type AutomationChannel = "email" | "push";
+
+interface AutomationTrigger {
+  id: string;
+  name: string;
+  enabled: boolean;
+  subject: string;
+  template: string;
+  delay: number;
+  interval: "Minutes" | "Hours" | "Days" | "Weeks";
+}
+
+const automationTriggers: AutomationTrigger[] = [
+  {
+    id: "new-client-created",
+    name: "New client created",
+    enabled: true,
+    subject: "Welcome to Complete Coach!",
+    template:
+      "[FIRST_NAME]!\n\nWelcome to your coaching program. I need 10 minutes of your time to make sure you are clear on the next steps.\n\nThings you will need for success:\n\n- Bodyweight scales\n- Measuring tape\n- Wearable activity tracker\n- Food scale\n- Meal prep containers\n- Gym membership",
+    delay: 1,
+    interval: "Minutes"
+  },
+  {
+    id: "client-completes-check-in",
+    name: "Client completes a check-in",
+    enabled: true,
+    subject: "Your check-in has been received",
+    template: "Thanks [FIRST_NAME], your check-in has been submitted and your coach will review it soon.",
+    delay: 1,
+    interval: "Minutes"
+  },
+  {
+    id: "nutrition-plan-added",
+    name: "Nutrition plan added to your client",
+    enabled: true,
+    subject: "Your nutrition plan is ready",
+    template: "Hi [FIRST_NAME], your nutrition plan has been added to your Complete Coach profile.",
+    delay: 5,
+    interval: "Minutes"
+  },
+  {
+    id: "initial-qa-completed",
+    name: "Client completes initial Q&A form",
+    enabled: true,
+    subject: "Initial Q&A received",
+    template: "Thanks [FIRST_NAME], your initial Q&A form has been attached to your profile.",
+    delay: 1,
+    interval: "Minutes"
+  },
+  {
+    id: "workout-plan-added",
+    name: "Workout plan added to your client",
+    enabled: true,
+    subject: "Your workout plan is ready",
+    template: "Hi [FIRST_NAME], your workout plan is now available in Complete Coach.",
+    delay: 5,
+    interval: "Minutes"
+  },
+  {
+    id: "supplement-plan-added",
+    name: "Supplement plan added to your client",
+    enabled: true,
+    subject: "Your supplement plan is ready",
+    template: "Hi [FIRST_NAME], your supplement plan has been added to your profile.",
+    delay: 5,
+    interval: "Minutes"
+  },
+  {
+    id: "workout-plan-updated",
+    name: "Workout plan updated",
+    enabled: true,
+    subject: "Your workout plan has been updated",
+    template: "Hi [FIRST_NAME], your coach has updated your workout plan.",
+    delay: 1,
+    interval: "Minutes"
+  },
+  {
+    id: "nutrition-plan-updated",
+    name: "Nutrition plan updated",
+    enabled: true,
+    subject: "Your nutrition plan has been updated",
+    template: "Hi [FIRST_NAME], your coach has updated your nutrition plan.",
+    delay: 1,
+    interval: "Minutes"
+  },
+  {
+    id: "client-misses-check-in",
+    name: "Client misses a check-in",
+    enabled: true,
+    subject: "Your check-in is overdue",
+    template: "Hi [FIRST_NAME], your check-in is still waiting. Please submit it when you can.",
+    delay: 1,
+    interval: "Days"
+  },
+  {
+    id: "client-check-in-reminder",
+    name: "Client check-in reminder",
+    enabled: true,
+    subject: "Check-in reminder",
+    template: "Hi [FIRST_NAME], this is a reminder that your check-in is due soon.",
+    delay: 1,
+    interval: "Days"
+  },
+  {
+    id: "client-birthday",
+    name: "Client's birthday",
+    enabled: true,
+    subject: "Happy birthday from your coaching team",
+    template: "Happy birthday [FIRST_NAME]. Have a great day from the Complete Coach team.",
+    delay: 0,
+    interval: "Minutes"
+  },
+  {
+    id: "supplement-plan-updated",
+    name: "Supplement plan updated",
+    enabled: true,
+    subject: "Your supplement plan has been updated",
+    template: "Hi [FIRST_NAME], your coach has updated your supplement plan.",
+    delay: 1,
+    interval: "Minutes"
+  }
+];
+
+function AutomationsPanel() {
+  const [automations, setAutomations] = useState(automationTriggers);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [channel, setChannel] = useState<AutomationChannel>("email");
+  const [saveMessage, setSaveMessage] = useState("");
+  const editingAutomation = automations.find((automation) => automation.id === editingId);
+
+  const toggleAutomation = (automationId: string) => {
+    setAutomations((currentAutomations) =>
+      currentAutomations.map((automation) =>
+        automation.id === automationId ? { ...automation, enabled: !automation.enabled } : automation
+      )
+    );
+  };
+
+  if (editingAutomation) {
+    return (
+      <AutomationEditPanel
+        automation={editingAutomation}
+        channel={channel}
+        saveMessage={saveMessage}
+        onBack={() => {
+          setEditingId(null);
+          setSaveMessage("");
+        }}
+        onChannelChange={setChannel}
+        onSave={() => setSaveMessage("Automation saved.")}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">Client communication</p>
+            <h3 className="mt-2 text-xl font-black text-slate-950">Automation triggers</h3>
+            <p className="mt-2 max-w-3xl text-sm text-slate-600">
+              Choose a trigger below and create a series of emails or push notifications to be sent when that action
+              takes place.
+            </p>
+          </div>
+          <div className="flex gap-2 rounded-2xl bg-white p-2 shadow-sm">
+            <span className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white">
+              <Mail className="size-4" aria-hidden="true" />
+              Email
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">
+              <Bell className="size-4" aria-hidden="true" />
+              Push
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section className="overflow-visible rounded-2xl border border-slate-200">
+        <table className="w-full min-w-[720px] text-left text-sm" aria-label="Automation triggers">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-[0.18em] text-slate-500">
+            <tr>
+              <th className="px-5 py-4">Name</th>
+              <th className="px-5 py-4">Status</th>
+              <th className="px-5 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 bg-white">
+            {automations.map((automation) => (
+              <tr key={automation.id}>
+                <td className="px-5 py-4 font-medium text-slate-700">{automation.name}</td>
+                <td className="px-5 py-4">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={automation.enabled}
+                    aria-label={`Toggle ${automation.name} automation`}
+                    className={cn(
+                      "inline-flex h-6 w-11 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+                      automation.enabled ? "bg-blue-500" : "bg-slate-200"
+                    )}
+                    onClick={() => toggleAutomation(automation.id)}
+                  >
+                    <span
+                      className={cn(
+                        "size-5 rounded-full bg-white shadow-sm transition-transform",
+                        automation.enabled ? "translate-x-5" : "translate-x-0"
+                      )}
+                    />
+                  </button>
+                </td>
+                <td className="overflow-visible px-5 py-4 text-right">
+                  <div className="relative inline-flex">
+                    <button
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={openMenuId === automation.id}
+                      aria-label={`Actions for ${automation.name}`}
+                      className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200"
+                      onClick={() => setOpenMenuId(openMenuId === automation.id ? null : automation.id)}
+                    >
+                      Actions
+                      <ChevronDown className="size-4" aria-hidden="true" />
+                    </button>
+                    {openMenuId === automation.id ? (
+                      <div
+                        role="menu"
+                        className="absolute right-0 top-full z-30 mt-2 w-36 rounded-xl border border-slate-200 bg-white p-1 text-left shadow-xl"
+                      >
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-indigo-50 hover:text-indigo-700"
+                          onClick={() => {
+                            setEditingId(automation.id);
+                            setOpenMenuId(null);
+                            setChannel("email");
+                          }}
+                        >
+                          <Edit3 className="size-4" aria-hidden="true" />
+                          Edit
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  );
+}
+
+function AutomationEditPanel({
+  automation,
+  channel,
+  saveMessage,
+  onBack,
+  onChannelChange,
+  onSave
+}: {
+  automation: AutomationTrigger;
+  channel: AutomationChannel;
+  saveMessage: string;
+  onBack: () => void;
+  onChannelChange: (channel: AutomationChannel) => void;
+  onSave: () => void;
+}) {
+  const [subject, setSubject] = useState(automation.subject);
+  const [message, setMessage] = useState(automation.template);
+  const [delay, setDelay] = useState(String(automation.delay));
+  const [interval, setInterval] = useState(automation.interval);
+
+  return (
+    <div className="space-y-6">
+      <button
+        type="button"
+        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
+        onClick={onBack}
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        Back to automations
+      </button>
+
+      <section className="rounded-2xl border border-slate-200 p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Edit automation</p>
+            <h3 className="mt-2 text-2xl font-black text-slate-950">{automation.name}</h3>
+          </div>
+          {saveMessage ? (
+            <p role="status" className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
+              {saveMessage}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="mt-6 grid gap-5">
+          <label className="grid gap-2">
+            <span className="text-sm font-black text-slate-950">Name</span>
+            <input
+              value={automation.name.toUpperCase()}
+              readOnly
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium uppercase text-slate-700"
+            />
+          </label>
+
+          <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div>
+              <h4 className="text-base font-black text-slate-800">Notifications</h4>
+              <p className="mt-1 text-sm text-slate-500">Choose what type of notification you want to send.</p>
+            </div>
+            <div className="inline-flex rounded-2xl bg-slate-100 p-1" role="tablist" aria-label="Automation notification type">
+              {(["email", "push"] as AutomationChannel[]).map((notificationChannel) => (
+                <button
+                  key={notificationChannel}
+                  type="button"
+                  role="tab"
+                  aria-selected={channel === notificationChannel}
+                  className={cn(
+                    "rounded-xl px-5 py-3 text-sm font-black capitalize transition-colors",
+                    channel === notificationChannel ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-white"
+                  )}
+                  onClick={() => onChannelChange(notificationChannel)}
+                >
+                  {notificationChannel}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="grid gap-2">
+            <span className="text-sm font-black text-slate-950">{channel === "email" ? "Subject" : "Push title"}</span>
+            <input
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+            />
+          </label>
+
+          <div>
+            <h4 className="text-xl font-black text-slate-800">
+              {channel === "email" ? "Email Messages" : "Push Notification Message"}
+            </h4>
+            <p className="mt-1 text-sm text-slate-500">
+              Use short-codes to personalize your messages with your contact&apos;s first name{" "}
+              <span className="font-black text-slate-700">[FIRST_NAME]</span> and last name{" "}
+              <span className="font-black text-slate-700">[LAST_NAME]</span>.
+            </p>
+            <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+              <div className="flex flex-wrap gap-1 border-b border-slate-200 bg-slate-50 p-2 text-xs font-bold text-slate-500">
+                {["B", "I", "U", "Link", "List", "Align", "Image", "Merge Tags"].map((tool) => (
+                  <span key={tool} className="rounded-lg bg-white px-3 py-2 shadow-sm">
+                    {tool}
+                  </span>
+                ))}
+              </div>
+              <textarea
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                rows={10}
+                className="min-h-72 w-full resize-y border-0 bg-white p-5 text-sm leading-7 text-slate-800 outline-none"
+                aria-label={`${channel === "email" ? "Email" : "Push"} automation message`}
+              />
+            </div>
+          </div>
+
+          <label className="grid gap-2">
+            <span className="inline-flex items-center gap-2 text-sm font-black text-slate-950">
+              <Paperclip className="size-4 text-indigo-600" aria-hidden="true" />
+              Attached file
+            </span>
+            <input type="file" className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600" />
+          </label>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2">
+              <span className="text-sm font-black text-slate-950">When do you want to send this message?</span>
+              <input
+                type="number"
+                min="0"
+                value={delay}
+                onChange={(event) => setDelay(event.target.value)}
+                className="rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700"
+              />
+            </label>
+            <label className="grid gap-2">
+              <span className="text-sm font-black text-slate-950">Interval</span>
+              <select
+                value={interval}
+                onChange={(event) => setInterval(event.target.value as AutomationTrigger["interval"])}
+                className="rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700"
+              >
+                {["Minutes", "Hours", "Days", "Weeks"].map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-sm font-black text-slate-800 transition-colors hover:bg-slate-200"
+              >
+                <Plus className="size-4" aria-hidden="true" />
+                Add New Message
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-sm font-black text-slate-800 transition-colors hover:bg-slate-200"
+              >
+                <Send className="size-4" aria-hidden="true" />
+                Send Test
+              </button>
+            </div>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-black text-white transition-colors hover:bg-indigo-700"
+              onClick={onSave}
+            >
+              <Save className="size-4" aria-hidden="true" />
+              Save Automation
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

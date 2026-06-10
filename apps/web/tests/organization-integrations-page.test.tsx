@@ -9,27 +9,21 @@ afterEach(() => {
 
 describe("OrganizationSettingsPage integrations panel", () => {
   it("shows connected social channels and OAuth links", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
-      if (String(input).startsWith("/api/v1/calendar/connections")) {
-        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-      }
-
-      return Promise.resolve(
-        new Response(
-          JSON.stringify({
-            data: [
-              {
-                id: "connection_1",
-                provider: "instagram",
-                accountName: "Complete Coach IG",
-                status: "active"
-              }
-            ]
-          }),
-          { status: 200 }
-        )
-      );
-    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "connection_1",
+              provider: "instagram",
+              accountName: "Complete Coach IG",
+              status: "active"
+            }
+          ]
+        }),
+        { status: 200 }
+      )
+    );
 
     render(<OrganizationSettingsPage />);
 
@@ -47,50 +41,12 @@ describe("OrganizationSettingsPage integrations panel", () => {
     );
   });
 
-  it("sets up organisation calendar connections for Apple, Google, and Outlook", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+  it("keeps organisation calendar connections out of organisation settings", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
       if (url === "/api/v1/social/connections") {
         return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-      }
-
-      if (url === "/api/v1/calendar/connections?scope=organization") {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: [
-                {
-                  id: "calendar_1",
-                  provider: "google",
-                  scope: "organization",
-                  accountName: "ops@completecoach.fit",
-                  calendarName: "Complete Coach HQ",
-                  status: "active"
-                }
-              ]
-            }),
-            { status: 200 }
-          )
-        );
-      }
-
-      if (url === "/api/v1/calendar/connections/apple" && init?.method === "POST") {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: {
-                id: "calendar_apple",
-                provider: "apple",
-                scope: "organization",
-                accountName: "Apple Calendar setup",
-                calendarName: "Apple Calendar",
-                status: "pending"
-              }
-            }),
-            { status: 201 }
-          )
-        );
       }
 
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
@@ -100,26 +56,44 @@ describe("OrganizationSettingsPage integrations panel", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "Integrations" }));
 
-    expect(await screen.findByText("ops@completecoach.fit")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Connect Google Calendar" })).toHaveAttribute(
-      "href",
-      "/api/v1/calendar/connections/oauth/start?provider=google&scope=organization&redirectTo=/organization-settings"
-    );
-    expect(screen.getByRole("link", { name: "Connect Outlook Calendar" })).toHaveAttribute(
-      "href",
-      "/api/v1/calendar/connections/oauth/start?provider=outlook&scope=organization&redirectTo=/organization-settings"
-    );
+    expect(await screen.findByText("No social channels connected yet.")).toBeInTheDocument();
+    expect(screen.queryByText("Organisation Calendar Connections")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Connect Google Calendar" })).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([input]) => String(input).startsWith("/api/v1/calendar/connections"))).toBe(false);
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "Set up Apple Calendar" }));
+  it("edits email and push automation triggers from organisation settings", () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
 
-    expect(await screen.findByText("Apple Calendar setup")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/calendar/connections/apple",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ scope: "organization" })
-      })
+    render(<OrganizationSettingsPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Automations" }));
+
+    expect(screen.getByRole("table", { name: "Automation triggers" })).toBeInTheDocument();
+    expect(screen.getByText("New client created")).toBeInTheDocument();
+    expect(screen.getByText("Client completes a check-in")).toBeInTheDocument();
+    expect(screen.getByLabelText("Toggle New client created automation")).toHaveAttribute("aria-checked", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "Actions for New client created" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+
+    expect(screen.getByRole("heading", { level: 3, name: "New client created" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("NEW CLIENT CREATED")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "email" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "push" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Welcome to Complete Coach!")).toBeInTheDocument();
+    expect(screen.getByText("[FIRST_NAME]")).toBeInTheDocument();
+    expect(screen.getByText("[LAST_NAME]")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email automation message")).toHaveValue(
+      "[FIRST_NAME]!\n\nWelcome to your coaching program. I need 10 minutes of your time to make sure you are clear on the next steps.\n\nThings you will need for success:\n\n- Bodyweight scales\n- Measuring tape\n- Wearable activity tracker\n- Food scale\n- Meal prep containers\n- Gym membership"
     );
+    expect(screen.getByLabelText("When do you want to send this message?")).toHaveValue(1);
+    expect(screen.getByLabelText("Interval")).toHaveValue("Minutes");
+
+    fireEvent.click(screen.getByRole("tab", { name: "push" }));
+
+    expect(screen.getByLabelText("Push automation message")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save Automation" })).toBeInTheDocument();
   });
 
   it("creates a Stripe Connect onboarding link from organization settings", async () => {

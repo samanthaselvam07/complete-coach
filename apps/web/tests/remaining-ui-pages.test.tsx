@@ -77,6 +77,9 @@ describe("OrganizationSettingsPage", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Add sender domain" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create DNS records" })).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("tab", { name: "Automations" }));
+    expect(screen.getByRole("table", { name: "Automation triggers" })).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("tab", { name: "Team Management" }));
     expect(screen.getByRole("link", { name: "Open team management" })).toHaveAttribute("href", "/team-management");
 
