@@ -276,7 +276,8 @@ describe("TrainingProgramsPage", () => {
     fireEvent.change(screen.getByLabelText(/Program Title/i), { target: { value: "Strength Template 1" } });
     fireEvent.click(screen.getByRole("button", { name: "Save as Template" }));
 
-    expect(await screen.findByText("Program template saved to persistence API.")).toBeInTheDocument();
+    expect(await screen.findByText("Program template saved.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(screen.getByRole("heading", { level: 1, name: "Program Library" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 1, name: "Create a Program" })).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
@@ -345,7 +346,8 @@ describe("TrainingProgramsPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Save & Close" }));
 
-    expect(await screen.findByText("Lower Strength Build saved to Custom programs.")).toBeInTheDocument();
+    expect(await screen.findByText("Lower Strength Build added to Custom programs.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(screen.getByRole("tab", { name: "Custom programs" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "Custom programs" })).toHaveTextContent("Lower Strength Build");
     expect(fetchMock).not.toHaveBeenCalledWith(

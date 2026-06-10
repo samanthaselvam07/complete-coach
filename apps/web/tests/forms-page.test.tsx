@@ -248,7 +248,8 @@ describe("FormsPage", () => {
     fireEvent.change(screen.getByLabelText("Form description"), { target: { value: "Custom description" } });
     fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
 
-    expect(await screen.findByText("Draft saved to persistence API.")).toBeInTheDocument();
+    expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/forms",
       expect.objectContaining({
@@ -373,7 +374,8 @@ describe("FormsPage", () => {
     fireEvent.change(screen.getByLabelText("Field label"), { target: { value: "Updated saved field" } });
     fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
 
-    expect(await screen.findByText("Draft saved to persistence API.")).toBeInTheDocument();
+    expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/forms/form_api_1",
       expect.objectContaining({

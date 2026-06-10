@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
+import { SavedToast } from "@/components/ui/saved-toast";
 import { assignedPrograms, programTemplates } from "@/fixtures/training";
 import { cn } from "@/lib/utils";
 
@@ -221,7 +222,7 @@ export function TrainingProgramsPage() {
       setActiveTab("Program templates");
       setProgramDraft(null);
       setCreationDialogMode(null);
-      setStatusMessage("Program template saved to persistence API.");
+      setStatusMessage("Program template saved.");
     } catch {
       const localTemplate = createLocalTrainingTemplateFromDraft(draft, templates.length + 1);
 
@@ -230,7 +231,7 @@ export function TrainingProgramsPage() {
       setActiveTab("Program templates");
       setProgramDraft(null);
       setCreationDialogMode(null);
-      setStatusMessage("Program saved locally because the persistence API is unavailable.");
+      setStatusMessage("Program saved.");
       setErrorMessage(null);
     } finally {
       setSaving(false);
@@ -244,7 +245,7 @@ export function TrainingProgramsPage() {
     setActiveTab("Custom programs");
     setProgramDraft(null);
     setCreationDialogMode(null);
-    setStatusMessage(`${customProgram.name} saved to Custom programs.`);
+    setStatusMessage(`${customProgram.name} added to Custom programs.`);
     setErrorMessage(null);
   }
 
@@ -452,7 +453,7 @@ export function TrainingProgramsPage() {
           Program persistence API unavailable. Showing fixture program library.
         </p>
       ) : null}
-      {statusMessage ? <p className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">{statusMessage}</p> : null}
+      {statusMessage ? <SavedToast message={statusMessage} /> : null}
       {errorMessage ? <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p> : null}
 
       <div role="tablist" aria-label="Program library sections" className="mb-8 flex items-center gap-8 border-b border-gray-200">

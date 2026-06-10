@@ -247,6 +247,7 @@ describe("TrainingProgramsPage quick actions", () => {
         })
       )
     );
-    expect(await screen.findByText("Program template saved to persistence API.")).toBeInTheDocument();
+    expect(await screen.findByText("Program template saved.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
   });
 });

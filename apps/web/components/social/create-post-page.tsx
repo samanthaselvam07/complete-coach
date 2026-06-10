@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 
+import { SavedToast } from "@/components/ui/saved-toast";
+
 type SocialConnection = {
   id: string;
   provider: "instagram" | "facebook" | "x";
@@ -162,7 +164,7 @@ export function CreatePostPage() {
         </div>
 
         {error ? <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
-        {created ? <p className="mt-4 rounded-xl bg-green-50 p-3 text-sm font-medium text-green-800">Post scheduled.</p> : null}
+        {created ? <SavedToast message="Post scheduled." /> : null}
 
         <div className="mt-6 flex flex-wrap gap-3">
           <button

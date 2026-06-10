@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
+import { SavedToast } from "@/components/ui/saved-toast";
+
 type BillingInterval = "monthly" | "one-time";
 
 interface PackageFormState {
@@ -131,12 +133,12 @@ export function CreatePackagePage() {
 
         {error ? <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
         {created ? (
-          <div className="mt-4 rounded-xl bg-green-50 p-3 text-sm font-medium text-green-800">
-            <p>Package created.</p>
+          <>
+            <SavedToast message="Package created." />
             <Link className="mt-1 inline-flex text-indigo-700 underline" href="/packages">
               Back to packages
             </Link>
-          </div>
+          </>
         ) : null}
 
         <div className="mt-6 flex flex-wrap gap-3">

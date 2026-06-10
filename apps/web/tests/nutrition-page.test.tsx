@@ -175,7 +175,8 @@ describe("MealPlansPage", () => {
     fireEvent.change(screen.getByLabelText("Nutrition plan title"), { target: { value: "Contest Prep Meal Plan" } });
     fireEvent.click(screen.getByRole("button", { name: "Save Nutrition Plan & Close" }));
 
-    expect(await screen.findByText("Nutrition plan saved to meal plans.")).toBeInTheDocument();
+    expect(await screen.findByText("Nutrition plan added to Meal Plans.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(screen.getByRole("tabpanel", { name: "Meal Plans" })).toHaveTextContent("Contest Prep Meal Plan");
   });
 
@@ -571,7 +572,8 @@ describe("FoodDatabasePage", () => {
     await screen.findByText("No persisted foods match the current filters.");
     fireEvent.click(screen.getByRole("button", { name: "Create New Food" }));
 
-    expect(await screen.findByText("Food saved to persistence API.")).toBeInTheDocument();
+    expect(await screen.findByText("Food saved.")).toBeInTheDocument();
+    expect(screen.getAllByRole("status").some((status) => status.textContent?.includes("Saved"))).toBe(true);
     expect(screen.getByText("Coach Food 1")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/foods",

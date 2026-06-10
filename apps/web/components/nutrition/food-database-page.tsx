@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Database, Download, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { SavedToast } from "@/components/ui/saved-toast";
 import { foodCategories, foods, type Food } from "@/fixtures/nutrition";
 import { cn } from "@/lib/utils";
 
@@ -116,7 +117,7 @@ export function FoodDatabasePage() {
       setApiFoods((currentFoods) => [payload.data as ApiFood, ...currentFoods]);
       setFoodSource("api");
       setSelectedCategory("All Ingredients");
-      setStatusMessage("Food saved to persistence API.");
+      setStatusMessage("Food saved.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Food could not be saved.");
     } finally {
@@ -156,11 +157,7 @@ export function FoodDatabasePage() {
           Food persistence API unavailable. Showing fixture food library.
         </p>
       ) : null}
-      {statusMessage ? (
-        <p role="status" className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-          {statusMessage}
-        </p>
-      ) : null}
+      {statusMessage ? <SavedToast message={statusMessage} /> : null}
       {errorMessage ? <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p> : null}
 
       <div className="relative mb-6">

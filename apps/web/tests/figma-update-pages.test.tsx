@@ -46,6 +46,7 @@ describe("Figma update pages", () => {
     });
 
     expect(await screen.findByText("Client created.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(screen.getByRole("link", { name: "Open client profile" })).toHaveAttribute(
       "href",
       "/clients/client_created_1",
@@ -98,6 +99,7 @@ describe("Figma update pages", () => {
     });
 
     expect(await screen.findByText("Package created.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(screen.getByRole("link", { name: "Back to packages" })).toHaveAttribute("href", "/packages");
   });
 
@@ -152,6 +154,7 @@ describe("Figma update pages", () => {
     });
 
     expect(await screen.findByText("Post scheduled.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
   });
 
   it("handles social post connection loading failures", async () => {

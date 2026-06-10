@@ -26,6 +26,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { AuditLogPage } from "@/components/audit/audit-log-page";
+import { SavedToast } from "@/components/ui/saved-toast";
 import { ALL_CAPABILITIES, getCapabilitiesForRole, type Capability, type MembershipRole } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils";
 
@@ -749,11 +750,7 @@ function AutomationEditPanel({
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Edit automation</p>
             <h3 className="mt-2 text-2xl font-black text-slate-950">{automation.name}</h3>
           </div>
-          {saveMessage ? (
-            <p role="status" className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
-              {saveMessage}
-            </p>
-          ) : null}
+          {saveMessage ? <SavedToast message={saveMessage} /> : null}
         </div>
 
         <div className="mt-6 grid gap-5">

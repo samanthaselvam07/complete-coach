@@ -1,6 +1,7 @@
 import { ArrowLeft, Bell, Eye, Grip, Image, Search, Send, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { SavedToast } from "@/components/ui/saved-toast";
 import { formElements, getTemplateName, initialFormFields, type FormField } from "@/fixtures/forms";
 import { cn } from "@/lib/utils";
 import {
@@ -245,7 +246,7 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
 
       setPersistedForm(savedForm);
       onPersistedForm(savedForm);
-      setStatusMessage("Draft saved to persistence API.");
+      setStatusMessage("Draft saved.");
 
       return { form: savedForm, version: savedVersion };
     } catch {
@@ -574,11 +575,7 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
           </div>
 
           <div className="space-y-3 border-t border-gray-200 pt-4">
-            {statusMessage ? (
-              <div role="status" className="rounded-lg bg-emerald-50 p-3 text-sm font-medium text-emerald-700">
-                {statusMessage}
-              </div>
-            ) : null}
+            {statusMessage ? <SavedToast message={statusMessage} /> : null}
             {errorMessage ? (
               <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">
                 {errorMessage}

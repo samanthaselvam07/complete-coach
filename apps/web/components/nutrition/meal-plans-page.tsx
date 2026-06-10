@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
 import { mealAssignments, mealTemplates } from "@/fixtures/nutrition";
+import { SavedToast } from "@/components/ui/saved-toast";
 import { cn } from "@/lib/utils";
 
 type MealPlanTab = "Meal Plans" | "Meal Templates";
@@ -170,7 +171,7 @@ export function MealPlansPage() {
     setShowPlanTypeDialog(false);
     setShowMacroChoiceDialog(false);
     setActiveTab("Meal Plans");
-    setStatusMessage("Nutrition plan saved to meal plans.");
+    setStatusMessage("Nutrition plan added to Meal Plans.");
   }
 
   async function assignTemplate() {
@@ -255,7 +256,7 @@ export function MealPlansPage() {
           Meal plan persistence API unavailable. Showing fixture meal plan library.
         </p>
       ) : null}
-      {statusMessage ? <p className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">{statusMessage}</p> : null}
+      {statusMessage ? <SavedToast message={statusMessage} /> : null}
       {errorMessage ? <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p> : null}
 
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">

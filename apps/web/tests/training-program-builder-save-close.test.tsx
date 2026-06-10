@@ -33,7 +33,8 @@ describe("Training program builder save and close", () => {
     expect(screen.queryByRole("heading", { level: 1, name: "Create a Program" })).not.toBeInTheDocument();
     expect(await screen.findByText("Preview Hypertrophy Build")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Custom programs" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByText("Preview Hypertrophy Build saved to Custom programs.")).toBeInTheDocument();
+    expect(screen.getByText("Preview Hypertrophy Build added to Custom programs.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/v1/training-program-templates",
       expect.objectContaining({ method: "POST" })

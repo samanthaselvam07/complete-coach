@@ -8,6 +8,7 @@ import {
   emptyClientForm,
   type ClientFormState
 } from "@/components/clients/client-form-dialog";
+import { SavedToast } from "@/components/ui/saved-toast";
 
 export function NewClientIntakePage() {
   const [form, setForm] = useState<ClientFormState>(emptyClientForm);
@@ -103,12 +104,12 @@ export function NewClientIntakePage() {
 
         {error ? <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
         {createdClientId ? (
-          <div className="mt-4 rounded-xl bg-green-50 p-3 text-sm font-medium text-green-800">
-            <p>Client created.</p>
+          <>
+            <SavedToast message="Client created." />
             <Link className="mt-1 inline-flex text-indigo-700 underline" href={`/clients/${createdClientId}`}>
               Open client profile
             </Link>
-          </div>
+          </>
         ) : null}
 
         <div className="mt-6 flex flex-wrap gap-3">

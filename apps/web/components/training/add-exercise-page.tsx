@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, Minus, Plus, Upload } from "lucide-react";
 import { useState } from "react";
 
+import { SavedToast } from "@/components/ui/saved-toast";
 import { muscleGroups } from "@/fixtures/training";
 import { cn } from "@/lib/utils";
 
@@ -392,11 +393,7 @@ export function AddExercisePage() {
         </div>
 
         <div className="mt-8 space-y-3">
-          {statusMessage ? (
-            <div role="status" className="rounded-lg bg-emerald-50 p-3 text-sm font-medium text-emerald-700">
-              {statusMessage}
-            </div>
-          ) : null}
+          {statusMessage ? <SavedToast message={statusMessage} /> : null}
           {errorMessage ? (
             <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">
               {errorMessage}
