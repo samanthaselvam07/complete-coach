@@ -97,7 +97,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
   });
 
   it("creates a Stripe Connect onboarding link from organization settings", async () => {
-    const onboardingWindow = { close: vi.fn(), location: { href: "about:blank" } };
+    const onboardingWindow = { close: vi.fn(), location: { href: "about:blank" }, opener: window };
     const openMock = vi.spyOn(window, "open").mockReturnValue(onboardingWindow as unknown as Window);
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
@@ -135,7 +135,8 @@ describe("OrganizationSettingsPage integrations panel", () => {
       "https://connect.stripe.com/setup/test"
     );
     expect(screen.getByText("onboarding-required")).toBeInTheDocument();
-    expect(openMock).toHaveBeenCalledWith("about:blank", "_blank", "noopener,noreferrer");
+    expect(openMock).toHaveBeenCalledWith("about:blank", "_blank");
+    expect(onboardingWindow.opener).toBeNull();
     expect(onboardingWindow.location.href).toBe("https://connect.stripe.com/setup/test");
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/stripe/connect/account-link",
@@ -181,7 +182,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
   });
 
   it("shows the safe Stripe detail when onboarding fails", async () => {
-    const onboardingWindow = { close: vi.fn(), location: { href: "about:blank" } };
+    const onboardingWindow = { close: vi.fn(), location: { href: "about:blank" }, opener: window };
     vi.spyOn(window, "open").mockReturnValue(onboardingWindow as unknown as Window);
     vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);

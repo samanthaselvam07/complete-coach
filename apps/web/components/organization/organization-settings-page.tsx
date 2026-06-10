@@ -335,7 +335,7 @@ function IntegrationsPanel() {
   const connectStripe = async () => {
     setIsConnectingStripe(true);
     setStripeStatus("Creating Stripe onboarding link...");
-    const onboardingWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
+    const onboardingWindow = window.open("about:blank", "_blank");
 
     try {
       const response = await fetch("/api/v1/stripe/connect/account-link", {
@@ -358,6 +358,7 @@ function IntegrationsPanel() {
       setStripeStatus(payload.data.status);
       setStripeOnboardingUrl(payload.data.onboardingUrl);
       if (onboardingWindow) {
+        onboardingWindow.opener = null;
         onboardingWindow.location.href = payload.data.onboardingUrl;
       }
     } catch (error) {
