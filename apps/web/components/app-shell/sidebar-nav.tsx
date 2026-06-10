@@ -42,16 +42,14 @@ export function SidebarNav({ currentPath }: SidebarNavProps) {
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="border-b border-sidebar-border p-5">
         <Link href="/" className="flex items-center gap-3" aria-label="Complete Coach dashboard">
-          <span className="flex size-10 items-center justify-center rounded-xl border border-indigo-100 bg-white shadow-sm">
-            <Image
-              src="/brand/favicon.svg"
-              alt="Complete Coach icon"
-              width={28}
-              height={28}
-              className="size-7"
-              priority
-            />
-          </span>
+          <Image
+            src="/brand/favicon.svg"
+            alt="Complete Coach icon"
+            width={40}
+            height={40}
+            className="size-10 shrink-0"
+            priority
+          />
           <span>
             <span className="block text-base font-bold tracking-tight">Complete Coach</span>
             <span className="block text-xs uppercase tracking-[0.22em] text-muted-foreground">
