@@ -180,6 +180,46 @@ describe("OrganizationSettingsPage integrations panel", () => {
     expect(openMock).toHaveBeenCalledWith("https://stripe.com/express/test-login", "_blank", "noopener,noreferrer");
   });
 
+  it("shows the safe Stripe detail when onboarding fails", async () => {
+    const onboardingWindow = { close: vi.fn(), location: { href: "about:blank" } };
+    vi.spyOn(window, "open").mockReturnValue(onboardingWindow as unknown as Window);
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/social/connections") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/stripe/connect/account-link" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              error: {
+                code: "stripe_request_failed",
+                message: "Stripe request failed.",
+                details: {
+                  status: 401,
+                  message: "Invalid API Key provided."
+                }
+              }
+            }),
+            { status: 502 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(<OrganizationSettingsPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Integrations" }));
+    fireEvent.click(screen.getByRole("button", { name: "Connect Stripe account" }));
+
+    expect(await screen.findByText("Invalid API Key provided.")).toBeInTheDocument();
+    expect(onboardingWindow.close).toHaveBeenCalled();
+  });
+
   it("shows integration loading errors without blocking the settings page", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 

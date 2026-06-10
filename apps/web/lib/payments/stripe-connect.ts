@@ -67,7 +67,7 @@ export const stripeAccountLinkSchema = z.object({
 export type StripeAccountLinkInput = z.infer<typeof stripeAccountLinkSchema>;
 
 export function getStripeConfig(): StripeConfig {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
 
   if (!secretKey) {
     throw new StripeConfigurationError();

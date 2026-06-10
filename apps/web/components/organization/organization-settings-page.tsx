@@ -348,11 +348,11 @@ function IntegrationsPanel() {
       });
       const payload = (await response.json()) as {
         data?: { status: string; onboardingUrl: string };
-        error?: { message: string };
+        error?: { message: string; details?: { message?: string } };
       };
 
       if (!response.ok || !payload.data?.onboardingUrl) {
-        throw new Error(payload.error?.message ?? "Could not create Stripe onboarding link.");
+        throw new Error(payload.error?.details?.message ?? payload.error?.message ?? "Could not create Stripe onboarding link.");
       }
 
       setStripeStatus(payload.data.status);
@@ -378,11 +378,11 @@ function IntegrationsPanel() {
       });
       const payload = (await response.json()) as {
         data?: { status: string; dashboardUrl: string };
-        error?: { message: string };
+        error?: { message: string; details?: { message?: string } };
       };
 
       if (!response.ok || !payload.data?.dashboardUrl) {
-        throw new Error(payload.error?.message ?? "Could not create Stripe dashboard link.");
+        throw new Error(payload.error?.details?.message ?? payload.error?.message ?? "Could not create Stripe dashboard link.");
       }
 
       setStripeStatus(payload.data.status);
