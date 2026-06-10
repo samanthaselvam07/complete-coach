@@ -1,10 +1,28 @@
+"use client";
+
 import { CheckCircle2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface SavedToastProps {
+  durationMs?: number;
   message?: string;
 }
 
-export function SavedToast({ message = "Saved" }: SavedToastProps) {
+export function SavedToast({ durationMs = 5000, message = "Saved" }: SavedToastProps) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setVisible(false);
+    }, durationMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [durationMs, message]);
+
+  if (!visible) {
+    return null;
+  }
+
   return (
     <div
       role="status"
