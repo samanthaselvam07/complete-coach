@@ -67,6 +67,28 @@ describe("MealPlansPage", () => {
     expect(screen.queryByRole("menu", { name: /meal plan actions/i })).not.toBeInTheDocument();
   });
 
+  it("runs meal plan quick actions for edit, copy, delete, and assign", () => {
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Hypertrophy Phase II" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy" }));
+    expect(screen.getByText("Hypertrophy Phase II (copy)")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Hypertrophy Phase II (copy)" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    expect(screen.queryByText("Hypertrophy Phase II (copy)")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Hypertrophy Phase II" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Assign to" }));
+    expect(screen.getByRole("dialog", { name: "Assign Meal Plan" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Search clients")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Hypertrophy Phase II" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+    expect(screen.getByRole("heading", { level: 2, name: "Hypertrophy Phase II" })).toBeInTheDocument();
+  });
+
   it("opens the selected meal plan from the row edit button", () => {
     render(createElement(MealPlansPage));
 

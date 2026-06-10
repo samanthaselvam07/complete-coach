@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, ClipboardCopy, Edit, Info, MoreVertical, Plus, Trash2, UserPlus, X } from "lucide-react";
+import { Calendar, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
@@ -94,12 +94,15 @@ export function MealPlansPage() {
   const [assignments, setAssignments] = useState<ApiMealPlanAssignment[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [createdPlans, setCreatedPlans] = useState<MealAssignmentRow[]>([]);
+  const [hiddenMealPlanIds, setHiddenMealPlanIds] = useState<string[]>([]);
+  const [mealPlanOverrides, setMealPlanOverrides] = useState<Record<string, Partial<MealAssignmentRow>>>({});
   const [source, setSource] = useState<MealPlanSource>("fixtures");
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<ApiMealPlanTemplate | null>(null);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [builderMode, setBuilderMode] = useState<NutritionPlanBuilderMode | null>(null);
   const [editingPlan, setEditingPlan] = useState<MealAssignmentRow | null>(null);
+  const [assignmentTarget, setAssignmentTarget] = useState<MealAssignmentRow | null>(null);
   const [showPlanTypeDialog, setShowPlanTypeDialog] = useState(false);
   const [showMacroChoiceDialog, setShowMacroChoiceDialog] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -156,8 +159,11 @@ export function MealPlansPage() {
 
   const templateCards = useMemo(() => getMealTemplateCards(source, templates), [source, templates]);
   const assignmentRows = useMemo(
-    () => [...createdPlans, ...getMealAssignmentRows(source, assignments)],
-    [assignments, createdPlans, source]
+    () =>
+      [...createdPlans, ...getMealAssignmentRows(source, assignments)]
+        .filter((assignment) => !hiddenMealPlanIds.includes(assignment.id))
+        .map((assignment) => ({ ...assignment, ...(mealPlanOverrides[assignment.id] ?? {}) })),
+    [assignments, createdPlans, hiddenMealPlanIds, mealPlanOverrides, source]
   );
 
   function openPlanTypeDialog() {
@@ -174,6 +180,49 @@ export function MealPlansPage() {
     setShowMacroChoiceDialog(false);
     setActiveTab("Meal Plans");
     setStatusMessage("Nutrition plan added to Meal Plans.");
+  }
+
+  function editMealPlan(assignment: MealAssignmentRow) {
+    setEditingPlan(assignment);
+    setBuilderMode("full");
+    setStatusMessage(null);
+    setErrorMessage(null);
+  }
+
+  function deleteMealPlan(assignment: MealAssignmentRow) {
+    setCreatedPlans((currentPlans) => currentPlans.filter((plan) => plan.id !== assignment.id));
+    setHiddenMealPlanIds((currentIds) => [...currentIds, assignment.id]);
+    setAssignmentTarget((currentTarget) => (currentTarget?.id === assignment.id ? null : currentTarget));
+    setStatusMessage(`${assignment.planName} deleted from Meal Plans.`);
+  }
+
+  function copyMealPlan(assignment: MealAssignmentRow) {
+    const copiedPlan: MealAssignmentRow = {
+      ...assignment,
+      id: `local-meal-plan-copy-${Date.now()}`,
+      planName: `${assignment.planName} (copy)`,
+      activeClientCount: 0,
+      lastEdited: "Just now",
+      status: "draft"
+    };
+
+    setCreatedPlans((currentPlans) => [copiedPlan, ...currentPlans]);
+    setActiveTab("Meal Plans");
+    setStatusMessage(`${copiedPlan.planName} added to Meal Plans.`);
+  }
+
+  function assignMealPlanToClient(assignment: MealAssignmentRow, client: ClientSummary) {
+    setMealPlanOverrides((currentOverrides) => ({
+      ...currentOverrides,
+      [assignment.id]: {
+        activeClientCount: assignment.activeClientCount + 1,
+        status: "active",
+        lastEdited: "Just now"
+      }
+    }));
+    setAssignmentTarget(null);
+    setActiveTab("Meal Plans");
+    setStatusMessage(`${assignment.planName} assigned to ${client.name}.`);
   }
 
   async function assignTemplate() {
@@ -289,12 +338,10 @@ export function MealPlansPage() {
       {activeTab === "Meal Plans" ? (
         <ActiveAssignmentsPanel
           assignments={assignmentRows}
-          onEdit={(assignment) => {
-            setEditingPlan(assignment);
-            setBuilderMode("full");
-            setStatusMessage(null);
-            setErrorMessage(null);
-          }}
+          onEdit={editMealPlan}
+          onDelete={deleteMealPlan}
+          onCopy={copyMealPlan}
+          onAssign={setAssignmentTarget}
         />
       ) : (
         <MasterTemplatesPanel
@@ -321,6 +368,15 @@ export function MealPlansPage() {
             setSelectedClientId("");
           }}
           onSubmit={assignTemplate}
+        />
+      ) : null}
+
+      {assignmentTarget ? (
+        <MealPlanAssignmentDialog
+          target={assignmentTarget}
+          clients={clients}
+          onClose={() => setAssignmentTarget(null)}
+          onAssign={(client) => assignMealPlanToClient(assignmentTarget, client)}
         />
       ) : null}
 
@@ -768,10 +824,16 @@ function MacroInput({
 
 function ActiveAssignmentsPanel({
   assignments,
-  onEdit
+  onEdit,
+  onDelete,
+  onCopy,
+  onAssign
 }: {
   assignments: MealAssignmentRow[];
   onEdit: (assignment: MealAssignmentRow) => void;
+  onDelete: (assignment: MealAssignmentRow) => void;
+  onCopy: (assignment: MealAssignmentRow) => void;
+  onAssign: (assignment: MealAssignmentRow) => void;
 }) {
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
@@ -830,12 +892,34 @@ function ActiveAssignmentsPanel({
                 type="button"
                 aria-label={`More actions for ${assignment.planName}`}
                 aria-expanded={openActionMenuId === assignment.id}
+                aria-controls={`meal-plan-actions-${assignment.id}`}
                 className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
                 onClick={() => setOpenActionMenuId((currentId) => (currentId === assignment.id ? null : assignment.id))}
               >
                 <MoreVertical className="size-4" aria-hidden="true" />
               </button>
-              {menuOpen ? <MealPlanActionMenu planName={assignment.planName} /> : null}
+              {menuOpen ? (
+                <MealPlanActionMenu
+                  id={`meal-plan-actions-${assignment.id}`}
+                  planName={assignment.planName}
+                  onEdit={() => {
+                    setOpenActionMenuId(null);
+                    onEdit(assignment);
+                  }}
+                  onDelete={() => {
+                    setOpenActionMenuId(null);
+                    onDelete(assignment);
+                  }}
+                  onAssign={() => {
+                    setOpenActionMenuId(null);
+                    onAssign(assignment);
+                  }}
+                  onCopy={() => {
+                    setOpenActionMenuId(null);
+                    onCopy(assignment);
+                  }}
+                />
+              ) : null}
             </div>
           </article>
         );
@@ -847,35 +931,153 @@ function ActiveAssignmentsPanel({
   );
 }
 
-function MealPlanActionMenu({ planName }: { planName: string }) {
+function MealPlanActionMenu({
+  id,
+  planName,
+  onEdit,
+  onDelete,
+  onAssign,
+  onCopy
+}: {
+  id: string;
+  planName: string;
+  onEdit: () => void;
+  onDelete: () => void;
+  onAssign: () => void;
+  onCopy: () => void;
+}) {
   const actions = [
-    { label: "Edit", icon: Edit },
-    { label: "Delete", icon: Trash2 },
-    { label: "Assign to", icon: UserPlus },
-    { label: "Copy", icon: ClipboardCopy }
+    { label: "Edit", icon: Edit, onSelect: onEdit },
+    { label: "Delete", icon: Trash2, onSelect: onDelete },
+    { label: "Assign to", icon: UserPlus, onSelect: onAssign },
+    { label: "Copy", icon: ClipboardCopy, onSelect: onCopy }
   ];
 
   return (
     <div
+      id={id}
       role="menu"
       aria-label={`Meal plan actions for ${planName}`}
       className="absolute right-0 top-10 z-[60] w-44 rounded-xl border border-gray-200 bg-white py-2 shadow-xl"
     >
-      {actions.map((action) => {
-        const Icon = action.icon;
+      {actions.map(({ label, icon: Icon, onSelect }) => (
+        <button
+          key={label}
+          type="button"
+          role="menuitem"
+          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+          onClick={onSelect}
+        >
+          <Icon className="size-4 text-slate-500" aria-hidden="true" />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
-        return (
-          <button
-            key={action.label}
-            type="button"
-            role="menuitem"
-            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            <Icon className="size-4 text-slate-500" aria-hidden="true" />
-            {action.label}
+function MealPlanAssignmentDialog({
+  target,
+  clients,
+  onClose,
+  onAssign
+}: {
+  target: MealAssignmentRow;
+  clients: ClientSummary[];
+  onClose: () => void;
+  onAssign: (client: ClientSummary) => void;
+}) {
+  const fallbackClients = clients.length > 0 ? clients : [];
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState("");
+  const filteredClients = fallbackClients.filter((client) =>
+    client.name.toLowerCase().includes(clientSearchQuery.trim().toLowerCase())
+  );
+  const selectedClient = fallbackClients.find((client) => client.id === selectedClientId) ?? null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="assign-meal-plan-title"
+        className="w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-6 shadow-xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 id="assign-meal-plan-title" className="text-2xl font-bold text-gray-900">
+              Assign Meal Plan
+            </h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Search the client roster and assign <span className="font-semibold text-gray-900">{target.planName}</span>.
+            </p>
+          </div>
+          <button type="button" aria-label="Close assign meal plan" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
           </button>
-        );
-      })}
+        </div>
+
+        <div className="mt-6">
+          <label htmlFor="meal-plan-client-search" className="mb-2 block text-sm font-semibold text-gray-700">
+            Search clients
+          </label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+            <input
+              id="meal-plan-client-search"
+              type="search"
+              value={clientSearchQuery}
+              placeholder="Search client roster..."
+              className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={(event) => setClientSearchQuery(event.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 max-h-64 space-y-2 overflow-y-auto">
+          {filteredClients.map((client) => (
+            <label
+              key={client.id}
+              className="flex cursor-pointer items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm hover:bg-gray-50"
+            >
+              <span>
+                <span className="block font-semibold text-gray-900">{client.name}</span>
+                <span className="block text-xs text-gray-500">{client.packageName}</span>
+              </span>
+              <input
+                type="radio"
+                name="meal-plan-client"
+                aria-label={`Select ${client.name}`}
+                checked={selectedClientId === client.id}
+                onChange={() => setSelectedClientId(client.id)}
+              />
+            </label>
+          ))}
+          {filteredClients.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-gray-300 p-4 text-center text-sm text-gray-600">
+              No clients match that search.
+            </p>
+          ) : null}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button type="button" className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            disabled={!selectedClient}
+            onClick={() => {
+              if (selectedClient) {
+                onAssign(selectedClient);
+              }
+            }}
+          >
+            Assign Meal Plan
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
