@@ -67,6 +67,18 @@ describe("MealPlansPage", () => {
     expect(screen.queryByRole("menu", { name: /meal plan actions/i })).not.toBeInTheDocument();
   });
 
+  it("opens the selected meal plan from the row edit button", () => {
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Hypertrophy Phase II" }));
+
+    expect(screen.getByRole("heading", { level: 2, name: "Hypertrophy Phase II" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Nutrition plan title")).toHaveValue("Hypertrophy Phase II");
+    expect(screen.getByText("2800 Kcal")).toBeInTheDocument();
+    expect(screen.getByText("210 g Protein")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save Nutrition Plan & Close" })).toBeInTheDocument();
+  });
+
   it("loads persisted meal templates and assignments when the API is available", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);

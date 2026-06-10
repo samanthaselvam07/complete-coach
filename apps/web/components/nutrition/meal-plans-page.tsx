@@ -99,6 +99,7 @@ export function MealPlansPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<ApiMealPlanTemplate | null>(null);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [builderMode, setBuilderMode] = useState<NutritionPlanBuilderMode | null>(null);
+  const [editingPlan, setEditingPlan] = useState<MealAssignmentRow | null>(null);
   const [showPlanTypeDialog, setShowPlanTypeDialog] = useState(false);
   const [showMacroChoiceDialog, setShowMacroChoiceDialog] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -168,6 +169,7 @@ export function MealPlansPage() {
   function saveNutritionPlan(plan: MealAssignmentRow) {
     setCreatedPlans((currentPlans) => [plan, ...currentPlans]);
     setBuilderMode(null);
+    setEditingPlan(null);
     setShowPlanTypeDialog(false);
     setShowMacroChoiceDialog(false);
     setActiveTab("Meal Plans");
@@ -219,8 +221,10 @@ export function MealPlansPage() {
     return (
       <NutritionPlanBuilder
         mode={builderMode}
+        initialPlan={editingPlan}
         onBack={() => {
           setBuilderMode(null);
+          setEditingPlan(null);
           setActiveTab("Meal Plans");
         }}
         onSave={saveNutritionPlan}
@@ -283,7 +287,15 @@ export function MealPlansPage() {
       </div>
 
       {activeTab === "Meal Plans" ? (
-        <ActiveAssignmentsPanel assignments={assignmentRows} />
+        <ActiveAssignmentsPanel
+          assignments={assignmentRows}
+          onEdit={(assignment) => {
+            setEditingPlan(assignment);
+            setBuilderMode("full");
+            setStatusMessage(null);
+            setErrorMessage(null);
+          }}
+        />
       ) : (
         <MasterTemplatesPanel
           templates={templateCards}
@@ -317,6 +329,7 @@ export function MealPlansPage() {
           onClose={() => setShowPlanTypeDialog(false)}
           onFullPlan={() => {
             setShowPlanTypeDialog(false);
+            setEditingPlan(null);
             setBuilderMode("full");
           }}
           onMacroOnly={() => {
@@ -331,10 +344,12 @@ export function MealPlansPage() {
           onClose={() => setShowMacroChoiceDialog(false)}
           onDailyTotals={() => {
             setShowMacroChoiceDialog(false);
+            setEditingPlan(null);
             setBuilderMode("macro-day");
           }}
           onEachMeal={() => {
             setShowMacroChoiceDialog(false);
+            setEditingPlan(null);
             setBuilderMode("macro-meal");
           }}
         />
@@ -436,19 +451,21 @@ function MacroPlanChoiceDialog({
 
 function NutritionPlanBuilder({
   mode,
+  initialPlan,
   onBack,
   onSave
 }: {
   mode: NutritionPlanBuilderMode;
+  initialPlan?: MealAssignmentRow | null;
   onBack: () => void;
   onSave: (plan: MealAssignmentRow) => void;
 }) {
-  const [title, setTitle] = useState(mode === "full" ? "New Nutrition Plan" : "Macro Only Nutrition Plan");
+  const [title, setTitle] = useState(initialPlan?.planName ?? (mode === "full" ? "New Nutrition Plan" : "Macro Only Nutrition Plan"));
   const [dayName, setDayName] = useState("Day 1");
-  const [protein, setProtein] = useState("0");
-  const [carbs, setCarbs] = useState("0");
-  const [fats, setFats] = useState("0");
-  const [calories, setCalories] = useState("0");
+  const [protein, setProtein] = useState(String(initialPlan?.protein ?? 0));
+  const [carbs, setCarbs] = useState(String(initialPlan?.carbs ?? 0));
+  const [fats, setFats] = useState(String(initialPlan?.fats ?? 0));
+  const [calories, setCalories] = useState(String(initialPlan?.calories ?? 0));
   const isFullPlan = mode === "full";
   const isMealMacroPlan = mode === "macro-meal";
 
@@ -749,7 +766,13 @@ function MacroInput({
   );
 }
 
-function ActiveAssignmentsPanel({ assignments }: { assignments: MealAssignmentRow[] }) {
+function ActiveAssignmentsPanel({
+  assignments,
+  onEdit
+}: {
+  assignments: MealAssignmentRow[];
+  onEdit: (assignment: MealAssignmentRow) => void;
+}) {
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
   return (
@@ -795,7 +818,12 @@ function ActiveAssignmentsPanel({ assignments }: { assignments: MealAssignmentRo
             </div>
             <div className="col-span-2 text-sm text-gray-600">{assignment.lastEdited}</div>
             <div className="relative col-span-1 flex items-center gap-2">
-              <button aria-label={`Edit ${assignment.planName}`} className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50">
+              <button
+                type="button"
+                aria-label={`Edit ${assignment.planName}`}
+                className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
+                onClick={() => onEdit(assignment)}
+              >
                 <Edit className="size-4" aria-hidden="true" />
               </button>
               <button
