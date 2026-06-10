@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -11,7 +12,6 @@ import {
   CreditCard,
   Edit3,
   Globe2,
-  Link2,
   Mail,
   Paperclip,
   Plus,
@@ -297,9 +297,9 @@ function BillingMetric({ label, value, detail }: { label: string; value: string;
 }
 
 function IntegrationsPanel() {
-  const [stripeStatus, setStripeStatus] = useState("Not connected");
-  const [stripeOnboardingUrl, setStripeOnboardingUrl] = useState<string | null>(null);
-  const [isConnectingStripe, setIsConnectingStripe] = useState(false);
+  const searchParams = useSearchParams();
+  const stripeError = searchParams.get("stripe_error");
+  const [stripeStatus, setStripeStatus] = useState(() => stripeError ?? "Not connected");
   const [isOpeningStripeDashboard, setIsOpeningStripeDashboard] = useState(false);
   const [connections, setConnections] = useState<SocialConnection[]>([]);
   const [socialStatusMessage, setSocialStatusMessage] = useState("Loading social channels...");
@@ -331,43 +331,6 @@ function IntegrationsPanel() {
       mounted = false;
     };
   }, []);
-
-  const connectStripe = async () => {
-    setIsConnectingStripe(true);
-    setStripeStatus("Creating Stripe onboarding link...");
-    const onboardingWindow = window.open("about:blank", "_blank");
-
-    try {
-      const response = await fetch("/api/v1/stripe/connect/account-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          returnUrl: "/organization-settings",
-          refreshUrl: "/organization-settings"
-        })
-      });
-      const payload = (await response.json()) as {
-        data?: { status: string; onboardingUrl: string };
-        error?: { message: string; details?: { message?: string } };
-      };
-
-      if (!response.ok || !payload.data?.onboardingUrl) {
-        throw new Error(payload.error?.details?.message ?? payload.error?.message ?? "Could not create Stripe onboarding link.");
-      }
-
-      setStripeStatus(payload.data.status);
-      setStripeOnboardingUrl(payload.data.onboardingUrl);
-      if (onboardingWindow) {
-        onboardingWindow.opener = null;
-        onboardingWindow.location.href = payload.data.onboardingUrl;
-      }
-    } catch (error) {
-      onboardingWindow?.close();
-      setStripeStatus(error instanceof Error ? error.message : "Could not create Stripe onboarding link.");
-    } finally {
-      setIsConnectingStripe(false);
-    }
-  };
 
   const openStripeDashboard = async () => {
     setIsOpeningStripeDashboard(true);
@@ -409,23 +372,12 @@ function IntegrationsPanel() {
             <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Connection status</p>
             <p className="mt-1 text-sm font-bold text-slate-800">{stripeStatus}</p>
           </div>
-          <button
-            type="button"
-            disabled={isConnectingStripe}
-            onClick={connectStripe}
-            className="mt-5 w-full rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700 disabled:bg-slate-300"
+          <a
+            href="/api/v1/stripe/connect/onboarding/start?returnUrl=/organization-settings&refreshUrl=/organization-settings"
+            className="mt-5 inline-flex w-full justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700"
           >
-            {isConnectingStripe ? "Creating link..." : "Connect Stripe account"}
-          </button>
-          {stripeOnboardingUrl ? (
-            <a
-              href={stripeOnboardingUrl}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 px-5 py-3 text-sm font-bold text-indigo-700 transition-colors hover:bg-indigo-50"
-            >
-              Continue Stripe onboarding
-              <Link2 className="h-4 w-4" aria-hidden="true" />
-            </a>
-          ) : null}
+            Connect Stripe account
+          </a>
           <button
             type="button"
             disabled={isOpeningStripeDashboard}

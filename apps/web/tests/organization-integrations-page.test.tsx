@@ -3,8 +3,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OrganizationSettingsPage } from "@/components/organization/organization-settings-page";
 
+const navigationMocks = vi.hoisted(() => ({
+  searchParams: new URLSearchParams()
+}));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => navigationMocks.searchParams
+}));
+
 afterEach(() => {
   vi.restoreAllMocks();
+  navigationMocks.searchParams = new URLSearchParams();
 });
 
 describe("OrganizationSettingsPage integrations panel", () => {
@@ -96,30 +105,12 @@ describe("OrganizationSettingsPage integrations panel", () => {
     expect(screen.getByRole("button", { name: "Save Automation" })).toBeInTheDocument();
   });
 
-  it("creates a Stripe Connect onboarding link from organization settings", async () => {
-    const onboardingWindow = { close: vi.fn(), location: { href: "about:blank" }, opener: window };
-    const openMock = vi.spyOn(window, "open").mockReturnValue(onboardingWindow as unknown as Window);
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+  it("links Stripe Connect onboarding through the server redirect route", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
       if (url === "/api/v1/social/connections") {
         return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-      }
-
-      if (url === "/api/v1/stripe/connect/account-link" && init?.method === "POST") {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: {
-                accountId: "acct_1",
-                status: "onboarding-required",
-                onboardingUrl: "https://connect.stripe.com/setup/test",
-                expiresAt: "2026-06-09T10:00:00.000Z"
-              }
-            }),
-            { status: 200 }
-          )
-        );
       }
 
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
@@ -128,20 +119,11 @@ describe("OrganizationSettingsPage integrations panel", () => {
     render(<OrganizationSettingsPage />);
 
     fireEvent.click(screen.getByRole("tab", { name: "Integrations" }));
-    fireEvent.click(screen.getByRole("button", { name: "Connect Stripe account" }));
-
-    expect(await screen.findByRole("link", { name: "Continue Stripe onboarding" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Connect Stripe account" })).toHaveAttribute(
       "href",
-      "https://connect.stripe.com/setup/test"
+      "/api/v1/stripe/connect/onboarding/start?returnUrl=/organization-settings&refreshUrl=/organization-settings"
     );
-    expect(screen.getByText("onboarding-required")).toBeInTheDocument();
-    expect(openMock).toHaveBeenCalledWith("about:blank", "_blank");
-    expect(onboardingWindow.opener).toBeNull();
-    expect(onboardingWindow.location.href).toBe("https://connect.stripe.com/setup/test");
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/stripe/connect/account-link",
-      expect.objectContaining({ method: "POST" })
-    );
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/stripe/connect/account-link", expect.anything());
   });
 
   it("creates an on-demand Stripe dashboard link from organization settings", async () => {
@@ -181,44 +163,15 @@ describe("OrganizationSettingsPage integrations panel", () => {
     expect(openMock).toHaveBeenCalledWith("https://stripe.com/express/test-login", "_blank", "noopener,noreferrer");
   });
 
-  it("shows the safe Stripe detail when onboarding fails", async () => {
-    const onboardingWindow = { close: vi.fn(), location: { href: "about:blank" }, opener: window };
-    vi.spyOn(window, "open").mockReturnValue(onboardingWindow as unknown as Window);
-    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
-      const url = String(input);
-
-      if (url === "/api/v1/social/connections") {
-        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-      }
-
-      if (url === "/api/v1/stripe/connect/account-link" && init?.method === "POST") {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              error: {
-                code: "stripe_request_failed",
-                message: "Stripe request failed.",
-                details: {
-                  status: 401,
-                  message: "Invalid API Key provided."
-                }
-              }
-            }),
-            { status: 502 }
-          )
-        );
-      }
-
-      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-    });
+  it("shows Stripe onboarding redirect errors returned in the URL", async () => {
+    navigationMocks.searchParams = new URLSearchParams({ stripe_error: "Invalid API Key provided." });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
 
     render(<OrganizationSettingsPage />);
 
     fireEvent.click(screen.getByRole("tab", { name: "Integrations" }));
-    fireEvent.click(screen.getByRole("button", { name: "Connect Stripe account" }));
 
-    expect(await screen.findByText("Invalid API Key provided.")).toBeInTheDocument();
-    expect(onboardingWindow.close).toHaveBeenCalled();
+    expect(screen.getByText("Invalid API Key provided.")).toBeInTheDocument();
   });
 
   it("shows integration loading errors without blocking the settings page", async () => {
@@ -229,6 +182,6 @@ describe("OrganizationSettingsPage integrations panel", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Integrations" }));
 
     expect(await screen.findByText("Social channels could not be loaded.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Connect Stripe account" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Connect Stripe account" })).toBeInTheDocument();
   });
 });

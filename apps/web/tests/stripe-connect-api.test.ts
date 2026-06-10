@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as createStripeConnectAccountLink } from "@/app/api/v1/stripe/connect/account-link/route";
 import { POST as createStripeConnectDashboardLink } from "@/app/api/v1/stripe/connect/dashboard-link/route";
+import { GET as startStripeConnectOnboarding } from "@/app/api/v1/stripe/connect/onboarding/start/route";
 import { deriveConnectStatus } from "@/lib/payments/stripe-connect";
 
 const mocks = vi.hoisted(() => ({
@@ -331,6 +332,92 @@ describe("Stripe Connect dashboard-link API", () => {
 
     expect(response.status).toBe(409);
     expect(payload.error.code).toBe("stripe_connect_required");
+  });
+});
+
+describe("Stripe Connect onboarding redirect API", () => {
+  beforeEach(() => {
+    delete process.env.STRIPE_SECRET_KEY;
+    delete process.env.STRIPE_API_BASE_URL;
+    vi.unstubAllGlobals();
+    mocks.auth.mockReset();
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.auditLog.create.mockReset();
+    mocks.prisma.organization.findUnique.mockReset();
+    mocks.prisma.organization.update.mockReset();
+  });
+
+  it("redirects directly to a server-generated Stripe onboarding link", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    process.env.STRIPE_API_BASE_URL = "https://stripe.test";
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({
+          id: "acct_new",
+          details_submitted: false,
+          charges_enabled: false,
+          payouts_enabled: false
+        })
+      )
+      .mockResolvedValueOnce(
+        Response.json({
+          object: "account_link",
+          created: 1_779_033_600,
+          expires_at: 1_779_033_900,
+          url: "https://connect.stripe.test/setup/acct_new"
+        })
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    mocks.prisma.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      stripeConnectAccountId: null,
+      stripeConnectStatus: null
+    });
+    mocks.prisma.organization.update.mockResolvedValue({});
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await startStripeConnectOnboarding(
+      new Request("https://app.example.com/api/v1/stripe/connect/onboarding/start?returnUrl=/organization-settings")
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("https://connect.stripe.test/setup/acct_new");
+    expect(String(fetchMock.mock.calls[1][1].body)).toContain(
+      "return_url=https%3A%2F%2Fapp.example.com%2Forganization-settings"
+    );
+  });
+
+  it("redirects back to organization settings with a safe Stripe error", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    process.env.STRIPE_API_BASE_URL = "https://stripe.test";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json(
+          {
+            error: { message: "You can only create new accounts if you've signed up for Connect." }
+          },
+          { status: 400 }
+        )
+      )
+    );
+    mocks.prisma.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      stripeConnectAccountId: null,
+      stripeConnectStatus: null
+    });
+
+    const response = await startStripeConnectOnboarding(
+      new Request("https://app.example.com/api/v1/stripe/connect/onboarding/start")
+    );
+    const location = response.headers.get("location") ?? "";
+
+    expect(response.status).toBe(307);
+    expect(location).toContain("https://app.example.com/organization-settings?stripe_error=");
+    expect(new URL(location).searchParams.get("stripe_error")).toBe(
+      "You can only create new accounts if you've signed up for Connect."
+    );
   });
 });
 

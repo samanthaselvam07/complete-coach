@@ -29,6 +29,7 @@ Completed on May 18, 2026.
 
 Delivered:
 - `POST /api/v1/stripe/connect/account-link` creates or reuses the active organization's Stripe connected account.
+- `GET /api/v1/stripe/connect/onboarding/start` creates or reuses the active organization's Stripe connected account and redirects directly to Stripe Express onboarding.
 - `POST /api/v1/stripe/connect/dashboard-link` creates an authenticated, on-demand Stripe Express Dashboard login link for an existing connected account.
 - Stripe secret key is read from environment variables only and is never accepted from clients.
 - Connected account creation requests Express onboarding with card payment and transfer capabilities and stores organization metadata in Stripe.
@@ -129,6 +130,7 @@ Rules:
 - `PATCH /api/v1/packages/{package_id}`
 - `POST /api/v1/packages/{package_id}/stripe-sync`
 - `POST /api/v1/stripe/connect/account-link`
+- `GET /api/v1/stripe/connect/onboarding/start`
 - `POST /api/v1/stripe/connect/dashboard-link`
 - `GET /api/v1/client-subscriptions`
 - `POST /api/v1/client-subscriptions`
