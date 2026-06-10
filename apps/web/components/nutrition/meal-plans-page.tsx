@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, ClipboardCopy, Edit, MoreVertical, Plus, Trash2, UserPlus } from "lucide-react";
+import { Calendar, ClipboardCopy, Edit, Info, MoreVertical, Plus, Trash2, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
@@ -8,6 +8,7 @@ import { mealAssignments, mealTemplates } from "@/fixtures/nutrition";
 import { cn } from "@/lib/utils";
 
 type MealPlanTab = "Meal Plans" | "Meal Templates";
+type NutritionPlanBuilderMode = "full" | "macro-day" | "macro-meal";
 export type MealPlanSource = "api" | "fixtures";
 
 export interface ApiMealPlanTemplate {
@@ -91,10 +92,14 @@ export function MealPlansPage() {
   const [templates, setTemplates] = useState<ApiMealPlanTemplate[]>([]);
   const [assignments, setAssignments] = useState<ApiMealPlanAssignment[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
+  const [createdPlans, setCreatedPlans] = useState<MealAssignmentRow[]>([]);
   const [source, setSource] = useState<MealPlanSource>("fixtures");
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<ApiMealPlanTemplate | null>(null);
   const [selectedClientId, setSelectedClientId] = useState("");
+  const [builderMode, setBuilderMode] = useState<NutritionPlanBuilderMode | null>(null);
+  const [showPlanTypeDialog, setShowPlanTypeDialog] = useState(false);
+  const [showMacroChoiceDialog, setShowMacroChoiceDialog] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -148,65 +153,24 @@ export function MealPlansPage() {
   }, []);
 
   const templateCards = useMemo(() => getMealTemplateCards(source, templates), [source, templates]);
-  const assignmentRows = useMemo(() => getMealAssignmentRows(source, assignments), [source, assignments]);
+  const assignmentRows = useMemo(
+    () => [...createdPlans, ...getMealAssignmentRows(source, assignments)],
+    [assignments, createdPlans, source]
+  );
 
-  async function createTemplate() {
-    setSaving(true);
+  function openPlanTypeDialog() {
     setStatusMessage(null);
     setErrorMessage(null);
+    setShowPlanTypeDialog(true);
+  }
 
-    try {
-      const response = await fetch("/api/v1/meal-plan-templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: `Performance Meal Template ${templates.length + 1}`,
-          phase: "Hypertrophy",
-          targetCalories: 2800,
-          proteinGrams: 210,
-          carbsGrams: 280,
-          fatGrams: 93,
-          status: "draft",
-          template: {
-            days: [
-              {
-                name: "Day 1",
-                meals: [
-                  {
-                    meal: "Breakfast",
-                    foods: [
-                      {
-                        foodName: "Coach-created protein oats",
-                        servingSize: "1 bowl",
-                        calories: 620,
-                        proteinGrams: 42,
-                        carbsGrams: 68,
-                        fatGrams: 18
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        })
-      });
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.error?.message ?? "Meal template could not be saved.");
-      }
-
-      setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
-      setSource("api");
-      setActiveTab("Meal Templates");
-      setStatusMessage("Meal plan template saved to persistence API.");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Meal template could not be saved.");
-    } finally {
-      setSaving(false);
-    }
+  function saveNutritionPlan(plan: MealAssignmentRow) {
+    setCreatedPlans((currentPlans) => [plan, ...currentPlans]);
+    setBuilderMode(null);
+    setShowPlanTypeDialog(false);
+    setShowMacroChoiceDialog(false);
+    setActiveTab("Meal Plans");
+    setStatusMessage("Nutrition plan saved to meal plans.");
   }
 
   async function assignTemplate() {
@@ -250,6 +214,19 @@ export function MealPlansPage() {
     }
   }
 
+  if (builderMode) {
+    return (
+      <NutritionPlanBuilder
+        mode={builderMode}
+        onBack={() => {
+          setBuilderMode(null);
+          setActiveTab("Meal Plans");
+        }}
+        onSave={saveNutritionPlan}
+      />
+    );
+  }
+
   return (
     <div className="p-6 md:p-8">
       <div className="mb-8">
@@ -263,10 +240,10 @@ export function MealPlansPage() {
               type="button"
               className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
               disabled={saving}
-              onClick={createTemplate}
+              onClick={openPlanTypeDialog}
             >
               <Plus className="size-4" aria-hidden="true" />
-              {saving ? "Saving..." : "Create Meal Template"}
+              Create New Nutritional Plan
             </button>
           </div>
         </div>
@@ -300,7 +277,7 @@ export function MealPlansPage() {
           ))}
         </div>
         {activeTab === "Meal Plans" ? (
-          <button className="text-sm font-medium text-indigo-600 hover:text-indigo-700">View All Active</button>
+          <button className="text-sm font-medium text-indigo-600 hover:text-indigo-700">View All Plans</button>
         ) : null}
       </div>
 
@@ -333,7 +310,441 @@ export function MealPlansPage() {
           onSubmit={assignTemplate}
         />
       ) : null}
+
+      {showPlanTypeDialog ? (
+        <CreateNutritionPlanDialog
+          onClose={() => setShowPlanTypeDialog(false)}
+          onFullPlan={() => {
+            setShowPlanTypeDialog(false);
+            setBuilderMode("full");
+          }}
+          onMacroOnly={() => {
+            setShowPlanTypeDialog(false);
+            setShowMacroChoiceDialog(true);
+          }}
+        />
+      ) : null}
+
+      {showMacroChoiceDialog ? (
+        <MacroPlanChoiceDialog
+          onClose={() => setShowMacroChoiceDialog(false)}
+          onDailyTotals={() => {
+            setShowMacroChoiceDialog(false);
+            setBuilderMode("macro-day");
+          }}
+          onEachMeal={() => {
+            setShowMacroChoiceDialog(false);
+            setBuilderMode("macro-meal");
+          }}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function CreateNutritionPlanDialog({
+  onClose,
+  onFullPlan,
+  onMacroOnly
+}: {
+  onClose: () => void;
+  onFullPlan: () => void;
+  onMacroOnly: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Create new nutritional plan"
+        className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Nutrition builder</p>
+            <h2 className="mt-2 text-2xl font-black text-slate-950">Create new nutritional plan</h2>
+            <p className="mt-2 text-sm text-slate-500">Choose whether you want to build a full food-based plan or set macro targets only.</p>
+          </div>
+          <button type="button" aria-label="Close create nutritional plan" className="rounded-full p-2 text-slate-400 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <button
+            type="button"
+            aria-label="Full Meal Plan"
+            className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5 text-left transition-colors hover:border-indigo-300 hover:bg-indigo-100"
+            onClick={onFullPlan}
+          >
+            <span className="text-lg font-black text-slate-950">Full Meal Plan</span>
+            <span className="mt-2 block text-sm text-slate-600">Build days, meals, foods, notes, tags, and full nutrition targets.</span>
+          </button>
+          <button
+            type="button"
+            aria-label="Macro Only Meal Plan"
+            className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-left transition-colors hover:border-blue-300 hover:bg-blue-100"
+            onClick={onMacroOnly}
+          >
+            <span className="text-lg font-black text-slate-950">Macro Only Meal Plan</span>
+            <span className="mt-2 block text-sm text-slate-600">Set macro targets for the day or per meal without assigning foods.</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MacroPlanChoiceDialog({
+  onClose,
+  onDailyTotals,
+  onEachMeal
+}: {
+  onClose: () => void;
+  onDailyTotals: () => void;
+  onEachMeal: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Choose macro plan type"
+        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-black text-slate-950">Do you want to create macros for each meal or daily totals?</h2>
+            <Info className="mt-3 size-7 text-blue-500" aria-hidden="true" />
+          </div>
+          <button type="button" aria-label="Close macro plan type" className="rounded-full p-2 text-slate-400 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <button type="button" className="rounded-xl bg-blue-50 px-5 py-4 text-sm font-bold text-blue-600 hover:bg-blue-100" onClick={onDailyTotals}>
+            Total For Day
+          </button>
+          <button type="button" className="rounded-xl bg-blue-500 px-5 py-4 text-sm font-bold text-white hover:bg-blue-600" onClick={onEachMeal}>
+            Each Meal
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NutritionPlanBuilder({
+  mode,
+  onBack,
+  onSave
+}: {
+  mode: NutritionPlanBuilderMode;
+  onBack: () => void;
+  onSave: (plan: MealAssignmentRow) => void;
+}) {
+  const [title, setTitle] = useState(mode === "full" ? "New Nutrition Plan" : "Macro Only Nutrition Plan");
+  const [dayName, setDayName] = useState("Day 1");
+  const [protein, setProtein] = useState("0");
+  const [carbs, setCarbs] = useState("0");
+  const [fats, setFats] = useState("0");
+  const [calories, setCalories] = useState("0");
+  const isFullPlan = mode === "full";
+  const isMealMacroPlan = mode === "macro-meal";
+
+  const savePlan = () => {
+    const planName = title.trim() || (isFullPlan ? "New Nutrition Plan" : "Macro Only Nutrition Plan");
+    onSave({
+      id: `local_meal_plan_${Date.now()}`,
+      planName,
+      activeClientCount: 0,
+      calories: Number(calories) || 0,
+      protein: Number(protein) || 0,
+      carbs: Number(carbs) || 0,
+      fats: Number(fats) || 0,
+      lastEdited: "Just now",
+      status: "draft"
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6 md:p-8">
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <button type="button" className="text-sm font-bold text-indigo-600 hover:text-indigo-700" onClick={onBack}>
+          Back to meal plans
+        </button>
+        <button type="button" className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700">
+          Actions
+        </button>
+      </div>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {isFullPlan ? (
+          <FullMealPlanFields
+            title={title}
+            setTitle={setTitle}
+            protein={protein}
+            carbs={carbs}
+            fats={fats}
+            calories={calories}
+          />
+        ) : (
+          <MacroOnlyPlanFields
+            title={title}
+            setTitle={setTitle}
+            dayName={dayName}
+            setDayName={setDayName}
+            protein={protein}
+            setProtein={setProtein}
+            carbs={carbs}
+            setCarbs={setCarbs}
+            fats={fats}
+            setFats={setFats}
+            calories={calories}
+            setCalories={setCalories}
+            showMealFields={isMealMacroPlan}
+          />
+        )}
+
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          {isFullPlan ? (
+            <button type="button" className="rounded-xl bg-blue-500 px-5 py-3 text-sm font-bold text-white hover:bg-blue-600" onClick={savePlan}>
+              Save Nutrition Plan
+            </button>
+          ) : null}
+          <button type="button" className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700" onClick={savePlan}>
+            {isFullPlan ? "Save Nutrition Plan & Close" : "Save Nutrition Plan"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function FullMealPlanFields({
+  title,
+  setTitle,
+  protein,
+  carbs,
+  fats,
+  calories
+}: {
+  title: string;
+  setTitle: (value: string) => void;
+  protein: string;
+  carbs: string;
+  fats: string;
+  calories: string;
+}) {
+  return (
+    <div className="space-y-8">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <h2 className="sr-only">{title}</h2>
+          <label className="sr-only" htmlFor="full-nutrition-title">
+            Nutrition plan title
+          </label>
+          <input
+            id="full-nutrition-title"
+            aria-label="Nutrition plan title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="w-full rounded-xl border-0 bg-white text-2xl font-black text-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <div className="hidden flex-wrap items-center gap-2 lg:flex">
+          <span className="text-xs font-black uppercase text-slate-700">DAY TOTAL</span>
+          <MacroPill value={`${calories} Kcal`} />
+          <MacroPill value={`${protein} g Protein`} />
+          <MacroPill value={`${carbs} g Carbs`} />
+          <MacroPill value={`${fats} g Fat`} />
+          <span className="rounded-xl bg-slate-100 px-4 py-3 text-slate-400">i</span>
+        </div>
+      </div>
+
+      <div className="border-l border-dashed border-slate-200 pl-6">
+        <div className="mb-6 inline-flex border-b-2 border-blue-500 pb-3 text-sm font-bold text-blue-500">
+          Day 1
+        </div>
+        <div className="space-y-5">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-bold text-blue-500">Main Meal</h3>
+            <button type="button" className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-bold text-slate-500">
+              ...
+            </button>
+          </div>
+          <button type="button" className="text-sm font-bold uppercase text-slate-400">
+            + Add Food
+          </button>
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-slate-700">Notes</span>
+            <textarea className="min-h-16 rounded-xl border border-slate-200 px-4 py-3 text-sm" placeholder="Enter meal notes" />
+            <span className="text-xs text-slate-400">Please enter meal notes</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <button type="button" aria-label="Add another meal" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
+          + Add another meal
+        </button>
+        <button type="button" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
+          + Add meal from template
+        </button>
+      </div>
+
+      <label className="grid gap-2">
+        <span className="text-sm font-medium text-slate-700">Notes</span>
+        <textarea className="min-h-52 rounded-xl border border-slate-200 px-4 py-3 text-sm" />
+      </label>
+
+      <label className="grid gap-2">
+        <span className="text-sm font-medium text-slate-700">Nutrition Plan Tags:</span>
+        <input className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm" placeholder="Enter nutrition plan tags" />
+        <span className="text-xs text-slate-400">Please enter nutrition plan tags. Max length for a tag is 80 chars.</span>
+      </label>
+    </div>
+  );
+}
+
+function MacroOnlyPlanFields({
+  title,
+  setTitle,
+  dayName,
+  setDayName,
+  protein,
+  setProtein,
+  carbs,
+  setCarbs,
+  fats,
+  setFats,
+  calories,
+  setCalories,
+  showMealFields
+}: {
+  title: string;
+  setTitle: (value: string) => void;
+  dayName: string;
+  setDayName: (value: string) => void;
+  protein: string;
+  setProtein: (value: string) => void;
+  carbs: string;
+  setCarbs: (value: string) => void;
+  fats: string;
+  setFats: (value: string) => void;
+  calories: string;
+  setCalories: (value: string) => void;
+  showMealFields: boolean;
+}) {
+  return (
+    <div className="space-y-8">
+      <h2 className="sr-only">{title}</h2>
+      <label className="grid gap-2">
+        <span className="text-sm font-medium text-slate-700">Title</span>
+        <input
+          aria-label="Nutrition plan title"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+          placeholder="Enter nutrition plan title"
+        />
+        <span className="text-xs text-slate-400">Please enter nutrition plan title.</span>
+      </label>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="inline-flex border-b-2 border-blue-500 pb-3 text-sm font-bold text-blue-500">Day 1</div>
+        <button type="button" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
+          + Add New Day
+        </button>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_0.32fr] lg:items-end">
+        <label className="grid gap-2">
+          <span className="text-sm font-medium text-slate-700">Day Name</span>
+          <input value={dayName} onChange={(event) => setDayName(event.target.value)} className="rounded-xl border border-slate-200 px-4 py-3 text-sm" />
+        </label>
+        <button type="button" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
+          Copy / Duplicate Day
+        </button>
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-4">
+        <MacroTotalCard label="Total Protein (g)" value={protein} />
+        <MacroTotalCard label="Total Carbs (g)" value={carbs} />
+        <MacroTotalCard label="Total Fat (g)" value={fats} />
+        <MacroTotalCard label="Total Calories (kcal)" value={calories} />
+      </div>
+
+      {showMealFields ? (
+        <label className="grid gap-2">
+          <span className="text-sm font-medium text-slate-700">Meal Title</span>
+          <input aria-label="Meal Title" className="rounded-xl border border-slate-200 px-4 py-3 text-sm" defaultValue="Meal" />
+          <span className="text-xs text-slate-400">Please enter meal title. Ex: Breakfast, Lunch etc...</span>
+        </label>
+      ) : null}
+
+      <div className="grid gap-5 md:grid-cols-4">
+        <MacroInput label="Protein" value={protein} onChange={setProtein} unit="g" helper="Please enter protein." />
+        <MacroInput label="Carbs" value={carbs} onChange={setCarbs} unit="g" helper="Please enter carbohydrate." />
+        <MacroInput label="Fat" value={fats} onChange={setFats} unit="g" helper="Please enter fat." />
+        <MacroInput label="Calories" value={calories} onChange={setCalories} unit="Kcal" helper="Please enter calories." />
+      </div>
+
+      {showMealFields ? (
+        <button type="button" aria-label="Add another meal" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
+          + Add another meal
+        </button>
+      ) : null}
+
+      <label className="grid gap-2">
+        <span className="text-sm font-medium text-slate-700">Notes</span>
+        <textarea className="min-h-52 rounded-xl border border-slate-200 px-4 py-3 text-sm" />
+      </label>
+    </div>
+  );
+}
+
+function MacroPill({ value }: { value: string }) {
+  return <span className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-black text-white">{value}</span>;
+}
+
+function MacroTotalCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-none bg-slate-100 px-5 py-6 text-center">
+      <p className="text-lg font-black text-slate-800">{value}</p>
+      <p className="mt-2 text-sm font-bold text-slate-700">{label}</p>
+    </div>
+  );
+}
+
+function MacroInput({
+  label,
+  value,
+  onChange,
+  unit,
+  helper
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  unit: string;
+  helper: string;
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <div className="flex overflow-hidden rounded-xl border border-slate-200">
+        <input
+          aria-label={label}
+          type="number"
+          min="0"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="min-w-0 flex-1 px-4 py-3 text-sm outline-none"
+        />
+        <span className="border-l border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">{unit}</span>
+      </div>
+      <span className="text-xs text-slate-400">{helper}</span>
+    </label>
   );
 }
 

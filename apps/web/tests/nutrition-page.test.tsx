@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FoodDatabasePage } from "@/components/nutrition/food-database-page";
@@ -45,8 +45,8 @@ describe("MealPlansPage", () => {
     expect(screen.queryByRole("button", { name: "Recipes" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Access Protocol" })).not.toBeInTheDocument();
     expect(screen.queryByText("Master Nutrition Protocol 2024")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "View All Active" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Create Meal Template" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "View All Plans" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create New Nutritional Plan" })).toBeInTheDocument();
   });
 
   it("opens the meal plan quick action menu and closes it from the page overlay", () => {
@@ -148,51 +148,60 @@ describe("MealPlansPage", () => {
     expect(screen.queryByText("High-Protein Breakfast Bowl")).not.toBeInTheDocument();
   });
 
-  it("creates a persisted meal template from the meal plan library", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
-      const url = String(input);
-
-      if (url === "/api/v1/meal-plan-templates" && init?.method === "POST") {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: {
-                id: "meal_template_created",
-                name: "Performance Meal Template 1",
-                phase: "Hypertrophy",
-                targetCalories: 2800,
-                proteinGrams: 210,
-                carbsGrams: 280,
-                fatGrams: 93,
-                status: "draft",
-                template: { days: [] },
-                updatedAt: "2026-05-18T00:00:00.000Z"
-              }
-            }),
-            { status: 201 }
-          )
-        );
-      }
-
-      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-    });
+  it("opens a create nutritional plan chooser before building a plan", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
 
     render(createElement(MealPlansPage));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/clients?status=active&limit=100"));
-    fireEvent.click(screen.getByRole("button", { name: "Create Meal Template" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Create New Nutritional Plan" }));
 
-    expect(await screen.findByText("Meal plan template saved to persistence API.")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/meal-plan-templates",
-      expect.objectContaining({
-        method: "POST",
-        body: expect.stringContaining("Performance Meal Template 1")
-      })
-    );
-    expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent(
-      "Performance Meal Template 1"
-    );
+    expect(screen.getByRole("dialog", { name: "Create new nutritional plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Full Meal Plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Macro Only Meal Plan" })).toBeInTheDocument();
+  });
+
+  it("saves a full meal plan into the meal plans tab", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create New Nutritional Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Full Meal Plan" }));
+
+    expect(screen.getByRole("heading", { level: 2, name: "New Nutrition Plan" })).toBeInTheDocument();
+    expect(screen.getByText("DAY TOTAL")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add another meal" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Nutrition plan title"), { target: { value: "Contest Prep Meal Plan" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Nutrition Plan & Close" }));
+
+    expect(await screen.findByText("Nutrition plan saved to meal plans.")).toBeInTheDocument();
+    expect(screen.getByRole("tabpanel", { name: "Meal Plans" })).toHaveTextContent("Contest Prep Meal Plan");
+  });
+
+  it("builds macro-only plans from daily totals or meal-level macros", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create New Nutritional Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Macro Only Meal Plan" }));
+
+    expect(screen.getByRole("dialog", { name: "Choose macro plan type" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Total For Day" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Each Meal" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Total For Day" }));
+    expect(screen.getByRole("heading", { level: 2, name: "Macro Only Nutrition Plan" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Protein")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Meal Title")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back to meal plans" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Create New Nutritional Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Macro Only Meal Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Each Meal" }));
+    expect(screen.getByLabelText("Meal Title")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add another meal" })).toBeInTheDocument();
   });
 
   it("assigns a persisted meal template to a client", async () => {
@@ -323,26 +332,6 @@ describe("MealPlansPage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
 
     expect(screen.getByText("No meal plan templates exist yet. Create a new template to start the library.")).toBeInTheDocument();
-  });
-
-  it("shows API errors when persisted meal template creation fails", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
-      if (String(input) === "/api/v1/meal-plan-templates" && init?.method === "POST") {
-        return Promise.resolve(
-          new Response(JSON.stringify({ error: { message: "Template macro values are invalid." } }), {
-            status: 422
-          })
-        );
-      }
-
-      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-    });
-
-    render(createElement(MealPlansPage));
-
-    fireEvent.click(await screen.findByRole("button", { name: "Create Meal Template" }));
-
-    expect(await screen.findByText("Template macro values are invalid.")).toBeInTheDocument();
   });
 
   it("shows API errors when persisted meal assignment fails", async () => {
