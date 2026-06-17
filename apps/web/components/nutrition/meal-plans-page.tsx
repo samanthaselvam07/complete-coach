@@ -1988,7 +1988,7 @@ function FoodDatabaseDrawer({
                 Select one or more foods to set quantities before adding them to the meal.
               </p>
             ) : (
-              <div role="list" aria-label="Selected food quantity list" className="mt-4 max-h-[22rem] space-y-4 overflow-y-auto pr-2">
+              <div role="list" aria-label="Selected food quantity list" className="mt-4 h-[22rem] space-y-4 overflow-y-auto pr-2">
                 {selectedFoodEntries.map((food) => {
                   const selection = selectedFoods[food.id] ?? getDefaultSelection(food);
                   const parsedQuantity = Number(selection.quantity);
