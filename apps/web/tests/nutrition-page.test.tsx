@@ -306,12 +306,9 @@ describe("MealPlansPage", () => {
     expect(screen.getByLabelText("Meal name for High Carb Day meal 2")).toHaveValue("Breakfast");
 
     fireEvent.click(screen.getAllByRole("button", { name: "Add food" })[0]);
-    const foodDrawer = screen.getByRole("complementary", { name: "Food database panel" });
-    expect(foodDrawer).not.toHaveClass("fixed");
-    expect(foodDrawer).not.toHaveClass("order-first");
-    expect(
-      screen.getByRole("article", { name: "Meal card Main Meal" }).compareDocumentPosition(foodDrawer) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
+    expect(foodDrawer).toHaveAttribute("aria-modal", "true");
+    expect(foodDrawer).toHaveClass("max-w-5xl");
     expect(screen.getByRole("button", { name: "Add day" })).toBeEnabled();
     expect(within(foodDrawer).getByRole("searchbox", { name: "Search food database" })).toHaveAttribute(
       "placeholder",
@@ -322,34 +319,40 @@ describe("MealPlansPage", () => {
     expect(within(foodDrawer).getByRole("button", { name: "USDA" })).toBeInTheDocument();
     fireEvent.click(within(foodDrawer).getByRole("button", { name: "USDA" }));
     expect(within(foodDrawer).getByText("Showing USDA foods")).toBeInTheDocument();
-    fireEvent.click(within(foodDrawer).getByRole("button", { name: "Select Chicken Breast" }));
-    expect(within(foodDrawer).getByLabelText("Food quantity")).toHaveValue(1);
-    fireEvent.change(within(foodDrawer).getByLabelText("Food quantity"), { target: { value: "2" } });
-    fireEvent.click(within(foodDrawer).getByRole("button", { name: "Add selected food" }));
+    fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Chicken Breast" }));
+    fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Basmati Rice" }));
+    expect(within(foodDrawer).getByLabelText("Quantity for Chicken Breast")).toHaveValue(100);
+    fireEvent.change(within(foodDrawer).getByLabelText("Quantity for Chicken Breast"), { target: { value: "200" } });
+    fireEvent.change(within(foodDrawer).getByLabelText("Measurement for Chicken Breast"), { target: { value: "g" } });
+    expect(within(foodDrawer).getByLabelText("Quantity for Basmati Rice")).toHaveValue(100);
+    fireEvent.change(within(foodDrawer).getByLabelText("Quantity for Basmati Rice"), { target: { value: "1" } });
+    fireEvent.change(within(foodDrawer).getByLabelText("Measurement for Basmati Rice"), { target: { value: "cups" } });
+    fireEvent.click(within(foodDrawer).getByRole("button", { name: "Add selected foods" }));
 
     const chickenRow = screen.getByRole("row", { name: /Chicken Breast 200 g 330 kcal 62g protein 0g carbs 7.2g fat 0g fibre/i });
     expect(chickenRow).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Basmati Rice 1 cups 121 kcal 3g protein 25g carbs 0.4g fat 0.4g fibre/i })).toBeInTheDocument();
     expect(within(chickenRow).queryByText("100g, Boneless")).not.toBeInTheDocument();
     expect(within(chickenRow).getByLabelText("Quantity for Chicken Breast")).toHaveValue(200);
     fireEvent.change(within(chickenRow).getByLabelText("Quantity for Chicken Breast"), { target: { value: "250" } });
     expect(
       screen.getByRole("row", { name: /Chicken Breast 250 g 412.5 kcal 77.5g protein 0g carbs 9g fat 0g fibre/i })
     ).toBeInTheDocument();
-    expect(screen.getByText("412.5 Kcal")).toBeInTheDocument();
-    expect(screen.getByText("77.5 g Protein")).toBeInTheDocument();
-    expect(screen.getByText("0 g Carbs")).toBeInTheDocument();
-    expect(screen.getByText("9 g Fat")).toBeInTheDocument();
-    expect(screen.getByText("0 g Fibre")).toBeInTheDocument();
+    expect(screen.getByText("533.5 Kcal")).toBeInTheDocument();
+    expect(screen.getByText("80.5 g Protein")).toBeInTheDocument();
+    expect(screen.getByText("25 g Carbs")).toBeInTheDocument();
+    expect(screen.getByText("9.4 g Fat")).toBeInTheDocument();
+    expect(screen.getByText("0.4 g Fibre")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Nutrient breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Protein nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /Protein 77.5 g/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Protein 80.5 g/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Carbohydrates nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /Dietary Fibre - g 0%/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Dietary Fibre 0.4 g 1%/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Lipids nutrient breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Vitamins nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /B3 \(Niacin\) 34.3 mg 245%/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /B3 \(Niacin\) 35.9 mg 256%/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Minerals nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /Sodium 185 mg 9%/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Sodium 186 mg 9%/i })).toBeInTheDocument();
     expect(screen.queryByText("Dynamic totals")).not.toBeInTheDocument();
     expect(
       screen.getByRole("table", { name: "Protein nutrient breakdown" }).compareDocumentPosition(screen.getByRole("table", { name: "Carbohydrates nutrient breakdown" }))

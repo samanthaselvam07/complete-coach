@@ -13,6 +13,7 @@ type NutritionPlanBuilderMode = "full" | "macro-day" | "macro-meal";
 export type MealPlanSource = "api" | "fixtures";
 
 type FoodDatabaseSource = "AUS / NZ" | "EFSA" | "USDA";
+type FoodMeasurementUnit = "g" | "ml" | "oz" | "cups" | "tbsp" | "tsp" | "serving";
 
 interface BuilderMeal {
   id: string;
@@ -24,6 +25,7 @@ interface BuilderFood {
   id: string;
   name: string;
   serving: string;
+  measurementUnit?: FoodMeasurementUnit;
   calories: number;
   protein: number;
   carbs: number;
@@ -926,13 +928,32 @@ function FullMealPlanFields({
     setShowMealTemplateDialog(false);
   };
 
-  const addFoodToMeal = (foodId: string, quantity: number) => {
-    const food = foods.find((item) => item.id === foodId);
-    const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
-
-    if (!food || !activeFoodTarget) {
+  const addFoodsToMeal = (selections: Array<{ foodId: string; quantity: number; unit: FoodMeasurementUnit }>) => {
+    if (!activeFoodTarget || selections.length === 0) {
       return;
     }
+
+    const selectedFoods = selections
+      .map((selection) => {
+        const food = foods.find((item) => item.id === selection.foodId);
+
+        return food ? createBuilderFood(food, selection.quantity, selection.unit) : null;
+      })
+      .filter((food): food is BuilderFood => Boolean(food));
+
+    if (selectedFoods.length === 0) {
+      return;
+    }
+
+    const addedTotals = selectedFoods.reduce(
+      (totals, food) => ({
+        calories: totals.calories + food.calories,
+        protein: totals.protein + food.protein,
+        carbs: totals.carbs + food.carbs,
+        fats: totals.fats + food.fats
+      }),
+      { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    );
 
     setDays((currentDays) =>
       currentDays.map((day) =>
@@ -940,16 +961,16 @@ function FullMealPlanFields({
           ? {
               ...day,
               meals: day.meals.map((meal) =>
-                meal.id === activeFoodTarget.mealId ? { ...meal, foods: [...meal.foods, createBuilderFood(food, safeQuantity)] } : meal
+                meal.id === activeFoodTarget.mealId ? { ...meal, foods: [...meal.foods, ...selectedFoods] } : meal
               )
             }
           : day
       )
     );
-    setCalories(String((Number(calories) || 0) + food.calories * safeQuantity));
-    setProtein(String((Number(protein) || 0) + food.protein * safeQuantity));
-    setCarbs(String((Number(carbs) || 0) + food.carbs * safeQuantity));
-    setFats(String((Number(fats) || 0) + food.fats * safeQuantity));
+    setCalories(String((Number(calories) || 0) + addedTotals.calories));
+    setProtein(String((Number(protein) || 0) + addedTotals.protein));
+    setCarbs(String((Number(carbs) || 0) + addedTotals.carbs));
+    setFats(String((Number(fats) || 0) + addedTotals.fats));
     setActiveFoodTarget(null);
   };
 
@@ -1063,7 +1084,7 @@ function FullMealPlanFields({
       </div>
 
       {activeDay ? (
-        <div className={cn("grid items-start gap-6 transition-[grid-template-columns]", activeFoodTarget ? "xl:grid-cols-[minmax(0,1fr)_380px]" : "xl:grid-cols-1")}>
+        <div className="grid items-start gap-6">
           <div className="space-y-6">
           <section className="border-l border-dashed border-indigo-200 pl-6">
             <label className="mb-6 inline-flex border-b-2 border-indigo-500 pb-3">
@@ -1230,17 +1251,6 @@ function FullMealPlanFields({
             </div>
           </section>
           </div>
-          {activeFoodTarget ? (
-            <FoodDatabaseDrawer
-              source={foodSource}
-              searchQuery={foodSearchQuery}
-              filteredFoods={filteredFoods}
-              onSourceChange={setFoodSource}
-              onSearchChange={setFoodSearchQuery}
-              onAddFood={addFoodToMeal}
-              onClose={() => setActiveFoodTarget(null)}
-            />
-          ) : null}
         </div>
       ) : null}
 
@@ -1270,6 +1280,18 @@ function FullMealPlanFields({
             setCopyMealTarget(null);
             setOpenMealMenu(null);
           }}
+        />
+      ) : null}
+
+      {activeFoodTarget ? (
+        <FoodDatabaseDrawer
+          source={foodSource}
+          searchQuery={foodSearchQuery}
+          filteredFoods={filteredFoods}
+          onSourceChange={setFoodSource}
+          onSearchChange={setFoodSearchQuery}
+          onAddFoods={addFoodsToMeal}
+          onClose={() => setActiveFoodTarget(null)}
         />
       ) : null}
     </div>
@@ -1311,8 +1333,12 @@ function cloneBuilderMeal(meal: BuilderMeal, mealNumber: number): BuilderMeal {
   };
 }
 
-function createBuilderFood(food: Food, quantity: number): BuilderFood {
-  const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+function createBuilderFood(food: Food, amount: number, unit?: FoodMeasurementUnit): BuilderFood {
+  const parsedServing = parseServingAmount(food.serving);
+  const defaultUnit = parsedServing?.unit ?? "serving";
+  const selectedUnit = unit ?? defaultUnit;
+  const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : parsedServing?.amount ?? 1;
+  const safeQuantity = getFoodQuantityMultiplier(food, safeAmount, selectedUnit);
   const scaledMicronutrients = Object.fromEntries(
     Object.entries(food.micronutrients ?? {}).map(([key, value]) => [key, value * safeQuantity])
   );
@@ -1321,6 +1347,7 @@ function createBuilderFood(food: Food, quantity: number): BuilderFood {
     id: `${food.id}_${Date.now()}`,
     name: food.name,
     serving: food.serving,
+    measurementUnit: selectedUnit,
     calories: food.calories * safeQuantity,
     protein: food.protein * safeQuantity,
     carbs: food.carbs * safeQuantity,
@@ -1333,9 +1360,9 @@ function createBuilderFood(food: Food, quantity: number): BuilderFood {
 
 function rescaleBuilderFood(food: BuilderFood, nextAmount: number): BuilderFood {
   const parsedServing = parseServingAmount(food.serving);
-  const baseAmount = parsedServing?.amount ?? 1;
+  const unit = food.measurementUnit ?? parsedServing?.unit ?? "serving";
   const safeAmount = Number.isFinite(nextAmount) && nextAmount > 0 ? nextAmount : getFoodQuantityDisplay(food).amount;
-  const nextQuantity = parsedServing ? safeAmount / baseAmount : safeAmount;
+  const nextQuantity = getFoodQuantityMultiplier(food, safeAmount, unit);
   const currentQuantity = food.quantity > 0 ? food.quantity : 1;
   const ratio = nextQuantity / currentQuantity;
 
@@ -1364,7 +1391,7 @@ function parseServingAmount(serving: string) {
   };
 }
 
-function normaliseServingUnit(unit: string) {
+function normaliseServingUnit(unit: string): FoodMeasurementUnit {
   const lowerUnit = unit.toLowerCase();
 
   if (lowerUnit === "gram" || lowerUnit === "grams") {
@@ -1379,22 +1406,115 @@ function normaliseServingUnit(unit: string) {
     return "oz";
   }
 
-  return lowerUnit;
+  if (["g", "ml", "oz", "cups", "tbsp", "tsp", "serving"].includes(lowerUnit)) {
+    return lowerUnit as FoodMeasurementUnit;
+  }
+
+  return "serving";
+}
+
+function getFoodQuantityMultiplier(food: Pick<Food, "serving">, amount: number, unit: FoodMeasurementUnit) {
+  const parsedServing = parseServingAmount(food.serving);
+
+  if (!parsedServing) {
+    return amount;
+  }
+
+  const convertedAmount = convertMeasurementToServingUnit(amount, unit, parsedServing.unit);
+
+  return convertedAmount === null ? amount : convertedAmount / parsedServing.amount;
+}
+
+function convertMeasurementToServingUnit(amount: number, unit: FoodMeasurementUnit, servingUnit: FoodMeasurementUnit) {
+  if (unit === servingUnit) {
+    return amount;
+  }
+
+  if (servingUnit === "g" && unit === "oz") {
+    return amount * 28.3495;
+  }
+
+  if (servingUnit === "oz" && unit === "g") {
+    return amount / 28.3495;
+  }
+
+  if (servingUnit === "ml") {
+    if (unit === "cups") {
+      return amount * 250;
+    }
+
+    if (unit === "tbsp") {
+      return amount * 15;
+    }
+
+    if (unit === "tsp") {
+      return amount * 5;
+    }
+  }
+
+  return null;
 }
 
 function getFoodQuantityDisplay(food: BuilderFood) {
   const parsedServing = parseServingAmount(food.serving);
+  const unit = food.measurementUnit ?? parsedServing?.unit;
 
-  if (!parsedServing) {
+  if (!parsedServing || !unit) {
     return {
       amount: food.quantity,
       unit: food.quantity === 1 ? "serving" : "servings"
     };
   }
 
+  const servingAmount = parsedServing.amount * food.quantity;
+
+  if (unit === parsedServing.unit) {
+    return {
+      amount: servingAmount,
+      unit
+    };
+  }
+
+  if (parsedServing.unit === "g" && unit === "oz") {
+    return {
+      amount: servingAmount / 28.3495,
+      unit
+    };
+  }
+
+  if (parsedServing.unit === "oz" && unit === "g") {
+    return {
+      amount: servingAmount * 28.3495,
+      unit
+    };
+  }
+
+  if (parsedServing.unit === "ml") {
+    if (unit === "cups") {
+      return {
+        amount: servingAmount / 250,
+        unit
+      };
+    }
+
+    if (unit === "tbsp") {
+      return {
+        amount: servingAmount / 15,
+        unit
+      };
+    }
+
+    if (unit === "tsp") {
+      return {
+        amount: servingAmount / 5,
+        unit
+      };
+    }
+  }
+
   return {
-    amount: parsedServing.amount * food.quantity,
-    unit: parsedServing.unit
+    amount: food.quantity,
+    unit
   };
 }
 
@@ -1690,7 +1810,7 @@ function FoodDatabaseDrawer({
   filteredFoods,
   onSourceChange,
   onSearchChange,
-  onAddFood,
+  onAddFoods,
   onClose
 }: {
   source: FoodDatabaseSource;
@@ -1698,23 +1818,72 @@ function FoodDatabaseDrawer({
   filteredFoods: typeof foods;
   onSourceChange: (source: FoodDatabaseSource) => void;
   onSearchChange: (query: string) => void;
-  onAddFood: (foodId: string, quantity: number) => void;
+  onAddFoods: (selections: Array<{ foodId: string; quantity: number; unit: FoodMeasurementUnit }>) => void;
   onClose: () => void;
 }) {
   const sources: FoodDatabaseSource[] = ["AUS / NZ", "EFSA", "USDA"];
-  const [selectedFoodId, setSelectedFoodId] = useState(filteredFoods[0]?.id ?? "");
-  const [quantity, setQuantity] = useState("1");
-  const selectedFood = filteredFoods.find((food) => food.id === selectedFoodId) ?? filteredFoods[0] ?? null;
-  const quantityValue = Number(quantity);
-  const safeQuantity = Number.isFinite(quantityValue) && quantityValue > 0 ? quantityValue : 1;
+  const measurementUnits: FoodMeasurementUnit[] = ["g", "ml", "oz", "cups", "tbsp", "tsp", "serving"];
+  const [selectedFoods, setSelectedFoods] = useState<Record<string, { quantity: string; unit: FoodMeasurementUnit }>>({});
+  const selectedFoodEntries = filteredFoods.filter((food) => selectedFoods[food.id]);
+
+  function getDefaultSelection(food: Food) {
+    const parsedServing = parseServingAmount(food.serving);
+
+    return {
+      quantity: String(parsedServing?.amount ?? 1),
+      unit: (parsedServing?.unit as FoodMeasurementUnit | undefined) ?? "serving"
+    };
+  }
+
+  function toggleFood(food: Food) {
+    setSelectedFoods((currentSelections) => {
+      if (currentSelections[food.id]) {
+        const remainingSelections = { ...currentSelections };
+        delete remainingSelections[food.id];
+
+        return remainingSelections;
+      }
+
+      return {
+        ...currentSelections,
+        [food.id]: getDefaultSelection(food)
+      };
+    });
+  }
+
+  function updateSelection(foodId: string, updates: Partial<{ quantity: string; unit: FoodMeasurementUnit }>) {
+    setSelectedFoods((currentSelections) => ({
+      ...currentSelections,
+      [foodId]: {
+        ...(currentSelections[foodId] ?? { quantity: "1", unit: "serving" }),
+        ...updates
+      }
+    }));
+  }
+
+  function addSelectedFoods() {
+    onAddFoods(
+      Object.entries(selectedFoods).map(([foodId, selection]) => {
+        const parsedQuantity = Number(selection.quantity);
+
+        return {
+          foodId,
+          quantity: Number.isFinite(parsedQuantity) && parsedQuantity > 0 ? parsedQuantity : 1,
+          unit: selection.unit
+        };
+      })
+    );
+  }
 
   return (
-    <aside
-      role="complementary"
-      aria-label="Food database panel"
-      className="max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-4"
-    >
-        <div className="flex items-start justify-between gap-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="food-database-drawer-title"
+        className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-6">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Food database</p>
             <h3 id="food-database-drawer-title" className="mt-1 text-2xl font-black text-slate-950">
@@ -1727,89 +1896,144 @@ function FoodDatabaseDrawer({
           </button>
         </div>
 
-        <label className="mt-6 grid gap-2">
-          <span className="text-sm font-bold text-slate-700">Search food database</span>
-          <input
-            type="search"
-            role="searchbox"
-            aria-label="Search food database"
-            value={searchQuery}
-            placeholder="Search foods..."
-            className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-            onChange={(event) => onSearchChange(event.target.value)}
-          />
-        </label>
-
-        <div className="mt-5">
-          <p className="text-xs font-black uppercase tracking-wide text-slate-500">Database source</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {sources.map((item) => (
-              <button
-                key={item}
-                type="button"
-                className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-bold",
-                  source === item ? "border-indigo-500 bg-indigo-50 text-indigo-600" : "border-slate-200 text-slate-600"
-                )}
-                onClick={() => onSourceChange(item)}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-          <p className="mt-3 text-sm font-medium text-slate-600">Showing {source} foods</p>
-        </div>
-
-        <div className="mt-6 space-y-3">
-          {filteredFoods.map((food) => (
-            <button
-              key={food.id}
-              type="button"
-              aria-label={`Select ${food.name}`}
-              className={cn(
-                "w-full rounded-xl border p-4 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50",
-                selectedFood?.id === food.id ? "border-indigo-500 bg-indigo-50" : "border-slate-200"
-              )}
-              onClick={() => setSelectedFoodId(food.id)}
-            >
-              <span className="block font-bold text-slate-900">{food.name}</span>
-              <span className="mt-1 block text-xs text-slate-500">{food.serving}</span>
-              <span className="mt-2 block text-xs font-bold text-slate-600">
-                {food.calories} kcal · P {food.protein}g · C {food.carbs}g · F {food.fats}g · Fibre {food.fibre}g
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {selectedFood ? (
-          <div className="sticky bottom-0 -mx-6 mt-6 border-t border-slate-200 bg-white p-6 shadow-[0_-12px_24px_rgba(15,23,42,0.08)]">
+        <div className="grid max-h-[calc(90vh-8rem)] gap-0 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="p-6">
             <label className="grid gap-2">
-              <span className="text-sm font-bold text-slate-700">Food quantity</span>
+              <span className="text-sm font-bold text-slate-700">Search food database</span>
               <input
-                type="number"
-                min="0.25"
-                step="0.25"
-                aria-label="Food quantity"
-                value={quantity}
+                type="search"
+                role="searchbox"
+                aria-label="Search food database"
+                value={searchQuery}
+                placeholder="Search foods..."
                 className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                onChange={(event) => setQuantity(event.target.value)}
+                onChange={(event) => onSearchChange(event.target.value)}
               />
             </label>
-            <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-600">
-              {formatMacroValue(selectedFood.calories * safeQuantity)} kcal · P {formatMacroValue(selectedFood.protein * safeQuantity)}g · C{" "}
-              {formatMacroValue(selectedFood.carbs * safeQuantity)}g · F {formatMacroValue(selectedFood.fats * safeQuantity)}g · Fibre{" "}
-              {formatMacroValue(selectedFood.fibre * safeQuantity)}g
+
+            <div className="mt-5">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Database source</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {sources.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    className={cn(
+                      "rounded-full border px-4 py-2 text-sm font-bold",
+                      source === item ? "border-indigo-500 bg-indigo-50 text-indigo-600" : "border-slate-200 text-slate-600"
+                    )}
+                    onClick={() => onSourceChange(item)}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-sm font-medium text-slate-600">Showing {source} foods</p>
             </div>
-            <button
-              type="button"
-              className="mt-3 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700"
-              onClick={() => onAddFood(selectedFood.id, safeQuantity)}
-            >
-              Add selected food
-            </button>
+
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
+              {filteredFoods.map((food) => {
+                const selected = Boolean(selectedFoods[food.id]);
+
+                return (
+                  <label
+                    key={food.id}
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50",
+                      selected ? "border-indigo-500 bg-indigo-50" : "border-slate-200"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${food.name}`}
+                      checked={selected}
+                      className="mt-1 size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      onChange={() => toggleFood(food)}
+                    />
+                    <span>
+                      <span className="block font-bold text-slate-900">{food.name}</span>
+                      <span className="mt-1 block text-xs text-slate-500">{food.serving}</span>
+                      <span className="mt-2 block text-xs font-bold text-slate-600">
+                        {food.calories} kcal · P {food.protein}g · C {food.carbs}g · F {food.fats}g · Fibre {food.fibre}g
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
-        ) : null}
-    </aside>
+
+          <div className="border-t border-slate-200 bg-slate-50 p-6 lg:border-l lg:border-t-0">
+            <h4 className="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Selected foods</h4>
+            {selectedFoodEntries.length === 0 ? (
+              <p className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+                Select one or more foods to set quantities before adding them to the meal.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-4">
+                {selectedFoodEntries.map((food) => {
+                  const selection = selectedFoods[food.id] ?? getDefaultSelection(food);
+                  const parsedQuantity = Number(selection.quantity);
+                  const safeQuantity = Number.isFinite(parsedQuantity) && parsedQuantity > 0 ? parsedQuantity : 1;
+                  const multiplier = getFoodQuantityMultiplier(food, safeQuantity, selection.unit);
+
+                  return (
+                    <div key={food.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <p className="font-bold text-slate-950">{food.name}</p>
+                      <div className="mt-3 grid grid-cols-[1fr_7rem] gap-3">
+                        <label className="grid gap-1">
+                          <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Quantity</span>
+                          <input
+                            type="number"
+                            min="0.25"
+                            step="0.25"
+                            aria-label={`Quantity for ${food.name}`}
+                            value={selection.quantity}
+                            className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                            onChange={(event) => updateSelection(food.id, { quantity: event.target.value })}
+                          />
+                        </label>
+                        <label className="grid gap-1">
+                          <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Measure</span>
+                          <select
+                            aria-label={`Measurement for ${food.name}`}
+                            value={selection.unit}
+                            className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                            onChange={(event) => updateSelection(food.id, { unit: event.target.value as FoodMeasurementUnit })}
+                          >
+                            {measurementUnits.map((unit) => (
+                              <option key={unit} value={unit}>
+                                {unit}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                      <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-600">
+                        {formatMacroValue(food.calories * multiplier)} kcal · P {formatMacroValue(food.protein * multiplier)}g · C{" "}
+                        {formatMacroValue(food.carbs * multiplier)}g · F {formatMacroValue(food.fats * multiplier)}g · Fibre{" "}
+                        {formatMacroValue(food.fibre * multiplier)}g
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="sticky bottom-0 -mx-6 mt-6 border-t border-slate-200 bg-slate-50 p-6">
+              <button
+                type="button"
+                disabled={selectedFoodEntries.length === 0}
+                className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                onClick={addSelectedFoods}
+              >
+                Add selected foods
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 
