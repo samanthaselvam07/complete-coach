@@ -309,7 +309,8 @@ describe("MealPlansPage", () => {
     const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
     expect(foodDrawer).toHaveAttribute("aria-modal", "true");
     expect(foodDrawer).toHaveClass("max-w-6xl");
-    expect(within(foodDrawer).getAllByLabelText("Verified database food")[0]).toHaveTextContent("Verified");
+    expect(within(foodDrawer).getAllByLabelText("Verified database food")[0]).toBeInTheDocument();
+    expect(within(foodDrawer).queryByText("Verified")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add day" })).toBeEnabled();
     expect(within(foodDrawer).getByRole("searchbox", { name: "Search food database" })).toHaveAttribute(
       "placeholder",

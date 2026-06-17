@@ -1962,12 +1962,11 @@ function FoodDatabaseDrawer({
                         <span
                           aria-label={verified ? "Verified database food" : "Coach-added food"}
                           className={cn(
-                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.68rem] font-black uppercase tracking-wide",
+                            "inline-flex size-5 items-center justify-center rounded-full",
                             verified ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
                           )}
                         >
                           {verified ? <CheckCircle2 className="size-3.5" aria-hidden="true" /> : null}
-                          {verified ? "Verified" : "Custom"}
                         </span>
                       </span>
                       <span className="mt-1 block text-xs text-slate-500">{food.serving}</span>
