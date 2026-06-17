@@ -12,13 +12,14 @@ type MealPlanTab = "Meal Plans" | "Meal Templates";
 type NutritionPlanBuilderMode = "full" | "macro-day" | "macro-meal";
 export type MealPlanSource = "api" | "fixtures";
 
-type FoodDatabaseSource = "AUS / NZ" | "EFSA" | "USDA";
+type FoodDatabaseSource = "AUS/NZ" | "EFSA" | "USDA";
 type FoodMeasurementUnit = "g" | "ml" | "oz" | "cups" | "tbsp" | "tsp" | "serving";
 const VERIFIED_FOOD_SOURCES = new Set(["USDA", "AUS/NZ", "EFSA"]);
 
 interface BuilderMeal {
   id: string;
   name: string;
+  notes: string;
   foods: BuilderFood[];
 }
 
@@ -57,6 +58,7 @@ export interface ApiMealPlanTemplate {
       name: string;
       meals: Array<{
         meal: string;
+        notes?: string;
         foods: Array<{
           foodId?: string;
           foodName: string;
@@ -157,6 +159,7 @@ export function MealPlansPage() {
   const [builderMode, setBuilderMode] = useState<NutritionPlanBuilderMode | null>(null);
   const [editingPlan, setEditingPlan] = useState<MealAssignmentRow | null>(null);
   const [assignmentTarget, setAssignmentTarget] = useState<MealAssignmentRow | null>(null);
+  const [selectedMealTemplate, setSelectedMealTemplate] = useState<MealTemplateCard | null>(null);
   const [showPlanTypeDialog, setShowPlanTypeDialog] = useState(false);
   const [showMacroChoiceDialog, setShowMacroChoiceDialog] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -266,9 +269,34 @@ export function MealPlansPage() {
     }
   }
 
-  function createMealTemplate(template: MealTemplateCard) {
-    setCreatedTemplates((currentTemplates) => [template, ...currentTemplates]);
-    setStatusMessage(`${template.name} saved to Meal Templates.`);
+  async function createMealTemplate(template: MealTemplateCard) {
+    setSaving(true);
+    setStatusMessage(null);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/v1/meal-plan-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(getMealTemplateSaveInput(template))
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.data || Array.isArray(payload.data)) {
+        throw new Error(payload.error?.message ?? "Meal template could not be saved.");
+      }
+
+      setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
+      setSource("api");
+      setActiveTab("Meal Templates");
+      setStatusMessage(`${template.name} saved to Meal Templates.`);
+    } catch (error) {
+      setCreatedTemplates((currentTemplates) => [template, ...currentTemplates]);
+      setStatusMessage(`${template.name} saved locally. It will need to be saved again when the API is available.`);
+      setErrorMessage(error instanceof Error ? error.message : "Meal template could not be saved.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function editMealPlan(assignment: MealAssignmentRow) {
@@ -278,11 +306,100 @@ export function MealPlansPage() {
     setErrorMessage(null);
   }
 
-  function deleteMealPlan(assignment: MealAssignmentRow) {
+  async function deleteMealPlan(assignment: MealAssignmentRow) {
+    if (assignment.apiTemplate?.id) {
+      setSaving(true);
+      setStatusMessage(null);
+      setErrorMessage(null);
+
+      try {
+        const response = await fetch(`/api/v1/meal-plan-templates/${assignment.apiTemplate.id}`, {
+          method: "DELETE"
+        });
+
+        if (!response.ok) {
+          const payload = await response.json();
+          throw new Error(payload.error?.message ?? "Meal plan could not be deleted.");
+        }
+
+        setTemplates((currentTemplates) => currentTemplates.filter((template) => template.id !== assignment.apiTemplate?.id));
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Meal plan could not be deleted.");
+        setSaving(false);
+        return;
+      } finally {
+        setSaving(false);
+      }
+    }
+
     setCreatedPlans((currentPlans) => currentPlans.filter((plan) => plan.id !== assignment.id));
     setHiddenMealPlanIds((currentIds) => [...currentIds, assignment.id]);
     setAssignmentTarget((currentTarget) => (currentTarget?.id === assignment.id ? null : currentTarget));
     setStatusMessage(`${assignment.planName} deleted from Meal Plans.`);
+  }
+
+  async function saveMealTemplate(template: MealTemplateCard, input: MealPlanTemplateSaveInput) {
+    setSaving(true);
+    setStatusMessage(null);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch(template.apiTemplate?.id ? `/api/v1/meal-plan-templates/${template.apiTemplate.id}` : "/api/v1/meal-plan-templates", {
+        method: template.apiTemplate?.id ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input)
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.data || Array.isArray(payload.data)) {
+        throw new Error(payload.error?.message ?? "Meal template could not be saved.");
+      }
+
+      setTemplates((currentTemplates) =>
+        template.apiTemplate?.id
+          ? currentTemplates.map((currentTemplate) => (currentTemplate.id === template.apiTemplate?.id ? payload.data : currentTemplate))
+          : [payload.data, ...currentTemplates]
+      );
+      setCreatedTemplates((currentTemplates) => currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.id));
+      setSelectedMealTemplate(null);
+      setSource("api");
+      setActiveTab("Meal Templates");
+      setStatusMessage(`${input.name} saved to Meal Templates.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Meal template could not be saved.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteMealTemplate(template: MealTemplateCard) {
+    if (!template.apiTemplate?.id) {
+      setCreatedTemplates((currentTemplates) => currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.id));
+      setSelectedMealTemplate(null);
+      setStatusMessage(`${template.name} deleted from Meal Templates.`);
+      return;
+    }
+
+    setSaving(true);
+    setStatusMessage(null);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch(`/api/v1/meal-plan-templates/${template.apiTemplate.id}`, { method: "DELETE" });
+
+      if (!response.ok) {
+        const payload = await response.json();
+        throw new Error(payload.error?.message ?? "Meal template could not be deleted.");
+      }
+
+      setTemplates((currentTemplates) => currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.apiTemplate?.id));
+      setSelectedMealTemplate(null);
+      setStatusMessage(`${template.name} deleted from Meal Templates.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Meal template could not be deleted.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function copyMealPlan(assignment: MealAssignmentRow) {
@@ -444,12 +561,14 @@ export function MealPlansPage() {
         <MasterTemplatesPanel
           templates={templateCards}
           canAssign={source === "api"}
+          onOpenTemplate={setSelectedMealTemplate}
           onUseTemplate={(template) => {
             if (template.apiTemplate) {
               setSelectedTemplate(template.apiTemplate);
               setErrorMessage(null);
             }
           }}
+          onDeleteTemplate={deleteMealTemplate}
         />
       )}
 
@@ -474,6 +593,15 @@ export function MealPlansPage() {
           clients={clients}
           onClose={() => setAssignmentTarget(null)}
           onAssign={(client) => assignMealPlanToClient(assignmentTarget, client)}
+        />
+      ) : null}
+
+      {selectedMealTemplate ? (
+        <MealTemplateDetailsDialog
+          template={selectedMealTemplate}
+          saving={saving}
+          onClose={() => setSelectedMealTemplate(null)}
+          onSave={(input) => saveMealTemplate(selectedMealTemplate, input)}
         />
       ) : null}
 
@@ -761,7 +889,7 @@ function FullMealPlanFields({
   const [openMealMenu, setOpenMealMenu] = useState<{ dayId: string; mealId: string } | null>(null);
   const [copyMealTarget, setCopyMealTarget] = useState<{ dayId: string; mealId: string } | null>(null);
   const [draggedMealId, setDraggedMealId] = useState<string | null>(null);
-  const [foodSource, setFoodSource] = useState<FoodDatabaseSource>("AUS / NZ");
+  const [foodSource, setFoodSource] = useState<FoodDatabaseSource>("AUS/NZ");
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
   const [showMealTemplateDialog, setShowMealTemplateDialog] = useState(false);
   const activeDay = days.find((day) => day.id === activeDayId) ?? days.at(-1);
@@ -780,6 +908,19 @@ function FullMealPlanFields({
           ? {
               ...day,
               meals: day.meals.map((meal) => (meal.id === mealId ? { ...meal, name } : meal))
+            }
+          : day
+      )
+    );
+  };
+
+  const updateMealNotes = (dayId: string, mealId: string, notes: string) => {
+    setDays((currentDays) =>
+      currentDays.map((day) =>
+        day.id === dayId
+          ? {
+              ...day,
+              meals: day.meals.map((meal) => (meal.id === mealId ? { ...meal, notes } : meal))
             }
           : day
       )
@@ -1008,7 +1149,9 @@ function FullMealPlanFields({
     );
   };
 
-  const filteredFoods = foods.filter((food) => food.name.toLowerCase().includes(foodSearchQuery.trim().toLowerCase()));
+  const filteredFoods = foods.filter(
+    (food) => food.source === foodSource && food.name.toLowerCase().includes(foodSearchQuery.trim().toLowerCase())
+  );
 
   return (
     <div className="space-y-8">
@@ -1233,7 +1376,13 @@ function FullMealPlanFields({
                   ) : null}
                   <label className="mt-4 grid gap-2">
                     <span className="text-sm font-medium text-slate-700">Notes</span>
-                    <textarea className="min-h-16 rounded-xl border border-slate-200 px-4 py-3 text-sm" placeholder="Enter meal notes" />
+                    <textarea
+                      aria-label={`Notes for ${meal.name}`}
+                      value={meal.notes}
+                      className="min-h-16 rounded-xl border border-slate-200 px-4 py-3 text-sm"
+                      placeholder="Enter meal notes"
+                      onChange={(event) => updateMealNotes(activeDay.id, meal.id, event.target.value)}
+                    />
                     <span className="text-xs text-slate-400">Please enter meal notes</span>
                   </label>
                 </article>
@@ -1301,6 +1450,7 @@ function FullMealPlanFields({
         <FoodDatabaseDrawer
           source={foodSource}
           searchQuery={foodSearchQuery}
+          foods={foods}
           filteredFoods={filteredFoods}
           onSourceChange={setFoodSource}
           onSearchChange={setFoodSearchQuery}
@@ -1332,6 +1482,7 @@ function createBuilderMeal(mealNumber: number, name = `Meal ${mealNumber}`): Bui
   return {
     id: `meal_${mealNumber}_${Date.now()}`,
     name,
+    notes: "",
     foods: []
   };
 }
@@ -1349,6 +1500,7 @@ function createBuilderDaysFromTemplate(template?: ApiMealPlanTemplate | null): B
     meals: day.meals.map((meal, mealIndex) => ({
       id: `meal_template_${dayIndex + 1}_${mealIndex + 1}_${Date.now()}`,
       name: meal.meal || `Meal ${mealIndex + 1}`,
+      notes: meal.notes ?? "",
       foods: meal.foods.map((food, foodIndex) => createBuilderFoodFromTemplateFood(food, foodIndex))
     }))
   }));
@@ -1383,6 +1535,7 @@ function createBuilderMealsFromMealTemplate(template: MealTemplateCard): Builder
     return templateMeals.map((meal, mealIndex) => ({
       id: `imported_meal_${template.id}_${mealIndex + 1}_${Date.now()}`,
       name: meal.meal || template.name,
+      notes: meal.notes ?? "",
       foods: meal.foods.map((food, foodIndex) => createBuilderFoodFromTemplateFood(food, foodIndex))
     }));
   }
@@ -1391,6 +1544,7 @@ function createBuilderMealsFromMealTemplate(template: MealTemplateCard): Builder
     {
       id: `meal_${Date.now()}_1`,
       name: template.name,
+      notes: "",
       foods: [
         {
           id: `template_food_${template.id}_${Date.now()}`,
@@ -1413,6 +1567,7 @@ function cloneBuilderMeal(meal: BuilderMeal, mealNumber: number): BuilderMeal {
   return {
     id: `meal_copy_${mealNumber}_${Date.now()}`,
     name: meal.name,
+    notes: meal.notes,
     foods: meal.foods.map((food) => ({
       ...food,
       id: `${food.id}_copy_${Date.now()}`
@@ -1661,6 +1816,24 @@ function calculatePlanTotals(days: BuilderDay[]) {
   );
 }
 
+function calculateTemplateTotals(template: ApiMealPlanTemplate["template"]) {
+  return (template.days ?? []).reduce(
+    (totals, day) => {
+      day.meals.forEach((meal) => {
+        meal.foods.forEach((food) => {
+          totals.calories += food.calories;
+          totals.protein += food.proteinGrams;
+          totals.carbs += food.carbsGrams;
+          totals.fats += food.fatGrams;
+        });
+      });
+
+      return totals;
+    },
+    { calories: 0, protein: 0, carbs: 0, fats: 0 }
+  );
+}
+
 function getFullMealPlanTemplatePayload(days: BuilderDay[]): ApiMealPlanTemplate["template"] {
   const templateDays = days.length > 0 ? days : [createBuilderDay(1)];
 
@@ -1669,6 +1842,7 @@ function getFullMealPlanTemplatePayload(days: BuilderDay[]): ApiMealPlanTemplate
       name: day.name.trim() || `Day ${dayIndex + 1}`,
       meals: (day.meals.length > 0 ? day.meals : [createBuilderMeal(1)]).map((meal) => ({
         meal: meal.name.trim() || "Meal",
+        notes: meal.notes,
         foods: meal.foods.map((food) => ({
           foodId: food.foodId,
           foodName: food.name,
@@ -1700,6 +1874,33 @@ function getMacroMealPlanTemplatePayload(dayName: string, eachMeal: boolean): Ap
         ]
       }
     ]
+  };
+}
+
+function getMealTemplateSaveInput(template: MealTemplateCard): MealPlanTemplateSaveInput {
+  return {
+    name: template.name.trim() || "Untitled Meal Template",
+    phase: template.description.trim() || "Meal template",
+    targetCalories: Math.round(template.calories),
+    proteinGrams: template.protein,
+    carbsGrams: template.carbs,
+    fatGrams: template.fats,
+    status: "published",
+    template:
+      template.template ??
+      template.apiTemplate?.template ?? {
+        days: [
+          {
+            name: "Template Day",
+            meals: [
+              {
+                meal: template.name.trim() || "Meal",
+                foods: []
+              }
+            ]
+          }
+        ]
+      }
   };
 }
 
@@ -1900,6 +2101,7 @@ function NutrientTable({ section, totals }: { section: NutrientSectionDefinition
 function FoodDatabaseDrawer({
   source,
   searchQuery,
+  foods: foodOptions,
   filteredFoods,
   onSourceChange,
   onSearchChange,
@@ -1908,16 +2110,17 @@ function FoodDatabaseDrawer({
 }: {
   source: FoodDatabaseSource;
   searchQuery: string;
+  foods: typeof foods;
   filteredFoods: typeof foods;
   onSourceChange: (source: FoodDatabaseSource) => void;
   onSearchChange: (query: string) => void;
   onAddFoods: (selections: Array<{ foodId: string; quantity: number; unit: FoodMeasurementUnit }>) => void;
   onClose: () => void;
 }) {
-  const sources: FoodDatabaseSource[] = ["AUS / NZ", "EFSA", "USDA"];
+  const sources: FoodDatabaseSource[] = ["AUS/NZ", "EFSA", "USDA"];
   const measurementUnits: FoodMeasurementUnit[] = ["g", "ml", "oz", "cups", "tbsp", "tsp", "serving"];
   const [selectedFoods, setSelectedFoods] = useState<Record<string, { quantity: string; unit: FoodMeasurementUnit }>>({});
-  const selectedFoodEntries = filteredFoods.filter((food) => selectedFoods[food.id]);
+  const selectedFoodEntries = foodOptions.filter((food) => selectedFoods[food.id]);
 
   function isVerifiedDatabaseFood(food: Food) {
     return VERIFIED_FOOD_SOURCES.has(String(food.source));
@@ -2664,17 +2867,34 @@ function MealPlanAssignmentDialog({
 function MasterTemplatesPanel({
   templates,
   canAssign,
-  onUseTemplate
+  onOpenTemplate,
+  onUseTemplate,
+  onDeleteTemplate
 }: {
   templates: MealTemplateCard[];
   canAssign: boolean;
+  onOpenTemplate: (template: MealTemplateCard) => void;
   onUseTemplate: (template: MealTemplateCard) => void;
+  onDeleteTemplate: (template: MealTemplateCard) => void;
 }) {
   return (
     <section role="tabpanel" aria-label="Meal Templates">
       <div className="grid gap-6 md:grid-cols-3">
         {templates.map((template) => (
-          <article key={template.id} className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg">
+          <article
+            key={template.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`View ${template.name}`}
+            className="overflow-hidden rounded-xl border border-gray-200 bg-white text-left transition-all hover:border-indigo-300 hover:shadow-lg"
+            onClick={() => onOpenTemplate(template)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onOpenTemplate(template);
+              }
+            }}
+          >
             <div className="relative h-48 bg-gradient-to-br from-green-700 to-emerald-500">
               <div className="absolute right-3 top-3 rounded bg-white/20 px-2 py-1 text-xs font-medium uppercase text-white backdrop-blur-sm">
                 {template.badge}
@@ -2698,10 +2918,24 @@ function MasterTemplatesPanel({
                 type="button"
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300"
                 disabled={!canAssign}
-                onClick={() => onUseTemplate(template)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onUseTemplate(template);
+                }}
               >
                 <Plus className="size-4" aria-hidden="true" />
                 Use Template
+              </button>
+              <button
+                type="button"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-red-100 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDeleteTemplate(template);
+                }}
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+                Delete Template
               </button>
             </div>
           </article>
@@ -2798,6 +3032,164 @@ function Macro({ label, value, tone }: { label: string; value: string; tone: str
     <div>
       <span className={cn("font-medium", tone)}>{value}</span>
       <span className="ml-1 text-gray-500">{label}</span>
+    </div>
+  );
+}
+
+function MealTemplateDetailsDialog({
+  template,
+  saving,
+  onClose,
+  onSave
+}: {
+  template: MealTemplateCard;
+  saving: boolean;
+  onClose: () => void;
+  onSave: (input: MealPlanTemplateSaveInput) => void;
+}) {
+  const templatePayload = template.template ?? getMealTemplateSaveInput(template).template;
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(template.name);
+  const [days, setDays] = useState<NonNullable<ApiMealPlanTemplate["template"]["days"]>>(() => templatePayload.days ?? []);
+  const totals = calculateTemplateTotals({ days });
+
+  function updateMealNotes(dayIndex: number, mealIndex: number, notes: string) {
+    setDays((currentDays) =>
+      currentDays.map((day, currentDayIndex) =>
+        currentDayIndex === dayIndex
+          ? {
+              ...day,
+              meals: day.meals.map((meal, currentMealIndex) => (currentMealIndex === mealIndex ? { ...meal, notes } : meal))
+            }
+          : day
+      )
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="meal-template-details-title"
+        className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Meal Template</p>
+            {editing ? (
+              <>
+                <h2 id="meal-template-details-title" className="sr-only">
+                  Edit {template.name}
+                </h2>
+                <input
+                  aria-label="Meal template name"
+                  value={name}
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-2xl font-black text-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </>
+            ) : (
+              <h2 id="meal-template-details-title" className="mt-1 text-2xl font-black text-slate-950">
+                {template.name}
+              </h2>
+            )}
+            <p className="mt-2 text-sm text-slate-500">
+              {formatMacroValue(totals.calories)} kcal · P {formatMacroValue(totals.protein)}g · C {formatMacroValue(totals.carbs)}g · F{" "}
+              {formatMacroValue(totals.fats)}g
+            </p>
+          </div>
+          <button type="button" aria-label="Close meal template details" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mt-6 space-y-5">
+          {days.map((day, dayIndex) => (
+            <div key={`${day.name}-${dayIndex}`} className="rounded-2xl border border-slate-200 p-4">
+              <h3 className="font-black text-slate-950">{day.name}</h3>
+              <div className="mt-4 space-y-4">
+                {day.meals.map((meal, mealIndex) => (
+                  <article key={`${meal.meal}-${mealIndex}`} className="rounded-xl bg-slate-50 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h4 className="font-bold text-slate-900">{meal.meal}</h4>
+                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{meal.foods.length} ingredients</span>
+                    </div>
+                    {editing ? (
+                      <label className="mt-3 grid gap-2">
+                        <span className="text-sm font-semibold text-slate-700">Notes</span>
+                        <textarea
+                          aria-label={`Notes for ${meal.meal}`}
+                          value={meal.notes ?? ""}
+                          className="min-h-20 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          onChange={(event) => updateMealNotes(dayIndex, mealIndex, event.target.value)}
+                        />
+                      </label>
+                    ) : meal.notes ? (
+                      <p className="mt-3 rounded-xl bg-white p-3 text-sm text-slate-600">{meal.notes}</p>
+                    ) : null}
+                    <div role="table" aria-label={`${meal.meal} template ingredients`} className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                      <div role="row" className="grid grid-cols-5 gap-2 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500">
+                        <span role="columnheader">Ingredient</span>
+                        <span role="columnheader">Serving</span>
+                        <span role="columnheader">Calories</span>
+                        <span role="columnheader">Protein</span>
+                        <span role="columnheader">Macros</span>
+                      </div>
+                      {meal.foods.map((food) => (
+                        <div key={`${food.foodId ?? food.foodName}-${food.servingSize}`} role="row" className="grid grid-cols-5 gap-2 border-t border-slate-100 px-3 py-2 text-sm text-slate-700">
+                          <span role="cell" className="font-semibold text-slate-900">
+                            {food.foodName}
+                          </span>
+                          <span role="cell">{food.servingSize}</span>
+                          <span role="cell">{formatMacroValue(food.calories)} kcal</span>
+                          <span role="cell">{formatMacroValue(food.proteinGrams)}g</span>
+                          <span role="cell">
+                            C {formatMacroValue(food.carbsGrams)}g · F {formatMacroValue(food.fatGrams)}g
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          {editing ? (
+            <>
+              <button type="button" className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700" onClick={() => setEditing(false)}>
+                Cancel Edit
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+                onClick={() =>
+                  onSave({
+                    name: name.trim() || template.name,
+                    phase: "Meal template",
+                    targetCalories: Math.round(totals.calories),
+                    proteinGrams: totals.protein,
+                    carbsGrams: totals.carbs,
+                    fatGrams: totals.fats,
+                    status: "published",
+                    template: { days }
+                  })
+                }
+              >
+                {saving ? "Saving..." : "Save Template"}
+              </button>
+            </>
+          ) : (
+            <button type="button" className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white" onClick={() => setEditing(true)}>
+              Edit Template
+            </button>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

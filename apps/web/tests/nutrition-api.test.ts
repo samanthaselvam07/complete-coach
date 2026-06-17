@@ -11,7 +11,10 @@ import {
   GET as getMealPlanTemplates,
   POST as createMealPlanTemplate
 } from "@/app/api/v1/meal-plan-templates/route";
-import { PATCH as updateMealPlanTemplate } from "@/app/api/v1/meal-plan-templates/[templateId]/route";
+import {
+  DELETE as deleteMealPlanTemplate,
+  PATCH as updateMealPlanTemplate
+} from "@/app/api/v1/meal-plan-templates/[templateId]/route";
 import {
   GET as getMealPlanAssignments,
   POST as createMealPlanAssignment
@@ -482,6 +485,37 @@ describe("nutrition persistence APIs", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           action: "meal_plan_template.updated",
+          targetId: "meal_template_1"
+        })
+      })
+    );
+  });
+
+  it("soft deletes an existing meal plan template", async () => {
+    mocks.prisma.mealPlanTemplate.findFirst.mockResolvedValue(mealTemplateRecord);
+    mocks.prisma.mealPlanTemplate.update.mockResolvedValue({
+      ...mealTemplateRecord,
+      deletedAt: new Date("2026-06-17T00:00:00.000Z")
+    });
+
+    const response = await deleteMealPlanTemplate(
+      new Request("http://test.local/api/v1/meal-plan-templates/meal_template_1", {
+        method: "DELETE"
+      }),
+      { params: Promise.resolve({ templateId: "meal_template_1" }) }
+    );
+    const payload = (await response.json()) as { data: { id: string; deleted: boolean } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual({ id: "meal_template_1", deleted: true });
+    expect(mocks.prisma.mealPlanTemplate.update).toHaveBeenCalledWith({
+      where: { id: "meal_template_1" },
+      data: { deletedAt: expect.any(Date) }
+    });
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "meal_plan_template.deleted",
           targetId: "meal_template_1"
         })
       })

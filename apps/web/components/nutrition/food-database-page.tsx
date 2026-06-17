@@ -17,9 +17,11 @@ interface ApiFood {
   proteinGrams: number;
   carbsGrams: number;
   fatGrams: number;
+  fiberGrams?: number | null;
   metadata?: {
     source?: string;
     sourceId?: string;
+    [key: string]: unknown;
   } | null;
 }
 
@@ -97,6 +99,7 @@ export function FoodDatabasePage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [newFoodModalOpen, setNewFoodModalOpen] = useState(false);
+  const [selectedFood, setSelectedFood] = useState<ApiFood | Food | null>(null);
   const [newFoodForm, setNewFoodForm] = useState<NewFoodFormState>(initialNewFoodForm);
 
   useEffect(() => {
@@ -313,13 +316,13 @@ export function FoodDatabasePage() {
           viewMode === "cards" ? (
             <section aria-label="Food grid" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
               {filteredFoods.map((food) => (
-                <FoodCard key={food.id} food={food} />
+                <FoodCard key={food.id} food={food} onOpen={() => setSelectedFood(food)} />
               ))}
               <AddFoodCard onClick={() => setNewFoodModalOpen(true)} />
             </section>
           ) : (
             <>
-              <FoodList foods={filteredFoods} />
+              <FoodList foods={filteredFoods} onOpen={setSelectedFood} />
               <button
                 type="button"
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-white px-5 py-4 text-sm font-semibold text-slate-700 transition-colors hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
@@ -388,13 +391,19 @@ export function FoodDatabasePage() {
           onSubmit={createFood}
         />
       ) : null}
+      {selectedFood ? <FoodNutrientDetailsDialog food={selectedFood} onClose={() => setSelectedFood(null)} /> : null}
     </div>
   );
 }
 
-function FoodCard({ food }: { food: ApiFood | Food }) {
+function FoodCard({ food, onOpen }: { food: ApiFood | Food; onOpen: () => void }) {
   return (
-    <article className="group rounded-xl border border-gray-200 bg-white p-5 transition-all hover:border-indigo-300 hover:shadow-lg">
+    <button
+      type="button"
+      aria-label={`View nutrient breakdown for ${food.name}`}
+      className="group rounded-xl border border-gray-200 bg-white p-5 text-left transition-all hover:border-indigo-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      onClick={onOpen}
+    >
       <div className="relative mb-5">
         {isVerifiedFood(food) ? (
           <span
@@ -417,50 +426,53 @@ function FoodCard({ food }: { food: ApiFood | Food }) {
         <FoodMacro label="Carbs" value={`${getFoodMacro(food, "carbs")}g`} tone="text-green-600" />
         <FoodMacro label="Fats" value={`${getFoodMacro(food, "fats")}g`} tone="text-orange-600" />
       </div>
-    </article>
+    </button>
   );
 }
 
-function FoodList({ foods: foodItems }: { foods: Array<ApiFood | Food> }) {
+function FoodList({ foods: foodItems, onOpen }: { foods: Array<ApiFood | Food>; onOpen: (food: ApiFood | Food) => void }) {
   return (
     <div role="list" aria-label="Food list" className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       {foodItems.map((food) => (
-        <article
-          key={food.id}
-          role="listitem"
-          className="grid gap-4 border-b border-gray-100 px-4 py-4 last:border-b-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(8rem,0.7fr)_minmax(18rem,1fr)] lg:items-center"
-        >
-          <div className="flex min-w-0 items-center gap-3">
-            <img src={getFoodImageSrc(food.name)} alt="" className="size-12 shrink-0 rounded-full object-cover" />
-            <div className="min-w-0">
-              <div className="flex min-w-0 items-center gap-2">
-                <h3 className="truncate font-semibold text-slate-950">{food.name}</h3>
-                {isVerifiedFood(food) ? (
-                  <span
-                    aria-label="Verified Complete Coach food"
-                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
-                    title="Verified Complete Coach food"
-                  >
-                    <Check className="size-3.5" aria-hidden="true" />
-                  </span>
-                ) : null}
+        <div key={food.id} role="listitem" className="border-b border-gray-100 last:border-b-0">
+          <button
+            type="button"
+            aria-label={`View nutrient breakdown for ${food.name}`}
+            className="grid w-full gap-4 px-4 py-4 text-left hover:bg-indigo-50/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 lg:grid-cols-[minmax(0,1.4fr)_minmax(8rem,0.7fr)_minmax(18rem,1fr)] lg:items-center"
+            onClick={() => onOpen(food)}
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <img src={getFoodImageSrc(food.name)} alt="" className="size-12 shrink-0 rounded-full object-cover" />
+              <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-2">
+                  <h3 className="truncate font-semibold text-slate-950">{food.name}</h3>
+                  {isVerifiedFood(food) ? (
+                    <span
+                      aria-label="Verified Complete Coach food"
+                      className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+                      title="Verified Complete Coach food"
+                    >
+                      <Check className="size-3.5" aria-hidden="true" />
+                    </span>
+                  ) : null}
+                </div>
+                <p className="truncate text-xs text-slate-500">{food.category}</p>
               </div>
-              <p className="truncate text-xs text-slate-500">{food.category}</p>
             </div>
-          </div>
 
-          <div className="text-sm text-slate-600">
-            <span className="font-medium text-slate-900">{getFoodServing(food)}</span>
-            <span className="ml-2 text-xs text-slate-400">{getFoodSource(food)}</span>
-          </div>
+            <div className="text-sm text-slate-600">
+              <span className="font-medium text-slate-900">{getFoodServing(food)}</span>
+              <span className="ml-2 text-xs text-slate-400">{getFoodSource(food)}</span>
+            </div>
 
-          <div className="grid grid-cols-4 gap-2 text-xs">
-            <ListMacro label="Cal" value={`${food.calories}`} tone="text-slate-900" />
-            <ListMacro label="Protein" value={`${getFoodMacro(food, "protein")}g`} tone="text-blue-600" />
-            <ListMacro label="Carbs" value={`${getFoodMacro(food, "carbs")}g`} tone="text-green-600" />
-            <ListMacro label="Fats" value={`${getFoodMacro(food, "fats")}g`} tone="text-orange-600" />
-          </div>
-        </article>
+            <div className="grid grid-cols-4 gap-2 text-xs">
+              <ListMacro label="Cal" value={`${food.calories}`} tone="text-slate-900" />
+              <ListMacro label="Protein" value={`${getFoodMacro(food, "protein")}g`} tone="text-blue-600" />
+              <ListMacro label="Carbs" value={`${getFoodMacro(food, "carbs")}g`} tone="text-green-600" />
+              <ListMacro label="Fats" value={`${getFoodMacro(food, "fats")}g`} tone="text-orange-600" />
+            </div>
+          </button>
+        </div>
       ))}
     </div>
   );
@@ -478,6 +490,76 @@ function AddFoodCard({ onClick }: { onClick: () => void }) {
       </div>
       <h3 className="font-semibold text-gray-700">Add New Food</h3>
     </button>
+  );
+}
+
+function FoodNutrientDetailsDialog({ food, onClose }: { food: ApiFood | Food; onClose: () => void }) {
+  const macroRows = getFoodMacroRows(food);
+  const nutrientRows = getDetailedNutrientRows(food);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${food.name} nutrient breakdown`}
+        className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Nutrient breakdown</p>
+            <h2 id="food-details-title" className="mt-1 truncate text-2xl font-black text-slate-950">
+              {food.name}
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              {getFoodServing(food)} · {food.category} · {getFoodSource(food)}
+            </p>
+          </div>
+          <button type="button" aria-label="Close food details" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="max-h-[calc(90vh-8rem)] overflow-y-auto px-6 py-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {macroRows.map((row) => (
+              <div key={row.label} role="row" aria-label={`${row.label} ${row.value}`} className="rounded-xl bg-slate-50 px-4 py-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{row.label}</p>
+                <p className={cn("mt-1 text-lg font-black", row.tone)}>{row.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <section className="mt-6">
+            <h3 className="text-base font-black text-slate-950">Nutrient breakdown</h3>
+            {nutrientRows.length > 0 ? (
+              <div role="table" aria-label={`${food.name} nutrient breakdown`} className="mt-3 overflow-hidden rounded-xl border border-slate-200">
+                <div role="row" className="grid grid-cols-[1fr_8rem] gap-3 bg-slate-50 px-4 py-3 text-xs font-black uppercase tracking-wide text-slate-500">
+                  <span role="columnheader">Nutrient</span>
+                  <span role="columnheader" className="text-right">
+                    Amount
+                  </span>
+                </div>
+                {nutrientRows.map((row) => (
+                  <div key={row.key} role="row" aria-label={`${row.label} ${row.value}`} className="grid grid-cols-[1fr_8rem] gap-3 border-t border-slate-100 px-4 py-3 text-sm">
+                    <span role="cell" className="font-medium text-slate-800">
+                      {row.label}
+                    </span>
+                    <span role="cell" className="text-right font-semibold text-slate-700">
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                No detailed micronutrient data is available for this food yet.
+              </p>
+            )}
+          </section>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -635,7 +717,7 @@ function formatServingSize(form: NewFoodFormState) {
 }
 
 function getFoodSource(food: ApiFood | Food): FoodDatabaseSource {
-  if ("source" in food) {
+  if (!isApiFood(food)) {
     return food.source;
   }
 
@@ -678,6 +760,144 @@ function getFoodMacro(food: ApiFood | Food, macro: "protein" | "carbs" | "fats")
   }
 
   return macro === "protein" ? food.proteinGrams : macro === "carbs" ? food.carbsGrams : food.fatGrams;
+}
+
+function getFoodFibre(food: ApiFood | Food) {
+  if ("fibre" in food) {
+    return food.fibre;
+  }
+
+  return food.fiberGrams ?? 0;
+}
+
+function getFoodMacroRows(food: ApiFood | Food) {
+  return [
+    { label: "Calories", value: `${formatNutrientValue(food.calories)} kcal`, tone: "text-slate-950" },
+    { label: "Protein", value: `${formatNutrientValue(getFoodMacro(food, "protein"))} g`, tone: "text-blue-600" },
+    { label: "Carbs", value: `${formatNutrientValue(getFoodMacro(food, "carbs"))} g`, tone: "text-green-600" },
+    { label: "Fats", value: `${formatNutrientValue(getFoodMacro(food, "fats"))} g`, tone: "text-orange-600" },
+    { label: "Fibre", value: `${formatNutrientValue(getFoodFibre(food))} g`, tone: "text-emerald-600" }
+  ];
+}
+
+function getDetailedNutrientRows(food: ApiFood | Food) {
+  const nutrients = isApiFood(food) ? getMetadataNutrients(food.metadata) : food.micronutrients;
+
+  return Object.entries(nutrients ?? {})
+    .filter(([, value]) => typeof value === "number" && Number.isFinite(value))
+    .map(([key, value]) => ({
+      key,
+      label: nutrientLabels[key] ?? toTitleLabel(key),
+      value: `${formatNutrientValue(value as number)} ${nutrientUnits[key] ?? inferNutrientUnit(key)}`
+    }))
+    .sort((first, second) => first.label.localeCompare(second.label));
+}
+
+function isApiFood(food: ApiFood | Food): food is ApiFood {
+  return "servingSize" in food;
+}
+
+function getMetadataNutrients(metadata: ApiFood["metadata"]) {
+  if (!metadata) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(metadata).filter(([key, value]) => !metadataDisplayBlocklist.has(key) && typeof value === "number")
+  );
+}
+
+const metadataDisplayBlocklist = new Set(["source", "sourceId", "sourceVersion", "servingDescription"]);
+
+const nutrientLabels: Record<string, string> = {
+  vitaminB1: "B1 (Thiamine)",
+  vitaminB2: "B2 (Riboflavin)",
+  vitaminB3: "B3 (Niacin)",
+  vitaminB5: "B5 (Pantothenic Acid)",
+  vitaminB6: "B6 (Pyridoxine)",
+  vitaminB12: "B12 (Cobalamin)",
+  folate: "Folate",
+  vitaminA: "Vitamin A",
+  vitaminC: "Vitamin C",
+  vitaminD: "Vitamin D",
+  vitaminE: "Vitamin E",
+  vitaminK: "Vitamin K",
+  calcium: "Calcium",
+  copper: "Copper",
+  iron: "Iron",
+  magnesium: "Magnesium",
+  manganese: "Manganese",
+  phosphorus: "Phosphorus",
+  potassium: "Potassium",
+  selenium: "Selenium",
+  sodium: "Sodium",
+  zinc: "Zinc",
+  cystine: "Cystine",
+  histidine: "Histidine",
+  isoleucine: "Isoleucine",
+  leucine: "Leucine",
+  lysine: "Lysine",
+  methionine: "Methionine",
+  phenylalanine: "Phenylalanine",
+  threonine: "Threonine",
+  tryptophan: "Tryptophan",
+  tyrosine: "Tyrosine",
+  valine: "Valine",
+  monounsaturated: "Monounsaturated",
+  polyunsaturated: "Polyunsaturated",
+  omega3: "Omega-3",
+  ala: "ALA",
+  dha: "DHA",
+  epa: "EPA",
+  omega6: "Omega-6",
+  aa: "AA",
+  la: "LA",
+  saturated: "Saturated Fat",
+  transFats: "Trans Fats",
+  cholesterol: "Cholesterol",
+  starch: "Starch",
+  sugars: "Sugars",
+  addedSugars: "Added Sugars",
+  sugarGrams: "Sugars",
+  polyolsGrams: "Polyols",
+  saturatedGrams: "Saturated Fat",
+  polyunsaturatedGrams: "Polyunsaturated",
+  monounsaturatedGrams: "Monounsaturated",
+  saltGrams: "Salt"
+};
+
+const nutrientUnits: Record<string, string> = {
+  vitaminA: "µg",
+  vitaminD: "IU",
+  vitaminK: "µg",
+  folate: "µg",
+  vitaminB12: "µg",
+  selenium: "µg",
+  calcium: "mg",
+  copper: "mg",
+  iron: "mg",
+  magnesium: "mg",
+  manganese: "mg",
+  phosphorus: "mg",
+  potassium: "mg",
+  sodium: "mg",
+  zinc: "mg",
+  cholesterol: "mg"
+};
+
+function inferNutrientUnit(key: string) {
+  return key.endsWith("Grams") || key.toLowerCase().includes("fat") || key.toLowerCase().includes("sugar") ? "g" : "mg";
+}
+
+function toTitleLabel(value: string) {
+  return value
+    .replace(/Grams$/, "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function formatNutrientValue(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
 }
 
 function getFoodImageSrc(name: string) {

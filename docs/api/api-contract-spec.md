@@ -185,8 +185,9 @@ AI output statuses:
 - `GET /api/v1/foods/{food_id}`: returns a global or organization-owned food.
 - `PATCH /api/v1/foods/{food_id}`: updates an organization-owned private food. Global foods and other-tenant foods are not mutable by tenant users.
 - `GET /api/v1/meal-plan-templates`: returns organization-owned meal templates. Query: `status`, `limit`.
-- `POST /api/v1/meal-plan-templates`: creates a template with validated `name`, optional `phase`, macro targets, `status`, and structured days/meals/foods `template` JSON.
-- `PATCH /api/v1/meal-plan-templates/{template_id}`: updates an existing organization-owned meal template in place. Body: any explicit subset of `name`, optional `phase`, macro targets, `status`, and structured `template` JSON. Food rows in `template.days[].meals[].foods[]` may include `foodId`, `foodName`, `servingSize`, calories/macros, optional `fiberGrams`, optional `quantity`, optional `measurementUnit`, and optional `micronutrients`.
+- `POST /api/v1/meal-plan-templates`: creates a template with validated `name`, optional `phase`, macro targets, `status`, and structured days/meals/foods `template` JSON. Meal rows may include optional `notes`.
+- `PATCH /api/v1/meal-plan-templates/{template_id}`: updates an existing organization-owned meal template in place. Body: any explicit subset of `name`, optional `phase`, macro targets, `status`, and structured `template` JSON. Meal rows may include optional `notes`. Food rows in `template.days[].meals[].foods[]` may include `foodId`, `foodName`, `servingSize`, calories/macros, optional `fiberGrams`, optional `quantity`, optional `measurementUnit`, and optional `micronutrients`.
+- `DELETE /api/v1/meal-plan-templates/{template_id}`: soft-deletes an organization-owned meal template by setting `deletedAt`; deleted meal plans/templates are excluded from subsequent list results.
 - `GET /api/v1/meal-plan-assignments`: returns organization-scoped meal assignments with client names. Query: `clientId`, `limit`.
 - `POST /api/v1/meal-plan-assignments`: assigns an organization-owned template to a scoped client and writes immutable `snapshot_json` from the current template.
 - `GET /api/v1/clients/{client_id}/meal-plans`: returns meal plan assignments for one organization-scoped client.

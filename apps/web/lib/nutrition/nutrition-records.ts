@@ -74,6 +74,7 @@ export const mealPlanTemplateListQuerySchema = z.object({
 
 export const mealPlanItemSchema = z.object({
   meal: z.string().trim().min(1).max(120),
+  notes: z.string().trim().max(2_000).optional(),
   foods: z
     .array(
       z.object({

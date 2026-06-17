@@ -53,3 +53,43 @@ export async function PATCH(request: Request, context: MealPlanTemplateRouteCont
     return handleApiError(error);
   }
 }
+
+export async function DELETE(_request: Request, context: MealPlanTemplateRouteContext) {
+  try {
+    const actor = requireActiveActor(await auth(), "nutrition:write");
+    const { templateId } = await context.params;
+    const existingTemplate = await prisma.mealPlanTemplate.findFirst({
+      where: {
+        id: templateId,
+        organizationId: actor.organizationId,
+        deletedAt: null
+      }
+    });
+
+    if (!existingTemplate) {
+      return errorResponse("not_found", "Meal plan template not found.", 404);
+    }
+
+    const template = await prisma.mealPlanTemplate.update({
+      where: { id: templateId },
+      data: { deletedAt: new Date() }
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        organizationId: actor.organizationId,
+        actorUserId: actor.userId,
+        action: "meal_plan_template.deleted",
+        targetType: "meal_plan_template",
+        targetId: template.id,
+        metadata: {
+          name: template.name
+        }
+      }
+    });
+
+    return dataResponse({ id: template.id, deleted: true });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}

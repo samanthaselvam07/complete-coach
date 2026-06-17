@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FoodDatabasePage } from "@/components/nutrition/food-database-page";
@@ -322,6 +322,204 @@ describe("MealPlansPage", () => {
     expect(screen.queryByText("High-Protein Breakfast Bowl")).not.toBeInTheDocument();
   });
 
+  it("deletes persisted draft meal plans through the template API so reloads do not restore them", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/meal-plan-templates/meal_template_draft" && init?.method === "DELETE") {
+        return Promise.resolve(new Response(JSON.stringify({ data: { id: "meal_template_draft", deleted: true } }), { status: 200 }));
+      }
+
+      if (url.startsWith("/api/v1/meal-plan-templates")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "meal_template_draft",
+                  name: "Draft Cut Plan",
+                  phase: "Full meal plan",
+                  targetCalories: 2100,
+                  proteinGrams: 180,
+                  carbsGrams: 190,
+                  fatGrams: 60,
+                  status: "draft",
+                  template: { days: [] },
+                  updatedAt: "2026-06-17T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(MealPlansPage));
+
+    expect(await screen.findByText("Draft Cut Plan")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Draft Cut Plan" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+
+    expect(await screen.findByText("Draft Cut Plan deleted from Meal Plans.")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/meal-plan-templates/meal_template_draft",
+        expect.objectContaining({ method: "DELETE" })
+      )
+    );
+    expect(screen.queryByText("Draft Cut Plan")).not.toBeInTheDocument();
+  });
+
+  it("opens meal template details and saves edits to the selected template", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/meal-plan-templates/meal_template_api" && init?.method === "PATCH") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "meal_template_api",
+                name: "Edited Breakfast Template",
+                phase: "Meal template",
+                targetCalories: 451,
+                proteinGrams: 65,
+                carbsGrams: 25,
+                fatGrams: 7.6,
+                status: "published",
+                template: {
+                  days: [
+                    {
+                      name: "Template Day",
+                      meals: [
+                        {
+                          meal: "Breakfast",
+                          notes: "Use pre-workout on heavy leg days.",
+                          foods: [
+                            {
+                              foodId: "chicken-breast",
+                              foodName: "Chicken Breast",
+                              servingSize: "200 g",
+                              calories: 330,
+                              proteinGrams: 62,
+                              carbsGrams: 0,
+                              fatGrams: 7.2
+                            },
+                            {
+                              foodId: "basmati-rice",
+                              foodName: "Basmati Rice",
+                              servingSize: "100 g",
+                              calories: 121,
+                              proteinGrams: 3,
+                              carbsGrams: 25,
+                              fatGrams: 0.4
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                updatedAt: "2026-06-17T00:00:00.000Z"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url.startsWith("/api/v1/meal-plan-templates")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "meal_template_api",
+                  name: "Persisted Breakfast Template",
+                  phase: "Meal template",
+                  targetCalories: 451,
+                  proteinGrams: 65,
+                  carbsGrams: 25,
+                  fatGrams: 7.6,
+                  status: "published",
+                  template: {
+                    days: [
+                      {
+                        name: "Template Day",
+                        meals: [
+                          {
+                            meal: "Breakfast",
+                            notes: "Prep oats with cinnamon.",
+                            foods: [
+                              {
+                                foodId: "chicken-breast",
+                                foodName: "Chicken Breast",
+                                servingSize: "200 g",
+                                calories: 330,
+                                proteinGrams: 62,
+                                carbsGrams: 0,
+                                fatGrams: 7.2
+                              },
+                              {
+                                foodId: "basmati-rice",
+                                foodName: "Basmati Rice",
+                                servingSize: "100 g",
+                                calories: 121,
+                                proteinGrams: 3,
+                                carbsGrams: 25,
+                                fatGrams: 0.4
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  updatedAt: "2026-06-16T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(await screen.findByRole("button", { name: "View Persisted Breakfast Template" }));
+
+    expect(screen.getByRole("dialog", { name: "Persisted Breakfast Template" })).toBeInTheDocument();
+    expect(screen.getByText("Prep oats with cinnamon.")).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Chicken Breast\s*200 g\s*330 kcal\s*62g\s*C 0g · F 7.2g/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Basmati Rice\s*100 g\s*121 kcal\s*3g\s*C 25g · F 0.4g/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Template" }));
+    fireEvent.change(screen.getByLabelText("Meal template name"), { target: { value: "Edited Breakfast Template" } });
+    fireEvent.change(screen.getByLabelText("Notes for Breakfast"), { target: { value: "Use pre-workout on heavy leg days." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Template" }));
+
+    expect(await screen.findByText("Edited Breakfast Template saved to Meal Templates.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/meal-plan-templates/meal_template_api",
+      expect.objectContaining({
+        method: "PATCH",
+        body: expect.stringContaining("Use pre-workout on heavy leg days.")
+      })
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/v1/meal-plan-templates",
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+
   it("opens a create nutritional plan chooser before building a plan", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
 
@@ -389,7 +587,19 @@ describe("MealPlansPage", () => {
   });
 
   it("builds full meal plans with editable day tabs, meal actions, food search, and meal template import", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/meal-plan-templates" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ error: { message: "Meal template persistence unavailable." } }), {
+            status: 503
+          })
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
 
     render(createElement(MealPlansPage));
 
@@ -436,7 +646,7 @@ describe("MealPlansPage", () => {
     expect(screen.getByLabelText("Meal name for Day 1 meal 1")).toHaveValue("Breakfast");
     fireEvent.click(screen.getAllByRole("button", { name: "Meal actions" })[0]);
     fireEvent.click(screen.getByRole("menuitem", { name: "Create meal template" }));
-    expect(screen.getByText("Breakfast saved to Meal Templates.")).toBeInTheDocument();
+    expect(await screen.findByText("Breakfast saved locally. It will need to be saved again when the API is available.")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Meal actions" })[0]);
     fireEvent.click(screen.getByRole("menuitem", { name: "Copy to another day" }));
@@ -456,12 +666,18 @@ describe("MealPlansPage", () => {
       "placeholder",
       "Search foods..."
     );
-    expect(within(foodDrawer).getByRole("button", { name: "AUS / NZ" })).toBeInTheDocument();
+    expect(within(foodDrawer).getByRole("button", { name: "AUS/NZ" })).toBeInTheDocument();
     expect(within(foodDrawer).getByRole("button", { name: "EFSA" })).toBeInTheDocument();
     expect(within(foodDrawer).getByRole("button", { name: "USDA" })).toBeInTheDocument();
+    expect(within(foodDrawer).getByText("Showing AUS/NZ foods")).toBeInTheDocument();
+    expect(within(foodDrawer).getByRole("checkbox", { name: "Select Basmati Rice" })).toBeInTheDocument();
+    expect(within(foodDrawer).queryByRole("checkbox", { name: "Select Chicken Breast" })).not.toBeInTheDocument();
     fireEvent.click(within(foodDrawer).getByRole("button", { name: "USDA" }));
     expect(within(foodDrawer).getByText("Showing USDA foods")).toBeInTheDocument();
+    expect(within(foodDrawer).getByRole("checkbox", { name: "Select Chicken Breast" })).toBeInTheDocument();
+    expect(within(foodDrawer).queryByRole("checkbox", { name: "Select Basmati Rice" })).not.toBeInTheDocument();
     fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Chicken Breast" }));
+    fireEvent.click(within(foodDrawer).getByRole("button", { name: "AUS/NZ" }));
     fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Basmati Rice" }));
     const selectedFoodsRegion = within(foodDrawer).getByRole("region", { name: "Selected foods" });
     expect(selectedFoodsRegion).toHaveClass("lg:min-w-[26rem]");
@@ -469,6 +685,7 @@ describe("MealPlansPage", () => {
       "h-[22rem]",
       "overflow-y-auto"
     );
+    fireEvent.click(within(foodDrawer).getByRole("button", { name: "EFSA" }));
     fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Raw Avocado" }));
     expect(within(selectedFoodsRegion).getAllByRole("listitem")).toHaveLength(3);
     fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Raw Avocado" }));
@@ -512,6 +729,7 @@ describe("MealPlansPage", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Meal actions" })[0]);
     fireEvent.click(screen.getByRole("menuitem", { name: "Create meal template" }));
+    expect(await screen.findByText("Main Meal saved locally. It will need to be saved again when the API is available.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
     fireEvent.click(screen.getByRole("button", { name: "Import Main Meal" }));
     expect(screen.queryByRole("row", { name: /Main Meal 1 serving/i })).not.toBeInTheDocument();
@@ -520,13 +738,13 @@ describe("MealPlansPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
     const templateDialog = screen.getByRole("dialog", { name: "Import meal from template" });
-    expect(within(templateDialog).getByText("High-Protein Breakfast Bowl")).toBeInTheDocument();
-    fireEvent.click(within(templateDialog).getByRole("button", { name: "Import High-Protein Breakfast Bowl" }));
+    expect(within(templateDialog).getByText("Breakfast")).toBeInTheDocument();
+    fireEvent.click(within(templateDialog).getByRole("button", { name: "Import Breakfast" }));
 
-    expect(screen.getByLabelText("Meal name for High Carb Day meal 4")).toHaveValue("High-Protein Breakfast Bowl");
+    expect(screen.getByLabelText("Meal name for High Carb Day meal 4")).toHaveValue("Breakfast");
 
     const firstMeal = screen.getAllByLabelText("Meal card Main Meal")[0];
-    const secondMeal = screen.getByLabelText("Meal card Breakfast");
+    const secondMeal = screen.getAllByLabelText("Meal card Breakfast")[0];
     fireEvent.dragStart(firstMeal);
     fireEvent.dragOver(secondMeal);
     fireEvent.drop(secondMeal);
@@ -956,6 +1174,70 @@ describe("FoodDatabasePage", () => {
 
     expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("region", { name: "Food grid" })).toBeInTheDocument();
+  });
+
+  it("opens a nutrient breakdown modal from a food card", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(null, { status: 503 }));
+
+    render(createElement(FoodDatabasePage));
+
+    await screen.findByText("Food persistence API unavailable. Showing fixture food library.");
+    const chickenCard = screen.getByRole("heading", { name: "Chicken Breast" }).closest("button");
+    expect(chickenCard).not.toBeNull();
+    fireEvent.click(chickenCard!);
+
+    const dialog = screen.getByRole("dialog", { name: "Chicken Breast nutrient breakdown" });
+    expect(within(dialog).getByRole("heading", { name: "Chicken Breast" })).toBeInTheDocument();
+    expect(within(dialog).getByText(/100g, Boneless/)).toBeInTheDocument();
+    expect(within(dialog).getByRole("row", { name: /Calories 165 kcal/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole("row", { name: /Protein 31 g/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole("row", { name: /B3 \(Niacin\) 13.7 mg/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole("row", { name: /Sodium 74 mg/i })).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close food details" }));
+
+    expect(screen.queryByRole("dialog", { name: "Chicken Breast nutrient breakdown" })).not.toBeInTheDocument();
+  });
+
+  it("opens a nutrient breakdown modal from the food list view", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "food_api_1",
+              scope: "global",
+              name: "API Turkey Mince",
+              category: "Proteins",
+              servingSize: "100g cooked",
+              calories: 180,
+              proteinGrams: 28,
+              carbsGrams: 0,
+              fatGrams: 8,
+              fiberGrams: 0,
+              metadata: {
+                sourceId: "usda_fdc"
+              }
+            }
+          ]
+        }),
+        { status: 200 }
+      )
+    );
+
+    render(createElement(FoodDatabasePage));
+
+    expect(await screen.findByText("API Turkey Mince")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    const turkeyRow = screen.getByRole("heading", { name: "API Turkey Mince" }).closest("button");
+    expect(turkeyRow).not.toBeNull();
+    fireEvent.click(turkeyRow!);
+
+    const dialog = screen.getByRole("dialog", { name: "API Turkey Mince nutrient breakdown" });
+    expect(within(dialog).getByRole("heading", { name: "API Turkey Mince" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("row", { name: /Calories 180 kcal/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole("row", { name: /Fibre 0 g/i })).toBeInTheDocument();
+    expect(within(dialog).getByText("No detailed micronutrient data is available for this food yet.")).toBeInTheDocument();
   });
 
   it("filters imported AUS/NZ foods into the AUS/NZ source tab", async () => {
