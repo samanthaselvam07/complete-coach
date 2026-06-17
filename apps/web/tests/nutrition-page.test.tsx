@@ -243,6 +243,14 @@ describe("MealPlansPage", () => {
     fireEvent.change(screen.getByLabelText("Day name for Day 2"), { target: { value: "High Carb Day" } });
     expect(screen.getByDisplayValue("High Carb Day")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "High Carb Day" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("button", { name: "Actions" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Day actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Duplicate day" }));
+    expect(screen.getByRole("tab", { name: "High Carb Day copy" })).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Day actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete day" }));
+    expect(screen.queryByRole("tab", { name: "High Carb Day copy" })).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "High Carb Day" })).toHaveAttribute("aria-selected", "true");
 
     fireEvent.click(screen.getByRole("tab", { name: "Day 1" }));
     expect(screen.getByLabelText("Meal name for Day 1 meal 1")).toHaveValue("Breakfast");

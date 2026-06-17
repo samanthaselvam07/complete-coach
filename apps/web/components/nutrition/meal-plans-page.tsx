@@ -588,9 +588,6 @@ function NutritionPlanBuilder({
         <button type="button" className="text-sm font-bold text-indigo-600 hover:text-indigo-700" onClick={onBack}>
           Back to meal plans
         </button>
-        <button type="button" className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700">
-          Actions
-        </button>
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -667,6 +664,7 @@ function FullMealPlanFields({
   const [days, setDays] = useState<BuilderDay[]>(() => [createBuilderDay(1)]);
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [activeFoodTarget, setActiveFoodTarget] = useState<{ dayId: string; mealId: string } | null>(null);
+  const [dayMenuOpen, setDayMenuOpen] = useState(false);
   const [openMealMenu, setOpenMealMenu] = useState<{ dayId: string; mealId: string } | null>(null);
   const [copyMealTarget, setCopyMealTarget] = useState<{ dayId: string; mealId: string } | null>(null);
   const [draggedMealId, setDraggedMealId] = useState<string | null>(null);
@@ -716,6 +714,31 @@ function FullMealPlanFields({
     const nextDay = createBuilderDay(days.length + 1);
     setDays((currentDays) => [...currentDays, nextDay]);
     setActiveDayId(nextDay.id);
+    setDayMenuOpen(false);
+  };
+
+  const duplicateActiveDay = () => {
+    if (!activeDay) {
+      return;
+    }
+
+    const duplicatedDay = cloneBuilderDay(activeDay, `${activeDay.name} copy`);
+    setDays((currentDays) => [...currentDays, duplicatedDay]);
+    setActiveDayId(duplicatedDay.id);
+    setDayMenuOpen(false);
+  };
+
+  const deleteActiveDay = () => {
+    if (!activeDay || days.length <= 1) {
+      setDayMenuOpen(false);
+      return;
+    }
+
+    const activeIndex = days.findIndex((day) => day.id === activeDay.id);
+    const nextActiveDay = days[activeIndex - 1] ?? days[activeIndex + 1] ?? days[0];
+    setDays((currentDays) => currentDays.filter((day) => day.id !== activeDay.id));
+    setActiveDayId(nextActiveDay.id);
+    setDayMenuOpen(false);
   };
 
   const deleteMeal = (dayId: string, mealId: string) => {
@@ -911,6 +934,37 @@ function FullMealPlanFields({
               {day.name}
             </button>
           ))}
+        </div>
+        <div className="relative">
+          <button
+            type="button"
+            aria-label="Day actions"
+            className="rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-200"
+            onClick={() => setDayMenuOpen((isOpen) => !isOpen)}
+          >
+            ...
+          </button>
+          {dayMenuOpen ? (
+            <div role="menu" className="absolute left-0 top-12 z-20 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+              <button
+                type="button"
+                role="menuitem"
+                className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                onClick={duplicateActiveDay}
+              >
+                Duplicate day
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={days.length <= 1}
+                className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white"
+                onClick={deleteActiveDay}
+              >
+                Delete day
+              </button>
+            </div>
+          ) : null}
         </div>
         <button type="button" aria-label="Add day" className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600 hover:bg-indigo-100" onClick={addDay}>
           + Add day
@@ -1121,6 +1175,14 @@ function createBuilderDay(dayNumber: number): BuilderDay {
     id: `day_${dayNumber}_${Date.now()}`,
     name: `Day ${dayNumber}`,
     meals: [createBuilderMeal(1, "Main Meal")]
+  };
+}
+
+function cloneBuilderDay(day: BuilderDay, name: string): BuilderDay {
+  return {
+    id: `day_copy_${Date.now()}`,
+    name,
+    meals: day.meals.map((meal, index) => cloneBuilderMeal(meal, index + 1))
   };
 }
 
