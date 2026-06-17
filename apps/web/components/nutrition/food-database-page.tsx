@@ -52,6 +52,8 @@ const databaseSources = [
 ] as const;
 
 const servingDescriptionOptions = ["Grams", "Ounces", "Qty", "Cups", "Oz", "Tbsp", "Tsp", "Ml"];
+const FOOD_LIBRARY_FETCH_LIMIT = 5_000;
+const FOODS_PER_PAGE = 12;
 
 const initialNewFoodForm: NewFoodFormState = {
   name: "",
@@ -107,7 +109,7 @@ export function FoodDatabasePage() {
 
     async function loadFoods() {
       try {
-        const response = await fetch("/api/v1/foods?limit=100");
+        const response = await fetch(`/api/v1/foods?limit=${FOOD_LIBRARY_FETCH_LIMIT}`);
 
         if (!response.ok) {
           throw new Error("Food API unavailable.");
@@ -146,6 +148,10 @@ export function FoodDatabasePage() {
         food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         food.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
+  const totalPages = Math.max(1, Math.ceil(filteredFoods.length / FOODS_PER_PAGE));
+  const effectivePage = Math.min(currentPage, totalPages);
+  const visibleFoods = filteredFoods.slice((effectivePage - 1) * FOODS_PER_PAGE, effectivePage * FOODS_PER_PAGE);
+  const paginationPages = getPaginationPages(effectivePage, totalPages);
 
   async function createFood() {
     setSavingFood(true);
@@ -192,6 +198,7 @@ export function FoodDatabasePage() {
       setApiFoods((currentFoods) => [payload.data as ApiFood, ...currentFoods]);
       setFoodSource("api");
       setSelectedSource(getFoodSource(payload.data as ApiFood));
+      setCurrentPage(1);
       setNewFoodModalOpen(false);
       setNewFoodForm(initialNewFoodForm);
       setStatusMessage("Food saved.");
@@ -248,7 +255,10 @@ export function FoodDatabasePage() {
           value={searchQuery}
           placeholder="Search thousands of ingredients..."
           className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          onChange={(event) => setSearchQuery(event.target.value)}
+          onChange={(event) => {
+            setSearchQuery(event.target.value);
+            setCurrentPage(1);
+          }}
         />
       </div>
 
@@ -266,7 +276,10 @@ export function FoodDatabasePage() {
                   ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                   : "border-gray-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-indigo-50"
               )}
-              onClick={() => setSelectedSource(source.id)}
+              onClick={() => {
+                setSelectedSource(source.id);
+                setCurrentPage(1);
+              }}
             >
               {source.label}
               <span aria-hidden="true" className="text-[10px] font-medium text-indigo-500">
@@ -282,7 +295,9 @@ export function FoodDatabasePage() {
         <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <h2 className="text-xl font-bold">Recent Ingredients</h2>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-gray-500">Showing {filteredFoods.length} results</span>
+            <span className="text-sm text-gray-500">
+              Showing {visibleFoods.length} of {filteredFoods.length} results
+            </span>
             <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm" aria-label="Food database view">
               <button
                 type="button"
@@ -315,14 +330,14 @@ export function FoodDatabasePage() {
         {filteredFoods.length > 0 ? (
           viewMode === "cards" ? (
             <section aria-label="Food grid" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {filteredFoods.map((food) => (
+              {visibleFoods.map((food) => (
                 <FoodCard key={food.id} food={food} onOpen={() => setSelectedFood(food)} />
               ))}
               <AddFoodCard onClick={() => setNewFoodModalOpen(true)} />
             </section>
           ) : (
             <>
-              <FoodList foods={filteredFoods} onOpen={setSelectedFood} />
+              <FoodList foods={visibleFoods} onOpen={setSelectedFood} />
               <button
                 type="button"
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-white px-5 py-4 text-sm font-semibold text-slate-700 transition-colors hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
@@ -351,17 +366,19 @@ export function FoodDatabasePage() {
           aria-label="Previous food page"
           disabled={currentPage === 1}
           className="flex size-8 items-center justify-center rounded border border-gray-200 transition-colors hover:bg-gray-50 disabled:opacity-50"
-          onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+          onClick={() => setCurrentPage((page) => Math.max(1, Math.min(page, totalPages) - 1))}
         >
           <ChevronLeft className="size-4" aria-hidden="true" />
         </button>
-        {[1, 2, 3, 12].map((page) => (
+        {paginationPages.map((page) => (
           <button
             key={page}
             type="button"
+            aria-label={`Food page ${page}`}
+            aria-current={effectivePage === page ? "page" : undefined}
             className={cn(
               "flex size-8 items-center justify-center rounded border text-sm font-medium",
-              currentPage === page
+              effectivePage === page
                 ? "border-indigo-600 bg-indigo-600 text-white"
                 : "border-gray-200 transition-colors hover:bg-gray-50"
             )}
@@ -373,14 +390,15 @@ export function FoodDatabasePage() {
         <button
           type="button"
           aria-label="Next food page"
-          className="flex size-8 items-center justify-center rounded border border-gray-200 transition-colors hover:bg-gray-50"
-          onClick={() => setCurrentPage((page) => page + 1)}
+          disabled={effectivePage === totalPages}
+          className="flex size-8 items-center justify-center rounded border border-gray-200 transition-colors hover:bg-gray-50 disabled:opacity-50"
+          onClick={() => setCurrentPage((page) => Math.min(totalPages, Math.min(page, totalPages) + 1))}
         >
           <ChevronRight className="size-4" aria-hidden="true" />
         </button>
       </div>
       <p role="status" aria-label="Food database page" className="sr-only">
-        Page {currentPage}
+        Page {effectivePage}
       </p>
       {newFoodModalOpen ? (
         <NewFoodModal
@@ -781,9 +799,11 @@ function getFoodMacroRows(food: ApiFood | Food) {
 }
 
 function getDetailedNutrientRows(food: ApiFood | Food) {
-  const nutrients = isApiFood(food) ? getMetadataNutrients(food.metadata) : food.micronutrients;
+  if (isApiFood(food)) {
+    return getMetadataNutrientRows(food.metadata);
+  }
 
-  return Object.entries(nutrients ?? {})
+  return Object.entries(food.micronutrients ?? {})
     .filter(([, value]) => typeof value === "number" && Number.isFinite(value))
     .map(([key, value]) => ({
       key,
@@ -797,17 +817,53 @@ function isApiFood(food: ApiFood | Food): food is ApiFood {
   return "servingSize" in food;
 }
 
-function getMetadataNutrients(metadata: ApiFood["metadata"]) {
+function getMetadataNutrientRows(metadata: ApiFood["metadata"]) {
   if (!metadata) {
-    return {};
+    return [];
   }
 
-  return Object.fromEntries(
-    Object.entries(metadata).filter(([key, value]) => !metadataDisplayBlocklist.has(key) && typeof value === "number")
-  );
+  if (Array.isArray(metadata.nutrientsPer100g)) {
+    return metadata.nutrientsPer100g
+      .filter(isImportedNutrient)
+      .map((nutrient, index) => ({
+        key: nutrient.sourceNutrientId ?? `${nutrient.name}-${index}`,
+        label: nutrientLabels[nutrient.name] ?? nutrient.name,
+        value: `${formatNutrientValue(nutrient.value)} ${nutrient.unit}`
+      }))
+      .sort((first, second) => first.label.localeCompare(second.label));
+  }
+
+  return Object.entries(metadata)
+    .filter(([key, value]) => !metadataDisplayBlocklist.has(key) && typeof value === "number")
+    .map(([key, value]) => ({
+      key,
+      label: nutrientLabels[key] ?? toTitleLabel(key),
+      value: `${formatNutrientValue(value as number)} ${nutrientUnits[key] ?? inferNutrientUnit(key)}`
+    }))
+    .sort((first, second) => first.label.localeCompare(second.label));
 }
 
-const metadataDisplayBlocklist = new Set(["source", "sourceId", "sourceVersion", "servingDescription"]);
+function isImportedNutrient(value: unknown): value is { name: string; unit: string; value: number; sourceNutrientId?: string } {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as { name?: unknown; unit?: unknown; value?: unknown };
+
+  return typeof candidate.name === "string" && typeof candidate.unit === "string" && typeof candidate.value === "number";
+}
+
+function getPaginationPages(currentPage: number, totalPages: number) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
+
+  return [...pages].filter((page) => page >= 1 && page <= totalPages).sort((first, second) => first - second);
+}
+
+const metadataDisplayBlocklist = new Set(["source", "sourceId", "sourceVersion", "servingDescription", "nutrientsPer100g"]);
 
 const nutrientLabels: Record<string, string> = {
   vitaminB1: "B1 (Thiamine)",

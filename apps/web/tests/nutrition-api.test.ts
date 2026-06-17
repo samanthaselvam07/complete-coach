@@ -198,6 +198,42 @@ describe("nutrition persistence APIs", () => {
     );
   });
 
+  it("allows large food library reads for imported databases", async () => {
+    mocks.prisma.foodLibraryItem.findMany.mockResolvedValue([]);
+
+    const response = await getFoods(new Request("http://test.local/api/v1/foods?limit=5000"));
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.foodLibraryItem.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        take: 5000
+      })
+    );
+  });
+
+  it("filters foods by imported AUS/NZ source metadata", async () => {
+    mocks.prisma.foodLibraryItem.findMany.mockResolvedValue([globalFood]);
+
+    const response = await getFoods(new Request("http://test.local/api/v1/foods?source=AUS%2FNZ&search=kangaroo&limit=5000"));
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.foodLibraryItem.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          AND: expect.arrayContaining([
+            expect.objectContaining({
+              OR: expect.arrayContaining([
+                { metadataJson: { path: ["sourceId"], equals: "fsanz_ausnut" } },
+                { metadataJson: { path: ["sourceId"], equals: "fsanz_branded" } }
+              ])
+            })
+          ])
+        }),
+        take: 5000
+      })
+    );
+  });
+
   it("creates private tenant foods and audit logs the write", async () => {
     mocks.prisma.foodLibraryItem.create.mockResolvedValue(privateFood);
 

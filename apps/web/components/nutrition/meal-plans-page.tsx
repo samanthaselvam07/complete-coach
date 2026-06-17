@@ -44,6 +44,19 @@ interface BuilderDay {
   meals: BuilderMeal[];
 }
 
+interface ApiFoodLibraryItem {
+  id: string;
+  name: string;
+  category: string;
+  servingSize: string;
+  calories: number;
+  proteinGrams: number;
+  carbsGrams: number;
+  fatGrams: number;
+  fiberGrams?: number | null;
+  metadata?: unknown;
+}
+
 export interface ApiMealPlanTemplate {
   id: string;
   name: string;
@@ -891,15 +904,66 @@ function FullMealPlanFields({
   const [draggedMealId, setDraggedMealId] = useState<string | null>(null);
   const [foodSource, setFoodSource] = useState<FoodDatabaseSource>("AUS/NZ");
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
+  const [apiFoods, setApiFoods] = useState<Food[]>([]);
+  const [foodCache, setFoodCache] = useState<Record<string, Food>>({});
   const [showMealTemplateDialog, setShowMealTemplateDialog] = useState(false);
   const activeDay = days.find((day) => day.id === activeDayId) ?? days.at(-1);
   const dayTotals = calculateDayTotals(activeDay);
   const nutrientTotals = calculateNutrientTotals(activeDay);
   const activeDayIndex = Math.max(days.findIndex((day) => day.id === activeDay?.id), 0);
+  const foodOptions = useMemo(() => mergeFoodOptions(Object.values(foodCache), foods), [foodCache]);
 
   useEffect(() => {
     onDaysChange(days);
   }, [days, onDaysChange]);
+
+  useEffect(() => {
+    if (!activeFoodTarget) {
+      return;
+    }
+
+    let cancelled = false;
+    const params = new URLSearchParams({
+      limit: "5000",
+      source: foodSource
+    });
+    const search = foodSearchQuery.trim();
+
+    if (search) {
+      params.set("search", search);
+    }
+
+    async function loadFoodOptions() {
+      try {
+        const response = await fetch(`/api/v1/foods?${params.toString()}`);
+
+        if (!response.ok) {
+          throw new Error("Food API unavailable.");
+        }
+
+        const payload = (await response.json()) as { data?: ApiFoodLibraryItem[] };
+        const mappedFoods = Array.isArray(payload.data) ? payload.data.map(mapApiFoodToBuilderFood).filter((food) => food.source === foodSource) : [];
+
+        if (!cancelled) {
+          setApiFoods(mappedFoods);
+          setFoodCache((currentCache) => ({
+            ...currentCache,
+            ...Object.fromEntries(mappedFoods.map((food) => [food.id, food]))
+          }));
+        }
+      } catch {
+        if (!cancelled) {
+          setApiFoods([]);
+        }
+      }
+    }
+
+    void loadFoodOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeFoodTarget, foodSearchQuery, foodSource]);
 
   const updateMealName = (dayId: string, mealId: string, name: string) => {
     setDays((currentDays) =>
@@ -1090,7 +1154,7 @@ function FullMealPlanFields({
 
     const selectedFoods = selections
       .map((selection) => {
-        const food = foods.find((item) => item.id === selection.foodId);
+        const food = foodOptions.find((item) => item.id === selection.foodId);
 
         return food ? createBuilderFood(food, selection.quantity, selection.unit) : null;
       })
@@ -1149,9 +1213,10 @@ function FullMealPlanFields({
     );
   };
 
-  const filteredFoods = foods.filter(
+  const fixtureFilteredFoods = foods.filter(
     (food) => food.source === foodSource && food.name.toLowerCase().includes(foodSearchQuery.trim().toLowerCase())
   );
+  const filteredFoods = apiFoods.length > 0 ? apiFoods : fixtureFilteredFoods;
 
   return (
     <div className="space-y-8">
@@ -1450,7 +1515,7 @@ function FullMealPlanFields({
         <FoodDatabaseDrawer
           source={foodSource}
           searchQuery={foodSearchQuery}
-          foods={foods}
+          foods={foodOptions}
           filteredFoods={filteredFoods}
           onSourceChange={setFoodSource}
           onSearchChange={setFoodSearchQuery}
@@ -1599,6 +1664,73 @@ function createBuilderFood(food: Food, amount: number, unit?: FoodMeasurementUni
     quantity: safeQuantity,
     micronutrients: scaledMicronutrients
   };
+}
+
+function mapApiFoodToBuilderFood(food: ApiFoodLibraryItem): Food {
+  return {
+    id: food.id,
+    name: food.name,
+    serving: food.servingSize,
+    source: getApiFoodSource(food),
+    calories: food.calories,
+    protein: food.proteinGrams,
+    carbs: food.carbsGrams,
+    fats: food.fatGrams,
+    fibre: food.fiberGrams ?? 0,
+    micronutrients: getApiFoodMicronutrients(food.metadata),
+    category: food.category
+  };
+}
+
+function mergeFoodOptions(primaryFoods: Food[], fallbackFoods: Food[]) {
+  const merged = new Map<string, Food>();
+
+  [...primaryFoods, ...fallbackFoods].forEach((food) => {
+    if (!merged.has(food.id)) {
+      merged.set(food.id, food);
+    }
+  });
+
+  return Array.from(merged.values());
+}
+
+function getApiFoodSource(food: ApiFoodLibraryItem): FoodDatabaseSource {
+  const metadata = isRecord(food.metadata) ? food.metadata : {};
+  const source = String(metadata.source ?? "").toUpperCase();
+  const sourceId = String(metadata.sourceId ?? "").toLowerCase();
+
+  if (
+    source === "AUS/NZ" ||
+    source === "AUS-NZ" ||
+    source === "AUSTRALIA_NEW_ZEALAND" ||
+    sourceId === "fsanz_afcd" ||
+    sourceId === "fsanz_ausnut" ||
+    sourceId === "fsanz_branded"
+  ) {
+    return "AUS/NZ";
+  }
+
+  if (source === "EFSA" || source === "EU" || sourceId === "efsa_foodex2") {
+    return "EFSA";
+  }
+
+  return "USDA";
+}
+
+function getApiFoodMicronutrients(metadata: unknown) {
+  if (!isRecord(metadata) || !isRecord(metadata.nutrients)) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(metadata.nutrients)
+      .map(([key, value]) => [key, Number(value)])
+      .filter((entry): entry is [string, number] => Number.isFinite(entry[1]))
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function rescaleBuilderFood(food: BuilderFood, nextAmount: number): BuilderFood {

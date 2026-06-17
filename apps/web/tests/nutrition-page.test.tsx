@@ -532,6 +532,59 @@ describe("MealPlansPage", () => {
     expect(screen.getByRole("button", { name: "Macro Only Meal Plan" })).toBeInTheDocument();
   });
 
+  it("searches imported AUS/NZ foods from the nutrition builder selector", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/v1/foods")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "food_ausnut_kangaroo",
+                  scope: "global",
+                  name: "AUSNUT Kangaroo Steak",
+                  category: "Meat",
+                  servingSize: "100g",
+                  calories: 103,
+                  proteinGrams: 22,
+                  carbsGrams: 0,
+                  fatGrams: 1,
+                  fiberGrams: 0,
+                  metadata: {
+                    sourceId: "fsanz_ausnut",
+                    sourceVersion: "2023"
+                  }
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create New Nutritional Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Full Meal Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add food" }));
+
+    const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
+    fireEvent.change(within(foodDrawer).getByRole("searchbox", { name: "Search food database" }), {
+      target: { value: "kangaroo" }
+    });
+
+    expect(await within(foodDrawer).findByRole("checkbox", { name: "Select AUSNUT Kangaroo Steak" })).toBeInTheDocument();
+    expect(within(foodDrawer).getByLabelText("Verified database food")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/v1/foods?limit=5000&source=AUS%2FNZ&search=kangaroo"))
+    );
+  });
+
   it("saves and closes a full meal plan through the persistence API", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
@@ -1240,6 +1293,88 @@ describe("FoodDatabasePage", () => {
     expect(within(dialog).getByText("No detailed micronutrient data is available for this food yet.")).toBeInTheDocument();
   });
 
+  it("paginates API-backed foods twelve at a time", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: Array.from({ length: 13 }, (_, index) => ({
+            id: `food_api_${index + 1}`,
+            scope: "global",
+            name: `USDA Food ${String(index + 1).padStart(2, "0")}`,
+            category: "Imported Foods",
+            servingSize: "100g",
+            calories: 100 + index,
+            proteinGrams: 10,
+            carbsGrams: 20,
+            fatGrams: 5,
+            metadata: {
+              sourceId: "usda_fdc"
+            }
+          }))
+        }),
+        { status: 200 }
+      )
+    );
+
+    render(createElement(FoodDatabasePage));
+
+    expect(await screen.findByText("USDA Food 01")).toBeInTheDocument();
+    expect(screen.getByText("Showing 12 of 13 results")).toBeInTheDocument();
+    expect(screen.queryByText("USDA Food 13")).not.toBeInTheDocument();
+    expect(globalThis.fetch).toHaveBeenCalledWith("/api/v1/foods?limit=5000");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next food page" }));
+
+    expect(screen.getByRole("status", { name: "Food database page" })).toHaveTextContent("Page 2");
+    expect(screen.getByText("Showing 1 of 13 results")).toBeInTheDocument();
+    expect(screen.getByText("USDA Food 13")).toBeInTheDocument();
+    expect(screen.queryByText("USDA Food 01")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next food page" })).toBeDisabled();
+  });
+
+  it("shows imported nutrient-per-100g data inside the food details modal", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "food_ausnut_1",
+              scope: "global",
+              name: "AUSNUT Apple Raw",
+              category: "Fruit",
+              servingSize: "100g",
+              calories: 52,
+              proteinGrams: 0.3,
+              carbsGrams: 12,
+              fatGrams: 0.1,
+              fiberGrams: 2.4,
+              metadata: {
+                sourceId: "fsanz_ausnut",
+                nutrientsPer100g: [
+                  { name: "Vitamin C", unit: "mg", value: 12.5 },
+                  { name: "Calcium", unit: "mg", value: 80 },
+                  { name: "Folate", unit: "µg", value: 9 }
+                ]
+              }
+            }
+          ]
+        }),
+        { status: 200 }
+      )
+    );
+
+    render(createElement(FoodDatabasePage));
+
+    await screen.findByText("No persisted foods match the current filters.");
+    fireEvent.click(screen.getByRole("button", { name: "AUS/NZ" }));
+    fireEvent.click(await screen.findByRole("button", { name: "View nutrient breakdown for AUSNUT Apple Raw" }));
+
+    const dialog = screen.getByRole("dialog", { name: "AUSNUT Apple Raw nutrient breakdown" });
+    expect(within(dialog).getByRole("row", { name: /Vitamin C 12.5 mg/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole("row", { name: /Calcium 80 mg/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole("row", { name: /Folate 9 µg/i })).toBeInTheDocument();
+  });
+
   it("filters imported AUS/NZ foods into the AUS/NZ source tab", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(
@@ -1423,17 +1558,4 @@ describe("FoodDatabasePage", () => {
     expect(within(grid).queryByText("Basmati Rice")).not.toBeInTheDocument();
   });
 
-  it("updates pagination controls locally", () => {
-    render(createElement(FoodDatabasePage));
-
-    expect(screen.getByRole("status", { name: "Food database page" })).toHaveTextContent("Page 1");
-
-    fireEvent.click(screen.getByRole("button", { name: "Next food page" }));
-
-    expect(screen.getByRole("status", { name: "Food database page" })).toHaveTextContent("Page 2");
-
-    fireEvent.click(screen.getByRole("button", { name: "Previous food page" }));
-
-    expect(screen.getByRole("status", { name: "Food database page" })).toHaveTextContent("Page 1");
-  });
 });

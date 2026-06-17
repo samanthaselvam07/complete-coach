@@ -8,8 +8,10 @@ import {
 } from "@/app/generated/prisma/enums";
 
 export const foodLibraryScopeValues = ["global", "private"] as const;
+export const foodLibrarySourceValues = ["AUS/NZ", "EFSA", "USDA"] as const;
 export const mealPlanTemplateStatusValues = ["draft", "published", "archived"] as const;
 export type ApiFoodLibraryScope = (typeof foodLibraryScopeValues)[number];
+export type ApiFoodLibrarySource = (typeof foodLibrarySourceValues)[number];
 export type ApiMealPlanTemplateStatus = (typeof mealPlanTemplateStatusValues)[number];
 
 const foodLibraryScopeToPrisma: Record<ApiFoodLibraryScope, LibraryScope> = {
@@ -46,9 +48,10 @@ const mealPlanAssignmentStatusFromPrisma: Record<
 
 export const foodListQuerySchema = z.object({
   scope: z.enum(foodLibraryScopeValues).optional(),
+  source: z.enum(foodLibrarySourceValues).optional(),
   category: z.string().trim().max(80).optional(),
   search: z.string().trim().max(100).optional(),
-  limit: z.coerce.number().int().min(1).max(100).default(50)
+  limit: z.coerce.number().int().min(1).max(5_000).default(50)
 });
 
 export const createFoodSchema = z.object({
@@ -200,24 +203,59 @@ export function toPrismaMealPlanTemplateStatus(status: ApiMealPlanTemplateStatus
 }
 
 export function buildFoodWhere(organizationId: string, query: FoodListQuery) {
+  const andFilters = [
+    ...(query.search
+      ? [
+          {
+            OR: [
+              { name: { contains: query.search, mode: "insensitive" as const } },
+              { category: { contains: query.search, mode: "insensitive" as const } },
+              { servingSize: { contains: query.search, mode: "insensitive" as const } }
+            ]
+          }
+        ]
+      : []),
+    ...(query.source ? [buildFoodSourceWhere(query.source)] : [])
+  ];
+
   return {
     deletedAt: null,
     OR: [{ scope: LibraryScope.GLOBAL }, { organizationId }],
     ...(query.scope ? { scope: toPrismaFoodLibraryScope(query.scope) } : {}),
     ...(query.category ? { category: query.category } : {}),
-    ...(query.search
-      ? {
-          AND: [
-            {
-              OR: [
-                { name: { contains: query.search, mode: "insensitive" as const } },
-                { category: { contains: query.search, mode: "insensitive" as const } },
-                { servingSize: { contains: query.search, mode: "insensitive" as const } }
-              ]
-            }
-          ]
-        }
-      : {})
+    ...(andFilters.length > 0 ? { AND: andFilters } : {})
+  };
+}
+
+function buildFoodSourceWhere(source: ApiFoodLibrarySource) {
+  if (source === "AUS/NZ") {
+    return {
+      OR: [
+        { metadataJson: { path: ["source"], equals: "AUS/NZ" } },
+        { metadataJson: { path: ["source"], equals: "AUS-NZ" } },
+        { metadataJson: { path: ["source"], equals: "AUSTRALIA_NEW_ZEALAND" } },
+        { metadataJson: { path: ["sourceId"], equals: "fsanz_afcd" } },
+        { metadataJson: { path: ["sourceId"], equals: "fsanz_ausnut" } },
+        { metadataJson: { path: ["sourceId"], equals: "fsanz_branded" } }
+      ]
+    };
+  }
+
+  if (source === "EFSA") {
+    return {
+      OR: [
+        { metadataJson: { path: ["source"], equals: "EFSA" } },
+        { metadataJson: { path: ["source"], equals: "EU" } },
+        { metadataJson: { path: ["sourceId"], equals: "efsa_foodex2" } }
+      ]
+    };
+  }
+
+  return {
+    OR: [
+      { metadataJson: { path: ["source"], equals: "USDA" } },
+      { metadataJson: { path: ["sourceId"], equals: "usda_fdc" } }
+    ]
   };
 }
 

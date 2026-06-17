@@ -181,7 +181,7 @@ AI output statuses:
 - `GET /api/v1/clients/{client_id}/training-programs`: returns training assignments for one organization-scoped client.
 
 ### Nutrition
-- `GET /api/v1/foods`: returns global library foods and active-organization private foods. Query: `scope`, `category`, `search`, `limit`.
+- `GET /api/v1/foods`: returns global library foods and active-organization private foods. Query: `scope`, `source` (`AUS/NZ`, `EFSA`, `USDA`), `category`, `search`, `limit`. Source filtering uses imported food metadata such as FSANZ/AUSNUT, EFSA, and USDA source ids so large verified libraries remain searchable from plan builders.
 - `POST /api/v1/foods`: creates a private organization food. Body: `name`, `category`, `servingSize`, `calories`, `proteinGrams`, `carbsGrams`, `fatGrams`, optional `fiberGrams`, and optional metadata.
 - `GET /api/v1/foods/{food_id}`: returns a global or organization-owned food.
 - `PATCH /api/v1/foods/{food_id}`: updates an organization-owned private food. Global foods and other-tenant foods are not mutable by tenant users.
