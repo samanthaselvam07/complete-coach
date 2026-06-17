@@ -992,7 +992,19 @@ function FullMealPlanFields({
       </div>
 
       {activeDay ? (
-        <div className="space-y-6">
+        <div className={cn("grid gap-6", activeFoodTarget ? "lg:grid-cols-[24rem_minmax(0,1fr)]" : "")}>
+          {activeFoodTarget ? (
+            <FoodDatabaseDrawer
+              source={foodSource}
+              searchQuery={foodSearchQuery}
+              filteredFoods={filteredFoods}
+              onSourceChange={setFoodSource}
+              onSearchChange={setFoodSearchQuery}
+              onAddFood={addFoodToMeal}
+              onClose={() => setActiveFoodTarget(null)}
+            />
+          ) : null}
+          <div className="space-y-6">
           <section className="border-l border-dashed border-indigo-200 pl-6">
             <label className="mb-6 inline-flex border-b-2 border-indigo-500 pb-3">
               <span className="sr-only">Day name</span>
@@ -1157,6 +1169,7 @@ function FullMealPlanFields({
               </button>
             </div>
           </section>
+          </div>
         </div>
       ) : null}
 
@@ -1172,18 +1185,6 @@ function FullMealPlanFields({
       </label>
 
       <MicronutrientBreakdown totals={nutrientTotals} dayName={activeDay?.name ?? "Current day"} />
-
-      {activeFoodTarget ? (
-        <FoodDatabaseDrawer
-          source={foodSource}
-          searchQuery={foodSearchQuery}
-          filteredFoods={filteredFoods}
-          onSourceChange={setFoodSource}
-          onSearchChange={setFoodSearchQuery}
-          onAddFood={addFoodToMeal}
-          onClose={() => setActiveFoodTarget(null)}
-        />
-      ) : null}
 
       {showMealTemplateDialog ? (
         <MealTemplateImportDialog templates={availableTemplates} onImport={importTemplateIntoActiveDay} onClose={() => setShowMealTemplateDialog(false)} />
@@ -1580,8 +1581,9 @@ function FoodDatabaseDrawer({
   return (
     <aside
       role="dialog"
+      aria-modal="false"
       aria-labelledby="food-database-drawer-title"
-      className="fixed left-0 top-0 z-50 h-full w-full max-w-md overflow-y-auto border-r border-slate-200 bg-white p-6 shadow-2xl"
+      className="order-first max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-4"
     >
         <div className="flex items-start justify-between gap-4">
           <div>

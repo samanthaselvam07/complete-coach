@@ -275,7 +275,9 @@ describe("MealPlansPage", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Add food" })[0]);
     const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
-    expect(foodDrawer).toHaveClass("left-0");
+    expect(foodDrawer).toHaveAttribute("aria-modal", "false");
+    expect(foodDrawer).not.toHaveClass("fixed");
+    expect(foodDrawer).toHaveClass("order-first");
     expect(screen.getByRole("button", { name: "Add day" })).toBeEnabled();
     expect(within(foodDrawer).getByRole("searchbox", { name: "Search food database" })).toHaveAttribute(
       "placeholder",
