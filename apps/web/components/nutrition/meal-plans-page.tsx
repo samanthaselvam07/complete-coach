@@ -1101,7 +1101,6 @@ function FullMealPlanFields({
                           >
                             <span role="cell">
                               <span className="block font-bold text-slate-900">{food.name}</span>
-                              <span className="block text-xs text-slate-500">{food.serving}</span>
                             </span>
                             <span role="cell" className="flex items-center gap-2">
                               <input

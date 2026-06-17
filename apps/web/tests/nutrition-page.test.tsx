@@ -293,6 +293,7 @@ describe("MealPlansPage", () => {
 
     const chickenRow = screen.getByRole("row", { name: /Chicken Breast 200 g 330 kcal 62g protein 0g carbs 7.2g fat 0g fibre/i });
     expect(chickenRow).toBeInTheDocument();
+    expect(within(chickenRow).queryByText("100g, Boneless")).not.toBeInTheDocument();
     expect(within(chickenRow).getByLabelText("Quantity for Chicken Breast")).toHaveValue(200);
     fireEvent.change(within(chickenRow).getByLabelText("Quantity for Chicken Breast"), { target: { value: "250" } });
     expect(
