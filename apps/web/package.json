@@ -18,6 +18,7 @@
     "db:seed": "prisma db seed",
     "env:validate": "tsx scripts/validate-env.ts",
     "food:import:candidates": "tsx scripts/import-food-candidates.ts",
+    "food:import:fsanz": "tsx scripts/import-fsanz-foods.ts",
     "food:import:usda": "tsx scripts/import-usda-foods.ts",
     "supplement:import:csv": "tsx scripts/import-supplements-csv.ts",
     "postinstall": "prisma generate",

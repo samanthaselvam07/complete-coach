@@ -23,6 +23,7 @@ Delivered:
 - Demo seed data creates one global food and one private organization food.
 - Food database UI loads persisted food library data and saves new foods through the API with fixture fallback.
 - API, mapper, and component tests cover food isolation, global read/private write behavior, validation, API-backed load, and UI persistence submit.
+- AUS/NZ food database CSV imports can be dry-run or committed with `pnpm --dir apps/web food:import:fsanz <csv-path> --source-id fsanz_ausnut --version <source-version>`. The importer writes global verified foods through the existing food import planner and preserves source metadata for future nutrient expansion.
 
 ## Ticket 015B Outcome
 Completed on May 18, 2026.
