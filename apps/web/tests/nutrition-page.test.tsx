@@ -912,6 +912,52 @@ describe("FoodDatabasePage", () => {
     expect(screen.queryByText("Chicken Breast")).not.toBeInTheDocument();
   });
 
+  it("toggles between card and list food database views", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "food_api_1",
+              scope: "global",
+              name: "API Turkey Mince",
+              category: "Proteins",
+              servingSize: "100g cooked",
+              calories: 180,
+              proteinGrams: 28,
+              carbsGrams: 0,
+              fatGrams: 8,
+              metadata: {
+                sourceId: "usda_fdc"
+              }
+            }
+          ]
+        }),
+        { status: 200 }
+      )
+    );
+
+    render(createElement(FoodDatabasePage));
+
+    expect(await screen.findByText("API Turkey Mince")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("region", { name: "Food grid" })).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Food list" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+
+    const list = screen.getByRole("list", { name: "Food list" });
+    expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(list).getByText("API Turkey Mince")).toBeInTheDocument();
+    expect(within(list).getByText("Proteins")).toBeInTheDocument();
+    expect(within(list).getByText("100g cooked")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Card view" }));
+
+    expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("region", { name: "Food grid" })).toBeInTheDocument();
+  });
+
   it("filters imported AUS/NZ foods into the AUS/NZ source tab", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(

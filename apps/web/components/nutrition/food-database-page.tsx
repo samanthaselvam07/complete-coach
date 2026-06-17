@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Download, Plus, Search, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, Grid2X2, List as ListIcon, Plus, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
@@ -25,6 +25,7 @@ interface ApiFood {
 
 type FoodSource = "api" | "fixtures";
 type FoodDatabaseSource = Food["source"];
+type FoodDatabaseView = "cards" | "list";
 type NewFoodFormState = {
   name: string;
   calories: string;
@@ -91,6 +92,7 @@ export function FoodDatabasePage() {
   const [apiFoods, setApiFoods] = useState<ApiFood[]>([]);
   const [foodSource, setFoodSource] = useState<FoodSource>("fixtures");
   const [loadingFoods, setLoadingFoods] = useState(true);
+  const [viewMode, setViewMode] = useState<FoodDatabaseView>("cards");
   const [savingFood, setSavingFood] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -274,59 +276,70 @@ export function FoodDatabasePage() {
       </div>
 
       <div className="mb-6">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <h2 className="text-xl font-bold">Recent Ingredients</h2>
-          <span className="text-sm text-gray-500">Showing {filteredFoods.length} results</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm text-gray-500">Showing {filteredFoods.length} results</span>
+            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm" aria-label="Food database view">
+              <button
+                type="button"
+                aria-label="Card view"
+                aria-pressed={viewMode === "cards"}
+                className={cn(
+                  "inline-flex size-9 items-center justify-center rounded-md transition-colors",
+                  viewMode === "cards" ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-indigo-50 hover:text-indigo-700"
+                )}
+                onClick={() => setViewMode("cards")}
+              >
+                <Grid2X2 className="size-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                aria-label="List view"
+                aria-pressed={viewMode === "list"}
+                className={cn(
+                  "inline-flex size-9 items-center justify-center rounded-md transition-colors",
+                  viewMode === "list" ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-indigo-50 hover:text-indigo-700"
+                )}
+                onClick={() => setViewMode("list")}
+              >
+                <ListIcon className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <section aria-label="Food grid" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {filteredFoods.map((food) => (
-            <article key={food.id} className="group rounded-xl border border-gray-200 bg-white p-5 transition-all hover:border-indigo-300 hover:shadow-lg">
-              <div className="relative mb-5">
-                {isVerifiedFood(food) ? (
-                  <span
-                    aria-label="Verified Complete Coach food"
-                    className="absolute right-0 top-0 inline-flex size-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
-                    title="Verified Complete Coach food"
-                  >
-                    <Check className="size-4" aria-hidden="true" />
-                  </span>
-                ) : null}
-                <img
-                  src={getFoodImageSrc(food.name)}
-                  alt={food.name}
-                  className="mx-auto size-20 rounded-full object-cover"
-                />
-              </div>
-              <div className="mb-4 text-center">
-                <h3 className="mb-1 font-semibold text-gray-900">{food.name}</h3>
-                <p className="text-xs text-gray-500">{getFoodServing(food)}</p>
-              </div>
-              <div className="space-y-2">
-                <FoodMacro label="Calories" value={`${food.calories}`} tone="text-gray-900" />
-                <FoodMacro label="Protein" value={`${getFoodMacro(food, "protein")}g`} tone="text-blue-600" />
-                <FoodMacro label="Carbs" value={`${getFoodMacro(food, "carbs")}g`} tone="text-green-600" />
-                <FoodMacro label="Fats" value={`${getFoodMacro(food, "fats")}g`} tone="text-orange-600" />
-              </div>
-            </article>
-          ))}
-
-          <button
-            type="button"
-            className="flex min-h-72 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-5 text-center transition-all hover:border-indigo-400 hover:bg-indigo-50"
-            onClick={() => setNewFoodModalOpen(true)}
-          >
-            <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-white">
-              <Plus className="size-6 text-gray-400" aria-hidden="true" />
-            </div>
-            <h3 className="font-semibold text-gray-700">Add New Food</h3>
-          </button>
-          {foodSource === "api" && !loadingFoods && filteredFoods.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
-              No persisted foods match the current filters.
-            </p>
-          ) : null}
-        </section>
+        {filteredFoods.length > 0 ? (
+          viewMode === "cards" ? (
+            <section aria-label="Food grid" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {filteredFoods.map((food) => (
+                <FoodCard key={food.id} food={food} />
+              ))}
+              <AddFoodCard onClick={() => setNewFoodModalOpen(true)} />
+            </section>
+          ) : (
+            <>
+              <FoodList foods={filteredFoods} />
+              <button
+                type="button"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-white px-5 py-4 text-sm font-semibold text-slate-700 transition-colors hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
+                onClick={() => setNewFoodModalOpen(true)}
+              >
+                <Plus className="size-4" aria-hidden="true" />
+                Add New Food
+              </button>
+            </>
+          )
+        ) : (
+          <section aria-label="Food grid" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <AddFoodCard onClick={() => setNewFoodModalOpen(true)} />
+            {foodSource === "api" && !loadingFoods ? (
+              <p className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
+                No persisted foods match the current filters.
+              </p>
+            ) : null}
+          </section>
+        )}
       </div>
 
       <div className="mt-8 flex items-center justify-center gap-2">
@@ -376,6 +389,95 @@ export function FoodDatabasePage() {
         />
       ) : null}
     </div>
+  );
+}
+
+function FoodCard({ food }: { food: ApiFood | Food }) {
+  return (
+    <article className="group rounded-xl border border-gray-200 bg-white p-5 transition-all hover:border-indigo-300 hover:shadow-lg">
+      <div className="relative mb-5">
+        {isVerifiedFood(food) ? (
+          <span
+            aria-label="Verified Complete Coach food"
+            className="absolute right-0 top-0 inline-flex size-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+            title="Verified Complete Coach food"
+          >
+            <Check className="size-4" aria-hidden="true" />
+          </span>
+        ) : null}
+        <img src={getFoodImageSrc(food.name)} alt={food.name} className="mx-auto size-20 rounded-full object-cover" />
+      </div>
+      <div className="mb-4 text-center">
+        <h3 className="mb-1 font-semibold text-gray-900">{food.name}</h3>
+        <p className="text-xs text-gray-500">{getFoodServing(food)}</p>
+      </div>
+      <div className="space-y-2">
+        <FoodMacro label="Calories" value={`${food.calories}`} tone="text-gray-900" />
+        <FoodMacro label="Protein" value={`${getFoodMacro(food, "protein")}g`} tone="text-blue-600" />
+        <FoodMacro label="Carbs" value={`${getFoodMacro(food, "carbs")}g`} tone="text-green-600" />
+        <FoodMacro label="Fats" value={`${getFoodMacro(food, "fats")}g`} tone="text-orange-600" />
+      </div>
+    </article>
+  );
+}
+
+function FoodList({ foods: foodItems }: { foods: Array<ApiFood | Food> }) {
+  return (
+    <div role="list" aria-label="Food list" className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      {foodItems.map((food) => (
+        <article
+          key={food.id}
+          role="listitem"
+          className="grid gap-4 border-b border-gray-100 px-4 py-4 last:border-b-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(8rem,0.7fr)_minmax(18rem,1fr)] lg:items-center"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <img src={getFoodImageSrc(food.name)} alt="" className="size-12 shrink-0 rounded-full object-cover" />
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-2">
+                <h3 className="truncate font-semibold text-slate-950">{food.name}</h3>
+                {isVerifiedFood(food) ? (
+                  <span
+                    aria-label="Verified Complete Coach food"
+                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+                    title="Verified Complete Coach food"
+                  >
+                    <Check className="size-3.5" aria-hidden="true" />
+                  </span>
+                ) : null}
+              </div>
+              <p className="truncate text-xs text-slate-500">{food.category}</p>
+            </div>
+          </div>
+
+          <div className="text-sm text-slate-600">
+            <span className="font-medium text-slate-900">{getFoodServing(food)}</span>
+            <span className="ml-2 text-xs text-slate-400">{getFoodSource(food)}</span>
+          </div>
+
+          <div className="grid grid-cols-4 gap-2 text-xs">
+            <ListMacro label="Cal" value={`${food.calories}`} tone="text-slate-900" />
+            <ListMacro label="Protein" value={`${getFoodMacro(food, "protein")}g`} tone="text-blue-600" />
+            <ListMacro label="Carbs" value={`${getFoodMacro(food, "carbs")}g`} tone="text-green-600" />
+            <ListMacro label="Fats" value={`${getFoodMacro(food, "fats")}g`} tone="text-orange-600" />
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function AddFoodCard({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="flex min-h-72 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-5 text-center transition-all hover:border-indigo-400 hover:bg-indigo-50"
+      onClick={onClick}
+    >
+      <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-white">
+        <Plus className="size-6 text-gray-400" aria-hidden="true" />
+      </div>
+      <h3 className="font-semibold text-gray-700">Add New Food</h3>
+    </button>
   );
 }
 
@@ -602,6 +704,15 @@ function FoodMacro({ label, value, tone }: { label: string; value: string; tone:
   return (
     <div className="flex items-center justify-between text-xs">
       <span className="text-gray-500">{label}</span>
+      <span className={cn("font-semibold", tone)}>{value}</span>
+    </div>
+  );
+}
+
+function ListMacro({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className="rounded-lg bg-slate-50 px-3 py-2">
+      <span className="block text-[10px] font-medium uppercase tracking-wide text-slate-400">{label}</span>
       <span className={cn("font-semibold", tone)}>{value}</span>
     </div>
   );
