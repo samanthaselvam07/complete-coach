@@ -47,6 +47,25 @@ describe("supplement CSV import", () => {
     );
   });
 
+  it("accepts snake_case supplement CSV headers from export files", () => {
+    const rows = parseSupplementCsv(`supplement_name,category,description,used_for,benefits,how_it_works,recommended_dosage,recommended_timing,bioavailability_notes,clinical_description,tags,source_url,notes
+"Creatine Monohydrate",Performance,"Well studied supplement",Strength and power,"Improves repeat high-intensity performance","Supports phosphocreatine resynthesis",3-5g daily,Daily,Consistent daily dosing matters,,"strength;performance",https://example.com/creatine,"Use micronized where possible"
+`);
+
+    const record = normaliseSupplementCsvRow(rows[0]);
+
+    expect(record).toMatchObject({
+      name: "Creatine Monohydrate",
+      category: "Performance",
+      dosage: "3-5g daily",
+      recommendedTiming: "Daily",
+      bioavailabilityNotes: "Consistent daily dosing matters",
+      sourceUrl: "https://example.com/creatine",
+      notes: "Use micronized where possible"
+    });
+    expect(record.clinicalDescription).toContain("Used for: Strength and power");
+  });
+
   it("plans supplement creates, updates, and duplicate skips", () => {
     const rows = parseSupplementCsv(`${csv}${csv.split("\n")[1]}\n`);
 

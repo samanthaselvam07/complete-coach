@@ -4,7 +4,7 @@ import type {
 } from "@/lib/supplementation/supplement-import-types";
 
 export function normaliseSupplementCsvRow(row: SupplementCsvRow): SupplementImportCandidate {
-  const name = row["Supplement name"]?.trim();
+  const name = getFirst(row, "Supplement name", "supplement_name");
   const category = row.category?.trim();
 
   if (!name) {
@@ -17,27 +17,32 @@ export function normaliseSupplementCsvRow(row: SupplementCsvRow): SupplementImpo
 
   const importKey = buildSupplementImportKey(name, category);
   const description = optional(row.description);
-  const usedFor = optional(row["used for"]);
+  const usedFor = getFirst(row, "used for", "used_for");
   const benefits = optional(row.benefits);
-  const howItWorks = optional(row["how it works"]);
+  const howItWorks = getFirst(row, "how it works", "how_it_works");
   const clinicalDescription = buildClinicalDescription({
     description,
     usedFor,
     benefits,
     howItWorks,
-    clinicalDescription: optional(row["clinical description"])
+    clinicalDescription: getFirst(row, "clinical description", "clinical_description")
   });
 
   return {
     importKey,
     name,
     category,
-    recommendedTiming: optional(row["recommended timing"]),
-    dosage: optional(row["recommended dosage"]),
-    bioavailabilityNotes: optional(row["bioavailably notes"]),
+    recommendedTiming: getFirst(row, "recommended timing", "recommended_timing"),
+    dosage: getFirst(row, "recommended dosage", "recommended_dosage"),
+    bioavailabilityNotes: getFirst(
+      row,
+      "bioavailably notes",
+      "bioavailability notes",
+      "bioavailability_notes"
+    ),
     clinicalDescription,
     tags: parseTags(row.tags),
-    sourceUrl: optional(row["source url"]),
+    sourceUrl: getFirst(row, "source url", "source_url"),
     notes: optional(row.notes),
     metadata: {
       importKey,
@@ -46,7 +51,7 @@ export function normaliseSupplementCsvRow(row: SupplementCsvRow): SupplementImpo
       usedFor,
       benefits,
       howItWorks,
-      sourceUrl: optional(row["source url"]),
+      sourceUrl: getFirst(row, "source url", "source_url"),
       notes: optional(row.notes)
     }
   };
@@ -93,6 +98,17 @@ function parseTags(tags?: string) {
 function optional(value?: string) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : undefined;
+}
+
+function getFirst(row: SupplementCsvRow, ...keys: Array<keyof SupplementCsvRow>) {
+  for (const key of keys) {
+    const value = optional(row[key]);
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
 }
 
 function slugify(value: string) {

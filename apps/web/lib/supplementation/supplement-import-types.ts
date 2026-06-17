@@ -1,16 +1,25 @@
 export type SupplementCsvRow = {
-  "Supplement name": string;
+  "Supplement name"?: string;
+  supplement_name?: string;
   category: string;
   description?: string;
   "used for"?: string;
+  used_for?: string;
   benefits?: string;
   "how it works"?: string;
+  how_it_works?: string;
   "recommended dosage"?: string;
+  recommended_dosage?: string;
   "recommended timing"?: string;
+  recommended_timing?: string;
   "bioavailably notes"?: string;
+  "bioavailability notes"?: string;
+  bioavailability_notes?: string;
   "clinical description"?: string;
+  clinical_description?: string;
   tags?: string;
   "source url"?: string;
+  source_url?: string;
   notes?: string;
 };
 

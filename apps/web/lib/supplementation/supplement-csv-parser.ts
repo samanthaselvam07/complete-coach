@@ -1,6 +1,6 @@
 import type { SupplementCsvRow } from "@/lib/supplementation/supplement-import-types";
 
-const requiredHeaders = ["Supplement name", "category"] as const;
+const nameHeaders = ["Supplement name", "supplement_name"] as const;
 
 export function parseSupplementCsv(contents: string): SupplementCsvRow[] {
   const rows = parseCsvRows(contents);
@@ -9,7 +9,11 @@ export function parseSupplementCsv(contents: string): SupplementCsvRow[] {
   }
 
   const [headers, ...dataRows] = rows;
-  const missingHeaders = requiredHeaders.filter((header) => !headers.includes(header));
+  const missingHeaders = [
+    nameHeaders.some((header) => headers.includes(header)) ? undefined : "Supplement name",
+    headers.includes("category") ? undefined : "category"
+  ].filter(Boolean);
+
   if (missingHeaders.length) {
     throw new Error(`Missing required supplement CSV headers: ${missingHeaders.join(", ")}`);
   }
