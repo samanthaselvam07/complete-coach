@@ -54,6 +54,7 @@ export interface Food {
   id: string;
   name: string;
   serving: string;
+  source: "USDA" | "AUS/NZ" | "EFSA";
   calories: number;
   protein: number;
   carbs: number;
@@ -172,6 +173,7 @@ export const foods: Food[] = [
     id: "chicken-breast",
     name: "Chicken Breast",
     serving: "100g, Boneless",
+    source: "USDA",
     calories: 165,
     protein: 31,
     carbs: 0,
@@ -230,6 +232,7 @@ export const foods: Food[] = [
     id: "basmati-rice",
     name: "Basmati Rice",
     serving: "100g, Long Grain",
+    source: "AUS/NZ",
     calories: 121,
     protein: 3,
     carbs: 25,
@@ -262,6 +265,7 @@ export const foods: Food[] = [
     id: "raw-avocado",
     name: "Raw Avocado",
     serving: "100g",
+    source: "EFSA",
     calories: 160,
     protein: 2,
     carbs: 9,
@@ -306,6 +310,7 @@ export const foods: Food[] = [
     id: "boiled-oats",
     name: "Boiled Oats",
     serving: "100g",
+    source: "USDA",
     calories: 389,
     protein: 13,
     carbs: 66,
@@ -360,6 +365,7 @@ export const foods: Food[] = [
     id: "whey-isolate",
     name: "Whey Isolate",
     serving: "30g Scoop",
+    source: "AUS/NZ",
     calories: 120,
     protein: 27,
     carbs: 1,

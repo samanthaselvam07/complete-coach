@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Database, Download, Plus, Search } from "luc
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
-import { foodCategories, foods, type Food } from "@/fixtures/nutrition";
+import { foods, type Food } from "@/fixtures/nutrition";
 import { cn } from "@/lib/utils";
 
 interface ApiFood {
@@ -17,18 +17,22 @@ interface ApiFood {
   proteinGrams: number;
   carbsGrams: number;
   fatGrams: number;
+  metadata?: {
+    source?: string;
+  } | null;
 }
 
 type FoodSource = "api" | "fixtures";
+type FoodDatabaseSource = Food["source"];
 
 const databaseSources = [
-  { id: "usda", label: "USDA", detail: "600,000+ items", active: true },
-  { id: "aus-nz", label: "Aus & NZ", detail: "", active: false },
-  { id: "eu", label: "EU", detail: "", active: false }
+  { id: "USDA", label: "USDA", detail: "FoodData Central" },
+  { id: "AUS/NZ", label: "AUS/NZ", detail: "Australia & New Zealand" },
+  { id: "EFSA", label: "EFSA", detail: "European Food Safety Authority" }
 ] as const;
 
 export function FoodDatabasePage() {
-  const [selectedCategory, setSelectedCategory] = useState("All Ingredients");
+  const [selectedSource, setSelectedSource] = useState<FoodDatabaseSource>("USDA");
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [apiFoods, setApiFoods] = useState<ApiFood[]>([]);
@@ -75,12 +79,8 @@ export function FoodDatabasePage() {
   }, []);
 
   const sourceFoods: Array<ApiFood | Food> = foodSource === "api" ? apiFoods : foods;
-  const sourceCategories =
-    foodSource === "api"
-      ? ["All Ingredients", ...Array.from(new Set(apiFoods.map((food) => food.category))).sort()]
-      : foodCategories;
   const filteredFoods = sourceFoods
-    .filter((food) => selectedCategory === "All Ingredients" || food.category === selectedCategory)
+    .filter((food) => getFoodSource(food) === selectedSource)
     .filter(
       (food) =>
         food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -116,7 +116,7 @@ export function FoodDatabasePage() {
 
       setApiFoods((currentFoods) => [payload.data as ApiFood, ...currentFoods]);
       setFoodSource("api");
-      setSelectedCategory("All Ingredients");
+      setSelectedSource(getFoodSource(payload.data as ApiFood));
       setStatusMessage("Food saved.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Food could not be saved.");
@@ -182,38 +182,23 @@ export function FoodDatabasePage() {
             <button
               key={source.id}
               type="button"
-              aria-label={source.detail ? `${source.label} ${source.detail}` : source.label}
+              aria-pressed={selectedSource === source.id}
               className={cn(
                 "inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold shadow-sm transition",
-                source.active
+                selectedSource === source.id
                   ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                   : "border-gray-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-indigo-50"
               )}
+              onClick={() => setSelectedSource(source.id)}
             >
               {source.label}
-              {source.detail ? <span className="text-[10px] font-medium text-indigo-500">{source.detail}</span> : null}
+              <span aria-hidden="true" className="text-[10px] font-medium text-indigo-500">
+                {source.detail}
+              </span>
             </button>
           ))}
         </div>
-        <span className="text-xs font-medium text-slate-400">USDA FoodData Central</span>
-      </div>
-
-      <div className="mb-8 flex flex-wrap items-center gap-3">
-        {sourceCategories.map((category) => (
-          <button
-            key={category}
-            type="button"
-            className={cn(
-              "rounded-full px-4 py-2 text-sm font-semibold transition-all",
-              selectedCategory === category
-                ? "bg-orange-500 text-white shadow-sm"
-                : "border border-gray-200 bg-white text-slate-700 hover:border-orange-300"
-            )}
-            onClick={() => setSelectedCategory(category)}
-          >
-            {category}
-          </button>
-        ))}
+        <span className="text-xs font-medium text-slate-400">{getSourceDescription(selectedSource)}</span>
       </div>
 
       <section className="mb-8 flex items-center justify-between rounded-xl bg-gradient-to-r from-indigo-600 to-violet-700 p-6 shadow-sm">
@@ -323,6 +308,28 @@ export function FoodDatabasePage() {
 
 function getFoodServing(food: ApiFood | Food) {
   return "serving" in food ? food.serving : food.servingSize;
+}
+
+function getFoodSource(food: ApiFood | Food): FoodDatabaseSource {
+  if ("source" in food) {
+    return food.source;
+  }
+
+  const source = food.metadata?.source?.toUpperCase();
+
+  if (source === "AUS/NZ" || source === "AUS-NZ" || source === "AUSTRALIA_NEW_ZEALAND") {
+    return "AUS/NZ";
+  }
+
+  if (source === "EFSA" || source === "EU") {
+    return "EFSA";
+  }
+
+  return "USDA";
+}
+
+function getSourceDescription(source: FoodDatabaseSource) {
+  return databaseSources.find((databaseSource) => databaseSource.id === source)?.detail ?? "Verified food library";
 }
 
 function getFoodMacro(food: ApiFood | Food, macro: "protein" | "carbs" | "fats") {

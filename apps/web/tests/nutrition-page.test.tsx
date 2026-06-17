@@ -649,11 +649,14 @@ describe("FoodDatabasePage", () => {
       "Search thousands of ingredients..."
     );
     expect(screen.getByText("Source:")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /USDA 600,000\+ items/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Aus & NZ" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "EU" })).toBeInTheDocument();
-    expect(screen.getByText("USDA FoodData Central")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "USDA" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "AUS/NZ" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "EFSA" })).toBeInTheDocument();
+    expect(screen.getAllByText("FoodData Central").length).toBeGreaterThan(0);
     expect(screen.getByAltText("Chicken Breast")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "All Ingredients" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Proteins" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Carbs" })).not.toBeInTheDocument();
   });
 
   it("loads API-backed foods when persistence is available", async () => {
@@ -755,6 +758,7 @@ describe("FoodDatabasePage", () => {
   it("searches foods by name", () => {
     render(createElement(FoodDatabasePage));
 
+    fireEvent.click(screen.getByRole("button", { name: "AUS/NZ" }));
     fireEvent.change(screen.getByRole("searchbox", { name: /search foods/i }), {
       target: { value: "rice" }
     });
@@ -763,14 +767,22 @@ describe("FoodDatabasePage", () => {
     expect(screen.queryByText("Chicken Breast")).not.toBeInTheDocument();
   });
 
-  it("filters foods by category", () => {
+  it("filters foods by source", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(null, { status: 503 }));
+
     render(createElement(FoodDatabasePage));
 
-    fireEvent.click(screen.getByRole("button", { name: "Proteins" }));
+    await screen.findByText("Food persistence API unavailable. Showing fixture food library.");
+    fireEvent.click(screen.getByRole("button", { name: "AUS/NZ" }));
 
     const grid = screen.getByRole("region", { name: "Food grid" });
-    expect(within(grid).getByText("Chicken Breast")).toBeInTheDocument();
+    expect(within(grid).getByText("Basmati Rice")).toBeInTheDocument();
     expect(within(grid).getByText("Whey Isolate")).toBeInTheDocument();
+    expect(within(grid).queryByText("Chicken Breast")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "EFSA" }));
+
+    expect(within(grid).getByText("Raw Avocado")).toBeInTheDocument();
     expect(within(grid).queryByText("Basmati Rice")).not.toBeInTheDocument();
   });
 
