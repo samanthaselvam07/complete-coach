@@ -27,6 +27,7 @@ Added a live verification script:
 Added mocked coverage:
 - `apps/web/tests/usda-fooddata-central.test.ts`
 - `apps/web/tests/food-import-processor.test.ts`
+- `apps/web/tests/food-import-writer.test.ts`
 
 ## Import Processing Design
 Each source maps into a shared `ImportedFoodCandidate` shape before it is normalised.
@@ -106,6 +107,25 @@ It returns:
 - skipped records for duplicate candidates inside the same batch
 
 `getGlobalFoodImportCreateData` and `getGlobalFoodImportUpdateData` turn normalised records into Prisma-ready writes for `food_library_items`.
+
+## Import Commands
+USDA search import:
+
+```bash
+pnpm --dir apps/web food:import:usda "greek yogurt"
+pnpm --dir apps/web food:import:usda "greek yogurt" --commit
+```
+
+Generic source-normalised candidate import:
+
+```bash
+pnpm --dir apps/web food:import:candidates ./foods.json
+pnpm --dir apps/web food:import:candidates ./foods.json --commit
+```
+
+Both commands dry-run by default. `--commit` is required before writing records to Postgres.
+
+The generic JSON file should contain an array of `ImportedFoodCandidate` objects. Source-specific file parsers should convert raw USDA/FSANZ/other files into this shared shape before writing.
 
 ## Running The Live Pull
 The script uses `FDC_API_KEY` when present and falls back to USDA's `DEMO_KEY`.

@@ -96,5 +96,11 @@ Rules:
 - `POST /api/v1/meal-plan-assignments`
 - `GET /api/v1/clients/{client_id}/meal-plans`
 
+## Import Commands
+- `pnpm --dir apps/web food:import:usda "search term"` dry-runs a USDA FoodData Central import plan.
+- `pnpm --dir apps/web food:import:usda "search term" --commit` writes the USDA import plan to global foods.
+- `pnpm --dir apps/web food:import:candidates ./foods.json` dry-runs source-normalised food candidate imports.
+- `pnpm --dir apps/web food:import:candidates ./foods.json --commit` writes source-normalised candidates to global foods.
+
 ## Remaining M6 Work
 - None. M6 is complete.

@@ -66,19 +66,24 @@ export type ExistingImportedFood = {
   metadataJson: unknown;
 };
 
-export type FoodImportPlanItem =
+export type FoodImportCreatePlanItem =
   | {
       action: "create";
       record: FoodLibraryImportRecord;
-    }
-  | {
-      action: "update";
-      id: string;
-      record: FoodLibraryImportRecord;
     };
 
+export type FoodImportUpdatePlanItem = {
+  action: "update";
+  id: string;
+  record: FoodLibraryImportRecord;
+};
+
+export type FoodImportPlanItem =
+  | FoodImportCreatePlanItem
+  | FoodImportUpdatePlanItem;
+
 export type FoodImportPlan = {
-  create: FoodImportPlanItem[];
-  update: FoodImportPlanItem[];
+  create: FoodImportCreatePlanItem[];
+  update: FoodImportUpdatePlanItem[];
   skipped: Array<{ candidate: ImportedFoodCandidate; reason: string }>;
 };

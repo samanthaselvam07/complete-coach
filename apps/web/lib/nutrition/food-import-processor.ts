@@ -3,8 +3,9 @@ import {
 } from "@/lib/nutrition/food-import-normalizer";
 import type {
   ExistingImportedFood,
+  FoodImportCreatePlanItem,
   FoodImportPlan,
-  FoodImportPlanItem,
+  FoodImportUpdatePlanItem,
   ImportedFoodCandidate
 } from "@/lib/nutrition/food-import-types";
 
@@ -18,8 +19,8 @@ export function buildFoodImportPlan(
       .filter((entry): entry is [string, ExistingImportedFood] => Boolean(entry[0]))
   );
 
-  const create: FoodImportPlanItem[] = [];
-  const update: FoodImportPlanItem[] = [];
+  const create: FoodImportCreatePlanItem[] = [];
+  const update: FoodImportUpdatePlanItem[] = [];
   const skipped: FoodImportPlan["skipped"] = [];
   const seen = new Set<string>();
 
