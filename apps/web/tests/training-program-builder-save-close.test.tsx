@@ -9,13 +9,27 @@ afterEach(() => {
 });
 
 describe("Training program builder save and close", () => {
-  it("returns to the custom programs tab with a local program", async () => {
+  it("persists the program and returns to the custom programs tab", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
       if (url === "/api/v1/training-program-templates" && init?.method === "POST") {
         return Promise.resolve(
-          new Response(JSON.stringify({ error: { message: "Training template API unavailable." } }), { status: 503 })
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "training_program_saved",
+                name: "Preview Hypertrophy Build",
+                description: "Coach-created custom program from the program library.",
+                goal: "custom-program",
+                durationWeeks: 8,
+                status: "draft",
+                template: { days: [{ name: "Day 1", exercises: [] }], instructions: "" },
+                updatedAt: "2026-06-17T00:00:00.000Z"
+              }
+            }),
+            { status: 201 }
+          )
         );
       }
 
@@ -35,9 +49,12 @@ describe("Training program builder save and close", () => {
     expect(screen.getByRole("tab", { name: "Custom programs" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Preview Hypertrophy Build added to Custom programs.")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
-    expect(fetchMock).not.toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/training-program-templates",
-      expect.objectContaining({ method: "POST" })
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Preview Hypertrophy Build")
+      })
     );
   });
 

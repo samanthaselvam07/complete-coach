@@ -302,10 +302,30 @@ describe("TrainingProgramsPage", () => {
                 id: "template_created",
                 name: "Lower Strength Build",
                 description: "Four week lower body progression.",
-                goal: "custom",
+                goal: "custom-program",
                 durationWeeks: 1,
                 status: "draft",
-                template: { days: [] },
+                template: {
+                  days: [
+                    {
+                      name: "Lower Day",
+                      exercises: [
+                        {
+                          exerciseId: "manual-entry",
+                          exerciseName: "Back Squat",
+                          sets: 4,
+                          reps: "6-8",
+                          rpe: "8",
+                          rir: "2",
+                          restSeconds: 150,
+                          section: "workout"
+                        }
+                      ]
+                    },
+                    { name: "Day 2", exercises: [] }
+                  ],
+                  instructions: "Progress only if reps stay crisp."
+                },
                 updatedAt: "2026-05-14T00:00:00.000Z"
               }
             }),
@@ -350,9 +370,12 @@ describe("TrainingProgramsPage", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(screen.getByRole("tab", { name: "Custom programs" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "Custom programs" })).toHaveTextContent("Lower Strength Build");
-    expect(fetchMock).not.toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/training-program-templates",
-      expect.objectContaining({ method: "POST" })
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Lower Strength Build")
+      })
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Edit Lower Strength Build" }));

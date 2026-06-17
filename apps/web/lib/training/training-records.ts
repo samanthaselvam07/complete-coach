@@ -116,7 +116,7 @@ export const trainingTemplateSchema = z.object({
     .array(
       z.object({
         name: z.string().trim().min(1).max(120),
-        exercises: z.array(trainingTemplateExerciseSchema).min(1).max(30)
+        exercises: z.array(trainingTemplateExerciseSchema).max(30)
       })
     )
     .min(1)

@@ -115,6 +115,17 @@ export interface MealAssignmentRow {
   status: string;
 }
 
+interface MealPlanTemplateSaveInput {
+  name: string;
+  phase: string;
+  targetCalories: number;
+  proteinGrams: number;
+  carbsGrams: number;
+  fatGrams: number;
+  status: "draft" | "published";
+  template: ApiMealPlanTemplate["template"];
+}
+
 export function MealPlansPage() {
   const [activeTab, setActiveTab] = useState<MealPlanTab>("Meal Plans");
   const [templates, setTemplates] = useState<ApiMealPlanTemplate[]>([]);
@@ -188,10 +199,10 @@ export function MealPlansPage() {
   const templateCards = useMemo(() => [...createdTemplates, ...getMealTemplateCards(source, templates)], [createdTemplates, source, templates]);
   const assignmentRows = useMemo(
     () =>
-      [...createdPlans, ...getMealAssignmentRows(source, assignments)]
+      [...createdPlans, ...getMealAssignmentRows(source, assignments, templates)]
         .filter((assignment) => !hiddenMealPlanIds.includes(assignment.id))
         .map((assignment) => ({ ...assignment, ...(mealPlanOverrides[assignment.id] ?? {}) })),
-    [assignments, createdPlans, hiddenMealPlanIds, mealPlanOverrides, source]
+    [assignments, createdPlans, hiddenMealPlanIds, mealPlanOverrides, source, templates]
   );
 
   function openPlanTypeDialog() {
@@ -200,13 +211,39 @@ export function MealPlansPage() {
     setShowPlanTypeDialog(true);
   }
 
-  function saveNutritionPlan(plan: MealAssignmentRow) {
-    setCreatedPlans((currentPlans) => [plan, ...currentPlans]);
-    setEditingPlan(null);
-    setShowPlanTypeDialog(false);
-    setShowMacroChoiceDialog(false);
-    setActiveTab("Meal Plans");
-    setStatusMessage("Nutrition plan saved.");
+  async function saveNutritionPlan(input: MealPlanTemplateSaveInput, options: { close: boolean }) {
+    setSaving(true);
+    setStatusMessage(null);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/v1/meal-plan-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input)
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.data) {
+        throw new Error(payload.error?.message ?? "Nutrition plan could not be saved.");
+      }
+
+      setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
+      setSource("api");
+      setShowPlanTypeDialog(false);
+      setShowMacroChoiceDialog(false);
+      setActiveTab("Meal Plans");
+      setStatusMessage("Nutrition plan saved.");
+
+      if (options.close) {
+        setBuilderMode(null);
+        setEditingPlan(null);
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Nutrition plan could not be saved.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function createMealTemplate(template: MealTemplateCard) {
@@ -306,6 +343,7 @@ export function MealPlansPage() {
         <NutritionPlanBuilder
           mode={builderMode}
           initialPlan={editingPlan}
+          saving={saving}
           availableTemplates={templateCards.length > 0 ? templateCards : getMealTemplateCards("fixtures", [])}
           onBack={() => {
             setBuilderMode(null);
@@ -546,6 +584,7 @@ function MacroPlanChoiceDialog({
 function NutritionPlanBuilder({
   mode,
   initialPlan,
+  saving,
   availableTemplates,
   onBack,
   onSave,
@@ -553,9 +592,10 @@ function NutritionPlanBuilder({
 }: {
   mode: NutritionPlanBuilderMode;
   initialPlan?: MealAssignmentRow | null;
+  saving: boolean;
   availableTemplates: MealTemplateCard[];
   onBack: () => void;
-  onSave: (plan: MealAssignmentRow) => void;
+  onSave: (input: MealPlanTemplateSaveInput, options: { close: boolean }) => Promise<void>;
   onCreateMealTemplate: (template: MealTemplateCard) => void;
 }) {
   const [title, setTitle] = useState(initialPlan?.planName ?? (mode === "full" ? "New Nutrition Plan" : "Macro Only Nutrition Plan"));
@@ -564,22 +604,33 @@ function NutritionPlanBuilder({
   const [carbs, setCarbs] = useState(String(initialPlan?.carbs ?? 0));
   const [fats, setFats] = useState(String(initialPlan?.fats ?? 0));
   const [calories, setCalories] = useState(String(initialPlan?.calories ?? 0));
+  const [fullPlanDays, setFullPlanDays] = useState<BuilderDay[]>([]);
   const isFullPlan = mode === "full";
   const isMealMacroPlan = mode === "macro-meal";
 
-  const savePlan = () => {
+  const savePlan = (close: boolean) => {
     const planName = title.trim() || (isFullPlan ? "New Nutrition Plan" : "Macro Only Nutrition Plan");
-    onSave({
-      id: `local_meal_plan_${Date.now()}`,
-      planName,
-      activeClientCount: 0,
-      calories: Number(calories) || 0,
-      protein: Number(protein) || 0,
-      carbs: Number(carbs) || 0,
-      fats: Number(fats) || 0,
-      lastEdited: "Just now",
-      status: "draft"
-    });
+    const fullPlanTotals = calculatePlanTotals(fullPlanDays);
+    const fallbackCalories = isFullPlan ? fullPlanTotals.calories : Number(calories) || 0;
+    const fallbackProtein = isFullPlan ? fullPlanTotals.protein : Number(protein) || 0;
+    const fallbackCarbs = isFullPlan ? fullPlanTotals.carbs : Number(carbs) || 0;
+    const fallbackFats = isFullPlan ? fullPlanTotals.fats : Number(fats) || 0;
+
+    void onSave(
+      {
+        name: planName,
+        phase: isFullPlan ? "Full meal plan" : "Macro only meal plan",
+        targetCalories: Math.round(fallbackCalories),
+        proteinGrams: fallbackProtein,
+        carbsGrams: fallbackCarbs,
+        fatGrams: fallbackFats,
+        status: "draft",
+        template: isFullPlan
+          ? getFullMealPlanTemplatePayload(fullPlanDays)
+          : getMacroMealPlanTemplatePayload(dayName, isMealMacroPlan)
+      },
+      { close }
+    );
   };
 
   return (
@@ -604,6 +655,7 @@ function NutritionPlanBuilder({
             setFats={setFats}
             setCalories={setCalories}
             availableTemplates={availableTemplates}
+            onDaysChange={setFullPlanDays}
             onCreateMealTemplate={onCreateMealTemplate}
           />
         ) : (
@@ -625,8 +677,21 @@ function NutritionPlanBuilder({
         )}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <button type="button" className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700" onClick={savePlan}>
-            Save
+          <button
+            type="button"
+            className="rounded-xl border border-indigo-200 bg-white px-5 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 disabled:opacity-60"
+            disabled={saving}
+            onClick={() => savePlan(false)}
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+          <button
+            type="button"
+            className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-60"
+            disabled={saving}
+            onClick={() => savePlan(true)}
+          >
+            {saving ? "Saving..." : "Save & Close"}
           </button>
         </div>
       </section>
@@ -646,6 +711,7 @@ function FullMealPlanFields({
   setFats,
   setCalories,
   availableTemplates,
+  onDaysChange,
   onCreateMealTemplate
 }: {
   title: string;
@@ -659,6 +725,7 @@ function FullMealPlanFields({
   setFats: (value: string) => void;
   setCalories: (value: string) => void;
   availableTemplates: MealTemplateCard[];
+  onDaysChange: (days: BuilderDay[]) => void;
   onCreateMealTemplate: (template: MealTemplateCard) => void;
 }) {
   const [days, setDays] = useState<BuilderDay[]>(() => [createBuilderDay(1)]);
@@ -675,6 +742,10 @@ function FullMealPlanFields({
   const dayTotals = calculateDayTotals(activeDay);
   const nutrientTotals = calculateNutrientTotals(activeDay);
   const activeDayIndex = Math.max(days.findIndex((day) => day.id === activeDay?.id), 0);
+
+  useEffect(() => {
+    onDaysChange(days);
+  }, [days, onDaysChange]);
 
   const updateMealName = (dayId: string, mealId: string, name: string) => {
     setDays((currentDays) =>
@@ -1363,6 +1434,65 @@ function calculateDayTotals(day?: BuilderDay) {
   });
 
   return totals;
+}
+
+function calculatePlanTotals(days: BuilderDay[]) {
+  return days.reduce(
+    (totals, day) => {
+      const dayTotals = calculateDayTotals(day);
+
+      return {
+        calories: totals.calories + dayTotals.calories,
+        protein: totals.protein + dayTotals.protein,
+        carbs: totals.carbs + dayTotals.carbs,
+        fats: totals.fats + dayTotals.fats,
+        fibre: totals.fibre + dayTotals.fibre
+      };
+    },
+    { calories: 0, protein: 0, carbs: 0, fats: 0, fibre: 0 }
+  );
+}
+
+function getFullMealPlanTemplatePayload(days: BuilderDay[]): ApiMealPlanTemplate["template"] {
+  const templateDays = days.length > 0 ? days : [createBuilderDay(1)];
+
+  return {
+    days: templateDays.map((day, dayIndex) => ({
+      name: day.name.trim() || `Day ${dayIndex + 1}`,
+      meals: (day.meals.length > 0 ? day.meals : [createBuilderMeal(1)]).map((meal) => ({
+        meal: meal.name.trim() || "Meal",
+        foods: meal.foods.map((food) => ({
+          foodName: food.name,
+          servingSize: getFoodServingLabel(food),
+          calories: Math.round(food.calories),
+          proteinGrams: food.protein,
+          carbsGrams: food.carbs,
+          fatGrams: food.fats
+        }))
+      }))
+    }))
+  };
+}
+
+function getMacroMealPlanTemplatePayload(dayName: string, eachMeal: boolean): ApiMealPlanTemplate["template"] {
+  return {
+    days: [
+      {
+        name: dayName.trim() || "Day 1",
+        meals: [
+          {
+            meal: eachMeal ? "Meal" : "Daily Macro Targets",
+            foods: []
+          }
+        ]
+      }
+    ]
+  };
+}
+
+function getFoodServingLabel(food: BuilderFood) {
+  const quantityDisplay = getFoodQuantityDisplay(food);
+  return `${formatMacroValue(quantityDisplay.amount)} ${quantityDisplay.unit}`;
 }
 
 function calculateNutrientTotals(day?: BuilderDay) {
@@ -2355,7 +2485,7 @@ export function getMealTemplateCards(source: MealPlanSource, templates: ApiMealP
     }));
   }
 
-  return templates.map((template) => ({
+  return templates.filter((template) => template.status !== "draft").map((template) => ({
     id: template.id,
     name: template.name,
     description: template.phase ? `${template.phase} protocol` : "Nutrition protocol",
@@ -2368,7 +2498,11 @@ export function getMealTemplateCards(source: MealPlanSource, templates: ApiMealP
   }));
 }
 
-export function getMealAssignmentRows(source: MealPlanSource, assignments: ApiMealPlanAssignment[]): MealAssignmentRow[] {
+export function getMealAssignmentRows(
+  source: MealPlanSource,
+  assignments: ApiMealPlanAssignment[],
+  templates: ApiMealPlanTemplate[] = []
+): MealAssignmentRow[] {
   if (source === "fixtures") {
     return mealAssignments.map((assignment) => ({
       id: assignment.id,
@@ -2390,7 +2524,7 @@ export function getMealAssignmentRows(source: MealPlanSource, assignments: ApiMe
     assignmentGroups.set(assignmentKey, [...(assignmentGroups.get(assignmentKey) ?? []), assignment]);
   });
 
-  return Array.from(assignmentGroups.entries()).map(([assignmentKey, group]) => {
+  const assignedRows = Array.from(assignmentGroups.entries()).map(([assignmentKey, group]) => {
     const sortedGroup = [...group].sort(
       (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
     );
@@ -2408,6 +2542,23 @@ export function getMealAssignmentRows(source: MealPlanSource, assignments: ApiMe
       status: assignment.status
     };
   });
+
+  const assignedTemplateIds = new Set(assignments.map((assignment) => assignment.templateId).filter(Boolean));
+  const draftPlanRows = templates
+    .filter((template) => template.status === "draft" && !assignedTemplateIds.has(template.id))
+    .map((template) => ({
+      id: template.id,
+      planName: template.name,
+      activeClientCount: 0,
+      calories: template.targetCalories,
+      protein: template.proteinGrams,
+      carbs: template.carbsGrams,
+      fats: template.fatGrams,
+      lastEdited: formatDisplayDate(template.updatedAt),
+      status: "draft"
+    }));
+
+  return [...draftPlanRows, ...assignedRows];
 }
 
 export function formatDisplayDate(value: string) {

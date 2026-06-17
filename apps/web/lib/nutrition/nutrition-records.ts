@@ -86,7 +86,6 @@ export const mealPlanItemSchema = z.object({
         fatGrams: z.number().min(0).max(5_000)
       })
     )
-    .min(1)
     .max(30)
 });
 
@@ -105,7 +104,7 @@ export const mealPlanTemplateSchema = z.object({
 export const createMealPlanTemplateSchema = z.object({
   name: z.string().trim().min(1).max(160),
   phase: z.string().trim().max(120).optional(),
-  targetCalories: z.number().int().min(1).max(20_000),
+  targetCalories: z.number().int().min(0).max(20_000),
   proteinGrams: z.number().min(0).max(5_000),
   carbsGrams: z.number().min(0).max(5_000),
   fatGrams: z.number().min(0).max(5_000),

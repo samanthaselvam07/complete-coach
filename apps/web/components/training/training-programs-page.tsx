@@ -204,7 +204,7 @@ export function TrainingProgramsPage() {
       const response = await fetch("/api/v1/training-program-templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(getTrainingProgramTemplatePayload(draft, templates.length + 1))
+        body: JSON.stringify(getTrainingProgramTemplatePayload(draft, templates.length + 1, { status: "published" }))
       });
 
       const payload = await response.json();
@@ -238,15 +238,40 @@ export function TrainingProgramsPage() {
     }
   }
 
-  function saveCustomProgramFromDraft(draft: TrainingProgramDraft) {
-    const customProgram = createLocalTrainingProgramFromDraft(draft);
-
-    setLocalProgramRows((currentRows) => [customProgram, ...currentRows]);
-    setActiveTab("Custom programs");
-    setProgramDraft(null);
-    setCreationDialogMode(null);
-    setStatusMessage(`${customProgram.name} added to Custom programs.`);
+  async function saveCustomProgramFromDraft(draft: TrainingProgramDraft) {
+    setSaving(true);
+    setStatusMessage(null);
     setErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/v1/training-program-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          getTrainingProgramTemplatePayload(draft, templates.length + 1, {
+            status: "draft",
+            goal: "custom-program",
+            description: draft.overview.trim() || "Coach-created custom program from the program library."
+          })
+        )
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.data) {
+        throw new Error(payload.error?.message ?? "Training program could not be saved.");
+      }
+
+      setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
+      setSource("api");
+      setActiveTab("Custom programs");
+      setProgramDraft(null);
+      setCreationDialogMode(null);
+      setStatusMessage(`${payload.data.name} added to Custom programs.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Training program could not be saved.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function openScratchBuilder() {
@@ -421,7 +446,7 @@ export function TrainingProgramsPage() {
         saving={saving}
         onDraftChange={setProgramDraft}
         onCancel={() => setProgramDraft(null)}
-        onSave={() => saveCustomProgramFromDraft(programDraft)}
+        onSave={() => void saveCustomProgramFromDraft(programDraft)}
         onSaveAsTemplate={() => createTemplateFromDraft(programDraft)}
       />
     );
@@ -538,7 +563,7 @@ export function getProgramTemplateCards(
     }));
   }
 
-  return templates.map((template, index) => ({
+  return templates.filter((template) => template.status !== "draft" || template.goal !== "custom-program").map((template, index) => ({
     id: template.id,
     name: template.name,
     description: template.description || "No description recorded.",
@@ -564,50 +589,6 @@ function createLocalTrainingTemplateFromDraft(draft: TrainingProgramDraft, fallb
     template: payload.template,
     updatedAt: new Date().toISOString()
   };
-}
-
-function createLocalTrainingProgramFromDraft(draft: TrainingProgramDraft): ProgramAssignmentRow {
-  const durationWeeks = parseDraftDurationWeeks(draft);
-  const title = draft.title.trim() || `Custom Program ${Date.now()}`;
-
-  return {
-    id: `local-program-${Date.now()}`,
-    name: title,
-    clientName: "Unassigned",
-    activeClientCount: 0,
-    progress: 0,
-    weeksTotal: durationWeeks,
-    startDate: "Draft",
-    lastEdited: "Just now",
-    color: "bg-indigo-100 text-indigo-700",
-    icon: title.charAt(0).toUpperCase(),
-    apiTemplate: createTrainingProgramDraftSourceFromDraft(draft, title, durationWeeks),
-    templateId: null
-  };
-}
-
-function createTrainingProgramDraftSourceFromDraft(
-  draft: TrainingProgramDraft,
-  title: string,
-  durationWeeks: number
-): TrainingProgramTemplateDraftSource {
-  const payload = getTrainingProgramTemplatePayload(draft, 1);
-
-  return {
-    name: title,
-    description: draft.overview.trim() || payload.description,
-    goal: draft.tags.trim() || payload.goal,
-    durationWeeks,
-    template: payload.template
-  };
-}
-
-function parseDraftDurationWeeks(draft: TrainingProgramDraft) {
-  const parsedDuration = Number.parseInt(draft.durationWeeks, 10);
-
-  return Number.isFinite(parsedDuration) && parsedDuration > 0
-    ? parsedDuration
-    : Math.max(1, draft.days.length);
 }
 
 function getTemplateDraftSource(template: ProgramTemplateCard): TrainingProgramTemplateDraftSource {
@@ -696,7 +677,7 @@ export function getProgramAssignmentRows(
     assignmentGroups.set(assignmentKey, [...(assignmentGroups.get(assignmentKey) ?? []), assignment]);
   });
 
-  return Array.from(assignmentGroups.entries()).map(([programKey, group], index) => {
+  const assignedRows = Array.from(assignmentGroups.entries()).map(([programKey, group], index) => {
     const assignment = group.find((entry) => entry.status === "active") ?? group[0];
     const template = getAssignmentTemplateDraftSource(assignment, templates);
 
@@ -715,6 +696,32 @@ export function getProgramAssignmentRows(
       templateId: assignment.templateId
     };
   });
+
+  const assignedTemplateIds = new Set(assignments.map((assignment) => assignment.templateId).filter(Boolean));
+  const unassignedCustomRows = templates
+    .filter((template) => template.status === "draft" && template.goal === "custom-program" && !assignedTemplateIds.has(template.id))
+    .map((template, index) => ({
+      id: template.id,
+      name: template.name,
+      clientName: "Unassigned",
+      activeClientCount: 0,
+      progress: 0,
+      weeksTotal: template.durationWeeks,
+      startDate: "Draft",
+      lastEdited: formatRelativeDate(template.updatedAt),
+      color: assignmentColors[(assignedRows.length + index) % assignmentColors.length],
+      icon: template.name.charAt(0).toUpperCase(),
+      apiTemplate: {
+        name: template.name,
+        description: template.description,
+        goal: template.goal,
+        durationWeeks: template.durationWeeks,
+        template: template.template
+      },
+      templateId: template.id
+    }));
+
+  return [...unassignedCustomRows, ...assignedRows];
 }
 
 function getAssignmentTemplateDraftSource(

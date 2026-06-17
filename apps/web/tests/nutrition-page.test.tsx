@@ -194,8 +194,34 @@ describe("MealPlansPage", () => {
     expect(screen.getByRole("button", { name: "Macro Only Meal Plan" })).toBeInTheDocument();
   });
 
-  it("saves a full meal plan into the meal plans tab", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+  it("saves and closes a full meal plan through the persistence API", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/meal-plan-templates" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "meal_plan_saved",
+                name: "Contest Prep Meal Plan",
+                phase: "Full meal plan",
+                targetCalories: 0,
+                proteinGrams: 0,
+                carbsGrams: 0,
+                fatGrams: 0,
+                status: "draft",
+                template: { days: [{ name: "Day 1", meals: [{ meal: "Main Meal", foods: [] }] }] },
+                updatedAt: "2026-06-17T00:00:00.000Z"
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
 
     render(createElement(MealPlansPage));
 
@@ -207,13 +233,19 @@ describe("MealPlansPage", () => {
     expect(screen.getByRole("button", { name: "Add meal" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Nutrition plan title"), { target: { value: "Contest Prep Meal Plan" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save & Close" }));
 
     expect(await screen.findByText("Nutrition plan saved.")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
-    expect(screen.getByRole("heading", { level: 2, name: "Contest Prep Meal Plan" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Back to meal plans" }));
+    expect(screen.queryByRole("heading", { level: 2, name: "Contest Prep Meal Plan" })).not.toBeInTheDocument();
     expect(screen.getByRole("tabpanel", { name: "Meal Plans" })).toHaveTextContent("Contest Prep Meal Plan");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/meal-plan-templates",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Contest Prep Meal Plan")
+      })
+    );
   });
 
   it("builds full meal plans with editable day tabs, meal actions, food search, and meal template import", async () => {

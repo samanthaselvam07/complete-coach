@@ -479,15 +479,21 @@ export function createTrainingProgramDraftFromTemplate(
   };
 }
 
-export function getTrainingProgramTemplatePayload(draft: TrainingProgramDraft, fallbackIndex: number) {
+export function getTrainingProgramTemplatePayload(
+  draft: TrainingProgramDraft,
+  fallbackIndex: number,
+  options: { status?: "draft" | "published"; goal?: string; description?: string } = {}
+) {
   const title = draft.title.trim() || `Strength Template ${fallbackIndex}`;
+  const description = options.description ?? (draft.overview.trim() || "Coach-created template from the program library.");
+  const goal = options.goal ?? (draft.tags.trim() || "custom");
 
   return {
     name: title,
-    description: draft.overview.trim() || "Coach-created template from the program library.",
-    goal: draft.tags.trim() || "custom",
+    description,
+    goal,
     durationWeeks: parsePositiveInteger(draft.durationWeeks, Math.max(1, draft.days.length)),
-    status: "draft",
+    status: options.status ?? "draft",
     template: {
       days: draft.days.map((day, dayIndex) => ({
         name: day.name.trim() || `Day ${dayIndex + 1}`,
