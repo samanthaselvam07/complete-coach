@@ -306,10 +306,12 @@ describe("MealPlansPage", () => {
     expect(screen.getByLabelText("Meal name for High Carb Day meal 2")).toHaveValue("Breakfast");
 
     fireEvent.click(screen.getAllByRole("button", { name: "Add food" })[0]);
-    const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
-    expect(foodDrawer).toHaveAttribute("aria-modal", "false");
+    const foodDrawer = screen.getByRole("complementary", { name: "Food database panel" });
     expect(foodDrawer).not.toHaveClass("fixed");
-    expect(foodDrawer).toHaveClass("order-first");
+    expect(foodDrawer).not.toHaveClass("order-first");
+    expect(
+      screen.getByRole("article", { name: "Meal card Main Meal" }).compareDocumentPosition(foodDrawer) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Add day" })).toBeEnabled();
     expect(within(foodDrawer).getByRole("searchbox", { name: "Search food database" })).toHaveAttribute(
       "placeholder",
@@ -723,7 +725,7 @@ describe("FoodDatabasePage", () => {
           data: [
             {
               id: "food_api_1",
-              scope: "private",
+              scope: "global",
               name: "API Turkey Mince",
               category: "Proteins",
               servingSize: "100g cooked",
@@ -741,6 +743,7 @@ describe("FoodDatabasePage", () => {
     render(createElement(FoodDatabasePage));
 
     expect(await screen.findByText("API Turkey Mince")).toBeInTheDocument();
+    expect(screen.getByLabelText("Verified Complete Coach food")).toBeInTheDocument();
     expect(screen.getByText("100g cooked")).toBeInTheDocument();
     expect(screen.getByText("28g")).toBeInTheDocument();
     expect(screen.queryByText("Chicken Breast")).not.toBeInTheDocument();
