@@ -19,6 +19,7 @@ interface ApiFood {
   fatGrams: number;
   metadata?: {
     source?: string;
+    sourceId?: string;
   } | null;
 }
 
@@ -537,13 +538,25 @@ function getFoodSource(food: ApiFood | Food): FoodDatabaseSource {
   }
 
   const source = food.metadata?.source?.toUpperCase();
+  const sourceId = food.metadata?.sourceId?.toLowerCase();
 
-  if (source === "AUS/NZ" || source === "AUS-NZ" || source === "AUSTRALIA_NEW_ZEALAND") {
+  if (
+    source === "AUS/NZ" ||
+    source === "AUS-NZ" ||
+    source === "AUSTRALIA_NEW_ZEALAND" ||
+    sourceId === "fsanz_afcd" ||
+    sourceId === "fsanz_ausnut" ||
+    sourceId === "fsanz_branded"
+  ) {
     return "AUS/NZ";
   }
 
-  if (source === "EFSA" || source === "EU") {
+  if (source === "EFSA" || source === "EU" || sourceId === "efsa_foodex2") {
     return "EFSA";
+  }
+
+  if (sourceId === "usda_fdc") {
+    return "USDA";
   }
 
   return "USDA";

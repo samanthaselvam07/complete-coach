@@ -912,6 +912,57 @@ describe("FoodDatabasePage", () => {
     expect(screen.queryByText("Chicken Breast")).not.toBeInTheDocument();
   });
 
+  it("filters imported AUS/NZ foods into the AUS/NZ source tab", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "food_ausnut_1",
+              scope: "global",
+              name: "AUSNUT Apple Raw",
+              category: "Fruit",
+              servingSize: "100g",
+              calories: 52,
+              proteinGrams: 0.3,
+              carbsGrams: 12,
+              fatGrams: 0.1,
+              metadata: {
+                sourceId: "fsanz_ausnut",
+                sourceVersion: "2023"
+              }
+            },
+            {
+              id: "food_usda_1",
+              scope: "global",
+              name: "USDA Turkey Mince",
+              category: "Proteins",
+              servingSize: "100g",
+              calories: 180,
+              proteinGrams: 28,
+              carbsGrams: 0,
+              fatGrams: 8,
+              metadata: {
+                sourceId: "usda_fdc"
+              }
+            }
+          ]
+        }),
+        { status: 200 }
+      )
+    );
+
+    render(createElement(FoodDatabasePage));
+
+    expect(await screen.findByText("USDA Turkey Mince")).toBeInTheDocument();
+    expect(screen.queryByText("AUSNUT Apple Raw")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "AUS/NZ" }));
+
+    expect(screen.getByText("AUSNUT Apple Raw")).toBeInTheDocument();
+    expect(screen.queryByText("USDA Turkey Mince")).not.toBeInTheDocument();
+  });
+
   it("creates a persisted food from the food database", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
