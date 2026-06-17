@@ -701,13 +701,13 @@ describe("FoodDatabasePage", () => {
             data: {
               id: "food_created",
               scope: "private",
-              name: "Coach Food 1",
+              name: "Coach Blueberries",
               category: "Custom",
-              servingSize: "100g",
-              calories: 250,
-              proteinGrams: 20,
-              carbsGrams: 25,
-              fatGrams: 8
+              servingSize: "150 Grams",
+              calories: 85,
+              proteinGrams: 1,
+              carbsGrams: 21,
+              fatGrams: 0
             }
           }),
           { status: 201 }
@@ -718,17 +718,49 @@ describe("FoodDatabasePage", () => {
 
     await screen.findByText("No persisted foods match the current filters.");
     fireEvent.click(screen.getByRole("button", { name: "Create New Food" }));
+    const dialog = screen.getByRole("dialog", { name: "Add Own Food item for your nutrition plan" });
+    fireEvent.change(within(dialog).getByPlaceholderText("Enter food name"), { target: { value: "Coach Blueberries" } });
+    fireEvent.change(within(dialog).getByPlaceholderText("Enter total calories"), { target: { value: "85" } });
+    fireEvent.change(within(dialog).getByPlaceholderText("Enter total protein"), { target: { value: "1" } });
+    fireEvent.change(within(dialog).getByPlaceholderText("Enter total carbs"), { target: { value: "21" } });
+    fireEvent.change(within(dialog).getByPlaceholderText("Enter total fat"), { target: { value: "0" } });
+    fireEvent.change(within(dialog).getByPlaceholderText("Enter total fiber"), { target: { value: "4" } });
+    fireEvent.change(within(dialog).getByPlaceholderText("Enter serving size"), { target: { value: "150" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add" }));
 
     expect(await screen.findByText("Food saved.")).toBeInTheDocument();
     expect(screen.getAllByRole("status").some((status) => status.textContent?.includes("Saved"))).toBe(true);
-    expect(screen.getByText("Coach Food 1")).toBeInTheDocument();
+    expect(screen.getByText("Coach Blueberries")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/foods",
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining("Coach Food 1")
+        body: expect.stringContaining("Coach Blueberries")
       })
     );
+  });
+
+  it("opens the custom food modal from the add new food card", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(null, { status: 503 }));
+
+    render(createElement(FoodDatabasePage));
+
+    await screen.findByText("Food persistence API unavailable. Showing fixture food library.");
+    expect(screen.queryByRole("button", { name: "Add Chicken Breast" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add New Food" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Add Own Food item for your nutrition plan" });
+    expect(within(dialog).getByPlaceholderText("Enter food name")).toBeInTheDocument();
+    expect(within(dialog).getByLabelText("Serving Description:")).toHaveValue("Grams");
+    expect(within(dialog).getByRole("option", { name: "Ounces" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("option", { name: "Qty" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("option", { name: "Cups" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("option", { name: "Oz" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("option", { name: "Tbsp" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("option", { name: "Tsp" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("option", { name: "Ml" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("heading", { name: "Vitamins" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("heading", { name: "Minerals" })).toBeInTheDocument();
   });
 
   it("falls back to fixture foods when the persistence API is unavailable", async () => {
@@ -753,6 +785,9 @@ describe("FoodDatabasePage", () => {
 
     await screen.findByText("No persisted foods match the current filters.");
     fireEvent.click(screen.getByRole("button", { name: "Create New Food" }));
+    const dialog = screen.getByRole("dialog", { name: "Add Own Food item for your nutrition plan" });
+    fireEvent.change(within(dialog).getByPlaceholderText("Enter food name"), { target: { value: "Invalid Macro Food" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add" }));
 
     expect(await screen.findByText("Macro values are invalid.")).toBeInTheDocument();
   });

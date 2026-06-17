@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Download, Plus, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Plus, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
@@ -24,12 +24,64 @@ interface ApiFood {
 
 type FoodSource = "api" | "fixtures";
 type FoodDatabaseSource = Food["source"];
+type NewFoodFormState = {
+  name: string;
+  calories: string;
+  protein: string;
+  carbs: string;
+  fat: string;
+  fiber: string;
+  sugar: string;
+  polyols: string;
+  saturated: string;
+  polyunsaturated: string;
+  monounsaturated: string;
+  salt: string;
+  servingDescription: string;
+  servingSize: string;
+};
 
 const databaseSources = [
   { id: "USDA", label: "USDA", detail: "FoodData Central" },
   { id: "AUS/NZ", label: "AUS/NZ", detail: "Australia & New Zealand" },
   { id: "EFSA", label: "EFSA", detail: "European Food Safety Authority" }
 ] as const;
+
+const servingDescriptionOptions = ["Grams", "Ounces", "Qty", "Cups", "Oz", "Tbsp", "Tsp", "Ml"];
+
+const initialNewFoodForm: NewFoodFormState = {
+  name: "",
+  calories: "",
+  protein: "",
+  carbs: "",
+  fat: "",
+  fiber: "",
+  sugar: "",
+  polyols: "",
+  saturated: "",
+  polyunsaturated: "",
+  monounsaturated: "",
+  salt: "",
+  servingDescription: "Grams",
+  servingSize: ""
+};
+
+const vitaminFields = [
+  "B1 (Thiamine)",
+  "B2 (Riboflavin)",
+  "B3 (Niacin)",
+  "B5 (Pantothenic Acid)",
+  "B6 (Pyridoxine)",
+  "B12 (Cobalamin)",
+  "Folate",
+  "Vitamin A",
+  "Vitamin C",
+  "Vitamin D",
+  "Vitamin E",
+  "Vitamin K"
+];
+
+const mineralFields = ["Calcium", "Copper", "Iron", "Magnesium", "Manganese", "Phosphorus", "Potassium", "Selenium", "Sodium", "Zinc"];
 
 export function FoodDatabasePage() {
   const [selectedSource, setSelectedSource] = useState<FoodDatabaseSource>("USDA");
@@ -41,6 +93,8 @@ export function FoodDatabasePage() {
   const [savingFood, setSavingFood] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [newFoodModalOpen, setNewFoodModalOpen] = useState(false);
+  const [newFoodForm, setNewFoodForm] = useState<NewFoodFormState>(initialNewFoodForm);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,20 +146,35 @@ export function FoodDatabasePage() {
     setStatusMessage(null);
     setErrorMessage(null);
 
+    const calories = parseNumberInput(newFoodForm.calories);
+    const protein = parseNumberInput(newFoodForm.protein);
+    const carbs = parseNumberInput(newFoodForm.carbs);
+    const fat = parseNumberInput(newFoodForm.fat);
+    const fiber = parseNumberInput(newFoodForm.fiber);
+
     try {
       const response = await fetch("/api/v1/foods", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: `Coach Food ${apiFoods.length + 1}`,
+          name: newFoodForm.name.trim() || `Coach Food ${apiFoods.length + 1}`,
           category: "Custom",
-          servingSize: "100g",
-          calories: 250,
-          proteinGrams: 20,
-          carbsGrams: 25,
-          fatGrams: 8,
-          fiberGrams: 4,
-          metadata: { source: "coach-created" }
+          servingSize: formatServingSize(newFoodForm),
+          calories,
+          proteinGrams: protein,
+          carbsGrams: carbs,
+          fatGrams: fat,
+          fiberGrams: fiber,
+          metadata: {
+            source: selectedSource,
+            sugarGrams: parseNumberInput(newFoodForm.sugar),
+            polyolsGrams: parseNumberInput(newFoodForm.polyols),
+            saturatedGrams: parseNumberInput(newFoodForm.saturated),
+            polyunsaturatedGrams: parseNumberInput(newFoodForm.polyunsaturated),
+            monounsaturatedGrams: parseNumberInput(newFoodForm.monounsaturated),
+            saltGrams: parseNumberInput(newFoodForm.salt),
+            servingDescription: newFoodForm.servingDescription
+          }
         })
       });
       const payload = (await response.json()) as { data?: ApiFood; error?: { message?: string } };
@@ -117,6 +186,8 @@ export function FoodDatabasePage() {
       setApiFoods((currentFoods) => [payload.data as ApiFood, ...currentFoods]);
       setFoodSource("api");
       setSelectedSource(getFoodSource(payload.data as ApiFood));
+      setNewFoodModalOpen(false);
+      setNewFoodForm(initialNewFoodForm);
       setStatusMessage("Food saved.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Food could not be saved.");
@@ -142,10 +213,10 @@ export function FoodDatabasePage() {
               type="button"
               disabled={savingFood}
               className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
-              onClick={createFood}
+              onClick={() => setNewFoodModalOpen(true)}
             >
               <Plus className="size-4" aria-hidden="true" />
-              {savingFood ? "Saving..." : "Create New Food"}
+              Create New Food
             </button>
           </div>
         </div>
@@ -216,12 +287,6 @@ export function FoodDatabasePage() {
                   alt={food.name}
                   className="mx-auto size-20 rounded-full object-cover"
                 />
-                <button
-                  aria-label={`Add ${food.name}`}
-                  className="absolute right-0 top-0 flex size-8 items-center justify-center rounded-full border border-gray-200 bg-white opacity-0 transition-colors hover:border-indigo-300 hover:bg-indigo-50 group-hover:opacity-100"
-                >
-                  <Plus className="size-4 text-indigo-600" aria-hidden="true" />
-                </button>
               </div>
               <div className="mb-4 text-center">
                 <h3 className="mb-1 font-semibold text-gray-900">{food.name}</h3>
@@ -236,12 +301,16 @@ export function FoodDatabasePage() {
             </article>
           ))}
 
-          <article className="flex min-h-72 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-5 transition-all hover:border-indigo-400 hover:bg-indigo-50">
+          <button
+            type="button"
+            className="flex min-h-72 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-5 text-center transition-all hover:border-indigo-400 hover:bg-indigo-50"
+            onClick={() => setNewFoodModalOpen(true)}
+          >
             <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-white">
               <Plus className="size-6 text-gray-400" aria-hidden="true" />
             </div>
-            <h3 className="font-semibold text-gray-700">Add New Ingredient</h3>
-          </article>
+            <h3 className="font-semibold text-gray-700">Add New Food</h3>
+          </button>
           {foodSource === "api" && !loadingFoods && filteredFoods.length === 0 ? (
             <p className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
               No persisted foods match the current filters.
@@ -287,12 +356,170 @@ export function FoodDatabasePage() {
       <p role="status" aria-label="Food database page" className="sr-only">
         Page {currentPage}
       </p>
+      {newFoodModalOpen ? (
+        <NewFoodModal
+          form={newFoodForm}
+          saving={savingFood}
+          onChange={(key, value) => setNewFoodForm((currentForm) => ({ ...currentForm, [key]: value }))}
+          onClose={() => setNewFoodModalOpen(false)}
+          onSubmit={createFood}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function NewFoodModal({
+  form,
+  saving,
+  onChange,
+  onClose,
+  onSubmit
+}: {
+  form: NewFoodFormState;
+  saving: boolean;
+  onChange: (key: keyof NewFoodFormState, value: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="new-food-title" className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <h2 id="new-food-title" className="text-xl font-bold text-slate-800">
+            Add Own Food item for your nutrition plan
+          </h2>
+          <button type="button" aria-label="Close add food" className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <form
+          className="max-h-[calc(92vh-8rem)] overflow-y-auto px-6 py-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit();
+          }}
+        >
+          <div className="grid gap-5 md:grid-cols-2">
+            <FoodInput className="md:col-span-2" label="Name:" placeholder="Enter food name" value={form.name} onChange={(value) => onChange("name", value)} />
+            <FoodInput label="Calories (kcal):" placeholder="Enter total calories" value={form.calories} onChange={(value) => onChange("calories", value)} />
+            <FoodInput label="Protein (g):" placeholder="Enter total protein" value={form.protein} onChange={(value) => onChange("protein", value)} />
+            <FoodInput label="Carbs (g):" placeholder="Enter total carbs" value={form.carbs} onChange={(value) => onChange("carbs", value)} />
+            <FoodInput label="Fat (g):" placeholder="Enter total fat" value={form.fat} onChange={(value) => onChange("fat", value)} />
+            <FoodInput label="Fiber (g):" placeholder="Enter total fiber" value={form.fiber} onChange={(value) => onChange("fiber", value)} />
+            <FoodInput label="Sugar (g):" placeholder="Enter total sugar" value={form.sugar} onChange={(value) => onChange("sugar", value)} />
+            <FoodInput label="Polyols (g):" placeholder="Enter total polyols" value={form.polyols} onChange={(value) => onChange("polyols", value)} />
+            <FoodInput label="Saturated (g):" placeholder="Enter total saturated" value={form.saturated} onChange={(value) => onChange("saturated", value)} />
+            <FoodInput label="Polyunsaturated (g):" placeholder="Enter total polyunsaturated" value={form.polyunsaturated} onChange={(value) => onChange("polyunsaturated", value)} />
+            <FoodInput label="Monounsaturated (g):" placeholder="Enter total monounsaturated" value={form.monounsaturated} onChange={(value) => onChange("monounsaturated", value)} />
+            <FoodInput label="Salt (g):" placeholder="Enter total salt" value={form.salt} onChange={(value) => onChange("salt", value)} />
+
+            <label className="block">
+              <span className="mb-2 block font-medium text-slate-900">Serving Description:</span>
+              <select
+                value={form.servingDescription}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                onChange={(event) => onChange("servingDescription", event.target.value)}
+              >
+                {servingDescriptionOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <FoodInput label="Serving Size (g):" placeholder="Enter serving size" value={form.servingSize} onChange={(value) => onChange("servingSize", value)} />
+          </div>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            <MicronutrientSection title="Vitamins" fields={vitaminFields} />
+            <MicronutrientSection title="Minerals" fields={mineralFields} />
+          </div>
+        </form>
+
+        <div className="flex justify-end gap-3 border-t border-gray-200 bg-white px-6 py-4">
+          <button type="button" className="rounded-xl bg-indigo-50 px-5 py-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-100" onClick={onClose}>
+            Close
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-60"
+            onClick={onSubmit}
+          >
+            {saving ? "Saving..." : "Add"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FoodInput({
+  label,
+  placeholder,
+  value,
+  className,
+  onChange
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  className?: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className={cn("block", className)}>
+      <span className="mb-2 block font-medium text-slate-900">{label}</span>
+      <input
+        value={value}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function MicronutrientSection({ title, fields }: { title: string; fields: string[] }) {
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-slate-50">
+      <h3 className="rounded-t-2xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-800">{title}</h3>
+      <div className="divide-y divide-white">
+        {fields.map((field) => (
+          <div key={field} className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-2 text-sm">
+            <span className="text-slate-700">{field}</span>
+            <input
+              aria-label={`${field} amount`}
+              placeholder="-"
+              className="w-24 rounded-lg border border-gray-200 bg-white px-3 py-2 text-right text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
 function getFoodServing(food: ApiFood | Food) {
   return "serving" in food ? food.serving : food.servingSize;
+}
+
+function parseNumberInput(value: string) {
+  const parsed = Number.parseFloat(value);
+
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatServingSize(form: NewFoodFormState) {
+  const servingSize = form.servingSize.trim();
+
+  if (!servingSize) {
+    return form.servingDescription;
+  }
+
+  return `${servingSize} ${form.servingDescription}`;
 }
 
 function getFoodSource(food: ApiFood | Food): FoodDatabaseSource {
