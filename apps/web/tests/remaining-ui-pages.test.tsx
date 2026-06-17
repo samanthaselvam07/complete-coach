@@ -484,7 +484,7 @@ describe("SupplementDatabasePage", () => {
       target: { value: "Vitamin D3" }
     });
     fireEvent.click(screen.getByRole("button", { name: "Morning" }));
-    fireEvent.change(screen.getByLabelText("Standard Dosage"), {
+    fireEvent.change(screen.getByLabelText("Coach dosage instructions"), {
       target: { value: "5000 IU" }
     });
     fireEvent.click(screen.getByRole("button", { name: "Create Protocol" }));
@@ -598,8 +598,30 @@ describe("SupplementDatabasePage", () => {
     const dialog = screen.getByRole("dialog", { name: "Zinc Complex details" });
     expect(within(dialog).getByText("Immune")).toBeInTheDocument();
     expect(within(dialog).getByText("Morning")).toBeInTheDocument();
-    expect(within(dialog).getByText("1g")).toBeInTheDocument();
-    expect(within(dialog).getAllByText("Take with food.")).toHaveLength(2);
+    expect(within(dialog).queryByText("1g")).not.toBeInTheDocument();
+    expect(within(dialog).getByText("No coach dosage instructions added.")).toBeInTheDocument();
+    expect(within(dialog).getByText("No coach notes added.")).toBeInTheDocument();
+    expect(within(dialog).getByText("No affiliate or product link added.")).toBeInTheDocument();
+    expect(within(dialog).getByText("Take with food.")).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Edit coach supplement details" }));
+    fireEvent.change(within(dialog).getByLabelText("Coach dosage instructions"), {
+      target: { value: "Use the dosage agreed in your client protocol." }
+    });
+    fireEvent.change(within(dialog).getByLabelText("Coach notes"), {
+      target: { value: "Use the brand stocked through our supplement partner." }
+    });
+    fireEvent.change(within(dialog).getByLabelText("Affiliate or product link"), {
+      target: { value: "https://example.com/zinc" }
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save coach details" }));
+
+    expect(within(dialog).getByText("Use the dosage agreed in your client protocol.")).toBeInTheDocument();
+    expect(within(dialog).getByText("Use the brand stocked through our supplement partner.")).toBeInTheDocument();
+    expect(within(dialog).getByRole("link", { name: "https://example.com/zinc" })).toHaveAttribute(
+      "href",
+      "https://example.com/zinc"
+    );
   });
 });
 

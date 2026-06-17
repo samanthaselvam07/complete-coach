@@ -29,6 +29,14 @@ type SupplementLibraryEntry = SupplementEntry & {
   description: string;
   bioavailabilityNotes?: string;
   clinicalDescription?: string;
+  coachDosageInstructions?: string;
+  affiliateLink?: string;
+};
+
+type CoachSupplementDetails = {
+  dosageInstructions: string;
+  notes: string;
+  affiliateLink: string;
 };
 
 export function SupplementDatabasePage() {
@@ -41,6 +49,7 @@ export function SupplementDatabasePage() {
   const [supplements, setSupplements] = useState<SupplementLibraryEntry[]>(
     supplementEntries.map(mapFixtureSupplementToEntry)
   );
+  const [coachDetails, setCoachDetails] = useState<Record<string, CoachSupplementDetails>>(loadCoachDetails);
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [newSupplement, setNewSupplement] = useState({
@@ -134,6 +143,14 @@ export function SupplementDatabasePage() {
 
       const payload = (await response.json()) as { data: ApiSupplement };
       setSupplements((current) => [mapApiSupplementToEntry(payload.data), ...current]);
+      setCoachDetails((current) => saveCoachDetails({
+        ...current,
+        [payload.data.id]: {
+          dosageInstructions: newSupplement.dosage.trim(),
+          notes: "",
+          affiliateLink: ""
+        }
+      }));
       setNewSupplement({ name: "", category: "", timing: "", dosage: "" });
       setShowAddPanel(false);
       setStatus("Supplement created.");
@@ -297,6 +314,10 @@ export function SupplementDatabasePage() {
       {selectedSupplement ? (
         <SupplementDetailsDialog
           supplement={selectedSupplement}
+          coachDetails={coachDetails[selectedSupplement.id] ?? getDefaultCoachDetails(selectedSupplement)}
+          onSaveCoachDetails={(details) => {
+            setCoachDetails((current) => saveCoachDetails({ ...current, [selectedSupplement.id]: details }));
+          }}
           onClose={() => setSelectedSupplement(null)}
         />
       ) : null}
@@ -380,11 +401,27 @@ function VerifiedTick({ label, verified }: { label: string; verified: boolean })
 
 function SupplementDetailsDialog({
   supplement,
+  coachDetails,
+  onSaveCoachDetails,
   onClose
 }: {
   supplement: SupplementLibraryEntry;
+  coachDetails: CoachSupplementDetails;
+  onSaveCoachDetails: (details: CoachSupplementDetails) => void;
   onClose: () => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [draftDetails, setDraftDetails] = useState(coachDetails);
+
+  function saveDetails() {
+    onSaveCoachDetails({
+      dosageInstructions: draftDetails.dosageInstructions.trim(),
+      notes: draftDetails.notes.trim(),
+      affiliateLink: draftDetails.affiliateLink.trim()
+    });
+    setEditing(false);
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
       <div
@@ -415,7 +452,6 @@ function SupplementDetailsDialog({
             items={[
               ["Category", supplement.category],
               ["Timing", supplement.timing],
-              ["Dosage", supplement.dosage],
               ["Bioavailability", supplement.bioavailabilityNotes ?? "No bioavailability notes recorded."]
             ]}
           />
@@ -426,8 +462,86 @@ function SupplementDetailsDialog({
             </p>
           </section>
           <section>
-            <h3 className="mb-2 text-sm font-black uppercase tracking-wide text-slate-500">Coach Notes</h3>
-            <p className="text-sm leading-6 text-slate-700">{supplement.coachNote}</p>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">Coach Supplement Details</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftDetails(coachDetails);
+                  setEditing(true);
+                }}
+                className="rounded-lg border border-indigo-200 px-3 py-2 text-xs font-black text-indigo-700 transition hover:bg-indigo-50"
+              >
+                Edit coach supplement details
+              </button>
+            </div>
+
+            {editing ? (
+              <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <label className="block text-sm font-bold text-slate-700">
+                  Coach dosage instructions
+                  <textarea
+                    value={draftDetails.dosageInstructions}
+                    onChange={(event) => setDraftDetails({ ...draftDetails, dosageInstructions: event.target.value })}
+                    rows={3}
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm font-normal outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Add your own client-specific dosage guidance."
+                  />
+                </label>
+                <label className="block text-sm font-bold text-slate-700">
+                  Coach notes
+                  <textarea
+                    value={draftDetails.notes}
+                    onChange={(event) => setDraftDetails({ ...draftDetails, notes: event.target.value })}
+                    rows={3}
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm font-normal outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Add your own coaching notes for client use."
+                  />
+                </label>
+                <label className="block text-sm font-bold text-slate-700">
+                  Affiliate or product link
+                  <input
+                    value={draftDetails.affiliateLink}
+                    onChange={(event) => setDraftDetails({ ...draftDetails, affiliateLink: event.target.value })}
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm font-normal outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="https://"
+                  />
+                </label>
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(false)}
+                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveDetails}
+                    className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-700"
+                  >
+                    Save coach details
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <dl className="grid gap-3">
+                <CoachDetail label="Coach dosage instructions" value={coachDetails.dosageInstructions || "No coach dosage instructions added."} />
+                <CoachDetail label="Coach notes" value={coachDetails.notes || "No coach notes added."} />
+                <div className="rounded-xl bg-slate-50 p-4">
+                  <dt className="text-xs font-black uppercase tracking-wide text-slate-500">Affiliate or product link</dt>
+                  <dd className="mt-1 text-sm font-bold text-slate-900">
+                    {coachDetails.affiliateLink ? (
+                      <a className="text-indigo-700 underline" href={coachDetails.affiliateLink}>
+                        {coachDetails.affiliateLink}
+                      </a>
+                    ) : (
+                      "No affiliate or product link added."
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            )}
           </section>
         </div>
       </div>
@@ -445,6 +559,15 @@ function DetailGrid({ items }: { items: Array<[string, string]> }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+function CoachDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-slate-50 p-4">
+      <dt className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</dt>
+      <dd className="mt-1 whitespace-pre-line text-sm font-bold text-slate-900">{value}</dd>
+    </div>
   );
 }
 
@@ -545,7 +668,7 @@ function NewSupplementPanel({
           </div>
 
           <label className="block text-sm font-bold text-slate-700">
-            Standard Dosage
+            Coach dosage instructions
             <input
               value={supplement.dosage}
               onChange={(event) => onChange({ ...supplement, dosage: event.target.value })}
@@ -588,11 +711,12 @@ function mapApiSupplementToEntry(supplement: ApiSupplement): SupplementLibraryEn
     category: supplement.category,
     timing: supplement.recommendedTiming ?? "As needed",
     dosage: supplement.dosage ?? "Variable",
-    coachNote: bioavailabilityNotes ?? clinicalDescription ?? "Review client tolerance before assigning broadly.",
+    coachNote: "",
     verified: supplement.scope === "global",
     description,
     bioavailabilityNotes,
-    clinicalDescription
+    clinicalDescription,
+    coachDosageInstructions: supplement.scope === "private" ? supplement.dosage ?? "" : ""
   };
 }
 
@@ -602,8 +726,40 @@ function mapFixtureSupplementToEntry(supplement: SupplementEntry): SupplementLib
     verified: true,
     description: supplement.coachNote,
     bioavailabilityNotes: supplement.coachNote,
-    clinicalDescription: supplement.coachNote
+    clinicalDescription: supplement.coachNote,
+    coachDosageInstructions: ""
   };
+}
+
+function getDefaultCoachDetails(supplement: SupplementLibraryEntry): CoachSupplementDetails {
+  return {
+    dosageInstructions: supplement.coachDosageInstructions ?? "",
+    notes: supplement.coachNote,
+    affiliateLink: supplement.affiliateLink ?? ""
+  };
+}
+
+function saveCoachDetails(details: Record<string, CoachSupplementDetails>) {
+  try {
+    window.localStorage.setItem("complete-coach:supplement-coach-details", JSON.stringify(details));
+  } catch {
+    // Local storage is best-effort only.
+  }
+
+  return details;
+}
+
+function loadCoachDetails() {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  try {
+    const stored = window.localStorage.getItem("complete-coach:supplement-coach-details");
+    return stored ? (JSON.parse(stored) as Record<string, CoachSupplementDetails>) : {};
+  } catch {
+    return {};
+  }
 }
 
 function getBriefDescription(value: string) {
