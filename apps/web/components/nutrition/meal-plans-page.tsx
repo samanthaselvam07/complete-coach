@@ -798,7 +798,6 @@ function FullMealPlanFields({
           <MacroPill value={`${formatMacroValue(dayTotals.carbs || Number(carbs) || 0)} g Carbs`} />
           <MacroPill value={`${formatMacroValue(dayTotals.fats || Number(fats) || 0)} g Fat`} />
           <MacroPill value={`${formatMacroValue(dayTotals.fibre)} g Fibre`} />
-          <span className="rounded-xl bg-slate-100 px-4 py-3 text-slate-400">i</span>
         </div>
       </div>
 
