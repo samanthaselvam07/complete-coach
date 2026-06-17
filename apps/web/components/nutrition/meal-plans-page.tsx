@@ -4,7 +4,7 @@ import { Calendar, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
-import { foods, mealAssignments, mealTemplates } from "@/fixtures/nutrition";
+import { foods, mealAssignments, mealTemplates, type Food } from "@/fixtures/nutrition";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,19 @@ type FoodDatabaseSource = "AUS / NZ" | "EFSA" | "USDA";
 interface BuilderMeal {
   id: string;
   name: string;
-  foods: string[];
+  foods: BuilderFood[];
+}
+
+interface BuilderFood {
+  id: string;
+  name: string;
+  serving: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  fibre: number;
+  quantity: number;
 }
 
 interface BuilderDay {
@@ -642,11 +654,13 @@ function FullMealPlanFields({
   availableTemplates: MealTemplateCard[];
 }) {
   const [days, setDays] = useState<BuilderDay[]>(() => [createBuilderDay(1)]);
+  const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [activeFoodTarget, setActiveFoodTarget] = useState<{ dayId: string; mealId: string } | null>(null);
   const [foodSource, setFoodSource] = useState<FoodDatabaseSource>("AUS / NZ");
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
   const [showMealTemplateDialog, setShowMealTemplateDialog] = useState(false);
-  const activeDay = days.at(-1);
+  const activeDay = days.find((day) => day.id === activeDayId) ?? days.at(-1);
+  const dayTotals = calculateDayTotals(activeDay);
 
   const updateMealName = (dayId: string, mealId: string, name: string) => {
     setDays((currentDays) =>
@@ -659,6 +673,10 @@ function FullMealPlanFields({
           : day
       )
     );
+  };
+
+  const updateDayName = (dayId: string, name: string) => {
+    setDays((currentDays) => currentDays.map((day) => (day.id === dayId ? { ...day, name } : day)));
   };
 
   const addMealToDay = (dayId = activeDay?.id) => {
@@ -679,7 +697,9 @@ function FullMealPlanFields({
   };
 
   const addDay = () => {
-    setDays((currentDays) => [...currentDays, createBuilderDay(currentDays.length + 1)]);
+    const nextDay = createBuilderDay(days.length + 1);
+    setDays((currentDays) => [...currentDays, nextDay]);
+    setActiveDayId(nextDay.id);
   };
 
   const importTemplateIntoActiveDay = (template: MealTemplateCard) => {
@@ -697,7 +717,19 @@ function FullMealPlanFields({
                 {
                   id: `meal_${Date.now()}_${day.meals.length + 1}`,
                   name: template.name,
-                  foods: [`${template.calories} kcal template meal`]
+                  foods: [
+                    {
+                      id: `template_food_${template.id}_${Date.now()}`,
+                      name: template.name,
+                      serving: "Template meal",
+                      calories: template.calories,
+                      protein: template.protein,
+                      carbs: template.carbs,
+                      fats: template.fats,
+                      fibre: 0,
+                      quantity: 1
+                    }
+                  ]
                 }
               ]
             }
@@ -707,8 +739,9 @@ function FullMealPlanFields({
     setShowMealTemplateDialog(false);
   };
 
-  const addFoodToMeal = (foodId: string) => {
+  const addFoodToMeal = (foodId: string, quantity: number) => {
     const food = foods.find((item) => item.id === foodId);
+    const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
 
     if (!food || !activeFoodTarget) {
       return;
@@ -720,16 +753,16 @@ function FullMealPlanFields({
           ? {
               ...day,
               meals: day.meals.map((meal) =>
-                meal.id === activeFoodTarget.mealId ? { ...meal, foods: [...meal.foods, `${food.name} (${food.serving})`] } : meal
+                meal.id === activeFoodTarget.mealId ? { ...meal, foods: [...meal.foods, createBuilderFood(food, safeQuantity)] } : meal
               )
             }
           : day
       )
     );
-    setCalories(String((Number(calories) || 0) + food.calories));
-    setProtein(String((Number(protein) || 0) + food.protein));
-    setCarbs(String((Number(carbs) || 0) + food.carbs));
-    setFats(String((Number(fats) || 0) + food.fats));
+    setCalories(String((Number(calories) || 0) + food.calories * safeQuantity));
+    setProtein(String((Number(protein) || 0) + food.protein * safeQuantity));
+    setCarbs(String((Number(carbs) || 0) + food.carbs * safeQuantity));
+    setFats(String((Number(fats) || 0) + food.fats * safeQuantity));
     setActiveFoodTarget(null);
   };
 
@@ -760,10 +793,11 @@ function FullMealPlanFields({
         </div>
         <div className="hidden flex-wrap items-center gap-2 lg:flex">
           <span className="text-xs font-black uppercase text-slate-700">DAY TOTAL</span>
-          <MacroPill value={`${calories} Kcal`} />
-          <MacroPill value={`${protein} g Protein`} />
-          <MacroPill value={`${carbs} g Carbs`} />
-          <MacroPill value={`${fats} g Fat`} />
+          <MacroPill value={`${formatMacroValue(dayTotals.calories || Number(calories) || 0)} Kcal`} />
+          <MacroPill value={`${formatMacroValue(dayTotals.protein || Number(protein) || 0)} g Protein`} />
+          <MacroPill value={`${formatMacroValue(dayTotals.carbs || Number(carbs) || 0)} g Carbs`} />
+          <MacroPill value={`${formatMacroValue(dayTotals.fats || Number(fats) || 0)} g Fat`} />
+          <MacroPill value={`${formatMacroValue(dayTotals.fibre)} g Fibre`} />
           <span className="rounded-xl bg-slate-100 px-4 py-3 text-slate-400">i</span>
         </div>
       </div>
@@ -777,9 +811,15 @@ function FullMealPlanFields({
       <div className="space-y-6">
         {days.map((day, dayIndex) => (
           <section key={day.id} className="border-l border-dashed border-indigo-200 pl-6">
-            <div className="mb-6 inline-flex border-b-2 border-indigo-500 pb-3 text-sm font-bold text-indigo-600">
-              {day.name}
-            </div>
+            <label className="mb-6 inline-flex border-b-2 border-indigo-500 pb-3">
+              <span className="sr-only">Day name</span>
+              <input
+                aria-label={`Day name for Day ${dayIndex + 1}`}
+                value={day.name}
+                className="w-48 border-0 bg-transparent text-sm font-bold text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-200"
+                onChange={(event) => updateDayName(day.id, event.target.value)}
+              />
+            </label>
             <div className="space-y-5">
               {day.meals.map((meal, mealIndex) => (
                 <article key={meal.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -801,18 +841,44 @@ function FullMealPlanFields({
                     type="button"
                     aria-label="Add food"
                     className="mt-4 text-sm font-bold uppercase text-indigo-500"
-                    onClick={() => setActiveFoodTarget({ dayId: day.id, mealId: meal.id })}
+                    onClick={() => {
+                      setActiveDayId(day.id);
+                      setActiveFoodTarget({ dayId: day.id, mealId: meal.id });
+                    }}
                   >
                     + Add food
                   </button>
                   {meal.foods.length > 0 ? (
-                    <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                      {meal.foods.map((food, index) => (
-                        <li key={`${food}-${index}`} className="rounded-lg bg-slate-50 px-3 py-2">
-                          {food}
-                        </li>
+                    <div role="table" aria-label={`${meal.name} foods`} className="mt-3 overflow-hidden rounded-xl border border-slate-200">
+                      <div role="row" className="grid grid-cols-6 gap-2 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500">
+                        <span role="columnheader">Food</span>
+                        <span role="columnheader">Calories</span>
+                        <span role="columnheader">Protein</span>
+                        <span role="columnheader">Carbs</span>
+                        <span role="columnheader">Fat</span>
+                        <span role="columnheader">Fibre</span>
+                      </div>
+                      {meal.foods.map((food) => (
+                        <div
+                          key={food.id}
+                          role="row"
+                          aria-label={`${food.name} ${formatMacroValue(food.quantity)} servings ${formatMacroValue(food.calories)} kcal ${formatMacroValue(food.protein)}g protein ${formatMacroValue(food.carbs)}g carbs ${formatMacroValue(food.fats)}g fat ${formatMacroValue(food.fibre)}g fibre`}
+                          className="grid grid-cols-6 gap-2 border-t border-slate-100 px-3 py-2 text-sm text-slate-700"
+                        >
+                          <span role="cell">
+                            <span className="block font-bold text-slate-900">{food.name}</span>
+                            <span className="block text-xs text-slate-500">
+                              {formatMacroValue(food.quantity)} {food.quantity === 1 ? "serving" : "servings"} · {food.serving}
+                            </span>
+                          </span>
+                          <span role="cell">{formatMacroValue(food.calories)} kcal</span>
+                          <span role="cell">{formatMacroValue(food.protein)}g protein</span>
+                          <span role="cell">{formatMacroValue(food.carbs)}g carbs</span>
+                          <span role="cell">{formatMacroValue(food.fats)}g fat</span>
+                          <span role="cell">{formatMacroValue(food.fibre)}g fibre</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   ) : null}
                   <label className="mt-4 grid gap-2">
                     <span className="text-sm font-medium text-slate-700">Notes</span>
@@ -824,14 +890,25 @@ function FullMealPlanFields({
             </div>
             {dayIndex === days.length - 1 ? (
               <div className="mt-5 flex flex-wrap gap-3">
-                <button type="button" aria-label="Add meal" className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600" onClick={() => addMealToDay(day.id)}>
+                <button
+                  type="button"
+                  aria-label="Add meal"
+                  className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600"
+                  onClick={() => {
+                    setActiveDayId(day.id);
+                    addMealToDay(day.id);
+                  }}
+                >
                   + Add meal
                 </button>
                 <button
                   type="button"
                   aria-label="Add meal from template"
                   className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600"
-                  onClick={() => setShowMealTemplateDialog(true)}
+                  onClick={() => {
+                    setActiveDayId(day.id);
+                    setShowMealTemplateDialog(true);
+                  }}
                 >
                   + Add meal from template
                 </button>
@@ -887,6 +964,48 @@ function createBuilderMeal(mealNumber: number, name = `Meal ${mealNumber}`): Bui
   };
 }
 
+function createBuilderFood(food: Food, quantity: number): BuilderFood {
+  const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+
+  return {
+    id: `${food.id}_${Date.now()}`,
+    name: food.name,
+    serving: food.serving,
+    calories: food.calories * safeQuantity,
+    protein: food.protein * safeQuantity,
+    carbs: food.carbs * safeQuantity,
+    fats: food.fats * safeQuantity,
+    fibre: food.fibre * safeQuantity,
+    quantity: safeQuantity
+  };
+}
+
+function calculateDayTotals(day?: BuilderDay) {
+  const totals = {
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fats: 0,
+    fibre: 0
+  };
+
+  day?.meals.forEach((meal) => {
+    meal.foods.forEach((food) => {
+      totals.calories += food.calories;
+      totals.protein += food.protein;
+      totals.carbs += food.carbs;
+      totals.fats += food.fats;
+      totals.fibre += food.fibre;
+    });
+  });
+
+  return totals;
+}
+
+function formatMacroValue(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
 function FoodDatabaseDrawer({
   source,
   searchQuery,
@@ -901,19 +1020,22 @@ function FoodDatabaseDrawer({
   filteredFoods: typeof foods;
   onSourceChange: (source: FoodDatabaseSource) => void;
   onSearchChange: (query: string) => void;
-  onAddFood: (foodId: string) => void;
+  onAddFood: (foodId: string, quantity: number) => void;
   onClose: () => void;
 }) {
   const sources: FoodDatabaseSource[] = ["AUS / NZ", "EFSA", "USDA"];
+  const [selectedFoodId, setSelectedFoodId] = useState(filteredFoods[0]?.id ?? "");
+  const [quantity, setQuantity] = useState("1");
+  const selectedFood = filteredFoods.find((food) => food.id === selectedFoodId) ?? filteredFoods[0] ?? null;
+  const quantityValue = Number(quantity);
+  const safeQuantity = Number.isFinite(quantityValue) && quantityValue > 0 ? quantityValue : 1;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/20">
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="food-database-drawer-title"
-        className="fixed left-0 top-0 h-full w-full max-w-md overflow-y-auto border-r border-slate-200 bg-white p-6 shadow-2xl"
-      >
+    <aside
+      role="dialog"
+      aria-labelledby="food-database-drawer-title"
+      className="fixed left-0 top-0 z-50 h-full w-full max-w-md overflow-y-auto border-r border-slate-200 bg-white p-6 shadow-2xl"
+    >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Food database</p>
@@ -965,19 +1087,51 @@ function FoodDatabaseDrawer({
             <button
               key={food.id}
               type="button"
-              className="w-full rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50"
-              onClick={() => onAddFood(food.id)}
+              aria-label={`Select ${food.name}`}
+              className={cn(
+                "w-full rounded-xl border p-4 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50",
+                selectedFood?.id === food.id ? "border-indigo-500 bg-indigo-50" : "border-slate-200"
+              )}
+              onClick={() => setSelectedFoodId(food.id)}
             >
               <span className="block font-bold text-slate-900">{food.name}</span>
               <span className="mt-1 block text-xs text-slate-500">{food.serving}</span>
               <span className="mt-2 block text-xs font-bold text-slate-600">
-                {food.calories} kcal · P {food.protein}g · C {food.carbs}g · F {food.fats}g
+                {food.calories} kcal · P {food.protein}g · C {food.carbs}g · F {food.fats}g · Fibre {food.fibre}g
               </span>
             </button>
           ))}
         </div>
-      </aside>
-    </div>
+
+        {selectedFood ? (
+          <div className="sticky bottom-0 -mx-6 mt-6 border-t border-slate-200 bg-white p-6 shadow-[0_-12px_24px_rgba(15,23,42,0.08)]">
+            <label className="grid gap-2">
+              <span className="text-sm font-bold text-slate-700">Food quantity</span>
+              <input
+                type="number"
+                min="0.25"
+                step="0.25"
+                aria-label="Food quantity"
+                value={quantity}
+                className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                onChange={(event) => setQuantity(event.target.value)}
+              />
+            </label>
+            <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-600">
+              {formatMacroValue(selectedFood.calories * safeQuantity)} kcal · P {formatMacroValue(selectedFood.protein * safeQuantity)}g · C{" "}
+              {formatMacroValue(selectedFood.carbs * safeQuantity)}g · F {formatMacroValue(selectedFood.fats * safeQuantity)}g · Fibre{" "}
+              {formatMacroValue(selectedFood.fibre * safeQuantity)}g
+            </div>
+            <button
+              type="button"
+              className="mt-3 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700"
+              onClick={() => onAddFood(selectedFood.id, safeQuantity)}
+            >
+              Add selected food
+            </button>
+          </div>
+        ) : null}
+    </aside>
   );
 }
 

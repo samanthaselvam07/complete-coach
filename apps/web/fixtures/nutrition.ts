@@ -58,6 +58,7 @@ export interface Food {
   protein: number;
   carbs: number;
   fats: number;
+  fibre: number;
   category: string;
 }
 
@@ -174,6 +175,7 @@ export const foods: Food[] = [
     protein: 31,
     carbs: 0,
     fats: 3.6,
+    fibre: 0,
     category: "Proteins"
   },
   {
@@ -184,6 +186,7 @@ export const foods: Food[] = [
     protein: 3,
     carbs: 25,
     fats: 0.4,
+    fibre: 0.4,
     category: "Carbs"
   },
   {
@@ -194,6 +197,7 @@ export const foods: Food[] = [
     protein: 2,
     carbs: 9,
     fats: 15,
+    fibre: 7,
     category: "Fats"
   },
   {
@@ -204,6 +208,7 @@ export const foods: Food[] = [
     protein: 13,
     carbs: 66,
     fats: 7,
+    fibre: 10.6,
     category: "Carbs"
   },
   {
@@ -214,6 +219,7 @@ export const foods: Food[] = [
     protein: 27,
     carbs: 1,
     fats: 0.5,
+    fibre: 0,
     category: "Proteins"
   }
 ];

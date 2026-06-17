@@ -233,12 +233,15 @@ describe("MealPlansPage", () => {
     expect(screen.getByLabelText("Meal name for Day 1 meal 2")).toHaveValue("Meal 2");
 
     fireEvent.click(screen.getByRole("button", { name: "Add day" }));
-    expect(screen.getByText("Day 2")).toBeInTheDocument();
+    expect(screen.getByLabelText("Day name for Day 2")).toHaveValue("Day 2");
     expect(screen.getByLabelText("Meal name for Day 2 meal 1")).toHaveValue("Main Meal");
+    fireEvent.change(screen.getByLabelText("Day name for Day 2"), { target: { value: "High Carb Day" } });
+    expect(screen.getByDisplayValue("High Carb Day")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Add food" })[0]);
     const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
     expect(foodDrawer).toHaveClass("left-0");
+    expect(screen.getByRole("button", { name: "Add day" })).toBeEnabled();
     expect(within(foodDrawer).getByRole("searchbox", { name: "Search food database" })).toHaveAttribute(
       "placeholder",
       "Search foods..."
@@ -248,14 +251,25 @@ describe("MealPlansPage", () => {
     expect(within(foodDrawer).getByRole("button", { name: "USDA" })).toBeInTheDocument();
     fireEvent.click(within(foodDrawer).getByRole("button", { name: "USDA" }));
     expect(within(foodDrawer).getByText("Showing USDA foods")).toBeInTheDocument();
-    fireEvent.click(within(foodDrawer).getByRole("button", { name: "Close food search" }));
+    fireEvent.click(within(foodDrawer).getByRole("button", { name: "Select Chicken Breast" }));
+    expect(within(foodDrawer).getByLabelText("Food quantity")).toHaveValue(1);
+    fireEvent.change(within(foodDrawer).getByLabelText("Food quantity"), { target: { value: "2" } });
+    fireEvent.click(within(foodDrawer).getByRole("button", { name: "Add selected food" }));
+
+    const chickenRow = screen.getByRole("row", { name: /Chicken Breast 2 servings 330 kcal 62g protein 0g carbs 7.2g fat 0g fibre/i });
+    expect(chickenRow).toBeInTheDocument();
+    expect(screen.getByText("330 Kcal")).toBeInTheDocument();
+    expect(screen.getByText("62 g Protein")).toBeInTheDocument();
+    expect(screen.getByText("0 g Carbs")).toBeInTheDocument();
+    expect(screen.getByText("7.2 g Fat")).toBeInTheDocument();
+    expect(screen.getByText("0 g Fibre")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
     const templateDialog = screen.getByRole("dialog", { name: "Import meal from template" });
     expect(within(templateDialog).getByText("High-Protein Breakfast Bowl")).toBeInTheDocument();
     fireEvent.click(within(templateDialog).getByRole("button", { name: "Import High-Protein Breakfast Bowl" }));
 
-    expect(screen.getByLabelText("Meal name for Day 2 meal 2")).toHaveValue("High-Protein Breakfast Bowl");
+    expect(screen.getByLabelText("Meal name for High Carb Day meal 2")).toHaveValue("High-Protein Breakfast Bowl");
   });
 
   it("builds macro-only plans from daily totals or meal-level macros", async () => {
