@@ -324,6 +324,10 @@ describe("MealPlansPage", () => {
     fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Basmati Rice" }));
     const selectedFoodsRegion = within(foodDrawer).getByRole("region", { name: "Selected foods" });
     expect(selectedFoodsRegion).toHaveClass("lg:min-w-[26rem]");
+    expect(within(selectedFoodsRegion).getByRole("list", { name: "Selected food quantity list" })).toHaveClass(
+      "max-h-[22rem]",
+      "overflow-y-auto"
+    );
     expect(within(foodDrawer).getByLabelText("Quantity for Chicken Breast")).toHaveValue(100);
     expect(within(foodDrawer).getByLabelText("Measurement for Chicken Breast")).toHaveClass("w-full");
     fireEvent.change(within(foodDrawer).getByLabelText("Quantity for Chicken Breast"), { target: { value: "200" } });
