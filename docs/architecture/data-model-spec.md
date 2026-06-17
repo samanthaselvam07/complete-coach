@@ -482,6 +482,8 @@ Fields:
 - `created_at`
 - `updated_at`
 
+`template_json` stores builder-level `instructions` plus structured training days and exercises, including sets, reps, RPE, RIR, section, tempo, rest, cues, and notes.
+
 ### `training_program_assignments`
 Fields:
 - `id`

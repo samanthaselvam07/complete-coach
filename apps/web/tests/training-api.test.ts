@@ -12,7 +12,10 @@ import {
   GET as getTrainingTemplates,
   POST as createTrainingTemplate
 } from "@/app/api/v1/training-program-templates/route";
-import { DELETE as deleteTrainingTemplate } from "@/app/api/v1/training-program-templates/[templateId]/route";
+import {
+  DELETE as deleteTrainingTemplate,
+  PATCH as updateTrainingTemplate
+} from "@/app/api/v1/training-program-templates/[templateId]/route";
 import {
   GET as getTrainingAssignments,
   POST as createTrainingAssignment
@@ -353,6 +356,69 @@ describe("training persistence APIs", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           action: "training_template.deleted",
+          targetId: "template_1"
+        })
+      })
+    );
+  });
+
+  it("updates an existing training program template in place", async () => {
+    const updatedTemplate = {
+      ...templateRecord,
+      name: "Edited Strength Foundation",
+      durationWeeks: 10,
+      templateJson: {
+        days: [
+          {
+            name: "Upper Strength",
+            exercises: [
+              {
+                exerciseId: "bench_press",
+                exerciseName: "Bench Press",
+                sets: 4,
+                reps: "5",
+                restSeconds: 180,
+                section: "workout"
+              }
+            ]
+          }
+        ],
+        instructions: "Keep one rep in reserve."
+      },
+      updatedAt: new Date("2026-06-17T00:00:00.000Z")
+    };
+    mocks.prisma.trainingProgramTemplate.findFirst.mockResolvedValue(templateRecord);
+    mocks.prisma.trainingProgramTemplate.update.mockResolvedValue(updatedTemplate);
+
+    const response = await updateTrainingTemplate(
+      new Request("http://test.local/api/v1/training-program-templates/template_1", {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: "Edited Strength Foundation",
+          durationWeeks: 10,
+          template: updatedTemplate.templateJson
+        })
+      }),
+      { params: Promise.resolve({ templateId: "template_1" }) }
+    );
+    const payload = (await response.json()) as { data: { id: string; name: string; durationWeeks: number } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toMatchObject({ id: "template_1", name: "Edited Strength Foundation", durationWeeks: 10 });
+    expect(mocks.prisma.trainingProgramTemplate.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "template_1" },
+        data: expect.objectContaining({
+          name: "Edited Strength Foundation",
+          durationWeeks: 10,
+          templateJson: updatedTemplate.templateJson
+        })
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "training_template.updated",
           targetId: "template_1"
         })
       })

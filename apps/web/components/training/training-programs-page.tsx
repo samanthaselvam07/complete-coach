@@ -244,8 +244,9 @@ export function TrainingProgramsPage() {
     setErrorMessage(null);
 
     try {
-      const response = await fetch("/api/v1/training-program-templates", {
-        method: "POST",
+      const existingTemplateId = draft.sourceTemplateId && !draft.sourceTemplateId.startsWith("local-") ? draft.sourceTemplateId : null;
+      const response = await fetch(existingTemplateId ? `/api/v1/training-program-templates/${existingTemplateId}` : "/api/v1/training-program-templates", {
+        method: existingTemplateId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
           getTrainingProgramTemplatePayload(draft, templates.length + 1, {
@@ -257,16 +258,20 @@ export function TrainingProgramsPage() {
       });
       const payload = await response.json();
 
-      if (!response.ok || !payload.data) {
+      if (!response.ok || !payload.data || Array.isArray(payload.data)) {
         throw new Error(payload.error?.message ?? "Training program could not be saved.");
       }
 
-      setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
+      setTemplates((currentTemplates) =>
+        existingTemplateId
+          ? currentTemplates.map((template) => (template.id === existingTemplateId ? payload.data : template))
+          : [payload.data, ...currentTemplates]
+      );
       setSource("api");
       setActiveTab("Custom programs");
       setProgramDraft(null);
       setCreationDialogMode(null);
-      setStatusMessage(`${payload.data.name} added to Custom programs.`);
+      setStatusMessage(existingTemplateId ? `${payload.data.name} saved.` : `${payload.data.name} added to Custom programs.`);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Training program could not be saved.");
     } finally {
@@ -595,11 +600,13 @@ function getTemplateDraftSource(template: ProgramTemplateCard): TrainingProgramT
   if (template.apiTemplate) {
     return {
       ...template.apiTemplate,
+      id: template.apiTemplate.id,
       durationWeeks: template.apiTemplate.durationWeeks
     };
   }
 
   return {
+    id: null,
     name: template.name,
     description: template.description,
     goal: template.goal,
@@ -712,6 +719,7 @@ export function getProgramAssignmentRows(
       color: assignmentColors[(assignedRows.length + index) % assignmentColors.length],
       icon: template.name.charAt(0).toUpperCase(),
       apiTemplate: {
+        id: template.id,
         name: template.name,
         description: template.description,
         goal: template.goal,
@@ -730,6 +738,7 @@ function getAssignmentTemplateDraftSource(
 ): TrainingProgramTemplateDraftSource | null {
   if (assignment.snapshot.template) {
     return {
+      id: assignment.templateId,
       name: assignment.name,
       description: null,
       goal: assignment.snapshot.goal ?? null,
@@ -746,6 +755,7 @@ function getAssignmentTemplateDraftSource(
 
   return {
     ...template,
+    id: template.id,
     name: assignment.name
   };
 }

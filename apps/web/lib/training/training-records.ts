@@ -120,7 +120,8 @@ export const trainingTemplateSchema = z.object({
       })
     )
     .min(1)
-    .max(14)
+    .max(14),
+  instructions: z.string().trim().max(5000).optional()
 });
 
 export const createTrainingTemplateSchema = z.object({
@@ -130,6 +131,10 @@ export const createTrainingTemplateSchema = z.object({
   durationWeeks: z.number().int().min(1).max(104),
   status: z.enum(trainingTemplateStatusValues).default("draft"),
   template: trainingTemplateSchema
+});
+
+export const updateTrainingTemplateSchema = createTrainingTemplateSchema.partial().refine((input) => Object.keys(input).length > 0, {
+  message: "At least one field is required."
 });
 
 export const createTrainingAssignmentSchema = z.object({
@@ -145,6 +150,7 @@ export type CreateExerciseInput = z.infer<typeof createExerciseSchema>;
 export type UpdateExerciseInput = z.infer<typeof updateExerciseSchema>;
 export type TrainingTemplateListQuery = z.infer<typeof trainingTemplateListQuerySchema>;
 export type CreateTrainingTemplateInput = z.infer<typeof createTrainingTemplateSchema>;
+export type UpdateTrainingTemplateInput = z.infer<typeof updateTrainingTemplateSchema>;
 
 interface ExerciseRecord {
   id: string;
@@ -293,6 +299,17 @@ export function getTrainingTemplateCreateData(
     durationWeeks: input.durationWeeks,
     status: toPrismaTrainingTemplateStatus(input.status),
     templateJson: input.template
+  };
+}
+
+export function getTrainingTemplateUpdateData(input: UpdateTrainingTemplateInput) {
+  return {
+    ...(input.name !== undefined ? { name: input.name } : {}),
+    ...(input.description !== undefined ? { description: input.description } : {}),
+    ...(input.goal !== undefined ? { goal: input.goal } : {}),
+    ...(input.durationWeeks !== undefined ? { durationWeeks: input.durationWeeks } : {}),
+    ...(input.status !== undefined ? { status: toPrismaTrainingTemplateStatus(input.status) } : {}),
+    ...(input.template !== undefined ? { templateJson: input.template } : {})
   };
 }
 

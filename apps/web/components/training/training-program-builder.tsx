@@ -29,6 +29,7 @@ export interface TrainingProgramDayDraft {
 }
 
 export interface TrainingProgramDraft {
+  sourceTemplateId?: string | null;
   title: string;
   tags: string;
   durationWeeks: string;
@@ -39,6 +40,7 @@ export interface TrainingProgramDraft {
 }
 
 export interface TrainingProgramTemplateDraftSource {
+  id?: string | null;
   name: string;
   description?: string | null;
   goal?: string | null;
@@ -437,6 +439,7 @@ export function createBlankTrainingProgramDraft(): TrainingProgramDraft {
   const firstDay = createBlankTrainingDay(1);
 
   return {
+    sourceTemplateId: null,
     title: "",
     tags: "",
     durationWeeks: "8",
@@ -469,6 +472,7 @@ export function createTrainingProgramDraftFromTemplate(
   const firstDay = days[0] ?? createBlankTrainingDay(1);
 
   return {
+    sourceTemplateId: options.copy === false ? template.id ?? null : null,
     title: options.copy === false ? template.name : `${template.name} Copy`,
     tags: template.goal ?? "",
     durationWeeks: String(template.durationWeeks ?? Math.max(1, days.length)),

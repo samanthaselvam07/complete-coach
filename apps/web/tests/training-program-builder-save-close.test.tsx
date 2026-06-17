@@ -9,6 +9,117 @@ afterEach(() => {
 });
 
 describe("Training program builder save and close", () => {
+  it("saves edits back to the original persisted custom program", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/training-program-templates/template_existing" && init?.method === "PATCH") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "template_existing",
+                name: "Edited Hypertrophy Build",
+                description: "Updated progression.",
+                goal: "custom-program",
+                durationWeeks: 10,
+                status: "draft",
+                template: {
+                  days: [
+                    {
+                      name: "Lower Day",
+                      exercises: [
+                        {
+                          exerciseId: "manual-entry",
+                          exerciseName: "Back Squat",
+                          sets: 5,
+                          reps: "5-7",
+                          restSeconds: 180,
+                          section: "workout"
+                        }
+                      ]
+                    }
+                  ],
+                  instructions: "Push load only if speed stays high."
+                },
+                updatedAt: "2026-06-17T00:00:00.000Z"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url.startsWith("/api/v1/training-program-templates")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "template_existing",
+                  name: "Original Hypertrophy Build",
+                  description: "Original progression.",
+                  goal: "custom-program",
+                  durationWeeks: 8,
+                  status: "draft",
+                  template: {
+                    days: [
+                      {
+                        name: "Lower Day",
+                        exercises: [
+                          {
+                            exerciseId: "manual-entry",
+                            exerciseName: "Back Squat",
+                            sets: 4,
+                            reps: "6-8",
+                            restSeconds: 150,
+                            section: "workout"
+                          }
+                        ]
+                      }
+                    ],
+                    instructions: "Progress steadily."
+                  },
+                  updatedAt: "2026-06-16T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(TrainingProgramsPage));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Original Hypertrophy Build" }));
+    fireEvent.change(screen.getByLabelText(/Program Title/i), { target: { value: "Edited Hypertrophy Build" } });
+    fireEvent.change(screen.getByLabelText(/Program Duration/i), { target: { value: "10" } });
+    fireEvent.change(screen.getByLabelText("Sets"), { target: { value: "5" } });
+    fireEvent.change(screen.getByLabelText("Reps"), { target: { value: "5-7" } });
+    fireEvent.change(screen.getByLabelText(/Workout Instructions/i), {
+      target: { value: "Push load only if speed stays high." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save & Close" }));
+
+    expect(await screen.findByText("Edited Hypertrophy Build saved.")).toBeInTheDocument();
+    expect(screen.getByText("Edited Hypertrophy Build")).toBeInTheDocument();
+    expect(screen.queryByText("Original Hypertrophy Build")).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/training-program-templates/template_existing",
+      expect.objectContaining({
+        method: "PATCH",
+        body: expect.stringContaining("Edited Hypertrophy Build")
+      })
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/v1/training-program-templates",
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+
   it("persists the program and returns to the custom programs tab", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
