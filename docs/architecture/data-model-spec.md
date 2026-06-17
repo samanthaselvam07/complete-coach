@@ -541,6 +541,8 @@ Fields:
 - `updated_at`
 - `deleted_at`
 
+`template_json` stores structured days, meals, and food rows. Food rows preserve database linkage and builder state with `foodId`, `foodName`, `servingSize`, calories/macros, optional `fiberGrams`, optional `quantity`, optional `measurementUnit`, and optional `micronutrients` so edited plans and imported meal templates can hydrate individual ingredients instead of summary rows.
+
 ### `meal_plan_assignments`
 Fields:
 - `id`

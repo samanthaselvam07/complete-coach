@@ -24,6 +24,7 @@ interface BuilderMeal {
 
 interface BuilderFood {
   id: string;
+  foodId?: string;
   name: string;
   serving: string;
   measurementUnit?: FoodMeasurementUnit;
@@ -64,6 +65,10 @@ export interface ApiMealPlanTemplate {
           proteinGrams: number;
           carbsGrams: number;
           fatGrams: number;
+          fiberGrams?: number;
+          quantity?: number;
+          measurementUnit?: FoodMeasurementUnit;
+          micronutrients?: Record<string, number>;
         }>;
       }>;
     }>;
@@ -94,6 +99,10 @@ export interface ApiMealPlanAssignment {
   updatedAt: string;
 }
 
+type ApiMealPlanTemplateDay = NonNullable<ApiMealPlanTemplate["template"]["days"]>[number];
+type ApiMealPlanTemplateMeal = ApiMealPlanTemplateDay["meals"][number];
+type ApiMealPlanTemplateFood = ApiMealPlanTemplateMeal["foods"][number];
+
 export interface MealTemplateCard {
   id: string;
   name: string;
@@ -104,10 +113,12 @@ export interface MealTemplateCard {
   fats: number;
   badge: string;
   apiTemplate: ApiMealPlanTemplate | null;
+  template: ApiMealPlanTemplate["template"] | null;
 }
 
 export interface MealAssignmentRow {
   id: string;
+  templateId: string | null;
   planName: string;
   activeClientCount: number;
   calories: number;
@@ -116,6 +127,7 @@ export interface MealAssignmentRow {
   fats: number;
   lastEdited: string;
   status: string;
+  apiTemplate: ApiMealPlanTemplate | null;
 }
 
 interface MealPlanTemplateSaveInput {
@@ -218,10 +230,11 @@ export function MealPlansPage() {
     setSaving(true);
     setStatusMessage(null);
     setErrorMessage(null);
+    const existingTemplateId = editingPlan?.apiTemplate?.id ?? null;
 
     try {
-      const response = await fetch("/api/v1/meal-plan-templates", {
-        method: "POST",
+      const response = await fetch(existingTemplateId ? `/api/v1/meal-plan-templates/${existingTemplateId}` : "/api/v1/meal-plan-templates", {
+        method: existingTemplateId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input)
       });
@@ -231,7 +244,11 @@ export function MealPlansPage() {
         throw new Error(payload.error?.message ?? "Nutrition plan could not be saved.");
       }
 
-      setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
+      setTemplates((currentTemplates) =>
+        existingTemplateId
+          ? currentTemplates.map((template) => (template.id === existingTemplateId ? payload.data : template))
+          : [payload.data, ...currentTemplates]
+      );
       setSource("api");
       setShowPlanTypeDialog(false);
       setShowMacroChoiceDialog(false);
@@ -346,6 +363,7 @@ export function MealPlansPage() {
         <NutritionPlanBuilder
           mode={builderMode}
           initialPlan={editingPlan}
+          initialTemplate={editingPlan?.apiTemplate ?? null}
           saving={saving}
           availableTemplates={templateCards.length > 0 ? templateCards : getMealTemplateCards("fixtures", [])}
           onBack={() => {
@@ -587,6 +605,7 @@ function MacroPlanChoiceDialog({
 function NutritionPlanBuilder({
   mode,
   initialPlan,
+  initialTemplate,
   saving,
   availableTemplates,
   onBack,
@@ -595,6 +614,7 @@ function NutritionPlanBuilder({
 }: {
   mode: NutritionPlanBuilderMode;
   initialPlan?: MealAssignmentRow | null;
+  initialTemplate?: ApiMealPlanTemplate | null;
   saving: boolean;
   availableTemplates: MealTemplateCard[];
   onBack: () => void;
@@ -657,6 +677,7 @@ function NutritionPlanBuilder({
             setCarbs={setCarbs}
             setFats={setFats}
             setCalories={setCalories}
+            initialTemplate={initialTemplate}
             availableTemplates={availableTemplates}
             onDaysChange={setFullPlanDays}
             onCreateMealTemplate={onCreateMealTemplate}
@@ -713,6 +734,7 @@ function FullMealPlanFields({
   setCarbs,
   setFats,
   setCalories,
+  initialTemplate,
   availableTemplates,
   onDaysChange,
   onCreateMealTemplate
@@ -727,11 +749,12 @@ function FullMealPlanFields({
   setCarbs: (value: string) => void;
   setFats: (value: string) => void;
   setCalories: (value: string) => void;
+  initialTemplate?: ApiMealPlanTemplate | null;
   availableTemplates: MealTemplateCard[];
   onDaysChange: (days: BuilderDay[]) => void;
   onCreateMealTemplate: (template: MealTemplateCard) => void;
 }) {
-  const [days, setDays] = useState<BuilderDay[]>(() => [createBuilderDay(1)]);
+  const [days, setDays] = useState<BuilderDay[]>(() => createBuilderDaysFromTemplate(initialTemplate));
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [activeFoodTarget, setActiveFoodTarget] = useState<{ dayId: string; mealId: string } | null>(null);
   const [dayMenuOpen, setDayMenuOpen] = useState(false);
@@ -824,6 +847,13 @@ function FullMealPlanFields({
 
   const createTemplateFromMeal = (meal: BuilderMeal) => {
     const totals = calculateMealTotals(meal);
+    const template = getFullMealPlanTemplatePayload([
+      {
+        id: `template_day_${Date.now()}`,
+        name: "Template Day",
+        meals: [meal]
+      }
+    ]);
 
     onCreateMealTemplate({
       id: `local-meal-template-${Date.now()}`,
@@ -834,7 +864,8 @@ function FullMealPlanFields({
       carbs: totals.carbs,
       fats: totals.fats,
       badge: "Custom",
-      apiTemplate: null
+      apiTemplate: null,
+      template
     });
     setOpenMealMenu(null);
   };
@@ -896,32 +927,14 @@ function FullMealPlanFields({
       return;
     }
 
+    const templateMeals = createBuilderMealsFromMealTemplate(template);
+
     setDays((currentDays) =>
       currentDays.map((day) =>
         day.id === activeDay.id
           ? {
               ...day,
-              meals: [
-                ...day.meals,
-                {
-                  id: `meal_${Date.now()}_${day.meals.length + 1}`,
-                  name: template.name,
-                  foods: [
-                    {
-                      id: `template_food_${template.id}_${Date.now()}`,
-                      name: template.name,
-                      serving: "Template meal",
-                      calories: template.calories,
-                      protein: template.protein,
-                      carbs: template.carbs,
-                      fats: template.fats,
-                      fibre: 0,
-                      quantity: 1,
-                      micronutrients: {}
-                    }
-                  ]
-                }
-              ]
+              meals: [...day.meals, ...templateMeals]
             }
           : day
       )
@@ -1323,6 +1336,79 @@ function createBuilderMeal(mealNumber: number, name = `Meal ${mealNumber}`): Bui
   };
 }
 
+function createBuilderDaysFromTemplate(template?: ApiMealPlanTemplate | null): BuilderDay[] {
+  const templateDays = template?.template.days;
+
+  if (!templateDays || templateDays.length === 0) {
+    return [createBuilderDay(1)];
+  }
+
+  return templateDays.map((day, dayIndex) => ({
+    id: `day_template_${dayIndex + 1}_${Date.now()}`,
+    name: day.name || `Day ${dayIndex + 1}`,
+    meals: day.meals.map((meal, mealIndex) => ({
+      id: `meal_template_${dayIndex + 1}_${mealIndex + 1}_${Date.now()}`,
+      name: meal.meal || `Meal ${mealIndex + 1}`,
+      foods: meal.foods.map((food, foodIndex) => createBuilderFoodFromTemplateFood(food, foodIndex))
+    }))
+  }));
+}
+
+function createBuilderFoodFromTemplateFood(food: ApiMealPlanTemplateFood, index: number): BuilderFood {
+  const libraryFood = foods.find((item) => item.id === food.foodId || item.name === food.foodName);
+  const parsedServing = parseServingAmount(food.servingSize);
+  const measurementUnit = food.measurementUnit ?? parsedServing?.unit ?? parseServingAmount(libraryFood?.serving ?? "")?.unit ?? "serving";
+
+  return {
+    id: `${food.foodId ?? food.foodName.toLowerCase().replace(/\W+/g, "-")}_${index}_${Date.now()}`,
+    foodId: food.foodId,
+    name: food.foodName,
+    serving: libraryFood?.serving ?? food.servingSize,
+    measurementUnit,
+    calories: food.calories,
+    protein: food.proteinGrams,
+    carbs: food.carbsGrams,
+    fats: food.fatGrams,
+    fibre: food.fiberGrams ?? libraryFood?.fibre ?? 0,
+    quantity: food.quantity ?? getFoodQuantityMultiplier({ serving: libraryFood?.serving ?? food.servingSize }, parsedServing?.amount ?? 1, measurementUnit),
+    micronutrients: food.micronutrients ?? libraryFood?.micronutrients ?? {}
+  };
+}
+
+function createBuilderMealsFromMealTemplate(template: MealTemplateCard): BuilderMeal[] {
+  const firstTemplateDay = template.template?.days?.[0] ?? template.apiTemplate?.template.days?.[0];
+  const templateMeals = firstTemplateDay?.meals ?? [];
+
+  if (templateMeals.length > 0) {
+    return templateMeals.map((meal, mealIndex) => ({
+      id: `imported_meal_${template.id}_${mealIndex + 1}_${Date.now()}`,
+      name: meal.meal || template.name,
+      foods: meal.foods.map((food, foodIndex) => createBuilderFoodFromTemplateFood(food, foodIndex))
+    }));
+  }
+
+  return [
+    {
+      id: `meal_${Date.now()}_1`,
+      name: template.name,
+      foods: [
+        {
+          id: `template_food_${template.id}_${Date.now()}`,
+          name: template.name,
+          serving: "Template meal",
+          calories: template.calories,
+          protein: template.protein,
+          carbs: template.carbs,
+          fats: template.fats,
+          fibre: 0,
+          quantity: 1,
+          micronutrients: {}
+        }
+      ]
+    }
+  ];
+}
+
 function cloneBuilderMeal(meal: BuilderMeal, mealNumber: number): BuilderMeal {
   return {
     id: `meal_copy_${mealNumber}_${Date.now()}`,
@@ -1346,6 +1432,7 @@ function createBuilderFood(food: Food, amount: number, unit?: FoodMeasurementUni
 
   return {
     id: `${food.id}_${Date.now()}`,
+    foodId: food.id,
     name: food.name,
     serving: food.serving,
     measurementUnit: selectedUnit,
@@ -1583,12 +1670,17 @@ function getFullMealPlanTemplatePayload(days: BuilderDay[]): ApiMealPlanTemplate
       meals: (day.meals.length > 0 ? day.meals : [createBuilderMeal(1)]).map((meal) => ({
         meal: meal.name.trim() || "Meal",
         foods: meal.foods.map((food) => ({
+          foodId: food.foodId,
           foodName: food.name,
           servingSize: getFoodServingLabel(food),
           calories: Math.round(food.calories),
           proteinGrams: food.protein,
           carbsGrams: food.carbs,
-          fatGrams: food.fats
+          fatGrams: food.fats,
+          fiberGrams: food.fibre,
+          quantity: food.quantity,
+          measurementUnit: food.measurementUnit,
+          micronutrients: food.micronutrients
         }))
       }))
     }))
@@ -2721,7 +2813,8 @@ export function getMealTemplateCards(source: MealPlanSource, templates: ApiMealP
       carbs: template.carbs,
       fats: template.fats,
       badge: "Fixture",
-      apiTemplate: null
+      apiTemplate: null,
+      template: null
     }));
   }
 
@@ -2734,7 +2827,8 @@ export function getMealTemplateCards(source: MealPlanSource, templates: ApiMealP
     carbs: template.carbsGrams,
     fats: template.fatGrams,
     badge: template.status,
-    apiTemplate: template
+    apiTemplate: template,
+    template: template.template
   }));
 }
 
@@ -2746,6 +2840,7 @@ export function getMealAssignmentRows(
   if (source === "fixtures") {
     return mealAssignments.map((assignment) => ({
       id: assignment.id,
+      templateId: null,
       planName: assignment.planName,
       activeClientCount: 1,
       calories: assignment.calories,
@@ -2753,11 +2848,13 @@ export function getMealAssignmentRows(
       carbs: assignment.carbs,
       fats: assignment.fats,
       lastEdited: assignment.started,
-      status: "active"
+      status: "active",
+      apiTemplate: null
     }));
   }
 
   const assignmentGroups = new Map<string, ApiMealPlanAssignment[]>();
+  const templatesById = new Map(templates.map((template) => [template.id, template]));
 
   assignments.forEach((assignment) => {
     const assignmentKey = assignment.templateId ?? assignment.id;
@@ -2772,6 +2869,7 @@ export function getMealAssignmentRows(
 
     return {
       id: assignmentKey,
+      templateId: assignment.templateId,
       planName: assignment.name,
       activeClientCount: group.filter((entry) => entry.status === "active").length,
       calories: assignment.snapshot.targetCalories ?? assignment.targetCalories,
@@ -2779,7 +2877,8 @@ export function getMealAssignmentRows(
       carbs: assignment.snapshot.carbsGrams ?? assignment.carbsGrams,
       fats: assignment.snapshot.fatGrams ?? assignment.fatGrams,
       lastEdited: formatDisplayDate(assignment.updatedAt),
-      status: assignment.status
+      status: assignment.status,
+      apiTemplate: assignment.templateId ? templatesById.get(assignment.templateId) ?? null : null
     };
   });
 
@@ -2788,6 +2887,7 @@ export function getMealAssignmentRows(
     .filter((template) => template.status === "draft" && !assignedTemplateIds.has(template.id))
     .map((template) => ({
       id: template.id,
+      templateId: template.id,
       planName: template.name,
       activeClientCount: 0,
       calories: template.targetCalories,
@@ -2795,7 +2895,8 @@ export function getMealAssignmentRows(
       carbs: template.carbsGrams,
       fats: template.fatGrams,
       lastEdited: formatDisplayDate(template.updatedAt),
-      status: "draft"
+      status: "draft",
+      apiTemplate: template
     }));
 
   return [...draftPlanRows, ...assignedRows];

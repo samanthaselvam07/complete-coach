@@ -83,7 +83,11 @@ export const mealPlanItemSchema = z.object({
         calories: z.number().int().min(0).max(20_000),
         proteinGrams: z.number().min(0).max(5_000),
         carbsGrams: z.number().min(0).max(5_000),
-        fatGrams: z.number().min(0).max(5_000)
+        fatGrams: z.number().min(0).max(5_000),
+        fiberGrams: z.number().min(0).max(1_000).optional(),
+        quantity: z.number().min(0).max(10_000).optional(),
+        measurementUnit: z.string().trim().max(40).optional(),
+        micronutrients: z.record(z.string(), z.number()).optional()
       })
     )
     .max(30)
@@ -112,6 +116,10 @@ export const createMealPlanTemplateSchema = z.object({
   template: mealPlanTemplateSchema
 });
 
+export const updateMealPlanTemplateSchema = createMealPlanTemplateSchema.partial().refine((input) => Object.keys(input).length > 0, {
+  message: "At least one field is required."
+});
+
 export const createMealPlanAssignmentSchema = z.object({
   clientId: z.string().min(1),
   templateId: z.string().min(1),
@@ -125,6 +133,7 @@ export type CreateFoodInput = z.infer<typeof createFoodSchema>;
 export type UpdateFoodInput = z.infer<typeof updateFoodSchema>;
 export type MealPlanTemplateListQuery = z.infer<typeof mealPlanTemplateListQuerySchema>;
 export type CreateMealPlanTemplateInput = z.infer<typeof createMealPlanTemplateSchema>;
+export type UpdateMealPlanTemplateInput = z.infer<typeof updateMealPlanTemplateSchema>;
 
 interface FoodRecord {
   id: string;
@@ -266,6 +275,19 @@ export function getMealPlanTemplateCreateData(
     fatGrams: input.fatGrams,
     status: toPrismaMealPlanTemplateStatus(input.status),
     templateJson: input.template as InputJsonValue
+  };
+}
+
+export function getMealPlanTemplateUpdateData(input: UpdateMealPlanTemplateInput) {
+  return {
+    ...(input.name !== undefined ? { name: input.name } : {}),
+    ...(input.phase !== undefined ? { phase: input.phase } : {}),
+    ...(input.targetCalories !== undefined ? { targetCalories: input.targetCalories } : {}),
+    ...(input.proteinGrams !== undefined ? { proteinGrams: input.proteinGrams } : {}),
+    ...(input.carbsGrams !== undefined ? { carbsGrams: input.carbsGrams } : {}),
+    ...(input.fatGrams !== undefined ? { fatGrams: input.fatGrams } : {}),
+    ...(input.status !== undefined ? { status: toPrismaMealPlanTemplateStatus(input.status) } : {}),
+    ...(input.template !== undefined ? { templateJson: input.template as InputJsonValue } : {})
   };
 }
 

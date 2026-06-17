@@ -101,6 +101,146 @@ describe("MealPlansPage", () => {
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
+  it("opens persisted meal plan ingredients and saves edits back to the same plan", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/v1/meal-plan-templates") && init?.method === "PATCH") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "meal_template_existing",
+                name: "Edited Hypertrophy Fuel",
+                phase: "Full meal plan",
+                targetCalories: 452,
+                proteinGrams: 34,
+                carbsGrams: 25,
+                fatGrams: 4,
+                status: "draft",
+                template: {
+                  days: [
+                    {
+                      name: "Day 1",
+                      meals: [
+                        {
+                          meal: "Breakfast",
+                          foods: [
+                            {
+                              foodId: "chicken-breast",
+                              foodName: "Chicken Breast",
+                              servingSize: "200 g",
+                              calories: 330,
+                              proteinGrams: 62,
+                              carbsGrams: 0,
+                              fatGrams: 7.2,
+                              fiberGrams: 0,
+                              quantity: 2,
+                              measurementUnit: "g"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                updatedAt: "2026-06-17T00:00:00.000Z"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url.startsWith("/api/v1/meal-plan-templates")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "meal_template_existing",
+                  name: "Persisted Hypertrophy Fuel",
+                  phase: "Full meal plan",
+                  targetCalories: 452,
+                  proteinGrams: 34,
+                  carbsGrams: 25,
+                  fatGrams: 4,
+                  status: "draft",
+                  template: {
+                    days: [
+                      {
+                        name: "Day 1",
+                        meals: [
+                          {
+                            meal: "Breakfast",
+                            foods: [
+                              {
+                                foodId: "chicken-breast",
+                                foodName: "Chicken Breast",
+                                servingSize: "200 g",
+                                calories: 330,
+                                proteinGrams: 62,
+                                carbsGrams: 0,
+                                fatGrams: 7.2,
+                                fiberGrams: 0,
+                                quantity: 2,
+                                measurementUnit: "g"
+                              },
+                              {
+                                foodId: "basmati-rice",
+                                foodName: "Basmati Rice",
+                                servingSize: "100 g",
+                                calories: 121,
+                                proteinGrams: 3,
+                                carbsGrams: 25,
+                                fatGrams: 0.4,
+                                fiberGrams: 0.4,
+                                quantity: 1,
+                                measurementUnit: "g"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  updatedAt: "2026-06-16T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Persisted Hypertrophy Fuel" }));
+
+    expect(screen.getByLabelText("Nutrition plan title")).toHaveValue("Persisted Hypertrophy Fuel");
+    expect(screen.getByRole("row", { name: /Chicken Breast 200 g 330 kcal 62g protein/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Basmati Rice 100 g 121 kcal 3g protein/i })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Nutrition plan title"), { target: { value: "Edited Hypertrophy Fuel" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Nutrition plan saved.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/meal-plan-templates/meal_template_existing",
+      expect.objectContaining({
+        method: "PATCH",
+        body: expect.stringContaining("Edited Hypertrophy Fuel")
+      })
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/v1/meal-plan-templates",
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+
   it("loads persisted meal templates and assignments when the API is available", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
@@ -370,14 +510,22 @@ describe("MealPlansPage", () => {
       screen.getByRole("table", { name: "Protein nutrient breakdown" }).compareDocumentPosition(screen.getByRole("table", { name: "Carbohydrates nutrient breakdown" }))
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 
+    fireEvent.click(screen.getAllByRole("button", { name: "Meal actions" })[0]);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Create meal template" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import Main Meal" }));
+    expect(screen.queryByRole("row", { name: /Main Meal 1 serving/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("row", { name: /Chicken Breast/i })).toHaveLength(2);
+    expect(screen.getAllByRole("row", { name: /Basmati Rice/i })).toHaveLength(2);
+
     fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
     const templateDialog = screen.getByRole("dialog", { name: "Import meal from template" });
     expect(within(templateDialog).getByText("High-Protein Breakfast Bowl")).toBeInTheDocument();
     fireEvent.click(within(templateDialog).getByRole("button", { name: "Import High-Protein Breakfast Bowl" }));
 
-    expect(screen.getByLabelText("Meal name for High Carb Day meal 3")).toHaveValue("High-Protein Breakfast Bowl");
+    expect(screen.getByLabelText("Meal name for High Carb Day meal 4")).toHaveValue("High-Protein Breakfast Bowl");
 
-    const firstMeal = screen.getByLabelText("Meal card Main Meal");
+    const firstMeal = screen.getAllByLabelText("Meal card Main Meal")[0];
     const secondMeal = screen.getByLabelText("Meal card Breakfast");
     fireEvent.dragStart(firstMeal);
     fireEvent.dragOver(secondMeal);

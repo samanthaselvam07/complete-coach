@@ -11,6 +11,7 @@ import {
   GET as getMealPlanTemplates,
   POST as createMealPlanTemplate
 } from "@/app/api/v1/meal-plan-templates/route";
+import { PATCH as updateMealPlanTemplate } from "@/app/api/v1/meal-plan-templates/[templateId]/route";
 import {
   GET as getMealPlanAssignments,
   POST as createMealPlanAssignment
@@ -31,7 +32,8 @@ const mocks = vi.hoisted(() => ({
     mealPlanTemplate: {
       create: vi.fn(),
       findMany: vi.fn(),
-      findFirst: vi.fn()
+      findFirst: vi.fn(),
+      update: vi.fn()
     },
     mealPlanAssignment: {
       create: vi.fn(),
@@ -411,6 +413,76 @@ describe("nutrition persistence APIs", () => {
           organizationId: "org_1",
           createdByUserId: "user_1",
           templateJson: mealTemplateJson
+        })
+      })
+    );
+  });
+
+  it("updates an existing meal plan template in place", async () => {
+    const updatedTemplate = {
+      ...mealTemplateRecord,
+      name: "Edited Hypertrophy Meal Plan",
+      templateJson: {
+        days: [
+          {
+            name: "Day 1",
+            meals: [
+              {
+                meal: "Breakfast",
+                foods: [
+                  {
+                    foodId: "food_global",
+                    foodName: "Basmati Rice",
+                    servingSize: "100 g",
+                    calories: 121,
+                    proteinGrams: 3,
+                    carbsGrams: 25,
+                    fatGrams: 0.4,
+                    fiberGrams: 0.4,
+                    quantity: 1,
+                    measurementUnit: "g"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      updatedAt: new Date("2026-05-19T00:00:00.000Z")
+    };
+    mocks.prisma.mealPlanTemplate.findFirst.mockResolvedValue(mealTemplateRecord);
+    mocks.prisma.mealPlanTemplate.update.mockResolvedValue(updatedTemplate);
+
+    const response = await updateMealPlanTemplate(
+      new Request("http://test.local/api/v1/meal-plan-templates/meal_template_1", {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: "Edited Hypertrophy Meal Plan",
+          targetCalories: 2900,
+          template: updatedTemplate.templateJson
+        })
+      }),
+      { params: Promise.resolve({ templateId: "meal_template_1" }) }
+    );
+    const payload = (await response.json()) as { data: { id: string; name: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toMatchObject({ id: "meal_template_1", name: "Edited Hypertrophy Meal Plan" });
+    expect(mocks.prisma.mealPlanTemplate.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "meal_template_1" },
+        data: expect.objectContaining({
+          name: "Edited Hypertrophy Meal Plan",
+          targetCalories: 2900,
+          templateJson: updatedTemplate.templateJson
+        })
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "meal_plan_template.updated",
+          targetId: "meal_template_1"
         })
       })
     );
