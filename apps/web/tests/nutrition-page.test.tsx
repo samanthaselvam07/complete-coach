@@ -308,7 +308,8 @@ describe("MealPlansPage", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Add food" })[0]);
     const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
     expect(foodDrawer).toHaveAttribute("aria-modal", "true");
-    expect(foodDrawer).toHaveClass("max-w-5xl");
+    expect(foodDrawer).toHaveClass("max-w-6xl");
+    expect(within(foodDrawer).getAllByLabelText("Verified database food")[0]).toHaveTextContent("Verified");
     expect(screen.getByRole("button", { name: "Add day" })).toBeEnabled();
     expect(within(foodDrawer).getByRole("searchbox", { name: "Search food database" })).toHaveAttribute(
       "placeholder",
@@ -321,7 +322,10 @@ describe("MealPlansPage", () => {
     expect(within(foodDrawer).getByText("Showing USDA foods")).toBeInTheDocument();
     fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Chicken Breast" }));
     fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Basmati Rice" }));
+    const selectedFoodsRegion = within(foodDrawer).getByRole("region", { name: "Selected foods" });
+    expect(selectedFoodsRegion).toHaveClass("lg:min-w-[26rem]");
     expect(within(foodDrawer).getByLabelText("Quantity for Chicken Breast")).toHaveValue(100);
+    expect(within(foodDrawer).getByLabelText("Measurement for Chicken Breast")).toHaveClass("w-full");
     fireEvent.change(within(foodDrawer).getByLabelText("Quantity for Chicken Breast"), { target: { value: "200" } });
     fireEvent.change(within(foodDrawer).getByLabelText("Measurement for Chicken Breast"), { target: { value: "g" } });
     expect(within(foodDrawer).getByLabelText("Quantity for Basmati Rice")).toHaveValue(100);

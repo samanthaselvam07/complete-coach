@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
+import { Calendar, CheckCircle2, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
@@ -14,6 +14,7 @@ export type MealPlanSource = "api" | "fixtures";
 
 type FoodDatabaseSource = "AUS / NZ" | "EFSA" | "USDA";
 type FoodMeasurementUnit = "g" | "ml" | "oz" | "cups" | "tbsp" | "tsp" | "serving";
+const VERIFIED_FOOD_SOURCES = new Set(["USDA", "AUS/NZ", "EFSA"]);
 
 interface BuilderMeal {
   id: string;
@@ -1826,6 +1827,10 @@ function FoodDatabaseDrawer({
   const [selectedFoods, setSelectedFoods] = useState<Record<string, { quantity: string; unit: FoodMeasurementUnit }>>({});
   const selectedFoodEntries = filteredFoods.filter((food) => selectedFoods[food.id]);
 
+  function isVerifiedDatabaseFood(food: Food) {
+    return VERIFIED_FOOD_SOURCES.has(String(food.source));
+  }
+
   function getDefaultSelection(food: Food) {
     const parsedServing = parseServingAmount(food.serving);
 
@@ -1881,7 +1886,7 @@ function FoodDatabaseDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="food-database-drawer-title"
-        className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+        className="max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-6">
           <div>
@@ -1896,7 +1901,7 @@ function FoodDatabaseDrawer({
           </button>
         </div>
 
-        <div className="grid max-h-[calc(90vh-8rem)] gap-0 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid max-h-[calc(90vh-8rem)] gap-0 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(26rem,28rem)]">
           <div className="p-6">
             <label className="grid gap-2">
               <span className="text-sm font-bold text-slate-700">Search food database</span>
@@ -1934,6 +1939,7 @@ function FoodDatabaseDrawer({
             <div className="mt-6 grid gap-3 md:grid-cols-2">
               {filteredFoods.map((food) => {
                 const selected = Boolean(selectedFoods[food.id]);
+                const verified = isVerifiedDatabaseFood(food);
 
                 return (
                   <label
@@ -1950,8 +1956,20 @@ function FoodDatabaseDrawer({
                       className="mt-1 size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                       onChange={() => toggleFood(food)}
                     />
-                    <span>
-                      <span className="block font-bold text-slate-900">{food.name}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold text-slate-900">{food.name}</span>
+                        <span
+                          aria-label={verified ? "Verified database food" : "Coach-added food"}
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.68rem] font-black uppercase tracking-wide",
+                            verified ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+                          )}
+                        >
+                          {verified ? <CheckCircle2 className="size-3.5" aria-hidden="true" /> : null}
+                          {verified ? "Verified" : "Custom"}
+                        </span>
+                      </span>
                       <span className="mt-1 block text-xs text-slate-500">{food.serving}</span>
                       <span className="mt-2 block text-xs font-bold text-slate-600">
                         {food.calories} kcal · P {food.protein}g · C {food.carbs}g · F {food.fats}g · Fibre {food.fibre}g
@@ -1963,7 +1981,7 @@ function FoodDatabaseDrawer({
             </div>
           </div>
 
-          <div className="border-t border-slate-200 bg-slate-50 p-6 lg:border-l lg:border-t-0">
+          <section aria-label="Selected foods" className="border-t border-slate-200 bg-slate-50 p-6 lg:min-w-[26rem] lg:border-l lg:border-t-0">
             <h4 className="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Selected foods</h4>
             {selectedFoodEntries.length === 0 ? (
               <p className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
@@ -1980,8 +1998,8 @@ function FoodDatabaseDrawer({
                   return (
                     <div key={food.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <p className="font-bold text-slate-950">{food.name}</p>
-                      <div className="mt-3 grid grid-cols-[1fr_7rem] gap-3">
-                        <label className="grid gap-1">
+                      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_9rem]">
+                        <label className="grid min-w-0 gap-1">
                           <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Quantity</span>
                           <input
                             type="number"
@@ -1989,16 +2007,16 @@ function FoodDatabaseDrawer({
                             step="0.25"
                             aria-label={`Quantity for ${food.name}`}
                             value={selection.quantity}
-                            className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                             onChange={(event) => updateSelection(food.id, { quantity: event.target.value })}
                           />
                         </label>
-                        <label className="grid gap-1">
+                        <label className="grid min-w-0 gap-1">
                           <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Measure</span>
                           <select
                             aria-label={`Measurement for ${food.name}`}
                             value={selection.unit}
-                            className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                             onChange={(event) => updateSelection(food.id, { unit: event.target.value as FoodMeasurementUnit })}
                           >
                             {measurementUnits.map((unit) => (
@@ -2030,7 +2048,7 @@ function FoodDatabaseDrawer({
                 Add selected foods
               </button>
             </div>
-          </div>
+          </section>
         </div>
       </section>
     </div>
