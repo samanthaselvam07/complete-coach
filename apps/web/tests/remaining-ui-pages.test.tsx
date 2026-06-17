@@ -562,12 +562,48 @@ describe("SupplementPlansPage", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
     render(createElement(SupplementPlansPage));
 
+    expect(screen.queryByText("Protocol Compliance")).not.toBeInTheDocument();
+    expect(screen.queryByText("Active Plans")).not.toBeInTheDocument();
+    expect(screen.queryByText("Library")).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Supplement Protocols" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Protocol Templates" })).toBeInTheDocument();
     expect(screen.getByText("Alex Rivera")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Protocol Library" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
 
-    expect(screen.getByRole("tabpanel", { name: "Protocol Library" })).toHaveTextContent("Creatine Monohydrate");
+    expect(screen.getByRole("tabpanel", { name: "Protocol Templates" })).toHaveTextContent("Creatine Monohydrate");
     expect(screen.queryByText("Alex Rivera")).not.toBeInTheDocument();
+  });
+
+  it("creates, duplicates, assigns, edits, and saves supplement protocol templates", () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+    render(createElement(SupplementPlansPage));
+
+    fireEvent.click(screen.getByRole("button", { name: "Create Template" }));
+    const createDialog = screen.getByRole("dialog", { name: "Create Protocol Template" });
+    fireEvent.change(within(createDialog).getByLabelText("Template name"), { target: { value: "Sleep Support Stack" } });
+    fireEvent.change(within(createDialog).getByLabelText("Description"), { target: { value: "Evening recovery protocol." } });
+    fireEvent.change(within(createDialog).getByLabelText("Supplement count"), { target: { value: "3" } });
+    fireEvent.click(within(createDialog).getByRole("button", { name: "Save Template" }));
+
+    expect(screen.getByRole("tabpanel", { name: "Protocol Templates" })).toHaveTextContent("Sleep Support Stack");
+    expect(screen.getByText("Sleep Support Stack template saved.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Duplicate" })[0]);
+    expect(screen.getByText("Sleep Support Stack (copy)")).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Assign" })[0]);
+    expect(screen.getByRole("tabpanel", { name: "Supplement Protocols" })).toHaveTextContent("Assigned Client");
+
+    fireEvent.click(screen.getByRole("button", { name: "Save Sleep Support Stack (copy) as template" }));
+    expect(screen.getByRole("tabpanel", { name: "Protocol Templates" })).toHaveTextContent("Template saved from Assigned Client's protocol.");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+    const editDialog = screen.getByRole("dialog", { name: "Edit Protocol Template" });
+    fireEvent.change(within(editDialog).getByLabelText("Template name"), { target: { value: "Sleep Support Stack v2" } });
+    fireEvent.click(within(editDialog).getByRole("button", { name: "Save Template" }));
+
+    expect(screen.getByText("Sleep Support Stack v2")).toBeInTheDocument();
   });
 
   it("loads persisted active protocols and templates", async () => {
@@ -627,7 +663,7 @@ describe("SupplementPlansPage", () => {
 
     expect(await screen.findByText("Persisted Client")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Protocol Library" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
 
     expect(await screen.findByText("Persisted Template")).toBeInTheDocument();
   });
@@ -680,7 +716,7 @@ describe("SupplementPlansPage", () => {
     expect(await screen.findByText("Unassigned client")).toBeInTheDocument();
     expect(screen.getByText("In Review")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Protocol Library" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
 
     expect(await screen.findByText("Draft Template")).toBeInTheDocument();
     expect(screen.getByText("Coach-created supplement protocol.")).toBeInTheDocument();
