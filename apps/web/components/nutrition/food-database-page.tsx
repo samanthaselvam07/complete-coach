@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Database, Download, Plus, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
@@ -200,21 +200,6 @@ export function FoodDatabasePage() {
         </div>
         <span className="text-xs font-medium text-slate-400">{getSourceDescription(selectedSource)}</span>
       </div>
-
-      <section className="mb-8 flex items-center justify-between rounded-xl bg-gradient-to-r from-indigo-600 to-violet-700 p-6 shadow-sm">
-        <div className="flex-1 text-white">
-          <h2 className="mb-2 text-xl font-bold">Unlock Global Food Database</h2>
-          <p className="mb-4 text-sm text-indigo-100">
-            Access 50,000+ verified ingredients with complete macro breakdowns and international serving sizes
-          </p>
-          <button className="rounded-lg bg-white px-5 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-50">
-            Sync Now
-          </button>
-        </div>
-        <div className="hidden size-24 items-center justify-center rounded-full bg-white/15 md:flex">
-          <Database className="size-12 text-white" aria-hidden="true" />
-        </div>
-      </section>
 
       <div className="mb-6">
         <div className="mb-4 flex items-center justify-between">

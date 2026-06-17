@@ -657,6 +657,8 @@ describe("FoodDatabasePage", () => {
     expect(screen.queryByRole("button", { name: "All Ingredients" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Proteins" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Carbs" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Unlock Global Food Database" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sync Now" })).not.toBeInTheDocument();
   });
 
   it("loads API-backed foods when persistence is available", async () => {
