@@ -80,8 +80,26 @@ describe("FSANZ AUS/NZ food CSV import", () => {
   });
 
   it("reports missing required headers clearly", () => {
-    expect(() => parseFsanzFoodCsv("Name,Energy (kJ)\nChicken,690\n")).toThrow(
-      "Missing required AUS/NZ food CSV headers: food id"
+    expect(() => parseFsanzFoodCsv("Food Code,Energy (kJ)\nAUS-001,690\n")).toThrow(
+      "Missing required AUS/NZ food CSV headers: food name"
     );
+  });
+
+  it("uses a stable name-based source food id when AUSNUT exports omit food codes", () => {
+    const [candidate] = parseFsanzFoodCsv(`Food name,Energy with dietary fibre (kJ),Protein (g),"Available carbohydrate, without sugar alcohols (g)",Total fat (g),Dietary fibre (g)
+"Apple, raw",218,0.3,12,0.1,2.4
+`);
+
+    expect(candidate).toMatchObject({
+      sourceFoodId: "apple-raw",
+      name: "Apple, raw"
+    });
+    expect(candidate.nutrientsPer100g).toEqual([
+      { name: "Energy", unit: "kJ", value: 218 },
+      { name: "Protein", unit: "g", value: 0.3 },
+      { name: "Available carbohydrate", unit: "g", value: 12 },
+      { name: "Total fat", unit: "g", value: 0.1 },
+      { name: "Dietary fibre", unit: "g", value: 2.4 }
+    ]);
   });
 });

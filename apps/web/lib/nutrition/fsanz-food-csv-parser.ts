@@ -50,6 +50,8 @@ const nutrientHeaderAliases = [
     aliases: [
       "available carbohydrate g",
       "available carbohydrate (g)",
+      "available carbohydrate with sugar alcohols g",
+      "available carbohydrate without sugar alcohols g",
       "carbohydrate g",
       "carbohydrate (g)",
       "carbohydrate",
@@ -80,7 +82,6 @@ export function parseFsanzFoodCsv(
   const [headers, ...dataRows] = rows;
   const headerLookup = buildHeaderLookup(headers);
   const missingHeaders = [
-    findHeader(headerLookup, requiredHeaderAliases.foodId) ? undefined : "food id",
     findHeader(headerLookup, requiredHeaderAliases.name) ? undefined : "food name"
   ].filter(Boolean);
 
@@ -91,12 +92,14 @@ export function parseFsanzFoodCsv(
   return dataRows
     .map((row) => rowToObject(headers, row))
     .filter((row) => Object.values(row).some((cell) => cell.trim()))
-    .map((row) =>
-      fsanzRowToImportCandidate({
+    .map((row) => {
+      const name = readRequired(row, headerLookup, requiredHeaderAliases.name);
+
+      return fsanzRowToImportCandidate({
         sourceId: options.sourceId ?? "fsanz_ausnut",
-        foodId: readRequired(row, headerLookup, requiredHeaderAliases.foodId),
+        foodId: readOptional(row, headerLookup, requiredHeaderAliases.foodId) ?? slugify(name),
         version: options.version,
-        name: readRequired(row, headerLookup, requiredHeaderAliases.name),
+        name,
         brandName: readOptional(row, headerLookup, optionalHeaderAliases.brandName),
         barcode: readOptional(row, headerLookup, optionalHeaderAliases.barcode),
         category: readOptional(row, headerLookup, optionalHeaderAliases.category),
@@ -104,8 +107,8 @@ export function parseFsanzFoodCsv(
         servingSizeGrams: readNumber(row, headerLookup, optionalHeaderAliases.servingSizeGrams),
         nutrientsPer100g: readNutrients(row, headerLookup),
         raw: row
-      } satisfies FsanzFoodImportRow)
-    );
+      } satisfies FsanzFoodImportRow);
+    });
 }
 
 function readNutrients(row: ParsedCsvRow, headerLookup: Map<string, string>) {
@@ -175,6 +178,14 @@ function normaliseHeader(header: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function rowToObject(headers: string[], row: string[]) {
