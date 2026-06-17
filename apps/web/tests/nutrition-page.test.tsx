@@ -96,8 +96,8 @@ describe("MealPlansPage", () => {
 
     expect(screen.getByRole("heading", { level: 2, name: "Hypertrophy Phase II" })).toBeInTheDocument();
     expect(screen.getByLabelText("Nutrition plan title")).toHaveValue("Hypertrophy Phase II");
-    expect(screen.getByText("2800 Kcal")).toBeInTheDocument();
-    expect(screen.getByText("210 g Protein")).toBeInTheDocument();
+    expect(screen.getByText("0 Kcal")).toBeInTheDocument();
+    expect(screen.getByText("0 g Protein")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
@@ -227,6 +227,9 @@ describe("MealPlansPage", () => {
     expect(screen.getByRole("heading", { level: 2, name: "New Nutrition Plan" })).toBeInTheDocument();
     expect(screen.getByText("Complete Coach nutrition builder")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add day" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Day actions" }).compareDocumentPosition(screen.getByRole("tab", { name: "Day 1" }))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
 
     fireEvent.change(screen.getByLabelText("Meal name for Day 1 meal 1"), { target: { value: "Breakfast" } });
     expect(screen.getByDisplayValue("Breakfast")).toBeInTheDocument();
@@ -237,6 +240,11 @@ describe("MealPlansPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Add day" }));
     expect(screen.getByRole("tab", { name: "Day 2" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("0 Kcal")).toBeInTheDocument();
+    expect(screen.getByText("0 g Protein")).toBeInTheDocument();
+    expect(screen.getByText("0 g Carbs")).toBeInTheDocument();
+    expect(screen.getByText("0 g Fat")).toBeInTheDocument();
+    expect(screen.getByText("0 g Fibre")).toBeInTheDocument();
     expect(screen.queryByLabelText("Meal name for Day 1 meal 1")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Day name for Day 2")).toHaveValue("Day 2");
     expect(screen.getByLabelText("Meal name for Day 2 meal 1")).toHaveValue("Main Meal");

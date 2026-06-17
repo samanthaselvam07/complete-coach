@@ -929,32 +929,15 @@ function FullMealPlanFields({
         </div>
         <div className="hidden flex-wrap items-center gap-2 lg:flex">
           <span className="text-xs font-black uppercase text-slate-700">DAY TOTAL</span>
-          <MacroPill value={`${formatMacroValue(dayTotals.calories || Number(calories) || 0)} Kcal`} />
-          <MacroPill value={`${formatMacroValue(dayTotals.protein || Number(protein) || 0)} g Protein`} />
-          <MacroPill value={`${formatMacroValue(dayTotals.carbs || Number(carbs) || 0)} g Carbs`} />
-          <MacroPill value={`${formatMacroValue(dayTotals.fats || Number(fats) || 0)} g Fat`} />
+          <MacroPill value={`${formatMacroValue(dayTotals.calories)} Kcal`} />
+          <MacroPill value={`${formatMacroValue(dayTotals.protein)} g Protein`} />
+          <MacroPill value={`${formatMacroValue(dayTotals.carbs)} g Carbs`} />
+          <MacroPill value={`${formatMacroValue(dayTotals.fats)} g Fat`} />
           <MacroPill value={`${formatMacroValue(dayTotals.fibre)} g Fibre`} />
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div role="tablist" aria-label="Nutrition plan days" className="flex flex-wrap gap-2">
-          {days.map((day) => (
-            <button
-              key={day.id}
-              type="button"
-              role="tab"
-              aria-selected={day.id === activeDay?.id}
-              className={cn(
-                "rounded-xl px-4 py-3 text-sm font-bold",
-                day.id === activeDay?.id ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-              )}
-              onClick={() => setActiveDayId(day.id)}
-            >
-              {day.name}
-            </button>
-          ))}
-        </div>
         <div className="relative">
           <button
             type="button"
@@ -985,6 +968,23 @@ function FullMealPlanFields({
               </button>
             </div>
           ) : null}
+        </div>
+        <div role="tablist" aria-label="Nutrition plan days" className="flex flex-wrap gap-2">
+          {days.map((day) => (
+            <button
+              key={day.id}
+              type="button"
+              role="tab"
+              aria-selected={day.id === activeDay?.id}
+              className={cn(
+                "rounded-xl px-4 py-3 text-sm font-bold",
+                day.id === activeDay?.id ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+              )}
+              onClick={() => setActiveDayId(day.id)}
+            >
+              {day.name}
+            </button>
+          ))}
         </div>
         <button type="button" aria-label="Add day" className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600 hover:bg-indigo-100" onClick={addDay}>
           + Add day
