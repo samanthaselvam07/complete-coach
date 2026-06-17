@@ -24,6 +24,12 @@ interface ApiSupplement {
   clinicalDescription: string | null;
 }
 
+interface ApiSupplementCoachDetails {
+  coachDosageInstructions: string;
+  coachNotes: string;
+  affiliateLink: string;
+}
+
 type SupplementLibraryEntry = SupplementEntry & {
   verified: boolean;
   description: string;
@@ -49,7 +55,9 @@ export function SupplementDatabasePage() {
   const [supplements, setSupplements] = useState<SupplementLibraryEntry[]>(
     supplementEntries.map(mapFixtureSupplementToEntry)
   );
-  const [coachDetails, setCoachDetails] = useState<Record<string, CoachSupplementDetails>>(loadCoachDetails);
+  const [coachDetails, setCoachDetails] = useState<Record<string, CoachSupplementDetails>>({});
+  const [coachDetailsLoadingId, setCoachDetailsLoadingId] = useState<string | null>(null);
+  const [coachDetailsSavingId, setCoachDetailsSavingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [newSupplement, setNewSupplement] = useState({
@@ -142,15 +150,23 @@ export function SupplementDatabasePage() {
       }
 
       const payload = (await response.json()) as { data: ApiSupplement };
-      setSupplements((current) => [mapApiSupplementToEntry(payload.data), ...current]);
-      setCoachDetails((current) => saveCoachDetails({
+      const createdSupplement = mapApiSupplementToEntry(payload.data);
+      const initialCoachDetails = {
+        dosageInstructions: newSupplement.dosage.trim(),
+        notes: "",
+        affiliateLink: ""
+      };
+
+      setSupplements((current) => [createdSupplement, ...current]);
+      setCoachDetails((current) => ({
         ...current,
-        [payload.data.id]: {
-          dosageInstructions: newSupplement.dosage.trim(),
-          notes: "",
-          affiliateLink: ""
-        }
+        [createdSupplement.id]: initialCoachDetails
       }));
+
+      if (initialCoachDetails.dosageInstructions) {
+        await saveSupplementCoachDetails(createdSupplement.id, initialCoachDetails, "Supplement created.");
+      }
+
       setNewSupplement({ name: "", category: "", timing: "", dosage: "" });
       setShowAddPanel(false);
       setStatus("Supplement created.");
@@ -159,6 +175,73 @@ export function SupplementDatabasePage() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  async function loadSupplementCoachDetails(supplement: SupplementLibraryEntry) {
+    setCoachDetailsLoadingId(supplement.id);
+
+    try {
+      const response = await fetch(`/api/v1/supplements/${supplement.id}/coach-details`);
+
+      if (!response.ok) {
+        throw new Error("Coach supplement details unavailable.");
+      }
+
+      const payload = (await response.json()) as { data?: ApiSupplementCoachDetails };
+
+      setCoachDetails((current) => ({
+        ...current,
+        [supplement.id]: isApiCoachDetails(payload.data) ? mapApiCoachDetails(payload.data) : getDefaultCoachDetails(supplement)
+      }));
+    } catch {
+      setCoachDetails((current) => ({
+        ...current,
+        [supplement.id]: current[supplement.id] ?? getDefaultCoachDetails(supplement)
+      }));
+      setStatus("Could not load coach supplement details.");
+    } finally {
+      setCoachDetailsLoadingId((current) => (current === supplement.id ? null : current));
+    }
+  }
+
+  async function saveSupplementCoachDetails(
+    supplementId: string,
+    details: CoachSupplementDetails,
+    successStatus = "Coach supplement details saved."
+  ) {
+    setCoachDetailsSavingId(supplementId);
+
+    try {
+      const response = await fetch(`/api/v1/supplements/${supplementId}/coach-details`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          coachDosageInstructions: details.dosageInstructions,
+          coachNotes: details.notes,
+          affiliateLink: details.affiliateLink
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Coach supplement details save failed.");
+      }
+
+      const payload = (await response.json()) as { data?: ApiSupplementCoachDetails };
+      const savedDetails = isApiCoachDetails(payload.data) ? mapApiCoachDetails(payload.data) : details;
+
+      setCoachDetails((current) => ({ ...current, [supplementId]: savedDetails }));
+      setStatus(successStatus);
+    } catch {
+      setStatus("Could not save coach supplement details.");
+      throw new Error("Coach supplement details save failed.");
+    } finally {
+      setCoachDetailsSavingId((current) => (current === supplementId ? null : current));
+    }
+  }
+
+  function openSupplementDetails(supplement: SupplementLibraryEntry) {
+    setSelectedSupplement(supplement);
+    void loadSupplementCoachDetails(supplement);
   }
 
   return (
@@ -262,7 +345,7 @@ export function SupplementDatabasePage() {
               <SupplementCard
                 key={supplement.id}
                 supplement={supplement}
-                onSelect={() => setSelectedSupplement(supplement)}
+                onSelect={() => openSupplementDetails(supplement)}
               />
             ))}
           </div>
@@ -272,7 +355,7 @@ export function SupplementDatabasePage() {
               <SupplementListRow
                 key={supplement.id}
                 supplement={supplement}
-                onSelect={() => setSelectedSupplement(supplement)}
+                onSelect={() => openSupplementDetails(supplement)}
               />
             ))}
           </div>
@@ -315,9 +398,9 @@ export function SupplementDatabasePage() {
         <SupplementDetailsDialog
           supplement={selectedSupplement}
           coachDetails={coachDetails[selectedSupplement.id] ?? getDefaultCoachDetails(selectedSupplement)}
-          onSaveCoachDetails={(details) => {
-            setCoachDetails((current) => saveCoachDetails({ ...current, [selectedSupplement.id]: details }));
-          }}
+          isLoadingCoachDetails={coachDetailsLoadingId === selectedSupplement.id}
+          isSavingCoachDetails={coachDetailsSavingId === selectedSupplement.id}
+          onSaveCoachDetails={(details) => saveSupplementCoachDetails(selectedSupplement.id, details)}
           onClose={() => setSelectedSupplement(null)}
         />
       ) : null}
@@ -402,24 +485,32 @@ function VerifiedTick({ label, verified }: { label: string; verified: boolean })
 function SupplementDetailsDialog({
   supplement,
   coachDetails,
+  isLoadingCoachDetails,
+  isSavingCoachDetails,
   onSaveCoachDetails,
   onClose
 }: {
   supplement: SupplementLibraryEntry;
   coachDetails: CoachSupplementDetails;
-  onSaveCoachDetails: (details: CoachSupplementDetails) => void;
+  isLoadingCoachDetails: boolean;
+  isSavingCoachDetails: boolean;
+  onSaveCoachDetails: (details: CoachSupplementDetails) => Promise<void>;
   onClose: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draftDetails, setDraftDetails] = useState(coachDetails);
 
-  function saveDetails() {
-    onSaveCoachDetails({
-      dosageInstructions: draftDetails.dosageInstructions.trim(),
-      notes: draftDetails.notes.trim(),
-      affiliateLink: draftDetails.affiliateLink.trim()
-    });
-    setEditing(false);
+  async function saveDetails() {
+    try {
+      await onSaveCoachDetails({
+        dosageInstructions: draftDetails.dosageInstructions.trim(),
+        notes: draftDetails.notes.trim(),
+        affiliateLink: draftDetails.affiliateLink.trim()
+      });
+      setEditing(false);
+    } catch {
+      // Status is shown by the parent component.
+    }
   }
 
   return (
@@ -466,17 +557,22 @@ function SupplementDetailsDialog({
               <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">Coach Supplement Details</h3>
               <button
                 type="button"
+                disabled={isLoadingCoachDetails}
                 onClick={() => {
                   setDraftDetails(coachDetails);
                   setEditing(true);
                 }}
-                className="rounded-lg border border-indigo-200 px-3 py-2 text-xs font-black text-indigo-700 transition hover:bg-indigo-50"
+                className="rounded-lg border border-indigo-200 px-3 py-2 text-xs font-black text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Edit coach supplement details
               </button>
             </div>
 
-            {editing ? (
+            {isLoadingCoachDetails ? (
+              <p className="rounded-xl bg-slate-50 p-4 text-sm font-bold text-slate-600">
+                Loading coach supplement details...
+              </p>
+            ) : editing ? (
               <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <label className="block text-sm font-bold text-slate-700">
                   Coach dosage instructions
@@ -517,10 +613,11 @@ function SupplementDetailsDialog({
                   </button>
                   <button
                     type="button"
-                    onClick={saveDetails}
+                    disabled={isSavingCoachDetails}
+                    onClick={() => void saveDetails()}
                     className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-700"
                   >
-                    Save coach details
+                    {isSavingCoachDetails ? "Saving..." : "Save coach details"}
                   </button>
                 </div>
               </div>
@@ -532,7 +629,12 @@ function SupplementDetailsDialog({
                   <dt className="text-xs font-black uppercase tracking-wide text-slate-500">Affiliate or product link</dt>
                   <dd className="mt-1 text-sm font-bold text-slate-900">
                     {coachDetails.affiliateLink ? (
-                      <a className="text-indigo-700 underline" href={coachDetails.affiliateLink}>
+                      <a
+                        className="text-indigo-700 underline"
+                        href={coachDetails.affiliateLink}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         {coachDetails.affiliateLink}
                       </a>
                     ) : (
@@ -739,27 +841,22 @@ function getDefaultCoachDetails(supplement: SupplementLibraryEntry): CoachSupple
   };
 }
 
-function saveCoachDetails(details: Record<string, CoachSupplementDetails>) {
-  try {
-    window.localStorage.setItem("complete-coach:supplement-coach-details", JSON.stringify(details));
-  } catch {
-    // Local storage is best-effort only.
-  }
-
-  return details;
+function mapApiCoachDetails(details: ApiSupplementCoachDetails): CoachSupplementDetails {
+  return {
+    dosageInstructions: details.coachDosageInstructions,
+    notes: details.coachNotes,
+    affiliateLink: details.affiliateLink
+  };
 }
 
-function loadCoachDetails() {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  try {
-    const stored = window.localStorage.getItem("complete-coach:supplement-coach-details");
-    return stored ? (JSON.parse(stored) as Record<string, CoachSupplementDetails>) : {};
-  } catch {
-    return {};
-  }
+function isApiCoachDetails(value: unknown): value is ApiSupplementCoachDetails {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "coachDosageInstructions" in value &&
+    "coachNotes" in value &&
+    "affiliateLink" in value
+  );
 }
 
 function getBriefDescription(value: string) {

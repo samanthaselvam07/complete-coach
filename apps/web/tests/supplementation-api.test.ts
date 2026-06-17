@@ -7,6 +7,10 @@ import {
 } from "@/app/generated/prisma/enums";
 import { GET as getSupplements, POST as createSupplement } from "@/app/api/v1/supplements/route";
 import {
+  GET as getSupplementCoachDetails,
+  PATCH as updateSupplementCoachDetails
+} from "@/app/api/v1/supplements/[supplementId]/coach-details/route";
+import {
   GET as getSupplementTemplates,
   POST as createSupplementTemplate
 } from "@/app/api/v1/supplement-plan-templates/route";
@@ -27,7 +31,12 @@ const mocks = vi.hoisted(() => ({
     auditLog: { create: vi.fn() },
     supplementLibraryItem: {
       create: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn()
+    },
+    supplementCoachDetail: {
+      findUnique: vi.fn(),
+      upsert: vi.fn()
     },
     supplementPlanTemplate: {
       create: vi.fn(),
@@ -87,6 +96,17 @@ const privateSupplement = {
   category: "Hydration"
 };
 
+const supplementCoachDetail = {
+  id: "supplement_coach_detail_1",
+  organizationId: "org_1",
+  supplementId: "supplement_global",
+  coachDosageInstructions: "Use the client-ready brand instructions.",
+  coachNotes: "Use the brand stocked through our supplement partner.",
+  affiliateLink: "https://completecoach.fit/recommended",
+  createdAt: new Date("2026-06-02T00:00:00.000Z"),
+  updatedAt: new Date("2026-06-02T00:00:00.000Z")
+};
+
 const supplementTemplateJson = {
   phases: [
     {
@@ -142,7 +162,10 @@ describe("supplementation persistence APIs", () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.auditLog.create.mockReset();
     mocks.prisma.supplementLibraryItem.create.mockReset();
+    mocks.prisma.supplementLibraryItem.findFirst.mockReset();
     mocks.prisma.supplementLibraryItem.findMany.mockReset();
+    mocks.prisma.supplementCoachDetail.findUnique.mockReset();
+    mocks.prisma.supplementCoachDetail.upsert.mockReset();
     mocks.prisma.supplementPlanTemplate.create.mockReset();
     mocks.prisma.supplementPlanTemplate.findMany.mockReset();
     mocks.prisma.supplementPlanTemplate.findFirst.mockReset();
@@ -206,6 +229,102 @@ describe("supplementation persistence APIs", () => {
         data: expect.objectContaining({ action: "supplement.created" })
       })
     );
+  });
+
+  it("returns organization-specific supplement coach details", async () => {
+    mocks.prisma.supplementLibraryItem.findFirst.mockResolvedValue(globalSupplement);
+    mocks.prisma.supplementCoachDetail.findUnique.mockResolvedValue(supplementCoachDetail);
+
+    const response = await getSupplementCoachDetails(
+      new Request("http://test.local/api/v1/supplements/supplement_global/coach-details"),
+      { params: Promise.resolve({ supplementId: "supplement_global" }) }
+    );
+    const payload = (await response.json()) as { data: { coachNotes: string; affiliateLink: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual(
+      expect.objectContaining({
+        coachNotes: "Use the brand stocked through our supplement partner.",
+        affiliateLink: "https://completecoach.fit/recommended"
+      })
+    );
+    expect(mocks.prisma.supplementLibraryItem.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: [{ scope: LibraryScope.GLOBAL }, { organizationId: "org_1" }]
+        })
+      })
+    );
+    expect(mocks.prisma.supplementCoachDetail.findUnique).toHaveBeenCalledWith({
+      where: {
+        organizationId_supplementId: {
+          organizationId: "org_1",
+          supplementId: "supplement_global"
+        }
+      }
+    });
+  });
+
+  it("upserts organization-specific supplement coach details and audits the write", async () => {
+    mocks.prisma.supplementLibraryItem.findFirst.mockResolvedValue(globalSupplement);
+    mocks.prisma.supplementCoachDetail.upsert.mockResolvedValue({
+      ...supplementCoachDetail,
+      coachDosageInstructions: "Client-facing dosage set by the coach.",
+      coachNotes: "Preferred brand notes.",
+      affiliateLink: "https://completecoach.fit/products"
+    });
+
+    const response = await updateSupplementCoachDetails(
+      new Request("http://test.local/api/v1/supplements/supplement_global/coach-details", {
+        method: "PATCH",
+        body: JSON.stringify({
+          coachDosageInstructions: "Client-facing dosage set by the coach.",
+          coachNotes: "Preferred brand notes.",
+          affiliateLink: "https://completecoach.fit/products"
+        })
+      }),
+      { params: Promise.resolve({ supplementId: "supplement_global" }) }
+    );
+    const payload = (await response.json()) as { data: { coachDosageInstructions: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.coachDosageInstructions).toBe("Client-facing dosage set by the coach.");
+    expect(mocks.prisma.supplementCoachDetail.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId_supplementId: {
+            organizationId: "org_1",
+            supplementId: "supplement_global"
+          }
+        },
+        create: expect.objectContaining({
+          organizationId: "org_1",
+          supplementId: "supplement_global",
+          createdByUserId: "user_1",
+          updatedByUserId: "user_1"
+        }),
+        update: expect.objectContaining({
+          updatedByUserId: "user_1"
+        })
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: "supplement.coach_details.updated" })
+      })
+    );
+  });
+
+  it("does not expose coach details for inaccessible supplements", async () => {
+    mocks.prisma.supplementLibraryItem.findFirst.mockResolvedValue(null);
+
+    const response = await getSupplementCoachDetails(
+      new Request("http://test.local/api/v1/supplements/missing/coach-details"),
+      { params: Promise.resolve({ supplementId: "missing" }) }
+    );
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.supplementCoachDetail.findUnique).not.toHaveBeenCalled();
   });
 
   it("creates supplement templates with structured protocol JSON", async () => {

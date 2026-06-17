@@ -471,6 +471,36 @@ describe("SupplementDatabasePage", () => {
         );
       }
 
+      if (String(input) === "/api/v1/supplements/supplement_api/coach-details" && init?.method === "PATCH") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                coachDosageInstructions: "5000 IU",
+                coachNotes: "",
+                affiliateLink: ""
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (String(input) === "/api/v1/supplements/supplement_api/coach-details") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                coachDosageInstructions: "5000 IU",
+                coachNotes: "",
+                affiliateLink: ""
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     });
 
@@ -491,11 +521,17 @@ describe("SupplementDatabasePage", () => {
 
     expect(await screen.findByText("Vitamin D3")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "View details for Vitamin D3" }));
-    expect(within(screen.getByRole("dialog", { name: "Vitamin D3 details" })).getByText("5000 IU")).toBeInTheDocument();
+    expect(
+      await within(screen.getByRole("dialog", { name: "Vitamin D3 details" })).findByText("5000 IU")
+    ).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "New Protocol" })).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/supplements",
       expect.objectContaining({ method: "POST" })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/supplements/supplement_api/coach-details",
+      expect.objectContaining({ method: "PATCH" })
     );
   });
 
@@ -575,9 +611,43 @@ describe("SupplementDatabasePage", () => {
           : "Brief clinical description for coach review."
     }));
 
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ data: apiSupplements }), { status: 200 })
-    );
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      if (String(input) === "/api/v1/supplements?limit=1000") {
+        return Promise.resolve(new Response(JSON.stringify({ data: apiSupplements }), { status: 200 }));
+      }
+
+      if (String(input) === "/api/v1/supplements/supplement_0/coach-details" && init?.method === "PATCH") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                coachDosageInstructions: "Use the dosage agreed in your client protocol.",
+                coachNotes: "Use the brand stocked through our supplement partner.",
+                affiliateLink: "https://example.com/zinc"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (String(input) === "/api/v1/supplements/supplement_0/coach-details") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                coachDosageInstructions: "",
+                coachNotes: "",
+                affiliateLink: ""
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
 
     render(createElement(SupplementDatabasePage));
 
@@ -599,7 +669,7 @@ describe("SupplementDatabasePage", () => {
     expect(within(dialog).getByText("Immune")).toBeInTheDocument();
     expect(within(dialog).getByText("Morning")).toBeInTheDocument();
     expect(within(dialog).queryByText("1g")).not.toBeInTheDocument();
-    expect(within(dialog).getByText("No coach dosage instructions added.")).toBeInTheDocument();
+    expect(await within(dialog).findByText("No coach dosage instructions added.")).toBeInTheDocument();
     expect(within(dialog).getByText("No coach notes added.")).toBeInTheDocument();
     expect(within(dialog).getByText("No affiliate or product link added.")).toBeInTheDocument();
     expect(within(dialog).getByText("Take with food.")).toBeInTheDocument();
@@ -616,11 +686,15 @@ describe("SupplementDatabasePage", () => {
     });
     fireEvent.click(within(dialog).getByRole("button", { name: "Save coach details" }));
 
-    expect(within(dialog).getByText("Use the dosage agreed in your client protocol.")).toBeInTheDocument();
-    expect(within(dialog).getByText("Use the brand stocked through our supplement partner.")).toBeInTheDocument();
-    expect(within(dialog).getByRole("link", { name: "https://example.com/zinc" })).toHaveAttribute(
+    await screen.findByText("Use the dosage agreed in your client protocol.");
+    expect(screen.getByText("Use the brand stocked through our supplement partner.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "https://example.com/zinc" })).toHaveAttribute(
       "href",
       "https://example.com/zinc"
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/supplements/supplement_0/coach-details",
+      expect.objectContaining({ method: "PATCH" })
     );
   });
 });

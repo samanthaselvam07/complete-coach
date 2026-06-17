@@ -582,6 +582,25 @@ Fields:
 - `updated_at`
 - `deleted_at`
 
+### `supplement_coach_details`
+Purpose: organization-scoped overlay for coach-controlled supplement instructions and commercial links. This keeps imported/global supplement facts separate from each organization's editable dosage guidance, notes, and affiliate/product links.
+
+Fields:
+- `id`
+- `organization_id`
+- `supplement_id`
+- `coach_dosage_instructions`
+- `coach_notes`
+- `affiliate_link`
+- `created_by_user_id`
+- `updated_by_user_id`
+- `created_at`
+- `updated_at`
+
+Constraints:
+- Unique `(organization_id, supplement_id)` so each organization has one editable overlay per supplement.
+- Cascades when the organization or supplement is deleted.
+
 ### `supplement_plan_templates`
 Fields:
 - `id`

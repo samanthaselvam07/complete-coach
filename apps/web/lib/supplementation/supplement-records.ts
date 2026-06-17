@@ -64,6 +64,12 @@ export const createSupplementSchema = z.object({
   imageObjectId: z.string().trim().max(500).optional()
 });
 
+export const supplementCoachDetailsSchema = z.object({
+  coachDosageInstructions: z.string().trim().max(2000).optional(),
+  coachNotes: z.string().trim().max(4000).optional(),
+  affiliateLink: z.union([z.string().trim().url().max(1000), z.literal("")]).optional()
+});
+
 export const supplementTemplateListQuerySchema = z.object({
   status: z.enum(supplementTemplateStatusValues).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50)
@@ -106,6 +112,7 @@ export const createSupplementAssignmentSchema = z.object({
 
 type SupplementListQuery = z.infer<typeof supplementListQuerySchema>;
 type CreateSupplementInput = z.infer<typeof createSupplementSchema>;
+type SupplementCoachDetailsInput = z.infer<typeof supplementCoachDetailsSchema>;
 type SupplementTemplateListQuery = z.infer<typeof supplementTemplateListQuerySchema>;
 type CreateSupplementTemplateInput = z.infer<typeof createSupplementTemplateSchema>;
 
@@ -132,6 +139,17 @@ interface SupplementTemplateRecord {
   description: string | null;
   status: SupplementPlanTemplateStatus;
   templateJson: unknown;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+interface SupplementCoachDetailRecord {
+  id: string;
+  organizationId: string;
+  supplementId: string;
+  coachDosageInstructions: string | null;
+  coachNotes: string | null;
+  affiliateLink: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -189,6 +207,41 @@ export function getSupplementCreateData(organizationId: string, userId: string, 
   };
 }
 
+export function getSupplementCoachDetailsUpsertData(
+  organizationId: string,
+  userId: string,
+  supplementId: string,
+  input: SupplementCoachDetailsInput
+) {
+  const coachDosageInstructions = emptyToNull(input.coachDosageInstructions);
+  const coachNotes = emptyToNull(input.coachNotes);
+  const affiliateLink = emptyToNull(input.affiliateLink);
+
+  return {
+    where: {
+      organizationId_supplementId: {
+        organizationId,
+        supplementId
+      }
+    },
+    update: {
+      coachDosageInstructions,
+      coachNotes,
+      affiliateLink,
+      updatedByUserId: userId
+    },
+    create: {
+      organizationId,
+      supplementId,
+      coachDosageInstructions,
+      coachNotes,
+      affiliateLink,
+      createdByUserId: userId,
+      updatedByUserId: userId
+    }
+  };
+}
+
 export function buildSupplementTemplateWhere(organizationId: string, query: SupplementTemplateListQuery) {
   return {
     organizationId,
@@ -239,6 +292,16 @@ export function serializeSupplement(record: SupplementRecord) {
   };
 }
 
+export function serializeSupplementCoachDetails(record: SupplementCoachDetailRecord | null) {
+  return {
+    coachDosageInstructions: record?.coachDosageInstructions ?? "",
+    coachNotes: record?.coachNotes ?? "",
+    affiliateLink: record?.affiliateLink ?? "",
+    createdAt: record ? toIsoDate(record.createdAt) : null,
+    updatedAt: record ? toIsoDate(record.updatedAt) : null
+  };
+}
+
 export function serializeSupplementTemplate(record: SupplementTemplateRecord) {
   return {
     id: record.id,
@@ -275,4 +338,9 @@ function toIsoDate(value: Date | string) {
 
 function toDateOnly(value: Date | string) {
   return toIsoDate(value).slice(0, 10);
+}
+
+function emptyToNull(value: string | undefined) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
 }

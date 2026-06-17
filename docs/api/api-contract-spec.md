@@ -193,6 +193,8 @@ AI output statuses:
 ### Supplementation
 - `GET /api/v1/supplements`: lists global and active-organization private supplements. Query: optional `scope`, optional `category`, optional `search`, optional `limit`.
 - `POST /api/v1/supplements`: creates an active-organization private supplement. Body: `name`, `category`, optional `recommendedTiming`, optional `dosage`, optional `bioavailabilityNotes`, optional `clinicalDescription`, optional `tags`, optional `imageObjectId`.
+- `GET /api/v1/supplements/{supplement_id}/coach-details`: returns the active organization's supplement-specific coach overlay for dosage instructions, coach notes, and affiliate/product link. Global and active-organization private supplements are readable.
+- `PATCH /api/v1/supplements/{supplement_id}/coach-details`: upserts the active organization's supplement-specific coach overlay. Body: optional `coachDosageInstructions`, optional `coachNotes`, optional `affiliateLink`.
 - `GET /api/v1/supplement-plan-templates`: lists active-organization supplement templates. Query: optional `status`, optional `limit`.
 - `POST /api/v1/supplement-plan-templates`: creates a template with validated `name`, optional `description`, `status`, and structured phase/supplement `template` JSON.
 - `GET /api/v1/supplement-plan-assignments`: returns organization-scoped supplement assignments with client names. Query: optional `clientId`, optional `limit`.

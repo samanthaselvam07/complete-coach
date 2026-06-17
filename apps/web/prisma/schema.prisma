@@ -504,6 +504,8 @@ model User {
   createdMealPlanTemplates     MealPlanTemplate[]            @relation("MealPlanTemplateCreator")
   createdMealPlanAssignments   MealPlanAssignment[]          @relation("MealPlanAssignmentCreator")
   createdSupplementItems       SupplementLibraryItem[]       @relation("SupplementCreator")
+  createdSupplementCoachDetails SupplementCoachDetail[]       @relation("SupplementCoachDetailCreator")
+  updatedSupplementCoachDetails SupplementCoachDetail[]       @relation("SupplementCoachDetailUpdater")
   createdSupplementTemplates   SupplementPlanTemplate[]      @relation("SupplementTemplateCreator")
   createdSupplementAssignments SupplementPlanAssignment[]    @relation("SupplementAssignmentCreator")
   createdEducationResources    EducationResource[]           @relation("EducationResourceCreator")
@@ -574,6 +576,7 @@ model Organization {
   mealPlanTemplates            MealPlanTemplate[]
   mealPlanAssignments          MealPlanAssignment[]
   supplementLibraryItems       SupplementLibraryItem[]
+  supplementCoachDetails       SupplementCoachDetail[]
   supplementPlanTemplates      SupplementPlanTemplate[]
   supplementPlanAssignments    SupplementPlanAssignment[]
   educationResources           EducationResource[]
@@ -1540,12 +1543,36 @@ model SupplementLibraryItem {
   deletedAt            DateTime?     @map("deleted_at") @db.Timestamptz(6)
   organization         Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy            User?         @relation("SupplementCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  coachDetails         SupplementCoachDetail[]
 
   @@index([scope])
   @@index([organizationId, name])
   @@index([organizationId, category])
   @@index([createdByUserId])
   @@map("supplement_library_items")
+}
+
+model SupplementCoachDetail {
+  id                      String                @id @default(cuid())
+  organizationId          String                @map("organization_id")
+  supplementId            String                @map("supplement_id")
+  coachDosageInstructions String?               @map("coach_dosage_instructions") @db.Text
+  coachNotes              String?               @map("coach_notes") @db.Text
+  affiliateLink           String?               @map("affiliate_link") @db.Text
+  createdByUserId         String?               @map("created_by_user_id")
+  updatedByUserId         String?               @map("updated_by_user_id")
+  createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization            Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplement              SupplementLibraryItem @relation(fields: [supplementId], references: [id], onDelete: Cascade)
+  createdBy               User?                 @relation("SupplementCoachDetailCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  updatedBy               User?                 @relation("SupplementCoachDetailUpdater", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, supplementId])
+  @@index([supplementId])
+  @@index([createdByUserId])
+  @@index([updatedByUserId])
+  @@map("supplement_coach_details")
 }
 
 model SupplementPlanTemplate {
