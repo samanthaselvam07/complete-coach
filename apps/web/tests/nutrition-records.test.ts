@@ -54,7 +54,7 @@ describe("nutrition record mappers", () => {
   });
 
   it("builds scoped food filters with optional facets", () => {
-    expect(buildFoodWhere("org_1", { limit: 50 })).toMatchObject({
+    expect(buildFoodWhere("org_1", { limit: 50, sort: "name" })).toMatchObject({
       deletedAt: null,
       OR: [{ scope: LibraryScope.GLOBAL }, { organizationId: "org_1" }]
     });
@@ -64,7 +64,8 @@ describe("nutrition record mappers", () => {
         scope: "private",
         category: "Proteins",
         search: "chicken",
-        limit: 100
+        limit: 100,
+        sort: "name"
       })
     ).toMatchObject({
       scope: LibraryScope.PRIVATE,

@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const query = foodListQuerySchema.parse(Object.fromEntries(new URL(request.url).searchParams));
     const foods = await prisma.foodLibraryItem.findMany({
       where: buildFoodWhere(actor.organizationId, query),
-      orderBy: [{ scope: "asc" }, { name: "asc" }],
+      orderBy: query.sort === "recent" ? [{ updatedAt: "desc" }, { name: "asc" }] : [{ scope: "asc" }, { name: "asc" }],
       take: query.limit
     });
 

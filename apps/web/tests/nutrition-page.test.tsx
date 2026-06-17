@@ -581,7 +581,69 @@ describe("MealPlansPage", () => {
     expect(await within(foodDrawer).findByRole("checkbox", { name: "Select AUSNUT Kangaroo Steak" })).toBeInTheDocument();
     expect(within(foodDrawer).getByLabelText("Verified database food")).toBeInTheDocument();
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/v1/foods?limit=5000&source=AUS%2FNZ&search=kangaroo"))
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/v1/foods?limit=50&source=AUS%2FNZ&sort=recent&search=kangaroo"))
+    );
+  });
+
+  it("quick-adds a custom food from the nutrition builder selector", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/foods" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "food_custom_blueberries",
+                scope: "private",
+                name: "Coach Blueberries",
+                category: "Custom",
+                servingSize: "150 Grams",
+                calories: 85,
+                proteinGrams: 1,
+                carbsGrams: 21,
+                fatGrams: 0,
+                fiberGrams: 4,
+                metadata: {
+                  source: "AUS/NZ",
+                  servingDescription: "Grams"
+                }
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create New Nutritional Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Full Meal Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add food" }));
+
+    const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
+    fireEvent.click(within(foodDrawer).getByRole("button", { name: "+ Quick add food" }));
+
+    const quickAddDialog = screen.getByRole("dialog", { name: "Add Own Food item for your nutrition plan" });
+    fireEvent.change(within(quickAddDialog).getByPlaceholderText("Enter food name"), { target: { value: "Coach Blueberries" } });
+    fireEvent.change(within(quickAddDialog).getByPlaceholderText("Enter total calories"), { target: { value: "85" } });
+    fireEvent.change(within(quickAddDialog).getByPlaceholderText("Enter total protein"), { target: { value: "1" } });
+    fireEvent.change(within(quickAddDialog).getByPlaceholderText("Enter total carbs"), { target: { value: "21" } });
+    fireEvent.change(within(quickAddDialog).getByPlaceholderText("Enter total fat"), { target: { value: "0" } });
+    fireEvent.change(within(quickAddDialog).getByPlaceholderText("Enter total fiber"), { target: { value: "4" } });
+    fireEvent.change(within(quickAddDialog).getByPlaceholderText("Enter serving size"), { target: { value: "150" } });
+    fireEvent.click(within(quickAddDialog).getByRole("button", { name: "Add" }));
+
+    expect(await within(foodDrawer).findByRole("checkbox", { name: "Select Coach Blueberries" })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/foods",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Coach Blueberries")
+      })
     );
   });
 
@@ -711,9 +773,11 @@ describe("MealPlansPage", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Add food" })[0]);
     const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
     expect(foodDrawer).toHaveAttribute("aria-modal", "true");
+    expect(foodDrawer).toHaveClass("h-[86vh]");
     expect(foodDrawer).toHaveClass("max-w-6xl");
     expect(within(foodDrawer).getAllByLabelText("Verified database food")[0]).toBeInTheDocument();
     expect(within(foodDrawer).queryByText("Verified")).not.toBeInTheDocument();
+    expect(within(foodDrawer).getByRole("button", { name: "+ Quick add food" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add day" })).toBeEnabled();
     expect(within(foodDrawer).getByRole("searchbox", { name: "Search food database" })).toHaveAttribute(
       "placeholder",
@@ -722,11 +786,12 @@ describe("MealPlansPage", () => {
     expect(within(foodDrawer).getByRole("button", { name: "AUS/NZ" })).toBeInTheDocument();
     expect(within(foodDrawer).getByRole("button", { name: "EFSA" })).toBeInTheDocument();
     expect(within(foodDrawer).getByRole("button", { name: "USDA" })).toBeInTheDocument();
-    expect(within(foodDrawer).getByText("Showing AUS/NZ foods")).toBeInTheDocument();
+    expect(within(foodDrawer).getByText("Showing recent AUS/NZ foods")).toBeInTheDocument();
+    expect(within(foodDrawer).getByRole("list", { name: "Selectable foods" })).toBeInTheDocument();
     expect(within(foodDrawer).getByRole("checkbox", { name: "Select Basmati Rice" })).toBeInTheDocument();
     expect(within(foodDrawer).queryByRole("checkbox", { name: "Select Chicken Breast" })).not.toBeInTheDocument();
     fireEvent.click(within(foodDrawer).getByRole("button", { name: "USDA" }));
-    expect(within(foodDrawer).getByText("Showing USDA foods")).toBeInTheDocument();
+    expect(within(foodDrawer).getByText("Showing recent USDA foods")).toBeInTheDocument();
     expect(within(foodDrawer).getByRole("checkbox", { name: "Select Chicken Breast" })).toBeInTheDocument();
     expect(within(foodDrawer).queryByRole("checkbox", { name: "Select Basmati Rice" })).not.toBeInTheDocument();
     fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Chicken Breast" }));
@@ -734,10 +799,7 @@ describe("MealPlansPage", () => {
     fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Basmati Rice" }));
     const selectedFoodsRegion = within(foodDrawer).getByRole("region", { name: "Selected foods" });
     expect(selectedFoodsRegion).toHaveClass("lg:min-w-[26rem]");
-    expect(within(selectedFoodsRegion).getByRole("list", { name: "Selected food quantity list" })).toHaveClass(
-      "h-[22rem]",
-      "overflow-y-auto"
-    );
+    expect(within(selectedFoodsRegion).getByRole("list", { name: "Selected food quantity list" })).toHaveClass("overflow-y-auto");
     fireEvent.click(within(foodDrawer).getByRole("button", { name: "EFSA" }));
     fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Raw Avocado" }));
     expect(within(selectedFoodsRegion).getAllByRole("listitem")).toHaveLength(3);

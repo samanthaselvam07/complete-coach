@@ -214,7 +214,7 @@ describe("nutrition persistence APIs", () => {
   it("filters foods by imported AUS/NZ source metadata", async () => {
     mocks.prisma.foodLibraryItem.findMany.mockResolvedValue([globalFood]);
 
-    const response = await getFoods(new Request("http://test.local/api/v1/foods?source=AUS%2FNZ&search=kangaroo&limit=5000"));
+    const response = await getFoods(new Request("http://test.local/api/v1/foods?source=AUS%2FNZ&search=kangaroo&limit=5000&sort=recent"));
 
     expect(response.status).toBe(200);
     expect(mocks.prisma.foodLibraryItem.findMany).toHaveBeenCalledWith(
@@ -229,6 +229,7 @@ describe("nutrition persistence APIs", () => {
             })
           ])
         }),
+        orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
         take: 5000
       })
     );

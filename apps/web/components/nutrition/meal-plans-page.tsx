@@ -15,6 +15,59 @@ export type MealPlanSource = "api" | "fixtures";
 type FoodDatabaseSource = "AUS/NZ" | "EFSA" | "USDA";
 type FoodMeasurementUnit = "g" | "ml" | "oz" | "cups" | "tbsp" | "tsp" | "serving";
 const VERIFIED_FOOD_SOURCES = new Set(["USDA", "AUS/NZ", "EFSA"]);
+const FOOD_SELECTOR_RECENT_LIMIT = 8;
+const servingDescriptionOptions = ["Grams", "Ounces", "Qty", "Cups", "Oz", "Tbsp", "Tsp", "Ml"];
+
+type NewFoodFormState = {
+  name: string;
+  calories: string;
+  protein: string;
+  carbs: string;
+  fat: string;
+  fiber: string;
+  sugar: string;
+  polyols: string;
+  saturated: string;
+  polyunsaturated: string;
+  monounsaturated: string;
+  salt: string;
+  servingDescription: string;
+  servingSize: string;
+};
+
+const initialNewFoodForm: NewFoodFormState = {
+  name: "",
+  calories: "",
+  protein: "",
+  carbs: "",
+  fat: "",
+  fiber: "",
+  sugar: "",
+  polyols: "",
+  saturated: "",
+  polyunsaturated: "",
+  monounsaturated: "",
+  salt: "",
+  servingDescription: "Grams",
+  servingSize: ""
+};
+
+const vitaminFields = [
+  "B1 (Thiamine)",
+  "B2 (Riboflavin)",
+  "B3 (Niacin)",
+  "B5 (Pantothenic Acid)",
+  "B6 (Pyridoxine)",
+  "B12 (Cobalamin)",
+  "Folate",
+  "Vitamin A",
+  "Vitamin C",
+  "Vitamin D",
+  "Vitamin E",
+  "Vitamin K"
+];
+
+const mineralFields = ["Calcium", "Copper", "Iron", "Magnesium", "Manganese", "Phosphorus", "Potassium", "Selenium", "Sodium", "Zinc"];
 
 interface BuilderMeal {
   id: string;
@@ -906,6 +959,10 @@ function FullMealPlanFields({
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
   const [apiFoods, setApiFoods] = useState<Food[]>([]);
   const [foodCache, setFoodCache] = useState<Record<string, Food>>({});
+  const [quickAddFoodOpen, setQuickAddFoodOpen] = useState(false);
+  const [quickAddFoodForm, setQuickAddFoodForm] = useState<NewFoodFormState>(initialNewFoodForm);
+  const [quickAddFoodSaving, setQuickAddFoodSaving] = useState(false);
+  const [quickAddFoodError, setQuickAddFoodError] = useState<string | null>(null);
   const [showMealTemplateDialog, setShowMealTemplateDialog] = useState(false);
   const activeDay = days.find((day) => day.id === activeDayId) ?? days.at(-1);
   const dayTotals = calculateDayTotals(activeDay);
@@ -923,11 +980,12 @@ function FullMealPlanFields({
     }
 
     let cancelled = false;
-    const params = new URLSearchParams({
-      limit: "5000",
-      source: foodSource
-    });
     const search = foodSearchQuery.trim();
+    const params = new URLSearchParams({
+      limit: search ? "50" : String(FOOD_SELECTOR_RECENT_LIMIT),
+      source: foodSource,
+      sort: "recent"
+    });
 
     if (search) {
       params.set("search", search);
@@ -1191,6 +1249,61 @@ function FullMealPlanFields({
     setCarbs(String((Number(carbs) || 0) + addedTotals.carbs));
     setFats(String((Number(fats) || 0) + addedTotals.fats));
     setActiveFoodTarget(null);
+  };
+
+  const updateQuickAddFoodForm = (key: keyof NewFoodFormState, value: string) => {
+    setQuickAddFoodForm((currentForm) => ({ ...currentForm, [key]: value }));
+  };
+
+  const createQuickAddFood = async () => {
+    setQuickAddFoodSaving(true);
+    setQuickAddFoodError(null);
+
+    try {
+      const response = await fetch("/api/v1/foods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: quickAddFoodForm.name.trim() || "Coach Food",
+          category: "Custom",
+          servingSize: formatServingSize(quickAddFoodForm),
+          calories: parseNumberInput(quickAddFoodForm.calories),
+          proteinGrams: parseNumberInput(quickAddFoodForm.protein),
+          carbsGrams: parseNumberInput(quickAddFoodForm.carbs),
+          fatGrams: parseNumberInput(quickAddFoodForm.fat),
+          fiberGrams: parseNumberInput(quickAddFoodForm.fiber),
+          metadata: {
+            source: foodSource,
+            sugarGrams: parseNumberInput(quickAddFoodForm.sugar),
+            polyolsGrams: parseNumberInput(quickAddFoodForm.polyols),
+            saturatedGrams: parseNumberInput(quickAddFoodForm.saturated),
+            polyunsaturatedGrams: parseNumberInput(quickAddFoodForm.polyunsaturated),
+            monounsaturatedGrams: parseNumberInput(quickAddFoodForm.monounsaturated),
+            saltGrams: parseNumberInput(quickAddFoodForm.salt),
+            servingDescription: quickAddFoodForm.servingDescription
+          }
+        })
+      });
+      const payload = (await response.json()) as { data?: ApiFoodLibraryItem; error?: { message?: string } };
+
+      if (!response.ok || !payload.data) {
+        throw new Error(payload.error?.message ?? "Food could not be saved.");
+      }
+
+      const createdFood = mapApiFoodToBuilderFood(payload.data);
+
+      setApiFoods((currentFoods) => [createdFood, ...currentFoods.filter((food) => food.id !== createdFood.id)]);
+      setFoodCache((currentCache) => ({ ...currentCache, [createdFood.id]: createdFood }));
+      setFoodSource(createdFood.source);
+      setFoodSearchQuery("");
+      setQuickAddFoodForm(initialNewFoodForm);
+      setQuickAddFoodOpen(false);
+      setQuickAddFoodError(null);
+    } catch (error) {
+      setQuickAddFoodError(error instanceof Error ? error.message : "Food could not be saved.");
+    } finally {
+      setQuickAddFoodSaving(false);
+    }
   };
 
   const updateFoodQuantity = (dayId: string, mealId: string, foodId: string, nextAmount: number) => {
@@ -1519,8 +1632,23 @@ function FullMealPlanFields({
           filteredFoods={filteredFoods}
           onSourceChange={setFoodSource}
           onSearchChange={setFoodSearchQuery}
+          onQuickAdd={() => {
+            setQuickAddFoodError(null);
+            setQuickAddFoodOpen(true);
+          }}
           onAddFoods={addFoodsToMeal}
           onClose={() => setActiveFoodTarget(null)}
+        />
+      ) : null}
+
+      {quickAddFoodOpen ? (
+        <QuickAddFoodModal
+          form={quickAddFoodForm}
+          saving={quickAddFoodSaving}
+          error={quickAddFoodError}
+          onChange={updateQuickAddFoodForm}
+          onClose={() => setQuickAddFoodOpen(false)}
+          onSubmit={createQuickAddFood}
         />
       ) : null}
     </div>
@@ -1798,6 +1926,22 @@ function getFoodQuantityMultiplier(food: Pick<Food, "serving">, amount: number, 
   const convertedAmount = convertMeasurementToServingUnit(amount, unit, parsedServing.unit);
 
   return convertedAmount === null ? amount : convertedAmount / parsedServing.amount;
+}
+
+function parseNumberInput(value: string) {
+  const parsed = Number.parseFloat(value);
+
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatServingSize(form: NewFoodFormState) {
+  const servingSize = form.servingSize.trim();
+
+  if (!servingSize) {
+    return form.servingDescription;
+  }
+
+  return `${servingSize} ${form.servingDescription}`;
 }
 
 function convertMeasurementToServingUnit(amount: number, unit: FoodMeasurementUnit, servingUnit: FoodMeasurementUnit) {
@@ -2237,15 +2381,17 @@ function FoodDatabaseDrawer({
   filteredFoods,
   onSourceChange,
   onSearchChange,
+  onQuickAdd,
   onAddFoods,
   onClose
 }: {
   source: FoodDatabaseSource;
   searchQuery: string;
-  foods: typeof foods;
-  filteredFoods: typeof foods;
+  foods: Food[];
+  filteredFoods: Food[];
   onSourceChange: (source: FoodDatabaseSource) => void;
   onSearchChange: (query: string) => void;
+  onQuickAdd: () => void;
   onAddFoods: (selections: Array<{ foodId: string; quantity: number; unit: FoodMeasurementUnit }>) => void;
   onClose: () => void;
 }) {
@@ -2313,7 +2459,7 @@ function FoodDatabaseDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="food-database-drawer-title"
-        className="max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+        className="flex h-[86vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-6">
           <div>
@@ -2321,15 +2467,24 @@ function FoodDatabaseDrawer({
             <h3 id="food-database-drawer-title" className="mt-1 text-2xl font-black text-slate-950">
               Add food from database
             </h3>
-            <p className="mt-2 text-sm text-slate-500">Search verified foods and choose the source library you want to pull from.</p>
+            <p className="mt-2 text-sm text-slate-500">Recent foods show first. Search to pull from the full verified library.</p>
           </div>
-          <button type="button" aria-label="Close food search" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
-            <X className="size-5" aria-hidden="true" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-indigo-700"
+              onClick={onQuickAdd}
+            >
+              + Quick add food
+            </button>
+            <button type="button" aria-label="Close food search" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+              <X className="size-5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
-        <div className="grid max-h-[calc(90vh-8rem)] gap-0 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(26rem,28rem)]">
-          <div className="p-6">
+        <div className="grid min-h-0 flex-1 gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(26rem,28rem)]">
+          <div className="flex min-h-0 flex-col p-6">
             <label className="grid gap-2">
               <span className="text-sm font-bold text-slate-700">Search food database</span>
               <input
@@ -2360,10 +2515,12 @@ function FoodDatabaseDrawer({
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-sm font-medium text-slate-600">Showing {source} foods</p>
+              <p className="mt-3 text-sm font-medium text-slate-600">
+                {searchQuery.trim() ? `Showing ${source} search results` : `Showing recent ${source} foods`}
+              </p>
             </div>
 
-            <div className="mt-6 grid gap-3 md:grid-cols-2">
+            <div role="list" aria-label="Selectable foods" className="mt-6 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-slate-200">
               {filteredFoods.map((food) => {
                 const selected = Boolean(selectedFoods[food.id]);
                 const verified = isVerifiedDatabaseFood(food);
@@ -2371,35 +2528,37 @@ function FoodDatabaseDrawer({
                 return (
                   <label
                     key={food.id}
+                    role="listitem"
                     className={cn(
-                      "flex cursor-pointer items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50",
-                      selected ? "border-indigo-500 bg-indigo-50" : "border-slate-200"
+                      "grid cursor-pointer grid-cols-[auto_minmax(0,1.4fr)_8rem_11rem] items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-indigo-50",
+                      selected ? "bg-indigo-50" : "bg-white"
                     )}
                   >
                     <input
                       type="checkbox"
                       aria-label={`Select ${food.name}`}
                       checked={selected}
-                      className="mt-1 size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                       onChange={() => toggleFood(food)}
                     />
-                    <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-slate-900">{food.name}</span>
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2">
+                        <span className="truncate font-bold text-slate-900">{food.name}</span>
                         <span
                           aria-label={verified ? "Verified database food" : "Coach-added food"}
                           className={cn(
-                            "inline-flex size-5 items-center justify-center rounded-full",
+                            "inline-flex size-5 shrink-0 items-center justify-center rounded-full",
                             verified ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
                           )}
                         >
                           {verified ? <CheckCircle2 className="size-3.5" aria-hidden="true" /> : null}
                         </span>
                       </span>
-                      <span className="mt-1 block text-xs text-slate-500">{food.serving}</span>
-                      <span className="mt-2 block text-xs font-bold text-slate-600">
-                        {food.calories} kcal · P {food.protein}g · C {food.carbs}g · F {food.fats}g · Fibre {food.fibre}g
-                      </span>
+                      <span className="mt-1 block truncate text-xs text-slate-500">{food.category}</span>
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500">{food.serving}</span>
+                    <span className="text-xs font-bold text-slate-600">
+                      {food.calories} kcal · P {food.protein}g · C {food.carbs}g · F {food.fats}g
                     </span>
                   </label>
                 );
@@ -2407,14 +2566,14 @@ function FoodDatabaseDrawer({
             </div>
           </div>
 
-          <section aria-label="Selected foods" className="border-t border-slate-200 bg-slate-50 p-6 lg:min-w-[26rem] lg:border-l lg:border-t-0">
+          <section aria-label="Selected foods" className="flex min-h-0 flex-col border-t border-slate-200 bg-slate-50 p-6 lg:min-w-[26rem] lg:border-l lg:border-t-0">
             <h4 className="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Selected foods</h4>
             {selectedFoodEntries.length === 0 ? (
               <p className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
                 Select one or more foods to set quantities before adding them to the meal.
               </p>
             ) : (
-              <div role="list" aria-label="Selected food quantity list" className="mt-4 h-[22rem] space-y-4 overflow-y-auto pr-2">
+              <div role="list" aria-label="Selected food quantity list" className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
                 {selectedFoodEntries.map((food) => {
                   const selection = selectedFoods[food.id] ?? getDefaultSelection(food);
                   const parsedQuantity = Number(selection.quantity);
@@ -2464,7 +2623,7 @@ function FoodDatabaseDrawer({
               </div>
             )}
 
-            <div className="sticky bottom-0 -mx-6 mt-6 border-t border-slate-200 bg-slate-50 p-6">
+            <div className="-mx-6 mt-6 border-t border-slate-200 bg-slate-50 p-6">
               <button
                 type="button"
                 disabled={selectedFoodEntries.length === 0}
@@ -2478,6 +2637,145 @@ function FoodDatabaseDrawer({
         </div>
       </section>
     </div>
+  );
+}
+
+function QuickAddFoodModal({
+  form,
+  saving,
+  error,
+  onChange,
+  onClose,
+  onSubmit
+}: {
+  form: NewFoodFormState;
+  saving: boolean;
+  error: string | null;
+  onChange: (key: keyof NewFoodFormState, value: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/50 p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="quick-add-food-title" className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Organization food database</p>
+            <h2 id="quick-add-food-title" className="text-xl font-bold text-slate-800">
+              Add Own Food item for your nutrition plan
+            </h2>
+          </div>
+          <button type="button" aria-label="Close add food" className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <form
+          className="max-h-[calc(92vh-8rem)] overflow-y-auto px-6 py-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit();
+          }}
+        >
+          {error ? <p className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p> : null}
+          <div className="grid gap-5 md:grid-cols-2">
+            <FoodInput className="md:col-span-2" label="Name:" placeholder="Enter food name" value={form.name} onChange={(value) => onChange("name", value)} />
+            <FoodInput label="Calories (kcal):" placeholder="Enter total calories" value={form.calories} onChange={(value) => onChange("calories", value)} />
+            <FoodInput label="Protein (g):" placeholder="Enter total protein" value={form.protein} onChange={(value) => onChange("protein", value)} />
+            <FoodInput label="Carbs (g):" placeholder="Enter total carbs" value={form.carbs} onChange={(value) => onChange("carbs", value)} />
+            <FoodInput label="Fat (g):" placeholder="Enter total fat" value={form.fat} onChange={(value) => onChange("fat", value)} />
+            <FoodInput label="Fiber (g):" placeholder="Enter total fiber" value={form.fiber} onChange={(value) => onChange("fiber", value)} />
+            <FoodInput label="Sugar (g):" placeholder="Enter total sugar" value={form.sugar} onChange={(value) => onChange("sugar", value)} />
+            <FoodInput label="Polyols (g):" placeholder="Enter total polyols" value={form.polyols} onChange={(value) => onChange("polyols", value)} />
+            <FoodInput label="Saturated (g):" placeholder="Enter total saturated" value={form.saturated} onChange={(value) => onChange("saturated", value)} />
+            <FoodInput label="Polyunsaturated (g):" placeholder="Enter total polyunsaturated" value={form.polyunsaturated} onChange={(value) => onChange("polyunsaturated", value)} />
+            <FoodInput label="Monounsaturated (g):" placeholder="Enter total monounsaturated" value={form.monounsaturated} onChange={(value) => onChange("monounsaturated", value)} />
+            <FoodInput label="Salt (g):" placeholder="Enter total salt" value={form.salt} onChange={(value) => onChange("salt", value)} />
+
+            <label className="block">
+              <span className="mb-2 block font-medium text-slate-900">Serving Description:</span>
+              <select
+                value={form.servingDescription}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                onChange={(event) => onChange("servingDescription", event.target.value)}
+              >
+                {servingDescriptionOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <FoodInput label="Serving Size (g):" placeholder="Enter serving size" value={form.servingSize} onChange={(value) => onChange("servingSize", value)} />
+          </div>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            <MicronutrientSection title="Vitamins" fields={vitaminFields} />
+            <MicronutrientSection title="Minerals" fields={mineralFields} />
+          </div>
+        </form>
+
+        <div className="flex justify-end gap-3 border-t border-gray-200 bg-white px-6 py-4">
+          <button type="button" className="rounded-xl bg-indigo-50 px-5 py-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-100" onClick={onClose}>
+            Close
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-60"
+            onClick={onSubmit}
+          >
+            {saving ? "Saving..." : "Add"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FoodInput({
+  label,
+  placeholder,
+  value,
+  className,
+  onChange
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  className?: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className={cn("block", className)}>
+      <span className="mb-2 block font-medium text-slate-900">{label}</span>
+      <input
+        value={value}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function MicronutrientSection({ title, fields }: { title: string; fields: string[] }) {
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-slate-50">
+      <h3 className="rounded-t-2xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-800">{title}</h3>
+      <div className="divide-y divide-white">
+        {fields.map((field) => (
+          <div key={field} className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-2 text-sm">
+            <span className="text-slate-700">{field}</span>
+            <input
+              aria-label={`${field} amount`}
+              placeholder="-"
+              className="w-24 rounded-lg border border-gray-200 bg-white px-3 py-2 text-right text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+            />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

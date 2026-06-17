@@ -49,6 +49,7 @@ const mealPlanAssignmentStatusFromPrisma: Record<
 export const foodListQuerySchema = z.object({
   scope: z.enum(foodLibraryScopeValues).optional(),
   source: z.enum(foodLibrarySourceValues).optional(),
+  sort: z.enum(["name", "recent"]).default("name"),
   category: z.string().trim().max(80).optional(),
   search: z.string().trim().max(100).optional(),
   limit: z.coerce.number().int().min(1).max(5_000).default(50)
