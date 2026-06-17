@@ -98,7 +98,7 @@ describe("MealPlansPage", () => {
     expect(screen.getByLabelText("Nutrition plan title")).toHaveValue("Hypertrophy Phase II");
     expect(screen.getByText("2800 Kcal")).toBeInTheDocument();
     expect(screen.getByText("210 g Protein")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save Nutrition Plan & Close" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
   it("loads persisted meal templates and assignments when the API is available", async () => {
@@ -207,14 +207,16 @@ describe("MealPlansPage", () => {
     expect(screen.getByRole("button", { name: "Add meal" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Nutrition plan title"), { target: { value: "Contest Prep Meal Plan" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save Nutrition Plan & Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(await screen.findByText("Nutrition plan added to Meal Plans.")).toBeInTheDocument();
+    expect(await screen.findByText("Nutrition plan saved.")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
+    expect(screen.getByRole("heading", { level: 2, name: "Contest Prep Meal Plan" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back to meal plans" }));
     expect(screen.getByRole("tabpanel", { name: "Meal Plans" })).toHaveTextContent("Contest Prep Meal Plan");
   });
 
-  it("builds full meal plans with editable meals, additional days, food search, and meal template import", async () => {
+  it("builds full meal plans with editable day tabs, meal actions, food search, and meal template import", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
 
     render(createElement(MealPlansPage));
@@ -231,12 +233,29 @@ describe("MealPlansPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Add meal" }));
     expect(screen.getByLabelText("Meal name for Day 1 meal 2")).toHaveValue("Meal 2");
+    fireEvent.change(screen.getByLabelText("Meal name for Day 1 meal 2"), { target: { value: "Lunch" } });
 
     fireEvent.click(screen.getByRole("button", { name: "Add day" }));
+    expect(screen.getByRole("tab", { name: "Day 2" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByLabelText("Meal name for Day 1 meal 1")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Day name for Day 2")).toHaveValue("Day 2");
     expect(screen.getByLabelText("Meal name for Day 2 meal 1")).toHaveValue("Main Meal");
     fireEvent.change(screen.getByLabelText("Day name for Day 2"), { target: { value: "High Carb Day" } });
     expect(screen.getByDisplayValue("High Carb Day")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "High Carb Day" })).toHaveAttribute("aria-selected", "true");
+
+    fireEvent.click(screen.getByRole("tab", { name: "Day 1" }));
+    expect(screen.getByLabelText("Meal name for Day 1 meal 1")).toHaveValue("Breakfast");
+    fireEvent.click(screen.getAllByRole("button", { name: "Meal actions" })[0]);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Create meal template" }));
+    expect(screen.getByText("Breakfast saved to Meal Templates.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Meal actions" })[0]);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy to another day" }));
+    const copyDialog = screen.getByRole("dialog", { name: "Copy meal to another day" });
+    fireEvent.click(within(copyDialog).getByRole("button", { name: "Copy to High Carb Day" }));
+    fireEvent.click(screen.getByRole("tab", { name: "High Carb Day" }));
+    expect(screen.getByLabelText("Meal name for High Carb Day meal 2")).toHaveValue("Breakfast");
 
     fireEvent.click(screen.getAllByRole("button", { name: "Add food" })[0]);
     const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
@@ -276,7 +295,23 @@ describe("MealPlansPage", () => {
     expect(within(templateDialog).getByText("High-Protein Breakfast Bowl")).toBeInTheDocument();
     fireEvent.click(within(templateDialog).getByRole("button", { name: "Import High-Protein Breakfast Bowl" }));
 
-    expect(screen.getByLabelText("Meal name for High Carb Day meal 2")).toHaveValue("High-Protein Breakfast Bowl");
+    expect(screen.getByLabelText("Meal name for High Carb Day meal 3")).toHaveValue("High-Protein Breakfast Bowl");
+
+    const firstMeal = screen.getByLabelText("Meal card Main Meal");
+    const secondMeal = screen.getByLabelText("Meal card Breakfast");
+    fireEvent.dragStart(firstMeal);
+    fireEvent.dragOver(secondMeal);
+    fireEvent.drop(secondMeal);
+    const mealNameInputs = screen.getAllByLabelText(/Meal name for High Carb Day meal/);
+    expect(mealNameInputs[0]).toHaveValue("Breakfast");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Meal actions" })[0]);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete meal" }));
+    expect(screen.queryByLabelText("Meal name for High Carb Day meal 1")).not.toHaveValue("Breakfast");
+
+    fireEvent.click(screen.getByRole("button", { name: "Back to meal plans" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
+    expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent("Breakfast");
   });
 
   it("builds macro-only plans from daily totals or meal-level macros", async () => {

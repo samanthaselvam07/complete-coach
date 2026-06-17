@@ -121,6 +121,7 @@ export function MealPlansPage() {
   const [assignments, setAssignments] = useState<ApiMealPlanAssignment[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [createdPlans, setCreatedPlans] = useState<MealAssignmentRow[]>([]);
+  const [createdTemplates, setCreatedTemplates] = useState<MealTemplateCard[]>([]);
   const [hiddenMealPlanIds, setHiddenMealPlanIds] = useState<string[]>([]);
   const [mealPlanOverrides, setMealPlanOverrides] = useState<Record<string, Partial<MealAssignmentRow>>>({});
   const [source, setSource] = useState<MealPlanSource>("fixtures");
@@ -184,7 +185,7 @@ export function MealPlansPage() {
     };
   }, []);
 
-  const templateCards = useMemo(() => getMealTemplateCards(source, templates), [source, templates]);
+  const templateCards = useMemo(() => [...createdTemplates, ...getMealTemplateCards(source, templates)], [createdTemplates, source, templates]);
   const assignmentRows = useMemo(
     () =>
       [...createdPlans, ...getMealAssignmentRows(source, assignments)]
@@ -201,12 +202,16 @@ export function MealPlansPage() {
 
   function saveNutritionPlan(plan: MealAssignmentRow) {
     setCreatedPlans((currentPlans) => [plan, ...currentPlans]);
-    setBuilderMode(null);
     setEditingPlan(null);
     setShowPlanTypeDialog(false);
     setShowMacroChoiceDialog(false);
     setActiveTab("Meal Plans");
-    setStatusMessage("Nutrition plan added to Meal Plans.");
+    setStatusMessage("Nutrition plan saved.");
+  }
+
+  function createMealTemplate(template: MealTemplateCard) {
+    setCreatedTemplates((currentTemplates) => [template, ...currentTemplates]);
+    setStatusMessage(`${template.name} saved to Meal Templates.`);
   }
 
   function editMealPlan(assignment: MealAssignmentRow) {
@@ -295,17 +300,22 @@ export function MealPlansPage() {
 
   if (builderMode) {
     return (
-      <NutritionPlanBuilder
-        mode={builderMode}
-        initialPlan={editingPlan}
-        availableTemplates={templateCards.length > 0 ? templateCards : getMealTemplateCards("fixtures", [])}
-        onBack={() => {
-          setBuilderMode(null);
-          setEditingPlan(null);
-          setActiveTab("Meal Plans");
-        }}
-        onSave={saveNutritionPlan}
-      />
+      <>
+        {statusMessage ? <SavedToast message={statusMessage} /> : null}
+        {errorMessage ? <p className="fixed right-6 top-6 z-[80] rounded-lg bg-red-50 p-3 text-sm text-red-700 shadow-xl">{errorMessage}</p> : null}
+        <NutritionPlanBuilder
+          mode={builderMode}
+          initialPlan={editingPlan}
+          availableTemplates={templateCards.length > 0 ? templateCards : getMealTemplateCards("fixtures", [])}
+          onBack={() => {
+            setBuilderMode(null);
+            setEditingPlan(null);
+            setActiveTab("Meal Plans");
+          }}
+          onSave={saveNutritionPlan}
+          onCreateMealTemplate={createMealTemplate}
+        />
+      </>
     );
   }
 
@@ -538,13 +548,15 @@ function NutritionPlanBuilder({
   initialPlan,
   availableTemplates,
   onBack,
-  onSave
+  onSave,
+  onCreateMealTemplate
 }: {
   mode: NutritionPlanBuilderMode;
   initialPlan?: MealAssignmentRow | null;
   availableTemplates: MealTemplateCard[];
   onBack: () => void;
   onSave: (plan: MealAssignmentRow) => void;
+  onCreateMealTemplate: (template: MealTemplateCard) => void;
 }) {
   const [title, setTitle] = useState(initialPlan?.planName ?? (mode === "full" ? "New Nutrition Plan" : "Macro Only Nutrition Plan"));
   const [dayName, setDayName] = useState("Day 1");
@@ -595,6 +607,7 @@ function NutritionPlanBuilder({
             setFats={setFats}
             setCalories={setCalories}
             availableTemplates={availableTemplates}
+            onCreateMealTemplate={onCreateMealTemplate}
           />
         ) : (
           <MacroOnlyPlanFields
@@ -615,13 +628,8 @@ function NutritionPlanBuilder({
         )}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
-          {isFullPlan ? (
-            <button type="button" className="rounded-xl bg-blue-500 px-5 py-3 text-sm font-bold text-white hover:bg-blue-600" onClick={savePlan}>
-              Save Nutrition Plan
-            </button>
-          ) : null}
           <button type="button" className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700" onClick={savePlan}>
-            {isFullPlan ? "Save Nutrition Plan & Close" : "Save Nutrition Plan"}
+            Save
           </button>
         </div>
       </section>
@@ -640,7 +648,8 @@ function FullMealPlanFields({
   setCarbs,
   setFats,
   setCalories,
-  availableTemplates
+  availableTemplates,
+  onCreateMealTemplate
 }: {
   title: string;
   setTitle: (value: string) => void;
@@ -653,16 +662,21 @@ function FullMealPlanFields({
   setFats: (value: string) => void;
   setCalories: (value: string) => void;
   availableTemplates: MealTemplateCard[];
+  onCreateMealTemplate: (template: MealTemplateCard) => void;
 }) {
   const [days, setDays] = useState<BuilderDay[]>(() => [createBuilderDay(1)]);
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [activeFoodTarget, setActiveFoodTarget] = useState<{ dayId: string; mealId: string } | null>(null);
+  const [openMealMenu, setOpenMealMenu] = useState<{ dayId: string; mealId: string } | null>(null);
+  const [copyMealTarget, setCopyMealTarget] = useState<{ dayId: string; mealId: string } | null>(null);
+  const [draggedMealId, setDraggedMealId] = useState<string | null>(null);
   const [foodSource, setFoodSource] = useState<FoodDatabaseSource>("AUS / NZ");
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
   const [showMealTemplateDialog, setShowMealTemplateDialog] = useState(false);
   const activeDay = days.find((day) => day.id === activeDayId) ?? days.at(-1);
   const dayTotals = calculateDayTotals(activeDay);
   const nutrientTotals = calculateNutrientTotals(activeDay);
+  const activeDayIndex = Math.max(days.findIndex((day) => day.id === activeDay?.id), 0);
 
   const updateMealName = (dayId: string, mealId: string, name: string) => {
     setDays((currentDays) =>
@@ -702,6 +716,82 @@ function FullMealPlanFields({
     const nextDay = createBuilderDay(days.length + 1);
     setDays((currentDays) => [...currentDays, nextDay]);
     setActiveDayId(nextDay.id);
+  };
+
+  const deleteMeal = (dayId: string, mealId: string) => {
+    setDays((currentDays) =>
+      currentDays.map((day) => (day.id === dayId ? { ...day, meals: day.meals.filter((meal) => meal.id !== mealId) } : day))
+    );
+    setOpenMealMenu(null);
+  };
+
+  const createTemplateFromMeal = (meal: BuilderMeal) => {
+    const totals = calculateMealTotals(meal);
+
+    onCreateMealTemplate({
+      id: `local-meal-template-${Date.now()}`,
+      name: meal.name.trim() || "Untitled Meal Template",
+      description: "Created from nutrition builder",
+      calories: totals.calories,
+      protein: totals.protein,
+      carbs: totals.carbs,
+      fats: totals.fats,
+      badge: "Custom",
+      apiTemplate: null
+    });
+    setOpenMealMenu(null);
+  };
+
+  const copyMealToDay = (targetDayId: string) => {
+    const sourceDay = days.find((day) => day.id === copyMealTarget?.dayId);
+    const sourceMeal = sourceDay?.meals.find((meal) => meal.id === copyMealTarget?.mealId);
+
+    if (!sourceMeal) {
+      return;
+    }
+
+    setDays((currentDays) =>
+      currentDays.map((day) =>
+        day.id === targetDayId
+          ? {
+              ...day,
+              meals: [...day.meals, cloneBuilderMeal(sourceMeal, day.meals.length + 1)]
+            }
+          : day
+      )
+    );
+    setActiveDayId(targetDayId);
+    setCopyMealTarget(null);
+    setOpenMealMenu(null);
+  };
+
+  const reorderMeal = (targetMealId: string) => {
+    if (!activeDay || !draggedMealId || draggedMealId === targetMealId) {
+      setDraggedMealId(null);
+      return;
+    }
+
+    setDays((currentDays) =>
+      currentDays.map((day) => {
+        if (day.id !== activeDay.id) {
+          return day;
+        }
+
+        const currentMeals = [...day.meals];
+        const fromIndex = currentMeals.findIndex((meal) => meal.id === draggedMealId);
+        const toIndex = currentMeals.findIndex((meal) => meal.id === targetMealId);
+
+        if (fromIndex === -1 || toIndex === -1) {
+          return day;
+        }
+
+        const [movedMeal] = currentMeals.splice(fromIndex, 1);
+        currentMeals.splice(toIndex, 0, movedMeal);
+
+        return { ...day, meals: currentMeals };
+      })
+    );
+    setDraggedMealId(null);
   };
 
   const importTemplateIntoActiveDay = (template: MealTemplateCard) => {
@@ -805,47 +895,111 @@ function FullMealPlanFields({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
+        <div role="tablist" aria-label="Nutrition plan days" className="flex flex-wrap gap-2">
+          {days.map((day) => (
+            <button
+              key={day.id}
+              type="button"
+              role="tab"
+              aria-selected={day.id === activeDay?.id}
+              className={cn(
+                "rounded-xl px-4 py-3 text-sm font-bold",
+                day.id === activeDay?.id ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+              )}
+              onClick={() => setActiveDayId(day.id)}
+            >
+              {day.name}
+            </button>
+          ))}
+        </div>
         <button type="button" aria-label="Add day" className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600 hover:bg-indigo-100" onClick={addDay}>
           + Add day
         </button>
       </div>
 
-      <div className="space-y-6">
-        {days.map((day, dayIndex) => (
-          <section key={day.id} className="border-l border-dashed border-indigo-200 pl-6">
+      {activeDay ? (
+        <div className="space-y-6">
+          <section className="border-l border-dashed border-indigo-200 pl-6">
             <label className="mb-6 inline-flex border-b-2 border-indigo-500 pb-3">
               <span className="sr-only">Day name</span>
               <input
-                aria-label={`Day name for Day ${dayIndex + 1}`}
-                value={day.name}
+                aria-label={`Day name for Day ${activeDayIndex + 1}`}
+                value={activeDay.name}
                 className="w-48 border-0 bg-transparent text-sm font-bold text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-200"
-                onChange={(event) => updateDayName(day.id, event.target.value)}
+                onChange={(event) => updateDayName(activeDay.id, event.target.value)}
               />
             </label>
             <div className="space-y-5">
-              {day.meals.map((meal, mealIndex) => (
-                <article key={meal.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              {activeDay.meals.map((meal, mealIndex) => (
+                <article
+                  key={meal.id}
+                  aria-label={`Meal card ${meal.name}`}
+                  draggable
+                  onDragStart={() => setDraggedMealId(meal.id)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => reorderMeal(meal.id)}
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <label className="grid flex-1 gap-2">
                       <span className="sr-only">Meal name</span>
                       <input
-                        aria-label={`Meal name for ${day.name} meal ${mealIndex + 1}`}
+                        aria-label={`Meal name for ${activeDay.name} meal ${mealIndex + 1}`}
                         value={meal.name}
-                        onChange={(event) => updateMealName(day.id, meal.id, event.target.value)}
+                        onChange={(event) => updateMealName(activeDay.id, meal.id, event.target.value)}
                         className="w-full rounded-lg border border-transparent bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700 outline-none focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
                       />
                     </label>
-                    <button type="button" className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-bold text-slate-500">
-                      ...
-                    </button>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        aria-label="Meal actions"
+                        className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-200"
+                        onClick={() =>
+                          setOpenMealMenu((currentMenu) =>
+                            currentMenu?.mealId === meal.id ? null : { dayId: activeDay.id, mealId: meal.id }
+                          )
+                        }
+                      >
+                        ...
+                      </button>
+                      {openMealMenu?.mealId === meal.id ? (
+                        <div role="menu" className="absolute right-0 top-11 z-20 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                            onClick={() => createTemplateFromMeal(meal)}
+                          >
+                            Create meal template
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
+                            onClick={() => setCopyMealTarget({ dayId: activeDay.id, mealId: meal.id })}
+                          >
+                            Copy to another day
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
+                            onClick={() => deleteMeal(activeDay.id, meal.id)}
+                          >
+                            Delete meal
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                   <button
                     type="button"
                     aria-label="Add food"
                     className="mt-4 text-sm font-bold uppercase text-indigo-500"
                     onClick={() => {
-                      setActiveDayId(day.id);
-                      setActiveFoodTarget({ dayId: day.id, mealId: meal.id });
+                      setActiveDayId(activeDay.id);
+                      setActiveFoodTarget({ dayId: activeDay.id, mealId: meal.id });
                     }}
                   >
                     + Add food
@@ -890,35 +1044,33 @@ function FullMealPlanFields({
                 </article>
               ))}
             </div>
-            {dayIndex === days.length - 1 ? (
-              <div className="mt-5 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  aria-label="Add meal"
-                  className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600"
-                  onClick={() => {
-                    setActiveDayId(day.id);
-                    addMealToDay(day.id);
-                  }}
-                >
-                  + Add meal
-                </button>
-                <button
-                  type="button"
-                  aria-label="Add meal from template"
-                  className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600"
-                  onClick={() => {
-                    setActiveDayId(day.id);
-                    setShowMealTemplateDialog(true);
-                  }}
-                >
-                  + Add meal from template
-                </button>
-              </div>
-            ) : null}
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                aria-label="Add meal"
+                className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600"
+                onClick={() => {
+                  setActiveDayId(activeDay.id);
+                  addMealToDay(activeDay.id);
+                }}
+              >
+                + Add meal
+              </button>
+              <button
+                type="button"
+                aria-label="Add meal from template"
+                className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600"
+                onClick={() => {
+                  setActiveDayId(activeDay.id);
+                  setShowMealTemplateDialog(true);
+                }}
+              >
+                + Add meal from template
+              </button>
+            </div>
           </section>
-        ))}
-      </div>
+        </div>
+      ) : null}
 
       <label className="grid gap-2">
         <span className="text-sm font-medium text-slate-700">Notes</span>
@@ -948,6 +1100,18 @@ function FullMealPlanFields({
       {showMealTemplateDialog ? (
         <MealTemplateImportDialog templates={availableTemplates} onImport={importTemplateIntoActiveDay} onClose={() => setShowMealTemplateDialog(false)} />
       ) : null}
+
+      {copyMealTarget ? (
+        <CopyMealDialog
+          days={days}
+          sourceDayId={copyMealTarget.dayId}
+          onCopy={copyMealToDay}
+          onClose={() => {
+            setCopyMealTarget(null);
+            setOpenMealMenu(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -965,6 +1129,17 @@ function createBuilderMeal(mealNumber: number, name = `Meal ${mealNumber}`): Bui
     id: `meal_${mealNumber}_${Date.now()}`,
     name,
     foods: []
+  };
+}
+
+function cloneBuilderMeal(meal: BuilderMeal, mealNumber: number): BuilderMeal {
+  return {
+    id: `meal_copy_${mealNumber}_${Date.now()}`,
+    name: meal.name,
+    foods: meal.foods.map((food) => ({
+      ...food,
+      id: `${food.id}_copy_${Date.now()}`
+    }))
   };
 }
 
@@ -986,6 +1161,18 @@ function createBuilderFood(food: Food, quantity: number): BuilderFood {
     quantity: safeQuantity,
     micronutrients: scaledMicronutrients
   };
+}
+
+function calculateMealTotals(meal: BuilderMeal) {
+  return meal.foods.reduce(
+    (totals, food) => ({
+      calories: totals.calories + food.calories,
+      protein: totals.protein + food.protein,
+      carbs: totals.carbs + food.carbs,
+      fats: totals.fats + food.fats
+    }),
+    { calories: 0, protein: 0, carbs: 0, fats: 0 }
+  );
 }
 
 function calculateDayTotals(day?: BuilderDay) {
@@ -1379,6 +1566,62 @@ function MealTemplateImportDialog({
               </div>
             </article>
           ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function CopyMealDialog({
+  days,
+  sourceDayId,
+  onCopy,
+  onClose
+}: {
+  days: BuilderDay[];
+  sourceDayId: string;
+  onCopy: (targetDayId: string) => void;
+  onClose: () => void;
+}) {
+  const targetDays = days.filter((day) => day.id !== sourceDayId);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="copy-meal-title"
+        className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Copy meal</p>
+            <h3 id="copy-meal-title" className="mt-1 text-2xl font-black text-slate-950">
+              Copy meal to another day
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">Choose the day where this complete meal should be duplicated.</p>
+          </div>
+          <button type="button" aria-label="Close copy meal" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-3">
+          {targetDays.map((day) => (
+            <button
+              key={day.id}
+              type="button"
+              className="rounded-xl border border-slate-200 px-4 py-3 text-left text-sm font-bold text-slate-800 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600"
+              onClick={() => onCopy(day.id)}
+            >
+              Copy to {day.name}
+            </button>
+          ))}
+          {targetDays.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-slate-300 p-4 text-center text-sm text-slate-600">
+              Add another day before copying this meal.
+            </p>
+          ) : null}
         </div>
       </section>
     </div>
