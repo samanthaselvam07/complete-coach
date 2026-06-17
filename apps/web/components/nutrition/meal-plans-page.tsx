@@ -30,6 +30,7 @@ interface BuilderFood {
   fats: number;
   fibre: number;
   quantity: number;
+  micronutrients: Record<string, number>;
 }
 
 interface BuilderDay {
@@ -661,6 +662,7 @@ function FullMealPlanFields({
   const [showMealTemplateDialog, setShowMealTemplateDialog] = useState(false);
   const activeDay = days.find((day) => day.id === activeDayId) ?? days.at(-1);
   const dayTotals = calculateDayTotals(activeDay);
+  const nutrientTotals = calculateNutrientTotals(activeDay);
 
   const updateMealName = (dayId: string, mealId: string, name: string) => {
     setDays((currentDays) =>
@@ -727,7 +729,8 @@ function FullMealPlanFields({
                       carbs: template.carbs,
                       fats: template.fats,
                       fibre: 0,
-                      quantity: 1
+                      quantity: 1,
+                      micronutrients: {}
                     }
                   ]
                 }
@@ -928,6 +931,8 @@ function FullMealPlanFields({
         <span className="text-xs text-slate-400">Please enter nutrition plan tags. Max length for a tag is 80 chars.</span>
       </label>
 
+      <MicronutrientBreakdown totals={nutrientTotals} dayName={activeDay?.name ?? "Current day"} />
+
       {activeFoodTarget ? (
         <FoodDatabaseDrawer
           source={foodSource}
@@ -965,6 +970,9 @@ function createBuilderMeal(mealNumber: number, name = `Meal ${mealNumber}`): Bui
 
 function createBuilderFood(food: Food, quantity: number): BuilderFood {
   const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+  const scaledMicronutrients = Object.fromEntries(
+    Object.entries(food.micronutrients ?? {}).map(([key, value]) => [key, value * safeQuantity])
+  );
 
   return {
     id: `${food.id}_${Date.now()}`,
@@ -975,7 +983,8 @@ function createBuilderFood(food: Food, quantity: number): BuilderFood {
     carbs: food.carbs * safeQuantity,
     fats: food.fats * safeQuantity,
     fibre: food.fibre * safeQuantity,
-    quantity: safeQuantity
+    quantity: safeQuantity,
+    micronutrients: scaledMicronutrients
   };
 }
 
@@ -1001,8 +1010,193 @@ function calculateDayTotals(day?: BuilderDay) {
   return totals;
 }
 
+function calculateNutrientTotals(day?: BuilderDay) {
+  const macroTotals = calculateDayTotals(day);
+  const totals: Record<string, number> = {
+    protein: macroTotals.protein,
+    carbs: macroTotals.carbs,
+    netCarbs: Math.max(macroTotals.carbs - macroTotals.fibre, 0),
+    fibre: macroTotals.fibre,
+    fat: macroTotals.fats
+  };
+
+  day?.meals.forEach((meal) => {
+    meal.foods.forEach((food) => {
+      Object.entries(food.micronutrients).forEach(([key, value]) => {
+        totals[key] = (totals[key] ?? 0) + value;
+      });
+    });
+  });
+
+  return totals;
+}
+
 function formatMacroValue(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+interface NutrientRowDefinition {
+  key: string;
+  label: string;
+  unit: string;
+  target?: number;
+  unavailableLabel?: "N/T" | "n/a";
+  indent?: boolean;
+}
+
+interface NutrientSectionDefinition {
+  title: string;
+  rows: NutrientRowDefinition[];
+}
+
+const NUTRIENT_SECTIONS: NutrientSectionDefinition[] = [
+  {
+    title: "Vitamins",
+    rows: [
+      { key: "vitaminB1", label: "B1 (Thiamine)", unit: "mg", target: 1.2 },
+      { key: "vitaminB2", label: "B2 (Riboflavin)", unit: "mg", target: 1.3 },
+      { key: "vitaminB3", label: "B3 (Niacin)", unit: "mg", target: 16 },
+      { key: "vitaminB5", label: "B5 (Pantothenic Acid)", unit: "mg", target: 5 },
+      { key: "vitaminB6", label: "B6 (Pyridoxine)", unit: "mg", target: 1.7 },
+      { key: "vitaminB12", label: "B12 (Cobalamin)", unit: "µg", target: 2.4 },
+      { key: "folate", label: "Folate", unit: "µg", target: 400 },
+      { key: "vitaminA", label: "Vitamin A", unit: "µg", target: 900 },
+      { key: "vitaminC", label: "Vitamin C", unit: "mg", target: 90 },
+      { key: "vitaminD", label: "Vitamin D", unit: "IU", target: 600 },
+      { key: "vitaminE", label: "Vitamin E", unit: "mg", target: 15 },
+      { key: "vitaminK", label: "Vitamin K", unit: "µg", target: 120 }
+    ]
+  },
+  {
+    title: "Carbohydrates",
+    rows: [
+      { key: "carbs", label: "Carbs", unit: "g", target: 275 },
+      { key: "netCarbs", label: "Net Carbs", unit: "g", target: 275, indent: true },
+      { key: "fibre", label: "Fiber", unit: "g", target: 30, indent: true },
+      { key: "insolubleFiber", label: "Insoluble Fiber", unit: "g", unavailableLabel: "N/T", indent: true },
+      { key: "solubleFiber", label: "Soluble Fiber", unit: "g", unavailableLabel: "N/T", indent: true },
+      { key: "starch", label: "Starch", unit: "g", unavailableLabel: "N/T" },
+      { key: "sugars", label: "Sugars", unit: "g", unavailableLabel: "N/T" },
+      { key: "addedSugars", label: "Added Sugars", unit: "g", unavailableLabel: "N/T" }
+    ]
+  },
+  {
+    title: "Lipids",
+    rows: [
+      { key: "fat", label: "Fat", unit: "g", target: 78 },
+      { key: "monounsaturated", label: "Monounsaturated", unit: "g", unavailableLabel: "N/T", indent: true },
+      { key: "polyunsaturated", label: "Polyunsaturated", unit: "g", unavailableLabel: "N/T", indent: true },
+      { key: "omega3", label: "Omega-3", unit: "g", target: 1.6, indent: true },
+      { key: "ala", label: "ALA", unit: "g", unavailableLabel: "N/T", indent: true },
+      { key: "dha", label: "DHA", unit: "g", unavailableLabel: "N/T", indent: true },
+      { key: "epa", label: "EPA", unit: "g", unavailableLabel: "N/T", indent: true },
+      { key: "omega6", label: "Omega-6", unit: "g", target: 17, indent: true },
+      { key: "aa", label: "AA", unit: "g", unavailableLabel: "N/T", indent: true },
+      { key: "la", label: "LA", unit: "g", unavailableLabel: "N/T", indent: true },
+      { key: "saturated", label: "Saturated", unit: "g", unavailableLabel: "n/a" },
+      { key: "transFats", label: "Trans-Fats", unit: "g", unavailableLabel: "n/a" },
+      { key: "cholesterol", label: "Cholesterol", unit: "mg", unavailableLabel: "N/T" }
+    ]
+  },
+  {
+    title: "Protein",
+    rows: [
+      { key: "protein", label: "Protein", unit: "g", target: 50 },
+      { key: "cystine", label: "Cystine", unit: "g", target: 0.3, indent: true },
+      { key: "histidine", label: "Histidine", unit: "g", target: 0.7, indent: true },
+      { key: "isoleucine", label: "Isoleucine", unit: "g", target: 1.4, indent: true },
+      { key: "leucine", label: "Leucine", unit: "g", target: 2.7, indent: true },
+      { key: "lysine", label: "Lysine", unit: "g", target: 2.1, indent: true },
+      { key: "methionine", label: "Methionine", unit: "g", target: 0.7, indent: true },
+      { key: "phenylalanine", label: "Phenylalanine", unit: "g", target: 1.8, indent: true },
+      { key: "threonine", label: "Threonine", unit: "g", target: 1.1, indent: true },
+      { key: "tryptophan", label: "Tryptophan", unit: "g", target: 0.28, indent: true },
+      { key: "tyrosine", label: "Tyrosine", unit: "g", target: 1.8, indent: true },
+      { key: "valine", label: "Valine", unit: "g", target: 1.8, indent: true }
+    ]
+  },
+  {
+    title: "Minerals",
+    rows: [
+      { key: "calcium", label: "Calcium", unit: "mg", target: 1300 },
+      { key: "copper", label: "Copper", unit: "mg", target: 0.9 },
+      { key: "iron", label: "Iron", unit: "mg", target: 18 },
+      { key: "magnesium", label: "Magnesium", unit: "mg", target: 420 },
+      { key: "manganese", label: "Manganese", unit: "mg", target: 2.3 },
+      { key: "phosphorus", label: "Phosphorus", unit: "mg", target: 1250 },
+      { key: "potassium", label: "Potassium", unit: "mg", target: 4700 },
+      { key: "selenium", label: "Selenium", unit: "µg", target: 55 },
+      { key: "sodium", label: "Sodium", unit: "mg", target: 2300 },
+      { key: "zinc", label: "Zinc", unit: "mg", target: 11 }
+    ]
+  }
+];
+
+function MicronutrientBreakdown({ totals, dayName }: { totals: Record<string, number>; dayName: string }) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Food analysis</p>
+          <h3 className="mt-1 text-xl font-black text-slate-950">Micronutrient breakdown</h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Live vitamin, mineral, carbohydrate, lipid, and protein detail for {dayName}.
+          </p>
+        </div>
+        <span className="rounded-full bg-indigo-50 px-4 py-2 text-xs font-black uppercase tracking-wide text-indigo-600">Dynamic totals</span>
+      </div>
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-2">
+        {NUTRIENT_SECTIONS.map((section) => (
+          <NutrientTable key={section.title} section={section} totals={totals} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function NutrientTable({ section, totals }: { section: NutrientSectionDefinition; totals: Record<string, number> }) {
+  return (
+    <div role="table" aria-label={`${section.title} nutrient breakdown`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="bg-slate-100 px-4 py-3 text-sm font-black text-slate-800" role="rowgroup">
+        <div role="row">
+          <span role="columnheader">{section.title}</span>
+        </div>
+      </div>
+      <div role="rowgroup">
+        {section.rows.map((row) => {
+          const rawValue = totals[row.key] ?? 0;
+          const value = Number.isFinite(rawValue) ? rawValue : 0;
+          const percent = row.target ? Math.min(Math.round((value / row.target) * 100), 999) : null;
+          const percentLabel = percent === null ? (row.unavailableLabel ?? "N/T") : `${percent}%`;
+          const progressWidth = percent === null ? 0 : Math.min(percent, 100);
+          const displayValue = value > 0 ? formatMacroValue(value) : "-";
+
+          return (
+            <div
+              key={row.key}
+              role="row"
+              aria-label={`${row.label} ${displayValue} ${row.unit} ${percentLabel}`}
+              className="grid grid-cols-[1fr_4.25rem_4rem_3rem] items-center gap-3 px-4 py-2.5 text-sm odd:bg-white even:bg-slate-50"
+            >
+              <span role="cell" className={cn("text-slate-800", row.indent ? "pl-4" : "")}>
+                {row.label}
+              </span>
+              <span role="cell" className="text-right font-medium text-slate-700">
+                {displayValue} {row.unit}
+              </span>
+              <span role="cell" aria-hidden="true" className="h-3 overflow-hidden rounded-full bg-indigo-50">
+                <span className="block h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" style={{ width: `${progressWidth}%` }} />
+              </span>
+              <span role="cell" className="text-right font-medium text-slate-700">
+                {percentLabel}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function FoodDatabaseDrawer({

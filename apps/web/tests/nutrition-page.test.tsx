@@ -263,6 +263,13 @@ describe("MealPlansPage", () => {
     expect(screen.getByText("0 g Carbs")).toBeInTheDocument();
     expect(screen.getByText("7.2 g Fat")).toBeInTheDocument();
     expect(screen.getByText("0 g Fibre")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Micronutrient breakdown" })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Vitamins nutrient breakdown" })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /B3 \(Niacin\) 27.4 mg/i })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Protein nutrient breakdown" })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Protein 62 g/i })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Minerals nutrient breakdown" })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Sodium 148 mg/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
     const templateDialog = screen.getByRole("dialog", { name: "Import meal from template" });
