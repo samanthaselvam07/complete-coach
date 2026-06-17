@@ -204,7 +204,7 @@ describe("MealPlansPage", () => {
 
     expect(screen.getByRole("heading", { level: 2, name: "New Nutrition Plan" })).toBeInTheDocument();
     expect(screen.getByText("DAY TOTAL")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add another meal" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add meal" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Nutrition plan title"), { target: { value: "Contest Prep Meal Plan" } });
     fireEvent.click(screen.getByRole("button", { name: "Save Nutrition Plan & Close" }));
@@ -212,6 +212,50 @@ describe("MealPlansPage", () => {
     expect(await screen.findByText("Nutrition plan added to Meal Plans.")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(screen.getByRole("tabpanel", { name: "Meal Plans" })).toHaveTextContent("Contest Prep Meal Plan");
+  });
+
+  it("builds full meal plans with editable meals, additional days, food search, and meal template import", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create New Nutritional Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Full Meal Plan" }));
+
+    expect(screen.getByRole("heading", { level: 2, name: "New Nutrition Plan" })).toBeInTheDocument();
+    expect(screen.getByText("Complete Coach nutrition builder")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add day" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Meal name for Day 1 meal 1"), { target: { value: "Breakfast" } });
+    expect(screen.getByDisplayValue("Breakfast")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add meal" }));
+    expect(screen.getByLabelText("Meal name for Day 1 meal 2")).toHaveValue("Meal 2");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add day" }));
+    expect(screen.getByText("Day 2")).toBeInTheDocument();
+    expect(screen.getByLabelText("Meal name for Day 2 meal 1")).toHaveValue("Main Meal");
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Add food" })[0]);
+    const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
+    expect(foodDrawer).toHaveClass("left-0");
+    expect(within(foodDrawer).getByRole("searchbox", { name: "Search food database" })).toHaveAttribute(
+      "placeholder",
+      "Search foods..."
+    );
+    expect(within(foodDrawer).getByRole("button", { name: "AUS / NZ" })).toBeInTheDocument();
+    expect(within(foodDrawer).getByRole("button", { name: "EFSA" })).toBeInTheDocument();
+    expect(within(foodDrawer).getByRole("button", { name: "USDA" })).toBeInTheDocument();
+    fireEvent.click(within(foodDrawer).getByRole("button", { name: "USDA" }));
+    expect(within(foodDrawer).getByText("Showing USDA foods")).toBeInTheDocument();
+    fireEvent.click(within(foodDrawer).getByRole("button", { name: "Close food search" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
+    const templateDialog = screen.getByRole("dialog", { name: "Import meal from template" });
+    expect(within(templateDialog).getByText("High-Protein Breakfast Bowl")).toBeInTheDocument();
+    fireEvent.click(within(templateDialog).getByRole("button", { name: "Import High-Protein Breakfast Bowl" }));
+
+    expect(screen.getByLabelText("Meal name for Day 2 meal 2")).toHaveValue("High-Protein Breakfast Bowl");
   });
 
   it("builds macro-only plans from daily totals or meal-level macros", async () => {
@@ -236,7 +280,7 @@ describe("MealPlansPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Macro Only Meal Plan" }));
     fireEvent.click(screen.getByRole("button", { name: "Each Meal" }));
     expect(screen.getByLabelText("Meal Title")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add another meal" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add meal" })).toBeInTheDocument();
   });
 
   it("assigns a persisted meal template to a client", async () => {

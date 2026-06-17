@@ -4,13 +4,27 @@ import { Calendar, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
-import { mealAssignments, mealTemplates } from "@/fixtures/nutrition";
+import { foods, mealAssignments, mealTemplates } from "@/fixtures/nutrition";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { cn } from "@/lib/utils";
 
 type MealPlanTab = "Meal Plans" | "Meal Templates";
 type NutritionPlanBuilderMode = "full" | "macro-day" | "macro-meal";
 export type MealPlanSource = "api" | "fixtures";
+
+type FoodDatabaseSource = "AUS / NZ" | "EFSA" | "USDA";
+
+interface BuilderMeal {
+  id: string;
+  name: string;
+  foods: string[];
+}
+
+interface BuilderDay {
+  id: string;
+  name: string;
+  meals: BuilderMeal[];
+}
 
 export interface ApiMealPlanTemplate {
   id: string;
@@ -271,6 +285,7 @@ export function MealPlansPage() {
       <NutritionPlanBuilder
         mode={builderMode}
         initialPlan={editingPlan}
+        availableTemplates={templateCards.length > 0 ? templateCards : getMealTemplateCards("fixtures", [])}
         onBack={() => {
           setBuilderMode(null);
           setEditingPlan(null);
@@ -508,11 +523,13 @@ function MacroPlanChoiceDialog({
 function NutritionPlanBuilder({
   mode,
   initialPlan,
+  availableTemplates,
   onBack,
   onSave
 }: {
   mode: NutritionPlanBuilderMode;
   initialPlan?: MealAssignmentRow | null;
+  availableTemplates: MealTemplateCard[];
   onBack: () => void;
   onSave: (plan: MealAssignmentRow) => void;
 }) {
@@ -560,6 +577,11 @@ function NutritionPlanBuilder({
             carbs={carbs}
             fats={fats}
             calories={calories}
+            setProtein={setProtein}
+            setCarbs={setCarbs}
+            setFats={setFats}
+            setCalories={setCalories}
+            availableTemplates={availableTemplates}
           />
         ) : (
           <MacroOnlyPlanFields
@@ -600,7 +622,12 @@ function FullMealPlanFields({
   protein,
   carbs,
   fats,
-  calories
+  calories,
+  setProtein,
+  setCarbs,
+  setFats,
+  setCalories,
+  availableTemplates
 }: {
   title: string;
   setTitle: (value: string) => void;
@@ -608,10 +635,116 @@ function FullMealPlanFields({
   carbs: string;
   fats: string;
   calories: string;
+  setProtein: (value: string) => void;
+  setCarbs: (value: string) => void;
+  setFats: (value: string) => void;
+  setCalories: (value: string) => void;
+  availableTemplates: MealTemplateCard[];
 }) {
+  const [days, setDays] = useState<BuilderDay[]>(() => [createBuilderDay(1)]);
+  const [activeFoodTarget, setActiveFoodTarget] = useState<{ dayId: string; mealId: string } | null>(null);
+  const [foodSource, setFoodSource] = useState<FoodDatabaseSource>("AUS / NZ");
+  const [foodSearchQuery, setFoodSearchQuery] = useState("");
+  const [showMealTemplateDialog, setShowMealTemplateDialog] = useState(false);
+  const activeDay = days.at(-1);
+
+  const updateMealName = (dayId: string, mealId: string, name: string) => {
+    setDays((currentDays) =>
+      currentDays.map((day) =>
+        day.id === dayId
+          ? {
+              ...day,
+              meals: day.meals.map((meal) => (meal.id === mealId ? { ...meal, name } : meal))
+            }
+          : day
+      )
+    );
+  };
+
+  const addMealToDay = (dayId = activeDay?.id) => {
+    if (!dayId) {
+      return;
+    }
+
+    setDays((currentDays) =>
+      currentDays.map((day) =>
+        day.id === dayId
+          ? {
+              ...day,
+              meals: [...day.meals, createBuilderMeal(day.meals.length + 1)]
+            }
+          : day
+      )
+    );
+  };
+
+  const addDay = () => {
+    setDays((currentDays) => [...currentDays, createBuilderDay(currentDays.length + 1)]);
+  };
+
+  const importTemplateIntoActiveDay = (template: MealTemplateCard) => {
+    if (!activeDay) {
+      return;
+    }
+
+    setDays((currentDays) =>
+      currentDays.map((day) =>
+        day.id === activeDay.id
+          ? {
+              ...day,
+              meals: [
+                ...day.meals,
+                {
+                  id: `meal_${Date.now()}_${day.meals.length + 1}`,
+                  name: template.name,
+                  foods: [`${template.calories} kcal template meal`]
+                }
+              ]
+            }
+          : day
+      )
+    );
+    setShowMealTemplateDialog(false);
+  };
+
+  const addFoodToMeal = (foodId: string) => {
+    const food = foods.find((item) => item.id === foodId);
+
+    if (!food || !activeFoodTarget) {
+      return;
+    }
+
+    setDays((currentDays) =>
+      currentDays.map((day) =>
+        day.id === activeFoodTarget.dayId
+          ? {
+              ...day,
+              meals: day.meals.map((meal) =>
+                meal.id === activeFoodTarget.mealId ? { ...meal, foods: [...meal.foods, `${food.name} (${food.serving})`] } : meal
+              )
+            }
+          : day
+      )
+    );
+    setCalories(String((Number(calories) || 0) + food.calories));
+    setProtein(String((Number(protein) || 0) + food.protein));
+    setCarbs(String((Number(carbs) || 0) + food.carbs));
+    setFats(String((Number(fats) || 0) + food.fats));
+    setActiveFoodTarget(null);
+  };
+
+  const filteredFoods = foods.filter((food) => food.name.toLowerCase().includes(foodSearchQuery.trim().toLowerCase()));
+
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between gap-4">
+      <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 p-5 text-white shadow-sm">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-100">Complete Coach nutrition builder</p>
+        <p className="mt-2 max-w-2xl text-sm text-indigo-50">
+          Build day-by-day meal plans, pull foods from verified databases, and import proven meal templates without leaving the plan.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex-1">
           <h2 className="sr-only">{title}</h2>
           <label className="sr-only" htmlFor="full-nutrition-title">
@@ -635,35 +768,77 @@ function FullMealPlanFields({
         </div>
       </div>
 
-      <div className="border-l border-dashed border-slate-200 pl-6">
-        <div className="mb-6 inline-flex border-b-2 border-blue-500 pb-3 text-sm font-bold text-blue-500">
-          Day 1
-        </div>
-        <div className="space-y-5">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-bold text-blue-500">Main Meal</h3>
-            <button type="button" className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-bold text-slate-500">
-              ...
-            </button>
-          </div>
-          <button type="button" className="text-sm font-bold uppercase text-slate-400">
-            + Add Food
-          </button>
-          <label className="grid gap-2">
-            <span className="text-sm font-medium text-slate-700">Notes</span>
-            <textarea className="min-h-16 rounded-xl border border-slate-200 px-4 py-3 text-sm" placeholder="Enter meal notes" />
-            <span className="text-xs text-slate-400">Please enter meal notes</span>
-          </label>
-        </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" aria-label="Add day" className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600 hover:bg-indigo-100" onClick={addDay}>
+          + Add day
+        </button>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <button type="button" aria-label="Add another meal" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
-          + Add another meal
-        </button>
-        <button type="button" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
-          + Add meal from template
-        </button>
+      <div className="space-y-6">
+        {days.map((day, dayIndex) => (
+          <section key={day.id} className="border-l border-dashed border-indigo-200 pl-6">
+            <div className="mb-6 inline-flex border-b-2 border-indigo-500 pb-3 text-sm font-bold text-indigo-600">
+              {day.name}
+            </div>
+            <div className="space-y-5">
+              {day.meals.map((meal, mealIndex) => (
+                <article key={meal.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <label className="grid flex-1 gap-2">
+                      <span className="sr-only">Meal name</span>
+                      <input
+                        aria-label={`Meal name for ${day.name} meal ${mealIndex + 1}`}
+                        value={meal.name}
+                        onChange={(event) => updateMealName(day.id, meal.id, event.target.value)}
+                        className="w-full rounded-lg border border-transparent bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700 outline-none focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+                      />
+                    </label>
+                    <button type="button" className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-bold text-slate-500">
+                      ...
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Add food"
+                    className="mt-4 text-sm font-bold uppercase text-indigo-500"
+                    onClick={() => setActiveFoodTarget({ dayId: day.id, mealId: meal.id })}
+                  >
+                    + Add food
+                  </button>
+                  {meal.foods.length > 0 ? (
+                    <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                      {meal.foods.map((food, index) => (
+                        <li key={`${food}-${index}`} className="rounded-lg bg-slate-50 px-3 py-2">
+                          {food}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <label className="mt-4 grid gap-2">
+                    <span className="text-sm font-medium text-slate-700">Notes</span>
+                    <textarea className="min-h-16 rounded-xl border border-slate-200 px-4 py-3 text-sm" placeholder="Enter meal notes" />
+                    <span className="text-xs text-slate-400">Please enter meal notes</span>
+                  </label>
+                </article>
+              ))}
+            </div>
+            {dayIndex === days.length - 1 ? (
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button type="button" aria-label="Add meal" className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600" onClick={() => addMealToDay(day.id)}>
+                  + Add meal
+                </button>
+                <button
+                  type="button"
+                  aria-label="Add meal from template"
+                  className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600"
+                  onClick={() => setShowMealTemplateDialog(true)}
+                >
+                  + Add meal from template
+                </button>
+              </div>
+            ) : null}
+          </section>
+        ))}
       </div>
 
       <label className="grid gap-2">
@@ -676,6 +851,189 @@ function FullMealPlanFields({
         <input className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm" placeholder="Enter nutrition plan tags" />
         <span className="text-xs text-slate-400">Please enter nutrition plan tags. Max length for a tag is 80 chars.</span>
       </label>
+
+      {activeFoodTarget ? (
+        <FoodDatabaseDrawer
+          source={foodSource}
+          searchQuery={foodSearchQuery}
+          filteredFoods={filteredFoods}
+          onSourceChange={setFoodSource}
+          onSearchChange={setFoodSearchQuery}
+          onAddFood={addFoodToMeal}
+          onClose={() => setActiveFoodTarget(null)}
+        />
+      ) : null}
+
+      {showMealTemplateDialog ? (
+        <MealTemplateImportDialog templates={availableTemplates} onImport={importTemplateIntoActiveDay} onClose={() => setShowMealTemplateDialog(false)} />
+      ) : null}
+    </div>
+  );
+}
+
+function createBuilderDay(dayNumber: number): BuilderDay {
+  return {
+    id: `day_${dayNumber}_${Date.now()}`,
+    name: `Day ${dayNumber}`,
+    meals: [createBuilderMeal(1, "Main Meal")]
+  };
+}
+
+function createBuilderMeal(mealNumber: number, name = `Meal ${mealNumber}`): BuilderMeal {
+  return {
+    id: `meal_${mealNumber}_${Date.now()}`,
+    name,
+    foods: []
+  };
+}
+
+function FoodDatabaseDrawer({
+  source,
+  searchQuery,
+  filteredFoods,
+  onSourceChange,
+  onSearchChange,
+  onAddFood,
+  onClose
+}: {
+  source: FoodDatabaseSource;
+  searchQuery: string;
+  filteredFoods: typeof foods;
+  onSourceChange: (source: FoodDatabaseSource) => void;
+  onSearchChange: (query: string) => void;
+  onAddFood: (foodId: string) => void;
+  onClose: () => void;
+}) {
+  const sources: FoodDatabaseSource[] = ["AUS / NZ", "EFSA", "USDA"];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-950/20">
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="food-database-drawer-title"
+        className="fixed left-0 top-0 h-full w-full max-w-md overflow-y-auto border-r border-slate-200 bg-white p-6 shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Food database</p>
+            <h3 id="food-database-drawer-title" className="mt-1 text-2xl font-black text-slate-950">
+              Add food from database
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">Search verified foods and choose the source library you want to pull from.</p>
+          </div>
+          <button type="button" aria-label="Close food search" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <label className="mt-6 grid gap-2">
+          <span className="text-sm font-bold text-slate-700">Search food database</span>
+          <input
+            type="search"
+            role="searchbox"
+            aria-label="Search food database"
+            value={searchQuery}
+            placeholder="Search foods..."
+            className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            onChange={(event) => onSearchChange(event.target.value)}
+          />
+        </label>
+
+        <div className="mt-5">
+          <p className="text-xs font-black uppercase tracking-wide text-slate-500">Database source</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {sources.map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={cn(
+                  "rounded-full border px-4 py-2 text-sm font-bold",
+                  source === item ? "border-indigo-500 bg-indigo-50 text-indigo-600" : "border-slate-200 text-slate-600"
+                )}
+                onClick={() => onSourceChange(item)}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-sm font-medium text-slate-600">Showing {source} foods</p>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {filteredFoods.map((food) => (
+            <button
+              key={food.id}
+              type="button"
+              className="w-full rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50"
+              onClick={() => onAddFood(food.id)}
+            >
+              <span className="block font-bold text-slate-900">{food.name}</span>
+              <span className="mt-1 block text-xs text-slate-500">{food.serving}</span>
+              <span className="mt-2 block text-xs font-bold text-slate-600">
+                {food.calories} kcal · P {food.protein}g · C {food.carbs}g · F {food.fats}g
+              </span>
+            </button>
+          ))}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function MealTemplateImportDialog({
+  templates,
+  onImport,
+  onClose
+}: {
+  templates: MealTemplateCard[];
+  onImport: (template: MealTemplateCard) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="import-meal-template-title"
+        className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Meal templates</p>
+            <h3 id="import-meal-template-title" className="mt-1 text-2xl font-black text-slate-950">
+              Import meal from template
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">Select a saved meal template to add it into the current nutrition plan day.</p>
+          </div>
+          <button type="button" aria-label="Close meal template import" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-3">
+          {templates.map((template) => (
+            <article key={template.id} className="rounded-xl border border-slate-200 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h4 className="font-bold text-slate-950">{template.name}</h4>
+                  <p className="text-sm text-slate-500">{template.description}</p>
+                  <p className="mt-2 text-xs font-bold text-slate-600">
+                    {template.calories} kcal · P {template.protein}g · C {template.carbs}g · F {template.fats}g
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700"
+                  onClick={() => onImport(template)}
+                >
+                  Import {template.name}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -764,8 +1122,8 @@ function MacroOnlyPlanFields({
       </div>
 
       {showMealFields ? (
-        <button type="button" aria-label="Add another meal" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
-          + Add another meal
+        <button type="button" aria-label="Add meal" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
+          + Add meal
         </button>
       ) : null}
 
