@@ -1405,20 +1405,20 @@ interface NutrientSectionDefinition {
 
 const NUTRIENT_SECTIONS: NutrientSectionDefinition[] = [
   {
-    title: "Vitamins",
+    title: "Protein",
     rows: [
-      { key: "vitaminB1", label: "B1 (Thiamine)", unit: "mg", target: 1.2 },
-      { key: "vitaminB2", label: "B2 (Riboflavin)", unit: "mg", target: 1.3 },
-      { key: "vitaminB3", label: "B3 (Niacin)", unit: "mg", target: 16 },
-      { key: "vitaminB5", label: "B5 (Pantothenic Acid)", unit: "mg", target: 5 },
-      { key: "vitaminB6", label: "B6 (Pyridoxine)", unit: "mg", target: 1.7 },
-      { key: "vitaminB12", label: "B12 (Cobalamin)", unit: "µg", target: 2.4 },
-      { key: "folate", label: "Folate", unit: "µg", target: 400 },
-      { key: "vitaminA", label: "Vitamin A", unit: "µg", target: 900 },
-      { key: "vitaminC", label: "Vitamin C", unit: "mg", target: 90 },
-      { key: "vitaminD", label: "Vitamin D", unit: "IU", target: 600 },
-      { key: "vitaminE", label: "Vitamin E", unit: "mg", target: 15 },
-      { key: "vitaminK", label: "Vitamin K", unit: "µg", target: 120 }
+      { key: "protein", label: "Protein", unit: "g", target: 50 },
+      { key: "cystine", label: "Cystine", unit: "g", target: 0.3, indent: true },
+      { key: "histidine", label: "Histidine", unit: "g", target: 0.7, indent: true },
+      { key: "isoleucine", label: "Isoleucine", unit: "g", target: 1.4, indent: true },
+      { key: "leucine", label: "Leucine", unit: "g", target: 2.7, indent: true },
+      { key: "lysine", label: "Lysine", unit: "g", target: 2.1, indent: true },
+      { key: "methionine", label: "Methionine", unit: "g", target: 0.7, indent: true },
+      { key: "phenylalanine", label: "Phenylalanine", unit: "g", target: 1.8, indent: true },
+      { key: "threonine", label: "Threonine", unit: "g", target: 1.1, indent: true },
+      { key: "tryptophan", label: "Tryptophan", unit: "g", target: 0.28, indent: true },
+      { key: "tyrosine", label: "Tyrosine", unit: "g", target: 1.8, indent: true },
+      { key: "valine", label: "Valine", unit: "g", target: 1.8, indent: true }
     ]
   },
   {
@@ -1453,20 +1453,20 @@ const NUTRIENT_SECTIONS: NutrientSectionDefinition[] = [
     ]
   },
   {
-    title: "Protein",
+    title: "Vitamins",
     rows: [
-      { key: "protein", label: "Protein", unit: "g", target: 50 },
-      { key: "cystine", label: "Cystine", unit: "g", target: 0.3, indent: true },
-      { key: "histidine", label: "Histidine", unit: "g", target: 0.7, indent: true },
-      { key: "isoleucine", label: "Isoleucine", unit: "g", target: 1.4, indent: true },
-      { key: "leucine", label: "Leucine", unit: "g", target: 2.7, indent: true },
-      { key: "lysine", label: "Lysine", unit: "g", target: 2.1, indent: true },
-      { key: "methionine", label: "Methionine", unit: "g", target: 0.7, indent: true },
-      { key: "phenylalanine", label: "Phenylalanine", unit: "g", target: 1.8, indent: true },
-      { key: "threonine", label: "Threonine", unit: "g", target: 1.1, indent: true },
-      { key: "tryptophan", label: "Tryptophan", unit: "g", target: 0.28, indent: true },
-      { key: "tyrosine", label: "Tyrosine", unit: "g", target: 1.8, indent: true },
-      { key: "valine", label: "Valine", unit: "g", target: 1.8, indent: true }
+      { key: "vitaminB1", label: "B1 (Thiamine)", unit: "mg", target: 1.2 },
+      { key: "vitaminB2", label: "B2 (Riboflavin)", unit: "mg", target: 1.3 },
+      { key: "vitaminB3", label: "B3 (Niacin)", unit: "mg", target: 16 },
+      { key: "vitaminB5", label: "B5 (Pantothenic Acid)", unit: "mg", target: 5 },
+      { key: "vitaminB6", label: "B6 (Pyridoxine)", unit: "mg", target: 1.7 },
+      { key: "vitaminB12", label: "B12 (Cobalamin)", unit: "µg", target: 2.4 },
+      { key: "folate", label: "Folate", unit: "µg", target: 400 },
+      { key: "vitaminA", label: "Vitamin A", unit: "µg", target: 900 },
+      { key: "vitaminC", label: "Vitamin C", unit: "mg", target: 90 },
+      { key: "vitaminD", label: "Vitamin D", unit: "IU", target: 600 },
+      { key: "vitaminE", label: "Vitamin E", unit: "mg", target: 15 },
+      { key: "vitaminK", label: "Vitamin K", unit: "µg", target: 120 }
     ]
   },
   {
@@ -1492,12 +1492,11 @@ function MicronutrientBreakdown({ totals, dayName }: { totals: Record<string, nu
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Food analysis</p>
-          <h3 className="mt-1 text-xl font-black text-slate-950">Micronutrient breakdown</h3>
+          <h3 className="mt-1 text-xl font-black text-slate-950">Nutrient breakdown</h3>
           <p className="mt-1 text-sm text-slate-500">
             Live vitamin, mineral, carbohydrate, lipid, and protein detail for {dayName}.
           </p>
         </div>
-        <span className="rounded-full bg-indigo-50 px-4 py-2 text-xs font-black uppercase tracking-wide text-indigo-600">Dynamic totals</span>
       </div>
 
       <div className="mt-5 grid gap-4 xl:grid-cols-2">
