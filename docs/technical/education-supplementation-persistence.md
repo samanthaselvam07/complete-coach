@@ -13,6 +13,7 @@ Ticket 018 / M9 connects education resources, education assignments, supplement 
 - Education resource uploads use R2 presigned PUT URLs and organization-scoped object ids.
 - Education UI loads persisted resources with fixture fallback and creates resources from direct URLs or uploaded files.
 - Supplement database UI loads persisted library items with fixture fallback and creates private supplement records.
+- Supplement CSV import can dry-run or commit global supplement records from the approved CSV header format.
 - Supplement plan UI loads persisted active assignments and templates with fixture fallback.
 - Demo seed data creates education and supplement records for the demo organization.
 
@@ -69,6 +70,7 @@ Rules:
 - Education writes require `education:write`.
 - Education assignments require `education:assign`.
 - Supplement global records are readable by every organization but are not created through tenant APIs.
+- Supplement CSV imports create or update global records through the internal import command, not tenant APIs.
 - Supplement and education assignments must verify both the client and template/resource belong to the active organization.
 - Assignment APIs audit ids and safe metadata only, not full resource bodies or protocol contents.
 
@@ -85,6 +87,38 @@ Rules:
 - `GET /api/v1/education-resources/{resource_id}`
 - `PATCH /api/v1/education-resources/{resource_id}`
 - `POST /api/v1/education-resources/{resource_id}/assignments`
+
+## Supplement Import Commands
+The supplement CSV importer expects these headers:
+
+```csv
+Supplement name,category,description,used for,benefits,how it works,recommended dosage,recommended timing,bioavailably notes,clinical description,tags,source url,notes
+```
+
+Dry-run:
+
+```bash
+pnpm --dir apps/web supplement:import:csv ./supplements.csv
+```
+
+Commit to global supplements:
+
+```bash
+pnpm --dir apps/web supplement:import:csv ./supplements.csv --commit
+```
+
+The importer maps:
+- `Supplement name` to `name`
+- `category` to `category`
+- `recommended dosage` to `dosage`
+- `recommended timing` to `recommendedTiming`
+- `bioavailably notes` to `bioavailabilityNotes`
+- `clinical description` to `clinicalDescription`
+- `tags` to supplement tags
+
+When `clinical description` is blank, the importer builds one from `description`, `used for`, `benefits`, and `how it works`.
+
+`source url`, `notes`, and source metadata are preserved in generated tags and import metadata where possible. Duplicate detection uses a stable import key derived from supplement name and category.
 
 ## Remaining M9 Work
 - None.
