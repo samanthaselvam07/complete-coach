@@ -882,6 +882,26 @@ function FullMealPlanFields({
     setActiveFoodTarget(null);
   };
 
+  const updateFoodQuantity = (dayId: string, mealId: string, foodId: string, nextAmount: number) => {
+    setDays((currentDays) =>
+      currentDays.map((day) =>
+        day.id === dayId
+          ? {
+              ...day,
+              meals: day.meals.map((meal) =>
+                meal.id === mealId
+                  ? {
+                      ...meal,
+                      foods: meal.foods.map((food) => (food.id === foodId ? rescaleBuilderFood(food, nextAmount) : food))
+                    }
+                  : meal
+              )
+            }
+          : day
+      )
+    );
+  };
+
   const filteredFoods = foods.filter((food) => food.name.toLowerCase().includes(foodSearchQuery.trim().toLowerCase()));
 
   return (
@@ -1060,34 +1080,49 @@ function FullMealPlanFields({
                   </button>
                   {meal.foods.length > 0 ? (
                     <div role="table" aria-label={`${meal.name} foods`} className="mt-3 overflow-hidden rounded-xl border border-slate-200">
-                      <div role="row" className="grid grid-cols-6 gap-2 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500">
+                      <div role="row" className="grid grid-cols-7 gap-2 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500">
                         <span role="columnheader">Food</span>
+                        <span role="columnheader">Quantity</span>
                         <span role="columnheader">Calories</span>
                         <span role="columnheader">Protein</span>
                         <span role="columnheader">Carbs</span>
                         <span role="columnheader">Fat</span>
                         <span role="columnheader">Fibre</span>
                       </div>
-                      {meal.foods.map((food) => (
-                        <div
-                          key={food.id}
-                          role="row"
-                          aria-label={`${food.name} ${formatMacroValue(food.quantity)} servings ${formatMacroValue(food.calories)} kcal ${formatMacroValue(food.protein)}g protein ${formatMacroValue(food.carbs)}g carbs ${formatMacroValue(food.fats)}g fat ${formatMacroValue(food.fibre)}g fibre`}
-                          className="grid grid-cols-6 gap-2 border-t border-slate-100 px-3 py-2 text-sm text-slate-700"
-                        >
-                          <span role="cell">
-                            <span className="block font-bold text-slate-900">{food.name}</span>
-                            <span className="block text-xs text-slate-500">
-                              {formatMacroValue(food.quantity)} {food.quantity === 1 ? "serving" : "servings"} · {food.serving}
+                      {meal.foods.map((food) => {
+                        const quantityDisplay = getFoodQuantityDisplay(food);
+
+                        return (
+                          <div
+                            key={food.id}
+                            role="row"
+                            aria-label={`${food.name} ${formatMacroValue(quantityDisplay.amount)} ${quantityDisplay.unit} ${formatMacroValue(food.calories)} kcal ${formatMacroValue(food.protein)}g protein ${formatMacroValue(food.carbs)}g carbs ${formatMacroValue(food.fats)}g fat ${formatMacroValue(food.fibre)}g fibre`}
+                            className="grid grid-cols-7 gap-2 border-t border-slate-100 px-3 py-2 text-sm text-slate-700"
+                          >
+                            <span role="cell">
+                              <span className="block font-bold text-slate-900">{food.name}</span>
+                              <span className="block text-xs text-slate-500">{food.serving}</span>
                             </span>
-                          </span>
-                          <span role="cell">{formatMacroValue(food.calories)} kcal</span>
-                          <span role="cell">{formatMacroValue(food.protein)}g protein</span>
-                          <span role="cell">{formatMacroValue(food.carbs)}g carbs</span>
-                          <span role="cell">{formatMacroValue(food.fats)}g fat</span>
-                          <span role="cell">{formatMacroValue(food.fibre)}g fibre</span>
-                        </div>
-                      ))}
+                            <span role="cell" className="flex items-center gap-2">
+                              <input
+                                aria-label={`Quantity for ${food.name}`}
+                                type="number"
+                                min="0"
+                                step="any"
+                                value={formatQuantityInputValue(quantityDisplay.amount)}
+                                className="w-16 rounded-lg border border-slate-200 bg-slate-100 px-2 py-2 text-center text-sm font-semibold text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+                                onChange={(event) => updateFoodQuantity(activeDay.id, meal.id, food.id, Number(event.target.value))}
+                              />
+                              <span className="text-sm font-bold text-slate-700">{quantityDisplay.unit}</span>
+                            </span>
+                            <span role="cell">{formatMacroValue(food.calories)} kcal</span>
+                            <span role="cell">{formatMacroValue(food.protein)}g protein</span>
+                            <span role="cell">{formatMacroValue(food.carbs)}g carbs</span>
+                            <span role="cell">{formatMacroValue(food.fats)}g fat</span>
+                            <span role="cell">{formatMacroValue(food.fibre)}g fibre</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : null}
                   <label className="mt-4 grid gap-2">
@@ -1223,6 +1258,77 @@ function createBuilderFood(food: Food, quantity: number): BuilderFood {
     quantity: safeQuantity,
     micronutrients: scaledMicronutrients
   };
+}
+
+function rescaleBuilderFood(food: BuilderFood, nextAmount: number): BuilderFood {
+  const parsedServing = parseServingAmount(food.serving);
+  const baseAmount = parsedServing?.amount ?? 1;
+  const safeAmount = Number.isFinite(nextAmount) && nextAmount > 0 ? nextAmount : getFoodQuantityDisplay(food).amount;
+  const nextQuantity = parsedServing ? safeAmount / baseAmount : safeAmount;
+  const currentQuantity = food.quantity > 0 ? food.quantity : 1;
+  const ratio = nextQuantity / currentQuantity;
+
+  return {
+    ...food,
+    calories: food.calories * ratio,
+    protein: food.protein * ratio,
+    carbs: food.carbs * ratio,
+    fats: food.fats * ratio,
+    fibre: food.fibre * ratio,
+    quantity: nextQuantity,
+    micronutrients: Object.fromEntries(Object.entries(food.micronutrients).map(([key, value]) => [key, value * ratio]))
+  };
+}
+
+function parseServingAmount(serving: string) {
+  const match = serving.match(/(\d+(?:\.\d+)?)\s*(g|gram|grams|ml|mL|millilitre|millilitres|milliliter|milliliters|oz|ounce|ounces)\b/i);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    amount: Number(match[1]),
+    unit: normaliseServingUnit(match[2])
+  };
+}
+
+function normaliseServingUnit(unit: string) {
+  const lowerUnit = unit.toLowerCase();
+
+  if (lowerUnit === "gram" || lowerUnit === "grams") {
+    return "g";
+  }
+
+  if (["ml", "millilitre", "millilitres", "milliliter", "milliliters"].includes(lowerUnit)) {
+    return "ml";
+  }
+
+  if (lowerUnit === "ounce" || lowerUnit === "ounces") {
+    return "oz";
+  }
+
+  return lowerUnit;
+}
+
+function getFoodQuantityDisplay(food: BuilderFood) {
+  const parsedServing = parseServingAmount(food.serving);
+
+  if (!parsedServing) {
+    return {
+      amount: food.quantity,
+      unit: food.quantity === 1 ? "serving" : "servings"
+    };
+  }
+
+  return {
+    amount: parsedServing.amount * food.quantity,
+    unit: parsedServing.unit
+  };
+}
+
+function formatQuantityInputValue(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 function calculateMealTotals(meal: BuilderMeal) {

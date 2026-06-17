@@ -283,20 +283,25 @@ describe("MealPlansPage", () => {
     fireEvent.change(within(foodDrawer).getByLabelText("Food quantity"), { target: { value: "2" } });
     fireEvent.click(within(foodDrawer).getByRole("button", { name: "Add selected food" }));
 
-    const chickenRow = screen.getByRole("row", { name: /Chicken Breast 2 servings 330 kcal 62g protein 0g carbs 7.2g fat 0g fibre/i });
+    const chickenRow = screen.getByRole("row", { name: /Chicken Breast 200 g 330 kcal 62g protein 0g carbs 7.2g fat 0g fibre/i });
     expect(chickenRow).toBeInTheDocument();
-    expect(screen.getByText("330 Kcal")).toBeInTheDocument();
-    expect(screen.getByText("62 g Protein")).toBeInTheDocument();
+    expect(within(chickenRow).getByLabelText("Quantity for Chicken Breast")).toHaveValue(200);
+    fireEvent.change(within(chickenRow).getByLabelText("Quantity for Chicken Breast"), { target: { value: "250" } });
+    expect(
+      screen.getByRole("row", { name: /Chicken Breast 250 g 412.5 kcal 77.5g protein 0g carbs 9g fat 0g fibre/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText("412.5 Kcal")).toBeInTheDocument();
+    expect(screen.getByText("77.5 g Protein")).toBeInTheDocument();
     expect(screen.getByText("0 g Carbs")).toBeInTheDocument();
-    expect(screen.getByText("7.2 g Fat")).toBeInTheDocument();
+    expect(screen.getByText("9 g Fat")).toBeInTheDocument();
     expect(screen.getByText("0 g Fibre")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Micronutrient breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Vitamins nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /B3 \(Niacin\) 27.4 mg/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /B3 \(Niacin\) 34.3 mg/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Protein nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /Protein 62 g/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Protein 77.5 g/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Minerals nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /Sodium 148 mg/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Sodium 185 mg/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
     const templateDialog = screen.getByRole("dialog", { name: "Import meal from template" });
