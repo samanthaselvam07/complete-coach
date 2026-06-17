@@ -5,6 +5,8 @@ import {
   searchUsdaFoods,
   type UsdaFoodDataType
 } from "@/lib/nutrition/usda-fooddata-central";
+import { normaliseImportedFoodCandidate } from "@/lib/nutrition/food-import-normalizer";
+import { usdaFoodToImportCandidate } from "@/lib/nutrition/usda-food-import-adapter";
 
 const apiKey = process.env.FDC_API_KEY ?? "DEMO_KEY";
 const query = process.argv[2] ?? "greek yogurt";
@@ -24,6 +26,9 @@ console.log(`currentPage: ${results.currentPage}`);
 console.log("");
 
 for (const food of results.foods) {
+  const importRecord = normaliseImportedFoodCandidate(
+    usdaFoodToImportCandidate(food)
+  );
   const energy = findNutrient(food, "Energy");
   const protein = findNutrient(food, "Protein");
   const carbs = findNutrient(food, "Carbohydrate, by difference");
@@ -42,6 +47,7 @@ for (const food of results.foods) {
   console.log(
     `per 100g: ${formatNutrient(energy)}, ${formatNutrient(protein)}, ${formatNutrient(carbs)}, ${formatNutrient(fat)}`
   );
+  console.log(`importKey: ${importRecord.importKey}`);
   console.log("");
 }
 
