@@ -490,7 +490,8 @@ describe("SupplementDatabasePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create Protocol" }));
 
     expect(await screen.findByText("Vitamin D3")).toBeInTheDocument();
-    expect(screen.getByText("5000 IU")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "View details for Vitamin D3" }));
+    expect(within(screen.getByRole("dialog", { name: "Vitamin D3 details" })).getByText("5000 IU")).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "New Protocol" })).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/supplements",
@@ -512,7 +513,7 @@ describe("SupplementDatabasePage", () => {
 
   it("loads persisted supplement library items and reports create failures", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
-      if (String(input) === "/api/v1/supplements?limit=100") {
+      if (String(input) === "/api/v1/supplements?limit=1000") {
         return Promise.resolve(
           new Response(
             JSON.stringify({
@@ -521,6 +522,7 @@ describe("SupplementDatabasePage", () => {
                   id: "supplement_loaded",
                   name: "Persisted Magnesium",
                   category: "Recovery",
+                  scope: "global",
                   recommendedTiming: null,
                   dosage: null,
                   bioavailabilityNotes: null,
@@ -543,9 +545,11 @@ describe("SupplementDatabasePage", () => {
     render(createElement(SupplementDatabasePage));
 
     expect(await screen.findByText("Persisted Magnesium")).toBeInTheDocument();
-    expect(screen.getByText("API")).toBeInTheDocument();
-    expect(screen.getByText("As needed")).toBeInTheDocument();
-    expect(screen.getByText("Variable")).toBeInTheDocument();
+    expect(screen.queryByText("Library Source")).not.toBeInTheDocument();
+    expect(screen.queryByText("Total Entries")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Verified Complete Coach supplement")).toBeInTheDocument();
+    expect(screen.queryByText("As needed")).not.toBeInTheDocument();
+    expect(screen.queryByText("Variable")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "New Entry" }));
     fireEvent.change(screen.getByLabelText("Supplement Name"), {
@@ -553,7 +557,49 @@ describe("SupplementDatabasePage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Create Protocol" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Could not create this supplement.");
+    expect(await screen.findByRole("status", { name: "Supplement save status" })).toHaveTextContent("Could not create this supplement.");
+  });
+
+  it("paginates, sorts, toggles list view, and opens supplement details", async () => {
+    const apiSupplements = Array.from({ length: 13 }, (_, index) => ({
+      id: `supplement_${index}`,
+      name: index === 0 ? "Zinc Complex" : `Alpha Supplement ${String(index).padStart(2, "0")}`,
+      category: index === 0 ? "Immune" : "Performance",
+      scope: index === 0 ? "global" : "private",
+      recommendedTiming: "Morning",
+      dosage: `${index + 1}g`,
+      bioavailabilityNotes: "Take with food.",
+      clinicalDescription:
+        index === 0
+          ? "Supports immune function. Use with client-specific context."
+          : "Brief clinical description for coach review."
+    }));
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ data: apiSupplements }), { status: 200 })
+    );
+
+    render(createElement(SupplementDatabasePage));
+
+    expect(await screen.findByText("Alpha Supplement 01")).toBeInTheDocument();
+    expect(screen.queryByText("Zinc Complex")).not.toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Supplement database page" })).toHaveTextContent("Page 1 of 2");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next supplement page" }));
+    expect(screen.getByText("Zinc Complex")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Sort supplements"), { target: { value: "za" } });
+    expect(screen.getByText("Zinc Complex")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    expect(screen.getByRole("list", { name: "Supplement list" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "View details for Zinc Complex" }));
+    const dialog = screen.getByRole("dialog", { name: "Zinc Complex details" });
+    expect(within(dialog).getByText("Immune")).toBeInTheDocument();
+    expect(within(dialog).getByText("Morning")).toBeInTheDocument();
+    expect(within(dialog).getByText("1g")).toBeInTheDocument();
+    expect(within(dialog).getAllByText("Take with food.")).toHaveLength(2);
   });
 });
 

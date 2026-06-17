@@ -1,14 +1,21 @@
 "use client";
 
-import { Plus, Search, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, ChevronLeft, ChevronRight, Grid2X2, List, Plus, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
 import { supplementEntries, type SupplementEntry } from "@/fixtures/supplementation";
+import { cn } from "@/lib/utils";
 
 const categoryOptions = ["Morning", "Evening", "Anytime"] as const;
 const timingOptions = ["Morning", "Mid-day", "Evening", "Anytime"] as const;
+const supplementsPerPage = 12;
+
+type SupplementViewMode = "cards" | "list";
+type SupplementSort = "az" | "za";
 
 interface ApiSupplement {
   id: string;
+  scope?: "global" | "private";
   name: string;
   category: string;
   recommendedTiming: string | null;
@@ -17,11 +24,23 @@ interface ApiSupplement {
   clinicalDescription: string | null;
 }
 
+type SupplementLibraryEntry = SupplementEntry & {
+  verified: boolean;
+  description: string;
+  bioavailabilityNotes?: string;
+  clinicalDescription?: string;
+};
+
 export function SupplementDatabasePage() {
   const [showAddPanel, setShowAddPanel] = useState(false);
+  const [selectedSupplement, setSelectedSupplement] = useState<SupplementLibraryEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [supplements, setSupplements] = useState<SupplementEntry[]>(supplementEntries);
-  const [librarySource, setLibrarySource] = useState<"fixture" | "api">("fixture");
+  const [sortOrder, setSortOrder] = useState<SupplementSort>("az");
+  const [viewMode, setViewMode] = useState<SupplementViewMode>("cards");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [supplements, setSupplements] = useState<SupplementLibraryEntry[]>(
+    supplementEntries.map(mapFixtureSupplementToEntry)
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [newSupplement, setNewSupplement] = useState({
@@ -36,7 +55,7 @@ export function SupplementDatabasePage() {
 
     async function loadSupplements() {
       try {
-        const response = await fetch("/api/v1/supplements?limit=100");
+        const response = await fetch("/api/v1/supplements?limit=1000");
 
         if (!response.ok) {
           return;
@@ -47,12 +66,9 @@ export function SupplementDatabasePage() {
 
         if (mounted && apiSupplements.length > 0) {
           setSupplements(apiSupplements.map(mapApiSupplementToEntry));
-          setLibrarySource("api");
         }
       } catch {
-        if (mounted) {
-          setLibrarySource("fixture");
-        }
+        // Keep fixture supplements visible when the API is unavailable.
       }
     }
 
@@ -63,10 +79,33 @@ export function SupplementDatabasePage() {
     };
   }, []);
 
-  const filteredSupplements = supplements.filter((supplement) => {
-    const query = searchQuery.toLowerCase();
-    return supplement.name.toLowerCase().includes(query) || supplement.category.toLowerCase().includes(query);
-  });
+  const filteredSupplements = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return supplements
+      .filter((supplement) => {
+        if (!query) {
+          return true;
+        }
+
+        return (
+          supplement.name.toLowerCase().includes(query) ||
+          supplement.category.toLowerCase().includes(query) ||
+          supplement.description.toLowerCase().includes(query)
+        );
+      })
+      .sort((first, second) => {
+        const comparison = first.name.localeCompare(second.name);
+        return sortOrder === "az" ? comparison : -comparison;
+      });
+  }, [searchQuery, sortOrder, supplements]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSupplements.length / supplementsPerPage));
+  const safePage = Math.min(currentPage, totalPages);
+  const visibleSupplements = filteredSupplements.slice(
+    (safePage - 1) * supplementsPerPage,
+    safePage * supplementsPerPage
+  );
 
   async function createSupplement() {
     if (!newSupplement.name.trim()) {
@@ -95,7 +134,6 @@ export function SupplementDatabasePage() {
 
       const payload = (await response.json()) as { data: ApiSupplement };
       setSupplements((current) => [mapApiSupplementToEntry(payload.data), ...current]);
-      setLibrarySource("api");
       setNewSupplement({ name: "", category: "", timing: "", dosage: "" });
       setShowAddPanel(false);
       setStatus("Supplement created.");
@@ -121,29 +159,64 @@ export function SupplementDatabasePage() {
         </p>
       </header>
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-sm font-bold uppercase tracking-wide text-slate-500">Total Entries</div>
-          <div className="mt-2 text-4xl font-black text-indigo-600">{supplements.length}</div>
-        </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-sm font-bold uppercase tracking-wide text-slate-500">Library Source</div>
-          <div className="mt-2 text-4xl font-black text-purple-600">{librarySource === "api" ? "API" : "Demo"}</div>
-        </article>
-      </section>
-
-      <section className="flex flex-col gap-4 lg:flex-row">
-        <label className="relative flex-1">
+      <section className="grid gap-4 xl:grid-cols-[1fr_auto_auto_auto] xl:items-center">
+        <label className="relative">
           <span className="sr-only">Search supplements or protocols</span>
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="search"
             value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search supplements or protocols..."
             className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </label>
+
+        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+          Sort supplements
+          <select
+            value={sortOrder}
+            onChange={(event) => {
+              setSortOrder(event.target.value as SupplementSort);
+              setCurrentPage(1);
+            }}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="az">A-Z</option>
+            <option value="za">Z-A</option>
+          </select>
+        </label>
+
+        <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1" aria-label="Supplement view">
+          <button
+            type="button"
+            aria-label="Card view"
+            aria-pressed={viewMode === "cards"}
+            onClick={() => setViewMode("cards")}
+            className={cn(
+              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
+              viewMode === "cards" ? "bg-indigo-50 text-indigo-700" : ""
+            )}
+          >
+            <Grid2X2 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="List view"
+            aria-pressed={viewMode === "list"}
+            onClick={() => setViewMode("list")}
+            className={cn(
+              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
+              viewMode === "list" ? "bg-indigo-50 text-indigo-700" : ""
+            )}
+          >
+            <List className="h-4 w-4" />
+          </button>
+        </div>
+
         <button
           type="button"
           onClick={() => setShowAddPanel(true)}
@@ -155,168 +228,386 @@ export function SupplementDatabasePage() {
       </section>
 
       <section aria-labelledby="supplements-heading">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 id="supplements-heading" className="text-lg font-black">
             Supplements & Nutrients
           </h2>
-          {status ? <p role="status" className="text-sm font-bold text-indigo-600">{status}</p> : null}
+          {status ? (
+            <p role="status" aria-label="Supplement save status" className="text-sm font-bold text-indigo-600">
+              {status}
+            </p>
+          ) : null}
         </div>
-        <div className="grid gap-6 lg:grid-cols-3">
-          {filteredSupplements.map((supplement) => (
-            <article key={supplement.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-300 hover:shadow-lg">
-              <div className="mb-4 flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-indigo-700 text-lg font-black text-white">
-                  {supplement.name.slice(0, 2).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="truncate font-black">{supplement.name}</h3>
-                  <p className="text-xs text-slate-500">{supplement.dosage}</p>
-                </div>
-              </div>
-              <dl className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <dt className="text-slate-500">Category</dt>
-                  <dd className="font-bold">{supplement.category}</dd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <dt className="text-slate-500">Timing</dt>
-                  <dd className="font-bold">{supplement.timing}</dd>
-                </div>
-              </dl>
-              <div className="mt-4 rounded-xl bg-indigo-50 p-3 text-xs leading-5 text-indigo-800">
-                <span className="font-black">Coach note:</span> {supplement.coachNote}
-              </div>
-            </article>
-          ))}
+
+        {viewMode === "cards" ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {visibleSupplements.map((supplement) => (
+              <SupplementCard
+                key={supplement.id}
+                supplement={supplement}
+                onSelect={() => setSelectedSupplement(supplement)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div role="list" aria-label="Supplement list" className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            {visibleSupplements.map((supplement) => (
+              <SupplementListRow
+                key={supplement.id}
+                supplement={supplement}
+                onSelect={() => setSelectedSupplement(supplement)}
+              />
+            ))}
+          </div>
+        )}
+
+        {visibleSupplements.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
+            No supplements match the current search.
+          </p>
+        ) : null}
+
+        <div className="mt-6 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            aria-label="Previous supplement page"
+            disabled={safePage === 1}
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </button>
+          <p role="status" aria-label="Supplement database page" className="text-sm font-bold text-slate-500">
+            Page {safePage} of {totalPages}
+          </p>
+          <button
+            type="button"
+            aria-label="Next supplement page"
+            disabled={safePage === totalPages}
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
       </section>
 
+      {selectedSupplement ? (
+        <SupplementDetailsDialog
+          supplement={selectedSupplement}
+          onClose={() => setSelectedSupplement(null)}
+        />
+      ) : null}
+
       {showAddPanel ? (
-        <>
-          <button
-            type="button"
-            aria-label="Close new protocol backdrop"
-            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
-            onClick={() => setShowAddPanel(false)}
-          />
-          <aside
-            role="dialog"
-            aria-modal="true"
-            aria-label="New Protocol"
-            className="fixed right-0 top-0 z-50 h-full w-full max-w-lg overflow-hidden bg-white shadow-2xl"
-          >
-            <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
-              <div>
-                <h2 className="text-2xl font-black">New Protocol</h2>
-                <p className="text-sm text-indigo-100">Add supplement to library</p>
-              </div>
-              <button
-                type="button"
-                aria-label="Close new protocol panel"
-                onClick={() => setShowAddPanel(false)}
-                className="rounded-xl p-2 transition hover:bg-white/20"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="h-[calc(100%-180px)] space-y-6 overflow-y-auto p-6">
-              <label className="block text-sm font-bold text-slate-700">
-                Supplement Name
-                <input
-                  value={newSupplement.name}
-                  onChange={(event) => setNewSupplement({ ...newSupplement, name: event.target.value })}
-                  placeholder="e.g., Vitamin D3"
-                  className="mt-2 w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </label>
-
-              <div>
-                <div className="mb-2 text-sm font-bold text-slate-700">Supplement Category</div>
-                <div className="grid grid-cols-3 gap-3">
-                  {categoryOptions.map((category) => (
-                    <button
-                      key={category}
-                      type="button"
-                      onClick={() => setNewSupplement({ ...newSupplement, category })}
-                      className={`rounded-xl border-2 p-3 text-sm font-bold transition ${
-                        newSupplement.category === category
-                          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                          : "border-slate-200 text-slate-700 hover:border-slate-300"
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-2 text-sm font-bold text-slate-700">Optimal Timing</div>
-                <div className="grid grid-cols-2 gap-3">
-                  {timingOptions.map((timing) => (
-                    <button
-                      key={timing}
-                      type="button"
-                      aria-label={`Timing ${timing}`}
-                      onClick={() => setNewSupplement({ ...newSupplement, timing: `Once ${timing.toLowerCase()}` })}
-                      className={`rounded-xl border-2 p-3 text-sm font-bold transition ${
-                        newSupplement.timing === `Once ${timing.toLowerCase()}`
-                          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                          : "border-slate-200 text-slate-700 hover:border-slate-300"
-                      }`}
-                    >
-                      {timing}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <label className="block text-sm font-bold text-slate-700">
-                Standard Dosage
-                <input
-                  value={newSupplement.dosage}
-                  onChange={(event) => setNewSupplement({ ...newSupplement, dosage: event.target.value })}
-                  placeholder="e.g., 5000 IU"
-                  className="mt-2 w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </label>
-            </div>
-
-            <div className="absolute bottom-0 left-0 right-0 flex gap-3 border-t border-slate-200 bg-slate-50 p-6">
-              <button
-                type="button"
-                onClick={() => setShowAddPanel(false)}
-                className="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100"
-              >
-                Save as Draft
-              </button>
-              <button
-                type="button"
-                disabled={!newSupplement.name.trim()}
-                onClick={createSupplement}
-                className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isSaving ? "Creating..." : "Create Protocol"}
-              </button>
-            </div>
-          </aside>
-        </>
+        <NewSupplementPanel
+          supplement={newSupplement}
+          isSaving={isSaving}
+          onChange={setNewSupplement}
+          onClose={() => setShowAddPanel(false)}
+          onCreate={createSupplement}
+        />
       ) : null}
     </main>
   );
 }
 
-function mapApiSupplementToEntry(supplement: ApiSupplement): SupplementEntry {
+function SupplementCard({
+  supplement,
+  onSelect
+}: {
+  supplement: SupplementLibraryEntry;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={`View details for ${supplement.name}`}
+      onClick={onSelect}
+      className="min-h-44 rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-indigo-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    >
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <h3 className="text-base font-black text-slate-950">{supplement.name}</h3>
+        <VerifiedTick label="Verified Complete Coach supplement" verified={supplement.verified} />
+      </div>
+      <p className="line-clamp-4 text-sm leading-6 text-slate-600">{supplement.description}</p>
+    </button>
+  );
+}
+
+function SupplementListRow({
+  supplement,
+  onSelect
+}: {
+  supplement: SupplementLibraryEntry;
+  onSelect: () => void;
+}) {
+  return (
+    <div role="listitem" className="border-b border-slate-100 last:border-b-0">
+      <button
+        type="button"
+        aria-label={`View details for ${supplement.name}`}
+        onClick={onSelect}
+        className="flex w-full items-start justify-between gap-4 p-4 text-left transition hover:bg-indigo-50/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+      >
+        <span>
+          <span className="block font-black text-slate-950">{supplement.name}</span>
+          <span className="mt-1 line-clamp-2 block text-sm leading-6 text-slate-600">{supplement.description}</span>
+        </span>
+        <VerifiedTick label="Verified Complete Coach supplement" verified={supplement.verified} />
+      </button>
+    </div>
+  );
+}
+
+function VerifiedTick({ label, verified }: { label: string; verified: boolean }) {
+  if (!verified) {
+    return null;
+  }
+
+  return (
+    <span
+      aria-label={label}
+      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+      title={label}
+    >
+      <Check className="h-4 w-4" aria-hidden="true" />
+    </span>
+  );
+}
+
+function SupplementDetailsDialog({
+  supplement,
+  onClose
+}: {
+  supplement: SupplementLibraryEntry;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${supplement.name} details`}
+        className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-6">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <h2 className="text-2xl font-black text-slate-950">{supplement.name}</h2>
+              <VerifiedTick label="Verified Complete Coach supplement" verified={supplement.verified} />
+            </div>
+            <p className="text-sm leading-6 text-slate-600">{supplement.description}</p>
+          </div>
+          <button
+            type="button"
+            aria-label="Close supplement details"
+            onClick={onClose}
+            className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="max-h-[calc(90vh-9rem)] space-y-5 overflow-y-auto p-6">
+          <DetailGrid
+            items={[
+              ["Category", supplement.category],
+              ["Timing", supplement.timing],
+              ["Dosage", supplement.dosage],
+              ["Bioavailability", supplement.bioavailabilityNotes ?? "No bioavailability notes recorded."]
+            ]}
+          />
+          <section>
+            <h3 className="mb-2 text-sm font-black uppercase tracking-wide text-slate-500">Clinical Description</h3>
+            <p className="whitespace-pre-line text-sm leading-6 text-slate-700">
+              {supplement.clinicalDescription ?? supplement.description}
+            </p>
+          </section>
+          <section>
+            <h3 className="mb-2 text-sm font-black uppercase tracking-wide text-slate-500">Coach Notes</h3>
+            <p className="text-sm leading-6 text-slate-700">{supplement.coachNote}</p>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailGrid({ items }: { items: Array<[string, string]> }) {
+  return (
+    <dl className="grid gap-3 sm:grid-cols-2">
+      {items.map(([label, value]) => (
+        <div key={label} className="rounded-xl bg-slate-50 p-4">
+          <dt className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</dt>
+          <dd className="mt-1 text-sm font-bold text-slate-900">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function NewSupplementPanel({
+  supplement,
+  isSaving,
+  onChange,
+  onClose,
+  onCreate
+}: {
+  supplement: { name: string; category: string; timing: string; dosage: string };
+  isSaving: boolean;
+  onChange: (supplement: { name: string; category: string; timing: string; dosage: string }) => void;
+  onClose: () => void;
+  onCreate: () => void;
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Close new protocol backdrop"
+        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="New Protocol"
+        className="fixed right-0 top-0 z-50 h-full w-full max-w-lg overflow-hidden bg-white shadow-2xl"
+      >
+        <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+          <div>
+            <h2 className="text-2xl font-black">New Protocol</h2>
+            <p className="text-sm text-indigo-100">Add supplement to library</p>
+          </div>
+          <button
+            type="button"
+            aria-label="Close new protocol panel"
+            onClick={onClose}
+            className="rounded-xl p-2 transition hover:bg-white/20"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <div className="h-[calc(100%-180px)] space-y-6 overflow-y-auto p-6">
+          <label className="block text-sm font-bold text-slate-700">
+            Supplement Name
+            <input
+              value={supplement.name}
+              onChange={(event) => onChange({ ...supplement, name: event.target.value })}
+              placeholder="e.g., Vitamin D3"
+              className="mt-2 w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </label>
+
+          <div>
+            <div className="mb-2 text-sm font-bold text-slate-700">Supplement Category</div>
+            <div className="grid grid-cols-3 gap-3">
+              {categoryOptions.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => onChange({ ...supplement, category })}
+                  className={cn(
+                    "rounded-xl border-2 p-3 text-sm font-bold transition",
+                    supplement.category === category
+                      ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                      : "border-slate-200 text-slate-700 hover:border-slate-300"
+                  )}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-2 text-sm font-bold text-slate-700">Optimal Timing</div>
+            <div className="grid grid-cols-2 gap-3">
+              {timingOptions.map((timing) => (
+                <button
+                  key={timing}
+                  type="button"
+                  aria-label={`Timing ${timing}`}
+                  onClick={() => onChange({ ...supplement, timing: `Once ${timing.toLowerCase()}` })}
+                  className={cn(
+                    "rounded-xl border-2 p-3 text-sm font-bold transition",
+                    supplement.timing === `Once ${timing.toLowerCase()}`
+                      ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                      : "border-slate-200 text-slate-700 hover:border-slate-300"
+                  )}
+                >
+                  {timing}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="block text-sm font-bold text-slate-700">
+            Standard Dosage
+            <input
+              value={supplement.dosage}
+              onChange={(event) => onChange({ ...supplement, dosage: event.target.value })}
+              placeholder="e.g., 5000 IU"
+              className="mt-2 w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </label>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 flex gap-3 border-t border-slate-200 bg-slate-50 p-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100"
+          >
+            Save as Draft
+          </button>
+          <button
+            type="button"
+            disabled={!supplement.name.trim()}
+            onClick={onCreate}
+            className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSaving ? "Creating..." : "Create Protocol"}
+          </button>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+function mapApiSupplementToEntry(supplement: ApiSupplement): SupplementLibraryEntry {
+  const clinicalDescription = supplement.clinicalDescription ?? undefined;
+  const bioavailabilityNotes = supplement.bioavailabilityNotes ?? undefined;
+  const description = getBriefDescription(clinicalDescription ?? bioavailabilityNotes ?? supplement.category);
+
   return {
     id: supplement.id,
     name: supplement.name,
     category: supplement.category,
     timing: supplement.recommendedTiming ?? "As needed",
     dosage: supplement.dosage ?? "Variable",
-    coachNote:
-      supplement.bioavailabilityNotes ??
-      supplement.clinicalDescription ??
-      "Review client tolerance before assigning broadly."
+    coachNote: bioavailabilityNotes ?? clinicalDescription ?? "Review client tolerance before assigning broadly.",
+    verified: supplement.scope === "global",
+    description,
+    bioavailabilityNotes,
+    clinicalDescription
   };
+}
+
+function mapFixtureSupplementToEntry(supplement: SupplementEntry): SupplementLibraryEntry {
+  return {
+    ...supplement,
+    verified: true,
+    description: supplement.coachNote,
+    bioavailabilityNotes: supplement.coachNote,
+    clinicalDescription: supplement.coachNote
+  };
+}
+
+function getBriefDescription(value: string) {
+  const trimmed = value.trim();
+  const firstSentence = trimmed.match(/^.*?[.!?](?:\s|$)/)?.[0]?.trim();
+  return firstSentence || trimmed || "Supplement details available.";
 }

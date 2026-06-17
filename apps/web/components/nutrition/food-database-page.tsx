@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Download, Plus, Search, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, Plus, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
@@ -282,6 +282,15 @@ export function FoodDatabasePage() {
           {filteredFoods.map((food) => (
             <article key={food.id} className="group rounded-xl border border-gray-200 bg-white p-5 transition-all hover:border-indigo-300 hover:shadow-lg">
               <div className="relative mb-5">
+                {isVerifiedFood(food) ? (
+                  <span
+                    aria-label="Verified Complete Coach food"
+                    className="absolute right-0 top-0 inline-flex size-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+                    title="Verified Complete Coach food"
+                  >
+                    <Check className="size-4" aria-hidden="true" />
+                  </span>
+                ) : null}
                 <img
                   src={getFoodImageSrc(food.name)}
                   alt={food.name}
@@ -538,6 +547,10 @@ function getFoodSource(food: ApiFood | Food): FoodDatabaseSource {
   }
 
   return "USDA";
+}
+
+function isVerifiedFood(food: ApiFood | Food) {
+  return "scope" in food ? food.scope === "global" : true;
 }
 
 function getSourceDescription(source: FoodDatabaseSource) {

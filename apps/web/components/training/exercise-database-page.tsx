@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Filter, Play, Plus, Search, Star, Target } from "lucide-react";
+import { Check, ChevronDown, Filter, Play, Plus, Search, Star, Target } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { exerciseCategories, exercises, type Exercise } from "@/fixtures/training";
@@ -146,6 +146,15 @@ export function ExerciseDatabasePage() {
         {filteredExercises.map((exercise) => (
           <article key={exercise.id} className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg">
             <div className="relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br from-gray-950 to-indigo-950">
+              {isVerifiedExercise(exercise) ? (
+                <span
+                  aria-label="Verified Complete Coach exercise"
+                  className="absolute left-3 top-3 inline-flex size-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+                  title="Verified Complete Coach exercise"
+                >
+                  <Check className="size-4" aria-hidden="true" />
+                </span>
+              ) : null}
               <div className="absolute right-3 top-3 flex items-center gap-1 rounded bg-black/50 px-2 py-1 text-white backdrop-blur-sm">
                 <Play className="size-3" aria-hidden="true" />
                 <span className="text-xs">{getExerciseVideoCount(exercise)}</span>
@@ -193,6 +202,10 @@ function getExerciseVideoCount(exercise: ApiExercise | Exercise) {
 
 function getExerciseRating(exercise: ApiExercise | Exercise) {
   return "rating" in exercise ? exercise.rating : exercise.scope === "global" ? "Global" : "Private";
+}
+
+function isVerifiedExercise(exercise: ApiExercise | Exercise) {
+  return "scope" in exercise ? exercise.scope === "global" : true;
 }
 
 function getExerciseMeta(exercise: ApiExercise | Exercise) {

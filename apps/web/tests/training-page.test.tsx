@@ -641,7 +641,7 @@ describe("ExerciseDatabasePage", () => {
               id: "api-exercise-1",
               name: "Persisted Tempo Squat",
               category: "Quads",
-              scope: "private",
+              scope: "global",
               equipment: "Barbell",
               difficulty: "intermediate",
               videoObjectKey: null,
@@ -656,6 +656,7 @@ describe("ExerciseDatabasePage", () => {
     render(createElement(ExerciseDatabasePage));
 
     expect(await screen.findByText("Persisted Tempo Squat")).toBeInTheDocument();
+    expect(screen.getByLabelText("Verified Complete Coach exercise")).toBeInTheDocument();
     expect(screen.queryByText("High-Bar Back Squat")).not.toBeInTheDocument();
   });
 
