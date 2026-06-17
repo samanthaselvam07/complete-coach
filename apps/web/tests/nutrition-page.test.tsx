@@ -308,11 +308,12 @@ describe("MealPlansPage", () => {
     expect(screen.getByRole("table", { name: "Protein nutrient breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("row", { name: /Protein 77.5 g/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Carbohydrates nutrient breakdown" })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Dietary Fibre - g 0%/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Lipids nutrient breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Vitamins nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /B3 \(Niacin\) 34.3 mg/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /B3 \(Niacin\) 34.3 mg 245%/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Minerals nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /Sodium 185 mg/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Sodium 185 mg 9%/i })).toBeInTheDocument();
     expect(screen.queryByText("Dynamic totals")).not.toBeInTheDocument();
     expect(
       screen.getByRole("table", { name: "Protein nutrient breakdown" }).compareDocumentPosition(screen.getByRole("table", { name: "Carbohydrates nutrient breakdown" }))

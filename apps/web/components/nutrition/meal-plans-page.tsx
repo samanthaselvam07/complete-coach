@@ -1403,6 +1403,7 @@ interface NutrientSectionDefinition {
   rows: NutrientRowDefinition[];
 }
 
+// Default targets use Eat for Health adult female NRV/SDT values until client-specific nutrient profiles are available.
 const NUTRIENT_SECTIONS: NutrientSectionDefinition[] = [
   {
     title: "Protein",
@@ -1426,7 +1427,7 @@ const NUTRIENT_SECTIONS: NutrientSectionDefinition[] = [
     rows: [
       { key: "carbs", label: "Carbs", unit: "g", target: 275 },
       { key: "netCarbs", label: "Net Carbs", unit: "g", target: 275, indent: true },
-      { key: "fibre", label: "Fiber", unit: "g", target: 30, indent: true },
+      { key: "fibre", label: "Dietary Fibre", unit: "g", target: 28, indent: true },
       { key: "insolubleFiber", label: "Insoluble Fiber", unit: "g", unavailableLabel: "N/T", indent: true },
       { key: "solubleFiber", label: "Soluble Fiber", unit: "g", unavailableLabel: "N/T", indent: true },
       { key: "starch", label: "Starch", unit: "g", unavailableLabel: "N/T" },
@@ -1455,33 +1456,33 @@ const NUTRIENT_SECTIONS: NutrientSectionDefinition[] = [
   {
     title: "Vitamins",
     rows: [
-      { key: "vitaminB1", label: "B1 (Thiamine)", unit: "mg", target: 1.2 },
-      { key: "vitaminB2", label: "B2 (Riboflavin)", unit: "mg", target: 1.3 },
-      { key: "vitaminB3", label: "B3 (Niacin)", unit: "mg", target: 16 },
+      { key: "vitaminB1", label: "B1 (Thiamine)", unit: "mg", target: 1.1 },
+      { key: "vitaminB2", label: "B2 (Riboflavin)", unit: "mg", target: 1.1 },
+      { key: "vitaminB3", label: "B3 (Niacin)", unit: "mg", target: 14 },
       { key: "vitaminB5", label: "B5 (Pantothenic Acid)", unit: "mg", target: 5 },
-      { key: "vitaminB6", label: "B6 (Pyridoxine)", unit: "mg", target: 1.7 },
+      { key: "vitaminB6", label: "B6 (Pyridoxine)", unit: "mg", target: 1.3 },
       { key: "vitaminB12", label: "B12 (Cobalamin)", unit: "µg", target: 2.4 },
       { key: "folate", label: "Folate", unit: "µg", target: 400 },
-      { key: "vitaminA", label: "Vitamin A", unit: "µg", target: 900 },
-      { key: "vitaminC", label: "Vitamin C", unit: "mg", target: 90 },
-      { key: "vitaminD", label: "Vitamin D", unit: "IU", target: 600 },
-      { key: "vitaminE", label: "Vitamin E", unit: "mg", target: 15 },
-      { key: "vitaminK", label: "Vitamin K", unit: "µg", target: 120 }
+      { key: "vitaminA", label: "Vitamin A", unit: "µg", target: 1220 },
+      { key: "vitaminC", label: "Vitamin C", unit: "mg", target: 190 },
+      { key: "vitaminD", label: "Vitamin D", unit: "IU", target: 200 },
+      { key: "vitaminE", label: "Vitamin E", unit: "mg", target: 14 },
+      { key: "vitaminK", label: "Vitamin K", unit: "µg", target: 60 }
     ]
   },
   {
     title: "Minerals",
     rows: [
-      { key: "calcium", label: "Calcium", unit: "mg", target: 1300 },
+      { key: "calcium", label: "Calcium", unit: "mg", target: 1000 },
       { key: "copper", label: "Copper", unit: "mg", target: 0.9 },
       { key: "iron", label: "Iron", unit: "mg", target: 18 },
-      { key: "magnesium", label: "Magnesium", unit: "mg", target: 420 },
-      { key: "manganese", label: "Manganese", unit: "mg", target: 2.3 },
-      { key: "phosphorus", label: "Phosphorus", unit: "mg", target: 1250 },
-      { key: "potassium", label: "Potassium", unit: "mg", target: 4700 },
-      { key: "selenium", label: "Selenium", unit: "µg", target: 55 },
-      { key: "sodium", label: "Sodium", unit: "mg", target: 2300 },
-      { key: "zinc", label: "Zinc", unit: "mg", target: 11 }
+      { key: "magnesium", label: "Magnesium", unit: "mg", target: 320 },
+      { key: "manganese", label: "Manganese", unit: "mg", target: 5 },
+      { key: "phosphorus", label: "Phosphorus", unit: "mg", target: 1000 },
+      { key: "potassium", label: "Potassium", unit: "mg", target: 2800 },
+      { key: "selenium", label: "Selenium", unit: "µg", target: 60 },
+      { key: "sodium", label: "Sodium", unit: "mg", target: 2000 },
+      { key: "zinc", label: "Zinc", unit: "mg", target: 8 }
     ]
   }
 ];
