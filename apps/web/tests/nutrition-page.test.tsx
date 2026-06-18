@@ -827,16 +827,25 @@ describe("MealPlansPage", () => {
     expect(screen.getByText("25 g Carbs")).toBeInTheDocument();
     expect(screen.getByText("9.4 g Fat")).toBeInTheDocument();
     expect(screen.getByText("0.4 g Fibre")).toBeInTheDocument();
+    expect(within(chickenRow).getByRole("button", { name: "Delete Chicken Breast" })).toBeInTheDocument();
+    fireEvent.click(within(chickenRow).getByRole("button", { name: "Delete Chicken Breast" }));
+    expect(screen.queryByRole("row", { name: /Chicken Breast/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Basmati Rice 1 cups 121 kcal 3g protein 25g carbs 0.4g fat 0.4g fibre/i })).toBeInTheDocument();
+    expect(screen.getByText("121 Kcal")).toBeInTheDocument();
+    expect(screen.getByText("3 g Protein")).toBeInTheDocument();
+    expect(screen.getByText("25 g Carbs")).toBeInTheDocument();
+    expect(screen.getByText("0.4 g Fat")).toBeInTheDocument();
+    expect(screen.getByText("0.4 g Fibre")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Nutrient breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Protein nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /Protein 80.5 g/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Protein 3 g/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Carbohydrates nutrient breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("row", { name: /Dietary Fibre 0.4 g 1%/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Lipids nutrient breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Vitamins nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /B3 \(Niacin\) 35.9 mg 256%/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /B3 \(Niacin\) 1.6 mg 11%/i })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Minerals nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /Sodium 186 mg 9%/i })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Sodium 1 mg 0%/i })).toBeInTheDocument();
     expect(screen.queryByText("Dynamic totals")).not.toBeInTheDocument();
     expect(
       screen.getByRole("table", { name: "Protein nutrient breakdown" }).compareDocumentPosition(screen.getByRole("table", { name: "Carbohydrates nutrient breakdown" }))
@@ -848,7 +857,7 @@ describe("MealPlansPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
     fireEvent.click(screen.getByRole("button", { name: "Import Main Meal" }));
     expect(screen.queryByRole("row", { name: /Main Meal 1 serving/i })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("row", { name: /Chicken Breast/i })).toHaveLength(2);
+    expect(screen.queryByRole("row", { name: /Chicken Breast/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole("row", { name: /Basmati Rice/i })).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));

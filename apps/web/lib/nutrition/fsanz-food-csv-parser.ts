@@ -113,11 +113,14 @@ export function parseFsanzFoodCsv(
 
 function readNutrients(row: ParsedCsvRow, headerLookup: Map<string, string>) {
   const nutrients: ImportedFoodNutrient[] = [];
+  const consumedHeaders = new Set<string>();
 
   for (const nutrient of nutrientHeaderAliases) {
-    const value = readNumber(row, headerLookup, nutrient.aliases);
+    const header = findHeader(headerLookup, nutrient.aliases);
+    const value = header ? parseNumber(row[header]) : undefined;
 
     if (value !== undefined) {
+      consumedHeaders.add(header as string);
       nutrients.push({
         name: nutrient.name,
         unit: nutrient.unit,
@@ -126,7 +129,89 @@ function readNutrients(row: ParsedCsvRow, headerLookup: Map<string, string>) {
     }
   }
 
+  const metadataHeaders = getMetadataHeaders(headerLookup);
+
+  for (const [header, rawValue] of Object.entries(row)) {
+    if (consumedHeaders.has(header) || metadataHeaders.has(header)) {
+      continue;
+    }
+
+    const value = parseNumber(rawValue);
+
+    if (value === undefined) {
+      continue;
+    }
+
+    const inferred = inferNutrientFromHeader(header);
+
+    nutrients.push({
+      sourceNutrientId: normaliseHeader(header),
+      name: inferred.name,
+      unit: inferred.unit,
+      value
+    });
+  }
+
   return nutrients;
+}
+
+function getMetadataHeaders(headerLookup: Map<string, string>) {
+  return new Set(
+    [
+      ...Object.values(requiredHeaderAliases),
+      ...Object.values(optionalHeaderAliases)
+    ]
+      .map((aliases) => findHeader(headerLookup, aliases))
+      .filter((header): header is string => Boolean(header))
+  );
+}
+
+function inferNutrientFromHeader(header: string) {
+  const trimmedHeader = header.trim();
+  const parenthesisedUnit = trimmedHeader.match(/\(([^)]+)\)\s*$/);
+
+  if (parenthesisedUnit) {
+    return {
+      name: trimmedHeader.replace(/\s*\([^)]+\)\s*$/, "").trim(),
+      unit: normaliseUnit(parenthesisedUnit[1])
+    };
+  }
+
+  const trailingUnit = trimmedHeader.match(/\b(kj|kcal|mg|mcg|µg|ug|g|iu)\s*$/i);
+
+  if (trailingUnit) {
+    return {
+      name: trimmedHeader.replace(new RegExp(`\\s*${trailingUnit[1]}\\s*$`, "i"), "").trim(),
+      unit: normaliseUnit(trailingUnit[1])
+    };
+  }
+
+  return {
+    name: trimmedHeader,
+    unit: "per 100g"
+  };
+}
+
+function normaliseUnit(unit: string) {
+  const cleanUnit = unit.trim();
+
+  if (/^(mcg|ug)$/i.test(cleanUnit)) {
+    return "µg";
+  }
+
+  if (/^kj$/i.test(cleanUnit)) {
+    return "kJ";
+  }
+
+  if (/^kcal$/i.test(cleanUnit)) {
+    return "kcal";
+  }
+
+  if (/^iu$/i.test(cleanUnit)) {
+    return "IU";
+  }
+
+  return cleanUnit;
 }
 
 function readRequired(row: ParsedCsvRow, headerLookup: Map<string, string>, aliases: readonly string[]) {
@@ -144,6 +229,14 @@ function readOptional(row: ParsedCsvRow, headerLookup: Map<string, string>, alia
 
 function readNumber(row: ParsedCsvRow, headerLookup: Map<string, string>, aliases: readonly string[]) {
   const value = readOptional(row, headerLookup, aliases);
+  if (!value) {
+    return undefined;
+  }
+
+  return parseNumber(value);
+}
+
+function parseNumber(value: string | undefined) {
   if (!value) {
     return undefined;
   }

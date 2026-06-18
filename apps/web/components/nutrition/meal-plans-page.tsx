@@ -1326,6 +1326,26 @@ function FullMealPlanFields({
     );
   };
 
+  const deleteFoodFromMeal = (dayId: string, mealId: string, foodId: string) => {
+    setDays((currentDays) =>
+      currentDays.map((day) =>
+        day.id === dayId
+          ? {
+              ...day,
+              meals: day.meals.map((meal) =>
+                meal.id === mealId
+                  ? {
+                      ...meal,
+                      foods: meal.foods.filter((food) => food.id !== foodId)
+                    }
+                  : meal
+              )
+            }
+          : day
+      )
+    );
+  };
+
   const fixtureFilteredFoods = foods.filter(
     (food) => food.source === foodSource && food.name.toLowerCase().includes(foodSearchQuery.trim().toLowerCase())
   );
@@ -1508,7 +1528,7 @@ function FullMealPlanFields({
                   </button>
                   {meal.foods.length > 0 ? (
                     <div role="table" aria-label={`${meal.name} foods`} className="mt-3 overflow-hidden rounded-xl border border-slate-200">
-                      <div role="row" className="grid grid-cols-7 gap-2 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500">
+                      <div role="row" className="grid grid-cols-[1.2fr_0.8fr_repeat(5,0.75fr)_2.5rem] gap-2 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500">
                         <span role="columnheader">Food</span>
                         <span role="columnheader">Quantity</span>
                         <span role="columnheader">Calories</span>
@@ -1516,6 +1536,9 @@ function FullMealPlanFields({
                         <span role="columnheader">Carbs</span>
                         <span role="columnheader">Fat</span>
                         <span role="columnheader">Fibre</span>
+                        <span role="columnheader" className="sr-only">
+                          Actions
+                        </span>
                       </div>
                       {meal.foods.map((food) => {
                         const quantityDisplay = getFoodQuantityDisplay(food);
@@ -1525,7 +1548,7 @@ function FullMealPlanFields({
                             key={food.id}
                             role="row"
                             aria-label={`${food.name} ${formatMacroValue(quantityDisplay.amount)} ${quantityDisplay.unit} ${formatMacroValue(food.calories)} kcal ${formatMacroValue(food.protein)}g protein ${formatMacroValue(food.carbs)}g carbs ${formatMacroValue(food.fats)}g fat ${formatMacroValue(food.fibre)}g fibre`}
-                            className="grid grid-cols-7 gap-2 border-t border-slate-100 px-3 py-2 text-sm text-slate-700"
+                            className="grid grid-cols-[1.2fr_0.8fr_repeat(5,0.75fr)_2.5rem] gap-2 border-t border-slate-100 px-3 py-2 text-sm text-slate-700"
                           >
                             <span role="cell">
                               <span className="block font-bold text-slate-900">{food.name}</span>
@@ -1547,6 +1570,16 @@ function FullMealPlanFields({
                             <span role="cell">{formatMacroValue(food.carbs)}g carbs</span>
                             <span role="cell">{formatMacroValue(food.fats)}g fat</span>
                             <span role="cell">{formatMacroValue(food.fibre)}g fibre</span>
+                            <span role="cell" className="flex justify-end">
+                              <button
+                                type="button"
+                                aria-label={`Delete ${food.name}`}
+                                className="inline-flex size-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700"
+                                onClick={() => deleteFoodFromMeal(activeDay.id, meal.id, food.id)}
+                              >
+                                <Trash2 className="size-4" aria-hidden="true" />
+                              </button>
+                            </span>
                           </div>
                         );
                       })}

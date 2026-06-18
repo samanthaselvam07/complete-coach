@@ -102,4 +102,21 @@ describe("FSANZ AUS/NZ food CSV import", () => {
       { name: "Dietary fibre", unit: "g", value: 2.4 }
     ]);
   });
+
+  it("preserves additional numeric vitamin and mineral columns as nutrients", () => {
+    const [candidate] = parseFsanzFoodCsv(`Food name,Energy (kJ),Protein (g),Available carbohydrate (g),Total fat (g),Dietary fibre (g),Vitamin C (mg),Folate (ug),Calcium (mg)
+"Apple, raw",218,0.3,12,0.1,2.4,12.5,9,80
+`);
+
+    expect(candidate.nutrientsPer100g).toEqual([
+      { name: "Energy", unit: "kJ", value: 218 },
+      { name: "Protein", unit: "g", value: 0.3 },
+      { name: "Available carbohydrate", unit: "g", value: 12 },
+      { name: "Total fat", unit: "g", value: 0.1 },
+      { name: "Dietary fibre", unit: "g", value: 2.4 },
+      { sourceNutrientId: "vitamin c mg", name: "Vitamin C", unit: "mg", value: 12.5 },
+      { sourceNutrientId: "folate ug", name: "Folate", unit: "µg", value: 9 },
+      { sourceNutrientId: "calcium mg", name: "Calcium", unit: "mg", value: 80 }
+    ]);
+  });
 });
