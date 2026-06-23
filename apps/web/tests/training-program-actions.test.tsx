@@ -30,7 +30,10 @@ describe("TrainingProgramsPage quick actions", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "More actions for Hypertrophy Phase II" }));
 
-    expect(screen.getByRole("menu", { name: "Actions for Hypertrophy Phase II" })).toBeInTheDocument();
+    const openMenu = screen.getByRole("menu", { name: "Actions for Hypertrophy Phase II" });
+    expect(openMenu).toBeInTheDocument();
+    expect(openMenu).toHaveClass("z-[80]");
+    expect(openMenu.closest("article")).toHaveClass("z-40");
 
     fireEvent.click(screen.getByRole("button", { name: "Close training program actions" }));
 

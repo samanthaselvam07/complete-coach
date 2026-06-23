@@ -66,73 +66,83 @@ export function ActiveProgramsPanel({
           <div className="col-span-2">Last Edited</div>
           <div className="col-span-1">Actions</div>
         </div>
-        {programs.map((program) => (
-          <article key={program.id} className="relative grid grid-cols-12 items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-0 hover:bg-gray-50">
-            <div className="col-span-4 flex items-center gap-3">
-              <div className={cn("flex size-10 items-center justify-center rounded-lg font-bold", program.color)}>
-                {program.icon}
-              </div>
-              <div>
-                <div className="font-medium text-gray-900">{program.name}</div>
-                <div className="text-xs text-gray-500">
-                  {program.weeksTotal} weeks - Started {program.startDate}
+        {programs.map((program) => {
+          const isActionMenuOpen = openActionMenuId === program.id;
+
+          return (
+            <article
+              key={program.id}
+              className={cn(
+                "relative grid grid-cols-12 items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-0 hover:bg-gray-50",
+                isActionMenuOpen ? "z-40" : "z-0"
+              )}
+            >
+              <div className="col-span-4 flex items-center gap-3">
+                <div className={cn("flex size-10 items-center justify-center rounded-lg font-bold", program.color)}>
+                  {program.icon}
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">{program.name}</div>
+                  <div className="text-xs text-gray-500">
+                    {program.weeksTotal} weeks - Started {program.startDate}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="col-span-3 text-sm font-medium text-gray-700">
-              {program.activeClientCount} active {program.activeClientCount === 1 ? "client" : "clients"}
-            </div>
-            <div className="col-span-2 flex items-center gap-2">
-              <div className="h-2 max-w-28 flex-1 rounded-full bg-gray-200">
-                <div className="h-2 rounded-full bg-indigo-600" style={{ width: `${program.progress}%` }} />
+              <div className="col-span-3 text-sm font-medium text-gray-700">
+                {program.activeClientCount} active {program.activeClientCount === 1 ? "client" : "clients"}
               </div>
-              <span className="text-xs text-gray-600">{program.progress}%</span>
-            </div>
-            <div className="col-span-2 text-sm text-gray-600">{program.lastEdited}</div>
-            <div className="relative z-30 col-span-1 flex items-center gap-2">
-              <button
-                type="button"
-                aria-label={`Edit ${program.name}`}
-                className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
-                onClick={() => onEditProgram(program)}
-              >
-                <Edit className="size-4" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                aria-label={`More actions for ${program.name}`}
-                aria-expanded={openActionMenuId === program.id}
-                aria-controls={`training-program-actions-${program.id}`}
-                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-                onClick={() => setOpenActionMenuId((currentMenuId) => (currentMenuId === program.id ? null : program.id))}
-              >
-                <MoreVertical className="size-4" aria-hidden="true" />
-              </button>
-              {openActionMenuId === program.id ? (
-                <TrainingProgramActionsMenu
-                  id={`training-program-actions-${program.id}`}
-                  label={`Actions for ${program.name}`}
-                  onEdit={() => {
-                    setOpenActionMenuId(null);
-                    onEditProgram(program);
-                  }}
-                  onDelete={() => {
-                    setOpenActionMenuId(null);
-                    onDeleteProgram(program);
-                  }}
-                  onAssign={() => {
-                    setOpenActionMenuId(null);
-                    onAssignProgram(program);
-                  }}
-                  onCopy={() => {
-                    setOpenActionMenuId(null);
-                    onCopyProgram(program);
-                  }}
-                />
-              ) : null}
-            </div>
-          </article>
-        ))}
+              <div className="col-span-2 flex items-center gap-2">
+                <div className="h-2 max-w-28 flex-1 rounded-full bg-gray-200">
+                  <div className="h-2 rounded-full bg-indigo-600" style={{ width: `${program.progress}%` }} />
+                </div>
+                <span className="text-xs text-gray-600">{program.progress}%</span>
+              </div>
+              <div className="col-span-2 text-sm text-gray-600">{program.lastEdited}</div>
+              <div className={cn("relative col-span-1 flex items-center gap-2", isActionMenuOpen ? "z-[70]" : "z-10")}>
+                <button
+                  type="button"
+                  aria-label={`Edit ${program.name}`}
+                  className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
+                  onClick={() => onEditProgram(program)}
+                >
+                  <Edit className="size-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`More actions for ${program.name}`}
+                  aria-expanded={isActionMenuOpen}
+                  aria-controls={`training-program-actions-${program.id}`}
+                  className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+                  onClick={() => setOpenActionMenuId((currentMenuId) => (currentMenuId === program.id ? null : program.id))}
+                >
+                  <MoreVertical className="size-4" aria-hidden="true" />
+                </button>
+                {isActionMenuOpen ? (
+                  <TrainingProgramActionsMenu
+                    id={`training-program-actions-${program.id}`}
+                    label={`Actions for ${program.name}`}
+                    onEdit={() => {
+                      setOpenActionMenuId(null);
+                      onEditProgram(program);
+                    }}
+                    onDelete={() => {
+                      setOpenActionMenuId(null);
+                      onDeleteProgram(program);
+                    }}
+                    onAssign={() => {
+                      setOpenActionMenuId(null);
+                      onAssignProgram(program);
+                    }}
+                    onCopy={() => {
+                      setOpenActionMenuId(null);
+                      onCopyProgram(program);
+                    }}
+                  />
+                ) : null}
+              </div>
+            </article>
+          );
+        })}
         {programs.length === 0 ? (
           <p className="px-6 py-8 text-center text-sm text-gray-600">No custom programs match the current search.</p>
         ) : null}
@@ -171,74 +181,84 @@ export function TemplatesPanel({
         />
       ) : null}
       <div className="grid gap-6 md:grid-cols-3">
-        {templates.map((template) => (
-          <article key={template.id} className="group relative overflow-visible rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg">
-            <div className={cn("relative p-6 text-white", template.color)}>
-              <div className="absolute right-3 top-3 rounded bg-white/20 px-2 py-1 text-xs font-medium backdrop-blur-sm">
-                {template.badge}
+        {templates.map((template) => {
+          const isActionMenuOpen = openActionMenuId === template.id;
+
+          return (
+            <article
+              key={template.id}
+              className={cn(
+                "group relative overflow-visible rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg",
+                isActionMenuOpen ? "z-40" : "z-0"
+              )}
+            >
+              <div className={cn("relative p-6 text-white", template.color)}>
+                <div className="absolute right-3 top-3 rounded bg-white/20 px-2 py-1 text-xs font-medium backdrop-blur-sm">
+                  {template.badge}
+                </div>
+                <div className="mb-2 flex items-center gap-2">
+                  <Zap className="size-5" aria-hidden="true" />
+                  <h2 className="text-lg font-bold">{template.name}</h2>
+                </div>
+                <p className="text-sm text-white/90">{template.description}</p>
               </div>
-              <div className="mb-2 flex items-center gap-2">
-                <Zap className="size-5" aria-hidden="true" />
-                <h2 className="text-lg font-bold">{template.name}</h2>
-              </div>
-              <p className="text-sm text-white/90">{template.description}</p>
-            </div>
-            <div className="p-5">
-              <div className="mb-4 flex justify-end">
+              <div className="p-5">
+                <div className="mb-4 flex justify-end">
+                  <button
+                    type="button"
+                    aria-label={`More actions for ${template.name}`}
+                    aria-expanded={isActionMenuOpen}
+                    aria-controls={`training-template-actions-${template.id}`}
+                    className={cn("relative rounded-lg p-2 text-gray-600 hover:bg-gray-100", isActionMenuOpen ? "z-[70]" : "z-10")}
+                    onClick={() => setOpenActionMenuId((currentMenuId) => (currentMenuId === template.id ? null : template.id))}
+                  >
+                    <MoreVertical className="size-4" aria-hidden="true" />
+                  </button>
+                  {isActionMenuOpen ? (
+                    <TrainingProgramActionsMenu
+                      id={`training-template-actions-${template.id}`}
+                      label={`Actions for ${template.name}`}
+                      onEdit={() => {
+                        setOpenActionMenuId(null);
+                        onEditTemplate(template);
+                      }}
+                      onDelete={() => {
+                        setOpenActionMenuId(null);
+                        onDeleteTemplate(template);
+                      }}
+                      onAssign={() => {
+                        setOpenActionMenuId(null);
+                        onAssignTemplate(template);
+                      }}
+                      onCopy={() => {
+                        setOpenActionMenuId(null);
+                        onCopyTemplate(template);
+                      }}
+                    />
+                  ) : null}
+                </div>
+                <div className="mb-4 flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <Users className="size-4" aria-hidden="true" />
+                    {template.uses} clients
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-600">
+                    <Calendar className="size-4" aria-hidden="true" />
+                    {template.weeks} weeks
+                  </div>
+                </div>
                 <button
                   type="button"
-                  aria-label={`More actions for ${template.name}`}
-                  aria-expanded={openActionMenuId === template.id}
-                  aria-controls={`training-template-actions-${template.id}`}
-                  className="relative z-30 rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-                  onClick={() => setOpenActionMenuId((currentMenuId) => (currentMenuId === template.id ? null : template.id))}
+                  className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300"
+                  disabled={!canUseTemplates}
+                  onClick={() => onUseTemplate(template)}
                 >
-                  <MoreVertical className="size-4" aria-hidden="true" />
+                  Use Template
                 </button>
-                {openActionMenuId === template.id ? (
-                  <TrainingProgramActionsMenu
-                    id={`training-template-actions-${template.id}`}
-                    label={`Actions for ${template.name}`}
-                    onEdit={() => {
-                      setOpenActionMenuId(null);
-                      onEditTemplate(template);
-                    }}
-                    onDelete={() => {
-                      setOpenActionMenuId(null);
-                      onDeleteTemplate(template);
-                    }}
-                    onAssign={() => {
-                      setOpenActionMenuId(null);
-                      onAssignTemplate(template);
-                    }}
-                    onCopy={() => {
-                      setOpenActionMenuId(null);
-                      onCopyTemplate(template);
-                    }}
-                  />
-                ) : null}
               </div>
-              <div className="mb-4 flex items-center justify-between text-sm">
-                <div className="flex items-center gap-1 text-gray-600">
-                  <Users className="size-4" aria-hidden="true" />
-                  {template.uses} clients
-                </div>
-                <div className="flex items-center gap-1 text-gray-600">
-                  <Calendar className="size-4" aria-hidden="true" />
-                  {template.weeks} weeks
-                </div>
-              </div>
-              <button
-                type="button"
-                className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300"
-                disabled={!canUseTemplates}
-                onClick={() => onUseTemplate(template)}
-              >
-                Use Template
-              </button>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
         {templates.length === 0 ? (
           <p className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
             No program templates exist yet. Create a new program to start the library.
@@ -276,7 +296,7 @@ function TrainingProgramActionsMenu({
       id={id}
       role="menu"
       aria-label={label}
-      className="absolute right-0 top-10 z-50 w-40 rounded-xl border border-gray-200 bg-white py-2 shadow-xl"
+      className="absolute right-0 top-10 z-[80] w-40 rounded-xl border border-gray-200 bg-white py-2 shadow-xl"
     >
       {actions.map(({ label: actionLabel, icon: Icon, onSelect }) => (
         <button
