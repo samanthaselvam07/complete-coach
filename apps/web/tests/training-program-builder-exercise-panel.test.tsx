@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -67,5 +67,46 @@ describe("Training program builder exercise panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add High-Bar Back Squat to Workout" }));
 
     expect(screen.getByDisplayValue("High-Bar Back Squat")).toBeInTheDocument();
+  });
+
+  it("supports compact movable rows and row deletion in the builder", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+
+    render(createElement(TrainingProgramsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Add custom exercise" }));
+    fireEvent.change(screen.getAllByLabelText("Exercise name")[0], { target: { value: "Back Squat" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add custom exercise" }));
+    fireEvent.change(screen.getAllByLabelText("Exercise name")[1], { target: { value: "Romanian Deadlift" } });
+
+    const squatRow = screen.getByRole("group", { name: "Back Squat exercise row" });
+    const deadliftRow = screen.getByRole("group", { name: "Romanian Deadlift exercise row" });
+
+    expect(within(squatRow).getByLabelText("Rest time")).toBeInTheDocument();
+    expect(within(squatRow).getByRole("button", { name: "Delete Back Squat" })).toBeInTheDocument();
+    expect(within(deadliftRow).getByRole("button", { name: "Move Romanian Deadlift exercise" })).toHaveAttribute("draggable", "true");
+
+    const dragData = new Map<string, string>();
+    const dataTransfer = {
+      effectAllowed: "move",
+      dropEffect: "move",
+      setData: (type: string, value: string) => dragData.set(type, value),
+      getData: (type: string) => dragData.get(type) ?? ""
+    };
+
+    fireEvent.dragStart(within(deadliftRow).getByRole("button", { name: "Move Romanian Deadlift exercise" }), { dataTransfer });
+    fireEvent.dragOver(squatRow, { dataTransfer });
+    fireEvent.drop(squatRow, { dataTransfer });
+
+    const exerciseNamesAfterMove = screen.getAllByLabelText("Exercise name").map((input) => (input as HTMLInputElement).value);
+    expect(exerciseNamesAfterMove.slice(0, 2)).toEqual(["Romanian Deadlift", "Back Squat"]);
+
+    fireEvent.click(within(screen.getByRole("group", { name: "Back Squat exercise row" })).getByRole("button", { name: "Delete Back Squat" }));
+
+    expect(screen.queryByDisplayValue("Back Squat")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("Romanian Deadlift")).toBeInTheDocument();
   });
 });

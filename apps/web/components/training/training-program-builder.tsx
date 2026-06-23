@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Copy, GripVertical, Plus, Search, Upload, X } from "lucide-react";
+import { ArrowLeft, Copy, GripVertical, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { exercises as fixtureExercises, type Exercise } from "@/fixtures/training";
@@ -251,6 +251,37 @@ export function TrainingProgramBuilder({
     });
   }
 
+  function deleteExercise(exerciseId: string) {
+    updateActiveDay({
+      exercises: activeDay.exercises.filter((exercise) => exercise.id !== exerciseId)
+    });
+  }
+
+  function moveExercise(exerciseId: string, targetExerciseId: string) {
+    if (exerciseId === targetExerciseId) {
+      return;
+    }
+
+    const exerciseToMove = activeDay.exercises.find((exercise) => exercise.id === exerciseId);
+    const targetExercise = activeDay.exercises.find((exercise) => exercise.id === targetExerciseId);
+
+    if (!exerciseToMove || !targetExercise || exerciseToMove.section !== targetExercise.section) {
+      return;
+    }
+
+    const exercisesWithoutMovedItem = activeDay.exercises.filter((exercise) => exercise.id !== exerciseId);
+    const targetIndex = exercisesWithoutMovedItem.findIndex((exercise) => exercise.id === targetExerciseId);
+
+    if (targetIndex < 0) {
+      return;
+    }
+
+    const nextExercises = [...exercisesWithoutMovedItem];
+    nextExercises.splice(targetIndex, 0, exerciseToMove);
+
+    updateActiveDay({ exercises: nextExercises });
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 text-slate-950 md:p-8">
       <div className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -388,7 +419,9 @@ export function TrainingProgramBuilder({
               exercises={activeDay.exercises.filter((exercise) => exercise.section === section)}
               onAddExercise={() => openExercisePanel(section)}
               onExerciseChange={updateExercise}
+              onExerciseDelete={deleteExercise}
               onExerciseDrop={(exerciseName) => addExercise(section, exerciseName)}
+              onExerciseMove={moveExercise}
             />
           ))}
 
@@ -522,13 +555,17 @@ function ProgramBuilderSection({
   exercises,
   onAddExercise,
   onExerciseDrop,
-  onExerciseChange
+  onExerciseChange,
+  onExerciseDelete,
+  onExerciseMove
 }: {
   section: TrainingProgramSection;
   exercises: TrainingProgramExerciseDraft[];
   onAddExercise: () => void;
   onExerciseDrop: (exerciseName: string) => void;
   onExerciseChange: (exerciseId: string, updates: Partial<TrainingProgramExerciseDraft>) => void;
+  onExerciseDelete: (exerciseId: string) => void;
+  onExerciseMove: (exerciseId: string, targetExerciseId: string) => void;
 }) {
   const sectionLabel = getProgramSectionLabel(section);
 
@@ -548,13 +585,47 @@ function ProgramBuilderSection({
       <h2 className="mb-3 text-sm font-black text-slate-900">{sectionLabel}</h2>
       <div className="space-y-3">
         {exercises.map((exercise) => (
-          <div key={exercise.id} className="grid gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm md:grid-cols-6">
+          <div
+            key={exercise.id}
+            role="group"
+            aria-label={`${exercise.exerciseName || "Untitled exercise"} exercise row`}
+            className="grid gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm lg:grid-cols-[2.5rem_minmax(12rem,2fr)_repeat(5,minmax(4.25rem,1fr))_2.5rem]"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              const exerciseId = event.dataTransfer.getData("application/x-complete-coach-exercise-id");
+
+              if (exerciseId) {
+                onExerciseMove(exerciseId, exercise.id);
+              }
+            }}
+          >
+            <button
+              type="button"
+              draggable
+              aria-label={`Move ${exercise.exerciseName || "untitled"} exercise`}
+              className="mt-6 inline-flex size-9 cursor-grab items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              onDragStart={(event) => {
+                event.dataTransfer.setData("application/x-complete-coach-exercise-id", exercise.id);
+                event.dataTransfer.effectAllowed = "move";
+              }}
+            >
+              <GripVertical className="size-4" aria-hidden="true" />
+            </button>
             <ExerciseField label="Exercise name" value={exercise.exerciseName} onChange={(exerciseName) => onExerciseChange(exercise.id, { exerciseName })} />
             <ExerciseField label="Sets" value={exercise.sets} inputMode="numeric" onChange={(sets) => onExerciseChange(exercise.id, { sets })} />
             <ExerciseField label="Reps" value={exercise.reps} onChange={(reps) => onExerciseChange(exercise.id, { reps })} />
             <ExerciseField label="RPE" value={exercise.rpe} onChange={(rpe) => onExerciseChange(exercise.id, { rpe })} />
             <ExerciseField label="RIR" value={exercise.rir} onChange={(rir) => onExerciseChange(exercise.id, { rir })} />
             <ExerciseField label="Rest time" value={exercise.restSeconds} inputMode="numeric" onChange={(restSeconds) => onExerciseChange(exercise.id, { restSeconds })} />
+            <button
+              type="button"
+              aria-label={`Delete ${exercise.exerciseName || "untitled exercise"}`}
+              className="mt-6 inline-flex size-9 items-center justify-center rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700"
+              onClick={() => onExerciseDelete(exercise.id)}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+            </button>
           </div>
         ))}
       </div>
@@ -725,7 +796,7 @@ function ExerciseField({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className={cn("text-xs font-bold uppercase tracking-wide text-slate-500", label === "Exercise name" ? "md:col-span-2" : "")}>
+    <label className="text-xs font-bold uppercase tracking-wide text-slate-500">
       {label}
       <input
         value={value}
