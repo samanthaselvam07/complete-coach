@@ -671,7 +671,7 @@ function ExerciseDatabaseSidePanel({
           className="mt-3 w-full rounded-xl border border-dashed border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 hover:border-indigo-400 hover:bg-indigo-100"
           onClick={onAddManual}
         >
-          Add manual {sectionLabel.toLowerCase()} row
+          Add custom exercise
         </button>
       </div>
 
