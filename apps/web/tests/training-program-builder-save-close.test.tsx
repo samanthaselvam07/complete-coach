@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -152,6 +152,17 @@ describe("Training program builder save and close", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
     fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
     fireEvent.change(screen.getByLabelText(/Program Title/i), { target: { value: "Preview Hypertrophy Build" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Add custom exercise" }));
+    const customExerciseDialog = screen.getByRole("dialog", { name: "Add custom exercise" });
+    fireEvent.change(within(customExerciseDialog).getByLabelText("Exercise name"), { target: { value: "Single Leg Squat" } });
+    fireEvent.change(within(customExerciseDialog).getByLabelText("YouTube or external video link"), {
+      target: { value: "https://youtu.be/single-leg-squat" }
+    });
+    fireEvent.change(within(customExerciseDialog).getByLabelText("Upload exercise video"), {
+      target: { files: [new File(["demo"], "single-leg-squat.mp4", { type: "video/mp4" })] }
+    });
+    fireEvent.click(within(customExerciseDialog).getByRole("button", { name: "Add exercise" }));
     fireEvent.click(screen.getByRole("button", { name: "Save & Close" }));
 
     expect(await screen.findByRole("heading", { level: 1, name: "Program Library" })).toBeInTheDocument();
@@ -165,6 +176,20 @@ describe("Training program builder save and close", () => {
       expect.objectContaining({
         method: "POST",
         body: expect.stringContaining("Preview Hypertrophy Build")
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/training-program-templates",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Video link: https://youtu.be/single-leg-squat")
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/training-program-templates",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Uploaded video: single-leg-squat.mp4")
       })
     );
   });

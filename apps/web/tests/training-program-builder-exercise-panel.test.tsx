@@ -8,6 +8,23 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+function addCustomExercise(name: string, options: { videoUrl?: string; file?: File } = {}) {
+  fireEvent.click(screen.getByRole("button", { name: "Add custom exercise" }));
+
+  const dialog = screen.getByRole("dialog", { name: "Add custom exercise" });
+  fireEvent.change(within(dialog).getByLabelText("Exercise name"), { target: { value: name } });
+
+  if (options.videoUrl) {
+    fireEvent.change(within(dialog).getByLabelText("YouTube or external video link"), { target: { value: options.videoUrl } });
+  }
+
+  if (options.file) {
+    fireEvent.change(within(dialog).getByLabelText("Upload exercise video"), { target: { files: [options.file] } });
+  }
+
+  fireEvent.click(within(dialog).getByRole("button", { name: "Add exercise" }));
+}
+
 describe("Training program builder exercise panel", () => {
   it("opens a side exercise database in the program builder and adds searched exercises", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
@@ -77,10 +94,9 @@ describe("Training program builder exercise panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
     fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
     fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Add custom exercise" }));
-    fireEvent.change(screen.getAllByLabelText("Exercise name")[0], { target: { value: "Back Squat" } });
-    fireEvent.click(screen.getByRole("button", { name: "Add custom exercise" }));
-    fireEvent.change(screen.getAllByLabelText("Exercise name")[1], { target: { value: "Romanian Deadlift" } });
+    await screen.findByRole("button", { name: "Add custom exercise" });
+    addCustomExercise("Back Squat");
+    addCustomExercise("Romanian Deadlift");
 
     const squatRow = screen.getByRole("group", { name: "Back Squat exercise row" });
     const deadliftRow = screen.getByRole("group", { name: "Romanian Deadlift exercise row" });
@@ -108,5 +124,28 @@ describe("Training program builder exercise panel", () => {
 
     expect(screen.queryByDisplayValue("Back Squat")).not.toBeInTheDocument();
     expect(screen.getByDisplayValue("Romanian Deadlift")).toBeInTheDocument();
+  });
+
+  it("opens a custom exercise dialog with video link and upload options", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+
+    render(createElement(TrainingProgramsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
+    await screen.findByRole("button", { name: "Add custom exercise" });
+
+    const videoFile = new File(["demo"], "single-leg-squat.mp4", { type: "video/mp4" });
+    addCustomExercise("Single Leg Squat", {
+      videoUrl: "https://www.youtube.com/watch?v=demo",
+      file: videoFile
+    });
+
+    const exerciseRow = screen.getByRole("group", { name: "Single Leg Squat exercise row" });
+
+    expect(within(exerciseRow).getByDisplayValue("Single Leg Squat")).toBeInTheDocument();
+    expect(within(exerciseRow).getByText("Video link added")).toBeInTheDocument();
+    expect(within(exerciseRow).getByText("single-leg-squat.mp4")).toBeInTheDocument();
   });
 });

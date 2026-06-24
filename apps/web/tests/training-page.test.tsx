@@ -351,7 +351,8 @@ describe("TrainingProgramsPage", () => {
     fireEvent.change(screen.getByLabelText(/Day Name/i), { target: { value: "Lower Day" } });
     fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
     fireEvent.click(await screen.findByRole("button", { name: "Add custom exercise" }));
-    fireEvent.change(screen.getByLabelText("Exercise name"), { target: { value: "Back Squat" } });
+    fireEvent.change(within(screen.getByRole("dialog", { name: "Add custom exercise" })).getByLabelText("Exercise name"), { target: { value: "Back Squat" } });
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Add custom exercise" })).getByRole("button", { name: "Add exercise" }));
     fireEvent.change(screen.getByLabelText("Sets"), { target: { value: "4" } });
     fireEvent.change(screen.getByLabelText("Reps"), { target: { value: "6-8" } });
     fireEvent.change(screen.getByLabelText("RPE"), { target: { value: "8" } });

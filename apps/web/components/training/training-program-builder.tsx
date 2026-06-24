@@ -20,6 +20,8 @@ export interface TrainingProgramExerciseDraft {
   rpe: string;
   rir: string;
   restSeconds: string;
+  customVideoUrl?: string;
+  customVideoFileName?: string;
 }
 
 export interface TrainingProgramDayDraft {
@@ -74,6 +76,12 @@ interface ApiExercise {
 }
 
 type BuilderExerciseLibraryItem = ApiExercise | Exercise;
+
+interface CustomExerciseInput {
+  exerciseName: string;
+  videoUrl?: string;
+  videoFileName?: string;
+}
 
 const builderFieldClassName =
   "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-normal text-slate-950 placeholder:text-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
@@ -195,6 +203,7 @@ export function TrainingProgramBuilder({
 }) {
   const activeDay = draft.days.find((day) => day.id === draft.activeDayId) ?? draft.days[0];
   const [exercisePanelSection, setExercisePanelSection] = useState<TrainingProgramSection | null>(null);
+  const [customExerciseSection, setCustomExerciseSection] = useState<TrainingProgramSection | null>(null);
 
   function updateDraft(updates: Partial<TrainingProgramDraft>) {
     onDraftChange({ ...draft, ...updates });
@@ -217,7 +226,7 @@ export function TrainingProgramBuilder({
     });
   }
 
-  function addExercise(section: TrainingProgramSection, exerciseName = "") {
+  function addExercise(section: TrainingProgramSection, exerciseName = "", customInput: Partial<CustomExerciseInput> = {}) {
     const sectionExerciseCount = activeDay.exercises.filter((exercise) => exercise.section === section).length + 1;
 
     updateActiveDay({
@@ -231,7 +240,9 @@ export function TrainingProgramBuilder({
           reps: "8-10",
           rpe: "",
           rir: "",
-          restSeconds: "120"
+          restSeconds: "120",
+          customVideoUrl: customInput.videoUrl,
+          customVideoFileName: customInput.videoFileName
         }
       ]
     });
@@ -243,6 +254,11 @@ export function TrainingProgramBuilder({
 
   function addLibraryExercise(section: TrainingProgramSection, exercise: BuilderExerciseLibraryItem) {
     addExercise(section, exercise.name);
+  }
+
+  function addCustomExercise(section: TrainingProgramSection, input: CustomExerciseInput) {
+    addExercise(section, input.exerciseName, input);
+    setCustomExerciseSection(null);
   }
 
   function updateExercise(exerciseId: string, updates: Partial<TrainingProgramExerciseDraft>) {
@@ -459,11 +475,19 @@ export function TrainingProgramBuilder({
           <ExerciseDatabaseSidePanel
             activeSection={exercisePanelSection}
             onClose={() => setExercisePanelSection(null)}
-            onAddManual={() => addExercise(exercisePanelSection)}
+            onAddManual={() => setCustomExerciseSection(exercisePanelSection)}
             onAddExercise={(exercise) => addLibraryExercise(exercisePanelSection, exercise)}
           />
         ) : null}
       </div>
+
+      {customExerciseSection ? (
+        <CustomExerciseDialog
+          section={customExerciseSection}
+          onClose={() => setCustomExerciseSection(null)}
+          onCreate={(input) => addCustomExercise(customExerciseSection, input)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -542,7 +566,8 @@ export function getTrainingProgramTemplatePayload(
           rpe: exercise.rpe.trim(),
           rir: exercise.rir.trim(),
           restSeconds: parsePositiveInteger(exercise.restSeconds, 120),
-          section: exercise.section
+          section: exercise.section,
+          ...(buildCustomExerciseNotes(exercise) ? { notes: buildCustomExerciseNotes(exercise) } : {})
         }))
       })),
       instructions: draft.instructions.trim()
@@ -618,6 +643,12 @@ function ProgramBuilderSection({
             <ExerciseField label="RPE" value={exercise.rpe} onChange={(rpe) => onExerciseChange(exercise.id, { rpe })} />
             <ExerciseField label="RIR" value={exercise.rir} onChange={(rir) => onExerciseChange(exercise.id, { rir })} />
             <ExerciseField label="Rest time" value={exercise.restSeconds} inputMode="numeric" onChange={(restSeconds) => onExerciseChange(exercise.id, { restSeconds })} />
+            {exercise.customVideoUrl || exercise.customVideoFileName ? (
+              <div className="lg:col-start-2 lg:col-end-8 -mt-1 flex flex-wrap gap-2 text-xs font-bold text-indigo-700">
+                {exercise.customVideoUrl ? <span className="rounded-full bg-indigo-50 px-3 py-1">Video link added</span> : null}
+                {exercise.customVideoFileName ? <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{exercise.customVideoFileName}</span> : null}
+              </div>
+            ) : null}
             <button
               type="button"
               aria-label={`Delete ${exercise.exerciseName || "untitled exercise"}`}
@@ -638,6 +669,102 @@ function ProgramBuilderSection({
         <Plus className="size-4" aria-hidden="true" />
         Add an Exercise
       </button>
+    </div>
+  );
+}
+
+function CustomExerciseDialog({
+  section,
+  onClose,
+  onCreate
+}: {
+  section: TrainingProgramSection;
+  onClose: () => void;
+  onCreate: (input: CustomExerciseInput) => void;
+}) {
+  const [exerciseName, setExerciseName] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoFileName, setVideoFileName] = useState("");
+  const sectionLabel = getProgramSectionLabel(section);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="custom-exercise-title"
+        className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">Add to {sectionLabel}</p>
+            <h2 id="custom-exercise-title" className="mt-1 text-2xl font-black text-slate-950">
+              Add custom exercise
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">Create a one-off exercise row with an optional coaching video reference.</p>
+          </div>
+          <button type="button" aria-label="Close custom exercise dialog" className="rounded-xl p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mt-5 space-y-4">
+          <label className="block text-sm font-bold text-slate-800">
+            Exercise name
+            <input
+              value={exerciseName}
+              placeholder="e.g. Single Leg Squat"
+              className={builderFieldClassName}
+              onChange={(event) => setExerciseName(event.target.value)}
+            />
+          </label>
+
+          <label className="block text-sm font-bold text-slate-800">
+            YouTube or external video link
+            <input
+              type="url"
+              value={videoUrl}
+              placeholder="https://youtube.com/..."
+              className={builderFieldClassName}
+              onChange={(event) => setVideoUrl(event.target.value)}
+            />
+          </label>
+
+          <label className="block rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/70 p-4 text-sm font-bold text-indigo-700">
+            <span className="flex items-center gap-2">
+              <Upload className="size-4" aria-hidden="true" />
+              Upload exercise video
+            </span>
+            <input
+              type="file"
+              accept="video/*"
+              className="mt-3 block w-full text-sm font-medium text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-bold file:text-indigo-700"
+              onChange={(event) => setVideoFileName(event.target.files?.[0]?.name ?? "")}
+            />
+            {videoFileName ? <span className="mt-2 block text-xs text-slate-500">{videoFileName}</span> : null}
+          </label>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button type="button" className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!exerciseName.trim()}
+            onClick={() =>
+              onCreate({
+                exerciseName: exerciseName.trim(),
+                videoUrl: videoUrl.trim() || undefined,
+                videoFileName: videoFileName || undefined
+              })
+            }
+          >
+            Add exercise
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -819,6 +946,15 @@ function createBlankTrainingDay(dayNumber: number): TrainingProgramDayDraft {
 function parsePositiveInteger(value: string, fallback: number) {
   const parsedValue = Number.parseInt(value, 10);
   return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
+}
+
+function buildCustomExerciseNotes(exercise: TrainingProgramExerciseDraft) {
+  const notes = [
+    exercise.customVideoUrl ? `Video link: ${exercise.customVideoUrl}` : null,
+    exercise.customVideoFileName ? `Uploaded video: ${exercise.customVideoFileName}` : null
+  ].filter(Boolean);
+
+  return notes.length > 0 ? notes.join("\n") : "";
 }
 
 function getProgramSectionLabel(section: TrainingProgramSection) {
