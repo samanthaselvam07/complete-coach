@@ -4,6 +4,7 @@ import NextAuth from "next-auth";
 import type { Session } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
+import { findActiveOrganizationMembershipForUser } from "@/lib/auth/active-organization";
 import { credentialsSchema } from "@/lib/auth/credentials";
 import { isLocalDevAuthBypassEnabled, localDevelopmentSession } from "@/lib/auth/local-dev-session";
 import type { MembershipRole } from "@/lib/auth/permissions";
@@ -77,18 +78,7 @@ const nextAuth = NextAuth(() => {
           return token;
         }
 
-        const membership = await prisma.organizationMembership.findFirst({
-          where: {
-            userId: user.id,
-            status: "ACTIVE"
-          },
-          include: {
-            organization: true
-          },
-          orderBy: {
-            createdAt: "asc"
-          }
-        });
+        const membership = await findActiveOrganizationMembershipForUser(user.id);
 
         if (membership) {
           token.activeOrganization = {

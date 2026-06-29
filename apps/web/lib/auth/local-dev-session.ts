@@ -1,7 +1,7 @@
 import type { Session } from "next-auth";
 
 export function isLocalDevAuthBypassEnabled(env: NodeJS.ProcessEnv = process.env) {
-  return env.NODE_ENV === "development";
+  return env.NODE_ENV === "development" && env.NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS === "1";
 }
 
 export const localDevelopmentSession = {

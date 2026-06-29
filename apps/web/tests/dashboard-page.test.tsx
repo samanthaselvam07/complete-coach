@@ -57,6 +57,62 @@ describe("DashboardPage", () => {
     expect(await screen.findByText("No CRM stage data loaded from the database yet.")).toBeInTheDocument();
   });
 
+  it("keeps a clean empty dashboard when Neon APIs return no organization data", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/dashboard/financial-reporting?period=monthly") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                period: "monthly",
+                label: "Monthly Revenue",
+                amount: 0,
+                currency: "usd",
+                change: "Awaiting database data",
+                bars: []
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/dashboard/crm-summary") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                newLeadsLastFiveDays: 0,
+                totalLeadsAndCustomers: 0,
+                stageBreakdown: [],
+                updatedAt: "2026-06-29T00:00:00.000Z"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/dashboard/metadata") {
+        return Promise.resolve(new Response(JSON.stringify({ data: { timezone: "UTC" } }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+
+    expect(await screen.findByText("No CRM stage data loaded from the database yet.")).toBeInTheDocument();
+    expect(screen.getByText("No AI priority flags right now.")).toBeInTheDocument();
+    expect(screen.getByText("No assigned check-ins today.")).toBeInTheDocument();
+    expect(screen.queryByText("Review Jordan's progress check-in")).not.toBeInTheDocument();
+    expect(screen.queryByText("Marcus Rodriguez")).not.toBeInTheDocument();
+    expect(screen.queryByText("Sarah Johnson")).not.toBeInTheDocument();
+    expect(screen.queryByText("Payment Secured")).not.toBeInTheDocument();
+  });
+
   it("updates the displayed revenue period from the selector", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 

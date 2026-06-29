@@ -50,6 +50,19 @@ describe("GET /api/v1/dashboard/metadata", () => {
     });
   });
 
+  it("never reads another organization's metadata from a request parameter", async () => {
+    mocks.prisma.organization.findUnique.mockResolvedValue({ timezone: "Australia/Melbourne" });
+
+    const response = await getDashboardMetadata();
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.organization.findUnique).toHaveBeenCalledWith({
+      where: { id: "org_1" },
+      select: { timezone: true }
+    });
+    expect(JSON.stringify(mocks.prisma.organization.findUnique.mock.calls)).not.toContain("org_2");
+  });
+
   it("falls back to UTC when no organization timezone is available", async () => {
     mocks.prisma.organization.findUnique.mockResolvedValue(null);
 

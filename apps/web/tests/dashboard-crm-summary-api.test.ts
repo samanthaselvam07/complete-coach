@@ -101,4 +101,29 @@ describe("GET /api/v1/dashboard/crm-summary", () => {
     expect(payload.error.code).toBe("forbidden");
     expect(mocks.prisma.lead.groupBy).not.toHaveBeenCalled();
   });
+
+  it("does not allow cross-organization CRM summary reads", async () => {
+    mocks.prisma.lead.groupBy.mockResolvedValue([
+      { stage: LeadStage.INITIAL_CONTACT, _count: { _all: 1 } }
+    ]);
+    mocks.prisma.lead.count.mockResolvedValue(1);
+
+    const response = await getCrmSummary();
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.lead.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizationId: "org_1", deletedAt: null }
+      })
+    );
+    expect(mocks.prisma.lead.count).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        deletedAt: null,
+        createdAt: { gte: expect.any(Date) }
+      }
+    });
+    expect(JSON.stringify(mocks.prisma.lead.groupBy.mock.calls)).not.toContain("org_2");
+    expect(JSON.stringify(mocks.prisma.lead.count.mock.calls)).not.toContain("org_2");
+  });
 });

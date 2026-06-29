@@ -420,6 +420,7 @@ describe("operations persistence APIs", () => {
     expect(mocks.prisma.task.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
+          organizationId: "org_1",
           priority: TaskPriority.HIGH,
           dueAt: {
             gte: new Date("2026-05-01T00:00:00.000Z"),
