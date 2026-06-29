@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-import { teamMembers as operationTeamMembers } from "@/fixtures/operations";
-
 export interface TeamCapacityMember {
   id: string;
   userId?: string;
@@ -17,18 +15,21 @@ export interface TeamCapacityMember {
 
 interface ClientCapacityCardProps {
   members?: TeamCapacityMember[];
+  loading?: boolean;
 }
 
 interface PriorityTasksCardProps {
   pendingCheckIns?: number;
+  loading?: boolean;
 }
 
 interface TodaysCheckInsCardProps {
   weekday: string;
   clients: Array<{ id: string; name: string; checkInDay: string }>;
+  loading?: boolean;
 }
 
-export function ClientCapacityCard({ members = fallbackCapacityMembers }: ClientCapacityCardProps) {
+export function ClientCapacityCard({ members = fallbackCapacityMembers, loading = false }: ClientCapacityCardProps) {
   const coachMembers = members.filter((member) => member.status === "active" && member.capacityLimit > 0);
   const activeClients = coachMembers.reduce((total, member) => total + member.activeClientCount, 0);
   const capacity = coachMembers.reduce((total, member) => total + member.capacityLimit, 0);
@@ -46,19 +47,25 @@ export function ClientCapacityCard({ members = fallbackCapacityMembers }: Client
     >
       <div className="mb-4 flex items-center justify-between">
         <span className="text-xs uppercase tracking-wider text-gray-500">Client Capacity</span>
-        <span className="rounded bg-indigo-100 px-2 py-1 text-xs text-indigo-700">{capacityPercent}% LOAD</span>
+        <span className="rounded bg-indigo-100 px-2 py-1 text-xs text-indigo-700">{loading ? "Loading" : `${capacityPercent}% LOAD`}</span>
       </div>
       <p className="mb-2 text-sm font-semibold text-gray-700">Team Capacity</p>
-      <div className="mb-4">
-        <span className="text-3xl font-bold">{activeClients}</span>
-        <span className="text-xl text-gray-400">/{capacity}</span>
-      </div>
-      <div className="mb-2 h-3 w-full rounded-full bg-gray-100">
-        <div className="h-3 rounded-full bg-indigo-600" style={{ width: `${capacityPercent}%` }} />
-      </div>
-      <p className="text-xs text-gray-500">Room for {remainingCapacity} more premium athletes across {coachMembers.length} coaches</p>
+      {loading ? (
+        <CardLoadingState label="Loading team capacity from Neon." />
+      ) : (
+        <>
+          <div className="mb-4">
+            <span className="text-3xl font-bold">{activeClients}</span>
+            <span className="text-xl text-gray-400">/{capacity}</span>
+          </div>
+          <div className="mb-2 h-3 w-full rounded-full bg-gray-100">
+            <div className="h-3 rounded-full bg-indigo-600" style={{ width: `${capacityPercent}%` }} />
+          </div>
+          <p className="text-xs text-gray-500">Room for {remainingCapacity} more premium athletes across {coachMembers.length} coaches</p>
+        </>
+      )}
 
-      <div className="mt-4 space-y-2">
+      {!loading ? <div className="mt-4 space-y-2">
         {visibleMembers.map((member) => (
           <div key={member.id} className="flex items-center justify-between gap-3 text-xs">
             <div className="min-w-0">
@@ -71,24 +78,14 @@ export function ClientCapacityCard({ members = fallbackCapacityMembers }: Client
             </div>
           </div>
         ))}
-      </div>
+      </div> : null}
     </Link>
   );
 }
 
-const fallbackCapacityMembers = operationTeamMembers
-  .filter((member) => member.status === "active" && member.clients > 0)
-  .map((member) => ({
-    id: member.id,
-    name: member.name,
-    role: member.role,
-    status: "active",
-    activeClientCount: member.clients,
-    capacityLimit: Math.max(Math.round(member.clients / (member.load / 100)), member.clients),
-    capacityPercent: member.load
-  }));
+const fallbackCapacityMembers: TeamCapacityMember[] = [];
 
-export function PriorityTasksCard({ pendingCheckIns = 5 }: PriorityTasksCardProps) {
+export function PriorityTasksCard({ pendingCheckIns = 0, loading = false }: PriorityTasksCardProps) {
   const checkInLabel = pendingCheckIns === 1 ? "Check In" : "Check Ins";
 
   return (
@@ -102,14 +99,20 @@ export function PriorityTasksCard({ pendingCheckIns = 5 }: PriorityTasksCardProp
         <span className="size-2 rounded-full bg-orange-500" aria-label="Needs attention" />
       </div>
       <div className="rounded-lg bg-orange-50 p-3 text-center">
-        <div className="mb-1 text-2xl font-bold text-orange-600">{pendingCheckIns}</div>
-        <div className="text-xs uppercase tracking-wider text-gray-600">{checkInLabel}</div>
+        {loading ? (
+          <CardLoadingState label="Loading check-ins from Neon." />
+        ) : (
+          <>
+            <div className="mb-1 text-2xl font-bold text-orange-600">{pendingCheckIns}</div>
+            <div className="text-xs uppercase tracking-wider text-gray-600">{checkInLabel}</div>
+          </>
+        )}
       </div>
     </Link>
   );
 }
 
-export function TodaysCheckInsCard({ weekday, clients }: TodaysCheckInsCardProps) {
+export function TodaysCheckInsCard({ weekday, clients, loading = false }: TodaysCheckInsCardProps) {
   const clientCount = clients.length;
   const clientLabel = clientCount === 1 ? "Client" : "Clients";
   const previewNames = clients.slice(0, 3).map((client) => client.name).join(", ");
@@ -130,22 +133,29 @@ export function TodaysCheckInsCard({ weekday, clients }: TodaysCheckInsCardProps
         <span className="rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">{weekday}</span>
       </div>
       <p className="mb-2 text-sm font-semibold text-gray-700">{weekday} Check-Ins</p>
-      <div className="mb-2">
-        <span className="text-3xl font-bold text-blue-600">{clientCount}</span>
-        <span className="ml-2 text-sm text-gray-500">{clientLabel}</span>
-      </div>
-      <p className="text-xs text-gray-500">{previewText}</p>
+      {loading ? (
+        <CardLoadingState label="Loading client check-in schedule from Neon." />
+      ) : (
+        <>
+          <div className="mb-2">
+            <span className="text-3xl font-bold text-blue-600">{clientCount}</span>
+            <span className="ml-2 text-sm text-gray-500">{clientLabel}</span>
+          </div>
+          <p className="text-xs text-gray-500">{previewText}</p>
+        </>
+      )}
     </Link>
   );
 }
 
 interface TeamSnapshotCardProps {
   members?: TeamCapacityMember[];
+  loading?: boolean;
 }
 
 const coachAvatarColors = ["bg-indigo-600", "bg-orange-500", "bg-slate-900"];
 
-export function TeamSnapshotCard({ members = fallbackCapacityMembers }: TeamSnapshotCardProps) {
+export function TeamSnapshotCard({ members = fallbackCapacityMembers, loading = false }: TeamSnapshotCardProps) {
   const coachMembers = members
     .filter((member) => member.status === "active" && member.capacityLimit > 0)
     .sort((firstMember, secondMember) => secondMember.capacityPercent - firstMember.capacityPercent);
@@ -156,14 +166,16 @@ export function TeamSnapshotCard({ members = fallbackCapacityMembers }: TeamSnap
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold">Coaching Team</h2>
-          <p className="text-xs text-gray-500">{coachMembers.length} active coaches</p>
+          <p className="text-xs text-gray-500">{loading ? "Loading coaches from Neon" : `${coachMembers.length} active coaches`}</p>
         </div>
         <Link href="/team-management" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">
           View all coaches
         </Link>
       </div>
 
-      <div className="space-y-3">
+      {loading ? (
+        <CardLoadingState label="Loading coaching team from Neon." />
+      ) : <div className="space-y-3">
         {visibleMembers.map((member, index) => (
           <div key={member.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
             <div className="flex items-start gap-3">
@@ -197,10 +209,18 @@ export function TeamSnapshotCard({ members = fallbackCapacityMembers }: TeamSnap
             </div>
           </div>
         ))}
-      </div>
+      </div>}
 
-      <p className="mt-4 text-xs text-gray-500">Showing the three coaches closest to capacity.</p>
+      {!loading ? <p className="mt-4 text-xs text-gray-500">Showing the three coaches closest to capacity.</p> : null}
     </section>
+  );
+}
+
+function CardLoadingState({ label }: { label: string }) {
+  return (
+    <div role="status" className="rounded-lg bg-gray-50 px-3 py-4 text-xs font-medium text-gray-500">
+      {label}
+    </div>
   );
 }
 

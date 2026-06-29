@@ -16,14 +16,11 @@ export interface PersistedFormSummary {
   updatedAt: string;
 }
 
-type FormsSource = "api" | "fixture";
-
 export function FormsPage() {
   const [currentView, setCurrentView] = useState<"management" | "builder">("management");
   const [selectedTemplateType, setSelectedTemplateType] = useState<string | null>(null);
   const [selectedForm, setSelectedForm] = useState<PersistedFormSummary | null>(null);
   const [forms, setForms] = useState<PersistedFormSummary[]>([]);
-  const [formsSource, setFormsSource] = useState<FormsSource>("fixture");
   const [loadingForms, setLoadingForms] = useState(true);
 
   useEffect(() => {
@@ -34,17 +31,18 @@ export function FormsPage() {
         const response = await fetch("/api/v1/forms?limit=20");
 
         if (!response.ok) {
-          return;
+          throw new Error("Forms API unavailable.");
         }
 
         const payload = (await response.json()) as { data?: PersistedFormSummary[] };
 
         if (active) {
           setForms(payload.data ?? []);
-          setFormsSource("api");
         }
       } catch {
-        // Keep the fixture-backed preview usable when migrations or auth are unavailable.
+        if (active) {
+          setForms([]);
+        }
       } finally {
         if (active) {
           setLoadingForms(false);
@@ -72,7 +70,6 @@ export function FormsPage() {
   };
 
   const upsertForm = (form: PersistedFormSummary) => {
-    setFormsSource("api");
     setForms((currentForms) => {
       const existingIndex = currentForms.findIndex((currentForm) => currentForm.id === form.id);
 
@@ -89,7 +86,6 @@ export function FormsPage() {
   return currentView === "management" ? (
     <FormManagement
       forms={forms}
-      formsSource={formsSource}
       loadingForms={loadingForms}
       onCreateForm={handleCreateForm}
       onEditForm={handleEditForm}

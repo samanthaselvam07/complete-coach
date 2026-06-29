@@ -3,7 +3,7 @@
 import { Calendar, Clock, GripVertical, Mail, MapPin, Pencil, Phone, Plus, Search, Tag, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { leads as leadFixtures, pipelineStages, type Lead, type LeadStageId, type LeadStatus } from "@/fixtures/leads";
+import { pipelineStages, type Lead, type LeadStageId, type LeadStatus } from "@/fixtures/leads";
 import { cn } from "@/lib/utils";
 
 const statusConfig: Record<LeadStatus, { label: string; className: string }> = {
@@ -35,7 +35,7 @@ const emptyLeadForm: LeadFormState = {
 };
 
 export function CRMPage() {
-  const [leads, setLeads] = useState<Lead[]>(leadFixtures);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
   const [leadSearch, setLeadSearch] = useState("");
   const [leadFormOpen, setLeadFormOpen] = useState(false);
@@ -52,16 +52,18 @@ export function CRMPage() {
         const response = await fetch("/api/v1/leads");
 
         if (!response.ok) {
-          return;
+          throw new Error("Lead API unavailable.");
         }
 
         const payload = (await response.json()) as { data?: Lead[] };
 
-        if (active && payload.data?.length) {
-          setLeads(payload.data);
+        if (active) {
+          setLeads(payload.data ?? []);
         }
       } catch {
-        // Keep fixture-backed UI available until the persistence API is reachable.
+        if (active) {
+          setLeads([]);
+        }
       }
     }
 

@@ -68,11 +68,20 @@ const exerciseFieldSchemas = {
   secondaryMuscles: jsonStringArraySchema.optional(),
   difficulty: z.enum(exerciseDifficultyValues),
   videoObjectKey: z.string().trim().max(500).optional(),
+  videoUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .refine((value) => value === undefined || value === "" || isValidUrl(value), {
+      message: "Video link must be a valid URL."
+    }),
   imageObjectKey: z.string().trim().max(500).optional(),
   defaultSets: z.number().int().min(1).max(20).optional(),
   defaultReps: z.string().trim().max(40).optional(),
   defaultRestSeconds: z.number().int().min(0).max(3600).optional(),
   defaultRpe: z.number().min(1).max(10).optional(),
+  defaultRir: z.string().trim().max(20).optional(),
   executionCues: jsonStringArraySchema.optional()
 };
 
@@ -163,11 +172,13 @@ interface ExerciseRecord {
   secondaryMuscles: unknown;
   difficulty: ExerciseDifficulty;
   videoObjectKey: string | null;
+  videoUrl: string | null;
   imageObjectKey: string | null;
   defaultSets: number | null;
   defaultReps: string | null;
   defaultRestSeconds: number | null;
   defaultRpe: unknown;
+  defaultRir: string | null;
   executionCues: unknown;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -250,11 +261,13 @@ export function getExerciseCreateData(organizationId: string, userId: string, in
     secondaryMuscles: input.secondaryMuscles,
     difficulty: toPrismaExerciseDifficulty(input.difficulty),
     videoObjectKey: input.videoObjectKey,
+    videoUrl: input.videoUrl,
     imageObjectKey: input.imageObjectKey,
     defaultSets: input.defaultSets,
     defaultReps: input.defaultReps,
     defaultRestSeconds: input.defaultRestSeconds,
     defaultRpe: input.defaultRpe,
+    defaultRir: input.defaultRir,
     executionCues: input.executionCues
   };
 }
@@ -268,11 +281,13 @@ export function getExerciseUpdateData(input: UpdateExerciseInput) {
     ...(input.secondaryMuscles !== undefined ? { secondaryMuscles: input.secondaryMuscles } : {}),
     ...(input.difficulty ? { difficulty: toPrismaExerciseDifficulty(input.difficulty) } : {}),
     ...(input.videoObjectKey !== undefined ? { videoObjectKey: input.videoObjectKey } : {}),
+    ...(input.videoUrl !== undefined ? { videoUrl: input.videoUrl } : {}),
     ...(input.imageObjectKey !== undefined ? { imageObjectKey: input.imageObjectKey } : {}),
     ...(input.defaultSets !== undefined ? { defaultSets: input.defaultSets } : {}),
     ...(input.defaultReps !== undefined ? { defaultReps: input.defaultReps } : {}),
     ...(input.defaultRestSeconds !== undefined ? { defaultRestSeconds: input.defaultRestSeconds } : {}),
     ...(input.defaultRpe !== undefined ? { defaultRpe: input.defaultRpe } : {}),
+    ...(input.defaultRir !== undefined ? { defaultRir: input.defaultRir } : {}),
     ...(input.executionCues !== undefined ? { executionCues: input.executionCues } : {})
   };
 }
@@ -335,15 +350,26 @@ export function serializeExercise(record: ExerciseRecord) {
     secondaryMuscles: coerceStringArray(record.secondaryMuscles),
     difficulty: exerciseDifficultyFromPrisma[record.difficulty],
     videoObjectKey: record.videoObjectKey,
+    videoUrl: record.videoUrl,
     imageObjectKey: record.imageObjectKey,
     defaultSets: record.defaultSets,
     defaultReps: record.defaultReps,
     defaultRestSeconds: record.defaultRestSeconds,
     defaultRpe: record.defaultRpe === null ? null : Number(record.defaultRpe),
+    defaultRir: record.defaultRir,
     executionCues: coerceStringArray(record.executionCues),
     createdAt: toIsoString(record.createdAt),
     updatedAt: toIsoString(record.updatedAt)
   };
+}
+
+function isValidUrl(value: string) {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function serializeTrainingTemplate(record: TrainingTemplateRecord) {

@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Bell, Calendar, ChevronLeft, ChevronRight, Search, Settings, Share2 } from "lucide-react";
 
-import { scheduledPosts } from "@/fixtures/operations";
-
 type SocialConnection = {
   id: string;
   provider: "instagram" | "facebook" | "x";
@@ -39,7 +37,6 @@ const providerLabel = {
 export function SocialMediaPage() {
   const [connections, setConnections] = useState<SocialConnection[]>([]);
   const [posts, setPosts] = useState<SocialPost[]>([]);
-  const [isFallback, setIsFallback] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [caption, setCaption] = useState("");
   const [scheduledFor, setScheduledFor] = useState("");
@@ -68,11 +65,11 @@ export function SocialMediaPage() {
         if (isMounted) {
           setConnections(connectionsPayload.data);
           setPosts(postsPayload.data);
-          setIsFallback(false);
         }
       } catch {
         if (isMounted) {
-          setIsFallback(true);
+          setConnections([]);
+          setPosts([]);
         }
       }
     }
@@ -85,26 +82,8 @@ export function SocialMediaPage() {
   }, []);
 
   const displayedPosts = useMemo(() => {
-    if (!isFallback) {
-      return posts;
-    }
-
-    return scheduledPosts.map((post) => ({
-      id: post.id,
-      caption: post.content,
-      scheduledFor: post.scheduled,
-      status: post.status,
-      media: [],
-      targets: [
-        {
-          id: `${post.id}-${post.platform}`,
-          provider: post.platform === "Instagram" ? "instagram" : post.platform === "Facebook" ? "facebook" : "x",
-          accountName: post.platform,
-          status: post.status
-        }
-      ]
-    })) satisfies SocialPost[];
-  }, [isFallback, posts]);
+    return posts;
+  }, [posts]);
 
   async function handleCreatePost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -128,7 +107,6 @@ export function SocialMediaPage() {
     };
 
     setPosts((currentPosts) => [optimisticPost, ...currentPosts]);
-    setIsFallback(false);
 
     try {
       const response = await fetch("/api/v1/social/posts", {
@@ -196,12 +174,6 @@ export function SocialMediaPage() {
       </header>
 
       <section className="p-6">
-        {isFallback ? (
-          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
-            Social integrations are in read-only fallback mode until the API is available.
-          </div>
-        ) : null}
-
         <div className="mb-6 flex items-center gap-6">
           <button type="button" aria-label="Previous month">
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />

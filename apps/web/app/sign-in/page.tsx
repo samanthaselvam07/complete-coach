@@ -23,7 +23,7 @@ export default function SignInPage() {
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
             Complete Coach now uses Auth.js with Neon-backed users and organization memberships.
-            Fixture-backed product surfaces remain visible while persistence rolls out ticket by ticket.
+            Product surfaces now load their records from the Neon-backed application APIs.
           </p>
         </div>
 
@@ -35,7 +35,7 @@ export default function SignInPage() {
               </p>
               <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Welcome back</h2>
               <p className="mt-2 text-sm text-slate-600">
-                Use the demo owner credentials configured through the environment.
+                Use the owner credentials configured through the environment.
               </p>
             </div>
             <SignInForm />

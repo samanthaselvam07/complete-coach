@@ -1,60 +1,32 @@
+"use client";
+
 import Link from "next/link";
 import type { Route } from "next";
+import { useEffect, useMemo, useState } from "react";
 
-const currentCheckIn = {
-  week: "Week 24",
-  date: "April 18, 2026",
-  submitted: "April 18, 2026 08:24 AM",
-  assigned: "April 18, 2026 08:12 AM",
-  recordingUrl: "https://app.usetrellis.com/recording/week24-checkin",
-  measurements: {
-    Weight: "84.2kg",
-    Waist: "80.2cm",
-    "Body Fat": "13.4%",
-    Chest: "101.5cm"
-  },
-  wellbeing: {
-    "Energy Level": "8/10",
-    "Sleep Quality": "7/10",
-    "Stress Level": "4/10",
-    Adherence: "90%"
-  },
-  wins: "Hit new squat PR at 120kg. Slept 7+ hours every night except Friday.",
-  struggles: "Cravings for sugar mid-afternoon. Struggling with meal prep on weekends.",
-  dietNotes: "Followed the meal plan 6/7 days. Had a cheat meal on Saturday for a family event. Hit protein targets consistently."
-};
+interface ApiCheckInRecord {
+  id: string;
+  clientId?: string;
+  name: string;
+  submittedAt: string;
+  dueAt?: string | null;
+  summary?: string | null;
+  coachNotes?: string | null;
+  status: string;
+}
 
-const previousCheckIn = {
-  week: "Week 23",
-  date: "April 11, 2026",
-  submitted: "April 11, 2026 08:24 AM",
-  assigned: "April 11, 2026 08:12 AM",
-  recordingUrl: "https://app.usetrellis.com/recording/week23-checkin",
-  measurements: {
-    Weight: "85kg",
-    Waist: "80.8cm",
-    "Body Fat": "13.9%",
-    Chest: "101cm"
-  },
-  wellbeing: {
-    "Energy Level": "6/10",
-    "Sleep Quality": "6/10",
-    "Stress Level": "6/10",
-    Adherence: "78%"
-  },
-  wins: "Still managed to get 3 workouts in despite busy week.",
-  struggles: "Work stress affecting sleep and nutrition. Missed sessions.",
-  dietNotes: "Struggled this week. Work was stressful and missed two meal preps. Protein was low on 3 days."
-};
-
-const checkInOptions = [
-  { id: "week-24", label: "Week 24 - April 18, 2026" },
-  { id: "demo-weekly-check-in", label: "Week 24 - April 18, 2026" },
-  { id: "week-23", label: "Week 23 - April 11, 2026" },
-  { id: "week-22", label: "Week 22 - April 04, 2026" }
-] as const;
-
-const compareOptions = checkInOptions.filter((option) => option.id !== "week-24" && option.id !== "demo-weekly-check-in");
+interface CheckInDetailView {
+  id: string;
+  week: string;
+  submitted: string;
+  assigned: string;
+  recordingUrl: string | null;
+  measurements: Record<string, string>;
+  wellbeing: Record<string, string>;
+  wins: string;
+  struggles: string;
+  dietNotes: string;
+}
 
 export function CheckInDetailPage({
   clientId = "1",
@@ -67,14 +39,71 @@ export function CheckInDetailPage({
   compare?: boolean | string;
   embedded?: boolean;
 }) {
-  const selectedComparisonId = typeof compare === "string" && compare !== "previous" ? compare : "week-23";
+  const [checkIns, setCheckIns] = useState<ApiCheckInRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [comparisonSelection, setComparisonSelection] = useState("");
+  const selectedComparisonId = typeof compare === "string" && compare !== "previous" ? compare : "";
   const isComparing = Boolean(compare);
-  const currentCheckInValue = checkInOptions.some((option) => option.id === checkInId) ? checkInId : "week-24";
   const compareFormAction = embedded ? `/clients/${clientId}` : `/clients/${clientId}/check-ins/${checkInId}`;
   const currentHref = embedded
     ? `/clients/${clientId}?tab=check-ins&checkInId=${encodeURIComponent(checkInId)}`
     : `/clients/${clientId}/check-ins/${checkInId}`;
   const backHref = embedded ? `/clients/${clientId}?tab=check-ins` : `/clients/${clientId}`;
+  const selectedCheckIn = useMemo(() => checkIns.find((item) => item.id === checkInId) ?? checkIns[0] ?? null, [checkInId, checkIns]);
+  const comparedCheckIn = useMemo(
+    () => checkIns.find((item) => item.id === selectedComparisonId) ?? checkIns.find((item) => item.id !== selectedCheckIn?.id) ?? null,
+    [checkIns, selectedCheckIn?.id, selectedComparisonId]
+  );
+  const checkInOptions = checkIns.map((item) => ({ id: item.id, label: `${item.name} - ${formatCheckInDate(item.submittedAt)}` }));
+  const compareOptions = checkInOptions.filter((option) => option.id !== selectedCheckIn?.id);
+  const currentCheckInValue = selectedCheckIn?.id ?? "";
+  const selectedCompareValue = comparisonSelection || selectedComparisonId || compareOptions[0]?.id || "";
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadCheckIns() {
+      try {
+        const params = new URLSearchParams({ clientId, limit: "100" });
+        const response = await fetch(`/api/v1/check-ins?${params.toString()}`);
+
+        if (!response.ok) {
+          throw new Error("Check-in API unavailable.");
+        }
+
+        const payload = (await response.json()) as { data?: ApiCheckInRecord[] };
+
+        if (active) {
+          setCheckIns(payload.data ?? []);
+        }
+      } catch {
+        if (active) {
+          setCheckIns([]);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadCheckIns();
+
+    return () => {
+      active = false;
+    };
+  }, [clientId]);
+
+  useEffect(() => {
+    if (selectedComparisonId) {
+      setComparisonSelection(selectedComparisonId);
+      return;
+    }
+
+    if (compareOptions[0]?.id && !comparisonSelection) {
+      setComparisonSelection(compareOptions[0].id);
+    }
+  }, [compareOptions, comparisonSelection, selectedComparisonId]);
 
   return (
     <main className={embedded ? "overflow-hidden rounded-xl border border-slate-200 bg-white" : "min-h-screen bg-gray-50"}>
@@ -104,7 +133,8 @@ export function CheckInDetailPage({
             id="current-check-in-select"
             aria-label="Current check-in"
             className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700"
-            defaultValue={currentCheckInValue}
+            value={currentCheckInValue}
+            onChange={() => undefined}
           >
             {checkInOptions.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
@@ -116,7 +146,8 @@ export function CheckInDetailPage({
             aria-label="Compare against"
             className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700"
             name="compare"
-            defaultValue={selectedComparisonId}
+            value={selectedCompareValue}
+            onChange={(event) => setComparisonSelection(event.target.value)}
           >
             {compareOptions.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
@@ -131,13 +162,17 @@ export function CheckInDetailPage({
         </form>
       </header>
 
-      {isComparing ? (
+      {loading ? (
+        <section className="bg-white p-6 text-sm text-slate-500">Loading check-in from the database...</section>
+      ) : !selectedCheckIn ? (
+        <section className="bg-white p-6 text-sm text-slate-500">No persisted check-in was found for this client.</section>
+      ) : isComparing && comparedCheckIn ? (
         <div className="grid divide-y divide-slate-200 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-          <CheckInColumn title="Previous Check in" checkIn={previousCheckIn} muted />
-          <CheckInColumn title="Current Checkin" checkIn={currentCheckIn} showDeltas />
+          <CheckInColumn title="Previous Check in" checkIn={mapApiCheckInToDetail(comparedCheckIn)} muted />
+          <CheckInColumn title="Current Checkin" checkIn={mapApiCheckInToDetail(selectedCheckIn)} />
         </div>
       ) : (
-        <CheckInColumn title="Current Checkin" checkIn={currentCheckIn} />
+        <CheckInColumn title="Current Checkin" checkIn={mapApiCheckInToDetail(selectedCheckIn)} />
       )}
     </main>
   );
@@ -147,12 +182,10 @@ function CheckInColumn({
   title,
   checkIn,
   muted = false,
-  showDeltas = false
 }: {
   title: string;
-  checkIn: typeof currentCheckIn;
+  checkIn: CheckInDetailView;
   muted?: boolean;
-  showDeltas?: boolean;
 }) {
   return (
     <section className={`space-y-5 p-6 ${muted ? "bg-gray-50" : "bg-white"}`}>
@@ -166,36 +199,26 @@ function CheckInColumn({
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="font-bold text-indigo-950">Check-In Recording</p>
-            <a href={checkIn.recordingUrl} className="text-sm font-bold text-indigo-600">
-              {checkIn.recordingUrl}
-            </a>
+            {checkIn.recordingUrl ? (
+              <a href={checkIn.recordingUrl} className="text-sm font-bold text-indigo-600">
+                {checkIn.recordingUrl}
+              </a>
+            ) : (
+              <span className="text-sm font-bold text-slate-500">No recording attached</span>
+            )}
           </div>
           <button type="button" className="text-sm font-bold text-indigo-600">Copy Link</button>
         </div>
       </section>
 
-      <MetricGroup title="Key Measurements" metrics={checkIn.measurements} deltas={showDeltas ? measurementDeltas : undefined} />
-      <MetricGroup title="Well-being" metrics={checkIn.wellbeing} deltas={showDeltas ? wellbeingDeltas : undefined} />
+      <MetricGroup title="Key Measurements" metrics={checkIn.measurements} />
+      <MetricGroup title="Well-being" metrics={checkIn.wellbeing} />
       <TextPanel title="Wins" tone="text-green-600" body={checkIn.wins} />
       <TextPanel title="Struggles" tone="text-red-600" body={checkIn.struggles} />
       <TextPanel title="Diet Notes" tone="text-slate-700" body={checkIn.dietNotes} />
     </section>
   );
 }
-
-const measurementDeltas: Record<string, string> = {
-  Weight: "-0.8kg",
-  Waist: "-0.6cm",
-  "Body Fat": "-0.5%",
-  Chest: "+0.5cm"
-};
-
-const wellbeingDeltas: Record<string, string> = {
-  "Energy Level": "+2",
-  "Sleep Quality": "+1",
-  "Stress Level": "-2",
-  Adherence: "+12"
-};
 
 function MetricGroup({
   title,
@@ -235,4 +258,51 @@ function TextPanel({ title, tone, body }: { title: string; tone: string; body: s
       <p className="text-sm leading-6 text-slate-700">{body}</p>
     </section>
   );
+}
+
+function mapApiCheckInToDetail(checkIn: ApiCheckInRecord): CheckInDetailView {
+  return {
+    id: checkIn.id,
+    week: checkIn.name,
+    submitted: formatCheckInDateTime(checkIn.submittedAt),
+    assigned: checkIn.dueAt ? formatCheckInDateTime(checkIn.dueAt) : "Not assigned",
+    recordingUrl: null,
+    measurements: {
+      Weight: "Not recorded",
+      Waist: "Not recorded",
+      "Body Fat": "Not recorded",
+      Chest: "Not recorded"
+    },
+    wellbeing: {
+      "Energy Level": "Not recorded",
+      "Sleep Quality": "Not recorded",
+      "Stress Level": "Not recorded",
+      Adherence: "Not recorded"
+    },
+    wins: checkIn.summary ?? "No persisted wins summary has been recorded.",
+    struggles: checkIn.coachNotes ?? "No persisted struggles summary has been recorded.",
+    dietNotes: "No persisted diet notes have been recorded."
+  };
+}
+
+function formatCheckInDate(value: string) {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? "Unknown date"
+    : new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(date);
+}
+
+function formatCheckInDateTime(value: string) {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? "Unknown date"
+    : new Intl.DateTimeFormat("en", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      }).format(date);
 }

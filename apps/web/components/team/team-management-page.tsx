@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { teamMembers as fixtureTeamMembers } from "@/fixtures/operations";
 
 type TeamRole = "owner" | "admin" | "coach" | "assistant";
 type TeamStatus = "invited" | "active" | "suspended" | "removed";
@@ -37,9 +36,9 @@ interface TeamInvitation {
 }
 
 export function TeamManagementPage() {
-  const [members, setMembers] = useState<TeamMember[]>(() => mapFixtureMembers());
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
-  const [source, setSource] = useState<"api" | "fixture">("fixture");
+  const [source, setSource] = useState<"api" | "unavailable">("unavailable");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Exclude<TeamRole, "owner">>("coach");
@@ -68,7 +67,9 @@ export function TeamManagementPage() {
         }
       } catch {
         if (active) {
-          setSource("fixture");
+          setMembers([]);
+          setInvitations([]);
+          setSource("unavailable");
         }
       }
     }
@@ -182,16 +183,16 @@ export function TeamManagementPage() {
         </p>
       ) : null}
 
-      {source === "fixture" ? (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Team management is in read-only fallback mode until the API is available.
+      {source === "unavailable" ? (
+        <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          No team members were returned from the database.
         </p>
       ) : null}
 
       <section className="grid gap-5 lg:grid-cols-4" aria-label="Team summary">
-        <SummaryCard icon={Users} label="Total Staff" value={members.filter((member) => member.status !== "removed").length} detail="1.3 this month" />
-        <SummaryCard icon={ShieldCheck} label="Active Coaches" value={activeMembers.length} detail="4 currently on leave" />
-        <SummaryCard icon={Mail} label="Clients Managed" value={342} detail="28.4 average/coach" />
+        <SummaryCard icon={Users} label="Total Staff" value={members.filter((member) => member.status !== "removed").length} detail="Persisted team seats" />
+        <SummaryCard icon={ShieldCheck} label="Active Coaches" value={activeMembers.length} detail="Active persisted accounts" />
+        <SummaryCard icon={Mail} label="Pending Invites" value={invitations.length} detail="Open team invitations" />
         <article className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-sm">
           <div className="mb-4 flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
@@ -199,8 +200,8 @@ export function TeamManagementPage() {
             </span>
             <h2 className="text-sm font-bold text-white/80">Team Weekly Revenue</h2>
           </div>
-          <p className="text-3xl font-black">$28,440</p>
-          <p className="mt-1 text-xs font-bold text-white/85">$123,145 est. monthly</p>
+          <p className="text-3xl font-black">$0</p>
+          <p className="mt-1 text-xs font-bold text-white/85">Revenue reporting is sourced from Stripe-backed package data.</p>
         </article>
       </section>
 
@@ -254,15 +255,15 @@ export function TeamManagementPage() {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <span>{member.role === "owner" ? "28" : member.role === "admin" ? "44" : "36"} Clients</span>
+                      <span>Capacity managed from client assignments</span>
                       <span className="h-1.5 w-28 rounded-full bg-slate-100">
-                        <span className="block h-1.5 rounded-full bg-indigo-500" style={{ width: "72%" }} />
+                        <span className="block h-1.5 rounded-full bg-indigo-500" style={{ width: "0%" }} />
                       </span>
                     </div>
                   </td>
                   <td className="px-5 py-4">
-                    <span className="block font-black">$2,871</span>
-                    <span className="text-xs text-red-500">-10% commission</span>
+                    <span className="block font-black">$0</span>
+                    <span className="text-xs text-slate-500">Stripe-backed reporting pending</span>
                   </td>
                   <td className="px-5 py-4">
                     <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold capitalize text-green-700">
@@ -308,7 +309,7 @@ export function TeamManagementPage() {
       <section className="rounded-2xl bg-slate-950 p-6 text-white">
         <h2 className="mb-3 text-lg font-black">Client Load Distribution</h2>
         <p className="max-w-4xl text-sm text-slate-300">
-          Marcus Chen is currently at 85% capacity. We recommend re-routing new nutrition requests to the upcoming specialist or opening a new junior position.
+          Client load recommendations will appear here once persisted client assignments are available for each team member.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <button type="button" className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-slate-950">
@@ -407,16 +408,4 @@ function SummaryCard({
       <p className="mt-2 text-xs font-bold text-slate-400">{detail}</p>
     </article>
   );
-}
-
-function mapFixtureMembers(): TeamMember[] {
-  return fixtureTeamMembers.map((member) => ({
-    id: member.id,
-    userId: member.id,
-    name: member.name,
-    email: member.email,
-    image: null,
-    role: member.role.toLowerCase().includes("admin") ? "admin" : "coach",
-    status: member.status === "active" ? "active" : "suspended"
-  }));
 }

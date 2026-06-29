@@ -24,7 +24,7 @@
 - [x] `GET /api/v1/foods/{food_id}` reads global or organization-owned foods.
 - [x] `PATCH /api/v1/foods/{food_id}` updates only private organization-owned foods.
 - [x] Global foods are read-only to tenant users because food mutation routes only address private organization-owned records.
-- [x] Food database UI prefers persisted API data with fixture fallback.
+- [x] Food database UI loads persisted API data and renders empty/error states when unavailable.
 - [x] Food database UI can create a persisted private food.
 
 ## Templates And Assignments

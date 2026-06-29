@@ -7,24 +7,93 @@ import {
   createTrainingProgramsFromAssignments
 } from "@/components/clients/client-profile-page";
 
+const marcusClient = {
+  id: "1",
+  name: "Marcus Rodriguez",
+  packageName: "Elite Performance",
+  compliance: 96,
+  checkInDay: "Monday",
+  latestCheckIn: "Apr 18, 2026",
+  status: "active",
+  startDate: "Jan 15, 2026",
+  initials: "MR",
+  avatarColor: "bg-indigo-600"
+};
+
+const marcusCheckIns = [
+  {
+    id: "week-24",
+    clientId: "1",
+    name: "Marcus Rodriguez",
+    submittedAt: "2026-04-18T08:24:00.000Z",
+    dueAt: "2026-04-18T08:12:00.000Z",
+    status: "completed",
+    summary: "Hit new squat PR at 120kg.",
+    coachNotes: "Cravings for sugar mid-afternoon."
+  },
+  {
+    id: "week-23",
+    clientId: "1",
+    name: "Marcus Rodriguez",
+    submittedAt: "2026-04-11T08:24:00.000Z",
+    dueAt: "2026-04-11T08:12:00.000Z",
+    status: "completed",
+    summary: "Still managed to get 3 workouts in.",
+    coachNotes: "Work stress affecting sleep."
+  }
+];
+
+function mockMarcusProfile() {
+  vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+    const url = String(input);
+
+    if (url === "/api/v1/clients/1") {
+      return Promise.resolve(new Response(JSON.stringify({ data: marcusClient }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/clients/1/profile") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              bio: "Persisted Marcus coaching profile.",
+              goals: ["Hypertrophy II"],
+              dateOfBirth: "1994-05-14T00:00:00.000Z"
+            }
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
+    if (url === "/api/v1/check-ins?clientId=1&limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: marcusCheckIns }), { status: 200 }));
+    }
+
+    return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+  });
+}
+
 describe("ClientProfilePage", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("renders a client profile by id", () => {
+  it("renders a client profile by id", async () => {
+    mockMarcusProfile();
     render(createElement(ClientProfilePage, { clientId: "1" }));
 
-    expect(screen.getByRole("heading", { level: 1, name: "Marcus Rodriguez" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" })).toBeInTheDocument();
     expect(screen.getByText("Hypertrophy II")).toBeInTheDocument();
-    expect(screen.getByText("88.4")).toBeInTheDocument();
+    expect(screen.getByText("Elite Performance")).toBeInTheDocument();
     expect(screen.getByText("Recovery Score")).toBeInTheDocument();
   });
 
-  it("renders the updated Figma client dashboard surface", () => {
+  it("renders the updated Figma client dashboard surface", async () => {
+    mockMarcusProfile();
     render(createElement(ClientProfilePage, { clientId: "1" }));
 
-    expect(screen.getByText("Active Protocol: Hypertrophy II")).toBeInTheDocument();
+    expect(await screen.findByText("Active Protocol: Hypertrophy II")).toBeInTheDocument();
     expect(screen.getByText("Assigned Check-In: Every Monday")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open Trellis" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Edit Protocol" })).toBeInTheDocument();
@@ -34,12 +103,9 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("Calendar")).toBeInTheDocument();
     expect(screen.getByText("Goals & Countdowns")).toBeInTheDocument();
     expect(screen.getByText("Account Activity Log")).toBeInTheDocument();
-    expect(screen.getAllByText("Check-in submitted")).toHaveLength(1);
-    expect(screen.getAllByRole("link", { name: /Week 24/i })[0]).toHaveAttribute(
-      "href",
-      "/clients/1/check-ins/week-24"
-    );
-    expect(screen.getByText("Competition Day - Natural Pro Show")).toBeInTheDocument();
+    expect(screen.getByText("No persisted progress analytics are available for this client yet.")).toBeInTheDocument();
+    expect(screen.getByText("No persisted goals or countdowns are available for this client yet.")).toBeInTheDocument();
+    expect(screen.getByText("No persisted activity events are available for this client yet.")).toBeInTheDocument();
   });
 
   it("shows a deterministic fallback for an unknown client id", async () => {
@@ -178,48 +244,51 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("Unassigned")).toBeInTheDocument();
   });
 
-  it("switches profile tabs locally", () => {
+  it("switches profile tabs locally", async () => {
+    mockMarcusProfile();
     render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
 
     fireEvent.click(screen.getByRole("tab", { name: "Training" }));
 
     expect(screen.getByRole("tabpanel", { name: "Training" })).toHaveTextContent("Weekly Training Schedule");
-    expect(screen.getByText("Upper Power")).toBeInTheDocument();
+    expect(screen.getByText("No persisted training programs have been assigned yet.")).toBeInTheDocument();
   });
 
-  it("renders the Figma daily check-in matrix and check-in history tabs", () => {
+  it("renders the persisted daily check-in and check-in history tabs", async () => {
+    mockMarcusProfile();
     render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
 
     fireEvent.click(screen.getByRole("tab", { name: "Daily Check-Ins" }));
 
     expect(screen.getByRole("heading", { name: "Daily Check-Ins" })).toBeInTheDocument();
-    expect(screen.getByText("Form configured by coaching team")).toBeInTheDocument();
-    expect(screen.getByText("Energy Level")).toBeInTheDocument();
-    expect(screen.getByText("Coach Note:")).toBeInTheDocument();
+    expect(screen.getByText("No persisted daily check-in grid has been configured for this client yet.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Check-Ins" }));
 
     expect(screen.getByRole("heading", { name: "Check-In History" })).toBeInTheDocument();
-    expect(screen.getByText("Week 24")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open Week 24 check-in" })).toHaveAttribute(
+    expect(await screen.findByText("Hit new squat PR at 120kg.")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Open Marcus Rodriguez check-in" })[0]).toHaveAttribute(
       "href",
       "/clients/1/check-ins/week-24"
     );
-    expect(screen.getAllByText("View Check-In Recording")).toHaveLength(3);
-    expect(screen.getAllByText("Main Challenge")).toHaveLength(3);
   });
 
-  it("can open directly to the current check-in inside the client profile", () => {
-    render(createElement(ClientProfilePage, { clientId: "1", initialTab: "Check-Ins", highlightedCheckInId: "demo-weekly-check-in" }));
+  it("can open directly to the current check-in inside the client profile", async () => {
+    mockMarcusProfile();
+    render(createElement(ClientProfilePage, { clientId: "1", initialTab: "Check-Ins", highlightedCheckInId: "week-24" }));
 
+    expect(await screen.findByRole("heading", { name: "Current Checkin" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Check-Ins" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "Check-Ins" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Current Checkin" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Check-In History" })).not.toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Compare against" })).toHaveValue("week-23");
     expect(screen.getByRole("button", { name: "Compare" })).toBeInTheDocument();
     expect(screen.getByDisplayValue("check-ins")).toHaveAttribute("name", "tab");
-    expect(screen.getByDisplayValue("demo-weekly-check-in")).toHaveAttribute("name", "checkInId");
+    expect(screen.getByDisplayValue("week-24")).toHaveAttribute("name", "checkInId");
     expect(screen.getByRole("link", { name: "Go Back" })).toHaveAttribute("href", "/clients/1?tab=check-ins");
   });
 

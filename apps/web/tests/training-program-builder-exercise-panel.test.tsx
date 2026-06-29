@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -8,11 +8,20 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function addCustomExercise(name: string, options: { videoUrl?: string; file?: File } = {}) {
+async function addCustomExercise(
+  name: string,
+  options: { bodyPart?: string; sets?: string; reps?: string; restSeconds?: string; rpe?: string; rir?: string; videoUrl?: string; file?: File } = {}
+) {
   fireEvent.click(screen.getByRole("button", { name: "Add custom exercise" }));
 
   const dialog = screen.getByRole("dialog", { name: "Add custom exercise" });
   fireEvent.change(within(dialog).getByLabelText("Exercise name"), { target: { value: name } });
+  fireEvent.change(within(dialog).getByLabelText("Body part worked"), { target: { value: options.bodyPart ?? "Quads" } });
+  fireEvent.change(within(dialog).getByLabelText("Sets"), { target: { value: options.sets ?? "4" } });
+  fireEvent.change(within(dialog).getByLabelText("Reps"), { target: { value: options.reps ?? "6-8" } });
+  fireEvent.change(within(dialog).getByLabelText("Rest time"), { target: { value: options.restSeconds ?? "150" } });
+  fireEvent.change(within(dialog).getByLabelText("RPE"), { target: { value: options.rpe ?? "8" } });
+  fireEvent.change(within(dialog).getByLabelText("RIR"), { target: { value: options.rir ?? "2" } });
 
   if (options.videoUrl) {
     fireEvent.change(within(dialog).getByLabelText("YouTube or external video link"), { target: { value: options.videoUrl } });
@@ -23,6 +32,7 @@ function addCustomExercise(name: string, options: { videoUrl?: string; file?: Fi
   }
 
   fireEvent.click(within(dialog).getByRole("button", { name: "Add exercise" }));
+  return screen.findByRole("group", { name: `${name} exercise row` });
 }
 
 describe("Training program builder exercise panel", () => {
@@ -87,7 +97,44 @@ describe("Training program builder exercise panel", () => {
   });
 
   it("supports compact movable rows and row deletion in the builder", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      if (String(input) === "/api/v1/exercises" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as {
+          name: string;
+          category: string;
+          defaultSets?: number;
+          defaultReps?: string;
+          defaultRestSeconds?: number;
+          defaultRpe?: number;
+          executionCues?: string[];
+        };
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: `exercise_${body.name.toLowerCase().replace(/\W+/g, "_")}`,
+                name: body.name,
+                category: body.category,
+                scope: "private",
+                equipment: null,
+                difficulty: "intermediate",
+                videoObjectKey: null,
+                primaryMuscles: [body.category],
+                defaultSets: 4,
+                defaultReps: "6-8",
+                defaultRestSeconds: 150,
+                defaultRpe: 8,
+                executionCues: ["Default RIR: 2"]
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
 
     render(createElement(TrainingProgramsPage));
 
@@ -95,15 +142,39 @@ describe("Training program builder exercise panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
     fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
     await screen.findByRole("button", { name: "Add custom exercise" });
-    addCustomExercise("Back Squat");
-    addCustomExercise("Romanian Deadlift");
+    await addCustomExercise("Back Squat");
+    await addCustomExercise("Romanian Deadlift", { bodyPart: "Hamstrings" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/exercises",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("\"primaryMuscles\":[\"Quads\"]")
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/exercises",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("\"defaultRir\":\"2\"")
+      })
+    );
 
     const squatRow = screen.getByRole("group", { name: "Back Squat exercise row" });
     const deadliftRow = screen.getByRole("group", { name: "Romanian Deadlift exercise row" });
 
     expect(within(squatRow).getByLabelText("Rest time")).toBeInTheDocument();
+    expect(within(squatRow).getByLabelText("Sets")).toHaveValue("4");
+    expect(within(squatRow).getByLabelText("Reps")).toHaveValue("6-8");
+    expect(within(squatRow).getByLabelText("RPE")).toHaveValue("8");
+    expect(within(squatRow).getByLabelText("RIR")).toHaveValue("2");
+    expect(within(squatRow).getByLabelText("Rest time")).toHaveValue("150");
+    expect(squatRow).toHaveAttribute("draggable", "true");
+    expect(within(squatRow).getByText("Exercise video")).toBeInTheDocument();
+    expect(within(squatRow).getByText("No video attached yet.")).toBeInTheDocument();
     expect(within(squatRow).getByRole("button", { name: "Delete Back Squat" })).toBeInTheDocument();
-    expect(within(deadliftRow).getByRole("button", { name: "Move Romanian Deadlift exercise" })).toHaveAttribute("draggable", "true");
+    expect(within(deadliftRow).getByRole("button", { name: "Move Romanian Deadlift exercise" })).toBeInTheDocument();
+    expect(deadliftRow).toHaveAttribute("draggable", "true");
 
     const dragData = new Map<string, string>();
     const dataTransfer = {
@@ -113,7 +184,7 @@ describe("Training program builder exercise panel", () => {
       getData: (type: string) => dragData.get(type) ?? ""
     };
 
-    fireEvent.dragStart(within(deadliftRow).getByRole("button", { name: "Move Romanian Deadlift exercise" }), { dataTransfer });
+    fireEvent.dragStart(deadliftRow, { dataTransfer });
     fireEvent.dragOver(squatRow, { dataTransfer });
     fireEvent.drop(squatRow, { dataTransfer });
 
@@ -127,7 +198,44 @@ describe("Training program builder exercise panel", () => {
   });
 
   it("opens a custom exercise dialog with video link and upload options", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      if (String(input) === "/api/v1/exercises" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as {
+          name: string;
+          category: string;
+          defaultSets?: number;
+          defaultReps?: string;
+          defaultRestSeconds?: number;
+          defaultRpe?: number;
+          executionCues?: string[];
+        };
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "exercise_single_leg_squat",
+                name: body.name,
+                category: body.category,
+                scope: "private",
+                equipment: null,
+                difficulty: "intermediate",
+                videoObjectKey: null,
+                primaryMuscles: [body.category],
+                defaultSets: body.defaultSets,
+                defaultReps: body.defaultReps,
+                defaultRestSeconds: body.defaultRestSeconds,
+                defaultRpe: body.defaultRpe,
+                executionCues: body.executionCues
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
 
     render(createElement(TrainingProgramsPage));
 
@@ -137,7 +245,13 @@ describe("Training program builder exercise panel", () => {
     await screen.findByRole("button", { name: "Add custom exercise" });
 
     const videoFile = new File(["demo"], "single-leg-squat.mp4", { type: "video/mp4" });
-    addCustomExercise("Single Leg Squat", {
+    await addCustomExercise("Single Leg Squat", {
+      bodyPart: "Glutes",
+      sets: "3",
+      reps: "10-12",
+      restSeconds: "90",
+      rpe: "7",
+      rir: "3",
       videoUrl: "https://www.youtube.com/watch?v=demo",
       file: videoFile
     });
@@ -145,7 +259,37 @@ describe("Training program builder exercise panel", () => {
     const exerciseRow = screen.getByRole("group", { name: "Single Leg Squat exercise row" });
 
     expect(within(exerciseRow).getByDisplayValue("Single Leg Squat")).toBeInTheDocument();
+    expect(within(exerciseRow).getByLabelText("Sets")).toHaveValue("3");
+    expect(within(exerciseRow).getByLabelText("Reps")).toHaveValue("10-12");
+    expect(within(exerciseRow).getByLabelText("Rest time")).toHaveValue("90");
     expect(within(exerciseRow).getByText("Video link added")).toBeInTheDocument();
     expect(within(exerciseRow).getByText("single-leg-squat.mp4")).toBeInTheDocument();
+    expect(within(exerciseRow).getByRole("link", { name: "Open source" })).toHaveAttribute("href", "https://www.youtube.com/watch?v=demo");
+    expect(within(exerciseRow).getByTitle("Single Leg Squat video")).toHaveAttribute("src", "https://www.youtube.com/embed/demo");
+  });
+
+  it("keeps the dialog open and shows an error when a custom exercise cannot be persisted", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      if (String(input) === "/api/v1/exercises" && init?.method === "POST") {
+        return Promise.resolve(new Response(JSON.stringify({ error: "unavailable" }), { status: 503 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(TrainingProgramsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
+    await screen.findByRole("button", { name: "Add custom exercise" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add custom exercise" }));
+    const dialog = screen.getByRole("dialog", { name: "Add custom exercise" });
+    fireEvent.change(within(dialog).getByLabelText("Exercise name"), { target: { value: "Split Squat" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Add exercise" }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Custom exercise could not be saved to the exercise database.");
+    await waitFor(() => expect(screen.queryByRole("group", { name: "Split Squat exercise row" })).not.toBeInTheDocument());
   });
 });

@@ -6,7 +6,7 @@ export const routeCases = [
   { path: "/", heading: "Coach Operations Dashboard" },
   { path: "/training", heading: "Training Programs" },
   { path: "/training/programs", heading: "Program Library" },
-  { path: "/training/exercises", heading: "The Movement Vault" },
+  { path: "/training/exercises", heading: "Exercise database" },
   { path: "/training/exercises/add", heading: "Add New Exercise" },
   { path: "/nutrition", heading: "Nutrition Plans" },
   { path: "/nutrition/meal-plans", heading: "Meal Plan Library" },

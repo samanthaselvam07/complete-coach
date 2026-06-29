@@ -81,14 +81,13 @@ describe("TeamManagementPage", () => {
     );
   });
 
-  it("keeps mutations disabled in fixture fallback mode", async () => {
+  it("shows an empty persisted roster when the team API is unavailable", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
     render(<TeamManagementPage />);
 
-    await waitFor(() =>
-      expect(screen.getByText(/read-only fallback mode/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByText(/read-only fallback mode/i)).not.toBeInTheDocument());
     expect(screen.getByRole("button", { name: "Add Team Member" })).toBeDisabled();
+    expect(screen.getByText("No team members were returned from the database.")).toBeInTheDocument();
   });
 
   it("updates roles and removes persisted members", async () => {

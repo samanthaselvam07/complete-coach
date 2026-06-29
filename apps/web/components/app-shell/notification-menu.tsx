@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { initialNotifications } from "./notifications";
 import { useCloseOnOutsideClick } from "./use-close-on-outside-click";
 
 const notificationIconClass = {
@@ -25,8 +24,8 @@ const notificationIcons = {
 export function NotificationMenu() {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [notificationSource, setNotificationSource] = useState<"api" | "fixture">("fixture");
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const [notificationSource, setNotificationSource] = useState<"api" | "unavailable">("unavailable");
+  const [notifications, setNotifications] = useState<UiNotification[]>([]);
   const unreadCount = notifications.filter((notification) => notification.unread).length;
   const closeMenu = useCallback(() => setIsOpen(false), []);
 
@@ -53,8 +52,8 @@ export function NotificationMenu() {
         setNotifications(payload.data.map(mapApiNotification));
       } catch {
         if (isActive) {
-          setNotificationSource("fixture");
-          setNotifications(initialNotifications);
+          setNotificationSource("unavailable");
+          setNotifications([]);
         }
       }
     }
@@ -169,7 +168,16 @@ interface ApiNotification {
   createdAt: string;
 }
 
-function mapApiNotification(notification: ApiNotification) {
+type UiNotification = {
+  id: string;
+  type: ApiNotification["type"];
+  title: string;
+  message: string;
+  time: string;
+  unread: boolean;
+};
+
+function mapApiNotification(notification: ApiNotification): UiNotification {
   return {
     id: notification.id,
     type: notification.type,

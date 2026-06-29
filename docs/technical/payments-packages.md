@@ -10,7 +10,7 @@ Ticket 017 / M8 connects coaching packages, Stripe Connect, Stripe Billing subsc
 - Package Stripe sync can create trusted Stripe product and price ids for active-organization packages after local Stripe Connect setup exists.
 - Client subscription APIs can list local subscription mirrors and create Stripe Checkout subscription sessions for synced monthly packages.
 - Stripe webhook processing verifies signatures, persists payment events idempotently, updates subscription mirrors, and refreshes Stripe Connect status from trusted Stripe events.
-- Packages UI loads active organization packages from `GET /api/v1/packages`, supports create/edit/archive actions, can start trusted Stripe sync, and falls back to fixtures only when the package API is unavailable.
+- Packages UI loads active organization packages from `GET /api/v1/packages`, supports create/edit/archive actions, can start trusted Stripe sync, and renders empty/error states when the package API is unavailable.
 - Dashboard monthly revenue is derived from persisted package `projectedMonthlyRevenue` values when the package API is available, with fixture revenue retained as fallback.
 - Demo seed data creates package records from the UI stub fixtures.
 

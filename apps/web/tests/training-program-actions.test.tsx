@@ -8,9 +8,176 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+function mockTrainingLibraryApi() {
+  return vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+    const url = String(input);
+
+    if (url.startsWith("/api/v1/training-program-templates/") && init?.method === "DELETE") {
+      const deletedId = url.split("/").pop() ?? "template_deleted";
+
+      return Promise.resolve(
+        new Response(JSON.stringify({ data: { id: deletedId, deleted: true } }), { status: 200 })
+      );
+    }
+
+    if (url.startsWith("/api/v1/training-program-templates") && init?.method === "POST") {
+      const body = JSON.parse(String(init.body)) as {
+        name?: string;
+        description?: string;
+        durationWeeks?: number;
+        goal?: string;
+        status?: string;
+        template?: unknown;
+      };
+
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: `${body.name?.toLowerCase().replace(/\W+/g, "_") ?? "template"}_copy`,
+              name: body.name ?? "Copied Template",
+              description: body.description ?? "API-backed template copy",
+              goal: body.goal ?? "hypertrophy",
+              durationWeeks: body.durationWeeks ?? 12,
+              status: body.status ?? "draft",
+              template: body.template ?? { days: [] },
+              updatedAt: "2026-05-14T00:00:00.000Z"
+            }
+          }),
+          { status: 201 }
+        )
+      );
+    }
+
+    if (url.startsWith("/api/v1/training-program-templates")) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "template_body_recomp",
+                name: "Body Recomp v3",
+                description: "API-backed recomposition template",
+                goal: "recomp",
+                durationWeeks: 12,
+                status: "published",
+                template: { days: [] },
+                updatedAt: "2026-05-14T00:00:00.000Z"
+              },
+              {
+                id: "template_hypertrophy",
+                name: "Hypertrophy Phase II",
+                description: "Persisted custom hypertrophy program",
+                goal: "custom-program",
+                durationWeeks: 8,
+                status: "draft",
+                template: { days: [] },
+                updatedAt: "2026-05-14T00:00:00.000Z"
+              },
+              {
+                id: "template_functional",
+                name: "Functional Power",
+                description: "Persisted custom power program",
+                goal: "custom-program",
+                durationWeeks: 6,
+                status: "draft",
+                template: { days: [] },
+                updatedAt: "2026-05-14T00:00:00.000Z"
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
+    if (url.startsWith("/api/v1/training-program-assignments/assignment_hypertrophy") && init?.method === "DELETE") {
+      return Promise.resolve(
+        new Response(JSON.stringify({ data: { id: "assignment_hypertrophy", deleted: true } }), { status: 200 })
+      );
+    }
+
+    if (url.startsWith("/api/v1/training-program-assignments") && init?.method === "POST") {
+      const body = JSON.parse(String(init.body)) as { name?: string; clientName?: string; durationWeeks?: number };
+
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: `${body.name?.toLowerCase().replace(/\W+/g, "_") ?? "assignment"}_copy`,
+              clientId: "client_assigned",
+              clientName: body.clientName ?? "Emma Thompson",
+              templateId: null,
+              name: body.name ?? "Copied Program",
+              status: "active",
+              startsOn: "2026-05-01",
+              endsOn: "2026-06-12",
+              snapshot: { durationWeeks: body.durationWeeks ?? 6 },
+              updatedAt: "2026-05-14T00:00:00.000Z"
+            }
+          }),
+          { status: 201 }
+        )
+      );
+    }
+
+    if (url.startsWith("/api/v1/training-program-assignments")) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "assignment_hypertrophy",
+                clientId: "client_marcus",
+                clientName: "Marcus Rodriguez",
+                templateId: "template_hypertrophy",
+                name: "Hypertrophy Phase II",
+                status: "active",
+                startsOn: "2026-05-01",
+                endsOn: "2026-06-26",
+                snapshot: { durationWeeks: 8, goal: "hypertrophy", template: { days: [] } },
+                updatedAt: "2026-05-14T00:00:00.000Z"
+              },
+              {
+                id: "assignment_functional",
+                clientId: "client_emma",
+                clientName: "Emma Thompson",
+                templateId: "template_functional",
+                name: "Functional Power",
+                status: "active",
+                startsOn: "2026-05-01",
+                endsOn: "2026-06-12",
+                snapshot: { durationWeeks: 6, goal: "strength", template: { days: [] } },
+                updatedAt: "2026-05-14T00:00:00.000Z"
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
+    if (url === "/api/v1/clients?status=active&limit=100") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              { id: "client_marcus", name: "Marcus Rodriguez", packageName: "Elite", status: "active" },
+              { id: "client_emma", name: "Emma Thompson", packageName: "Standard", status: "active" }
+            ]
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
+    return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+  });
+}
+
 describe("TrainingProgramsPage quick actions", () => {
   it("renames tabs, searches custom programs, copies programs, deletes programs, and closes menus by clicking away", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+    mockTrainingLibraryApi();
 
     render(createElement(TrainingProgramsPage));
 
@@ -42,17 +209,17 @@ describe("TrainingProgramsPage quick actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "More actions for Hypertrophy Phase II" }));
     fireEvent.click(within(screen.getByRole("menu", { name: "Actions for Hypertrophy Phase II" })).getByRole("menuitem", { name: "Copy" }));
 
-    expect(screen.getByText("Hypertrophy Phase II (copy)")).toBeInTheDocument();
+    expect(await screen.findByText("Hypertrophy Phase II (copy)")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "More actions for Hypertrophy Phase II" }));
     fireEvent.click(within(screen.getByRole("menu", { name: "Actions for Hypertrophy Phase II" })).getByRole("menuitem", { name: "Delete" }));
 
-    expect(screen.queryByText("Hypertrophy Phase II")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("Hypertrophy Phase II")).not.toBeInTheDocument());
     expect(screen.getByText("Hypertrophy Phase II deleted from the training library.")).toBeInTheDocument();
   });
 
   it("assigns a custom program from a searchable client roster with a duration", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+    mockTrainingLibraryApi();
 
     render(createElement(TrainingProgramsPage));
 
@@ -63,16 +230,41 @@ describe("TrainingProgramsPage quick actions", () => {
 
     fireEvent.change(screen.getByLabelText("Search clients"), { target: { value: "Emma" } });
 
-    expect(screen.getByRole("option", { name: /Emma Thompson/i })).toBeInTheDocument();
+    expect(await screen.findByRole("option", { name: /Emma Thompson/i })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: /Marcus Rodriguez/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("option", { name: /Emma Thompson/i }));
     fireEvent.change(screen.getByLabelText(/Program duration/i), { target: { value: "6" } });
     fireEvent.click(screen.getByRole("button", { name: "Assign Program" }));
 
-    expect(screen.getByText("Functional Power assigned to Emma Thompson.")).toBeInTheDocument();
+    expect(await screen.findByText("Functional Power assigned to Emma Thompson.")).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "Assign Training Program" })).not.toBeInTheDocument();
     expect(screen.getAllByText("Functional Power").length).toBeGreaterThan(0);
+  });
+
+  it("supports program template card and list views without status labels and closes quick actions on outside click", async () => {
+    mockTrainingLibraryApi();
+
+    render(createElement(TrainingProgramsPage));
+
+    fireEvent.click(await screen.findByRole("tab", { name: "Program templates" }));
+
+    expect(screen.getByRole("region", { name: "Program template cards" })).toBeInTheDocument();
+    expect(screen.queryByText("PUBLISHED")).not.toBeInTheDocument();
+    expect(screen.queryByText("DRAFT")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Body Recomp v3" }));
+    expect(screen.getByRole("menu", { name: "Actions for Body Recomp v3" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close program template actions" }));
+    expect(screen.queryByRole("menu", { name: "Actions for Body Recomp v3" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+
+    const list = screen.getByRole("region", { name: "Program template list" });
+    expect(within(list).getByText("Body Recomp v3")).toBeInTheDocument();
+    expect(within(list).getByRole("button", { name: "More actions for Body Recomp v3" })).toBeInTheDocument();
+    expect(screen.queryByText("PUBLISHED")).not.toBeInTheDocument();
   });
 
   it("loads API clients in the assignment dialog and closes without assigning", async () => {
@@ -101,7 +293,35 @@ describe("TrainingProgramsPage quick actions", () => {
         );
       }
 
-      return Promise.reject(new Error("API unavailable"));
+      if (String(input).startsWith("/api/v1/training-program-assignments")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "assignment_functional",
+                  clientId: "client_existing",
+                  clientName: "Existing Client",
+                  templateId: null,
+                  name: "Functional Power",
+                  status: "active",
+                  startsOn: "2026-05-01",
+                  endsOn: "2026-06-12",
+                  snapshot: { durationWeeks: 6 },
+                  updatedAt: "2026-05-14T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (String(input).startsWith("/api/v1/training-program-templates")) {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     });
 
     render(createElement(TrainingProgramsPage));
@@ -190,7 +410,7 @@ describe("TrainingProgramsPage quick actions", () => {
   });
 
   it("copies and edits program templates from quick actions", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+    mockTrainingLibraryApi();
 
     render(createElement(TrainingProgramsPage));
 
@@ -198,7 +418,7 @@ describe("TrainingProgramsPage quick actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "More actions for Body Recomp v3" }));
     fireEvent.click(within(screen.getByRole("menu", { name: "Actions for Body Recomp v3" })).getByRole("menuitem", { name: "Copy" }));
 
-    expect(screen.getByText("Body Recomp v3 (copy)")).toBeInTheDocument();
+    expect(await screen.findByText("Body Recomp v3 (copy)")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "More actions for Body Recomp v3" }));
     fireEvent.click(within(screen.getByRole("menu", { name: "Actions for Body Recomp v3" })).getByRole("menuitem", { name: "Edit" }));

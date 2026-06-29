@@ -3,16 +3,62 @@ import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CheckInManagementPage } from "@/components/check-ins/check-in-management-page";
 
+const apiCheckIns = [
+  {
+    id: "4",
+    clientId: "1",
+    name: "Sarah Williams",
+    initials: "SW",
+    status: "pending",
+    checkInStatus: "pending-review",
+    dueAt: "2026-05-14T00:00:00.000Z",
+    submittedAt: "2026-05-13T22:30:00.000Z",
+    assignedDay: "2026-05-14T00:00:00.000Z",
+    lastCheckIn: "Today"
+  },
+  {
+    id: "2",
+    clientId: "2",
+    name: "David Thompson",
+    initials: "DT",
+    status: "pending",
+    checkInStatus: "pending-review",
+    dueAt: "2026-05-13T00:00:00.000Z",
+    submittedAt: "2026-05-14T10:00:00.000Z",
+    assignedDay: "2026-05-13T00:00:00.000Z",
+    lastCheckIn: "Yesterday"
+  },
+  {
+    id: "9",
+    clientId: "9",
+    name: "Jordan Smith",
+    initials: "JS",
+    status: "completed",
+    checkInStatus: "completed",
+    dueAt: "2026-05-12T00:00:00.000Z",
+    submittedAt: "2026-05-12T08:00:00.000Z",
+    assignedDay: "2026-05-12T00:00:00.000Z",
+    lastCheckIn: "May 12"
+  }
+];
+
+function mockCheckInsApi(checkIns = apiCheckIns) {
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(JSON.stringify({ data: checkIns }), { status: 200 })
+  );
+}
+
 describe("CheckInManagementPage", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("renders pending check-ins with timing status", () => {
+  it("renders pending check-ins with timing status", async () => {
+    mockCheckInsApi();
     render(createElement(CheckInManagementPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Check In Review Center" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Check-in list" })).toHaveTextContent("Sarah Williams");
+    expect(await screen.findByText("Sarah Williams")).toBeInTheDocument();
     expect(screen.getAllByText("On Time").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Late").length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: /view full check-in for Sarah Williams/i })).not.toBeInTheDocument();
@@ -22,8 +68,11 @@ describe("CheckInManagementPage", () => {
     );
   });
 
-  it("switches to completed check-ins", () => {
+  it("switches to completed check-ins", async () => {
+    mockCheckInsApi();
     render(createElement(CheckInManagementPage));
+
+    await screen.findByText("Sarah Williams");
 
     fireEvent.click(screen.getByRole("tab", { name: "Completed" }));
 
@@ -32,8 +81,11 @@ describe("CheckInManagementPage", () => {
     expect(within(list).queryByText("Sarah Williams")).not.toBeInTheDocument();
   });
 
-  it("sorts check-ins by name", () => {
+  it("sorts check-ins by name", async () => {
+    mockCheckInsApi();
     render(createElement(CheckInManagementPage));
+
+    await screen.findByText("Sarah Williams");
 
     fireEvent.click(screen.getByRole("button", { name: /sort check-ins/i }));
     fireEvent.click(screen.getByRole("menuitem", { name: "By Name" }));
@@ -78,13 +130,13 @@ describe("CheckInManagementPage", () => {
     );
   });
 
-  it("keeps fixture check-ins when the API is unavailable", async () => {
+  it("shows an empty persisted state when the API is unavailable", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ error: {} }), { status: 503 }));
 
     render(createElement(CheckInManagementPage));
 
-    expect(await screen.findByText("Sarah Williams")).toBeInTheDocument();
-    expect(screen.getByText(/showing local sample check-ins/i)).toBeInTheDocument();
+    expect(await screen.findByText("No pending check-ins found.")).toBeInTheDocument();
+    expect(screen.queryByText("Sarah Williams")).not.toBeInTheDocument();
   });
 
 });

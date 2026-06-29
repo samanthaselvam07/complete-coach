@@ -4,7 +4,7 @@ import { Check, ChevronLeft, ChevronRight, Download, Grid2X2, List as ListIcon, 
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
-import { foods, type Food } from "@/fixtures/nutrition";
+import type { Food } from "@/fixtures/nutrition";
 import { cn } from "@/lib/utils";
 
 interface ApiFood {
@@ -25,7 +25,6 @@ interface ApiFood {
   } | null;
 }
 
-type FoodSource = "api" | "fixtures";
 type FoodDatabaseSource = Food["source"];
 type FoodDatabaseView = "cards" | "list";
 type NewFoodFormState = {
@@ -94,7 +93,6 @@ export function FoodDatabasePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [apiFoods, setApiFoods] = useState<ApiFood[]>([]);
-  const [foodSource, setFoodSource] = useState<FoodSource>("fixtures");
   const [loadingFoods, setLoadingFoods] = useState(true);
   const [viewMode, setViewMode] = useState<FoodDatabaseView>("cards");
   const [savingFood, setSavingFood] = useState(false);
@@ -119,12 +117,10 @@ export function FoodDatabasePage() {
 
         if (!cancelled) {
           setApiFoods(Array.isArray(payload.data) ? payload.data : []);
-          setFoodSource("api");
         }
       } catch {
         if (!cancelled) {
           setApiFoods([]);
-          setFoodSource("fixtures");
         }
       } finally {
         if (!cancelled) {
@@ -140,7 +136,7 @@ export function FoodDatabasePage() {
     };
   }, []);
 
-  const sourceFoods: Array<ApiFood | Food> = foodSource === "api" ? apiFoods : foods;
+  const sourceFoods: Array<ApiFood | Food> = apiFoods;
   const filteredFoods = sourceFoods
     .filter((food) => getFoodSource(food) === selectedSource)
     .filter(
@@ -196,7 +192,6 @@ export function FoodDatabasePage() {
       }
 
       setApiFoods((currentFoods) => [payload.data as ApiFood, ...currentFoods]);
-      setFoodSource("api");
       setSelectedSource(getFoodSource(payload.data as ApiFood));
       setCurrentPage(1);
       setNewFoodModalOpen(false);
@@ -236,11 +231,6 @@ export function FoodDatabasePage() {
       </div>
 
       {loadingFoods ? <p className="mb-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">Loading persisted food library...</p> : null}
-      {foodSource === "fixtures" && !loadingFoods ? (
-        <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-          Food persistence API unavailable. Showing fixture food library.
-        </p>
-      ) : null}
       {statusMessage ? <SavedToast message={statusMessage} /> : null}
       {errorMessage ? <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p> : null}
 
@@ -351,7 +341,7 @@ export function FoodDatabasePage() {
         ) : (
           <section aria-label="Food grid" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             <AddFoodCard onClick={() => setNewFoodModalOpen(true)} />
-            {foodSource === "api" && !loadingFoods ? (
+            {!loadingFoods ? (
               <p className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
                 No persisted foods match the current filters.
               </p>

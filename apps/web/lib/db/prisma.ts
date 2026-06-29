@@ -1,15 +1,23 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/app/generated/prisma/client";
 
-const fallbackDatabaseUrl = "postgresql://placeholder:placeholder@localhost:5432/complete_coach";
-
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
+function getDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required. Configure the Neon database URL before starting Complete Coach.");
+  }
+
+  return databaseUrl;
+}
+
 function createPrismaClient() {
   const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL ?? fallbackDatabaseUrl
+    connectionString: getDatabaseUrl()
   });
 
   return new PrismaClient({

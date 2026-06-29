@@ -5,7 +5,7 @@ import { Archive, Check, ChevronDown, Download, Eye, Filter, Pencil, Plus, Searc
 import { useEffect, useState } from "react";
 import type { Route } from "next";
 
-import { checkInDays, clients as clientFixtures, type ClientSummary, type ClientStatus } from "@/fixtures/clients";
+import type { ClientSummary, ClientStatus } from "@/fixtures/clients";
 import { cn } from "@/lib/utils";
 import {
   ClientFormDialog,
@@ -23,9 +23,10 @@ const statusOptions: Array<{ value: ClientStatus | "all"; label: string }> = [
   { value: "new", label: "New" },
   { value: "deactivated", label: "Deactivated" }
 ];
+const checkInDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
 
 export function ClientsPage() {
-  const [clients, setClients] = useState<ClientSummary[]>(clientFixtures);
+  const [clients, setClients] = useState<ClientSummary[]>([]);
   const [filterStatus, setFilterStatus] = useState<ClientStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -50,11 +51,13 @@ export function ClientsPage() {
 
         const payload = (await response.json()) as { data?: ClientSummary[] };
 
-        if (active && payload.data?.length) {
-          setClients(payload.data);
+        if (active) {
+          setClients(payload.data ?? []);
         }
       } catch {
-        // Keep fixture-backed UI available until the persistence API is reachable.
+        if (active) {
+          setClients([]);
+        }
       }
     }
 
@@ -75,7 +78,7 @@ export function ClientsPage() {
 
   const activeClients = clients.filter((client) => client.status === "active").length;
   const newClientsThisWeek = clients.filter((client) => client.status === "new").length;
-  const checkInsDue = checkInDays.length;
+  const checkInsDue = clients.filter((client) => client.checkInDay && client.status === "active").length;
 
   const toggleCheckInDay = (day: string) => {
     setSelectedCheckInDays((currentDays) =>

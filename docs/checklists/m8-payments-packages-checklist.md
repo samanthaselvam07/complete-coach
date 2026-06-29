@@ -27,7 +27,7 @@
 - [x] Package Stripe product/price mapping is created through trusted server-side Stripe sync.
 - [x] `POST /api/v1/packages/{package_id}/stripe-sync` creates or reuses trusted Stripe product/price ids.
 - [x] Package Stripe sync requires completed local Stripe Connect account setup.
-- [x] Packages UI prefers persisted API data with fixture fallback.
+- [x] Packages UI loads persisted API data and renders empty/error states when unavailable.
 
 ## Stripe Connect
 - [x] Organization stores Stripe Connect account id and account status.

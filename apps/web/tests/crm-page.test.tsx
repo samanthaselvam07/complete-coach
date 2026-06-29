@@ -3,23 +3,76 @@ import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CRMPage } from "@/components/crm/crm-page";
 
+const apiLeads = [
+  {
+    id: "lead_1",
+    name: "Jessica Martinez",
+    email: "jessica@example.com",
+    phone: "+1 555",
+    source: "Website",
+    lastContact: "Today",
+    notes: "Interested in coaching",
+    location: "Austin, TX",
+    status: "warm",
+    stage: "initial-contact",
+    daysInStage: 1,
+    initials: "JM"
+  },
+  {
+    id: "lead_2",
+    name: "Michael Chen",
+    email: "michael@example.com",
+    phone: "+1 555",
+    source: "Referral",
+    lastContact: "Today",
+    notes: "Consultation booked",
+    location: "Melbourne, AU",
+    status: "hot",
+    stage: "consultation",
+    daysInStage: 0,
+    initials: "MC"
+  }
+];
+
+function mockLeadsApi(leads = apiLeads) {
+  vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+    const url = String(input);
+
+    if (url.startsWith("/api/v1/leads/") && init?.method === "PATCH") {
+      const id = url.split("/").at(-1);
+      const body = JSON.parse(String(init.body ?? "{}")) as { stage?: string };
+      const lead = leads.find((candidate) => candidate.id === id) ?? leads[0];
+      return Promise.resolve(
+        new Response(JSON.stringify({ data: { ...lead, stage: body.stage ?? lead.stage } }), { status: 200 })
+      );
+    }
+
+    return Promise.resolve(new Response(JSON.stringify({ data: leads }), { status: 200 }));
+  });
+}
+
 describe("CRMPage", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("renders CRM pipeline stages and lead cards", () => {
+  it("renders CRM pipeline stages and API-backed lead cards", async () => {
+    mockLeadsApi();
     render(createElement(CRMPage));
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Client Relationship Management" })
     ).toBeInTheDocument();
+    expect(await screen.findByText("Jessica Martinez")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Initial Contact" })).toHaveTextContent("Jessica Martinez");
     expect(screen.getByRole("region", { name: "Consultation Scheduled" })).toHaveTextContent("Michael Chen");
   });
 
-  it("moves a lead to another stage through the accessible stage action", () => {
+  it("moves a lead to another stage through the accessible stage action", async () => {
+    mockLeadsApi();
     render(createElement(CRMPage));
+
+    await screen.findByText("Jessica Martinez");
 
     const initialContact = screen.getByRole("region", { name: "Initial Contact" });
     const proposal = screen.getByRole("region", { name: "Proposal Sent" });

@@ -3,8 +3,6 @@
 import { ClipboardCopy, Edit, Plus, Save, UserPlus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
-  activeSupplementProtocols,
-  protocolLibrary,
   type ActiveSupplementProtocol,
   type ProtocolTemplate
 } from "@/fixtures/supplementation";
@@ -37,10 +35,49 @@ interface ApiSupplementAssignment {
 
 export function SupplementPlansPage() {
   const [activeTab, setActiveTab] = useState<TabId>("active");
-  const [activeProtocols, setActiveProtocols] = useState<ActiveSupplementProtocol[]>(activeSupplementProtocols);
-  const [templates, setTemplates] = useState<ProtocolTemplate[]>(protocolLibrary);
+  const [activeProtocols, setActiveProtocols] = useState<ActiveSupplementProtocol[]>([]);
+  const [templates, setTemplates] = useState<ProtocolTemplate[]>([]);
   const [templateDraft, setTemplateDraft] = useState<ProtocolTemplateDraft | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  async function createPersistedTemplate(draft: ProtocolTemplateDraft) {
+    const response = await fetch("/api/v1/supplement-plan-templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: draft.name.trim() || "Untitled Protocol Template",
+        description: draft.description.trim() || "Coach-created supplement protocol template.",
+        status: "draft",
+        template: {
+          phases: [
+            {
+              name: draft.category,
+              supplements: Array.from(
+                { length: Math.max(1, Number.isFinite(draft.supplements) ? draft.supplements : 1) },
+                (_, index) => ({
+                  supplementName: `Supplement ${index + 1}`,
+                  dosage: "Coach to complete",
+                  timing: "Coach to complete"
+                })
+              )
+            }
+          ]
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Supplement template could not be saved.");
+    }
+
+    const payload = (await response.json()) as { data?: ApiSupplementTemplate };
+
+    if (!payload.data) {
+      throw new Error("Supplement template response was empty.");
+    }
+
+    return mapApiTemplateToCard(payload.data);
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -52,27 +89,25 @@ export function SupplementPlansPage() {
           fetch("/api/v1/supplement-plan-templates?limit=100")
         ]);
 
-        if (assignmentsResponse.ok) {
-          const payload = (await assignmentsResponse.json()) as { data?: ApiSupplementAssignment[] };
-          const assignments = Array.isArray(payload.data) ? payload.data : [];
-
-          if (mounted && assignments.length > 0) {
-            setActiveProtocols(assignments.map(mapApiAssignmentToProtocol));
-          }
+        if (!assignmentsResponse.ok || !templatesResponse.ok) {
+          throw new Error("Supplement plan API unavailable.");
         }
 
-        if (templatesResponse.ok) {
-          const payload = (await templatesResponse.json()) as { data?: ApiSupplementTemplate[] };
-          const apiTemplates = Array.isArray(payload.data) ? payload.data : [];
+        const [assignmentsPayload, templatesPayload] = await Promise.all([
+          assignmentsResponse.json(),
+          templatesResponse.json()
+        ]) as [{ data?: ApiSupplementAssignment[] }, { data?: ApiSupplementTemplate[] }];
+        const assignments = Array.isArray(assignmentsPayload.data) ? assignmentsPayload.data : [];
+        const apiTemplates = Array.isArray(templatesPayload.data) ? templatesPayload.data : [];
 
-          if (mounted && apiTemplates.length > 0) {
-            setTemplates(apiTemplates.map(mapApiTemplateToCard));
-          }
+        if (mounted) {
+          setActiveProtocols(assignments.map(mapApiAssignmentToProtocol));
+          setTemplates(apiTemplates.map(mapApiTemplateToCard));
         }
       } catch {
         if (mounted) {
-          setActiveProtocols(activeSupplementProtocols);
-          setTemplates(protocolLibrary);
+          setActiveProtocols([]);
+          setTemplates([]);
         }
       }
     }
@@ -181,19 +216,20 @@ export function SupplementPlansPage() {
                           type="button"
                           aria-label={`Save ${protocol.protocol} as template`}
                           className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
-                          onClick={() => {
-                            setTemplates((currentTemplates) => [
-                              {
-                                id: `${protocol.id}-template-${Date.now()}`,
+                          onClick={async () => {
+                            try {
+                              const template = await createPersistedTemplate({
                                 name: protocol.protocol,
                                 category: "General Health",
                                 description: `Template saved from ${protocol.clientName}'s protocol.`,
-                                supplements: protocol.supplements.length
-                              },
-                              ...currentTemplates
-                            ]);
-                            setActiveTab("library");
-                            setStatusMessage(`${protocol.protocol} saved as a template.`);
+                                supplements: protocol.supplements.length || 1
+                              });
+                              setTemplates((currentTemplates) => [template, ...currentTemplates]);
+                              setActiveTab("library");
+                              setStatusMessage(`${protocol.protocol} saved as a template.`);
+                            } catch {
+                              setStatusMessage("Supplement template could not be saved to Neon.");
+                            }
                           }}
                         >
                           <Save className="h-4 w-4" />
@@ -226,19 +262,7 @@ export function SupplementPlansPage() {
                     type="button"
                     className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700"
                     onClick={() => {
-                      setActiveProtocols((currentProtocols) => [
-                        {
-                          id: `${protocol.id}-assigned-${Date.now()}`,
-                          clientName: "Assigned Client",
-                          protocol: protocol.name,
-                          supplements: Array.from({ length: protocol.supplements }, (_, index) => `Supplement ${index + 1}`),
-                          status: "In Review",
-                          compliance: 0
-                        },
-                        ...currentProtocols
-                      ]);
-                      setActiveTab("active");
-                      setStatusMessage(`${protocol.name} added to Supplement Protocols.`);
+                      setStatusMessage("Assigning a protocol requires selecting a persisted client from the Neon roster.");
                     }}
                   >
                     <UserPlus className="h-3.5 w-3.5" />
@@ -248,13 +272,7 @@ export function SupplementPlansPage() {
                     type="button"
                     className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:border-indigo-200 hover:bg-indigo-50"
                     onClick={() =>
-                      setTemplateDraft({
-                        id: protocol.id,
-                        name: protocol.name,
-                        category: protocol.category,
-                        description: protocol.description,
-                        supplements: protocol.supplements
-                      })
+                      setStatusMessage("Editing persisted protocol templates needs the Neon template update endpoint.")
                     }
                   >
                     <Edit className="h-3.5 w-3.5" />
@@ -263,16 +281,19 @@ export function SupplementPlansPage() {
                   <button
                     type="button"
                     className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:border-indigo-200 hover:bg-indigo-50"
-                    onClick={() => {
-                      setTemplates((currentTemplates) => [
-                        {
-                          ...protocol,
-                          id: `${protocol.id}-copy-${Date.now()}`,
-                          name: `${protocol.name} (copy)`
-                        },
-                        ...currentTemplates
-                      ]);
-                      setStatusMessage(`${protocol.name} duplicated.`);
+                    onClick={async () => {
+                      try {
+                        const template = await createPersistedTemplate({
+                          name: `${protocol.name} (copy)`,
+                          category: protocol.category,
+                          description: protocol.description,
+                          supplements: protocol.supplements
+                        });
+                        setTemplates((currentTemplates) => [template, ...currentTemplates]);
+                        setStatusMessage(`${protocol.name} duplicated.`);
+                      } catch {
+                        setStatusMessage("Supplement template copy could not be saved to Neon.");
+                      }
                     }}
                   >
                     <ClipboardCopy className="h-3.5 w-3.5" />
@@ -289,21 +310,21 @@ export function SupplementPlansPage() {
           draft={templateDraft}
           onChange={setTemplateDraft}
           onClose={() => setTemplateDraft(null)}
-          onSave={(draft) => {
-            const template: ProtocolTemplate = {
-              id: draft.id ?? `protocol-template-${Date.now()}`,
-              name: draft.name.trim() || "Untitled Protocol Template",
-              category: draft.category,
-              description: draft.description.trim() || "Coach-created supplement protocol template.",
-              supplements: Number.isFinite(draft.supplements) && draft.supplements > 0 ? draft.supplements : 1
-            };
+          onSave={async (draft) => {
+            if (draft.id) {
+              setStatusMessage("Editing persisted protocol templates needs the Neon template update endpoint.");
+              return;
+            }
 
-            setTemplates((currentTemplates) =>
-              draft.id ? currentTemplates.map((currentTemplate) => (currentTemplate.id === draft.id ? template : currentTemplate)) : [template, ...currentTemplates]
-            );
-            setActiveTab("library");
-            setTemplateDraft(null);
-            setStatusMessage(`${template.name} template saved.`);
+            try {
+              const template = await createPersistedTemplate(draft);
+              setTemplates((currentTemplates) => [template, ...currentTemplates]);
+              setActiveTab("library");
+              setTemplateDraft(null);
+              setStatusMessage(`${template.name} template saved.`);
+            } catch {
+              setStatusMessage("Supplement template could not be saved to Neon.");
+            }
           }}
         />
       ) : null}
@@ -320,7 +341,7 @@ function ProtocolTemplateDialog({
   draft: ProtocolTemplateDraft;
   onChange: (draft: ProtocolTemplateDraft) => void;
   onClose: () => void;
-  onSave: (draft: ProtocolTemplateDraft) => void;
+  onSave: (draft: ProtocolTemplateDraft) => void | Promise<void>;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">

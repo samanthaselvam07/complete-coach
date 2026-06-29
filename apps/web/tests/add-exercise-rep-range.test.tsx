@@ -14,8 +14,8 @@ afterEach(() => {
   navigationMocks.push.mockReset();
 });
 
-describe("AddExercisePage rep range", () => {
-  it("saves the configured lower and upper rep range into the exercise defaults", async () => {
+describe("AddExercisePage defaults", () => {
+  it("saves a free-form rep target with rest, RPE, RIR and external video link defaults", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -25,7 +25,11 @@ describe("AddExercisePage rep range", () => {
             category: "Compound",
             scope: "private",
             primaryMuscles: ["Chest", "Shoulders"],
-            defaultReps: "6-10"
+            defaultReps: "AMRAP technical failure",
+            defaultRestSeconds: 150,
+            defaultRpe: 8.5,
+            defaultRir: "1-2",
+            videoUrl: "https://www.youtube.com/watch?v=tempo-squat"
           }
         }),
         { status: 201 }
@@ -37,11 +41,20 @@ describe("AddExercisePage rep range", () => {
     fireEvent.change(screen.getByLabelText("Exercise Name"), {
       target: { value: "Tempo Squat" }
     });
-    fireEvent.change(screen.getByLabelText("Lower range"), {
-      target: { value: "6" }
+    fireEvent.change(screen.getByLabelText("Rep target"), {
+      target: { value: "AMRAP technical failure" }
     });
-    fireEvent.change(screen.getByLabelText("Upper range"), {
-      target: { value: "10" }
+    fireEvent.change(screen.getByLabelText("Rest timer"), {
+      target: { value: "150" }
+    });
+    fireEvent.change(screen.getByLabelText("RPE target"), {
+      target: { value: "8.5" }
+    });
+    fireEvent.change(screen.getByLabelText("RIR target"), {
+      target: { value: "1-2" }
+    });
+    fireEvent.change(screen.getByLabelText("YouTube or external video link"), {
+      target: { value: "https://www.youtube.com/watch?v=tempo-squat" }
     });
     fireEvent.click(screen.getAllByRole("button", { name: "Save Exercise" })[0]);
 
@@ -51,7 +64,11 @@ describe("AddExercisePage rep range", () => {
     expect(createCall).toBeDefined();
     expect(JSON.parse(String(createCall?.[1]?.body))).toMatchObject({
       name: "Tempo Squat",
-      defaultReps: "6-10"
+      defaultReps: "AMRAP technical failure",
+      defaultRestSeconds: 150,
+      defaultRpe: 8.5,
+      defaultRir: "1-2",
+      videoUrl: "https://www.youtube.com/watch?v=tempo-squat"
     });
   });
 });

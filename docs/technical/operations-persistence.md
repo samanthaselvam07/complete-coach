@@ -7,11 +7,12 @@ Ticket 016 / M7 replaces local-only operating workflows with persisted conversat
 - Messaging APIs can create/list conversations, create/list messages, and mark messages read with tenant-scoped access checks.
 - Message attachment uploads use short-lived R2 signed PUT URLs and message sends reject attachment object keys outside the active organization's message attachment path.
 - Task APIs can create/list/update/complete organization-scoped tasks.
-- Messages UI loads and sends persisted messages when APIs are available, with fixture fallback for local/demo resilience.
-- Dashboard Work To-Do loads, creates, completes, and reopens persisted tasks when APIs are available.
-- Dashboard capacity and check-in cards use real tenant counts from existing client and check-in APIs when available.
+- Messages UI loads and sends persisted messages through the persisted conversation APIs and renders empty/error states when those APIs are unavailable.
+- Dashboard Work To-Do loads, creates, completes, and reopens persisted tasks through the task APIs.
+- Dashboard capacity, check-in, today's expected check-ins, AI priority flags, CRM pipeline, and revenue cards use tenant data from Neon-backed APIs only.
+- Dashboard startup renders empty/zero states when APIs are unavailable and does not fall back to local fixtures or create local-only tasks.
 - Notification APIs list current-user notifications and mark one or all notifications read.
-- The app shell notification menu loads persisted notifications when available, with fixture fallback.
+- The app shell notification menu loads persisted notifications from the notification APIs and renders an empty count when those APIs are unavailable.
 - Resend email delivery helper records queued, sent, and failed states without storing email body content.
 - Resend webhook persists delivery, bounce, complaint, and failure events into email delivery records.
 
@@ -35,20 +36,21 @@ Delivered:
 - Selected persisted conversations load messages from `GET /api/v1/conversations/{conversation_id}/messages?limit=100`.
 - Sending a message posts to `POST /api/v1/conversations/{conversation_id}/messages` and appends the persisted response to the thread.
 - Fixture-backed conversation and local-send behavior remain available when the API is unavailable.
-- Component tests cover persisted conversation load, persisted message load, persisted send, fixture fallback, search, and local send.
+- Component tests cover persisted conversation load, persisted message load, persisted send, unavailable API empty/error states, and search.
 
 ## Ticket 016C Outcome
 Completed on May 18, 2026.
 
 Delivered:
 - Dashboard Work To-Do loads tasks from `GET /api/v1/tasks?limit=100` when the API is available.
+- Dashboard priority flags load pending AI risk outputs from `GET /api/v1/ai/recommendations?type=risk-flag&status=pending-approval&limit=5` and only show medium/high severity flags with expandable coach notes.
 - Dashboard task creation posts to `POST /api/v1/tasks` with title, category, and priority.
 - Dashboard task completion uses `POST /api/v1/tasks/{task_id}/complete`.
 - Dashboard task reopen uses `PATCH /api/v1/tasks/{task_id}` with `status: "open"`.
 - Client Capacity uses `GET /api/v1/clients?status=active&limit=100` for the active client count.
 - Check Ins uses `GET /api/v1/check-ins?status=pending-review&limit=100` for pending review count.
-- Fixture-backed tasks and card values remain available when APIs are unavailable.
-- Component tests cover persisted dashboard load, task create, task complete, and fixture fallback.
+- Dashboard task and card values no longer fall back to local fixtures when APIs are unavailable.
+- Component tests cover persisted dashboard load, task create, task complete, empty unavailable state, and prevention of local-only task creation.
 
 ## Ticket 016D Outcome
 Completed on May 18, 2026.
@@ -57,7 +59,7 @@ Delivered:
 - `GET /api/v1/notifications` lists tenant-scoped notifications for the current user with unread filtering.
 - `POST /api/v1/notifications/{notification_id}/read` marks one scoped notification as read.
 - `POST /api/v1/notifications/read` marks all current-user unread notifications as read.
-- App shell notifications load persisted records from `GET /api/v1/notifications?limit=20` and use fixture fallback if the API is unavailable.
+- App shell notifications load persisted records from `GET /api/v1/notifications?limit=20` and render an empty count/list if the API is unavailable.
 - `sendTransactionalEmail` creates queued delivery records, calls Resend through environment-provided credentials, records sent provider ids, and records failed status on configuration/provider errors.
 - `POST /api/webhooks/resend` accepts raw-body Resend events, verifies Svix signatures when `RESEND_WEBHOOK_SECRET` is configured, and persists delivery/bounce/complaint/failure status transitions.
 - Seed data now includes a demo conversation, message, dashboard task, notification, and email delivery record.

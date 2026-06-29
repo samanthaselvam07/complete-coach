@@ -12,7 +12,6 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { packages as fixturePackages } from "@/fixtures/operations";
 import { cn } from "@/lib/utils";
 
 type BillingInterval = "monthly" | "one-time";
@@ -66,8 +65,8 @@ const colorClasses = {
 };
 
 export function PackagesPage() {
-  const [packages, setPackages] = useState<ApiPackage[]>(() => fixturePackages.map(mapFixturePackage));
-  const [source, setSource] = useState<"api" | "fixture">("fixture");
+  const [packages, setPackages] = useState<ApiPackage[]>([]);
+  const [source, setSource] = useState<"api" | "unavailable">("unavailable");
   const [formOpen, setFormOpen] = useState(false);
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
   const [formState, setFormState] = useState<PackageFormState>(defaultFormState);
@@ -95,8 +94,8 @@ export function PackagesPage() {
         setSource("api");
         setPackages(loadedPackages);
       } else {
-        setSource("fixture");
-        setPackages(fixturePackages.map(mapFixturePackage));
+        setSource("unavailable");
+        setPackages([]);
       }
     }
 
@@ -153,8 +152,7 @@ export function PackagesPage() {
     }
 
     if (source !== "api") {
-      upsertLocalPackage(payload);
-      setFormOpen(false);
+      setFormError("Package could not be saved because the package API is unavailable.");
       return;
     }
 
@@ -185,7 +183,7 @@ export function PackagesPage() {
 
   async function handleArchivePackage(coachingPackage: ApiPackage) {
     if (source !== "api") {
-      setPackages((currentPackages) => currentPackages.filter((currentPackage) => currentPackage.id !== coachingPackage.id));
+      setFormError("Package could not be archived because the package API is unavailable.");
       return;
     }
 
@@ -290,33 +288,6 @@ export function PackagesPage() {
     } finally {
       setIsCreatingCheckout(false);
     }
-  }
-
-  function upsertLocalPackage(payload: NonNullable<ReturnType<typeof formStateToPayload>>) {
-    const nextPackage: ApiPackage = {
-      id: editingPackageId ?? `local-package-${Date.now()}`,
-      name: payload.name,
-      description: payload.description ?? null,
-      priceAmount: payload.priceAmount,
-      currency: payload.currency,
-      billingInterval: payload.billingInterval,
-      stripeProductId: null,
-      stripePriceId: null,
-      status: "active",
-      features: payload.features,
-      color: payload.color ?? "indigo",
-      activeSubscriptions: editingPackage?.activeSubscriptions ?? 0,
-      projectedMonthlyRevenue:
-        payload.billingInterval === "monthly" ? payload.priceAmount * (editingPackage?.activeSubscriptions ?? 0) : 0
-    };
-
-    setPackages((currentPackages) =>
-      editingPackageId
-        ? currentPackages.map((coachingPackage) =>
-            coachingPackage.id === editingPackageId ? nextPackage : coachingPackage
-          )
-        : [...currentPackages, nextPackage]
-    );
   }
 
   return (
@@ -838,26 +809,6 @@ function buildPackageStats(packages: ApiPackage[]) {
     { label: "Top Performer", value: topPackage?.name ?? "No packages", icon: Users },
     { label: "Retention Rate", value: "94%", icon: TrendingUp }
   ];
-}
-
-function mapFixturePackage(coachingPackage: (typeof fixturePackages)[number]): ApiPackage {
-  const priceAmount = coachingPackage.price * 100;
-
-  return {
-    id: coachingPackage.id,
-    name: coachingPackage.name,
-    description: coachingPackage.description,
-    priceAmount,
-    currency: "usd",
-    billingInterval: coachingPackage.billing === "monthly" ? "monthly" : "one-time",
-    stripeProductId: null,
-    stripePriceId: null,
-    status: "active",
-    features: coachingPackage.features,
-    color: coachingPackage.color,
-    activeSubscriptions: coachingPackage.activeClients,
-    projectedMonthlyRevenue: coachingPackage.revenue * 100
-  };
 }
 
 function packageToFormState(coachingPackage: ApiPackage): PackageFormState {

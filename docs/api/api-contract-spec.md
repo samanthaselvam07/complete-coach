@@ -142,7 +142,7 @@ Query filters:
 - `GET /api/v1/ai/methodology-profiles`: returns active organization-scoped coach methodology profiles. Requires `ai:read`.
 - `POST /api/v1/ai/methodology-profiles`: creates a coach methodology profile. Requires `ai:approve`. Body: `name`, `methodology`, optional `description`, optional `tone`, optional arrays `principles`, `checkInSections`, `redFlagRules`, `adjustmentRules`, `forbiddenRecommendations`, and optional `isDefault`. If `isDefault` is true, existing organization defaults are unset. Writes an audit event with counts only.
 - `POST /api/v1/ai/methodology-profiles/{profile_id}/default`: sets an active organization profile as the default for future AI check-in reviews. Requires `ai:approve`. Writes an audit event.
-- `GET /api/v1/ai/recommendations`: returns organization-scoped AI outputs. Query: optional `clientId`, `targetType`, `targetId`, `status`, `limit`. Requires `ai:read`.
+- `GET /api/v1/ai/recommendations`: returns organization-scoped AI outputs. Query: optional `clientId`, `targetType`, `targetId`, `type`, `status`, `limit`. Requires `ai:read`. Responses include a safe `client` summary (`id`, `name`) when the AI output is linked to a client; raw client email/profile details and raw AI generation input/output remain excluded.
 - `POST /api/v1/ai/recommendations/{recommendation_id}/approve`: approves a pending AI output. Requires `ai:approve`. Writes an audit event.
 - `POST /api/v1/ai/recommendations/{recommendation_id}/reject`: rejects a pending AI output. Requires `ai:approve`. Body: `reason`. Writes an audit event with reason length only.
 - `GET /api/v1/ai/usage`: returns organization-level generation counts, token totals, estimated cost cents, and status breakdowns. Query: optional `dateFrom`, `dateTo`. Requires `ai:read`.
@@ -168,7 +168,7 @@ AI output statuses:
 
 ### Training
 - `GET /api/v1/exercises`: returns global library exercises and active-organization private exercises. Query: `scope`, `category`, `search`, `limit`.
-- `POST /api/v1/exercises`: creates a private organization exercise. Body: `name`, `category`, optional `equipment`, `primaryMuscles`, optional `secondaryMuscles`, `difficulty`, optional media object keys, defaults, and execution cues.
+- `POST /api/v1/exercises`: creates a private organization exercise. Body: `name`, `category`, optional `equipment`, `primaryMuscles`, optional `secondaryMuscles`, `difficulty`, optional media object keys, optional `videoUrl`, defaults (`defaultSets`, free-text `defaultReps`, `defaultRestSeconds`, `defaultRpe`, `defaultRir`), and execution cues. The training program builder custom-exercise flow uses this endpoint before adding the row to a program, saving body part plus default sets, reps, rest seconds, RPE, RIR, and video/link metadata to the organization's exercise database.
 - `GET /api/v1/exercises/{exercise_id}`: returns a global or organization-owned exercise.
 - `PATCH /api/v1/exercises/{exercise_id}`: updates private organization-owned exercises only; global exercises are read-only to tenant users.
 - `POST /api/v1/exercises/media-upload-url`: creates a short-lived signed R2 `PUT` URL for exercise image/video uploads. Body: `mediaType` (`video` or `image`), `filename`, `contentType`, `byteSize`, optional `checksumSha256`. Returns `objectKey`, `uploadUrl`, `expiresAt`, `method`, required headers, max bytes, and media type. Object keys are generated as `organizations/{organization_id}/training/exercises/{media_type}/{uuid}.{extension}`.

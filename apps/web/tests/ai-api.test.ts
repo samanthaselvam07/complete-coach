@@ -158,7 +158,14 @@ const recommendationRecord = {
   rejectionReason: null,
   createdAt: new Date("2026-06-06T08:00:00.000Z"),
   updatedAt: new Date("2026-06-06T08:00:00.000Z"),
-  generation: generationRecord
+  generation: generationRecord,
+  client: {
+    id: "client_1",
+    firstName: "Michal",
+    lastName: "Szalinski",
+    email: "michal@example.com",
+    profile: { medicalNotes: "Private medical notes" }
+  }
 };
 
 const methodologyProfileRecord = {
@@ -343,9 +350,55 @@ describe("AI-assisted coaching APIs", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload.data[0]).toEqual(expect.objectContaining({ id: "output_1", status: "pending-approval" }));
+    expect(payload.data[0]).toEqual(expect.objectContaining({
+      id: "output_1",
+      status: "pending-approval",
+      client: { id: "client_1", name: "Michal Szalinski" }
+    }));
     expect(JSON.stringify(payload)).not.toContain("redactedInput");
     expect(JSON.stringify(payload)).not.toContain("outputJson");
+    expect(JSON.stringify(payload)).not.toContain("michal@example.com");
+    expect(JSON.stringify(payload)).not.toContain("Private medical notes");
+  });
+
+  it("filters recommendations by AI output type for dashboard risk flags", async () => {
+    mocks.prisma.aiOutput.findMany.mockResolvedValue([
+      {
+        ...recommendationRecord,
+        type: AiOutputType.RISK_FLAG,
+        title: "Sleep and stress risk"
+      }
+    ]);
+
+    const response = await listRecommendations(
+      new Request("http://test.local/api/v1/ai/recommendations?type=risk-flag&status=pending-approval&limit=5")
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.aiOutput.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        type: AiOutputType.RISK_FLAG,
+        status: AiOutputStatus.PENDING_APPROVAL
+      },
+      include: {
+        generation: true,
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: 5
+    });
+    expect(payload.data[0]).toEqual(expect.objectContaining({
+      type: "risk-flag",
+      client: { id: "client_1", name: "Michal Szalinski" }
+    }));
   });
 
   it("requires human approval before recommendations become approved or rejected", async () => {

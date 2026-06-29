@@ -3,8 +3,8 @@
 Ticket 013 / M4 turns the fixture-backed forms and check-in UI into a persistent workflow and exposes de-identified analytics data to external analysis systems.
 
 ## Current State
-- `/forms` now loads persisted forms from `/api/v1/forms`, can save drafts, publish forms, and assign published forms to clients. It keeps a fixture fallback only when the persistence API is unavailable.
-- `/clients/check-ins` now loads persisted check-ins from `/api/v1/check-ins`, opens persisted submission details, supports review/complete actions, and keeps a fixture fallback only when the persistence API is unavailable.
+- `/forms` now loads persisted forms from `/api/v1/forms`, can save drafts, publish forms, and assign published forms to clients. When the persistence API is unavailable, it renders an empty/error state rather than local demo forms.
+- `/clients/check-ins` now loads persisted check-ins from `/api/v1/check-ins`, opens persisted submission details, and supports review/complete actions. When the persistence API is unavailable, it renders an empty/error state rather than local demo check-ins.
 - Prisma has auth, tenancy, clients, client profiles, leads, lead activities, forms, form versions, assignments, submissions, check-ins, measurements, external API keys, export jobs, webhook endpoints, and webhook deliveries.
 - Internal forms APIs now exist for form containers, immutable versions, publishing, and assignments.
 - Existing role capabilities already include `forms:*`, `submissions:*`, `metrics:read`, `api_keys:manage`, and `exports:read`.
@@ -256,7 +256,7 @@ Forms:
 - Save builder drafts through `POST /api/v1/forms` and `POST /api/v1/forms/{form_id}/versions`.
 - Publish drafts through `POST /api/v1/forms/{form_id}/publish`.
 - Assign published versions through `POST /api/v1/forms/{form_id}/assignments`.
-- Retain fixture fallback only when the API schema is unavailable in preview environments.
+- Preview environments must apply the API schema and seed Neon data; runtime forms/check-in pages do not use local fixture fallback.
 
 Check-ins:
 - Load queue from `GET /api/v1/check-ins`.

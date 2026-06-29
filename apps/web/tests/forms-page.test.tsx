@@ -184,13 +184,14 @@ describe("FormsPage", () => {
     expect(screen.queryByText("Weekly Performance Log")).not.toBeInTheDocument();
   });
 
-  it("keeps fixture forms when the persistence API is unavailable", async () => {
+  it("shows an empty persisted state when the forms API is unavailable", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ error: {} }), { status: 503 }));
 
     render(createElement(FormsPage));
 
-    expect(await screen.findByText("Weekly Performance Log")).toBeInTheDocument();
-    expect(screen.getByText(/showing local sample forms/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no persisted forms yet/i)).toBeInTheDocument();
+    expect(screen.queryByText("Weekly Performance Log")).not.toBeInTheDocument();
+    expect(screen.queryByText(/showing local sample forms/i)).not.toBeInTheDocument();
   });
 
   it("shows an empty persisted state when the forms API is available without records", async () => {

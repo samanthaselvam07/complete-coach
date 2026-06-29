@@ -4,13 +4,14 @@ import { Calendar, CheckCircle2, ClipboardCopy, Edit, Info, MoreVertical, Plus, 
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
-import { foods, mealAssignments, mealTemplates, type Food } from "@/fixtures/nutrition";
+import type { Food } from "@/fixtures/nutrition";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { cn } from "@/lib/utils";
 
 type MealPlanTab = "Meal Plans" | "Meal Templates";
 type NutritionPlanBuilderMode = "full" | "macro-day" | "macro-meal";
 export type MealPlanSource = "api" | "fixtures";
+type MealPlanLibraryView = "cards" | "list";
 
 type FoodDatabaseSource = "AUS/NZ" | "EFSA" | "USDA";
 type FoodMeasurementUnit = "g" | "ml" | "oz" | "cups" | "tbsp" | "tsp" | "serving";
@@ -95,6 +96,25 @@ interface BuilderDay {
   id: string;
   name: string;
   meals: BuilderMeal[];
+}
+
+interface MacroBuilderMeal {
+  id: string;
+  title: string;
+  protein: string;
+  carbs: string;
+  fats: string;
+  calories: string;
+}
+
+interface MacroBuilderDay {
+  id: string;
+  name: string;
+  protein: string;
+  carbs: string;
+  fats: string;
+  calories: string;
+  meals: MacroBuilderMeal[];
 }
 
 interface ApiFoodLibraryItem {
@@ -218,10 +238,10 @@ export function MealPlansPage() {
   const [createdTemplates, setCreatedTemplates] = useState<MealTemplateCard[]>([]);
   const [hiddenMealPlanIds, setHiddenMealPlanIds] = useState<string[]>([]);
   const [mealPlanOverrides, setMealPlanOverrides] = useState<Record<string, Partial<MealAssignmentRow>>>({});
-  const [source, setSource] = useState<MealPlanSource>("fixtures");
+  const [source, setSource] = useState<MealPlanSource>("api");
   const [loading, setLoading] = useState(true);
-  const [selectedTemplate, setSelectedTemplate] = useState<ApiMealPlanTemplate | null>(null);
-  const [selectedClientId, setSelectedClientId] = useState("");
+  const [mealPlanView, setMealPlanView] = useState<MealPlanLibraryView>("cards");
+  const [templatePlanTarget, setTemplatePlanTarget] = useState<MealTemplateCard | null>(null);
   const [builderMode, setBuilderMode] = useState<NutritionPlanBuilderMode | null>(null);
   const [editingPlan, setEditingPlan] = useState<MealAssignmentRow | null>(null);
   const [assignmentTarget, setAssignmentTarget] = useState<MealAssignmentRow | null>(null);
@@ -264,7 +284,7 @@ export function MealPlansPage() {
           setTemplates([]);
           setAssignments([]);
           setClients([]);
-          setSource("fixtures");
+          setSource("api");
         }
       } finally {
         if (!cancelled) {
@@ -357,8 +377,6 @@ export function MealPlansPage() {
       setActiveTab("Meal Templates");
       setStatusMessage(`${template.name} saved to Meal Templates.`);
     } catch (error) {
-      setCreatedTemplates((currentTemplates) => [template, ...currentTemplates]);
-      setStatusMessage(`${template.name} saved locally. It will need to be saved again when the API is available.`);
       setErrorMessage(error instanceof Error ? error.message : "Meal template could not be saved.");
     } finally {
       setSaving(false);
@@ -469,37 +487,19 @@ export function MealPlansPage() {
   }
 
   function copyMealPlan(assignment: MealAssignmentRow) {
-    const copiedPlan: MealAssignmentRow = {
-      ...assignment,
-      id: `local-meal-plan-copy-${Date.now()}`,
-      planName: `${assignment.planName} (copy)`,
-      activeClientCount: 0,
-      lastEdited: "Just now",
-      status: "draft"
-    };
-
-    setCreatedPlans((currentPlans) => [copiedPlan, ...currentPlans]);
-    setActiveTab("Meal Plans");
-    setStatusMessage(`${copiedPlan.planName} added to Meal Plans.`);
+    setErrorMessage(`${assignment.planName} could not be copied until database-backed copy is available.`);
   }
 
   function assignMealPlanToClient(assignment: MealAssignmentRow, client: ClientSummary) {
-    setMealPlanOverrides((currentOverrides) => ({
-      ...currentOverrides,
-      [assignment.id]: {
-        activeClientCount: assignment.activeClientCount + 1,
-        status: "active",
-        lastEdited: "Just now"
-      }
-    }));
+    void assignment;
+    void client;
     setAssignmentTarget(null);
-    setActiveTab("Meal Plans");
-    setStatusMessage(`${assignment.planName} assigned to ${client.name}.`);
+    setErrorMessage("Meal plan assignments must be saved through the persisted assignment API.");
   }
 
-  async function assignTemplate() {
-    if (!selectedTemplate || !selectedClientId) {
-      setErrorMessage("Select a client before assigning the meal plan.");
+  async function addMealTemplateToPlan(template: MealTemplateCard, targetPlan: MealAssignmentRow) {
+    if (!targetPlan.apiTemplate?.id) {
+      setErrorMessage("Select a persisted meal plan before adding this meal template.");
       return;
     }
 
@@ -508,31 +508,27 @@ export function MealPlansPage() {
     setErrorMessage(null);
 
     try {
-      const startsOn = new Date().toISOString().slice(0, 10);
-      const response = await fetch("/api/v1/meal-plan-assignments", {
-        method: "POST",
+      const updatedTemplate = appendMealTemplateToPlanTemplate(targetPlan.apiTemplate, template);
+      const response = await fetch(`/api/v1/meal-plan-templates/${targetPlan.apiTemplate.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: selectedClientId,
-          templateId: selectedTemplate.id,
-          name: selectedTemplate.name,
-          startsOn
-        })
+        body: JSON.stringify(updatedTemplate)
       });
 
       const payload = await response.json();
 
-      if (!response.ok) {
-        throw new Error(payload.error?.message ?? "Meal plan could not be assigned.");
+      if (!response.ok || !payload.data || Array.isArray(payload.data)) {
+        throw new Error(payload.error?.message ?? "Meal plan could not be updated.");
       }
 
-      setAssignments((currentAssignments) => [payload.data, ...currentAssignments]);
-      setSelectedTemplate(null);
-      setSelectedClientId("");
+      setTemplates((currentTemplates) =>
+        currentTemplates.map((currentTemplate) => (currentTemplate.id === targetPlan.apiTemplate?.id ? payload.data : currentTemplate))
+      );
+      setTemplatePlanTarget(null);
       setActiveTab("Meal Plans");
-      setStatusMessage("Meal plan assigned to client.");
+      setStatusMessage(`${template.name} added to ${targetPlan.planName}.`);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Meal plan could not be assigned.");
+      setErrorMessage(error instanceof Error ? error.message : "Meal plan could not be updated.");
     } finally {
       setSaving(false);
     }
@@ -548,7 +544,7 @@ export function MealPlansPage() {
           initialPlan={editingPlan}
           initialTemplate={editingPlan?.apiTemplate ?? null}
           saving={saving}
-          availableTemplates={templateCards.length > 0 ? templateCards : getMealTemplateCards("fixtures", [])}
+          availableTemplates={templateCards}
           onBack={() => {
             setBuilderMode(null);
             setEditingPlan(null);
@@ -584,11 +580,6 @@ export function MealPlansPage() {
       </div>
 
       {loading ? <p className="mb-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">Loading persisted meal plan library...</p> : null}
-      {source === "fixtures" && !loading ? (
-        <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-          Meal plan persistence API unavailable. Showing fixture meal plan library.
-        </p>
-      ) : null}
       {statusMessage ? <SavedToast message={statusMessage} /> : null}
       {errorMessage ? <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p> : null}
 
@@ -610,14 +601,13 @@ export function MealPlansPage() {
             </button>
           ))}
         </div>
-        {activeTab === "Meal Plans" ? (
-          <button className="text-sm font-medium text-indigo-600 hover:text-indigo-700">View All Plans</button>
-        ) : null}
       </div>
 
       {activeTab === "Meal Plans" ? (
         <ActiveAssignmentsPanel
           assignments={assignmentRows}
+          view={mealPlanView}
+          onViewChange={setMealPlanView}
           onEdit={editMealPlan}
           onDelete={deleteMealPlan}
           onCopy={copyMealPlan}
@@ -629,27 +619,20 @@ export function MealPlansPage() {
           canAssign={source === "api"}
           onOpenTemplate={setSelectedMealTemplate}
           onUseTemplate={(template) => {
-            if (template.apiTemplate) {
-              setSelectedTemplate(template.apiTemplate);
-              setErrorMessage(null);
-            }
+            setTemplatePlanTarget(template);
+            setErrorMessage(null);
           }}
           onDeleteTemplate={deleteMealTemplate}
         />
       )}
 
-      {selectedTemplate ? (
-        <TemplateAssignmentDialog
-          clients={clients}
-          templateName={selectedTemplate.name}
-          selectedClientId={selectedClientId}
+      {templatePlanTarget ? (
+        <TemplatePlanTargetDialog
+          template={templatePlanTarget}
+          mealPlans={assignmentRows}
           saving={saving}
-          onClientChange={setSelectedClientId}
-          onClose={() => {
-            setSelectedTemplate(null);
-            setSelectedClientId("");
-          }}
-          onSubmit={assignTemplate}
+          onClose={() => setTemplatePlanTarget(null)}
+          onSubmit={(targetPlan) => addMealTemplateToPlan(templatePlanTarget, targetPlan)}
         />
       ) : null}
 
@@ -736,7 +719,7 @@ function CreateNutritionPlanDialog({
           <button
             type="button"
             aria-label="Full Meal Plan"
-            className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5 text-left transition-colors hover:border-indigo-300 hover:bg-indigo-100"
+            className="rounded-2xl border border-orange-200 bg-orange-50 p-5 text-left transition-colors hover:border-orange-300 hover:bg-orange-100"
             onClick={onFullPlan}
           >
             <span className="text-lg font-black text-slate-950">Full Meal Plan</span>
@@ -745,7 +728,7 @@ function CreateNutritionPlanDialog({
           <button
             type="button"
             aria-label="Macro Only Meal Plan"
-            className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-left transition-colors hover:border-blue-300 hover:bg-blue-100"
+            className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5 text-left transition-colors hover:border-indigo-300 hover:bg-indigo-100"
             onClick={onMacroOnly}
           >
             <span className="text-lg font-black text-slate-950">Macro Only Meal Plan</span>
@@ -777,17 +760,17 @@ function MacroPlanChoiceDialog({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-black text-slate-950">Do you want to create macros for each meal or daily totals?</h2>
-            <Info className="mt-3 size-7 text-blue-500" aria-hidden="true" />
+            <Info className="mt-3 size-7 text-indigo-600" aria-hidden="true" />
           </div>
           <button type="button" aria-label="Close macro plan type" className="rounded-full p-2 text-slate-400 hover:bg-slate-100" onClick={onClose}>
             <X className="size-5" aria-hidden="true" />
           </button>
         </div>
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button type="button" className="rounded-xl bg-blue-50 px-5 py-4 text-sm font-bold text-blue-600 hover:bg-blue-100" onClick={onDailyTotals}>
+          <button type="button" className="rounded-xl bg-orange-500 px-5 py-4 text-sm font-bold text-white shadow-sm hover:bg-orange-600" onClick={onDailyTotals}>
             Total For Day
           </button>
-          <button type="button" className="rounded-xl bg-blue-500 px-5 py-4 text-sm font-bold text-white hover:bg-blue-600" onClick={onEachMeal}>
+          <button type="button" className="rounded-xl bg-indigo-600 px-5 py-4 text-sm font-bold text-white shadow-sm hover:bg-indigo-700" onClick={onEachMeal}>
             Each Meal
           </button>
         </div>
@@ -816,22 +799,31 @@ function NutritionPlanBuilder({
   onCreateMealTemplate: (template: MealTemplateCard) => void;
 }) {
   const [title, setTitle] = useState(initialPlan?.planName ?? (mode === "full" ? "New Nutrition Plan" : "Macro Only Nutrition Plan"));
-  const [dayName, setDayName] = useState("Day 1");
-  const [protein, setProtein] = useState(String(initialPlan?.protein ?? 0));
-  const [carbs, setCarbs] = useState(String(initialPlan?.carbs ?? 0));
-  const [fats, setFats] = useState(String(initialPlan?.fats ?? 0));
-  const [calories, setCalories] = useState(String(initialPlan?.calories ?? 0));
+  const [macroDays, setMacroDays] = useState<MacroBuilderDay[]>(() => [
+    createMacroBuilderDay(1, {
+      protein: String(initialPlan?.protein ?? 0),
+      carbs: String(initialPlan?.carbs ?? 0),
+      fats: String(initialPlan?.fats ?? 0),
+      calories: String(initialPlan?.calories ?? 0)
+    })
+  ]);
+  const [activeMacroDayId, setActiveMacroDayId] = useState("macro-day-1");
+  const [fullProtein, setFullProtein] = useState(String(initialPlan?.protein ?? 0));
+  const [fullCarbs, setFullCarbs] = useState(String(initialPlan?.carbs ?? 0));
+  const [fullFats, setFullFats] = useState(String(initialPlan?.fats ?? 0));
+  const [fullCalories, setFullCalories] = useState(String(initialPlan?.calories ?? 0));
   const [fullPlanDays, setFullPlanDays] = useState<BuilderDay[]>([]);
   const isFullPlan = mode === "full";
   const isMealMacroPlan = mode === "macro-meal";
+  const macroPlanTotals = calculateMacroPlanSummary(macroDays, isMealMacroPlan);
 
   const savePlan = (close: boolean) => {
     const planName = title.trim() || (isFullPlan ? "New Nutrition Plan" : "Macro Only Nutrition Plan");
     const fullPlanTotals = calculatePlanTotals(fullPlanDays);
-    const fallbackCalories = isFullPlan ? fullPlanTotals.calories : Number(calories) || 0;
-    const fallbackProtein = isFullPlan ? fullPlanTotals.protein : Number(protein) || 0;
-    const fallbackCarbs = isFullPlan ? fullPlanTotals.carbs : Number(carbs) || 0;
-    const fallbackFats = isFullPlan ? fullPlanTotals.fats : Number(fats) || 0;
+    const fallbackCalories = isFullPlan ? fullPlanTotals.calories : macroPlanTotals.calories;
+    const fallbackProtein = isFullPlan ? fullPlanTotals.protein : macroPlanTotals.protein;
+    const fallbackCarbs = isFullPlan ? fullPlanTotals.carbs : macroPlanTotals.carbs;
+    const fallbackFats = isFullPlan ? fullPlanTotals.fats : macroPlanTotals.fats;
 
     void onSave(
       {
@@ -844,7 +836,7 @@ function NutritionPlanBuilder({
         status: "draft",
         template: isFullPlan
           ? getFullMealPlanTemplatePayload(fullPlanDays)
-          : getMacroMealPlanTemplatePayload(dayName, isMealMacroPlan)
+          : getMacroMealPlanTemplatePayload(macroDays, isMealMacroPlan)
       },
       { close }
     );
@@ -863,14 +855,14 @@ function NutritionPlanBuilder({
           <FullMealPlanFields
             title={title}
             setTitle={setTitle}
-            protein={protein}
-            carbs={carbs}
-            fats={fats}
-            calories={calories}
-            setProtein={setProtein}
-            setCarbs={setCarbs}
-            setFats={setFats}
-            setCalories={setCalories}
+            protein={fullProtein}
+            carbs={fullCarbs}
+            fats={fullFats}
+            calories={fullCalories}
+            setProtein={setFullProtein}
+            setCarbs={setFullCarbs}
+            setFats={setFullFats}
+            setCalories={setFullCalories}
             initialTemplate={initialTemplate}
             availableTemplates={availableTemplates}
             onDaysChange={setFullPlanDays}
@@ -880,16 +872,10 @@ function NutritionPlanBuilder({
           <MacroOnlyPlanFields
             title={title}
             setTitle={setTitle}
-            dayName={dayName}
-            setDayName={setDayName}
-            protein={protein}
-            setProtein={setProtein}
-            carbs={carbs}
-            setCarbs={setCarbs}
-            fats={fats}
-            setFats={setFats}
-            calories={calories}
-            setCalories={setCalories}
+            days={macroDays}
+            activeDayId={activeMacroDayId}
+            onActiveDayChange={setActiveMacroDayId}
+            onDaysChange={setMacroDays}
             showMealFields={isMealMacroPlan}
           />
         )}
@@ -968,7 +954,7 @@ function FullMealPlanFields({
   const dayTotals = calculateDayTotals(activeDay);
   const nutrientTotals = calculateNutrientTotals(activeDay);
   const activeDayIndex = Math.max(days.findIndex((day) => day.id === activeDay?.id), 0);
-  const foodOptions = useMemo(() => mergeFoodOptions(Object.values(foodCache), foods), [foodCache]);
+  const foodOptions = useMemo(() => mergeFoodOptions(Object.values(foodCache), []), [foodCache]);
 
   useEffect(() => {
     onDaysChange(days);
@@ -990,6 +976,8 @@ function FullMealPlanFields({
     if (search) {
       params.set("search", search);
     }
+
+    setApiFoods([]);
 
     async function loadFoodOptions() {
       try {
@@ -1346,10 +1334,7 @@ function FullMealPlanFields({
     );
   };
 
-  const fixtureFilteredFoods = foods.filter(
-    (food) => food.source === foodSource && food.name.toLowerCase().includes(foodSearchQuery.trim().toLowerCase())
-  );
-  const filteredFoods = apiFoods.length > 0 ? apiFoods : fixtureFilteredFoods;
+  const filteredFoods = apiFoods;
 
   return (
     <div className="space-y-8">
@@ -1696,6 +1681,43 @@ function createBuilderDay(dayNumber: number): BuilderDay {
   };
 }
 
+function createMacroBuilderDay(dayNumber: number, overrides: Partial<Omit<MacroBuilderDay, "id">> = {}): MacroBuilderDay {
+  return {
+    id: `macro-day-${dayNumber}`,
+    name: `Day ${dayNumber}`,
+    protein: "0",
+    carbs: "0",
+    fats: "0",
+    calories: "0",
+    meals: [createMacroBuilderMeal(1)],
+    ...overrides
+  };
+}
+
+function createMacroBuilderMeal(mealNumber: number, overrides: Partial<Omit<MacroBuilderMeal, "id">> = {}): MacroBuilderMeal {
+  return {
+    id: `macro-meal-${mealNumber}-${Date.now()}`,
+    title: `Meal ${mealNumber}`,
+    protein: "0",
+    carbs: "0",
+    fats: "0",
+    calories: "0",
+    ...overrides
+  };
+}
+
+function cloneMacroBuilderDay(day: MacroBuilderDay, name: string): MacroBuilderDay {
+  return {
+    ...day,
+    id: `macro-day-${Date.now()}`,
+    name,
+    meals: day.meals.map((meal, index) => ({
+      ...meal,
+      id: `macro-meal-copy-${index + 1}-${Date.now()}`
+    }))
+  };
+}
+
 function cloneBuilderDay(day: BuilderDay, name: string): BuilderDay {
   return {
     id: `day_copy_${Date.now()}`,
@@ -1733,23 +1755,22 @@ function createBuilderDaysFromTemplate(template?: ApiMealPlanTemplate | null): B
 }
 
 function createBuilderFoodFromTemplateFood(food: ApiMealPlanTemplateFood, index: number): BuilderFood {
-  const libraryFood = foods.find((item) => item.id === food.foodId || item.name === food.foodName);
   const parsedServing = parseServingAmount(food.servingSize);
-  const measurementUnit = food.measurementUnit ?? parsedServing?.unit ?? parseServingAmount(libraryFood?.serving ?? "")?.unit ?? "serving";
+  const measurementUnit = food.measurementUnit ?? parsedServing?.unit ?? "serving";
 
   return {
     id: `${food.foodId ?? food.foodName.toLowerCase().replace(/\W+/g, "-")}_${index}_${Date.now()}`,
     foodId: food.foodId,
     name: food.foodName,
-    serving: libraryFood?.serving ?? food.servingSize,
+    serving: food.servingSize,
     measurementUnit,
     calories: food.calories,
     protein: food.proteinGrams,
     carbs: food.carbsGrams,
     fats: food.fatGrams,
-    fibre: food.fiberGrams ?? libraryFood?.fibre ?? 0,
-    quantity: food.quantity ?? getFoodQuantityMultiplier({ serving: libraryFood?.serving ?? food.servingSize }, parsedServing?.amount ?? 1, measurementUnit),
-    micronutrients: food.micronutrients ?? libraryFood?.micronutrients ?? {}
+    fibre: food.fiberGrams ?? 0,
+    quantity: food.quantity ?? getFoodQuantityMultiplier({ serving: food.servingSize }, parsedServing?.amount ?? 1, measurementUnit),
+    micronutrients: food.micronutrients ?? {}
   };
 }
 
@@ -2125,6 +2146,43 @@ function calculatePlanTotals(days: BuilderDay[]) {
   );
 }
 
+function calculateMacroDayTotals(day: MacroBuilderDay, eachMeal: boolean) {
+  if (!eachMeal) {
+    return {
+      calories: Number(day.calories) || 0,
+      protein: Number(day.protein) || 0,
+      carbs: Number(day.carbs) || 0,
+      fats: Number(day.fats) || 0
+    };
+  }
+
+  return day.meals.reduce(
+    (totals, meal) => ({
+      calories: totals.calories + (Number(meal.calories) || 0),
+      protein: totals.protein + (Number(meal.protein) || 0),
+      carbs: totals.carbs + (Number(meal.carbs) || 0),
+      fats: totals.fats + (Number(meal.fats) || 0)
+    }),
+    { calories: 0, protein: 0, carbs: 0, fats: 0 }
+  );
+}
+
+function calculateMacroPlanSummary(days: MacroBuilderDay[], eachMeal = false) {
+  return days.reduce(
+    (totals, day) => {
+      const dayTotals = calculateMacroDayTotals(day, eachMeal);
+
+      return {
+        calories: totals.calories + dayTotals.calories,
+        protein: totals.protein + dayTotals.protein,
+        carbs: totals.carbs + dayTotals.carbs,
+        fats: totals.fats + dayTotals.fats
+      };
+    },
+    { calories: 0, protein: 0, carbs: 0, fats: 0 }
+  );
+}
+
 function calculateTemplateTotals(template: ApiMealPlanTemplate["template"]) {
   return (template.days ?? []).reduce(
     (totals, day) => {
@@ -2170,19 +2228,50 @@ function getFullMealPlanTemplatePayload(days: BuilderDay[]): ApiMealPlanTemplate
   };
 }
 
-function getMacroMealPlanTemplatePayload(dayName: string, eachMeal: boolean): ApiMealPlanTemplate["template"] {
+function getMacroMealPlanTemplatePayload(days: MacroBuilderDay[], eachMeal: boolean): ApiMealPlanTemplate["template"] {
+  const templateDays = days.length > 0 ? days : [createMacroBuilderDay(1)];
+
   return {
-    days: [
-      {
-        name: dayName.trim() || "Day 1",
-        meals: [
-          {
-            meal: eachMeal ? "Meal" : "Daily Macro Targets",
-            foods: []
-          }
-        ]
-      }
-    ]
+    days: templateDays.map((day, dayIndex) => {
+      return {
+        name: day.name.trim() || `Day ${dayIndex + 1}`,
+        meals: eachMeal
+          ? (day.meals.length > 0 ? day.meals : [createMacroBuilderMeal(1)]).map((meal, mealIndex) => {
+              const mealName = meal.title.trim() || `Meal ${mealIndex + 1}`;
+
+              return {
+                meal: mealName,
+                foods: [
+                  {
+                    foodName: `${mealName} macro target`,
+                    servingSize: "Macro target",
+                    calories: Number(meal.calories) || 0,
+                    proteinGrams: Number(meal.protein) || 0,
+                    carbsGrams: Number(meal.carbs) || 0,
+                    fatGrams: Number(meal.fats) || 0,
+                    fiberGrams: 0
+                  }
+                ]
+              };
+            })
+          : [
+              {
+                meal: "Daily Macro Targets",
+                foods: [
+                  {
+                    foodName: "Daily macro target",
+                    servingSize: "Macro target",
+                    calories: Number(day.calories) || 0,
+                    proteinGrams: Number(day.protein) || 0,
+                    carbsGrams: Number(day.carbs) || 0,
+                    fatGrams: Number(day.fats) || 0,
+                    fiberGrams: 0
+                  }
+                ]
+              }
+            ]
+      };
+    })
   };
 }
 
@@ -2210,6 +2299,62 @@ function getMealTemplateSaveInput(template: MealTemplateCard): MealPlanTemplateS
           }
         ]
       }
+  };
+}
+
+function appendMealTemplateToPlanTemplate(planTemplate: ApiMealPlanTemplate, mealTemplate: MealTemplateCard): MealPlanTemplateSaveInput {
+  const mealTemplatePayload = mealTemplate.template ?? mealTemplate.apiTemplate?.template ?? getMealTemplateSaveInput(mealTemplate).template;
+  const mealsToAdd = (mealTemplatePayload.days ?? [])
+    .flatMap((day) => day.meals)
+    .map((meal) => ({
+      meal: meal.meal.trim() || mealTemplate.name,
+      notes: meal.notes,
+      foods: meal.foods.map((food) => ({ ...food }))
+    }));
+  const fallbackMeal = {
+    meal: mealTemplate.name,
+    foods: [
+      {
+        foodName: mealTemplate.name,
+        servingSize: "Meal template",
+        calories: mealTemplate.calories,
+        proteinGrams: mealTemplate.protein,
+        carbsGrams: mealTemplate.carbs,
+        fatGrams: mealTemplate.fats,
+        fiberGrams: 0
+      }
+    ]
+  };
+  const currentDays =
+    planTemplate.template.days && planTemplate.template.days.length > 0
+      ? planTemplate.template.days.map((day) => ({
+          name: day.name,
+          meals: day.meals.map((meal) => ({
+            meal: meal.meal,
+            notes: meal.notes,
+            foods: meal.foods.map((food) => ({ ...food }))
+          }))
+        }))
+      : [{ name: "Day 1", meals: [] }];
+  const [firstDay, ...remainingDays] = currentDays;
+
+  return {
+    name: planTemplate.name,
+    phase: planTemplate.phase ?? "Full meal plan",
+    targetCalories: planTemplate.targetCalories,
+    proteinGrams: planTemplate.proteinGrams,
+    carbsGrams: planTemplate.carbsGrams,
+    fatGrams: planTemplate.fatGrams,
+    status: planTemplate.status === "published" ? "published" : "draft",
+    template: {
+      days: [
+        {
+          ...firstDay,
+          meals: [...firstDay.meals, ...(mealsToAdd.length > 0 ? mealsToAdd : [fallbackMeal])]
+        },
+        ...remainingDays
+      ]
+    }
   };
 }
 
@@ -2928,32 +3073,51 @@ function CopyMealDialog({
 function MacroOnlyPlanFields({
   title,
   setTitle,
-  dayName,
-  setDayName,
-  protein,
-  setProtein,
-  carbs,
-  setCarbs,
-  fats,
-  setFats,
-  calories,
-  setCalories,
+  days,
+  activeDayId,
+  onActiveDayChange,
+  onDaysChange,
   showMealFields
 }: {
   title: string;
   setTitle: (value: string) => void;
-  dayName: string;
-  setDayName: (value: string) => void;
-  protein: string;
-  setProtein: (value: string) => void;
-  carbs: string;
-  setCarbs: (value: string) => void;
-  fats: string;
-  setFats: (value: string) => void;
-  calories: string;
-  setCalories: (value: string) => void;
+  days: MacroBuilderDay[];
+  activeDayId: string;
+  onActiveDayChange: (dayId: string) => void;
+  onDaysChange: (days: MacroBuilderDay[]) => void;
   showMealFields: boolean;
 }) {
+  const activeDay = days.find((day) => day.id === activeDayId) ?? days[0] ?? createMacroBuilderDay(1);
+  const activeDayTotals = calculateMacroDayTotals(activeDay, showMealFields);
+
+  const updateActiveDay = (updates: Partial<Omit<MacroBuilderDay, "id">>) => {
+    onDaysChange(days.map((day) => (day.id === activeDay.id ? { ...day, ...updates } : day)));
+  };
+
+  const updateMacroMeal = (mealId: string, updates: Partial<Omit<MacroBuilderMeal, "id">>) => {
+    updateActiveDay({
+      meals: activeDay.meals.map((meal) => (meal.id === mealId ? { ...meal, ...updates } : meal))
+    });
+  };
+
+  const addDay = () => {
+    const nextDay = createMacroBuilderDay(days.length + 1);
+    onDaysChange([...days, nextDay]);
+    onActiveDayChange(nextDay.id);
+  };
+
+  const addMeal = () => {
+    updateActiveDay({
+      meals: [...activeDay.meals, createMacroBuilderMeal(activeDay.meals.length + 1)]
+    });
+  };
+
+  const duplicateActiveDay = () => {
+    const duplicatedDay = cloneMacroBuilderDay(activeDay, `${activeDay.name.trim() || "Day"} copy`);
+    onDaysChange([...days, duplicatedDay]);
+    onActiveDayChange(duplicatedDay.id);
+  };
+
   return (
     <div className="space-y-8">
       <h2 className="sr-only">{title}</h2>
@@ -2970,8 +3134,26 @@ function MacroOnlyPlanFields({
       </label>
 
       <div className="flex items-center justify-between gap-4">
-        <div className="inline-flex border-b-2 border-blue-500 pb-3 text-sm font-bold text-blue-500">Day 1</div>
-        <button type="button" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
+        <div role="tablist" aria-label="Macro plan days" className="flex flex-wrap items-center gap-2">
+          {days.map((day) => (
+            <button
+              key={day.id}
+              type="button"
+              role="tab"
+              aria-selected={activeDay.id === day.id}
+              className={cn(
+                "rounded-xl border px-4 py-2 text-sm font-bold transition-colors",
+                activeDay.id === day.id
+                  ? "border-indigo-600 bg-indigo-600 text-white shadow-sm"
+                  : "border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+              )}
+              onClick={() => onActiveDayChange(day.id)}
+            >
+              {day.name.trim() || "Untitled day"}
+            </button>
+          ))}
+        </div>
+        <button type="button" className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-100" onClick={addDay}>
           + Add New Day
         </button>
       </div>
@@ -2979,40 +3161,86 @@ function MacroOnlyPlanFields({
       <div className="grid gap-4 lg:grid-cols-[1fr_0.32fr] lg:items-end">
         <label className="grid gap-2">
           <span className="text-sm font-medium text-slate-700">Day Name</span>
-          <input value={dayName} onChange={(event) => setDayName(event.target.value)} className="rounded-xl border border-slate-200 px-4 py-3 text-sm" />
+          <input
+            value={activeDay.name}
+            onChange={(event) => updateActiveDay({ name: event.target.value })}
+            className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          />
         </label>
-        <button type="button" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
+        <button type="button" className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-100" onClick={duplicateActiveDay}>
           Copy / Duplicate Day
         </button>
       </div>
 
       <div className="grid gap-5 md:grid-cols-4">
-        <MacroTotalCard label="Total Protein (g)" value={protein} />
-        <MacroTotalCard label="Total Carbs (g)" value={carbs} />
-        <MacroTotalCard label="Total Fat (g)" value={fats} />
-        <MacroTotalCard label="Total Calories (kcal)" value={calories} />
+        <MacroTotalCard label="Total Protein (g)" value={String(activeDayTotals.protein)} />
+        <MacroTotalCard label="Total Carbs (g)" value={String(activeDayTotals.carbs)} />
+        <MacroTotalCard label="Total Fat (g)" value={String(activeDayTotals.fats)} />
+        <MacroTotalCard label="Total Calories (kcal)" value={String(activeDayTotals.calories)} />
       </div>
 
       {showMealFields ? (
-        <label className="grid gap-2">
-          <span className="text-sm font-medium text-slate-700">Meal Title</span>
-          <input aria-label="Meal Title" className="rounded-xl border border-slate-200 px-4 py-3 text-sm" defaultValue="Meal" />
-          <span className="text-xs text-slate-400">Please enter meal title. Ex: Breakfast, Lunch etc...</span>
-        </label>
-      ) : null}
-
-      <div className="grid gap-5 md:grid-cols-4">
-        <MacroInput label="Protein" value={protein} onChange={setProtein} unit="g" helper="Please enter protein." />
-        <MacroInput label="Carbs" value={carbs} onChange={setCarbs} unit="g" helper="Please enter carbohydrate." />
-        <MacroInput label="Fat" value={fats} onChange={setFats} unit="g" helper="Please enter fat." />
-        <MacroInput label="Calories" value={calories} onChange={setCalories} unit="Kcal" helper="Please enter calories." />
-      </div>
-
-      {showMealFields ? (
-        <button type="button" aria-label="Add meal" className="rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-500">
-          + Add meal
-        </button>
-      ) : null}
+        <div className="space-y-4">
+          {activeDay.meals.map((meal, mealIndex) => (
+            <section key={meal.id} className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm" aria-label={`${meal.title} macro targets`}>
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-slate-700">Meal Title</span>
+                <input
+                  aria-label={`Meal title for meal ${mealIndex + 1}`}
+                  className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                  value={meal.title}
+                  onChange={(event) => updateMacroMeal(meal.id, { title: event.target.value })}
+                />
+                <span className="text-xs text-slate-400">Please enter meal title. Ex: Breakfast, Lunch etc...</span>
+              </label>
+              <div className="mt-5 grid gap-5 md:grid-cols-4">
+                <MacroInput
+                  label="Protein"
+                  ariaLabel={`Protein for Meal ${mealIndex + 1}`}
+                  value={meal.protein}
+                  onChange={(value) => updateMacroMeal(meal.id, { protein: value })}
+                  unit="g"
+                  helper="Please enter protein."
+                />
+                <MacroInput
+                  label="Carbs"
+                  ariaLabel={`Carbs for Meal ${mealIndex + 1}`}
+                  value={meal.carbs}
+                  onChange={(value) => updateMacroMeal(meal.id, { carbs: value })}
+                  unit="g"
+                  helper="Please enter carbohydrate."
+                />
+                <MacroInput
+                  label="Fat"
+                  ariaLabel={`Fat for Meal ${mealIndex + 1}`}
+                  value={meal.fats}
+                  onChange={(value) => updateMacroMeal(meal.id, { fats: value })}
+                  unit="g"
+                  helper="Please enter fat."
+                />
+                <MacroInput
+                  label="Calories"
+                  ariaLabel={`Calories for Meal ${mealIndex + 1}`}
+                  value={meal.calories}
+                  onChange={(value) => updateMacroMeal(meal.id, { calories: value })}
+                  unit="Kcal"
+                  helper="Please enter calories."
+                />
+              </div>
+            </section>
+          ))}
+          <button type="button" aria-label="Add meal" className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-indigo-700" onClick={addMeal}>
+            + Add meal
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-4">
+          <MacroInput label="Protein" value={activeDay.protein} onChange={(value) => updateActiveDay({ protein: value })} unit="g" helper="Please enter protein." />
+          <MacroInput label="Carbs" value={activeDay.carbs} onChange={(value) => updateActiveDay({ carbs: value })} unit="g" helper="Please enter carbohydrate." />
+          <MacroInput label="Fat" value={activeDay.fats} onChange={(value) => updateActiveDay({ fats: value })} unit="g" helper="Please enter fat." />
+          <MacroInput label="Calories" value={activeDay.calories} onChange={(value) => updateActiveDay({ calories: value })} unit="Kcal" helper="Please enter calories." />
+        </div>
+      )}
 
       <label className="grid gap-2">
         <span className="text-sm font-medium text-slate-700">Notes</span>
@@ -3028,21 +3256,23 @@ function MacroPill({ value }: { value: string }) {
 
 function MacroTotalCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-none bg-slate-100 px-5 py-6 text-center">
-      <p className="text-lg font-black text-slate-800">{value}</p>
-      <p className="mt-2 text-sm font-bold text-slate-700">{label}</p>
+    <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 px-5 py-6 text-center shadow-sm" aria-label={`${label}: ${value}`}>
+      <p className="text-lg font-black text-slate-950">{value}</p>
+      <p className="mt-2 text-sm font-bold text-slate-600">{label}</p>
     </div>
   );
 }
 
 function MacroInput({
   label,
+  ariaLabel,
   value,
   onChange,
   unit,
   helper
 }: {
   label: string;
+  ariaLabel?: string;
   value: string;
   onChange: (value: string) => void;
   unit: string;
@@ -3051,16 +3281,16 @@ function MacroInput({
   return (
     <label className="grid gap-2">
       <span className="text-sm font-medium text-slate-700">{label}</span>
-      <div className="flex overflow-hidden rounded-xl border border-slate-200">
+      <div className="flex overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100">
         <input
-          aria-label={label}
+          aria-label={ariaLabel ?? label}
           type="number"
           min="0"
           value={value}
           onChange={(event) => onChange(event.target.value)}
           className="min-w-0 flex-1 px-4 py-3 text-sm outline-none"
         />
-        <span className="border-l border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">{unit}</span>
+        <span className="border-l border-slate-200 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-700">{unit}</span>
       </div>
       <span className="text-xs text-slate-400">{helper}</span>
     </label>
@@ -3069,12 +3299,16 @@ function MacroInput({
 
 function ActiveAssignmentsPanel({
   assignments,
+  view,
+  onViewChange,
   onEdit,
   onDelete,
   onCopy,
   onAssign
 }: {
   assignments: MealAssignmentRow[];
+  view: MealPlanLibraryView;
+  onViewChange: (view: MealPlanLibraryView) => void;
   onEdit: (assignment: MealAssignmentRow) => void;
   onDelete: (assignment: MealAssignmentRow) => void;
   onCopy: (assignment: MealAssignmentRow) => void;
@@ -3083,7 +3317,7 @@ function ActiveAssignmentsPanel({
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
   return (
-    <section role="tabpanel" aria-label="Meal Plans" className="relative overflow-visible rounded-xl border border-gray-200 bg-white">
+    <section role="tabpanel" aria-label="Meal Plans" className="relative overflow-visible">
       {openActionMenuId ? (
         <button
           type="button"
@@ -3092,87 +3326,186 @@ function ActiveAssignmentsPanel({
           onClick={() => setOpenActionMenuId(null)}
         />
       ) : null}
-      <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600">
-        <div className="col-span-4">Meal Plan Name</div>
-        <div className="col-span-2">Assigned To</div>
-        <div className="col-span-3">Calories / Macros</div>
-        <div className="col-span-2">Last Edited</div>
-        <div className="col-span-1">Actions</div>
+      <div className="mb-4 flex justify-end">
+        <div className="inline-flex rounded-xl bg-slate-100 p-1" aria-label="Meal plan view options">
+          {(["cards", "list"] as MealPlanLibraryView[]).map((viewOption) => (
+            <button
+              key={viewOption}
+              type="button"
+              aria-pressed={view === viewOption}
+              className={cn(
+                "rounded-lg px-4 py-2 text-sm font-bold transition-colors",
+                view === viewOption ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-950"
+              )}
+              onClick={() => onViewChange(viewOption)}
+            >
+              {viewOption === "cards" ? "Card view" : "List view"}
+            </button>
+          ))}
+        </div>
       </div>
-      {assignments.map((assignment) => {
-        const menuOpen = openActionMenuId === assignment.id;
+      {view === "cards" ? (
+        <div role="region" aria-label="Meal plan cards" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {assignments.map((assignment) => {
+            const menuOpen = openActionMenuId === assignment.id;
 
-        return (
-          <article
-            key={assignment.id}
-            className={cn(
-              "relative grid grid-cols-12 items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-0 hover:bg-gray-50",
-              menuOpen ? "z-40" : "z-0"
-            )}
-          >
-            <div className="col-span-4">
-              <div className="font-medium text-gray-900">{assignment.planName}</div>
-              <div className="text-xs text-gray-500">{assignment.status}</div>
-            </div>
-            <div className="col-span-2 text-sm font-medium text-gray-700">
-              {assignment.activeClientCount} active {assignment.activeClientCount === 1 ? "client" : "clients"}
-            </div>
-            <div className="col-span-3 text-sm text-gray-700">
-              <span className="font-medium text-gray-900">{assignment.calories} cal</span>
-              <span className="ml-3 font-medium text-blue-600">P {assignment.protein}g</span>
-              <span className="ml-2 font-medium text-green-600">C {assignment.carbs}g</span>
-              <span className="ml-2 font-medium text-orange-600">F {assignment.fats}g</span>
-            </div>
-            <div className="col-span-2 text-sm text-gray-600">{assignment.lastEdited}</div>
-            <div className="relative col-span-1 flex items-center gap-2">
-              <button
-                type="button"
-                aria-label={`Edit ${assignment.planName}`}
-                className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
-                onClick={() => onEdit(assignment)}
+            return (
+              <article
+                key={assignment.id}
+                className={cn("relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm", menuOpen ? "z-40" : "z-0")}
               >
-                <Edit className="size-4" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                aria-label={`More actions for ${assignment.planName}`}
-                aria-expanded={openActionMenuId === assignment.id}
-                aria-controls={`meal-plan-actions-${assignment.id}`}
-                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-                onClick={() => setOpenActionMenuId((currentId) => (currentId === assignment.id ? null : assignment.id))}
-              >
-                <MoreVertical className="size-4" aria-hidden="true" />
-              </button>
-              {menuOpen ? (
-                <MealPlanActionMenu
-                  id={`meal-plan-actions-${assignment.id}`}
-                  planName={assignment.planName}
-                  onEdit={() => {
-                    setOpenActionMenuId(null);
-                    onEdit(assignment);
-                  }}
-                  onDelete={() => {
-                    setOpenActionMenuId(null);
-                    onDelete(assignment);
-                  }}
-                  onAssign={() => {
-                    setOpenActionMenuId(null);
-                    onAssign(assignment);
-                  }}
-                  onCopy={() => {
-                    setOpenActionMenuId(null);
-                    onCopy(assignment);
-                  }}
-                />
-              ) : null}
-            </div>
-          </article>
-        );
-      })}
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-600">{assignment.status}</p>
+                    <h2 className="mt-2 text-lg font-black text-slate-950">{assignment.planName}</h2>
+                    <p className="mt-1 text-sm text-slate-500">Last edited {assignment.lastEdited}</p>
+                  </div>
+                  <MealPlanInlineActions
+                    assignment={assignment}
+                    menuOpen={menuOpen}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onAssign={onAssign}
+                    onCopy={onCopy}
+                    onMenuToggle={() => setOpenActionMenuId((currentId) => (currentId === assignment.id ? null : assignment.id))}
+                    onMenuClose={() => setOpenActionMenuId(null)}
+                  />
+                </div>
+                <div className="mt-5 rounded-xl bg-slate-50 p-4">
+                  <p className="text-2xl font-black text-slate-950">{assignment.calories} cal</p>
+                  <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold">
+                    <span className="text-indigo-600">P {assignment.protein}g</span>
+                    <span className="text-emerald-600">C {assignment.carbs}g</span>
+                    <span className="text-orange-600">F {assignment.fats}g</span>
+                  </div>
+                </div>
+                <p className="mt-4 text-sm font-semibold text-slate-700">
+                  {assignment.activeClientCount} active {assignment.activeClientCount === 1 ? "client" : "clients"}
+                </p>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="overflow-visible rounded-xl border border-gray-200 bg-white">
+          <table role="table" aria-label="Meal plan list" className="w-full border-collapse">
+            <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-600">
+              <tr>
+                <th className="px-6 py-4 text-left">Meal Plan Name</th>
+                <th className="px-6 py-4 text-left">Assigned To</th>
+                <th className="px-6 py-4 text-left">Calories / Macros</th>
+                <th className="px-6 py-4 text-left">Last Edited</th>
+                <th className="px-6 py-4 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {assignments.map((assignment) => {
+                const menuOpen = openActionMenuId === assignment.id;
+
+                return (
+                  <tr key={assignment.id} className={cn("relative border-b border-gray-100 last:border-0 hover:bg-gray-50", menuOpen ? "z-40" : "z-0")}>
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{assignment.planName}</div>
+                      <div className="text-xs text-gray-500">{assignment.status}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-700">
+                      {assignment.activeClientCount} active {assignment.activeClientCount === 1 ? "client" : "clients"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-700">
+                      <span className="font-medium text-gray-900">{assignment.calories} cal</span>
+                      <span className="ml-3 font-medium text-indigo-600">P {assignment.protein}g</span>
+                      <span className="ml-2 font-medium text-green-600">C {assignment.carbs}g</span>
+                      <span className="ml-2 font-medium text-orange-600">F {assignment.fats}g</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{assignment.lastEdited}</td>
+                    <td className="relative px-6 py-4">
+                      <MealPlanInlineActions
+                        assignment={assignment}
+                        menuOpen={menuOpen}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                        onAssign={onAssign}
+                        onCopy={onCopy}
+                        onMenuToggle={() => setOpenActionMenuId((currentId) => (currentId === assignment.id ? null : assignment.id))}
+                        onMenuClose={() => setOpenActionMenuId(null)}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
       {assignments.length === 0 ? (
-        <p className="px-6 py-8 text-center text-sm text-gray-600">No active meal plans have been assigned yet.</p>
+        <p className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-8 text-center text-sm text-gray-600">No active meal plans have been assigned yet.</p>
       ) : null}
     </section>
+  );
+}
+
+function MealPlanInlineActions({
+  assignment,
+  menuOpen,
+  onEdit,
+  onDelete,
+  onAssign,
+  onCopy,
+  onMenuToggle,
+  onMenuClose
+}: {
+  assignment: MealAssignmentRow;
+  menuOpen: boolean;
+  onEdit: (assignment: MealAssignmentRow) => void;
+  onDelete: (assignment: MealAssignmentRow) => void;
+  onAssign: (assignment: MealAssignmentRow) => void;
+  onCopy: (assignment: MealAssignmentRow) => void;
+  onMenuToggle: () => void;
+  onMenuClose: () => void;
+}) {
+  return (
+    <div className="relative flex items-center gap-2">
+      <button
+        type="button"
+        aria-label={`Edit ${assignment.planName}`}
+        className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
+        onClick={() => onEdit(assignment)}
+      >
+        <Edit className="size-4" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        aria-label={`More actions for ${assignment.planName}`}
+        aria-expanded={menuOpen}
+        aria-controls={`meal-plan-actions-${assignment.id}`}
+        className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+        onClick={onMenuToggle}
+      >
+        <MoreVertical className="size-4" aria-hidden="true" />
+      </button>
+      {menuOpen ? (
+        <MealPlanActionMenu
+          id={`meal-plan-actions-${assignment.id}`}
+          planName={assignment.planName}
+          onEdit={() => {
+            onMenuClose();
+            onEdit(assignment);
+          }}
+          onDelete={() => {
+            onMenuClose();
+            onDelete(assignment);
+          }}
+          onAssign={() => {
+            onMenuClose();
+            onAssign(assignment);
+          }}
+          onCopy={() => {
+            onMenuClose();
+            onCopy(assignment);
+          }}
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -3413,63 +3746,94 @@ function MasterTemplatesPanel({
   );
 }
 
-function TemplateAssignmentDialog({
-  clients,
-  templateName,
-  selectedClientId,
+function TemplatePlanTargetDialog({
+  template,
+  mealPlans,
   saving,
-  onClientChange,
   onClose,
   onSubmit
 }: {
-  clients: ClientSummary[];
-  templateName: string;
-  selectedClientId: string;
+  template: MealTemplateCard;
+  mealPlans: MealAssignmentRow[];
   saving: boolean;
-  onClientChange: (clientId: string) => void;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: (targetPlan: MealAssignmentRow) => void;
 }) {
+  const [planSearchQuery, setPlanSearchQuery] = useState("");
+  const [selectedPlanId, setSelectedPlanId] = useState("");
+  const persistedMealPlans = mealPlans.filter((plan) => Boolean(plan.apiTemplate?.id));
+  const filteredMealPlans = persistedMealPlans.filter((plan) =>
+    plan.planName.toLowerCase().includes(planSearchQuery.trim().toLowerCase())
+  );
+  const selectedPlan = persistedMealPlans.find((plan) => plan.id === selectedPlanId) ?? null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
       <form
         role="dialog"
         aria-modal="true"
-        aria-labelledby="assign-meal-template-title"
+        aria-labelledby="add-meal-template-title"
         className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-xl"
         onSubmit={(event) => {
           event.preventDefault();
-          onSubmit();
+          if (selectedPlan) {
+            onSubmit(selectedPlan);
+          }
         }}
       >
-        <h2 id="assign-meal-template-title" className="text-2xl font-bold text-gray-900">
-          Assign Meal Template
+        <h2 id="add-meal-template-title" className="text-2xl font-bold text-gray-900">
+          Add Meal Template to Meal Plan
         </h2>
         <p className="mt-1 text-sm text-gray-600">
-          Assign <span className="font-medium text-gray-900">{templateName}</span> to an active client.
+          Add <span className="font-medium text-gray-900">{template.name}</span> into an existing meal plan.
         </p>
 
-        <label htmlFor="meal-assignment-client" className="mt-6 block text-sm font-medium text-gray-700">
-          Client
+        <label htmlFor="meal-plan-template-target-search" className="mt-6 block text-sm font-medium text-gray-700">
+          Search meal plans
         </label>
-        <select
-          id="meal-assignment-client"
-          required
-          value={selectedClientId}
-          className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          onChange={(event) => onClientChange(event.target.value)}
-        >
-          <option value="">Select a client</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>
-              {client.name}
-            </option>
-          ))}
-        </select>
+        <div className="relative mt-2">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+          <input
+            id="meal-plan-template-target-search"
+            type="search"
+            value={planSearchQuery}
+            placeholder="Search existing meal plans..."
+            className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            onChange={(event) => setPlanSearchQuery(event.target.value)}
+          />
+        </div>
 
-        {clients.length === 0 ? (
+        <div className="mt-4 max-h-64 space-y-2 overflow-y-auto">
+          {filteredMealPlans.map((plan) => (
+            <label
+              key={plan.id}
+              className="flex cursor-pointer items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm hover:bg-gray-50"
+            >
+              <span>
+                <span className="block font-semibold text-gray-900">{plan.planName}</span>
+                <span className="block text-xs text-gray-500">
+                  {plan.calories} cal · P {plan.protein}g · C {plan.carbs}g · F {plan.fats}g
+                </span>
+              </span>
+              <input
+                type="radio"
+                name="meal-template-target-plan"
+                aria-label={`Select ${plan.planName}`}
+                checked={selectedPlanId === plan.id}
+                onChange={() => setSelectedPlanId(plan.id)}
+              />
+            </label>
+          ))}
+          {filteredMealPlans.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-gray-300 p-4 text-center text-sm text-gray-600">
+              No existing persisted meal plans match that search.
+            </p>
+          ) : null}
+        </div>
+
+        {persistedMealPlans.length === 0 ? (
           <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-            No active clients are available for meal plan assignment.
+            Create and save a meal plan before adding individual meal templates into it.
           </p>
         ) : null}
 
@@ -3480,9 +3844,9 @@ function TemplateAssignmentDialog({
           <button
             type="submit"
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            disabled={saving || clients.length === 0}
+            disabled={saving || !selectedPlan}
           >
-            Assign Meal Plan
+            Add to Meal Plan
           </button>
         </div>
       </form>
@@ -3659,18 +4023,7 @@ function MealTemplateDetailsDialog({
 
 export function getMealTemplateCards(source: MealPlanSource, templates: ApiMealPlanTemplate[]): MealTemplateCard[] {
   if (source === "fixtures") {
-    return mealTemplates.map((template) => ({
-      id: template.id,
-      name: template.name,
-      description: template.description,
-      calories: template.calories,
-      protein: template.protein,
-      carbs: template.carbs,
-      fats: template.fats,
-      badge: "Fixture",
-      apiTemplate: null,
-      template: null
-    }));
+    return [];
   }
 
   return templates.filter((template) => template.status !== "draft").map((template) => ({
@@ -3693,19 +4046,7 @@ export function getMealAssignmentRows(
   templates: ApiMealPlanTemplate[] = []
 ): MealAssignmentRow[] {
   if (source === "fixtures") {
-    return mealAssignments.map((assignment) => ({
-      id: assignment.id,
-      templateId: null,
-      planName: assignment.planName,
-      activeClientCount: 1,
-      calories: assignment.calories,
-      protein: assignment.protein,
-      carbs: assignment.carbs,
-      fats: assignment.fats,
-      lastEdited: assignment.started,
-      status: "active",
-      apiTemplate: null
-    }));
+    return [];
   }
 
   const assignmentGroups = new Map<string, ApiMealPlanAssignment[]>();

@@ -3,9 +3,10 @@
 Ticket 014 / M5 replaces fixture-only training screens with persisted exercise libraries, training templates, assignment snapshots, and scoped upload foundations.
 
 ## Current State
-- `/training/exercises` now prefers persisted exercises from `GET /api/v1/exercises?limit=100` and falls back to fixtures only when the training API is unavailable.
-- `/training/exercises/add` now posts new private exercises to `POST /api/v1/exercises`.
+- `/training/exercises` loads persisted exercises from `GET /api/v1/exercises?limit=100` and renders an empty/error state when the training API is unavailable.
+- `/training/exercises/add` now posts new private exercises to `POST /api/v1/exercises`, including free-text rep targets, rest timer defaults, RPE, RIR, external video links, and uploaded video object keys.
 - `/training/programs` now prefers persisted templates from `GET /api/v1/training-program-templates`, assignments from `GET /api/v1/training-program-assignments`, and active clients from `GET /api/v1/clients`.
+- The `/training/programs` custom exercise dialog persists new exercises to `POST /api/v1/exercises` before adding them to the builder, so body part, default sets/reps/rest/RPE/RIR, external video links, and media references are available in the organization's exercise database.
 - `/training/programs` can create a draft program template and assign a persisted template to an active client.
 - Exercise media uploads use `POST /api/v1/exercises/media-upload-url` to generate short-lived, organization-scoped R2 `PUT` URLs.
 - Client profile Training tabs now load persisted assigned training programs from `GET /api/v1/clients/{client_id}/training-programs`.
@@ -22,7 +23,7 @@ Delivered:
 - Exercise APIs enforce active organization scope and prevent tenant mutation of global exercises.
 - Training assignment creation snapshots template details into `snapshot_json` so assignments remain stable after template edits.
 - Demo seed data creates one global exercise, one private exercise, one training template, and one training assignment.
-- Component UI now loads persisted exercise library data and saves new exercises through the API with fixture fallback.
+- Component UI now loads persisted exercise library data and saves new exercises through the API without local fixture fallback.
 - API and component tests cover training isolation, global read/private write behavior, assignment snapshots, and UI persistence paths.
 
 ## Ticket 014B Outcome
@@ -30,7 +31,7 @@ Completed on May 14, 2026.
 
 Delivered:
 - Program library UI loads persisted active assignments, templates, and active clients when APIs are available.
-- Program library keeps fixture fallback when persistence APIs are unavailable, preserving the launchable UI stub behavior.
+- Program library renders persisted templates/assignments only; unavailable persistence APIs show empty/error states instead of local demo programs.
 - Create New Program posts a draft template to `POST /api/v1/training-program-templates`.
 - Use Template opens a client assignment dialog and posts to `POST /api/v1/training-program-assignments`.
 - Successful assignment prepends the returned immutable assignment snapshot to the active programs table.

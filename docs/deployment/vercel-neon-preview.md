@@ -3,7 +3,7 @@
 ## Current State
 The deployed preview target includes the M1-M10 implementation baseline.
 
-Auth, tenancy, clients/CRM, forms/check-ins, training, nutrition, operations messaging/tasks/notifications, payments/packages, education, and supplementation persistence are implemented ticket by ticket and backed by PostgreSQL/Neon. Some UI surfaces still keep fixture fallback behavior when APIs are unavailable.
+Auth, tenancy, clients/CRM, forms/check-ins, training, nutrition, operations messaging/tasks/notifications, payments/packages, education, and supplementation persistence are implemented ticket by ticket and backed by PostgreSQL/Neon. Runtime pages that display tenant data start from Neon-backed APIs only and render empty/error states instead of local fixture data when those APIs are unavailable.
 
 ## Vercel Project Settings
 Use `apps/web` as the Vercel project root.
@@ -66,7 +66,8 @@ The deployed preview should show:
 - API-backed team invitations, role/status management, invitation acceptance, and audit log views.
 - API-backed social connection metadata, content scheduling, cancellation, simulated posting retries, and analytics snapshots where M11 is deployed.
 - `X-Request-Id`, security headers, durable API rate limits, structured JSON logs, and Sentry capture when configured.
-- Fixture-backed fallback behavior where implemented for user-facing resilience.
+- Runtime data pages must load records from Neon-backed APIs; unavailable APIs should show empty/error states instead of local demo data.
+- Dashboard revenue, tasks, team capacity, check-in counts, today's expected check-ins, and CRM summary must load from Neon-backed APIs.
 - Local interactive behavior such as filters, tabs, drawers, and message sending.
 
 The deployed preview will not include:

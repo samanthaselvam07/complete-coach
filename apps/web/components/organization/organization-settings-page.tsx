@@ -121,69 +121,19 @@ const tabs: Array<{
 
 const visibleRoles: MembershipRole[] = ["owner", "admin", "coach", "assistant"];
 
-const permissionTeamMembers: Array<{
-  id: string;
-  name: string;
-  role: Exclude<MembershipRole, "client">;
-}> = [
-  { id: "sarah", name: "Sarah Jenkins", role: "admin" },
-  { id: "marcus", name: "Marcus Chen", role: "coach" },
-  { id: "derek", name: "Derek Vance", role: "coach" },
-  { id: "elena", name: "Elena Rodriguez", role: "assistant" }
-];
-
-function buildInitialMemberPermissions() {
+function buildInitialMemberPermissions(members: TeamMember[]) {
   return Object.fromEntries(
-    permissionTeamMembers.map((member) => [
+    members.map((member) => [
       member.id,
       Object.fromEntries(
         ALL_CAPABILITIES.map((capability) => [
           capability,
-          getCapabilitiesForRole(member.role).includes(capability)
+          getCapabilitiesForRole(member.role as Exclude<MembershipRole, "client">).includes(capability)
         ])
       ) as Record<Capability, boolean>
     ])
   ) as Record<string, Record<Capability, boolean>>;
 }
-
-const fallbackTeamMembers: TeamMember[] = [
-  {
-    id: "membership_sarah",
-    userId: "user_sarah",
-    name: "Sarah Jenkins",
-    email: "sarah@kineticcurator.com",
-    image: null,
-    role: "admin",
-    status: "active",
-    activeClientCount: 28,
-    capacityLimit: 40,
-    capacityPercent: 70
-  },
-  {
-    id: "membership_marcus",
-    userId: "user_marcus",
-    name: "Marcus Chen",
-    email: "marcus@kineticcurator.com",
-    image: null,
-    role: "coach",
-    status: "active",
-    activeClientCount: 34,
-    capacityLimit: 40,
-    capacityPercent: 85
-  },
-  {
-    id: "membership_elena",
-    userId: "user_elena",
-    name: "Elena Rodriguez",
-    email: "elena@kineticcurator.com",
-    image: null,
-    role: "assistant",
-    status: "suspended",
-    activeClientCount: 0,
-    capacityLimit: 0,
-    capacityPercent: 0
-  }
-];
 
 export function OrganizationSettingsPage() {
   const [activeTab, setActiveTab] = useState<OrganizationSettingsTab>("billing");
@@ -1113,8 +1063,8 @@ function SenderDomainCard({ domain, isVerifying, onVerify }: { domain: SenderDom
 }
 
 function TeamManagementPanel() {
-  const [members, setMembers] = useState<TeamMember[]>(fallbackTeamMembers);
-  const [source, setSource] = useState<"api" | "fallback">("fallback");
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [source, setSource] = useState<"api" | "unavailable">("unavailable");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const visibleMembers = members.filter((member) => member.status !== "removed");
@@ -1137,17 +1087,14 @@ function TeamManagementPanel() {
         };
         const apiMembers = payload.data?.members;
 
-        if (!apiMembers?.length) {
-          throw new Error("No team members returned.");
-        }
-
         if (active) {
-          setMembers(apiMembers);
+          setMembers(apiMembers ?? []);
           setSource("api");
         }
       } catch {
         if (active) {
-          setSource("fallback");
+          setMembers([]);
+          setSource("unavailable");
         }
       }
     }
@@ -1224,9 +1171,9 @@ function TeamManagementPanel() {
         </p>
       ) : null}
 
-      {source === "fallback" ? (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Showing sample team access until the team API is available.
+      {source === "unavailable" ? (
+        <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          No team members were returned from the database.
         </p>
       ) : null}
 
@@ -1443,7 +1390,46 @@ function TeamMemberEditDialog({
 }
 
 function RolePermissionsPanel() {
-  const [memberPermissions, setMemberPermissions] = useState(buildInitialMemberPermissions);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [source, setSource] = useState<"api" | "unavailable">("unavailable");
+  const [memberPermissions, setMemberPermissions] = useState<Record<string, Record<Capability, boolean>>>({});
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadTeamMembers() {
+      try {
+        const response = await fetch("/api/v1/team-members");
+
+        if (!response.ok) {
+          throw new Error("Team API unavailable.");
+        }
+
+        const payload = (await response.json()) as {
+          data?: { members?: TeamMember[] };
+        };
+        const apiMembers = (payload.data?.members ?? []).filter((member) => member.status !== "removed");
+
+        if (active) {
+          setMembers(apiMembers);
+          setMemberPermissions(buildInitialMemberPermissions(apiMembers));
+          setSource("api");
+        }
+      } catch {
+        if (active) {
+          setMembers([]);
+          setMemberPermissions({});
+          setSource("unavailable");
+        }
+      }
+    }
+
+    void loadTeamMembers();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const toggleMemberPermission = (memberId: string, capability: Capability) => {
     setMemberPermissions((currentPermissions) => ({
@@ -1502,9 +1488,9 @@ function RolePermissionsPanel() {
           <thead className="border-b border-slate-200 bg-white text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="sticky left-0 z-10 bg-white px-4 py-3">Feature</th>
-              {permissionTeamMembers.map((member) => (
+              {members.map((member) => (
                 <th key={member.id} className="px-4 py-3">
-                  <span className="block text-slate-700">{member.name}</span>
+                  <span className="block text-slate-700">{member.name ?? member.email ?? "Team member"}</span>
                   <span className="block text-[10px] capitalize text-slate-400">{member.role}</span>
                 </th>
               ))}
@@ -1516,8 +1502,8 @@ function RolePermissionsPanel() {
                 <td className="sticky left-0 z-10 bg-white px-4 py-3 font-mono text-xs text-slate-700">
                   {capability}
                 </td>
-                {permissionTeamMembers.map((member) => {
-                  const enabled = memberPermissions[member.id][capability];
+                {members.map((member) => {
+                  const enabled = Boolean(memberPermissions[member.id]?.[capability]);
 
                   return (
                     <td key={`${member.id}-${capability}`} className="px-4 py-3">
@@ -1525,7 +1511,7 @@ function RolePermissionsPanel() {
                         type="button"
                         role="switch"
                         aria-checked={enabled}
-                        aria-label={`Toggle ${capability} for ${member.name}`}
+                        aria-label={`Toggle ${capability} for ${member.name ?? member.email ?? "team member"}`}
                         className={cn(
                           "inline-flex h-6 w-11 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
                           enabled ? "bg-indigo-600" : "bg-slate-200"
@@ -1546,6 +1532,13 @@ function RolePermissionsPanel() {
             ))}
           </tbody>
         </table>
+        {members.length === 0 ? (
+          <p className="border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
+            {source === "api"
+              ? "No team members were returned from the database."
+              : "Team member permissions will appear once the Neon team API is available."}
+          </p>
+        ) : null}
       </section>
     </div>
   );

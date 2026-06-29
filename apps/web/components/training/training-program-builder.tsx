@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowLeft, Copy, GripVertical, Plus, Search, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Copy, GripVertical, PlayCircle, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { exercises as fixtureExercises, type Exercise } from "@/fixtures/training";
+import type { Exercise } from "@/fixtures/training";
 import { cn } from "@/lib/utils";
 
 import type { ProgramTemplateCard } from "./training-programs-page";
@@ -13,6 +13,7 @@ export type TrainingProgramSection = "warmUp" | "workout" | "coolDown";
 
 export interface TrainingProgramExerciseDraft {
   id: string;
+  exerciseId?: string;
   section: TrainingProgramSection;
   exerciseName: string;
   sets: string;
@@ -72,16 +73,43 @@ interface ApiExercise {
   equipment: string | null;
   difficulty: "beginner" | "intermediate" | "advanced";
   videoObjectKey: string | null;
+  videoUrl?: string | null;
   primaryMuscles: string[];
+  defaultSets?: number | null;
+  defaultReps?: string | null;
+  defaultRestSeconds?: number | null;
+  defaultRpe?: number | null;
+  defaultRir?: string | null;
+  executionCues?: string[];
 }
 
 type BuilderExerciseLibraryItem = ApiExercise | Exercise;
 
 interface CustomExerciseInput {
   exerciseName: string;
+  bodyPart: string;
+  sets: string;
+  reps: string;
+  restSeconds: string;
+  rpe: string;
+  rir: string;
   videoUrl?: string;
   videoFileName?: string;
 }
+
+const customExerciseBodyParts = [
+  "Chest",
+  "Back",
+  "Shoulders",
+  "Quads",
+  "Hamstrings",
+  "Glutes",
+  "Calves",
+  "Biceps",
+  "Triceps",
+  "Core",
+  "Full Body"
+];
 
 const builderFieldClassName =
   "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-normal text-slate-950 placeholder:text-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
@@ -159,7 +187,7 @@ export function CreateProgramDialog({
             </button>
             {!canUseTemplates ? (
               <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                Template duplication needs the persisted program library. The app is currently showing fixture data.
+                Template duplication needs persisted templates from the program library.
               </p>
             ) : null}
             <div className="grid gap-3">
@@ -226,7 +254,11 @@ export function TrainingProgramBuilder({
     });
   }
 
-  function addExercise(section: TrainingProgramSection, exerciseName = "", customInput: Partial<CustomExerciseInput> = {}) {
+  function addExercise(
+    section: TrainingProgramSection,
+    exerciseName = "",
+    customInput: Partial<CustomExerciseInput> & { exerciseId?: string } = {}
+  ) {
     const sectionExerciseCount = activeDay.exercises.filter((exercise) => exercise.section === section).length + 1;
 
     updateActiveDay({
@@ -234,13 +266,14 @@ export function TrainingProgramBuilder({
         ...activeDay.exercises,
         {
           id: `${activeDay.id}-${section}-${sectionExerciseCount}`,
+          exerciseId: customInput.exerciseId,
           section,
           exerciseName,
-          sets: "3",
-          reps: "8-10",
-          rpe: "",
-          rir: "",
-          restSeconds: "120",
+          sets: customInput.sets || "3",
+          reps: customInput.reps || "8-10",
+          rpe: customInput.rpe || "",
+          rir: customInput.rir || "",
+          restSeconds: customInput.restSeconds || "120",
           customVideoUrl: customInput.videoUrl,
           customVideoFileName: customInput.videoFileName
         }
@@ -253,11 +286,29 @@ export function TrainingProgramBuilder({
   }
 
   function addLibraryExercise(section: TrainingProgramSection, exercise: BuilderExerciseLibraryItem) {
-    addExercise(section, exercise.name);
+    addExercise(section, exercise.name, {
+      exerciseId: exercise.id,
+      sets: "defaultSets" in exercise && exercise.defaultSets ? String(exercise.defaultSets) : "3",
+      reps: "defaultReps" in exercise && exercise.defaultReps ? exercise.defaultReps : "8-10",
+      restSeconds: "defaultRestSeconds" in exercise && exercise.defaultRestSeconds !== null && exercise.defaultRestSeconds !== undefined ? String(exercise.defaultRestSeconds) : "120",
+      rpe: "defaultRpe" in exercise && exercise.defaultRpe !== null && exercise.defaultRpe !== undefined ? String(exercise.defaultRpe) : "",
+      rir: "defaultRir" in exercise && exercise.defaultRir ? exercise.defaultRir : "",
+      videoUrl: "videoUrl" in exercise && exercise.videoUrl ? exercise.videoUrl : undefined
+    });
   }
 
-  function addCustomExercise(section: TrainingProgramSection, input: CustomExerciseInput) {
-    addExercise(section, input.exerciseName, input);
+  async function addCustomExercise(section: TrainingProgramSection, input: CustomExerciseInput) {
+    const exercise = await createOrganizationExercise(input);
+    addExercise(section, exercise.name, {
+      exerciseId: exercise.id,
+      sets: input.sets,
+      reps: input.reps,
+      restSeconds: input.restSeconds,
+      rpe: input.rpe,
+      rir: input.rir,
+      videoUrl: input.videoUrl,
+      videoFileName: input.videoFileName
+    });
     setCustomExerciseSection(null);
   }
 
@@ -559,7 +610,7 @@ export function getTrainingProgramTemplatePayload(
       days: draft.days.map((day, dayIndex) => ({
         name: day.name.trim() || `Day ${dayIndex + 1}`,
         exercises: day.exercises.map((exercise) => ({
-          exerciseId: "manual-entry",
+          exerciseId: exercise.exerciseId ?? "manual-entry",
           exerciseName: exercise.exerciseName.trim() || "Manual Exercise",
           sets: parsePositiveInteger(exercise.sets, 3),
           reps: exercise.reps.trim() || "8-10",
@@ -614,7 +665,12 @@ function ProgramBuilderSection({
             key={exercise.id}
             role="group"
             aria-label={`${exercise.exerciseName || "Untitled exercise"} exercise row`}
-            className="grid gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm lg:grid-cols-[2.5rem_minmax(12rem,2fr)_repeat(5,minmax(4.25rem,1fr))_2.5rem]"
+            draggable
+            className="grid cursor-grab gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm active:cursor-grabbing lg:grid-cols-[2.5rem_minmax(12rem,2fr)_repeat(5,minmax(4.25rem,1fr))_2.5rem]"
+            onDragStart={(event) => {
+              event.dataTransfer.setData("application/x-complete-coach-exercise-id", exercise.id);
+              event.dataTransfer.effectAllowed = "move";
+            }}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault();
@@ -627,13 +683,8 @@ function ProgramBuilderSection({
           >
             <button
               type="button"
-              draggable
               aria-label={`Move ${exercise.exerciseName || "untitled"} exercise`}
-              className="mt-6 inline-flex size-9 cursor-grab items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-              onDragStart={(event) => {
-                event.dataTransfer.setData("application/x-complete-coach-exercise-id", exercise.id);
-                event.dataTransfer.effectAllowed = "move";
-              }}
+              className="mt-6 inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
             >
               <GripVertical className="size-4" aria-hidden="true" />
             </button>
@@ -649,6 +700,7 @@ function ProgramBuilderSection({
                 {exercise.customVideoFileName ? <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{exercise.customVideoFileName}</span> : null}
               </div>
             ) : null}
+            <ExerciseVideoPreview exercise={exercise} />
             <button
               type="button"
               aria-label={`Delete ${exercise.exerciseName || "untitled exercise"}`}
@@ -673,6 +725,51 @@ function ProgramBuilderSection({
   );
 }
 
+function ExerciseVideoPreview({ exercise }: { exercise: TrainingProgramExerciseDraft }) {
+  const embedUrl = getEmbeddableExerciseVideoUrl(exercise.customVideoUrl);
+  const hasVideoReference = Boolean(exercise.customVideoUrl || exercise.customVideoFileName);
+
+  return (
+    <div className="lg:col-start-2 lg:col-end-8 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-500">
+          <PlayCircle className="size-4 text-indigo-600" aria-hidden="true" />
+          Exercise video
+        </div>
+        {exercise.customVideoUrl ? (
+          <a
+            href={exercise.customVideoUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs font-bold text-indigo-700 hover:text-indigo-900"
+            onClick={(event) => event.stopPropagation()}
+          >
+            Open source
+          </a>
+        ) : null}
+      </div>
+
+      {embedUrl ? (
+        <iframe
+          title={`${exercise.exerciseName || "Exercise"} video`}
+          src={embedUrl}
+          className="mt-3 aspect-video w-full rounded-xl border border-slate-200 bg-slate-950"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      ) : (
+        <div className="mt-3 flex min-h-24 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-500">
+          {hasVideoReference ? (
+            <span>{exercise.customVideoFileName ? `${exercise.customVideoFileName} attached` : "External video attached. Open source to view."}</span>
+          ) : (
+            <span>No video attached yet.</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CustomExerciseDialog({
   section,
   onClose,
@@ -680,12 +777,43 @@ function CustomExerciseDialog({
 }: {
   section: TrainingProgramSection;
   onClose: () => void;
-  onCreate: (input: CustomExerciseInput) => void;
+  onCreate: (input: CustomExerciseInput) => Promise<void>;
 }) {
   const [exerciseName, setExerciseName] = useState("");
+  const [bodyPart, setBodyPart] = useState(customExerciseBodyParts[0]);
+  const [sets, setSets] = useState("3");
+  const [reps, setReps] = useState("8-10");
+  const [restSeconds, setRestSeconds] = useState("120");
+  const [rpe, setRpe] = useState("");
+  const [rir, setRir] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [videoFileName, setVideoFileName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const sectionLabel = getProgramSectionLabel(section);
+
+  async function handleCreate() {
+    setSaving(true);
+    setErrorMessage("");
+
+    try {
+      await onCreate({
+        exerciseName: exerciseName.trim(),
+        bodyPart,
+        sets: sets.trim() || "3",
+        reps: reps.trim() || "8-10",
+        restSeconds: restSeconds.trim() || "120",
+        rpe: rpe.trim(),
+        rir: rir.trim(),
+        videoUrl: videoUrl.trim() || undefined,
+        videoFileName: videoFileName || undefined
+      });
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Custom exercise could not be saved.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
@@ -701,7 +829,7 @@ function CustomExerciseDialog({
             <h2 id="custom-exercise-title" className="mt-1 text-2xl font-black text-slate-950">
               Add custom exercise
             </h2>
-            <p className="mt-2 text-sm text-slate-500">Create a one-off exercise row with an optional coaching video reference.</p>
+            <p className="mt-2 text-sm text-slate-500">Save this movement to your organization exercise database and add it to the current program.</p>
           </div>
           <button type="button" aria-label="Close custom exercise dialog" className="rounded-xl p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
             <X className="size-4" aria-hidden="true" />
@@ -709,6 +837,7 @@ function CustomExerciseDialog({
         </div>
 
         <div className="mt-5 space-y-4">
+          {errorMessage ? <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">{errorMessage}</p> : null}
           <label className="block text-sm font-bold text-slate-800">
             Exercise name
             <input
@@ -718,6 +847,40 @@ function CustomExerciseDialog({
               onChange={(event) => setExerciseName(event.target.value)}
             />
           </label>
+
+          <label className="block text-sm font-bold text-slate-800">
+            Body part worked
+            <select value={bodyPart} className={builderFieldClassName} onChange={(event) => setBodyPart(event.target.value)}>
+              {customExerciseBodyParts.map((bodyPartOption) => (
+                <option key={bodyPartOption} value={bodyPartOption}>
+                  {bodyPartOption}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="grid gap-3 md:grid-cols-5">
+            <label className="text-sm font-bold text-slate-800">
+              Sets
+              <input value={sets} inputMode="numeric" className={builderFieldClassName} onChange={(event) => setSets(event.target.value)} />
+            </label>
+            <label className="text-sm font-bold text-slate-800">
+              Reps
+              <input value={reps} className={builderFieldClassName} onChange={(event) => setReps(event.target.value)} />
+            </label>
+            <label className="text-sm font-bold text-slate-800">
+              Rest time
+              <input value={restSeconds} inputMode="numeric" className={builderFieldClassName} onChange={(event) => setRestSeconds(event.target.value)} />
+            </label>
+            <label className="text-sm font-bold text-slate-800">
+              RPE
+              <input value={rpe} inputMode="numeric" className={builderFieldClassName} onChange={(event) => setRpe(event.target.value)} />
+            </label>
+            <label className="text-sm font-bold text-slate-800">
+              RIR
+              <input value={rir} inputMode="numeric" className={builderFieldClassName} onChange={(event) => setRir(event.target.value)} />
+            </label>
+          </div>
 
           <label className="block text-sm font-bold text-slate-800">
             YouTube or external video link
@@ -752,16 +915,10 @@ function CustomExerciseDialog({
           <button
             type="button"
             className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!exerciseName.trim()}
-            onClick={() =>
-              onCreate({
-                exerciseName: exerciseName.trim(),
-                videoUrl: videoUrl.trim() || undefined,
-                videoFileName: videoFileName || undefined
-              })
-            }
+            disabled={!exerciseName.trim() || saving}
+            onClick={() => void handleCreate()}
           >
-            Add exercise
+            {saving ? "Saving..." : "Add exercise"}
           </button>
         </div>
       </section>
@@ -782,7 +939,6 @@ function ExerciseDatabaseSidePanel({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [apiExercises, setApiExercises] = useState<ApiExercise[]>([]);
-  const [exerciseSource, setExerciseSource] = useState<"api" | "fixture">("fixture");
   const [loadingExercises, setLoadingExercises] = useState(true);
   const sectionLabel = getProgramSectionLabel(activeSection);
 
@@ -794,17 +950,18 @@ function ExerciseDatabaseSidePanel({
         const response = await fetch("/api/v1/exercises?limit=100");
 
         if (!response.ok) {
-          return;
+          throw new Error("Exercise API unavailable.");
         }
 
         const payload = (await response.json()) as { data?: ApiExercise[] };
 
-        if (active && payload.data && payload.data.length > 0) {
-          setApiExercises(payload.data);
-          setExerciseSource("api");
+        if (active) {
+          setApiExercises(payload.data ?? []);
         }
       } catch {
-        // Keep fixture exercises available when persistence is unavailable.
+        if (active) {
+          setApiExercises([]);
+        }
       } finally {
         if (active) {
           setLoadingExercises(false);
@@ -819,7 +976,7 @@ function ExerciseDatabaseSidePanel({
     };
   }, []);
 
-  const sourceExercises: BuilderExerciseLibraryItem[] = exerciseSource === "api" ? apiExercises : fixtureExercises;
+  const sourceExercises: BuilderExerciseLibraryItem[] = apiExercises;
   const filteredExercises = useMemo(
     () =>
       sourceExercises.filter((exercise) => {
@@ -946,6 +1103,80 @@ function createBlankTrainingDay(dayNumber: number): TrainingProgramDayDraft {
 function parsePositiveInteger(value: string, fallback: number) {
   const parsedValue = Number.parseInt(value, 10);
   return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
+}
+
+function parseOptionalNumber(value: string) {
+  const parsedValue = Number.parseFloat(value);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+}
+
+function getEmbeddableExerciseVideoUrl(videoUrl?: string) {
+  if (!videoUrl) {
+    return null;
+  }
+
+  try {
+    const parsedUrl = new URL(videoUrl);
+    const hostname = parsedUrl.hostname.replace(/^www\./, "");
+
+    if (hostname === "youtube.com" || hostname === "m.youtube.com") {
+      const videoId = parsedUrl.searchParams.get("v");
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+    }
+
+    if (hostname === "youtu.be") {
+      const videoId = parsedUrl.pathname.split("/").filter(Boolean)[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+    }
+
+    if (hostname === "vimeo.com") {
+      const videoId = parsedUrl.pathname.split("/").filter(Boolean)[0];
+      return videoId ? `https://player.vimeo.com/video/${videoId}` : null;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+async function createOrganizationExercise(input: CustomExerciseInput): Promise<ApiExercise> {
+  const defaultSets = parsePositiveInteger(input.sets, 3);
+  const defaultRestSeconds = parsePositiveInteger(input.restSeconds, 120);
+  const defaultRpe = parseOptionalNumber(input.rpe);
+  const executionCues = [
+    input.videoFileName ? `Uploaded video file: ${input.videoFileName}` : ""
+  ].filter(Boolean);
+
+  const response = await fetch("/api/v1/exercises", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: input.exerciseName,
+      category: input.bodyPart,
+      primaryMuscles: [input.bodyPart],
+      difficulty: "intermediate",
+      defaultSets,
+      defaultReps: input.reps.trim() || "8-10",
+      defaultRestSeconds,
+      ...(defaultRpe !== null ? { defaultRpe } : {}),
+      ...(input.rir.trim() ? { defaultRir: input.rir.trim() } : {}),
+      ...(input.videoUrl ? { videoUrl: input.videoUrl } : {}),
+      ...(executionCues.length > 0 ? { executionCues } : {})
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error("Custom exercise could not be saved to the exercise database.");
+  }
+
+  const payload = (await response.json()) as { data?: ApiExercise };
+
+  if (!payload.data) {
+    throw new Error("Custom exercise save response was empty.");
+  }
+
+  return payload.data;
 }
 
 function buildCustomExerciseNotes(exercise: TrainingProgramExerciseDraft) {

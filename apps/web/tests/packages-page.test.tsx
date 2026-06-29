@@ -318,29 +318,13 @@ describe("PackagesPage", () => {
     );
   });
 
-  it("keeps fixture fallback package management when the API is unavailable", async () => {
+  it("shows an empty persisted package inventory when the API is unavailable", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 
     render(createElement(PackagesPage));
 
-    expect(await screen.findAllByText("Platinum Elite")).toHaveLength(2);
-    fireEvent.click(screen.getByRole("button", { name: "Create New Package" }));
-    fireEvent.click(screen.getByRole("button", { name: "Save Package" }));
-
-    expect(screen.getByText("Enter a package name and a valid price.")).toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText("Package Name"), { target: { value: "Local Package" } });
-    fireEvent.change(screen.getByLabelText("Price"), { target: { value: "99" } });
-    fireEvent.change(screen.getByLabelText("Features"), { target: { value: "Local support" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save Package" }));
-
-    expect(screen.queryByRole("dialog", { name: "Create Package" })).not.toBeInTheDocument();
-    expect(screen.getByText("Local Package")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Duplicate Local Package" }));
-    fireEvent.click(screen.getByRole("button", { name: "Save Package" }));
-
-    expect(screen.getByText("Local Package Copy")).toBeInTheDocument();
+    expect(await screen.findByText("No packages")).toBeInTheDocument();
+    expect(screen.queryByText("Platinum Elite")).not.toBeInTheDocument();
   });
 });
 

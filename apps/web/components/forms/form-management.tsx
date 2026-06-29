@@ -1,11 +1,10 @@
 import { FileText, MoreVertical } from "lucide-react";
 
-import { formTemplates, recentForms } from "@/fixtures/forms";
+import { formTemplates } from "@/fixtures/forms";
 import type { PersistedFormSummary } from "./forms-page";
 
 interface FormManagementProps {
   forms: PersistedFormSummary[];
-  formsSource: "api" | "fixture";
   loadingForms: boolean;
   onCreateForm: (templateType?: string) => void;
   onEditForm: (form: PersistedFormSummary) => void;
@@ -13,13 +12,10 @@ interface FormManagementProps {
 
 export function FormManagement({
   forms,
-  formsSource,
   loadingForms,
   onCreateForm,
   onEditForm
 }: FormManagementProps) {
-  const usingApiForms = formsSource === "api";
-
   return (
     <div className="p-6 md:p-8">
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-start">
@@ -72,48 +68,18 @@ export function FormManagement({
 
       <section>
         <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-gray-900">Recent Forms</h2>
-        {formsSource === "fixture" ? (
-          <p className="mb-3 text-sm text-amber-700">Showing local sample forms until the persistence API is available.</p>
-        ) : null}
         <div className="space-y-3">
           {loadingForms ? (
             <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500">
               Loading persisted forms...
             </div>
           ) : null}
-          {usingApiForms && !loadingForms && forms.length === 0 ? (
+          {!loadingForms && forms.length === 0 ? (
             <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500">
               No persisted forms yet. Start from scratch or choose a template.
             </div>
           ) : null}
-          {usingApiForms
-            ? forms.map((form) => <RecentPersistedFormRow key={form.id} form={form} onEditForm={onEditForm} />)
-            : recentForms.map((form) => (
-                <button
-                  key={form.id}
-                  type="button"
-                  className="group flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50"
-                  onClick={() => onCreateForm(`edit-${form.id}`)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-lg bg-gray-100 transition-colors group-hover:bg-indigo-50">
-                      <FileText
-                        className="size-5 text-gray-600 transition-colors group-hover:text-indigo-600"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="text-left">
-                      <div className="text-sm font-medium">{form.name}</div>
-                      <div className="text-xs text-gray-500">
-                        LAST EDITED {form.lastEdited} - {form.responses} RESPONSES
-                      </div>
-                    </div>
-                  </div>
-                  <span className="rounded-lg p-2 transition-colors hover:bg-gray-100" aria-hidden="true">
-                    <MoreVertical className="size-4 text-gray-400" />
-                  </span>
-                </button>
-              ))}
+          {forms.map((form) => <RecentPersistedFormRow key={form.id} form={form} onEditForm={onEditForm} />)}
         </div>
       </section>
     </div>

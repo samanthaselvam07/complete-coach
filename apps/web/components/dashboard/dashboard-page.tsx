@@ -11,17 +11,15 @@ import {
   TodaysCheckInsCard,
   type TeamCapacityMember
 } from "./metric-cards";
+import { PriorityFlagsModule, type DashboardPriorityFlag } from "./priority-flags-module";
 import { TaskCreationPanel } from "./task-creation-panel";
 import { WorkTodoSection } from "./work-todo-section";
 import {
-  dashboardTasks,
-  revenueMetrics,
   type DashboardTask,
   type DashboardTaskCategory,
   type RevenueMetric,
   type RevenuePeriod
 } from "@/fixtures/dashboard";
-import { clients as fixtureClients } from "@/fixtures/clients";
 
 interface ApiTask {
   id: string;
@@ -57,6 +55,17 @@ interface ApiDashboardMetadata {
   timezone: string;
 }
 
+interface ApiPriorityFlag {
+  id: string;
+  severity: string | null;
+  title: string;
+  contentMarkdown: string;
+  client?: {
+    id: string;
+    name: string;
+  } | null;
+}
+
 export function DashboardPage() {
   const defaultCustomRange = getDefaultCustomDateRange();
   const [period, setPeriod] = useState<RevenuePeriod>("monthly");
@@ -64,24 +73,28 @@ export function DashboardPage() {
   const [customStartDate, setCustomStartDate] = useState(defaultCustomRange.startDate);
   const [customEndDate, setCustomEndDate] = useState(defaultCustomRange.endDate);
   const [taskPanelOpen, setTaskPanelOpen] = useState(false);
-  const [taskSource, setTaskSource] = useState<"api" | "fixture">("fixture");
-  const [tasks, setTasks] = useState<Record<DashboardTaskCategory, DashboardTask[]>>(dashboardTasks);
+  const [taskSource, setTaskSource] = useState<"api" | "unavailable">("unavailable");
+  const [taskSaveError, setTaskSaveError] = useState("");
+  const [tasks, setTasks] = useState<Record<DashboardTaskCategory, DashboardTask[]>>(emptyDashboardTasks);
   const [teamCapacityMembers, setTeamCapacityMembers] = useState<TeamCapacityMember[] | null>(null);
-  const [pendingCheckInCount, setPendingCheckInCount] = useState(5);
-  const [activeClients, setActiveClients] = useState<ApiClientSummary[]>(getFixtureActiveClients());
-  const [revenueMetricSource, setRevenueMetricSource] = useState(revenueMetrics);
+  const [pendingCheckInCount, setPendingCheckInCount] = useState(0);
+  const [activeClients, setActiveClients] = useState<ApiClientSummary[]>([]);
+  const [priorityFlags, setPriorityFlags] = useState<DashboardPriorityFlag[]>([]);
+  const [revenueMetricSource, setRevenueMetricSource] = useState(emptyRevenueMetrics);
   const [coachTimezone, setCoachTimezone] = useState(getBrowserTimezone());
+  const [dashboardLoaded, setDashboardLoaded] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     let isActive = true;
 
     async function loadDashboardData() {
-      const [tasksLoaded, teamCapacityLoaded, pendingCheckIns, activeClientsLoaded, packageRevenue, dashboardMetadata] = await Promise.all([
+      const [tasksLoaded, teamCapacityLoaded, pendingCheckIns, activeClientsLoaded, aiPriorityFlags, packageRevenue, dashboardMetadata] = await Promise.all([
         loadPersistedTasks(),
         loadTeamCapacityMembers(),
         loadUncompletedCheckInCount(),
         loadActiveClients(),
+        loadPriorityFlags(),
         loadStripeFinancialMetric("monthly"),
         loadDashboardMetadata()
       ]);
@@ -94,8 +107,8 @@ export function DashboardPage() {
         setTaskSource("api");
         setTasks(tasksLoaded);
       } else {
-        setTaskSource("fixture");
-        setTasks(dashboardTasks);
+        setTaskSource("unavailable");
+        setTasks(emptyDashboardTasks);
       }
 
       if (teamCapacityLoaded) {
@@ -110,6 +123,10 @@ export function DashboardPage() {
         setActiveClients(activeClientsLoaded);
       }
 
+      if (aiPriorityFlags) {
+        setPriorityFlags(aiPriorityFlags);
+      }
+
       if (packageRevenue) {
         setRevenueMetricSource((currentMetrics) => ({
           ...currentMetrics,
@@ -120,6 +137,8 @@ export function DashboardPage() {
       if (dashboardMetadata) {
         setCoachTimezone(dashboardMetadata.timezone);
       }
+
+      setDashboardLoaded(true);
     }
 
     void loadDashboardData();
@@ -138,7 +157,9 @@ export function DashboardPage() {
   const activeTaskCount = getActiveTaskCount(tasks);
   const dashboardWeekday = getDashboardWeekday(now, coachTimezone);
   const todaysCheckInClients = getClientsCheckingInOnDay(activeClients, dashboardWeekday);
-  const dashboardSubtitle = `${formatDashboardDate(now, coachTimezone)} - ${activeTaskCount} ${activeTaskCount === 1 ? "pipeline action requires" : "pipeline actions require"} attention.`;
+  const dashboardSubtitle = dashboardLoaded
+    ? `${formatDashboardDate(now, coachTimezone)} - ${activeTaskCount} ${activeTaskCount === 1 ? "pipeline action requires" : "pipeline actions require"} attention.`
+    : "Loading dashboard data from Neon.";
 
   const toggleTask = async (category: DashboardTaskCategory, taskId: string) => {
     const targetTask = tasks[category].find((task) => task.id === taskId);
@@ -189,33 +210,33 @@ export function DashboardPage() {
   }) => {
     const dueAt = getDueAtFromDateInput(task.dueDate);
 
-    if (taskSource === "api") {
-      try {
-        const response = await fetch("/api/v1/tasks", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: task.text,
-            category: task.category,
-            priority: task.priority,
-            ...(dueAt ? { dueAt } : {})
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error("Task persistence API unavailable.");
-        }
-
-        const payload = (await response.json()) as { data: ApiTask };
-        appendTask(mapApiTask(payload.data));
-        return;
-      } catch {
-        appendTask(createLocalDashboardTask(task.text, task.category, task.priority, dueAt), task.category);
-        return;
-      }
+    if (taskSource !== "api") {
+      setTaskSaveError("Dashboard tasks are unavailable until the Neon-backed task API loads.");
+      return;
     }
 
-    appendTask(createLocalDashboardTask(task.text, task.category, task.priority, dueAt), task.category);
+    try {
+      const response = await fetch("/api/v1/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: task.text,
+          category: task.category,
+          priority: task.priority,
+          ...(dueAt ? { dueAt } : {})
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Task persistence API unavailable.");
+      }
+
+      const payload = (await response.json()) as { data: ApiTask };
+      appendTask(mapApiTask(payload.data));
+      setTaskSaveError("");
+    } catch {
+      setTaskSaveError("Task could not be saved to the database. Please try again once the dashboard reconnects.");
+    }
   };
 
   function appendTask(nextTask: DashboardTask, category?: DashboardTaskCategory) {
@@ -225,22 +246,6 @@ export function DashboardPage() {
       ...currentTasks,
       [targetCategory]: sortDashboardTasks([...currentTasks[targetCategory], nextTask])
     }));
-  }
-
-  function createLocalDashboardTask(
-    text: string,
-    category: DashboardTaskCategory,
-    priority: DashboardTask["priority"],
-    dueAt: string | null
-  ): DashboardTask {
-    return {
-      id: `local-${Date.now()}`,
-      text,
-      completed: false,
-      category,
-      priority,
-      dueAt
-    };
   }
 
   return (
@@ -254,6 +259,7 @@ export function DashboardPage() {
         <FinancialCard
           currentPeriod={period}
           metric={revenueMetricSource[period]}
+          loading={!dashboardLoaded}
           open={periodMenuOpen}
           customStartDate={customStartDate}
           customEndDate={customEndDate}
@@ -276,22 +282,29 @@ export function DashboardPage() {
             void refreshFinancialMetric("custom", customStartDate, customEndDate);
           }}
         />
-        <ClientCapacityCard members={teamCapacityMembers ?? undefined} />
-        <PriorityTasksCard pendingCheckIns={pendingCheckInCount} />
-        <TodaysCheckInsCard weekday={dashboardWeekday} clients={todaysCheckInClients} />
+        <ClientCapacityCard members={teamCapacityMembers ?? []} loading={!dashboardLoaded} />
+        <PriorityTasksCard pendingCheckIns={pendingCheckInCount} loading={!dashboardLoaded} />
+        <TodaysCheckInsCard weekday={dashboardWeekday} clients={todaysCheckInClients} loading={!dashboardLoaded} />
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <WorkTodoSection
             tasks={tasks}
+            loading={!dashboardLoaded}
             onToggleTask={toggleTask}
             onAddTask={() => setTaskPanelOpen(true)}
           />
+          <PriorityFlagsModule flags={priorityFlags} />
+          {taskSaveError ? (
+            <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              {taskSaveError}
+            </p>
+          ) : null}
         </div>
         <div className="space-y-6">
-          <LivePipeline />
-          <TeamSnapshotCard members={teamCapacityMembers ?? undefined} />
+          <LivePipeline loading={!dashboardLoaded} />
+          <TeamSnapshotCard members={teamCapacityMembers ?? []} loading={!dashboardLoaded} />
         </div>
       </div>
 
@@ -316,6 +329,46 @@ export function DashboardPage() {
     }));
   }
 }
+
+const emptyDashboardTasks: Record<DashboardTaskCategory, DashboardTask[]> = {
+  "current-client-care": [],
+  "new-client-onboarding": [],
+  "social-media": [],
+  "business-operations": []
+};
+
+const emptyRevenueMetrics: Record<RevenuePeriod, RevenueMetric> = {
+  weekly: {
+    label: "Weekly Revenue",
+    value: "$0",
+    change: "Awaiting database data",
+    bars: []
+  },
+  monthly: {
+    label: "Monthly Revenue",
+    value: "$0",
+    change: "Awaiting database data",
+    bars: []
+  },
+  quarterly: {
+    label: "Quarterly Revenue",
+    value: "$0",
+    change: "Awaiting database data",
+    bars: []
+  },
+  yearly: {
+    label: "Yearly Revenue",
+    value: "$0",
+    change: "Awaiting database data",
+    bars: []
+  },
+  custom: {
+    label: "Custom Revenue",
+    value: "$0",
+    change: "Awaiting database data",
+    bars: []
+  }
+};
 
 async function loadPersistedTasks() {
   try {
@@ -378,6 +431,21 @@ async function loadActiveClients() {
   }
 }
 
+async function loadPriorityFlags() {
+  try {
+    const response = await fetch("/api/v1/ai/recommendations?type=risk-flag&status=pending-approval&limit=5");
+
+    if (!response.ok) {
+      throw new Error("AI priority flags API unavailable.");
+    }
+
+    const payload = (await response.json()) as { data?: ApiPriorityFlag[] };
+    return (payload.data ?? []).map(mapPriorityFlag).filter((flag): flag is DashboardPriorityFlag => Boolean(flag));
+  } catch {
+    return null;
+  }
+}
+
 function isApiClientSummary(value: unknown): value is ApiClientSummary {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -386,6 +454,41 @@ function isApiClientSummary(value: unknown): value is ApiClientSummary {
   const candidate = value as Partial<ApiClientSummary>;
 
   return typeof candidate.id === "string" && typeof candidate.name === "string";
+}
+
+function mapPriorityFlag(flag: ApiPriorityFlag): DashboardPriorityFlag | null {
+  const priority = normalizePriorityFlagSeverity(flag.severity);
+
+  if (!priority) {
+    return null;
+  }
+
+  return {
+    id: flag.id,
+    clientName: flag.client?.name || "Unknown client",
+    priority,
+    summary: getOneLineSummary(flag.title, flag.contentMarkdown),
+    note: flag.contentMarkdown || "No detailed AI note is available for this priority flag."
+  };
+}
+
+function normalizePriorityFlagSeverity(severity: string | null): DashboardPriorityFlag["priority"] | null {
+  if (severity === "high" || severity === "medium") {
+    return severity;
+  }
+
+  return null;
+}
+
+function getOneLineSummary(title: string, contentMarkdown: string) {
+  const cleanTitle = title.trim();
+
+  if (cleanTitle) {
+    return cleanTitle;
+  }
+
+  const [firstSentence] = contentMarkdown.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s+/u);
+  return firstSentence || "AI has flagged this client for coach review.";
 }
 
 async function loadTeamCapacityMembers() {
@@ -615,15 +718,4 @@ function getDefaultCustomDateRange() {
     startDate: startDate.toISOString().slice(0, 10),
     endDate: endDate.toISOString().slice(0, 10)
   };
-}
-
-function getFixtureActiveClients(): ApiClientSummary[] {
-  return fixtureClients
-    .filter((client) => client.status === "active")
-    .map((client) => ({
-      id: client.id,
-      name: client.name,
-      checkInDay: client.checkInDay,
-      status: client.status
-    }));
 }

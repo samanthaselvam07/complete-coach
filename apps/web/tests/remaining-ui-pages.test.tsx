@@ -45,26 +45,58 @@ describe("Ticket 009 route smoke", () => {
 });
 
 describe("SupplementationPage", () => {
-  it("renders the Figma supplementation hub surface", () => {
+  it("renders the persisted supplementation hub surface without local protocol rows", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+
     render(createElement(SupplementationPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Supplementation Hub" })).toBeInTheDocument();
     expect(screen.getByText("Manage client protocols and track compliance")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Assign Plan/i })).toBeInTheDocument();
-    expect(screen.getByText("Protocol Compliance")).toBeInTheDocument();
-    expect(screen.getByText("94.2%")).toBeInTheDocument();
-    expect(screen.getByText("Active Plans")).toBeInTheDocument();
-    expect(screen.getByText("Protocol Library")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Active Protocols" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Protocol Library" })).toBeInTheDocument();
-    expect(screen.getByText("Alex Rivera")).toBeInTheDocument();
-    expect(screen.getByText("Vitamin D3 + K2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Create Template/i })).toBeInTheDocument();
+    expect(screen.queryByText("Protocol Compliance")).not.toBeInTheDocument();
+    expect(screen.queryByText("94.2%")).not.toBeInTheDocument();
+    expect(screen.queryByText("Active Plans")).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Supplement Protocols" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Protocol Templates" })).toBeInTheDocument();
+    expect(await screen.findByText("0 protocols stored")).toBeInTheDocument();
+    expect(screen.queryByText("Alex Rivera")).not.toBeInTheDocument();
+    expect(screen.queryByText("Vitamin D3 + K2")).not.toBeInTheDocument();
   });
 });
 
 describe("OrganizationSettingsPage", () => {
-  it("separates operating system billing from coaching package management", () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+  it("separates operating system billing from coaching package management", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      if (String(input) === "/api/v1/team-members") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                members: [
+                  {
+                    id: "membership_marcus",
+                    userId: "user_marcus",
+                    name: "Marcus Chen",
+                    email: "marcus@example.com",
+                    image: null,
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 0,
+                    capacityLimit: 40,
+                    capacityPercent: 0
+                  }
+                ],
+                invitations: []
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
     render(createElement(OrganizationSettingsPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Organisation Settings" })).toBeInTheDocument();
@@ -88,7 +120,7 @@ describe("OrganizationSettingsPage", () => {
     expect(screen.getByRole("table", { name: "Team member feature permissions" })).toBeInTheDocument();
     expect(screen.getAllByText("payments:manage")).toHaveLength(2);
     expect(screen.getAllByText("api_keys:manage")).toHaveLength(2);
-    expect(screen.getByLabelText("Toggle payments:manage for Marcus Chen")).toHaveAttribute("aria-checked", "false");
+    expect(await screen.findByLabelText("Toggle payments:manage for Marcus Chen")).toHaveAttribute("aria-checked", "false");
 
     fireEvent.click(screen.getByLabelText("Toggle payments:manage for Marcus Chen"));
 
@@ -286,29 +318,153 @@ describe("OrganizationSettingsPage", () => {
 });
 
 describe("MessagesPage", () => {
-  it("selects conversations and sends a local message", () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+  it("selects persisted conversations and sends a message through the API", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/v1/conversations?")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "conversation_sarah",
+                  clientName: "Sarah Johnson",
+                  title: null,
+                  latestMessage: {
+                    id: "message_sarah_latest",
+                    senderType: "client",
+                    body: "Thanks for the update.",
+                    createdAt: "2026-05-18T09:15:00.000Z"
+                  },
+                  updatedAt: "2026-05-18T09:15:00.000Z"
+                },
+                {
+                  id: "conversation_marcus",
+                  clientName: "Marcus Chen",
+                  title: null,
+                  latestMessage: {
+                    id: "message_marcus_latest",
+                    senderType: "client",
+                    body: "Can we reschedule tomorrow's session?",
+                    createdAt: "2026-05-18T10:15:00.000Z"
+                  },
+                  updatedAt: "2026-05-18T10:15:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/conversations/conversation_sarah/messages?limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "message_sarah_1",
+                  senderType: "client",
+                  body: "Thanks for the update.",
+                  createdAt: "2026-05-18T09:15:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/conversations/conversation_marcus/messages?limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "message_marcus_1",
+                  senderType: "client",
+                  body: "Can we reschedule tomorrow's session?",
+                  createdAt: "2026-05-18T10:15:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/conversations/conversation_marcus/messages" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "message_created",
+                senderType: "user",
+                body: "Tomorrow at 3 PM works.",
+                createdAt: "2026-05-18T10:20:00.000Z"
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
     render(createElement(MessagesPage));
 
-    expect(screen.getByRole("heading", { level: 2, name: "Sarah Johnson" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 2, name: "Sarah Johnson" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Open conversation with Marcus Chen/i }));
 
-    const thread = screen.getByRole("log", { name: "Conversation with Marcus Chen" });
-    expect(within(thread).getByText("Can we reschedule tomorrow's session?")).toBeInTheDocument();
+    const thread = await screen.findByRole("log", { name: "Conversation with Marcus Chen" });
+    expect(await within(thread).findByText("Can we reschedule tomorrow's session?")).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("textbox", { name: /type a message/i }), {
       target: { value: "Tomorrow at 3 PM works." }
     });
     fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
-    expect(within(thread).getByText("Tomorrow at 3 PM works.")).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: /type a message/i })).toHaveValue("");
+    expect(await within(thread).findByText("Tomorrow at 3 PM works.")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("textbox", { name: /type a message/i })).toHaveValue(""));
   });
 
-  it("filters conversations by search query", () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+  it("filters persisted conversations by search query", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      if (String(input).startsWith("/api/v1/conversations?")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "conversation_sarah",
+                  clientName: "Sarah Johnson",
+                  title: null,
+                  latestMessage: null,
+                  updatedAt: "2026-05-18T09:15:00.000Z"
+                },
+                {
+                  id: "conversation_emma",
+                  clientName: "Emma Rodriguez",
+                  title: null,
+                  latestMessage: null,
+                  updatedAt: "2026-05-18T09:20:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
     render(createElement(MessagesPage));
+
+    expect(await screen.findByRole("button", { name: /Open conversation with Emma Rodriguez/i })).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("searchbox", { name: /search conversations/i }), {
       target: { value: "emma" }
@@ -535,9 +691,40 @@ describe("SupplementDatabasePage", () => {
     );
   });
 
-  it("searches supplements by category and name", () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+  it("searches persisted supplements by category and name", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "supplement_magnesium",
+              name: "Magnesium Glycinate",
+              category: "Evening",
+              scope: "global",
+              recommendedTiming: "Night",
+              dosage: null,
+              bioavailabilityNotes: null,
+              clinicalDescription: "Persisted magnesium entry."
+            },
+            {
+              id: "supplement_creatine",
+              name: "Creatine Monohydrate",
+              category: "Performance",
+              scope: "global",
+              recommendedTiming: "Daily",
+              dosage: null,
+              bioavailabilityNotes: null,
+              clinicalDescription: "Persisted creatine entry."
+            }
+          ]
+        }),
+        { status: 200 }
+      )
+    );
+
     render(createElement(SupplementDatabasePage));
+
+    expect(await screen.findByText("Magnesium Glycinate")).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("searchbox", { name: /search supplements/i }), {
       target: { value: "evening" }
@@ -700,8 +887,57 @@ describe("SupplementDatabasePage", () => {
 });
 
 describe("SupplementPlansPage", () => {
-  it("switches between active protocols and protocol library", () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+  it("switches between persisted active protocols and protocol templates", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      if (String(input) === "/api/v1/supplement-plan-assignments?limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "assignment_api",
+                  name: "Vitamin D3 + K2",
+                  clientName: "Alex Rivera",
+                  status: "active",
+                  snapshot: {
+                    template: {
+                      phases: [
+                        {
+                          supplements: [{ supplementName: "Vitamin D" }, { supplementName: "Vitamin K" }]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (String(input) === "/api/v1/supplement-plan-templates?limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "template_api",
+                  name: "Creatine Monohydrate",
+                  description: "Performance support protocol.",
+                  status: "published",
+                  template: { phases: [{ supplements: [{ supplementName: "Creatine" }] }] }
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
     render(createElement(SupplementPlansPage));
 
     expect(screen.queryByText("Protocol Compliance")).not.toBeInTheDocument();
@@ -709,18 +945,48 @@ describe("SupplementPlansPage", () => {
     expect(screen.queryByText("Library")).not.toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Supplement Protocols" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Protocol Templates" })).toBeInTheDocument();
-    expect(screen.getByText("Alex Rivera")).toBeInTheDocument();
+    expect(await screen.findByText("Alex Rivera")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
 
-    expect(screen.getByRole("tabpanel", { name: "Protocol Templates" })).toHaveTextContent("Creatine Monohydrate");
+    expect(await screen.findByText("Creatine Monohydrate")).toBeInTheDocument();
     expect(screen.queryByText("Alex Rivera")).not.toBeInTheDocument();
   });
 
-  it("creates, duplicates, assigns, edits, and saves supplement protocol templates", () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
+  it("creates and duplicates supplement protocol templates through the persistence API", async () => {
+    let nextTemplateId = 1;
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/supplement-plan-assignments?limit=100" || url === "/api/v1/supplement-plan-templates?limit=100") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/supplement-plan-templates" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as { name: string; description: string; status: string; template: { phases: Array<{ supplements: unknown[] }> } };
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: `template_created_${nextTemplateId++}`,
+                name: body.name,
+                description: body.description,
+                status: body.status,
+                template: body.template
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
     render(createElement(SupplementPlansPage));
 
+    expect(await screen.findByText("0 protocols stored")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Create Template" }));
     const createDialog = screen.getByRole("dialog", { name: "Create Protocol Template" });
     fireEvent.change(within(createDialog).getByLabelText("Template name"), { target: { value: "Sleep Support Stack" } });
@@ -728,24 +994,17 @@ describe("SupplementPlansPage", () => {
     fireEvent.change(within(createDialog).getByLabelText("Supplement count"), { target: { value: "3" } });
     fireEvent.click(within(createDialog).getByRole("button", { name: "Save Template" }));
 
-    expect(screen.getByRole("tabpanel", { name: "Protocol Templates" })).toHaveTextContent("Sleep Support Stack");
+    expect(await screen.findByText("Sleep Support Stack")).toBeInTheDocument();
     expect(screen.getByText("Sleep Support Stack template saved.")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Duplicate" })[0]);
-    expect(screen.getByText("Sleep Support Stack (copy)")).toBeInTheDocument();
+    expect(await screen.findByText("Sleep Support Stack (copy)")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Assign" })[0]);
-    expect(screen.getByRole("tabpanel", { name: "Supplement Protocols" })).toHaveTextContent("Assigned Client");
-
-    fireEvent.click(screen.getByRole("button", { name: "Save Sleep Support Stack (copy) as template" }));
-    expect(screen.getByRole("tabpanel", { name: "Protocol Templates" })).toHaveTextContent("Template saved from Assigned Client's protocol.");
+    expect(screen.getByText("Assigning a protocol requires selecting a persisted client from the Neon roster.")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
-    const editDialog = screen.getByRole("dialog", { name: "Edit Protocol Template" });
-    fireEvent.change(within(editDialog).getByLabelText("Template name"), { target: { value: "Sleep Support Stack v2" } });
-    fireEvent.click(within(editDialog).getByRole("button", { name: "Save Template" }));
-
-    expect(screen.getByText("Sleep Support Stack v2")).toBeInTheDocument();
+    expect(screen.getByText("Editing persisted protocol templates needs the Neon template update endpoint.")).toBeInTheDocument();
   });
 
   it("loads persisted active protocols and templates", async () => {
@@ -866,7 +1125,7 @@ describe("SupplementPlansPage", () => {
 });
 
 describe("Education persistence pages", () => {
-  it("renders the Figma education library surface", async () => {
+  it("renders the education library shell without local resource fixtures", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ data: [] }), { status: 200 })
     );
@@ -876,11 +1135,10 @@ describe("Education persistence pages", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Elevate Your Athletes." })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Create New Resource/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "All Content" })).toBeInTheDocument();
-    expect(screen.getByText("Advanced Hypertrophy Mechanisms & Periodization")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Watch Video" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Assign to Client" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Assign Now/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /View archive/i })).toBeInTheDocument();
+    expect(screen.getByText("No education resources were returned from the database.")).toBeInTheDocument();
+    expect(screen.queryByText("Advanced Hypertrophy Mechanisms & Periodization")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Watch Video" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Assign to Client" })).not.toBeInTheDocument();
   });
 
   it("loads education resources from the persistence API", async () => {
@@ -906,7 +1164,7 @@ describe("Education persistence pages", () => {
     expect(screen.getByText("Synced library")).toBeInTheDocument();
   });
 
-  it("keeps education fixtures when the resource API is empty or unavailable", async () => {
+  it("shows an empty persisted education library when the resource API is empty", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ data: [] }), { status: 200 })
     );
@@ -914,11 +1172,12 @@ describe("Education persistence pages", () => {
     render(createElement(EducationPage));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/education-resources?limit=100"));
-    expect(screen.getByText("Preview library")).toBeInTheDocument();
-    expect(screen.getByText("Nutrition Guide")).toBeInTheDocument();
+    expect(screen.getByText("No education resources were returned from the database.")).toBeInTheDocument();
+    expect(screen.queryByText("Preview library")).not.toBeInTheDocument();
+    expect(screen.queryByText("Nutrition Guide")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Nutrition Kit" }));
-    expect(screen.queryByText("Nutrition Guide")).not.toBeInTheDocument();
+    expect(screen.getByText("No education resources were returned from the database.")).toBeInTheDocument();
   });
 
   it("uploads a file and creates an education resource", async () => {

@@ -24,7 +24,7 @@
 - [x] `POST /api/v1/conversations/{conversation_id}/messages` creates coach-authored messages.
 - [x] `POST /api/v1/messages/{message_id}/read` creates/upserts read receipts.
 - [x] Message attachments use organization-scoped R2 signed upload URLs and object key validation before send.
-- [x] Messages UI prefers persisted API data with fixture fallback.
+- [x] Messages UI loads persisted API data and renders empty/error states when unavailable.
 - [x] Messages UI can send persisted messages.
 
 ## Tasks And Dashboard

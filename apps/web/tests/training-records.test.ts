@@ -90,11 +90,13 @@ describe("training record mappers", () => {
       secondaryMuscles: ["Glutes"],
       difficulty: "advanced",
       videoObjectKey: "videos/split-squat.mp4",
+      videoUrl: "https://www.youtube.com/watch?v=split-squat",
       imageObjectKey: "images/split-squat.jpg",
       defaultSets: 3,
       defaultReps: "8/side",
       defaultRestSeconds: 120,
       defaultRpe: 8.5,
+      defaultRir: "1-2",
       executionCues: ["Stay tall"]
     });
 
@@ -104,6 +106,8 @@ describe("training record mappers", () => {
       scope: LibraryScope.PRIVATE,
       difficulty: ExerciseDifficulty.ADVANCED,
       primaryMuscles: ["Quads"],
+      videoUrl: "https://www.youtube.com/watch?v=split-squat",
+      defaultRir: "1-2",
       executionCues: ["Stay tall"]
     });
 
@@ -125,11 +129,13 @@ describe("training record mappers", () => {
       secondaryMuscles: [],
       difficulty: "beginner",
       videoObjectKey: "",
+      videoUrl: "https://example.com/split-squat",
       imageObjectKey: "",
       defaultSets: 4,
       defaultReps: "10/side",
       defaultRestSeconds: 90,
       defaultRpe: 7,
+      defaultRir: "2",
       executionCues: []
     });
 
@@ -141,11 +147,13 @@ describe("training record mappers", () => {
       secondaryMuscles: [],
       difficulty: ExerciseDifficulty.BEGINNER,
       videoObjectKey: "",
+      videoUrl: "https://example.com/split-squat",
       imageObjectKey: "",
       defaultSets: 4,
       defaultReps: "10/side",
       defaultRestSeconds: 90,
       defaultRpe: 7,
+      defaultRir: "2",
       executionCues: []
     });
 
@@ -198,11 +206,13 @@ describe("training record mappers", () => {
         secondaryMuscles: "not-array",
         difficulty: ExerciseDifficulty.BEGINNER,
         videoObjectKey: null,
+        videoUrl: null,
         imageObjectKey: null,
         defaultSets: null,
         defaultReps: null,
         defaultRestSeconds: null,
         defaultRpe: null,
+        defaultRir: null,
         executionCues: ["Brace", false],
         createdAt: new Date("2026-05-14T00:00:00.000Z"),
         updatedAt: "2026-05-14T01:00:00.000Z"
@@ -214,6 +224,7 @@ describe("training record mappers", () => {
       secondaryMuscles: [],
       executionCues: ["Brace"],
       defaultRpe: null,
+      defaultRir: null,
       createdAt: "2026-05-14T00:00:00.000Z",
       updatedAt: "2026-05-14T01:00:00.000Z"
     });
@@ -230,11 +241,13 @@ describe("training record mappers", () => {
         secondaryMuscles: ["Glutes"],
         difficulty: ExerciseDifficulty.ADVANCED,
         videoObjectKey: "videos/split-squat.mp4",
+        videoUrl: "https://example.com/split-squat",
         imageObjectKey: "images/split-squat.jpg",
         defaultSets: 3,
         defaultReps: "8/side",
         defaultRestSeconds: 120,
         defaultRpe: "8.5",
+        defaultRir: "1-2",
         executionCues: [],
         createdAt: "2026-05-14T00:00:00.000Z",
         updatedAt: new Date("2026-05-14T01:00:00.000Z")
@@ -242,7 +255,9 @@ describe("training record mappers", () => {
     ).toMatchObject({
       scope: "private",
       difficulty: "advanced",
-      defaultRpe: 8.5
+      defaultRpe: 8.5,
+      defaultRir: "1-2",
+      videoUrl: "https://example.com/split-squat"
     });
   });
 

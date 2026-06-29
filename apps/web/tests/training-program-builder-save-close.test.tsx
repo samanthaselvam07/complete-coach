@@ -124,6 +124,41 @@ describe("Training program builder save and close", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
+      if (url === "/api/v1/exercises" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as {
+          name: string;
+          category?: string;
+          defaultSets?: number;
+          defaultReps?: string;
+          defaultRestSeconds?: number;
+          defaultRpe?: number;
+          executionCues?: string[];
+        };
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "exercise_single_leg_squat",
+                name: body.name,
+                category: body.category ?? "Glutes",
+                scope: "private",
+                equipment: null,
+                difficulty: "intermediate",
+                videoObjectKey: null,
+                primaryMuscles: [body.category ?? "Glutes"],
+                defaultSets: body.defaultSets ?? 3,
+                defaultReps: body.defaultReps ?? "8-10",
+                defaultRestSeconds: body.defaultRestSeconds ?? 120,
+                defaultRpe: body.defaultRpe ?? null,
+                executionCues: body.executionCues ?? []
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
       if (url === "/api/v1/training-program-templates" && init?.method === "POST") {
         return Promise.resolve(
           new Response(
@@ -163,6 +198,7 @@ describe("Training program builder save and close", () => {
       target: { files: [new File(["demo"], "single-leg-squat.mp4", { type: "video/mp4" })] }
     });
     fireEvent.click(within(customExerciseDialog).getByRole("button", { name: "Add exercise" }));
+    expect(await screen.findByRole("group", { name: "Single Leg Squat exercise row" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Save & Close" }));
 
     expect(await screen.findByRole("heading", { level: 1, name: "Program Library" })).toBeInTheDocument();
@@ -171,6 +207,13 @@ describe("Training program builder save and close", () => {
     expect(screen.getByRole("tab", { name: "Custom programs" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Preview Hypertrophy Build added to Custom programs.")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/exercises",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Single Leg Squat")
+      })
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/training-program-templates",
       expect.objectContaining({

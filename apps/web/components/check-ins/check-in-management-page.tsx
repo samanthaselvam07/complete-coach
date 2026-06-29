@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
-  checkIns,
   formatSubmittedAt,
   getTimingStatus,
   type CheckInRecord,
@@ -18,8 +17,6 @@ const sortOptions: Array<{ value: CheckInSort; label: string }> = [
   { value: "oldest", label: "Oldest First" },
   { value: "name", label: "By Name" }
 ];
-
-type CheckInSource = "api" | "fixture";
 
 interface ApiCheckInRecord {
   id: string;
@@ -44,7 +41,6 @@ export function CheckInManagementPage() {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [sortBy, setSortBy] = useState<CheckInSort>("recent");
   const [apiCheckIns, setApiCheckIns] = useState<ApiCheckInRecord[]>([]);
-  const [checkInSource, setCheckInSource] = useState<CheckInSource>("fixture");
   const [loadingCheckIns, setLoadingCheckIns] = useState(true);
 
   useEffect(() => {
@@ -55,17 +51,18 @@ export function CheckInManagementPage() {
         const response = await fetch("/api/v1/check-ins?limit=100");
 
         if (!response.ok) {
-          return;
+          throw new Error("Check-in API unavailable.");
         }
 
         const payload = (await response.json()) as { data?: ApiCheckInRecord[] };
 
         if (active) {
           setApiCheckIns(payload.data ?? []);
-          setCheckInSource("api");
         }
       } catch {
-        // Keep local sample check-ins available until persistence is reachable.
+        if (active) {
+          setApiCheckIns([]);
+        }
       } finally {
         if (active) {
           setLoadingCheckIns(false);
@@ -80,8 +77,7 @@ export function CheckInManagementPage() {
     };
   }, []);
 
-  const sourceCheckIns = checkInSource === "api" ? apiCheckIns : checkIns;
-  const displayedCheckIns = sourceCheckIns
+  const displayedCheckIns = apiCheckIns
     .filter((checkIn) => checkIn.status === activeTab)
     .sort((a, b) => sortCheckIns(a, b, sortBy));
 
@@ -153,9 +149,6 @@ export function CheckInManagementPage() {
           Reviewing <span className="font-semibold text-gray-900">{displayedCheckIns.length}</span>{" "}
           {activeTab === "pending" ? "pending" : "completed"} check-ins
         </p>
-        {checkInSource === "fixture" ? (
-          <p className="mt-2 text-sm text-amber-700">Showing local sample check-ins until the persistence API is available.</p>
-        ) : null}
       </div>
 
       <section aria-label="Check-in list" className="space-y-4">
@@ -202,7 +195,7 @@ export function CheckInManagementPage() {
         })}
       </section>
 
-      {checkInSource === "api" && !loadingCheckIns && displayedCheckIns.length === 0 ? (
+      {!loadingCheckIns && displayedCheckIns.length === 0 ? (
         <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
           No {activeTab === "pending" ? "pending" : "completed"} check-ins found.
         </div>

@@ -7,7 +7,7 @@ Ticket 012 replaces the client roster and CRM pipeline fixture-only foundation w
 - Authenticated `/api/v1/clients`, `/api/v1/clients/{client_id}/profile`, `/api/v1/leads`, and `/api/v1/leads/{lead_id}/activities` route handlers.
 - Tenant scoping from the active Auth.js organization context. API callers cannot provide or override `organization_id`.
 - Audit log writes for client/lead create, update, archive, and lead stage transitions.
-- Client roster, client profile, and CRM pages attempt API-backed data first and retain fixture fallback while migrations/seeds are unavailable.
+- Client roster, client profile, and CRM pages load API-backed data and render empty/not-found states when persistence APIs are unavailable.
 - Demo seed data populates clients and leads from the existing UI fixtures after migrations are applied.
 
 ## Mutation UI Follow-Up
@@ -30,7 +30,7 @@ Gaps found and closed:
 - Focused profile component tests cover persisted profile success, unavailable profile fallback, and incomplete profile normalization.
 
 Review verification:
-- Client roster, client profile, and CRM pages use API-backed data with fixture fallback retained only for preview environments without migrations/seeds.
+- Client roster, client profile, and CRM pages use API-backed data only; preview environments without migrations/seeds should be fixed at the database layer instead of showing local demo records.
 - Client create, edit, archive, search, filter, sort, profile view, lead create, lead edit, lead search, and lead stage transitions are covered by component tests.
 - Client/lead API route tests cover authenticated access, tenant scoping, cross-tenant denial, mutations, and audit logging.
 - Sensitive profile reads use the `clients:pii:read` capability and profile mutations use `clients:write`.

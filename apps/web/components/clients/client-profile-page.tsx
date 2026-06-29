@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { CheckInDetailPage } from "@/components/check-ins/check-in-detail-page";
 import { CheckInHistoryPanel, DailyCheckInsPanel } from "@/components/clients/client-check-in-panels";
 import { ClientProfileDashboard } from "@/components/clients/client-profile-dashboard";
-import { getClientById, type ClientProfile, type ClientSummary } from "@/fixtures/clients";
+import type { ClientProfile, ClientSummary } from "@/fixtures/clients";
 import { cn } from "@/lib/utils";
 
 type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "Supplementation" | "Check-Ins";
@@ -115,9 +115,9 @@ interface ClientNutritionPlan {
 
 interface ClientProfileView extends ClientProfile {
   trainingPrograms: ClientTrainingProgram[];
-  trainingSource: "api" | "fixtures";
+  trainingSource: "api";
   nutritionPlans: ClientNutritionPlan[];
-  nutritionSource: "api" | "fixtures";
+  nutritionSource: "api";
 }
 
 const tabs: ProfileTab[] = ["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Check-Ins"];
@@ -128,12 +128,8 @@ export function ClientProfilePage({
   highlightedCheckInId,
   initialTab = "Dashboard"
 }: ClientProfilePageProps) {
-  const [client, setClient] = useState<ClientProfileView | null>(() => {
-    const fixtureClient = getClientById(clientId);
-
-    return fixtureClient ? createProfileViewFromFixture(fixtureClient) : null;
-  });
-  const [loadingClient, setLoadingClient] = useState(!client);
+  const [client, setClient] = useState<ClientProfileView | null>(null);
+  const [loadingClient, setLoadingClient] = useState(true);
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
 
   useEffect(() => {
@@ -144,7 +140,7 @@ export function ClientProfilePage({
         const response = await fetch(`/api/v1/clients/${clientId}`);
 
         if (!response.ok) {
-          return;
+          throw new Error("Client API unavailable.");
         }
 
         const payload = (await response.json()) as { data?: ClientSummary };
@@ -159,7 +155,9 @@ export function ClientProfilePage({
           setClient(createProfileFromSummary(payload.data, profile, trainingAssignments, mealPlanAssignments));
         }
       } catch {
-        // Keep fixture fallback for UI preview environments without migrated client tables.
+        if (active) {
+          setClient(null);
+        }
       } finally {
         if (active) {
           setLoadingClient(false);
@@ -191,7 +189,7 @@ export function ClientProfilePage({
         </Link>
         <section className="rounded-2xl border border-gray-200 bg-white p-10">
           <h1 className="mb-2 text-3xl font-bold">Client Not Found</h1>
-          <p className="text-gray-600">The requested fixture client does not exist in this UI stub.</p>
+          <p className="text-gray-600">This client was not found in the Neon database.</p>
         </section>
       </div>
     );
@@ -341,43 +339,6 @@ function createProfileFromSummary(
     nutritionPlans,
     nutritionSource: "api",
     supplements: []
-  };
-}
-
-function createProfileViewFromFixture(client: ClientProfile): ClientProfileView {
-  return {
-    ...client,
-    trainingPrograms:
-      client.trainingSchedule.length > 0
-        ? [
-            {
-              id: `${client.id}-fixture-training`,
-              name: client.protocol,
-              status: "active",
-              startsOn: client.startDate,
-              endsOn: null,
-              durationWeeks: client.weeksWithCoach,
-              sessions: client.trainingSchedule
-            }
-          ]
-        : [],
-    trainingSource: "fixtures",
-    nutritionPlans: [
-      {
-        id: `${client.id}-fixture-nutrition`,
-        name: client.nutritionPlan.name,
-        phase: client.nutritionPlan.phase,
-        status: "active",
-        startsOn: client.startDate,
-        endsOn: null,
-        calories: client.nutritionPlan.calories,
-        protein: client.nutritionPlan.protein,
-        carbs: client.nutritionPlan.carbs,
-        fats: client.nutritionPlan.fats,
-        meals: []
-      }
-    ],
-    nutritionSource: "fixtures"
   };
 }
 
@@ -634,11 +595,7 @@ function TrainingPanel({ client }: { client: ClientProfileView }) {
             </article>
           ))
         ) : (
-          <p className="text-sm text-gray-500">
-            {client.trainingSource === "api"
-              ? "No scheduled sessions were found in persisted training assignments."
-              : "No active training sessions in this fixture profile."}
-          </p>
+          <p className="text-sm text-gray-500">No scheduled sessions were found in persisted training assignments.</p>
         )}
       </div>
     </div>
@@ -691,11 +648,7 @@ function NutritionPanel({ client }: { client: ClientProfileView }) {
             </article>
           ))
         ) : (
-          <p className="text-sm text-gray-500">
-            {client.nutritionSource === "api"
-              ? "No persisted meal schedule has been assigned yet."
-              : "No meal schedule is available in this fixture profile."}
-          </p>
+          <p className="text-sm text-gray-500">No persisted meal schedule has been assigned yet.</p>
         )}
       </div>
     </div>
@@ -723,7 +676,7 @@ function SupplementationPanel({ client }: { client: ClientProfile }) {
             </div>
           ))
         ) : (
-          <p className="text-sm text-gray-500">No active supplements in this fixture profile.</p>
+          <p className="text-sm text-gray-500">No persisted supplement protocol has been assigned yet.</p>
         )}
       </div>
     </div>

@@ -11,10 +11,10 @@ Ticket 018 / M9 connects education resources, education assignments, supplement 
 - Education assignment API can assign active-organization resources to active-organization clients.
 - Education writes require `education:write`; education assignment requires `education:assign`; read-only assistants and clients only receive `education:read`.
 - Education resource uploads use R2 presigned PUT URLs and organization-scoped object ids.
-- Education UI loads persisted resources with fixture fallback and creates resources from direct URLs or uploaded files.
-- Supplement database UI loads persisted library items with fixture fallback and creates private supplement records.
+- Education UI loads persisted resources and creates resources from direct URLs or uploaded files. Unavailable APIs render empty/error states instead of local demo resources.
+- Supplement database UI loads persisted library items and creates private supplement records. Unavailable APIs render empty/error states instead of local demo supplements.
 - Supplement CSV import can dry-run or commit global supplement records from the approved CSV header format.
-- Supplement plan UI loads persisted active assignments and templates with fixture fallback.
+- Supplement plan UI loads persisted active assignments and templates without local fixture fallback.
 - Demo seed data creates education and supplement records for the demo organization.
 
 ## Ticket 018A Outcome
@@ -37,7 +37,7 @@ Delivered:
 - `POST /api/v1/education-resources/upload-url` creates R2 presigned upload URLs for PDF, image, and video education resources.
 - Education upload validation enforces supported content types, extension/content-type matching, and per-media max byte limits.
 - Education upload URL creation audits safe metadata only: content type, byte size, checksum, and inferred resource type.
-- Education resource UI now loads persisted resources and falls back to fixtures when the API is unavailable.
+- Education resource UI now loads persisted resources and renders an empty/error state when the API is unavailable.
 - Add-resource UI can publish direct URL resources or upload a file through R2 before creating the education resource record.
 - Supplement database UI now loads persisted supplement library items and creates private supplement records.
 - Supplement plan UI now loads persisted supplement assignments and protocol templates.

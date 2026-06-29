@@ -2,7 +2,7 @@
 
 import { MessageSquare, MoreVertical, Paperclip, Phone, Search, Send, Smile, Video } from "lucide-react";
 import { useEffect, useState } from "react";
-import { conversations, initialConversationMessages, type ChatMessage } from "@/fixtures/operations";
+import type { ChatMessage } from "@/fixtures/operations";
 
 interface ApiConversation {
   id: string;
@@ -30,12 +30,12 @@ interface UiConversation {
 }
 
 export function MessagesPage() {
-  const [conversationSource, setConversationSource] = useState<"api" | "fixture">("fixture");
-  const [conversationList, setConversationList] = useState<UiConversation[]>(conversations);
-  const [selectedConversation, setSelectedConversation] = useState(conversations[0]?.id ?? "");
+  const [conversationList, setConversationList] = useState<UiConversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState("");
   const [messageInput, setMessageInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [messagesByConversation, setMessagesByConversation] = useState(initialConversationMessages);
+  const [messagesByConversation, setMessagesByConversation] = useState<Record<string, ChatMessage[]>>({});
+  const [messageError, setMessageError] = useState("");
 
   useEffect(() => {
     let isActive = true;
@@ -51,11 +51,10 @@ export function MessagesPage() {
         const payload = (await response.json()) as { data: ApiConversation[] };
         const apiConversations = payload.data.map(mapApiConversation);
 
-        if (!isActive || apiConversations.length === 0) {
+        if (!isActive) {
           return;
         }
 
-        setConversationSource("api");
         setConversationList(apiConversations);
         setSelectedConversation(apiConversations[0]?.id ?? "");
         setMessagesByConversation({});
@@ -64,10 +63,9 @@ export function MessagesPage() {
           return;
         }
 
-        setConversationSource("fixture");
-        setConversationList(conversations);
-        setSelectedConversation((current) => current || conversations[0]?.id || "");
-        setMessagesByConversation(initialConversationMessages);
+        setConversationList([]);
+        setSelectedConversation("");
+        setMessagesByConversation({});
       }
     }
 
@@ -79,7 +77,7 @@ export function MessagesPage() {
   }, []);
 
   useEffect(() => {
-    if (conversationSource !== "api" || !selectedConversation) {
+    if (!selectedConversation) {
       return;
     }
 
@@ -120,7 +118,7 @@ export function MessagesPage() {
     return () => {
       isActive = false;
     };
-  }, [conversationSource, selectedConversation]);
+  }, [selectedConversation]);
 
   const filteredConversations = conversationList.filter((conversation) =>
     conversation.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -134,32 +132,29 @@ export function MessagesPage() {
       return;
     }
 
-    if (conversationSource === "api") {
-      try {
-        const response = await fetch(`/api/v1/conversations/${selectedConversation}/messages`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ body: text })
-        });
-
-        if (!response.ok) {
-          throw new Error("Message API unavailable.");
-        }
-
-        const payload = (await response.json()) as { data: ApiMessage };
-        appendMessage(selectedConversation, mapApiMessage(payload.data));
-        setConversationList((current) => updateConversationPreview(current, selectedConversation, text));
-        setMessageInput("");
-        return;
-      } catch {
-        appendMessage(selectedConversation, createLocalMessage(selectedConversation, text));
-        setMessageInput("");
-        return;
-      }
+    if (!selectedConversation) {
+      return;
     }
 
-    appendMessage(selectedConversation, createLocalMessage(selectedConversation, text));
-    setMessageInput("");
+    try {
+      const response = await fetch(`/api/v1/conversations/${selectedConversation}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: text })
+      });
+
+      if (!response.ok) {
+        throw new Error("Message API unavailable.");
+      }
+
+      const payload = (await response.json()) as { data: ApiMessage };
+      appendMessage(selectedConversation, mapApiMessage(payload.data));
+      setConversationList((current) => updateConversationPreview(current, selectedConversation, text));
+      setMessageInput("");
+      setMessageError("");
+    } catch {
+      setMessageError("Message could not be sent. Please try again once the database connection is available.");
+    }
   }
 
   function appendMessage(conversationId: string, message: ChatMessage) {
@@ -174,6 +169,7 @@ export function MessagesPage() {
       <aside className="flex w-full max-w-sm flex-col border-r border-slate-200 bg-white">
         <div className="border-b border-slate-200 p-4">
           <h1 className="mb-4 text-2xl font-black">Messages</h1>
+          {messageError ? <p role="alert" className="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">{messageError}</p> : null}
           <label className="relative block">
             <span className="sr-only">Search conversations</span>
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -303,7 +299,7 @@ export function MessagesPage() {
           <div className="flex flex-1 items-center justify-center text-slate-500">
             <div className="text-center">
               <MessageSquare className="mx-auto mb-4 h-16 w-16 text-slate-300" />
-              <p>Select a conversation to start messaging</p>
+              <p>No conversations loaded from Neon yet.</p>
             </div>
           </div>
         )}
@@ -332,15 +328,6 @@ function mapApiMessage(message: ApiMessage): ChatMessage {
     sender: message.senderType === "user" ? "coach" : "client",
     text: message.body,
     time: formatMessageTime(message.createdAt)
-  };
-}
-
-function createLocalMessage(conversationId: string, text: string): ChatMessage {
-  return {
-    id: `${conversationId}-${Date.now()}`,
-    sender: "coach",
-    text,
-    time: "Now"
   };
 }
 

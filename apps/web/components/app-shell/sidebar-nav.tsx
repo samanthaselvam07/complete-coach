@@ -4,11 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Settings, UserCircle } from "lucide-react";
 import type { Route } from "next";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 
 import { cn } from "@/lib/utils";
 import { isActivePath, navigationItems } from "./navigation";
+import { useCloseOnOutsideClick } from "./use-close-on-outside-click";
 
 interface SidebarNavProps {
   currentPath: string;
@@ -27,9 +28,11 @@ function createInitialOpenGroups() {
 export function SidebarNav({ currentPath }: SidebarNavProps) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(createInitialOpenGroups);
   const [coachMenuOpen, setCoachMenuOpen] = useState(false);
+  const coachMenuRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const coachName = session?.user?.name ?? "Coach Marcus";
   const coachTitle = session?.user?.email ?? "Head Curator";
+  useCloseOnOutsideClick(coachMenuRef, coachMenuOpen, () => setCoachMenuOpen(false));
 
   const toggleGroup = (href: string) => {
     setOpenGroups((current) => ({
@@ -161,7 +164,7 @@ export function SidebarNav({ currentPath }: SidebarNavProps) {
       </nav>
 
       <div className="border-t border-sidebar-border p-4">
-        <div className="relative">
+        <div ref={coachMenuRef} className="relative">
           {coachMenuOpen ? (
             <div
               id="sidebar-coach-menu"

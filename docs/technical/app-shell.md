@@ -11,7 +11,7 @@ Included:
 - Nested groups can also expand or collapse from the chevron toggle.
 - Active route state via `aria-current`.
 - Top search control.
-- Notification dropdown with local fixture state and mark-all-read behavior.
+- Notification dropdown backed by `GET /api/v1/notifications?limit=20` with mark-all-read behavior and an empty state when the API is unavailable.
 - Settings/user menu placeholder.
 - Root layout wrapping application pages in the shell.
 

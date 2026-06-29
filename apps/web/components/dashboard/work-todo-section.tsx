@@ -9,11 +9,12 @@ import { cn } from "@/lib/utils";
 
 interface WorkTodoSectionProps {
   tasks: Record<DashboardTaskCategory, DashboardTask[]>;
+  loading?: boolean;
   onToggleTask: (category: DashboardTaskCategory, taskId: string) => void;
   onAddTask: () => void;
 }
 
-export function WorkTodoSection({ tasks, onToggleTask, onAddTask }: WorkTodoSectionProps) {
+export function WorkTodoSection({ tasks, loading = false, onToggleTask, onAddTask }: WorkTodoSectionProps) {
   return (
     <section className="col-span-1 lg:col-span-2">
       <div className="mb-4 flex items-center justify-between">
@@ -42,12 +43,16 @@ export function WorkTodoSection({ tasks, onToggleTask, onAddTask }: WorkTodoSect
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-sm font-semibold">{category.label}</h3>
                 <span className={cn("rounded px-2 py-1 text-xs", category.badgeClassName)}>
-                  {openTaskCount}
+                  {loading ? "..." : openTaskCount}
                 </span>
               </div>
 
               <div className="space-y-2">
-                {visibleTasks.length > 0 ? visibleTasks.map((task) => (
+                {loading ? (
+                  <p role="status" className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                    Loading tasks from Neon.
+                  </p>
+                ) : visibleTasks.length > 0 ? visibleTasks.map((task) => (
                   <button
                     key={task.id}
                     type="button"

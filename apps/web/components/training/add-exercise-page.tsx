@@ -15,7 +15,11 @@ export function AddExercisePage() {
   const [category, setCategory] = useState("Compound");
   const [equipment, setEquipment] = useState("Dumbbells");
   const [sets, setSets] = useState(3);
-  const [targetReps, setTargetReps] = useState([8, 12]);
+  const [repTarget, setRepTarget] = useState("8-12");
+  const [restSeconds, setRestSeconds] = useState("120");
+  const [rpeTarget, setRpeTarget] = useState("8");
+  const [rirTarget, setRirTarget] = useState("1-2");
+  const [videoUrl, setVideoUrl] = useState("");
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>(["Chest", "Shoulders"]);
   const [coachingCues, setCoachingCues] = useState([
     "Retract scapula",
@@ -35,22 +39,6 @@ export function AddExercisePage() {
       currentMuscles.includes(muscle)
         ? currentMuscles.filter((currentMuscle) => currentMuscle !== muscle)
         : [...currentMuscles, muscle]
-    );
-  };
-
-  const updateTargetRepRange = (rangeIndex: 0 | 1, rawValue: string) => {
-    const parsedValue = Number(rawValue);
-
-    if (!Number.isFinite(parsedValue)) {
-      return;
-    }
-
-    const nextValue = Math.max(1, Math.min(50, parsedValue));
-
-    setTargetReps(([lowerRange, upperRange]) =>
-      rangeIndex === 0
-        ? [Math.min(nextValue, upperRange), upperRange]
-        : [lowerRange, Math.max(nextValue, lowerRange)]
     );
   };
 
@@ -81,9 +69,12 @@ export function AddExercisePage() {
           primaryMuscles: selectedMuscles,
           difficulty: "intermediate",
           defaultSets: sets,
-          defaultReps: `${targetReps[0]}-${targetReps[1]}`,
-          defaultRestSeconds: 120,
+          defaultReps: repTarget.trim() || undefined,
+          defaultRestSeconds: parseOptionalPositiveInteger(restSeconds),
+          defaultRpe: parseOptionalNumber(rpeTarget),
+          defaultRir: rirTarget.trim() || undefined,
           videoObjectKey: videoObjectKey ?? undefined,
+          videoUrl: videoUrl.trim() || undefined,
           executionCues: coachingCues
         })
       });
@@ -280,38 +271,56 @@ export function AddExercisePage() {
                 </div>
 
                 <div>
-                  <div className="mb-3 flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-700">Target Reps</p>
-                    <span className="text-sm font-bold text-gray-900">
-                      {targetReps[0]} - {targetReps[1]}
-                    </span>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label htmlFor="target-reps-lower" className="grid gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Lower range
-                      <input
-                        id="target-reps-lower"
-                        type="number"
-                        min="1"
-                        max="50"
-                        value={targetReps[0]}
-                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        onChange={(event) => updateTargetRepRange(0, event.target.value)}
-                      />
-                    </label>
-                    <label htmlFor="target-reps-upper" className="grid gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Upper range
-                      <input
-                        id="target-reps-upper"
-                        type="number"
-                        min="1"
-                        max="50"
-                        value={targetReps[1]}
-                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        onChange={(event) => updateTargetRepRange(1, event.target.value)}
-                      />
-                    </label>
-                  </div>
+                  <label htmlFor="rep-target" className="mb-2 block text-sm font-medium text-gray-700">
+                    Rep target
+                  </label>
+                  <input
+                    id="rep-target"
+                    type="text"
+                    value={repTarget}
+                    placeholder="e.g. 8-12, AMRAP, 6/side"
+                    className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onChange={(event) => setRepTarget(event.target.value)}
+                  />
+                  <p className="mt-2 text-xs text-gray-500">Use any coaching format. This is not restricted to a numeric range.</p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <label htmlFor="rest-timer" className="grid gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Rest timer
+                    <input
+                      id="rest-timer"
+                      type="number"
+                      min="0"
+                      value={restSeconds}
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      onChange={(event) => setRestSeconds(event.target.value)}
+                    />
+                  </label>
+                  <label htmlFor="rpe-target" className="grid gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    RPE target
+                    <input
+                      id="rpe-target"
+                      type="number"
+                      min="1"
+                      max="10"
+                      step="0.5"
+                      value={rpeTarget}
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      onChange={(event) => setRpeTarget(event.target.value)}
+                    />
+                  </label>
+                  <label htmlFor="rir-target" className="grid gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    RIR target
+                    <input
+                      id="rir-target"
+                      type="text"
+                      value={rirTarget}
+                      placeholder="e.g. 1-2"
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      onChange={(event) => setRirTarget(event.target.value)}
+                    />
+                  </label>
                 </div>
               </div>
             </section>
@@ -320,6 +329,19 @@ export function AddExercisePage() {
           <div className="space-y-6">
             <section className="rounded-xl border border-gray-200 bg-white p-6">
               <CardHeader icon="M" title="Video Demonstration" tone="bg-indigo-100 text-indigo-600" />
+              <div className="mb-4">
+                <label htmlFor="exercise-video-url" className="mb-2 block text-sm font-medium text-gray-700">
+                  YouTube or external video link
+                </label>
+                <input
+                  id="exercise-video-url"
+                  type="url"
+                  value={videoUrl}
+                  placeholder="https://youtube.com/watch?v=..."
+                  className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  onChange={(event) => setVideoUrl(event.target.value)}
+                />
+              </div>
               <div className="rounded-xl border-2 border-dashed border-gray-300 p-8 text-center transition-all hover:border-indigo-400 hover:bg-indigo-50/50">
                 <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-indigo-100">
                   <Upload className="size-8 text-indigo-600" aria-hidden="true" />
@@ -425,4 +447,26 @@ function CardHeader({ icon, title, tone }: { icon: string; title: string; tone: 
       <h2 className="font-bold text-gray-900">{title}</h2>
     </div>
   );
+}
+
+function parseOptionalPositiveInteger(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  const parsedValue = Number(trimmedValue);
+  return Number.isFinite(parsedValue) ? Math.max(0, Math.round(parsedValue)) : undefined;
+}
+
+function parseOptionalNumber(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  const parsedValue = Number(trimmedValue);
+  return Number.isFinite(parsedValue) ? parsedValue : undefined;
 }

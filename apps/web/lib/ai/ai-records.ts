@@ -16,10 +16,21 @@ export const aiRecommendationStatusValues = [
   "discarded"
 ] as const;
 
+export const aiRecommendationTypeValues = [
+  "check-in-summary",
+  "risk-flag",
+  "workout-suggestion",
+  "nutrition-suggestion",
+  "message-draft",
+  "resource-recommendation",
+  "extraction-enhancement"
+] as const satisfies readonly AiReviewOutputDraft["type"][];
+
 export const aiRecommendationsQuerySchema = z.object({
   clientId: z.string().min(1).optional(),
   targetType: z.string().min(1).max(80).optional(),
   targetId: z.string().min(1).optional(),
+  type: z.enum(aiRecommendationTypeValues).optional(),
   status: z.enum(aiRecommendationStatusValues).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50)
 });
@@ -167,6 +178,11 @@ interface AiOutputRecord {
   createdAt: Date | string;
   updatedAt: Date | string;
   generation?: AiGenerationRecord | null;
+  client?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
 }
 
 export function toPrismaAiOutputType(type: AiReviewOutputDraft["type"]) {
@@ -238,9 +254,19 @@ export function serializeAiOutput(record: AiOutputRecord) {
     rejectedByUserId: record.rejectedByUserId,
     rejectedAt: record.rejectedAt ? toIsoString(record.rejectedAt) : null,
     rejectionReason: record.rejectionReason,
+    client: record.client ? serializeAiOutputClient(record.client) : null,
     createdAt: toIsoString(record.createdAt),
     updatedAt: toIsoString(record.updatedAt),
     ...(record.generation ? { generation: serializeAiGeneration(record.generation) } : {})
+  };
+}
+
+function serializeAiOutputClient(client: NonNullable<AiOutputRecord["client"]>) {
+  const name = `${client.firstName} ${client.lastName}`.trim();
+
+  return {
+    id: client.id,
+    name
   };
 }
 

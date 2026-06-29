@@ -72,12 +72,12 @@ export function TaskCreationPanel({ open, onClose, onCreateTask }: TaskCreationP
         aria-labelledby="task-creation-title"
         className="fixed right-0 top-0 z-50 h-full w-full max-w-lg bg-white shadow-2xl"
       >
-        <div className="flex items-center justify-between bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+        <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-violet-600 p-6 text-white">
           <div>
             <h2 id="task-creation-title" className="mb-1 text-2xl font-bold">
               Create New Task
             </h2>
-            <p className="text-sm text-orange-100">Add a task to your workload</p>
+            <p className="text-sm text-indigo-100">Add a task to your workload</p>
           </div>
           <button
             type="button"
@@ -98,7 +98,7 @@ export function TaskCreationPanel({ open, onClose, onCreateTask }: TaskCreationP
               id="task-description"
               value={text}
               rows={4}
-              className="w-full resize-none rounded-lg border border-gray-300 p-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full resize-none rounded-lg border border-gray-300 p-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="Enter task details..."
               onChange={(event) => setText(event.target.value)}
             />
@@ -116,7 +116,7 @@ export function TaskCreationPanel({ open, onClose, onCreateTask }: TaskCreationP
                   className={cn(
                     "rounded-lg border-2 p-3 text-sm font-medium transition-all",
                     category === option.value
-                      ? "border-orange-500 bg-orange-50 text-orange-700"
+                      ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                       : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                   )}
                   onClick={() => setCategory(option.value)}
@@ -158,7 +158,7 @@ export function TaskCreationPanel({ open, onClose, onCreateTask }: TaskCreationP
               id="task-due-date"
               type="date"
               value={dueDate}
-              className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
               onChange={(event) => setDueDate(event.target.value)}
             />
           </div>
@@ -171,7 +171,7 @@ export function TaskCreationPanel({ open, onClose, onCreateTask }: TaskCreationP
             </Button>
             <Button
               type="button"
-              className="flex-1 bg-orange-600 text-white hover:bg-orange-700"
+              className="flex-1 bg-indigo-600 text-white hover:bg-indigo-700"
               disabled={!text.trim()}
               onClick={handleSubmit}
             >

@@ -1,9 +1,9 @@
 "use client";
 
-import { Calendar, ClipboardCopy, Edit, MoreVertical, Search, Trash2, Users, UserPlus, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Calendar, ClipboardCopy, Edit, Grid2X2, List, MoreVertical, Search, Trash2, Users, UserPlus, Zap } from "lucide-react";
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 
-import { clients as fixtureClients, type ClientSummary } from "@/fixtures/clients";
+import type { ClientSummary } from "@/fixtures/clients";
 import { cn } from "@/lib/utils";
 
 import type { ProgramAssignmentRow, ProgramTemplateCard } from "./training-programs-page";
@@ -169,6 +169,7 @@ export function TemplatesPanel({
   onAssignTemplate: (template: ProgramTemplateCard) => void;
 }) {
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"card" | "list">("card");
 
   return (
     <section role="tabpanel" aria-label="Program templates" className="relative">
@@ -180,93 +181,239 @@ export function TemplatesPanel({
           onClick={() => setOpenActionMenuId(null)}
         />
       ) : null}
-      <div className="grid gap-6 md:grid-cols-3">
-        {templates.map((template) => {
-          const isActionMenuOpen = openActionMenuId === template.id;
-
-          return (
-            <article
-              key={template.id}
-              className={cn(
-                "group relative overflow-visible rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg",
-                isActionMenuOpen ? "z-40" : "z-0"
-              )}
-            >
-              <div className={cn("relative p-6 text-white", template.color)}>
-                <div className="absolute right-3 top-3 rounded bg-white/20 px-2 py-1 text-xs font-medium backdrop-blur-sm">
-                  {template.badge}
-                </div>
-                <div className="mb-2 flex items-center gap-2">
-                  <Zap className="size-5" aria-hidden="true" />
-                  <h2 className="text-lg font-bold">{template.name}</h2>
-                </div>
-                <p className="text-sm text-white/90">{template.description}</p>
-              </div>
-              <div className="p-5">
-                <div className="mb-4 flex justify-end">
-                  <button
-                    type="button"
-                    aria-label={`More actions for ${template.name}`}
-                    aria-expanded={isActionMenuOpen}
-                    aria-controls={`training-template-actions-${template.id}`}
-                    className={cn("relative rounded-lg p-2 text-gray-600 hover:bg-gray-100", isActionMenuOpen ? "z-[70]" : "z-10")}
-                    onClick={() => setOpenActionMenuId((currentMenuId) => (currentMenuId === template.id ? null : template.id))}
-                  >
-                    <MoreVertical className="size-4" aria-hidden="true" />
-                  </button>
-                  {isActionMenuOpen ? (
-                    <TrainingProgramActionsMenu
-                      id={`training-template-actions-${template.id}`}
-                      label={`Actions for ${template.name}`}
-                      onEdit={() => {
-                        setOpenActionMenuId(null);
-                        onEditTemplate(template);
-                      }}
-                      onDelete={() => {
-                        setOpenActionMenuId(null);
-                        onDeleteTemplate(template);
-                      }}
-                      onAssign={() => {
-                        setOpenActionMenuId(null);
-                        onAssignTemplate(template);
-                      }}
-                      onCopy={() => {
-                        setOpenActionMenuId(null);
-                        onCopyTemplate(template);
-                      }}
-                    />
-                  ) : null}
-                </div>
-                <div className="mb-4 flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <Users className="size-4" aria-hidden="true" />
-                    {template.uses} clients
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <Calendar className="size-4" aria-hidden="true" />
-                    {template.weeks} weeks
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300"
-                  disabled={!canUseTemplates}
-                  onClick={() => onUseTemplate(template)}
-                >
-                  Use Template
-                </button>
-              </div>
-            </article>
-          );
-        })}
-        {templates.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
-            No program templates exist yet. Create a new program to start the library.
-          </p>
-        ) : null}
+      <div className="mb-6 flex justify-end">
+        <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+          <button
+            type="button"
+            aria-label="Card view"
+            aria-pressed={viewMode === "card"}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+              viewMode === "card" ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-50"
+            )}
+            onClick={() => setViewMode("card")}
+          >
+            <Grid2X2 className="size-4" aria-hidden="true" />
+            Cards
+          </button>
+          <button
+            type="button"
+            aria-label="List view"
+            aria-pressed={viewMode === "list"}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+              viewMode === "list" ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-50"
+            )}
+            onClick={() => setViewMode("list")}
+          >
+            <List className="size-4" aria-hidden="true" />
+            List
+          </button>
+        </div>
       </div>
+
+      {viewMode === "card" ? (
+        <div role="region" aria-label="Program template cards" className="grid gap-6 md:grid-cols-3">
+          {templates.map((template) => {
+            const isActionMenuOpen = openActionMenuId === template.id;
+
+            return (
+              <article
+                key={template.id}
+                className={cn(
+                  "group relative overflow-visible rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg",
+                  isActionMenuOpen ? "z-40" : "z-0"
+                )}
+              >
+                <div className={cn("relative p-6 text-white", template.color)}>
+                  <div className="mb-2 flex items-center gap-2">
+                    <Zap className="size-5" aria-hidden="true" />
+                    <h2 className="text-lg font-bold">{template.name}</h2>
+                  </div>
+                  <p className="text-sm text-white/90">{template.description}</p>
+                </div>
+                <div className="p-5">
+                  <TemplateActionsButton
+                    template={template}
+                    isActionMenuOpen={isActionMenuOpen}
+                    setOpenActionMenuId={setOpenActionMenuId}
+                    wrapperClassName="mb-4 flex justify-end"
+                    onEditTemplate={onEditTemplate}
+                    onDeleteTemplate={onDeleteTemplate}
+                    onAssignTemplate={onAssignTemplate}
+                    onCopyTemplate={onCopyTemplate}
+                  />
+                  <TemplateMeta template={template} />
+                  <UseTemplateButton template={template} canUseTemplates={canUseTemplates} onUseTemplate={onUseTemplate} />
+                </div>
+              </article>
+            );
+          })}
+          <EmptyTemplatesState templates={templates} />
+        </div>
+      ) : (
+        <div role="region" aria-label="Program template list" className="overflow-visible rounded-xl border border-gray-200 bg-white">
+          <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-600">
+            <div className="col-span-5">Template Name</div>
+            <div className="col-span-2">Clients</div>
+            <div className="col-span-2">Duration</div>
+            <div className="col-span-2">Use Template</div>
+            <div className="col-span-1">Actions</div>
+          </div>
+          {templates.map((template) => {
+            const isActionMenuOpen = openActionMenuId === template.id;
+
+            return (
+              <article
+                key={template.id}
+                className={cn(
+                  "relative grid grid-cols-12 items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-0 hover:bg-gray-50",
+                  isActionMenuOpen ? "z-40" : "z-0"
+                )}
+              >
+                <div className="col-span-5">
+                  <div className="font-medium text-gray-900">{template.name}</div>
+                  <div className="text-xs text-gray-500">{template.description}</div>
+                </div>
+                <div className="col-span-2 flex items-center gap-1 text-sm text-gray-600">
+                  <Users className="size-4" aria-hidden="true" />
+                  {template.uses} clients
+                </div>
+                <div className="col-span-2 flex items-center gap-1 text-sm text-gray-600">
+                  <Calendar className="size-4" aria-hidden="true" />
+                  {template.weeks} weeks
+                </div>
+                <div className="col-span-2">
+                  <UseTemplateButton template={template} canUseTemplates={canUseTemplates} onUseTemplate={onUseTemplate} compact />
+                </div>
+                <div className={cn("relative col-span-1 flex justify-end", isActionMenuOpen ? "z-[70]" : "z-10")}>
+                  <TemplateActionsButton
+                    template={template}
+                    isActionMenuOpen={isActionMenuOpen}
+                    setOpenActionMenuId={setOpenActionMenuId}
+                    wrapperClassName="flex justify-end"
+                    onEditTemplate={onEditTemplate}
+                    onDeleteTemplate={onDeleteTemplate}
+                    onAssignTemplate={onAssignTemplate}
+                    onCopyTemplate={onCopyTemplate}
+                  />
+                </div>
+              </article>
+            );
+          })}
+          {templates.length === 0 ? (
+            <p className="px-6 py-8 text-center text-sm text-gray-600">No program templates exist yet. Create a new program to start the library.</p>
+          ) : null}
+        </div>
+      )}
     </section>
   );
+}
+
+function TemplateActionsButton({
+  template,
+  isActionMenuOpen,
+  setOpenActionMenuId,
+  wrapperClassName,
+  onEditTemplate,
+  onDeleteTemplate,
+  onAssignTemplate,
+  onCopyTemplate
+}: {
+  template: ProgramTemplateCard;
+  isActionMenuOpen: boolean;
+  setOpenActionMenuId: Dispatch<SetStateAction<string | null>>;
+  wrapperClassName: string;
+  onEditTemplate: (template: ProgramTemplateCard) => void;
+  onDeleteTemplate: (template: ProgramTemplateCard) => void;
+  onAssignTemplate: (template: ProgramTemplateCard) => void;
+  onCopyTemplate: (template: ProgramTemplateCard) => void;
+}) {
+  return (
+    <div className={wrapperClassName}>
+      <button
+        type="button"
+        aria-label={`More actions for ${template.name}`}
+        aria-expanded={isActionMenuOpen}
+        aria-controls={`training-template-actions-${template.id}`}
+        className={cn("relative rounded-lg p-2 text-gray-600 hover:bg-gray-100", isActionMenuOpen ? "z-[70]" : "z-10")}
+        onClick={() => setOpenActionMenuId((currentMenuId) => (currentMenuId === template.id ? null : template.id))}
+      >
+        <MoreVertical className="size-4" aria-hidden="true" />
+      </button>
+      {isActionMenuOpen ? (
+        <TrainingProgramActionsMenu
+          id={`training-template-actions-${template.id}`}
+          label={`Actions for ${template.name}`}
+          onEdit={() => {
+            setOpenActionMenuId(null);
+            onEditTemplate(template);
+          }}
+          onDelete={() => {
+            setOpenActionMenuId(null);
+            onDeleteTemplate(template);
+          }}
+          onAssign={() => {
+            setOpenActionMenuId(null);
+            onAssignTemplate(template);
+          }}
+          onCopy={() => {
+            setOpenActionMenuId(null);
+            onCopyTemplate(template);
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function TemplateMeta({ template }: { template: ProgramTemplateCard }) {
+  return (
+    <div className="mb-4 flex items-center justify-between text-sm">
+      <div className="flex items-center gap-1 text-gray-600">
+        <Users className="size-4" aria-hidden="true" />
+        {template.uses} clients
+      </div>
+      <div className="flex items-center gap-1 text-gray-600">
+        <Calendar className="size-4" aria-hidden="true" />
+        {template.weeks} weeks
+      </div>
+    </div>
+  );
+}
+
+function UseTemplateButton({
+  template,
+  canUseTemplates,
+  onUseTemplate,
+  compact = false
+}: {
+  template: ProgramTemplateCard;
+  canUseTemplates: boolean;
+  onUseTemplate: (template: ProgramTemplateCard) => void;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        "rounded-lg bg-indigo-600 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300",
+        compact ? "px-4 py-2" : "w-full py-2.5"
+      )}
+      disabled={!canUseTemplates}
+      onClick={() => onUseTemplate(template)}
+    >
+      Use Template
+    </button>
+  );
+}
+
+function EmptyTemplatesState({ templates }: { templates: ProgramTemplateCard[] }) {
+  return templates.length === 0 ? (
+    <p className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
+      No program templates exist yet. Create a new program to start the library.
+    </p>
+  ) : null;
 }
 
 function TrainingProgramActionsMenu({
@@ -323,7 +470,7 @@ export function TrainingProgramAssignmentDialog({
   onClose: () => void;
   onAssign: (client: ClientSummary, durationWeeks: number) => void;
 }) {
-  const [clients, setClients] = useState<ClientSummary[]>(fixtureClients.filter((client) => client.status === "active"));
+  const [clients, setClients] = useState<ClientSummary[]>([]);
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [selectedClientId, setSelectedClientId] = useState("");
   const [durationWeeks, setDurationWeeks] = useState(String(target.durationWeeks));
@@ -336,7 +483,7 @@ export function TrainingProgramAssignmentDialog({
         const response = await fetch("/api/v1/clients?status=active&limit=100");
 
         if (!response.ok) {
-          return;
+          throw new Error("Client API unavailable.");
         }
 
         const payload = (await response.json()) as { data?: ClientSummary[] };
@@ -345,7 +492,9 @@ export function TrainingProgramAssignmentDialog({
           setClients(payload.data);
         }
       } catch {
-        // Fixture clients keep the assignment flow available in previews.
+        if (active) {
+          setClients([]);
+        }
       }
     }
 

@@ -23,7 +23,7 @@
 - [x] `GET /api/v1/exercises/{exercise_id}` reads global or organization-owned exercises.
 - [x] `PATCH /api/v1/exercises/{exercise_id}` updates only private organization-owned exercises.
 - [x] Global exercises are read-only to tenant users.
-- [x] Exercise database UI prefers persisted API data with fixture fallback.
+- [x] Exercise database UI loads persisted API data and renders empty/error states when unavailable.
 - [x] Add-exercise UI saves through the persistence API.
 
 ## Templates And Assignments

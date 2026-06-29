@@ -4,6 +4,7 @@ import { requireActiveActor } from "@/lib/auth/session-guards";
 import {
   aiRecommendationsQuerySchema,
   serializeAiOutput,
+  toPrismaAiOutputType,
   toPrismaAiOutputStatus
 } from "@/lib/ai/ai-records";
 import { prisma } from "@/lib/db/prisma";
@@ -20,10 +21,18 @@ export async function GET(request: Request) {
         ...(query.clientId ? { clientId: query.clientId } : {}),
         ...(query.targetType ? { targetType: query.targetType } : {}),
         ...(query.targetId ? { targetId: query.targetId } : {}),
+        ...(query.type ? { type: toPrismaAiOutputType(query.type) } : {}),
         ...(query.status ? { status: toPrismaAiOutputStatus(query.status) } : {})
       },
       include: {
-        generation: true
+        generation: true,
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        }
       },
       orderBy: [{ createdAt: "desc" }],
       take: query.limit

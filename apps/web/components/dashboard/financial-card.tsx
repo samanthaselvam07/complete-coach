@@ -11,6 +11,7 @@ import {
 interface FinancialCardProps {
   currentPeriod: RevenuePeriod;
   metric: RevenueMetric;
+  loading?: boolean;
   open: boolean;
   customStartDate: string;
   customEndDate: string;
@@ -24,6 +25,7 @@ interface FinancialCardProps {
 export function FinancialCard({
   currentPeriod,
   metric,
+  loading = false,
   open,
   customStartDate,
   customEndDate,
@@ -113,19 +115,27 @@ export function FinancialCard({
         </div>
       </div>
 
-      <div className="mb-4 text-3xl font-bold">{metric.value}</div>
-      <div className="flex h-16 items-end gap-1" aria-hidden="true">
-        {metric.bars.map((height, index) => (
-          <div
-            key={`${metric.label}-${height}-${index}`}
-            className={cn(
-              "flex-1 rounded-t transition-all",
-              index >= metric.bars.length - 2 ? "bg-indigo-600" : "bg-gray-200"
-            )}
-            style={{ height: `${height}%` }}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div role="status" className="rounded-lg bg-gray-50 px-3 py-4 text-xs font-medium text-gray-500">
+          Loading Stripe revenue from Neon.
+        </div>
+      ) : (
+        <>
+          <div className="mb-4 text-3xl font-bold">{metric.value}</div>
+          <div className="flex h-16 items-end gap-1" aria-hidden="true">
+            {metric.bars.map((height, index) => (
+              <div
+                key={`${metric.label}-${height}-${index}`}
+                className={cn(
+                  "flex-1 rounded-t transition-all",
+                  index >= metric.bars.length - 2 ? "bg-indigo-600" : "bg-gray-200"
+                )}
+                style={{ height: `${height}%` }}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

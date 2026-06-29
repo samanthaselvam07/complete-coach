@@ -3,17 +3,75 @@ import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ClientsPage } from "@/components/clients/clients-page";
 
+const apiClients = [
+  {
+    id: "1",
+    name: "Marcus Rodriguez",
+    packageName: "Elite Performance",
+    compliance: 96,
+    checkInDay: "Monday",
+    latestCheckIn: "Apr 14, 2026",
+    status: "active",
+    startDate: "Jan 15, 2026",
+    initials: "MR",
+    avatarColor: "bg-indigo-600"
+  },
+  {
+    id: "2",
+    name: "Emma Thompson",
+    packageName: "Standard Package",
+    compliance: 88,
+    checkInDay: "Tuesday",
+    latestCheckIn: "Apr 15, 2026",
+    status: "active",
+    startDate: "Feb 3, 2026",
+    initials: "ET",
+    avatarColor: "bg-blue-600"
+  },
+  {
+    id: "3",
+    name: "Sarah Martinez",
+    packageName: "Standard Package",
+    compliance: 84,
+    checkInDay: "Thursday",
+    latestCheckIn: "Apr 17, 2026",
+    status: "new",
+    startDate: "Apr 14, 2026",
+    initials: "SM",
+    avatarColor: "bg-emerald-600"
+  },
+  {
+    id: "4",
+    name: "Ashley Davis",
+    packageName: "Starter Package",
+    compliance: 82,
+    checkInDay: "Monday",
+    latestCheckIn: "Apr 18, 2026",
+    status: "new",
+    startDate: "Apr 20, 2026",
+    initials: "AD",
+    avatarColor: "bg-purple-600"
+  }
+];
+
+function mockClientsApi(clients = apiClients) {
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(JSON.stringify({ data: clients }), { status: 200 })
+  );
+}
+
 describe("ClientsPage", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("renders roster stats and fixture-backed clients", () => {
+  it("renders roster stats and API-backed clients", async () => {
+    mockClientsApi();
     render(createElement(ClientsPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Client Roster" })).toBeInTheDocument();
     expect(screen.getByText("Total Clients")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Marcus Rodriguez" })).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: "Marcus Rodriguez" })).toHaveAttribute(
       "href",
       "/clients/1"
     );
@@ -25,6 +83,7 @@ describe("ClientsPage", () => {
   });
 
   it("renders the Figma client roster controls and table surface", () => {
+    mockClientsApi([]);
     render(createElement(ClientsPage));
 
     expect(screen.getByText("New Clients This Week")).toBeInTheDocument();
@@ -42,8 +101,11 @@ describe("ClientsPage", () => {
     expect(screen.getByRole("button", { name: /export or import clients/i })).toBeInTheDocument();
   });
 
-  it("searches clients by name", () => {
+  it("searches clients by name", async () => {
+    mockClientsApi();
     render(createElement(ClientsPage));
+
+    await screen.findByRole("link", { name: /view Emma Thompson profile/i });
 
     fireEvent.change(screen.getByRole("searchbox", { name: /search clients/i }), {
       target: { value: "Emma" }
@@ -53,8 +115,11 @@ describe("ClientsPage", () => {
     expect(screen.queryByRole("link", { name: /view Marcus Rodriguez profile/i })).not.toBeInTheDocument();
   });
 
-  it("filters by status and check-in day", () => {
+  it("filters by status and check-in day", async () => {
+    mockClientsApi();
     render(createElement(ClientsPage));
+
+    await screen.findByRole("link", { name: /view Sarah Martinez profile/i });
 
     fireEvent.click(screen.getByRole("button", { name: "New" }));
 
@@ -68,8 +133,11 @@ describe("ClientsPage", () => {
     expect(screen.queryByRole("link", { name: /view Sarah Martinez profile/i })).not.toBeInTheDocument();
   });
 
-  it("sorts the visible roster A to Z", () => {
+  it("sorts the visible roster A to Z", async () => {
+    mockClientsApi();
     render(createElement(ClientsPage));
+
+    await screen.findByRole("link", { name: /view Marcus Rodriguez profile/i });
 
     fireEvent.click(screen.getByRole("button", { name: /open client filters/i }));
     fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Sort A-Z" }));

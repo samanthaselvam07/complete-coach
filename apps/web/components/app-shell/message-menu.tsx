@@ -5,7 +5,6 @@ import { MessageSquare } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { conversations } from "@/fixtures/operations";
 import { useCloseOnOutsideClick } from "./use-close-on-outside-click";
 
 interface ApiConversation {
@@ -32,12 +31,10 @@ interface UiConversation {
   initials: string;
 }
 
-const fixtureConversations = conversations.slice(0, 4);
-
 export function MessageMenu() {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [conversationList, setConversationList] = useState<UiConversation[]>(fixtureConversations);
+  const [conversationList, setConversationList] = useState<UiConversation[]>([]);
   const messageCount = conversationList.reduce((total, conversation) => total + conversation.unread, 0) || conversationList.length;
   const closeMenu = useCallback(() => setIsOpen(false), []);
 
@@ -57,12 +54,12 @@ export function MessageMenu() {
         const payload = (await response.json()) as { data?: ApiConversation[] };
         const apiConversations = payload.data?.map(mapApiConversation) ?? [];
 
-        if (isActive && apiConversations.length > 0) {
+        if (isActive) {
           setConversationList(apiConversations);
         }
       } catch {
         if (isActive) {
-          setConversationList(fixtureConversations);
+          setConversationList([]);
         }
       }
     }

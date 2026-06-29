@@ -76,11 +76,13 @@ const globalExercise = {
   secondaryMuscles: ["Glutes"],
   difficulty: ExerciseDifficulty.INTERMEDIATE,
   videoObjectKey: null,
+  videoUrl: null,
   imageObjectKey: null,
   defaultSets: 4,
   defaultReps: "6-8",
   defaultRestSeconds: 180,
   defaultRpe: 8,
+  defaultRir: "1-2",
   executionCues: ["Brace hard"],
   createdAt: new Date("2026-05-14T00:00:00.000Z"),
   updatedAt: new Date("2026-05-14T00:00:00.000Z")
@@ -200,6 +202,10 @@ describe("training persistence APIs", () => {
           difficulty: "intermediate",
           defaultSets: 3,
           defaultReps: "8/side",
+          defaultRestSeconds: 150,
+          defaultRpe: 8.5,
+          defaultRir: "1-2",
+          videoUrl: "https://example.com/split-squat",
           executionCues: ["Control the eccentric"]
         })
       })
@@ -213,7 +219,11 @@ describe("training persistence APIs", () => {
         data: expect.objectContaining({
           organizationId: "org_1",
           scope: LibraryScope.PRIVATE,
-          createdByUserId: "user_1"
+          createdByUserId: "user_1",
+          defaultRestSeconds: 150,
+          defaultRpe: 8.5,
+          defaultRir: "1-2",
+          videoUrl: "https://example.com/split-squat"
         })
       })
     );

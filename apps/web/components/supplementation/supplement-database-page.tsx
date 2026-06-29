@@ -3,7 +3,6 @@
 import { Check, ChevronLeft, ChevronRight, Grid2X2, List, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { supplementEntries, type SupplementEntry } from "@/fixtures/supplementation";
 import { cn } from "@/lib/utils";
 
 const categoryOptions = ["Morning", "Evening", "Anytime"] as const;
@@ -30,7 +29,13 @@ interface ApiSupplementCoachDetails {
   affiliateLink: string;
 }
 
-type SupplementLibraryEntry = SupplementEntry & {
+type SupplementLibraryEntry = {
+  id: string;
+  name: string;
+  category: string;
+  timing: string;
+  dosage: string;
+  coachNote: string;
   verified: boolean;
   description: string;
   bioavailabilityNotes?: string;
@@ -52,9 +57,7 @@ export function SupplementDatabasePage() {
   const [sortOrder, setSortOrder] = useState<SupplementSort>("az");
   const [viewMode, setViewMode] = useState<SupplementViewMode>("cards");
   const [currentPage, setCurrentPage] = useState(1);
-  const [supplements, setSupplements] = useState<SupplementLibraryEntry[]>(
-    supplementEntries.map(mapFixtureSupplementToEntry)
-  );
+  const [supplements, setSupplements] = useState<SupplementLibraryEntry[]>([]);
   const [coachDetails, setCoachDetails] = useState<Record<string, CoachSupplementDetails>>({});
   const [coachDetailsLoadingId, setCoachDetailsLoadingId] = useState<string | null>(null);
   const [coachDetailsSavingId, setCoachDetailsSavingId] = useState<string | null>(null);
@@ -81,11 +84,13 @@ export function SupplementDatabasePage() {
         const payload = (await response.json()) as { data?: ApiSupplement[] };
         const apiSupplements = Array.isArray(payload.data) ? payload.data : [];
 
-        if (mounted && apiSupplements.length > 0) {
+        if (mounted) {
           setSupplements(apiSupplements.map(mapApiSupplementToEntry));
         }
       } catch {
-        // Keep fixture supplements visible when the API is unavailable.
+        if (mounted) {
+          setSupplements([]);
+        }
       }
     }
 
@@ -819,17 +824,6 @@ function mapApiSupplementToEntry(supplement: ApiSupplement): SupplementLibraryEn
     bioavailabilityNotes,
     clinicalDescription,
     coachDosageInstructions: supplement.scope === "private" ? supplement.dosage ?? "" : ""
-  };
-}
-
-function mapFixtureSupplementToEntry(supplement: SupplementEntry): SupplementLibraryEntry {
-  return {
-    ...supplement,
-    verified: true,
-    description: supplement.coachNote,
-    bioavailabilityNotes: supplement.coachNote,
-    clinicalDescription: supplement.coachNote,
-    coachDosageInstructions: ""
   };
 }
 

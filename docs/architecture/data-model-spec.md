@@ -453,11 +453,13 @@ Fields:
 - `secondary_muscles`
 - `difficulty`
 - `video_object_id`
+- `video_url`
 - `image_object_id`
 - `default_sets`
 - `default_reps`
 - `default_rest_seconds`
 - `default_rpe`
+- `default_rir`
 - `execution_cues`
 - `created_at`
 - `updated_at`

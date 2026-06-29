@@ -13,7 +13,6 @@ import {
   Share2,
   UserPlus,
   Users,
-  Users2,
   Utensils
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -71,13 +70,6 @@ export const navigationItems = [
     ]
   },
   { href: "/forms", label: "Forms", icon: FileText },
-  {
-    href: "/social-media",
-    label: "Social Media",
-    icon: Share2,
-    children: [{ href: "/social-media", label: "Social Hub", icon: Share2 }]
-  },
-  { href: "/team-management", label: "Team Management", icon: Users2 },
   {
     href: "/packages",
     label: "Packages",

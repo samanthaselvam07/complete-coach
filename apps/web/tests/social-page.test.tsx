@@ -4,17 +4,18 @@ import { describe, expect, it, vi } from "vitest";
 import { SocialMediaPage } from "@/components/social/social-media-page";
 
 describe("SocialMediaPage", () => {
-  it("falls back to fixture social content when APIs are unavailable", async () => {
+  it("shows an empty persisted social planner when APIs are unavailable", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 
     render(<SocialMediaPage />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Social Planner" })).toBeInTheDocument();
-    expect(await screen.findByText(/read-only fallback/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText(/read-only fallback/i)).not.toBeInTheDocument());
     expect(screen.getByText("June 2026")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Month" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Week" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Schedule Post/i })).toBeInTheDocument();
+    expect(screen.queryByText("API scheduled post")).not.toBeInTheDocument();
   });
 
   it("loads persisted social connections and scheduled posts", async () => {

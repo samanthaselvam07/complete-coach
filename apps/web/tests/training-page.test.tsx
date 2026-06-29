@@ -22,22 +22,75 @@ afterEach(() => {
 });
 
 describe("TrainingPage", () => {
-  it("renders training overview cards and recent workout activity", () => {
+  it("renders the persisted training program library shell", () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+
     render(createElement(TrainingPage));
 
-    expect(screen.getByRole("heading", { level: 1, name: "Training Programs" })).toBeInTheDocument();
-    expect(screen.getByText("Active Athletes")).toBeInTheDocument();
-    expect(screen.getAllByText("Elite Strength - Phase 2").length).toBeGreaterThan(0);
-    expect(screen.getByText("Recent Workout Completions")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Program Library" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Custom programs" })).toBeInTheDocument();
+    expect(screen.getByText("No custom programs match the current search.")).toBeInTheDocument();
   });
 });
 
 describe("TrainingProgramsPage", () => {
-  it("switches between custom programs and program templates", () => {
+  it("switches between custom programs and program templates", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/v1/training-program-templates")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "template_api",
+                  name: "Body Recomp v3",
+                  description: "API-backed recomposition template",
+                  goal: "recomp",
+                  durationWeeks: 12,
+                  status: "published",
+                  template: { days: [] },
+                  updatedAt: "2026-05-14T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url.startsWith("/api/v1/training-program-assignments")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "assignment_api",
+                  clientId: "client_api",
+                  clientName: "Persisted Client",
+                  templateId: null,
+                  name: "Hypertrophy Phase II",
+                  status: "active",
+                  startsOn: "2026-05-01",
+                  endsOn: "2026-06-26",
+                  snapshot: { durationWeeks: 8, template: { days: [] } },
+                  updatedAt: "2026-05-14T00:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
     render(createElement(TrainingProgramsPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Program Library" })).toBeInTheDocument();
-    expect(screen.getByText("Hypertrophy Phase II")).toBeInTheDocument();
+    expect(await screen.findByText("Hypertrophy Phase II")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Program templates" }));
 
@@ -245,6 +298,41 @@ describe("TrainingProgramsPage", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
+      if (url === "/api/v1/exercises" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as {
+          name: string;
+          category?: string;
+          defaultSets?: number;
+          defaultReps?: string;
+          defaultRestSeconds?: number;
+          defaultRpe?: number;
+          executionCues?: string[];
+        };
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "exercise_back_squat",
+                name: body.name,
+                category: body.category ?? "Quads",
+                scope: "private",
+                equipment: null,
+                difficulty: "intermediate",
+                videoObjectKey: null,
+                primaryMuscles: [body.category ?? "Quads"],
+                defaultSets: body.defaultSets ?? 3,
+                defaultReps: body.defaultReps ?? "8-10",
+                defaultRestSeconds: body.defaultRestSeconds ?? 120,
+                defaultRpe: body.defaultRpe ?? null,
+                executionCues: body.executionCues ?? []
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
       if (url === "/api/v1/training-program-templates" && init?.method === "POST") {
         return Promise.resolve(
           new Response(
@@ -293,6 +381,41 @@ describe("TrainingProgramsPage", () => {
   it("opens a create-program chooser and saves a from-scratch program to custom programs", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
+
+      if (url === "/api/v1/exercises" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as {
+          name: string;
+          category?: string;
+          defaultSets?: number;
+          defaultReps?: string;
+          defaultRestSeconds?: number;
+          defaultRpe?: number;
+          executionCues?: string[];
+        };
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "exercise_back_squat",
+                name: body.name,
+                category: body.category ?? "Quads",
+                scope: "private",
+                equipment: null,
+                difficulty: "intermediate",
+                videoObjectKey: null,
+                primaryMuscles: [body.category ?? "Quads"],
+                defaultSets: body.defaultSets ?? 3,
+                defaultReps: body.defaultReps ?? "8-10",
+                defaultRestSeconds: body.defaultRestSeconds ?? 120,
+                defaultRpe: body.defaultRpe ?? null,
+                executionCues: body.executionCues ?? []
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
 
       if (url === "/api/v1/training-program-templates" && init?.method === "POST") {
         return Promise.resolve(
@@ -353,6 +476,7 @@ describe("TrainingProgramsPage", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Add custom exercise" }));
     fireEvent.change(within(screen.getByRole("dialog", { name: "Add custom exercise" })).getByLabelText("Exercise name"), { target: { value: "Back Squat" } });
     fireEvent.click(within(screen.getByRole("dialog", { name: "Add custom exercise" })).getByRole("button", { name: "Add exercise" }));
+    expect(await screen.findByRole("group", { name: "Back Squat exercise row" })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Sets"), { target: { value: "4" } });
     fireEvent.change(screen.getByLabelText("Reps"), { target: { value: "6-8" } });
     fireEvent.change(screen.getByLabelText("RPE"), { target: { value: "8" } });
@@ -371,6 +495,13 @@ describe("TrainingProgramsPage", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(screen.getByRole("tab", { name: "Custom programs" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "Custom programs" })).toHaveTextContent("Lower Strength Build");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/exercises",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Back Squat")
+      })
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/training-program-templates",
       expect.objectContaining({
@@ -518,11 +649,8 @@ describe("TrainingProgramsPage", () => {
 });
 
 describe("training program view model helpers", () => {
-  it("maps fixture and API templates into reusable cards", () => {
-    expect(getProgramTemplateCards("fixtures", [], [])[0]).toMatchObject({
-      name: "Body Recomp v3",
-      apiTemplate: null
-    });
+  it("maps API templates into reusable cards and leaves fixture mode empty", () => {
+    expect(getProgramTemplateCards("fixtures", [], [])).toEqual([]);
 
     expect(
       getProgramTemplateCards(
@@ -562,12 +690,10 @@ describe("training program view model helpers", () => {
     });
   });
 
-  it("maps fixture and API assignments into active program rows", () => {
+  it("maps API assignments into active program rows and leaves fixture mode empty", () => {
     vi.spyOn(Date, "now").mockReturnValue(new Date("2026-05-15T00:00:00.000Z").getTime());
 
-    expect(getProgramAssignmentRows("fixtures", [])[0]).toMatchObject({
-      name: "Hypertrophy Phase II"
-    });
+    expect(getProgramAssignmentRows("fixtures", [])).toEqual([]);
 
     expect(
       getProgramAssignmentRows("api", [
@@ -633,6 +759,51 @@ describe("training program view model helpers", () => {
 });
 
 describe("ExerciseDatabasePage", () => {
+  function mockExercisesApi() {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "api-squat",
+              name: "High-Bar Back Squat",
+              category: "Legs",
+              scope: "global",
+              equipment: "Barbell",
+              difficulty: "intermediate",
+              videoObjectKey: null,
+              videoUrl: null,
+              primaryMuscles: ["Quads"]
+            },
+            {
+              id: "api-press",
+              name: "Incline DB Press",
+              category: "Chest",
+              scope: "global",
+              equipment: "Dumbbells",
+              difficulty: "intermediate",
+              videoObjectKey: null,
+              videoUrl: null,
+              primaryMuscles: ["Chest"]
+            },
+            {
+              id: "api-pullup",
+              name: "Wide-Grip Pull-Ups",
+              category: "Back",
+              scope: "global",
+              equipment: "Bodyweight",
+              difficulty: "advanced",
+              videoObjectKey: null,
+              videoUrl: null,
+              primaryMuscles: ["Back"]
+            }
+          ]
+        }),
+        { status: 200 }
+      )
+    );
+  }
+
   it("loads API-backed exercises when persistence is available", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
@@ -646,6 +817,7 @@ describe("ExerciseDatabasePage", () => {
               equipment: "Barbell",
               difficulty: "intermediate",
               videoObjectKey: null,
+              videoUrl: null,
               primaryMuscles: ["Quads"]
             }
           ]
@@ -658,11 +830,21 @@ describe("ExerciseDatabasePage", () => {
 
     expect(await screen.findByText("Persisted Tempo Squat")).toBeInTheDocument();
     expect(screen.getByLabelText("Verified Complete Coach exercise")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Exercise database" })).toBeInTheDocument();
+    expect(screen.queryByText("The Movement Vault")).not.toBeInTheDocument();
+    expect(screen.queryByText(/biomechanically optimized/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Muscle" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Favorites" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Favorite Persisted Tempo Squat/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/intermediate -/i)).not.toBeInTheDocument();
     expect(screen.queryByText("High-Bar Back Squat")).not.toBeInTheDocument();
   });
 
-  it("searches exercises by name", () => {
+  it("searches exercises by name", async () => {
+    mockExercisesApi();
     render(createElement(ExerciseDatabasePage));
+
+    expect(await screen.findByText("High-Bar Back Squat")).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("searchbox", { name: /search exercises/i }), {
       target: { value: "squat" }
@@ -672,14 +854,22 @@ describe("ExerciseDatabasePage", () => {
     expect(screen.queryByText("Incline DB Press")).not.toBeInTheDocument();
   });
 
-  it("filters exercises by category", () => {
+  it("switches between card and list views without category filters", async () => {
+    mockExercisesApi();
     render(createElement(ExerciseDatabasePage));
 
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(await screen.findByText("High-Bar Back Squat")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument();
 
-    const grid = screen.getByRole("region", { name: "Exercise grid" });
-    expect(within(grid).getByText("Wide-Grip Pull-Ups")).toBeInTheDocument();
-    expect(within(grid).queryByText("High-Bar Back Squat")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+
+    const list = screen.getByRole("region", { name: "Exercise list" });
+    expect(within(list).getByText("High-Bar Back Squat")).toBeInTheDocument();
+    expect(within(list).getAllByText("Global").length).toBeGreaterThan(0);
+    expect(within(list).getAllByLabelText("Verified Complete Coach exercise").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Card view" }));
+    expect(screen.getByRole("region", { name: "Exercise cards" })).toBeInTheDocument();
   });
 });
 

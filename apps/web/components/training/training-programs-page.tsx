@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/fixtures/clients";
 import { SavedToast } from "@/components/ui/saved-toast";
-import { assignedPrograms, programTemplates } from "@/fixtures/training";
 import { cn } from "@/lib/utils";
 
 import {
@@ -121,7 +120,7 @@ export function TrainingProgramsPage() {
   const [hiddenTemplateIds, setHiddenTemplateIds] = useState<string[]>([]);
   const [programSearchQuery, setProgramSearchQuery] = useState("");
   const [assignmentTarget, setAssignmentTarget] = useState<AssignableProgramTarget | null>(null);
-  const [source, setSource] = useState<ProgramSource>("fixtures");
+  const [source, setSource] = useState<ProgramSource>("api");
   const [loading, setLoading] = useState(true);
   const [creationDialogMode, setCreationDialogMode] = useState<CreationDialogMode | null>(null);
   const [programDraft, setProgramDraft] = useState<TrainingProgramDraft | null>(null);
@@ -159,7 +158,7 @@ export function TrainingProgramsPage() {
         if (!cancelled) {
           setTemplates([]);
           setAssignments([]);
-          setSource("fixtures");
+          setSource("api");
         }
       } finally {
         if (!cancelled) {
@@ -224,15 +223,7 @@ export function TrainingProgramsPage() {
       setCreationDialogMode(null);
       setStatusMessage("Program template saved.");
     } catch {
-      const localTemplate = createLocalTrainingTemplateFromDraft(draft, templates.length + 1);
-
-      setTemplates((currentTemplates) => [localTemplate, ...currentTemplates]);
-      setSource("api");
-      setActiveTab("Program templates");
-      setProgramDraft(null);
-      setCreationDialogMode(null);
-      setStatusMessage("Program saved.");
-      setErrorMessage(null);
+      setErrorMessage("Program template could not be saved to the database.");
     } finally {
       setSaving(false);
     }
@@ -348,46 +339,25 @@ export function TrainingProgramsPage() {
     setStatusMessage(`${target.name} deleted from the training library.`);
   }
 
-  function copyProgram(program: ProgramAssignmentRow) {
-    const copiedProgram: ProgramAssignmentRow = {
-      ...program,
-      id: `local-program-copy-${Date.now()}`,
-      name: `${program.name} (copy)`,
-      activeClientCount: 0,
-      progress: 0,
-      lastEdited: "Just now",
-      templateId: program.templateId?.startsWith("local-") ? program.templateId : null
-    };
+  async function copyProgram(program: ProgramAssignmentRow) {
+    if (!program.apiTemplate) {
+      setErrorMessage("Program could not be copied because no persisted template was loaded.");
+      return;
+    }
 
-    setLocalProgramRows((currentRows) => [copiedProgram, ...currentRows]);
-    setActiveTab("Custom programs");
-    setStatusMessage(`${copiedProgram.name} added to Custom programs.`);
+    await saveCustomProgramFromDraft({
+      ...createTrainingProgramDraftFromTemplate(program.apiTemplate, { copy: true }),
+      title: `${program.name} (copy)`
+    });
   }
 
-  function copyTemplate(template: ProgramTemplateCard) {
-    const localTemplateId = `local-template-copy-${Date.now()}`;
+  async function copyTemplate(template: ProgramTemplateCard) {
     const sourceTemplate = getTemplateDraftSource(template);
-    const copiedTemplate: ProgramTemplateCard = {
-      ...template,
-      id: localTemplateId,
-      name: `${template.name} (copy)`,
-      uses: 0,
-      badge: "COPY",
-      apiTemplate: {
-        id: localTemplateId,
-        name: `${template.name} (copy)`,
-        description: template.description,
-        goal: template.goal,
-        durationWeeks: template.weeks,
-        status: "draft",
-        template: getApiTemplateJson(sourceTemplate),
-        updatedAt: new Date().toISOString()
-      }
-    };
 
-    setLocalTemplateCards((currentTemplates) => [copiedTemplate, ...currentTemplates]);
-    setActiveTab("Program templates");
-    setStatusMessage(`${copiedTemplate.name} added to Program templates.`);
+    await createTemplateFromDraft({
+      ...createTrainingProgramDraftFromTemplate(sourceTemplate, { copy: true }),
+      title: `${template.name} (copy)`
+    });
   }
 
   async function assignTrainingProgram(target: AssignableProgramTarget, client: ClientSummary, durationWeeks: number) {
@@ -421,22 +391,8 @@ export function TrainingProgramsPage() {
         return;
       }
     } else {
-      const localAssignment: ProgramAssignmentRow = {
-        id: `local-assignment-${Date.now()}`,
-        name: target.name,
-        clientName: client.name,
-        activeClientCount: 1,
-        progress: 0,
-        weeksTotal: durationWeeks,
-        startDate: formatDisplayDate(startsOn),
-        lastEdited: "Just now",
-        color: "bg-indigo-100 text-indigo-700",
-        icon: client.initials.slice(0, 1),
-        apiTemplate: null,
-        templateId: target.templateId
-      };
-
-      setLocalProgramRows((currentRows) => [localAssignment, ...currentRows]);
+      setErrorMessage("Training program could not be assigned because no persisted template was loaded.");
+      return;
     }
 
     setAssignmentTarget(null);
@@ -478,11 +434,6 @@ export function TrainingProgramsPage() {
       </div>
 
       {loading ? <p className="mb-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">Loading persisted program library...</p> : null}
-      {source === "fixtures" && !loading ? (
-        <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-          Program persistence API unavailable. Showing fixture program library.
-        </p>
-      ) : null}
       {statusMessage ? <SavedToast message={statusMessage} /> : null}
       {errorMessage ? <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p> : null}
 
@@ -511,7 +462,7 @@ export function TrainingProgramsPage() {
           onSearchChange={setProgramSearchQuery}
           onEditProgram={openAssignedProgramBuilder}
           onDeleteProgram={(program) => void deleteTrainingProgram(programToAssignableTarget(program))}
-          onCopyProgram={copyProgram}
+          onCopyProgram={(program) => void copyProgram(program)}
           onAssignProgram={(program) => setAssignmentTarget(programToAssignableTarget(program))}
         />
       ) : (
@@ -521,7 +472,7 @@ export function TrainingProgramsPage() {
           onUseTemplate={openTemplateBuilder}
           onEditTemplate={editTemplate}
           onDeleteTemplate={(template) => void deleteTrainingProgram(templateToAssignableTarget(template))}
-          onCopyTemplate={copyTemplate}
+          onCopyTemplate={(template) => void copyTemplate(template)}
           onAssignTemplate={(template) => setAssignmentTarget(templateToAssignableTarget(template))}
         />
       )}
@@ -555,17 +506,7 @@ export function getProgramTemplateCards(
   assignments: ApiTrainingAssignment[]
 ): ProgramTemplateCard[] {
   if (source === "fixtures") {
-    return programTemplates.map((template) => ({
-      id: template.id,
-      name: template.name,
-      description: template.description,
-      uses: template.uses,
-      weeks: template.weeks,
-      color: template.color,
-      badge: template.badge,
-      goal: "template",
-      apiTemplate: null
-    }));
+    return [];
   }
 
   return templates.filter((template) => template.status !== "draft" || template.goal !== "custom-program").map((template, index) => ({
@@ -579,21 +520,6 @@ export function getProgramTemplateCards(
     goal: template.goal || "template",
     apiTemplate: template
   }));
-}
-
-function createLocalTrainingTemplateFromDraft(draft: TrainingProgramDraft, fallbackIndex: number): ApiTrainingTemplate {
-  const payload = getTrainingProgramTemplatePayload(draft, fallbackIndex);
-
-  return {
-    id: `local-template-${Date.now()}`,
-    name: payload.name,
-    description: payload.description,
-    goal: payload.goal,
-    durationWeeks: payload.durationWeeks,
-    status: "draft",
-    template: payload.template,
-    updatedAt: new Date().toISOString()
-  };
 }
 
 function getTemplateDraftSource(template: ProgramTemplateCard): TrainingProgramTemplateDraftSource {
@@ -631,19 +557,6 @@ function getTemplateDraftSource(template: ProgramTemplateCard): TrainingProgramT
   };
 }
 
-function getApiTemplateJson(source: TrainingProgramTemplateDraftSource): ApiTrainingTemplate["template"] {
-  return {
-    days: source.template.days?.map((day, dayIndex) => ({
-      name: day.name,
-      exercises: day.exercises.map((exercise, exerciseIndex) => ({
-        exerciseId: `manual-entry-${dayIndex + 1}-${exerciseIndex + 1}`,
-        ...exercise
-      }))
-    })),
-    instructions: source.template.instructions
-  };
-}
-
 function programToAssignableTarget(program: ProgramAssignmentRow): AssignableProgramTarget {
   return {
     id: program.id,
@@ -674,7 +587,7 @@ export function getProgramAssignmentRows(
   templates: ApiTrainingTemplate[] = []
 ): ProgramAssignmentRow[] {
   if (source === "fixtures") {
-    return assignedPrograms.map((program) => ({ ...program, apiTemplate: null, templateId: null }));
+    return [];
   }
 
   const assignmentGroups = new Map<string, ApiTrainingAssignment[]>();

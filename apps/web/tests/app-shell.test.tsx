@@ -59,6 +59,9 @@ describe("app shell navigation", () => {
     expect(within(nav).queryByRole("link", { name: /^education$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^coach profile$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^settings$/i })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole("link", { name: /^team management$/i })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole("button", { name: /^social media$/i })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole("link", { name: /^social hub$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^training$/i })).not.toBeInTheDocument();
     expect(within(nav).getByRole("button", { name: /^training$/i })).toHaveAttribute(
       "aria-expanded",
@@ -90,14 +93,6 @@ describe("app shell navigation", () => {
       "/messages"
     );
     expect(within(nav).queryAllByRole("link", { name: /^messages$/i })).toHaveLength(1);
-
-    fireEvent.click(within(nav).getByRole("button", { name: /expand social media menu/i }));
-
-    expect(within(nav).getByRole("link", { name: /^social hub$/i })).toHaveAttribute(
-      "href",
-      "/social-media"
-    );
-    expect(within(nav).queryByRole("link", { name: /^create post$/i })).not.toBeInTheDocument();
 
     fireEvent.click(within(nav).getByRole("button", { name: /expand packages menu/i }));
 
@@ -265,6 +260,10 @@ describe("app shell navigation", () => {
       "href",
       "/settings"
     );
+
+    fireEvent.pointerDown(document.body);
+
+    expect(screen.queryByLabelText("Coach module links")).not.toBeInTheDocument();
   });
 
   it("creates a new client from the top navigation quick action", async () => {
@@ -395,21 +394,17 @@ describe("notifications", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows unread count and can mark all notifications as read", () => {
+  it("does not show local notifications when the persistence API is unavailable", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
     render(createElement(NotificationMenu));
 
     const trigger = screen.getByRole("button", { name: /notifications/i });
-    expect(trigger).toHaveTextContent("3");
+    expect(trigger).toHaveTextContent("0");
 
     fireEvent.click(trigger);
     const menu = screen.getByRole("region", { name: /notifications/i });
 
-    expect(within(menu).getByText("New Check-In Submitted")).toBeInTheDocument();
-
-    fireEvent.click(within(menu).getByRole("button", { name: /mark all as read/i }));
-
-    expect(screen.getByRole("button", { name: /notifications/i })).toHaveTextContent("0");
+    expect(within(menu).queryByText("New Check-In Submitted")).not.toBeInTheDocument();
   });
 
   it("closes the notification popup when clicking outside it", () => {
@@ -524,7 +519,7 @@ describe("messages menu", () => {
     vi.restoreAllMocks();
   });
 
-  it("opens recent messages inline from the top bar", () => {
+  it("does not show local conversations when the persistence API is unavailable", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 
     render(createElement(MessageMenu));
@@ -533,8 +528,8 @@ describe("messages menu", () => {
     fireEvent.click(trigger);
 
     const menu = screen.getByRole("region", { name: "Messages" });
-    expect(within(menu).getByText("Sarah Johnson")).toBeInTheDocument();
-    expect(within(menu).getByText("Thanks for the updated meal plan!")).toBeInTheDocument();
+    expect(within(menu).queryByText("Sarah Johnson")).not.toBeInTheDocument();
+    expect(within(menu).queryByText("Thanks for the updated meal plan!")).not.toBeInTheDocument();
     expect(within(menu).getByRole("link", { name: "Open full inbox" })).toHaveAttribute("href", "/messages");
   });
 

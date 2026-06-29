@@ -9,29 +9,55 @@ afterEach(() => {
 });
 
 describe("DashboardPage", () => {
-  it("renders fixture-backed dashboard cards and client activity", () => {
+  it("does not render placeholder dashboard numbers before Neon data resolves", () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(() => new Promise<Response>(() => undefined));
+
+    render(createElement(DashboardPage));
+
+    expect(screen.getByText("Loading dashboard data from Neon.")).toBeInTheDocument();
+    expect(screen.getByText("Loading Stripe revenue from Neon.")).toBeInTheDocument();
+    expect(screen.getByText("Loading team capacity from Neon.")).toBeInTheDocument();
+    expect(screen.getByText("Loading check-ins from Neon.")).toBeInTheDocument();
+    expect(screen.getByText("Loading client check-in schedule from Neon.")).toBeInTheDocument();
+    expect(screen.getAllByText("Loading tasks from Neon.")).toHaveLength(4);
+    expect(screen.getByText("Loading CRM data from Neon.")).toBeInTheDocument();
+    expect(screen.getByText("Loading coaching team from Neon.")).toBeInTheDocument();
+    expect(screen.queryByText("$0")).not.toBeInTheDocument();
+    expect(screen.queryByText("5")).not.toBeInTheDocument();
+    expect(screen.queryByText("/0")).not.toBeInTheDocument();
+  });
+
+  it("does not render fixture-backed dashboard data when APIs are unavailable", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 
     render(createElement(DashboardPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Coach Operations Dashboard" })).toBeInTheDocument();
     expect(screen.getByText("Monthly Revenue")).toBeInTheDocument();
-    expect(screen.getByText("$24,850")).toBeInTheDocument();
+    expect(await screen.findByText("$0")).toBeInTheDocument();
+    expect(screen.getByText("Awaiting database data")).toBeInTheDocument();
     expect(screen.getByText("Client Capacity")).toBeInTheDocument();
     const capacityCard = screen.getByRole("link", { name: /client capacity/i });
     expect(capacityCard).toHaveAttribute("href", "/clients");
     expect(within(capacityCard).getByText("Team Capacity")).toBeInTheDocument();
-    expect(within(capacityCard).getByText("57")).toBeInTheDocument();
+    expect(within(capacityCard).getByText("0")).toBeInTheDocument();
+    expect(within(capacityCard).getByText("/0")).toBeInTheDocument();
     const checkInsCard = screen.getByRole("link", { name: /view client check-ins/i });
     expect(checkInsCard).toHaveAttribute("href", "/clients/check-ins");
+    expect(within(checkInsCard).getByText("0")).toBeInTheDocument();
     expect(within(checkInsCard).queryByText("Pending")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "CRM Pipeline" })).toBeInTheDocument();
     expect(screen.getByText("Coaching Team")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "New Client/Onboarding" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Priority Flagged Clients" })).toBeInTheDocument();
+    expect(screen.getByText("No AI priority flags right now.")).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: /weekly schedule/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("Review Jordan's progress check-in")).not.toBeInTheDocument();
+    expect(screen.queryByText("Payment Secured")).not.toBeInTheDocument();
+    expect(await screen.findByText("No CRM stage data loaded from the database yet.")).toBeInTheDocument();
   });
 
-  it("updates the displayed revenue period from the selector", () => {
+  it("updates the displayed revenue period from the selector", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 
     render(createElement(DashboardPage));
@@ -40,7 +66,7 @@ describe("DashboardPage", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Weekly" }));
 
     expect(screen.getByText("Weekly Revenue")).toBeInTheDocument();
-    expect(screen.getByText("$6,212")).toBeInTheDocument();
+    expect(await screen.findByText("$0")).toBeInTheDocument();
     expect(screen.queryByText("Monthly Revenue")).not.toBeInTheDocument();
   });
 
@@ -120,27 +146,7 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Stripe custom range")).toBeInTheDocument();
   });
 
-  it("removes local work tasks from the board when completed", () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
-
-    render(createElement(DashboardPage));
-
-    const clientWork = screen.getByRole("region", { name: "Client Work" });
-    const reviewTask = within(clientWork).getByRole("button", {
-      name: /mark review jordan's progress check-in complete/i
-    });
-
-    fireEvent.click(reviewTask);
-
-    expect(within(clientWork).queryByText("Review Jordan's progress check-in")).not.toBeInTheDocument();
-    expect(
-      within(clientWork).queryByRole("button", {
-        name: /mark review jordan's progress check-in incomplete/i
-      })
-    ).not.toBeInTheDocument();
-  });
-
-  it("adds a local task through the task creation panel", () => {
+  it("does not create local dashboard tasks when the task API is unavailable", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 
     render(createElement(DashboardPage));
@@ -157,14 +163,11 @@ describe("DashboardPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create Task" }));
 
     const clientWork = screen.getByRole("region", { name: "Client Work" });
-    const createdTask = within(clientWork).getByRole("button", {
-      name: /mark prepare onboarding packet complete/i
-    });
 
-    expect(within(clientWork).getByText("Prepare onboarding packet")).toBeInTheDocument();
-    expect(within(createdTask).getByText("Due Jun 12")).toBeInTheDocument();
-    expect(within(createdTask).getByText("High")).toBeInTheDocument();
-    expect(screen.queryByRole("dialog", { name: "Create New Task" })).not.toBeInTheDocument();
+    expect(within(clientWork).queryByText("Prepare onboarding packet")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Dashboard tasks are unavailable until the Neon-backed task API loads."
+    );
   });
 
   it("places the add task action in the work to-do header", () => {
@@ -184,6 +187,72 @@ describe("DashboardPage", () => {
     fireEvent.click(addTaskButton);
 
     expect(screen.getByRole("dialog", { name: "Create New Task" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Current Client Care" })).toHaveClass("border-indigo-500", "bg-indigo-50", "text-indigo-700");
+    expect(screen.getByRole("button", { name: "Create Task" })).toHaveClass("bg-indigo-600", "hover:bg-indigo-700");
+  });
+
+  it("shows AI priority flagged clients under the work to-do module with expandable notes", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/ai/recommendations?type=risk-flag&status=pending-approval&limit=5") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "risk_flag_1",
+                  severity: "high",
+                  title: "Sleep and stress risk needs coach review",
+                  contentMarkdown:
+                    "Stress has been above 8/10 for three consecutive check-ins while sleep has dropped below six hours. Review recovery load before progressing training.",
+                  client: { id: "client_1", name: "Maya Stone" }
+                },
+                {
+                  id: "risk_flag_2",
+                  severity: "medium",
+                  title: "Nutrition adherence is slipping",
+                  contentMarkdown:
+                    "Meal adherence has fallen across the last two check-ins and weekend prep is repeatedly missed. Coach should review the plan friction points.",
+                  client: { id: "client_2", name: "Alex Rivera" }
+                },
+                {
+                  id: "risk_flag_3",
+                  severity: "low",
+                  title: "Hidden low severity",
+                  contentMarkdown: "This should not render.",
+                  client: { id: "client_3", name: "Low Priority" }
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(DashboardPage));
+
+    const workToDoHeading = screen.getByRole("heading", { name: "Work To-Do" });
+    const priorityFlags = await screen.findByRole("region", { name: "Priority Flagged Clients" });
+
+    expect(workToDoHeading.compareDocumentPosition(priorityFlags) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(priorityFlags).getByText("Maya Stone")).toBeInTheDocument();
+    expect(within(priorityFlags).getByText("High priority")).toBeInTheDocument();
+    expect(within(priorityFlags).getByText("Sleep and stress risk needs coach review")).toBeInTheDocument();
+    expect(within(priorityFlags).getByText("Alex Rivera")).toBeInTheDocument();
+    expect(within(priorityFlags).getByText("Medium priority")).toBeInTheDocument();
+    expect(within(priorityFlags).queryByText("Low Priority")).not.toBeInTheDocument();
+
+    fireEvent.click(within(priorityFlags).getAllByText("View note")[0]);
+
+    expect(
+      within(priorityFlags).getByText(
+        "Stress has been above 8/10 for three consecutive check-ins while sleep has dropped below six hours. Review recovery load before progressing training."
+      )
+    ).toBeInTheDocument();
   });
 
   it("loads persisted dashboard tasks and live summary counts when APIs are available", async () => {
@@ -227,6 +296,51 @@ describe("DashboardPage", () => {
                 { id: "checkin_2", checkInStatus: "reviewed", status: "pending" },
                 { id: "checkin_3", checkInStatus: "completed", status: "completed" }
               ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/team-members") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                members: [
+                  {
+                    id: "membership_capacity_1",
+                    name: "Coach One",
+                    email: "one@example.com",
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 20,
+                    capacityLimit: 25,
+                    capacityPercent: 80
+                  },
+                  {
+                    id: "membership_capacity_2",
+                    name: "Coach Two",
+                    email: "two@example.com",
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 15,
+                    capacityLimit: 20,
+                    capacityPercent: 75
+                  },
+                  {
+                    id: "membership_capacity_3",
+                    name: "Coach Three",
+                    email: "three@example.com",
+                    role: "coach",
+                    status: "active",
+                    activeClientCount: 22,
+                    capacityLimit: 30,
+                    capacityPercent: 73
+                  }
+                ],
+                invitations: []
+              }
             }),
             { status: 200 }
           )
