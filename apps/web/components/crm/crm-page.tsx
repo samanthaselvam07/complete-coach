@@ -3,7 +3,7 @@
 import { Calendar, Clock, GripVertical, Mail, MapPin, Pencil, Phone, Plus, Search, Tag, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { pipelineStages, type Lead, type LeadStageId, type LeadStatus } from "@/fixtures/leads";
+import { pipelineStages, type Lead, type LeadStageId, type LeadStatus } from "@/lib/crm/lead-models";
 import { cn } from "@/lib/utils";
 
 const statusConfig: Record<LeadStatus, { label: string; className: string }> = {

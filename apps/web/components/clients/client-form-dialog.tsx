@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 
-import type { ClientSummary } from "@/fixtures/clients";
+import type { ClientSummary } from "@/lib/clients/client-models";
 
 export interface ClientFormState {
   firstName: string;

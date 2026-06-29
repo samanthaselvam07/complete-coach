@@ -11,7 +11,7 @@ import {
   type ClientFormState
 } from "@/components/clients/client-form-dialog";
 import { Button } from "@/components/ui/button";
-import type { ClientSummary } from "@/fixtures/clients";
+import type { ClientSummary } from "@/lib/clients/client-models";
 
 export function NewClientButton() {
   const router = useRouter();

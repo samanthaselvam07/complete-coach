@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { CheckInDetailPage } from "@/components/check-ins/check-in-detail-page";
 import { CheckInHistoryPanel, DailyCheckInsPanel } from "@/components/clients/client-check-in-panels";
 import { ClientProfileDashboard } from "@/components/clients/client-profile-dashboard";
-import type { ClientProfile, ClientSummary } from "@/fixtures/clients";
+import type { ClientProfile, ClientSummary } from "@/lib/clients/client-models";
 import { cn } from "@/lib/utils";
 
 type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "Supplementation" | "Check-Ins";

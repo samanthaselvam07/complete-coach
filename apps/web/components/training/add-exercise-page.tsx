@@ -6,7 +6,7 @@ import { ChevronLeft, Minus, Plus, Upload } from "lucide-react";
 import { useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
-import { muscleGroups } from "@/fixtures/training";
+import { muscleGroups } from "@/lib/training/training-models";
 import { cn } from "@/lib/utils";
 
 export function AddExercisePage() {

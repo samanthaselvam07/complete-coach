@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Check, Grid2X2, List, Play, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import type { Exercise } from "@/fixtures/training";
+import type { Exercise } from "@/lib/training/training-models";
 import { cn } from "@/lib/utils";
 
 interface ApiExercise {

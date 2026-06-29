@@ -4,7 +4,7 @@ import { Check, ChevronLeft, ChevronRight, Grid2X2, List as ListIcon, Plus, Sear
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
-import type { Food } from "@/fixtures/nutrition";
+import type { Food } from "@/lib/nutrition/nutrition-models";
 import { cn } from "@/lib/utils";
 
 interface ApiFood {

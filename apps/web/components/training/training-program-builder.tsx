@@ -3,7 +3,7 @@
 import { ArrowLeft, Copy, GripVertical, PlayCircle, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import type { Exercise } from "@/fixtures/training";
+import type { Exercise } from "@/lib/training/training-models";
 import { cn } from "@/lib/utils";
 
 import type { ProgramTemplateCard } from "./training-programs-page";

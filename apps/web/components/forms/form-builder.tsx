@@ -2,7 +2,7 @@ import { ArrowLeft, Bell, Eye, Grip, Image, Search, Send, Settings } from "lucid
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
-import { formElements, getTemplateName, initialFormFields, type FormField } from "@/fixtures/forms";
+import { formElements, getTemplateName, initialFormFields, type FormField } from "@/lib/forms/form-config";
 import { cn } from "@/lib/utils";
 import {
   fieldSupportsOptions,

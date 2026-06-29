@@ -3,7 +3,7 @@
 import { Calendar, ClipboardCopy, Edit, Grid2X2, List, MoreVertical, Search, Trash2, Users, UserPlus, Zap } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 
-import type { ClientSummary } from "@/fixtures/clients";
+import type { ClientSummary } from "@/lib/clients/client-models";
 import { cn } from "@/lib/utils";
 
 import type { ProgramAssignmentRow, ProgramTemplateCard } from "./training-programs-page";

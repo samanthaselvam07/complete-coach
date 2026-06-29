@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 
-import type { FormField } from "@/fixtures/forms";
+import type { FormField } from "@/lib/forms/form-config";
 
 export function fieldSupportsOptions(fieldType: string) {
   return fieldType === "multiple-choice" || fieldType === "dropdown" || fieldType === "checkbox";

@@ -2,7 +2,7 @@
 
 import { Check, ChevronLeft, Upload, X } from "lucide-react";
 import { type FormEvent, useState } from "react";
-import { distributionOptions, resourceCategories } from "@/fixtures/education";
+import { distributionOptions, resourceCategories } from "@/lib/education/education-config";
 
 const resourceTypes = ["article", "video", "pdf", "link", "file"] as const;
 

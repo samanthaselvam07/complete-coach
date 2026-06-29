@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { ClientStatus } from "@/app/generated/prisma/enums";
-import type { ClientSummary } from "@/fixtures/clients";
+import type { ClientSummary } from "@/lib/clients/client-models";
 
 export const clientStatusValues = ["active", "archived", "new", "deactivated"] as const;
 export type ApiClientStatus = (typeof clientStatusValues)[number];

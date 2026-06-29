@@ -1,6 +1,6 @@
 import { FileText, MoreVertical } from "lucide-react";
 
-import { formTemplates } from "@/fixtures/forms";
+import { formTemplates } from "@/lib/forms/form-config";
 import type { PersistedFormSummary } from "./forms-page";
 
 interface FormManagementProps {

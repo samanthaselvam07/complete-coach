@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { LeadStage, LeadStatus } from "@/app/generated/prisma/enums";
-import type { Lead } from "@/fixtures/leads";
+import type { Lead } from "@/lib/crm/lead-models";
 
 export const leadStatusValues = ["hot", "warm", "cold"] as const;
 export const leadStageValues = [

@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { CalendarDays, Target } from "lucide-react";
 
-import type { ClientProfile } from "@/fixtures/clients";
+import type { ClientProfile } from "@/lib/clients/client-models";
 import { cn } from "@/lib/utils";
 
 export function ClientProfileDashboard({ client }: { client: ClientProfile }) {

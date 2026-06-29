@@ -3,8 +3,8 @@
 import { Calendar, CheckCircle2, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import type { ClientSummary } from "@/fixtures/clients";
-import type { Food } from "@/fixtures/nutrition";
+import type { ClientSummary } from "@/lib/clients/client-models";
+import type { Food } from "@/lib/nutrition/nutrition-models";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { cn } from "@/lib/utils";
 

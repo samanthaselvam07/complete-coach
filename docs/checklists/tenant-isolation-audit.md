@@ -37,16 +37,16 @@ Status: Done
 
 ### Stage 3 - Fixture Leakage Audit
 
-Status: In progress
+Status: Done
 
 - [x] Defined runtime fixture rules: no persisted product data from `fixtures/*` in runtime pages.
 - [x] Moved check-in display helpers from `fixtures/check-ins` to `lib/check-ins/check-in-display.ts`.
 - [x] Moved supplement protocol display types from `fixtures/supplementation` to `lib/supplements/protocol-display.ts`.
 - [x] Moved dashboard model types/static task category options from `fixtures/dashboard` to `lib/dashboard/dashboard-models.ts`.
-- [ ] Review remaining runtime imports from `fixtures/clients`, `fixtures/nutrition`, `fixtures/training`, `fixtures/leads`, `fixtures/forms`, `fixtures/education`, and `fixtures/operations`.
-- [ ] Split remaining imports into either durable model modules under `lib/*` or clearly named static config modules.
-- [ ] Remove any fallback demo rows rendered when an API returns an empty data set.
-- [ ] Add a CI/check script or test that fails on runtime imports of fixture modules that contain tenant records.
+- [x] Reviewed remaining runtime imports from `fixtures/clients`, `fixtures/nutrition`, `fixtures/training`, `fixtures/leads`, `fixtures/forms`, `fixtures/education`, and `fixtures/operations`.
+- [x] Split remaining imports into durable model modules under `lib/*` or clearly named static config modules.
+- [x] Removed runtime fixture dependency paths so API-empty states cannot import fallback demo rows through shared fixture modules.
+- [x] Added `tests/fixture-leakage.test.ts` to fail when app, component, or lib runtime code imports `@/fixtures/*`.
 
 ### Stage 4 - Cross-Org API Tests
 
@@ -106,6 +106,7 @@ Status: Not started
 
 - `pnpm --filter @complete-coach/web test -- active-organization local-dev-session dashboard-metadata-api dashboard-crm-summary-api operations-api dashboard-page`: passed.
 - `pnpm --filter @complete-coach/web test -- dashboard-page submissions-checkins-api training-api nutrition-api supplementation-api audit-api`: passed.
+- `pnpm --filter @complete-coach/web test -- fixture-leakage`: passed.
 - `pnpm --filter @complete-coach/web typecheck`: passed.
 - `AUTH_SECRET=... DATABASE_URL=... DIRECT_URL=... pnpm --filter @complete-coach/web exec next build --webpack`: passed.
 - `pnpm --filter @complete-coach/web lint`: currently blocked by unrelated existing UI lint issues in check-in detail, client profile dashboard, meal plans, packages, and training program builder.
@@ -124,8 +125,8 @@ Status: Not started
 - `components/check-ins/check-in-management-page.tsx`: converted away from check-in fixture helper imports.
 - `components/supplementation/supplement-plans-page.tsx`: converted away from supplement fixture helper imports.
 - `components/dashboard/*`: converted away from `fixtures/dashboard` for runtime dashboard models/options.
-- `components/forms/*`, `components/crm/crm-page.tsx`, and `components/education/add-resource-page.tsx`: currently appear to use static option/template definitions rather than tenant records; keep this distinction explicit during refactors.
-- Remaining type-only imports from fixture modules should still be migrated where the fixture file also exports demo tenant rows, so runtime code cannot accidentally import sample records later.
+- `components/forms/*`, `components/crm/crm-page.tsx`, and `components/education/add-resource-page.tsx`: converted to `lib/forms`, `lib/crm`, and `lib/education` model/config modules.
+- Runtime app, component, and lib code now has a regression test requiring zero `@/fixtures/*` imports.
 
 ## Cross-Org API Test Rules
 
@@ -137,7 +138,6 @@ Status: Not started
 
 ## Open Risks
 
-- Some runtime components still import types or static options from fixture modules that also contain demo data. Even type-only imports can hide future accidental runtime imports.
 - The sign-up path has not yet been built and tested as a true clean-slate organization bootstrap.
 - Database-level review is still required to catch unsafe direct writes or `findUnique` calls outside the endpoints already tested.
 - Lint is not currently a clean gate because unrelated UI issues predate this audit slice.

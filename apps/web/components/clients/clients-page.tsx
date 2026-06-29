@@ -5,7 +5,7 @@ import { Archive, Check, ChevronDown, Download, Eye, Filter, Pencil, Plus, Searc
 import { useEffect, useState } from "react";
 import type { Route } from "next";
 
-import type { ClientSummary, ClientStatus } from "@/fixtures/clients";
+import type { ClientSummary, ClientStatus } from "@/lib/clients/client-models";
 import { cn } from "@/lib/utils";
 import {
   ClientFormDialog,

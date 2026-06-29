@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import type { ClientSummary } from "@/fixtures/clients";
+import type { ClientSummary } from "@/lib/clients/client-models";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { cn } from "@/lib/utils";
 

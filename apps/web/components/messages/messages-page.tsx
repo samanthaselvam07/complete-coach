@@ -2,7 +2,7 @@
 
 import { MessageSquare, MoreVertical, Paperclip, Phone, Search, Send, Smile, Video } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { ChatMessage } from "@/fixtures/operations";
+import type { ChatMessage } from "@/lib/operations/message-models";
 
 interface ApiConversation {
   id: string;
