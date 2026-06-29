@@ -544,13 +544,6 @@ function SupplementDetailsDialog({
           </button>
         </div>
         <div className="max-h-[calc(90vh-9rem)] space-y-5 overflow-y-auto p-6">
-          <DetailGrid
-            items={[
-              ["Category", supplement.category],
-              ["Timing", supplement.timing],
-              ["Bioavailability", supplement.bioavailabilityNotes ?? "No bioavailability notes recorded."]
-            ]}
-          />
           <section>
             <h3 className="mb-2 text-sm font-black uppercase tracking-wide text-slate-500">Clinical Description</h3>
             <p className="whitespace-pre-line text-sm leading-6 text-slate-700">
@@ -653,19 +646,6 @@ function SupplementDetailsDialog({
         </div>
       </div>
     </div>
-  );
-}
-
-function DetailGrid({ items }: { items: Array<[string, string]> }) {
-  return (
-    <dl className="grid gap-3 sm:grid-cols-2">
-      {items.map(([label, value]) => (
-        <div key={label} className="rounded-xl bg-slate-50 p-4">
-          <dt className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</dt>
-          <dd className="mt-1 text-sm font-bold text-slate-900">{value}</dd>
-        </div>
-      ))}
-    </dl>
   );
 }
 

@@ -853,13 +853,17 @@ describe("SupplementDatabasePage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "View details for Zinc Complex" }));
     const dialog = screen.getByRole("dialog", { name: "Zinc Complex details" });
-    expect(within(dialog).getByText("Immune")).toBeInTheDocument();
-    expect(within(dialog).getByText("Morning")).toBeInTheDocument();
+    expect(within(dialog).queryByText("Category")).not.toBeInTheDocument();
+    expect(within(dialog).queryByText("Timing")).not.toBeInTheDocument();
+    expect(within(dialog).queryByText("Bioavailability")).not.toBeInTheDocument();
+    expect(within(dialog).queryByText("Immune")).not.toBeInTheDocument();
+    expect(within(dialog).queryByText("Morning")).not.toBeInTheDocument();
     expect(within(dialog).queryByText("1g")).not.toBeInTheDocument();
     expect(await within(dialog).findByText("No coach dosage instructions added.")).toBeInTheDocument();
     expect(within(dialog).getByText("No coach notes added.")).toBeInTheDocument();
     expect(within(dialog).getByText("No affiliate or product link added.")).toBeInTheDocument();
-    expect(within(dialog).getByText("Take with food.")).toBeInTheDocument();
+    expect(within(dialog).queryByText("Take with food.")).not.toBeInTheDocument();
+    expect(within(dialog).getByText("Supports immune function. Use with client-specific context.")).toBeInTheDocument();
 
     fireEvent.click(within(dialog).getByRole("button", { name: "Edit coach supplement details" }));
     fireEvent.change(within(dialog).getByLabelText("Coach dosage instructions"), {
