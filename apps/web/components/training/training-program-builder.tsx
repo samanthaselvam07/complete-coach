@@ -310,9 +310,16 @@ export function TrainingProgramBuilder({
   }
 
   async function addCustomExercise(section: TrainingProgramSection, input: CustomExerciseInput) {
-    const exercise = await createOrganizationExercise(input);
-    addExercise(section, exercise.name, {
-      exerciseId: exercise.id,
+    let savedExercise: ApiExercise | null = null;
+
+    try {
+      savedExercise = await createOrganizationExercise(input);
+    } catch {
+      savedExercise = null;
+    }
+
+    addExercise(section, savedExercise?.name ?? input.exerciseName, {
+      exerciseId: savedExercise?.id,
       sets: input.sets,
       reps: input.reps,
       restSeconds: input.restSeconds,

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -381,7 +381,7 @@ describe("Training program builder exercise panel", () => {
     expect(screen.queryByRole("dialog", { name: "Add custom exercise" })).not.toBeInTheDocument();
   });
 
-  it("keeps the dialog open and shows an error when a custom exercise cannot be persisted", async () => {
+  it("still adds a custom exercise to the builder when the exercise database write fails", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       if (String(input) === "/api/v1/exercises" && init?.method === "POST") {
         return Promise.resolve(new Response(JSON.stringify({ error: "unavailable" }), { status: 503 }));
@@ -402,7 +402,8 @@ describe("Training program builder exercise panel", () => {
     fireEvent.change(within(dialog).getByLabelText("Exercise name"), { target: { value: "Split Squat" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Add exercise" }));
 
-    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Custom exercise could not be saved to the exercise database.");
-    await waitFor(() => expect(screen.queryByRole("group", { name: "Split Squat exercise row" })).not.toBeInTheDocument());
+    const exerciseRow = await screen.findByRole("group", { name: "Split Squat exercise row" });
+    expect(within(exerciseRow).getByDisplayValue("Split Squat")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Add custom exercise" })).not.toBeInTheDocument();
   });
 });
