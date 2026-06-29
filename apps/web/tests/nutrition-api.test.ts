@@ -6,7 +6,7 @@ import {
   MealPlanTemplateStatus
 } from "@/app/generated/prisma/enums";
 import { GET as getFoods, POST as createFood } from "@/app/api/v1/foods/route";
-import { GET as getFood, PATCH as updateFood } from "@/app/api/v1/foods/[foodId]/route";
+import { DELETE as deleteFood, GET as getFood, PATCH as updateFood } from "@/app/api/v1/foods/[foodId]/route";
 import {
   GET as getMealPlanTemplates,
   POST as createMealPlanTemplate
@@ -392,6 +392,71 @@ describe("nutrition persistence APIs", () => {
 
     expect(response.status).toBe(404);
     expect(payload.error).toMatchObject({ code: "not_found", message: "Editable private food not found." });
+    expect(mocks.prisma.foodLibraryItem.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          id: "food_global",
+          organizationId: "org_1",
+          scope: LibraryScope.PRIVATE,
+          deletedAt: null
+        })
+      })
+    );
+    expect(mocks.prisma.foodLibraryItem.update).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("soft deletes private tenant foods and audit logs the write", async () => {
+    mocks.prisma.foodLibraryItem.findFirst.mockResolvedValue(privateFood);
+    mocks.prisma.foodLibraryItem.update.mockResolvedValue({
+      ...privateFood,
+      deletedAt: new Date("2026-06-29T00:00:00.000Z")
+    });
+
+    const response = await deleteFood(
+      new Request("http://test.local/api/v1/foods/food_private", {
+        method: "DELETE"
+      }),
+      { params: Promise.resolve({ foodId: "food_private" }) }
+    );
+    const payload = (await response.json()) as { data: { id: string; deleted: boolean } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual({ id: "food_private", deleted: true });
+    expect(mocks.prisma.foodLibraryItem.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          id: "food_private",
+          organizationId: "org_1",
+          scope: LibraryScope.PRIVATE,
+          deletedAt: null
+        })
+      })
+    );
+    expect(mocks.prisma.foodLibraryItem.update).toHaveBeenCalledWith({
+      where: { id: "food_private" },
+      data: { deletedAt: expect.any(Date) }
+    });
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: "food.deleted", targetId: "food_private" })
+      })
+    );
+  });
+
+  it("does not delete global foods through tenant write access", async () => {
+    mocks.prisma.foodLibraryItem.findFirst.mockResolvedValue(null);
+
+    const response = await deleteFood(
+      new Request("http://test.local/api/v1/foods/food_global", {
+        method: "DELETE"
+      }),
+      { params: Promise.resolve({ foodId: "food_global" }) }
+    );
+    const payload = (await response.json()) as { error: { code: string; message: string } };
+
+    expect(response.status).toBe(404);
+    expect(payload.error).toMatchObject({ code: "not_found", message: "Deletable private food not found." });
     expect(mocks.prisma.foodLibraryItem.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({

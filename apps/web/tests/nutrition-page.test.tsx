@@ -1821,6 +1821,65 @@ describe("FoodDatabasePage", () => {
     );
   });
 
+  it("deletes only organization foods from the food database", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      if (String(input) === "/api/v1/foods?limit=5000") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "food_global",
+                  scope: "global",
+                  name: "Global Basmati Rice",
+                  category: "Carbs",
+                  servingSize: "100g",
+                  calories: 121,
+                  proteinGrams: 3,
+                  carbsGrams: 25,
+                  fatGrams: 0.4,
+                  metadata: { sourceId: "usda_fdc" }
+                },
+                {
+                  id: "food_private",
+                  scope: "private",
+                  name: "Coach Blueberries",
+                  category: "Custom",
+                  servingSize: "150 Grams",
+                  calories: 85,
+                  proteinGrams: 1,
+                  carbsGrams: 21,
+                  fatGrams: 0,
+                  metadata: { source: "USDA" }
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (String(input) === "/api/v1/foods/food_private" && init?.method === "DELETE") {
+        return Promise.resolve(new Response(JSON.stringify({ data: { id: "food_private", deleted: true } }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    });
+
+    render(createElement(FoodDatabasePage));
+
+    expect(await screen.findByText("Coach Blueberries")).toBeInTheDocument();
+    expect(screen.getByText("Global Basmati Rice")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete Global Basmati Rice" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Coach Blueberries" }));
+
+    await waitFor(() => expect(screen.queryByText("Coach Blueberries")).not.toBeInTheDocument());
+    expect(screen.getByText("Global Basmati Rice")).toBeInTheDocument();
+    expect(await screen.findByText("Food deleted.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/foods/food_private", { method: "DELETE" });
+  });
+
   it("opens the custom food modal from the add new food card", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }));
 

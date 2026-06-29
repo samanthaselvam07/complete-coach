@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Grid2X2, List as ListIcon, Plus, Search, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Grid2X2, List as ListIcon, Plus, Search, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
@@ -209,6 +209,30 @@ export function FoodDatabasePage() {
     }
   }
 
+  async function deleteFood(food: ApiFood | Food) {
+    if (!isDeletableFood(food)) {
+      return;
+    }
+
+    setStatusMessage(null);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch(`/api/v1/foods/${food.id}`, { method: "DELETE" });
+      const payload = (await response.json()) as { error?: { message?: string } };
+
+      if (!response.ok) {
+        throw new Error(payload.error?.message ?? "Food could not be deleted.");
+      }
+
+      setApiFoods((currentFoods) => currentFoods.filter((currentFood) => currentFood.id !== food.id));
+      setSelectedFood((currentFood) => (currentFood?.id === food.id ? null : currentFood));
+      setStatusMessage("Food deleted.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Food could not be deleted.");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8">
       <div className="mb-8">
@@ -332,13 +356,13 @@ export function FoodDatabasePage() {
           viewMode === "cards" ? (
             <section aria-label="Food grid" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
               {visibleFoods.map((food) => (
-                <FoodCard key={food.id} food={food} onOpen={() => setSelectedFood(food)} />
+                <FoodCard key={food.id} food={food} onDelete={deleteFood} onOpen={() => setSelectedFood(food)} />
               ))}
               <AddFoodCard onClick={() => setNewFoodModalOpen(true)} />
             </section>
           ) : (
             <>
-              <FoodList foods={visibleFoods} onOpen={setSelectedFood} />
+              <FoodList foods={visibleFoods} onDelete={deleteFood} onOpen={setSelectedFood} />
               <button
                 type="button"
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-white px-5 py-4 text-sm font-semibold text-slate-700 transition-colors hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
@@ -415,52 +439,63 @@ export function FoodDatabasePage() {
   );
 }
 
-function FoodCard({ food, onOpen }: { food: ApiFood | Food; onOpen: () => void }) {
+function FoodCard({ food, onDelete, onOpen }: { food: ApiFood | Food; onDelete: (food: ApiFood | Food) => void; onOpen: () => void }) {
   return (
-    <button
-      type="button"
-      aria-label={`View nutrient breakdown for ${food.name}`}
-      className="group rounded-xl border border-gray-200 bg-white p-5 text-left transition-all hover:border-indigo-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      onClick={onOpen}
-    >
-      <div className="relative mb-5">
-        {isVerifiedFood(food) ? (
-          <span
-            aria-label="Verified Complete Coach food"
-            className="absolute right-0 top-0 inline-flex size-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
-            title="Verified Complete Coach food"
-          >
-            <Check className="size-4" aria-hidden="true" />
-          </span>
-        ) : null}
-        <img src={getFoodImageSrc(food.name)} alt={food.name} className="mx-auto size-20 rounded-full object-cover" />
-      </div>
-      <div className="mb-4 text-center">
-        <h3 className="mb-1 font-semibold text-gray-900">{food.name}</h3>
-        <p className="text-xs text-gray-500">{getFoodServing(food)}</p>
-      </div>
-      <div className="space-y-2">
-        <FoodMacro label="Calories" value={`${food.calories}`} tone="text-gray-900" />
-        <FoodMacro label="Protein" value={`${getFoodMacro(food, "protein")}g`} tone="text-blue-600" />
-        <FoodMacro label="Carbs" value={`${getFoodMacro(food, "carbs")}g`} tone="text-green-600" />
-        <FoodMacro label="Fats" value={`${getFoodMacro(food, "fats")}g`} tone="text-orange-600" />
-      </div>
-    </button>
+    <article className="relative rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg">
+      {isDeletableFood(food) ? <DeleteFoodButton className="absolute right-3 top-3 z-10" food={food} onDelete={onDelete} /> : null}
+      <button
+        type="button"
+        aria-label={`View nutrient breakdown for ${food.name}`}
+        className="group h-full w-full p-5 text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+        onClick={onOpen}
+      >
+        <div className="relative mb-5">
+          {isVerifiedFood(food) ? (
+            <span
+              aria-label="Verified Complete Coach food"
+              className="absolute right-0 top-0 inline-flex size-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+              title="Verified Complete Coach food"
+            >
+              <Check className="size-4" aria-hidden="true" />
+            </span>
+          ) : null}
+          <img src={getFoodImageSrc(food.name)} alt={food.name} className="mx-auto size-20 rounded-full object-cover" />
+        </div>
+        <div className="mb-4 text-center">
+          <h3 className="mb-1 font-semibold text-gray-900">{food.name}</h3>
+          <p className="text-xs text-gray-500">{getFoodServing(food)}</p>
+        </div>
+        <div className="space-y-2">
+          <FoodMacro label="Calories" value={`${food.calories}`} tone="text-gray-900" />
+          <FoodMacro label="Protein" value={`${getFoodMacro(food, "protein")}g`} tone="text-blue-600" />
+          <FoodMacro label="Carbs" value={`${getFoodMacro(food, "carbs")}g`} tone="text-green-600" />
+          <FoodMacro label="Fats" value={`${getFoodMacro(food, "fats")}g`} tone="text-orange-600" />
+        </div>
+      </button>
+    </article>
   );
 }
 
-function FoodList({ foods: foodItems, onOpen }: { foods: Array<ApiFood | Food>; onOpen: (food: ApiFood | Food) => void }) {
+function FoodList({
+  foods: foodItems,
+  onDelete,
+  onOpen
+}: {
+  foods: Array<ApiFood | Food>;
+  onDelete: (food: ApiFood | Food) => void;
+  onOpen: (food: ApiFood | Food) => void;
+}) {
   return (
     <div role="list" aria-label="Food list" className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       {foodItems.map((food) => (
         <div key={food.id} role="listitem" className="border-b border-gray-100 last:border-b-0">
-          <button
-            type="button"
-            aria-label={`View nutrient breakdown for ${food.name}`}
-            className="grid w-full gap-4 px-4 py-4 text-left hover:bg-indigo-50/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 lg:grid-cols-[minmax(0,1.4fr)_minmax(8rem,0.7fr)_minmax(18rem,1fr)] lg:items-center"
-            onClick={() => onOpen(food)}
-          >
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="grid gap-4 px-4 py-4 hover:bg-indigo-50/50 lg:grid-cols-[minmax(0,1.4fr)_minmax(8rem,0.7fr)_minmax(18rem,1fr)_auto] lg:items-center">
+            <button
+              type="button"
+              aria-label={`View nutrient breakdown for ${food.name}`}
+              className="flex min-w-0 items-center gap-3 text-left focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onClick={() => onOpen(food)}
+            >
               <img src={getFoodImageSrc(food.name)} alt="" className="size-12 shrink-0 rounded-full object-cover" />
               <div className="min-w-0">
                 <div className="flex min-w-0 items-center gap-2">
@@ -477,7 +512,7 @@ function FoodList({ foods: foodItems, onOpen }: { foods: Array<ApiFood | Food>; 
                 </div>
                 <p className="truncate text-xs text-slate-500">{food.category}</p>
               </div>
-            </div>
+            </button>
 
             <div className="text-sm text-slate-600">
               <span className="font-medium text-slate-900">{getFoodServing(food)}</span>
@@ -490,10 +525,38 @@ function FoodList({ foods: foodItems, onOpen }: { foods: Array<ApiFood | Food>; 
               <ListMacro label="Carbs" value={`${getFoodMacro(food, "carbs")}g`} tone="text-green-600" />
               <ListMacro label="Fats" value={`${getFoodMacro(food, "fats")}g`} tone="text-orange-600" />
             </div>
-          </button>
+            <div className="flex justify-end">{isDeletableFood(food) ? <DeleteFoodButton food={food} onDelete={onDelete} /> : null}</div>
+          </div>
         </div>
       ))}
     </div>
+  );
+}
+
+function DeleteFoodButton({
+  className,
+  food,
+  onDelete
+}: {
+  className?: string;
+  food: ApiFood | Food;
+  onDelete: (food: ApiFood | Food) => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={`Delete ${food.name}`}
+      className={cn(
+        "inline-flex size-9 items-center justify-center rounded-full bg-red-50 text-red-600 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300",
+        className
+      )}
+      onClick={(event) => {
+        event.stopPropagation();
+        onDelete(food);
+      }}
+    >
+      <Trash2 className="size-4" aria-hidden="true" />
+    </button>
   );
 }
 
@@ -767,6 +830,10 @@ function getFoodSource(food: ApiFood | Food): FoodDatabaseSource {
 
 function isVerifiedFood(food: ApiFood | Food) {
   return "scope" in food ? food.scope === "global" : true;
+}
+
+function isDeletableFood(food: ApiFood | Food) {
+  return "scope" in food && food.scope === "private";
 }
 
 function getSourceDescription(source: FoodDatabaseSource) {

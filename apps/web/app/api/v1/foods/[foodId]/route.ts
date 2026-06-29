@@ -69,3 +69,41 @@ export async function PATCH(request: Request, context: FoodRouteContext) {
     return handleApiError(error);
   }
 }
+
+export async function DELETE(_request: Request, context: FoodRouteContext) {
+  try {
+    const actor = requireActiveActor(await auth(), "nutrition:write");
+    const { foodId } = await context.params;
+    const existingFood = await prisma.foodLibraryItem.findFirst({
+      where: {
+        id: foodId,
+        organizationId: actor.organizationId,
+        scope: LibraryScope.PRIVATE,
+        deletedAt: null
+      }
+    });
+
+    if (!existingFood) {
+      return errorResponse("not_found", "Deletable private food not found.", 404);
+    }
+
+    await prisma.foodLibraryItem.update({
+      where: { id: foodId },
+      data: { deletedAt: new Date() }
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        organizationId: actor.organizationId,
+        actorUserId: actor.userId,
+        action: "food.deleted",
+        targetType: "food",
+        targetId: foodId
+      }
+    });
+
+    return dataResponse({ id: foodId, deleted: true });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
