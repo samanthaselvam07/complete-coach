@@ -420,7 +420,18 @@ describe("supplementation persistence APIs", () => {
 
     expect(missingClientResponse.status).toBe(404);
     expect(missingTemplateResponse.status).toBe(404);
+    expect(mocks.prisma.client.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "client_1", organizationId: "org_1", deletedAt: null }
+      })
+    );
+    expect(mocks.prisma.supplementPlanTemplate.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "missing", organizationId: "org_1", deletedAt: null }
+      })
+    );
     expect(mocks.prisma.supplementPlanAssignment.create).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
   });
 
   it("lists supplement assignments with client names", async () => {

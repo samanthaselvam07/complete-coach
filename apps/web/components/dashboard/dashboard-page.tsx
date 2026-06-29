@@ -19,7 +19,7 @@ import {
   type DashboardTaskCategory,
   type RevenueMetric,
   type RevenuePeriod
-} from "@/fixtures/dashboard";
+} from "@/lib/dashboard/dashboard-models";
 
 interface ApiTask {
   id: string;

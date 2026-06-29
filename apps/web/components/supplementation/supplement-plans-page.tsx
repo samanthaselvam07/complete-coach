@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   type ActiveSupplementProtocol,
   type ProtocolTemplate
-} from "@/fixtures/supplementation";
+} from "@/lib/supplements/protocol-display";
 import { SavedToast } from "@/components/ui/saved-toast";
 
 type TabId = "active" | "library";

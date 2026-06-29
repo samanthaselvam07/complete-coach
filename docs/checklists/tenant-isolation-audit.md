@@ -14,14 +14,16 @@ This checklist tracks the clean-slate rollout for organization isolation. Comple
 ## Fixture Leakage Rules
 
 - Runtime pages must not import demo records from `fixtures/*` for persisted product data.
+- Check-in and supplement display helper types now live under `lib/check-ins` and `lib/supplements` so runtime pages do not import those fixture modules for shared helpers.
+- Dashboard task/revenue model types and static category labels now live under `lib/dashboard`, keeping old sample dashboard rows out of the runtime dependency graph.
 - Static UI configuration is allowed from fixture-like modules only when it is not tenant data, for example form field definitions, CRM stage labels, and resource category options.
 - New organization dashboards should render an empty but usable state until Neon returns persisted records.
 - Demo names such as `Marcus Rodriguez`, `Sarah Johnson`, `Complete Coach Demo`, and seeded KPI values must appear only in tests, seeds, explicit fixture previews, or documentation examples.
 
 ## Current Runtime Imports To Watch
 
-- `components/check-ins/check-in-management-page.tsx`: still references check-in fixture helpers and needs a follow-up conversion to API-only empty state where used.
-- `components/supplementation/supplement-plans-page.tsx`: still references supplement fixture helpers and should be audited before MVP sign-up opens broadly.
+- `components/check-ins/check-in-management-page.tsx`: converted away from check-in fixture helper imports.
+- `components/supplementation/supplement-plans-page.tsx`: converted away from supplement fixture helper imports.
 - `components/forms/*`, `components/crm/crm-page.tsx`, and `components/education/add-resource-page.tsx`: currently appear to use static option/template definitions rather than tenant records; keep this distinction explicit during refactors.
 
 ## Cross-Org API Test Backlog

@@ -697,7 +697,18 @@ describe("nutrition persistence APIs", () => {
 
     expect(response.status).toBe(404);
     expect(payload.error).toMatchObject({ code: "not_found", message: "Meal plan template not found." });
+    expect(mocks.prisma.client.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "client_1", organizationId: "org_1", deletedAt: null }
+      })
+    );
+    expect(mocks.prisma.mealPlanTemplate.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "missing_template", organizationId: "org_1", deletedAt: null }
+      })
+    );
     expect(mocks.prisma.mealPlanAssignment.create).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
   });
 
   it("lists meal assignments and client meal plans with organization scope", async () => {

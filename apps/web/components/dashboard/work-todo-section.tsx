@@ -4,7 +4,7 @@ import {
   dashboardTaskCategories,
   type DashboardTask,
   type DashboardTaskCategory
-} from "@/fixtures/dashboard";
+} from "@/lib/dashboard/dashboard-models";
 import { cn } from "@/lib/utils";
 
 interface WorkTodoSectionProps {

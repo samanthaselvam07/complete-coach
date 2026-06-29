@@ -480,6 +480,38 @@ describe("training persistence APIs", () => {
     );
   });
 
+  it("does not assign training templates outside the active organization", async () => {
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1" });
+    mocks.prisma.trainingProgramTemplate.findFirst.mockResolvedValue(null);
+
+    const response = await createTrainingAssignment(
+      new Request("http://test.local/api/v1/training-program-assignments", {
+        method: "POST",
+        body: JSON.stringify({
+          clientId: "client_1",
+          templateId: "org_2_template",
+          startsOn: "2026-05-14"
+        })
+      })
+    );
+    const payload = (await response.json()) as { error: { code: string; message: string } };
+
+    expect(response.status).toBe(404);
+    expect(payload.error).toMatchObject({ code: "not_found", message: "Training template not found." });
+    expect(mocks.prisma.client.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "client_1", organizationId: "org_1", deletedAt: null }
+      })
+    );
+    expect(mocks.prisma.trainingProgramTemplate.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "org_2_template", organizationId: "org_1", deletedAt: null }
+      })
+    );
+    expect(mocks.prisma.trainingProgramAssignment.create).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
   it("lists training assignments and client training programs with organization scope", async () => {
     mocks.prisma.trainingProgramAssignment.findMany.mockResolvedValue([assignmentRecord]);
     mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1" });

@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { DashboardTaskCategory, DashboardTaskPriority } from "@/fixtures/dashboard";
+import type { DashboardTaskCategory, DashboardTaskPriority } from "@/lib/dashboard/dashboard-models";
 import { cn } from "@/lib/utils";
 
 interface NewDashboardTask {

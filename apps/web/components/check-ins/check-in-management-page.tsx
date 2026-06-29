@@ -6,10 +6,10 @@ import { useEffect, useState } from "react";
 import {
   formatSubmittedAt,
   getTimingStatus,
-  type CheckInRecord,
   type CheckInSort,
-  type CheckInTab
-} from "@/fixtures/check-ins";
+  type CheckInTab,
+  type CheckInListRecord
+} from "@/lib/check-ins/check-in-display";
 import { cn } from "@/lib/utils";
 
 const sortOptions: Array<{ value: CheckInSort; label: string }> = [
@@ -34,7 +34,7 @@ interface ApiCheckInRecord {
   coachNotes?: string | null;
 }
 
-type DisplayCheckIn = CheckInRecord | ApiCheckInRecord;
+type DisplayCheckIn = CheckInListRecord | ApiCheckInRecord;
 
 export function CheckInManagementPage() {
   const [activeTab, setActiveTab] = useState<CheckInTab>("pending");

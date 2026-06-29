@@ -440,6 +440,27 @@ describe("submissions, check-ins, and metrics APIs", () => {
     expect(payload.data.metrics[0].metricKey).toBe("body_weight");
   });
 
+  it("does not read check-in detail or metrics outside the active organization", async () => {
+    mocks.prisma.checkIn.findFirst.mockResolvedValue(null);
+
+    const response = await getCheckIn(new Request("http://test.local/api/v1/check-ins/org_2_checkin"), {
+      params: Promise.resolve({ checkInId: "org_2_checkin" })
+    });
+    const payload = (await response.json()) as { error: { code: string; message: string } };
+
+    expect(response.status).toBe(404);
+    expect(payload.error).toMatchObject({ code: "not_found", message: "Check-in not found." });
+    expect(mocks.prisma.checkIn.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "org_2_checkin",
+          organizationId: "org_1"
+        }
+      })
+    );
+    expect(mocks.prisma.clientMeasurement.findMany).not.toHaveBeenCalled();
+  });
+
   it("returns not found and empty metric responses for check-in metric edge cases", async () => {
     mocks.prisma.checkIn.findFirst
       .mockResolvedValueOnce(null)

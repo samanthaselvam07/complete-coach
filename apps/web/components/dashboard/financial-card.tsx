@@ -6,7 +6,7 @@ import {
   revenuePeriodOptions,
   type RevenueMetric,
   type RevenuePeriod
-} from "@/fixtures/dashboard";
+} from "@/lib/dashboard/dashboard-models";
 
 interface FinancialCardProps {
   currentPeriod: RevenuePeriod;
