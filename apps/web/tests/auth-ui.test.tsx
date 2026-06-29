@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { UserMenu } from "@/components/app-shell/user-menu";
 import { SignInForm } from "@/components/auth/sign-in-form";
+import { SignUpForm } from "@/components/auth/sign-up-form";
 
 const signInMock = vi.fn();
 const signOutMock = vi.fn();
@@ -78,5 +79,56 @@ describe("auth UI", () => {
       password: "correct-password",
       redirectTo: "/"
     });
+  });
+
+  it("creates a coach account then signs into the clean organization workspace", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            user: { id: "user_new", email: "coach@example.com", name: "Demo Coach" },
+            organization: { id: "org_new", name: "Demo Coaching", slug: "demo-coaching" }
+          }
+        }),
+        { status: 201 }
+      )
+    );
+
+    render(createElement(SignUpForm));
+
+    fireEvent.change(screen.getByLabelText(/full name/i), {
+      target: { value: "Demo Coach" }
+    });
+    fireEvent.change(screen.getByLabelText(/work email/i), {
+      target: { value: "coach@example.com" }
+    });
+    fireEvent.change(screen.getByLabelText(/^password$/i), {
+      target: { value: "correct-password" }
+    });
+    fireEvent.change(screen.getByLabelText(/business name/i), {
+      target: { value: "Demo Coaching" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create clean workspace/i }));
+
+    await screen.findByText(/workspace created/i);
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/sign-up", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Demo Coach",
+        email: "coach@example.com",
+        password: "correct-password",
+        organizationName: "Demo Coaching",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+      })
+    });
+    expect(signInMock).toHaveBeenCalledWith("credentials", {
+      email: "coach@example.com",
+      password: "correct-password",
+      redirectTo: "/"
+    });
+
+    fetchMock.mockRestore();
   });
 });

@@ -90,15 +90,23 @@ Stage 5 findings:
 
 ### Stage 6 - Sign-Up Clean Slate
 
-Status: Not started
+Status: Done
 
-- [ ] Build or finalize coach sign-up page and onboarding flow.
-- [ ] Create a new organization on sign-up with a first owner membership.
-- [ ] Select the new organization as active session context after sign-up.
-- [ ] Ensure no demo clients, leads, tasks, programs, meal plans, supplement protocols, forms, messages, packages, social posts, or audit records are copied into the new organization.
-- [ ] Add tests for new organization bootstrap state.
-- [ ] Add a clean-empty dashboard test that simulates a brand-new organization with no product records.
-- [ ] Add an onboarding audit event only if required by product/security requirements.
+- [x] Build or finalize coach sign-up page and onboarding flow.
+- [x] Create a new organization on sign-up with a first owner membership.
+- [x] Select the new organization as active session context after sign-up.
+- [x] Ensure no demo clients, leads, tasks, programs, meal plans, supplement protocols, forms, messages, packages, social posts, or audit records are copied into the new organization.
+- [x] Add tests for new organization bootstrap state.
+- [x] Add a clean-empty dashboard test that simulates a brand-new organization with no product records.
+- [x] Add an onboarding audit event only if required by product/security requirements.
+
+Stage 6 findings:
+
+- Added `/sign-up` with a Complete Coach branded form that creates the account, then signs the coach in through the existing credentials provider.
+- Added `POST /api/auth/sign-up` to validate input, hash the password server-side, and create only the user, organization, and active owner membership in one transaction.
+- Organization slugs are deterministic and collision-safe through numeric suffixes, for example `mcp-coaching` then `mcp-coaching-2`.
+- The first Auth.js sign-in after registration selects the new organization through the existing active membership callback, so no request-provided organization ID is trusted.
+- No onboarding audit row is created in this stage because the current success criteria require the smallest clean-slate bootstrap and no product data side effects.
 
 ### Stage 7 - Production Verification
 
@@ -120,6 +128,7 @@ Status: Not started
 - `pnpm --filter @complete-coach/web test -- submissions-checkins-api forms-api client-crm-api`: passed.
 - `pnpm --filter @complete-coach/web test -- client-crm-api submissions-checkins-api education-api notifications-email-api package-stripe-sync-api operations-api training-api nutrition-api supplementation-api audit-api dashboard-crm-summary-api dashboard-metadata-api`: passed.
 - `pnpm --filter @complete-coach/web test -- ai-api forms-api notifications-email-api nutrition-api operations-api package-stripe-sync-api payments-api team-api training-api tenant-query-patterns`: passed.
+- `pnpm --filter @complete-coach/web test -- auth-signup-api auth-ui dashboard-page dashboard-metadata-api dashboard-crm-summary-api operations-api`: passed.
 - `rg -n "where:\s*\{\s*id[:}]" apps/web/app/api/v1 apps/web/lib apps/web/tests/tenant-query-patterns.test.ts`: only tenant-scoped writes and documented organization/type-only exceptions remain.
 - `pnpm --filter @complete-coach/web typecheck`: passed.
 - `AUTH_SECRET=... DATABASE_URL=... DIRECT_URL=... pnpm --filter @complete-coach/web exec next build --webpack`: passed.
@@ -152,6 +161,5 @@ Status: Not started
 
 ## Open Risks
 
-- The sign-up path has not yet been built and tested as a true clean-slate organization bootstrap.
 - Lint is not currently a clean gate because unrelated UI issues predate this audit slice.
 - Production verification has not yet been performed against a fresh Vercel/Neon preview organization.

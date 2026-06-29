@@ -1,4 +1,5 @@
 import { ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignInForm } from "@/components/auth/sign-in-form";
@@ -39,6 +40,12 @@ export default function SignInPage() {
               </p>
             </div>
             <SignInForm />
+            <p className="mt-6 text-center text-sm text-slate-600">
+              New to Complete Coach?{" "}
+              <Link href="/sign-up" className="font-bold text-indigo-700 hover:text-indigo-900">
+                Create a clean workspace
+              </Link>
+            </p>
           </CardContent>
         </Card>
       </div>
