@@ -69,15 +69,24 @@ Status: Done
 
 ### Stage 5 - Database And Query Isolation Review
 
-Status: Not started
+Status: Done
 
-- [ ] Inventory all Prisma models that contain `organizationId`.
-- [ ] Inventory all Prisma models that are global by design and document why they are safe, for example global food, exercise, or supplement libraries.
-- [ ] Review every API route for `findUnique`, `update`, `delete`, `upsert`, and `deleteMany` calls that could bypass `organizationId`.
-- [ ] Replace unsafe `findUnique`/direct writes with tenant-scoped `findFirst`/compound filters where required.
-- [ ] Confirm soft-delete filters are included for tenant resources that support archival/deletion.
-- [ ] Add unique constraints or compound indexes where tenant-scoped access depends on `organizationId + id` or `organizationId + slug`.
-- [ ] Review audit logs to ensure target IDs are always written with the active organization and never from request-provided org values.
+- [x] Inventory all Prisma models that contain `organizationId`.
+- [x] Inventory all Prisma models that are global by design and document why they are safe, for example global food, exercise, or supplement libraries.
+- [x] Review every API route for `findUnique`, `update`, `delete`, `upsert`, and `deleteMany` calls that could bypass `organizationId`.
+- [x] Replace unsafe `findUnique`/direct writes with tenant-scoped `findFirst`/compound filters where required.
+- [x] Confirm soft-delete filters are included for tenant resources that support archival/deletion.
+- [x] Review unique constraints and compound indexes where tenant-scoped access depends on `organizationId + id` or `organizationId + slug`.
+- [x] Review audit logs to ensure target IDs are always written with the active organization and never from request-provided org values.
+
+Stage 5 findings:
+
+- `ExerciseLibraryItem`, `FoodLibraryItem`, and `SupplementLibraryItem` are intentionally mixed global/private libraries. Global rows use `scope = GLOBAL` and nullable `organizationId`; tenant writes remain limited to private rows with `organizationId = actor.organizationId`.
+- `AuditLog.organizationId` is nullable for platform/system events, but the audit API filters by the active actor organization and role permissions.
+- `AiPromptVersion.organizationId` is nullable for platform-managed prompts; active write paths continue to use organization-owned prompt/profile/generation records for tenant state.
+- Auth/session/account/verification/rate-limit records are identity or infrastructure records rather than organization product data.
+- Existing Prisma primary-key indexes are sufficient for current write paths because the API now performs scoped ownership reads before mutation and writes include `organizationId` in extended unique filters. No migration was required in this stage.
+- Added `tests/tenant-query-patterns.test.ts` as a static guardrail so future id-based tenant writes in `app/api/v1` or `lib` must include `organizationId` or an explicit documented exception.
 
 ### Stage 6 - Sign-Up Clean Slate
 
@@ -110,6 +119,8 @@ Status: Not started
 - `pnpm --filter @complete-coach/web test -- client-crm-api`: passed.
 - `pnpm --filter @complete-coach/web test -- submissions-checkins-api forms-api client-crm-api`: passed.
 - `pnpm --filter @complete-coach/web test -- client-crm-api submissions-checkins-api education-api notifications-email-api package-stripe-sync-api operations-api training-api nutrition-api supplementation-api audit-api dashboard-crm-summary-api dashboard-metadata-api`: passed.
+- `pnpm --filter @complete-coach/web test -- ai-api forms-api notifications-email-api nutrition-api operations-api package-stripe-sync-api payments-api team-api training-api tenant-query-patterns`: passed.
+- `rg -n "where:\s*\{\s*id[:}]" apps/web/app/api/v1 apps/web/lib apps/web/tests/tenant-query-patterns.test.ts`: only tenant-scoped writes and documented organization/type-only exceptions remain.
 - `pnpm --filter @complete-coach/web typecheck`: passed.
 - `AUTH_SECRET=... DATABASE_URL=... DIRECT_URL=... pnpm --filter @complete-coach/web exec next build --webpack`: passed.
 - `pnpm --filter @complete-coach/web lint`: currently blocked by unrelated existing UI lint issues in check-in detail, client profile dashboard, meal plans, packages, and training program builder.
@@ -142,6 +153,5 @@ Status: Not started
 ## Open Risks
 
 - The sign-up path has not yet been built and tested as a true clean-slate organization bootstrap.
-- Database-level review is still required to catch unsafe direct writes or `findUnique` calls outside the endpoints already tested.
 - Lint is not currently a clean gate because unrelated UI issues predate this audit slice.
 - Production verification has not yet been performed against a fresh Vercel/Neon preview organization.

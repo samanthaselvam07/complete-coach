@@ -33,7 +33,7 @@ export async function PATCH(request: Request, context: TeamMemberRouteContext) {
     }
 
     const updatedMembership = await prisma.organizationMembership.update({
-      where: { id: membershipId },
+      where: { id: membershipId, organizationId: actor.organizationId },
       data: getMembershipUpdateData(input),
       include: { user: true }
     });
@@ -78,7 +78,7 @@ export async function DELETE(_request: Request, context: TeamMemberRouteContext)
     }
 
     await prisma.organizationMembership.update({
-      where: { id: membershipId },
+      where: { id: membershipId, organizationId: actor.organizationId },
       data: { status: MembershipStatus.REMOVED }
     });
     await prisma.auditLog.create({

@@ -26,7 +26,7 @@ export async function POST(_request: Request, context: ClientArchiveRouteContext
     }
 
     const client = await prisma.client.update({
-      where: { id: clientId },
+      where: { id: clientId, organizationId: actor.organizationId },
       data: {
         status: ClientStatus.ARCHIVED,
         archivedAt: new Date()

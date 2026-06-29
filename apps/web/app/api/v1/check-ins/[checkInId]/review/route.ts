@@ -32,7 +32,7 @@ export async function POST(request: Request, context: ReviewCheckInRouteContext)
     const reviewedAt = new Date();
     const reviewedCheckIn = await prisma.$transaction(async (tx) => {
       const updated = await tx.checkIn.update({
-        where: { id: checkIn.id },
+        where: { id: checkIn.id, organizationId: actor.organizationId },
         data: {
           status: CheckInStatus.REVIEWED,
           reviewedAt,
@@ -44,7 +44,7 @@ export async function POST(request: Request, context: ReviewCheckInRouteContext)
 
       if (checkIn.formSubmissionId) {
         await tx.formSubmission.update({
-          where: { id: checkIn.formSubmissionId },
+          where: { id: checkIn.formSubmissionId, organizationId: actor.organizationId },
           data: {
             status: FormSubmissionStatus.REVIEWED,
             reviewedAt,

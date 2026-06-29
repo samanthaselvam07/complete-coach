@@ -124,7 +124,7 @@ export async function POST(request: Request, context: AiReviewRouteContext) {
     });
 
     const generation = await prisma.aiGeneration.update({
-      where: { id: createdGeneration.id },
+      where: { id: createdGeneration.id, organizationId: actor.organizationId },
       data: {
         status: AiGenerationStatus.SUCCEEDED,
         outputJson: {

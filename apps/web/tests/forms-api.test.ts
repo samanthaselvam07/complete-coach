@@ -244,7 +244,7 @@ describe("forms API", () => {
     expect(mocks.prisma.form.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: { name: "Renamed Check-In" },
-        where: { id: "form_1" }
+        where: { id: "form_1", organizationId: "org_1" }
       })
     );
   });

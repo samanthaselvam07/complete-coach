@@ -52,7 +52,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const resource = await prisma.educationResource.update({
-      where: { id: resourceId },
+      where: { id: resourceId, organizationId: actor.organizationId },
       data: getEducationResourceUpdateData(input)
     });
 

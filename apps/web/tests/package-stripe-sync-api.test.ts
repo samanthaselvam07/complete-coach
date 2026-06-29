@@ -110,7 +110,7 @@ describe("package Stripe sync API", () => {
     expect(String(fetchMock.mock.calls[1][1].body)).toContain("unit_amount=39900");
     expect(String(fetchMock.mock.calls[1][1].body)).toContain("recurring%5Binterval%5D=month");
     expect(mocks.prisma.coachingPackage.update).toHaveBeenCalledWith({
-      where: { id: "package_1" },
+      where: { id: "package_1", organizationId: "org_1" },
       data: {
         stripeProductId: "prod_package_1",
         stripePriceId: "price_package_1"

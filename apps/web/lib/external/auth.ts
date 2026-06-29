@@ -73,7 +73,7 @@ export async function requireExternalApiActor(request: Request, requiredScope: s
   }
 
   await prisma.externalApiKey.update({
-    where: { id: apiKey.id },
+    where: { id: apiKey.id, organizationId: apiKey.organizationId },
     data: { lastUsedAt: new Date() }
   });
 

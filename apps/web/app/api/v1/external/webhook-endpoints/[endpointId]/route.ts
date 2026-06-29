@@ -39,7 +39,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ en
     }
 
     const endpoint = await prisma.externalWebhookEndpoint.update({
-      where: { id: endpointId },
+      where: { id: endpointId, organizationId: actor.organizationId },
       data: {
         ...(input.url !== undefined ? { url: input.url } : {}),
         ...(input.description !== undefined ? { description: input.description } : {}),
@@ -95,7 +95,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ e
     }
 
     const endpoint = await prisma.externalWebhookEndpoint.update({
-      where: { id: endpointId },
+      where: { id: endpointId, organizationId: actor.organizationId },
       data: { status: ExternalWebhookEndpointStatus.DISABLED }
     });
 

@@ -31,7 +31,7 @@ export async function POST(_request: Request, context: SetDefaultMethodologyProf
     });
 
     const updated = await prisma.aiMethodologyProfile.update({
-      where: { id: profile.id },
+      where: { id: profile.id, organizationId: actor.organizationId },
       data: { isDefault: true }
     });
 

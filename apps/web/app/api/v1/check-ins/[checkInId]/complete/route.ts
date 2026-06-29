@@ -34,7 +34,7 @@ export async function POST(_request: Request, context: CompleteCheckInRouteConte
     const completedAt = new Date();
     const completedCheckIn = await prisma.$transaction(async (tx) => {
       const updated = await tx.checkIn.update({
-        where: { id: checkIn.id },
+        where: { id: checkIn.id, organizationId: actor.organizationId },
         data: {
           status: CheckInStatus.COMPLETED,
           reviewedAt: checkIn.reviewedAt ?? completedAt,
@@ -44,7 +44,7 @@ export async function POST(_request: Request, context: CompleteCheckInRouteConte
 
       if (checkIn.formSubmissionId) {
         await tx.formSubmission.update({
-          where: { id: checkIn.formSubmissionId },
+          where: { id: checkIn.formSubmissionId, organizationId: actor.organizationId },
           data: {
             status: FormSubmissionStatus.COMPLETED,
             reviewedAt: checkIn.formSubmission?.reviewedAt ?? completedAt,

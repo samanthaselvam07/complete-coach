@@ -26,7 +26,7 @@ export async function PATCH(request: Request, context: PackageRouteContext) {
     }
 
     const coachingPackage = await prisma.coachingPackage.update({
-      where: { id: packageId },
+      where: { id: packageId, organizationId: actor.organizationId },
       data: getPackageUpdateData(input)
     });
 

@@ -71,7 +71,7 @@ export async function POST(request: Request, context: SubmitAssignmentRouteConte
       });
 
       await tx.formAssignment.update({
-        where: { id: assignment.id },
+        where: { id: assignment.id, organizationId: actor.organizationId },
         data: {
           status: FormAssignmentStatus.SUBMITTED,
           completedAt: submittedAt

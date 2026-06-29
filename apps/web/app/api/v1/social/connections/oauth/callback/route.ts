@@ -81,7 +81,7 @@ export async function GET(request: Request) {
     });
 
     await prisma.socialOAuthState.update({
-      where: { id: oauthState.id },
+      where: { id: oauthState.id, organizationId: actor.organizationId },
       data: { consumedAt: new Date() }
     });
     await prisma.auditLog.create({

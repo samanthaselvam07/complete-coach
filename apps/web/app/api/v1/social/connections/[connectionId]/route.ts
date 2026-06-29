@@ -25,7 +25,7 @@ export async function DELETE(_request: Request, context: SocialConnectionRouteCo
     }
 
     const connection = await prisma.socialConnection.update({
-      where: { id: connectionId },
+      where: { id: connectionId, organizationId: actor.organizationId },
       data: {
         status: SocialConnectionStatus.REVOKED,
         revokedAt: new Date()

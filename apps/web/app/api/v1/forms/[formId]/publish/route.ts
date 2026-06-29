@@ -40,12 +40,12 @@ export async function POST(request: Request, context: PublishFormRouteContext) {
 
     const publishedForm = await prisma.$transaction(async (tx) => {
       await tx.formVersion.update({
-        where: { id: version.id },
+        where: { id: version.id, organizationId: actor.organizationId },
         data: { publishedAt: version.publishedAt ?? new Date() }
       });
 
       const updatedForm = await tx.form.update({
-        where: { id: formId },
+        where: { id: formId, organizationId: actor.organizationId },
         data: {
           currentVersionId: version.id,
           status: FormStatus.PUBLISHED

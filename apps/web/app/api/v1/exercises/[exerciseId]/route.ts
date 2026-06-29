@@ -61,7 +61,7 @@ export async function PATCH(request: Request, context: ExerciseRouteContext) {
     }
 
     const exercise = await prisma.exerciseLibraryItem.update({
-      where: { id: exerciseId },
+      where: { id: exerciseId, organizationId: actor.organizationId },
       data: getExerciseUpdateData(input)
     });
 

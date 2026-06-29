@@ -77,7 +77,7 @@ export async function POST(_request: Request, context: PackageStripeSyncRouteCon
     }
 
     const syncedPackage = await prisma.coachingPackage.update({
-      where: { id: coachingPackage.id },
+      where: { id: coachingPackage.id, organizationId: actor.organizationId },
       data: {
         stripeProductId,
         stripePriceId

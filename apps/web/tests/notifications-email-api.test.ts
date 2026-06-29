@@ -149,7 +149,7 @@ describe("notification APIs and Resend email workflows", () => {
     );
     expect(mocks.prisma.notification.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: "notification_1" },
+        where: { id: "notification_1", organizationId: "org_1" },
         data: expect.objectContaining({ readAt: expect.any(Date) })
       })
     );

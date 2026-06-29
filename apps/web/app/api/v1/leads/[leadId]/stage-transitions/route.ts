@@ -32,7 +32,7 @@ export async function POST(request: Request, context: LeadStageTransitionRouteCo
 
     const lead = await prisma.$transaction(async (tx) => {
       const updatedLead = await tx.lead.update({
-        where: { id: leadId },
+        where: { id: leadId, organizationId: actor.organizationId },
         data: {
           stage: toPrismaLeadStage(input.stage),
           daysInStage: 0,

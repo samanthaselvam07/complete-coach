@@ -61,7 +61,7 @@ export async function PATCH(request: Request, context: FormRouteContext) {
     }
 
     const form = await prisma.form.update({
-      where: { id: formId },
+      where: { id: formId, organizationId: actor.organizationId },
       data: getFormUpdateData(input)
     });
 

@@ -30,7 +30,7 @@ export async function POST(_request: Request, context: SocialPostCancelRouteCont
 
     const cancelledPost = await prisma.$transaction(async (tx) => {
       const post = await tx.socialPost.update({
-        where: { id: postId },
+        where: { id: postId, organizationId: actor.organizationId },
         data: {
           status: SocialPostStatus.CANCELLED,
           cancelledAt: new Date()

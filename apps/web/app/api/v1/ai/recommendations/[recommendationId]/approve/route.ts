@@ -30,7 +30,7 @@ export async function POST(_request: Request, context: ApproveRecommendationRout
     }
 
     const updated = await prisma.aiOutput.update({
-      where: { id: recommendation.id },
+      where: { id: recommendation.id, organizationId: actor.organizationId },
       data: {
         status: AiOutputStatus.APPROVED,
         approvedByUserId: actor.userId,

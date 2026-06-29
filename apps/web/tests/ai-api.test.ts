@@ -307,7 +307,7 @@ describe("AI-assisted coaching APIs", () => {
     );
     expect(defaultResponse.status).toBe(200);
     expect(mocks.prisma.aiMethodologyProfile.update).toHaveBeenCalledWith({
-      where: { id: "methodology_1" },
+      where: { id: "methodology_1", organizationId: "org_1" },
       data: { isDefault: true }
     });
   });
@@ -420,7 +420,7 @@ describe("AI-assisted coaching APIs", () => {
 
     expect(approveResponse.status).toBe(200);
     expect(mocks.prisma.aiOutput.update).toHaveBeenCalledWith({
-      where: { id: "output_1" },
+      where: { id: "output_1", organizationId: "org_1" },
       data: expect.objectContaining({
         status: AiOutputStatus.APPROVED,
         approvedByUserId: "user_1"
@@ -447,7 +447,7 @@ describe("AI-assisted coaching APIs", () => {
 
     expect(rejectResponse.status).toBe(200);
     expect(mocks.prisma.aiOutput.update).toHaveBeenLastCalledWith({
-      where: { id: "output_1" },
+      where: { id: "output_1", organizationId: "org_1" },
       data: expect.objectContaining({
         status: AiOutputStatus.REJECTED,
         rejectedByUserId: "user_1",

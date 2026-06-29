@@ -25,7 +25,7 @@ export async function POST(_request: Request, context: RouteContext) {
     }
 
     const updatedNotification = await prisma.notification.update({
-      where: { id: notificationId },
+      where: { id: notificationId, organizationId: actor.organizationId },
       data: { readAt: new Date() }
     });
 

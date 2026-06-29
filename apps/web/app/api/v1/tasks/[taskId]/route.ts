@@ -25,7 +25,7 @@ export async function PATCH(request: Request, context: TaskRouteContext) {
     }
 
     const task = await prisma.task.update({
-      where: { id: taskId },
+      where: { id: taskId, organizationId: actor.organizationId },
       data: getTaskUpdateData(input)
     });
 

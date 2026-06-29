@@ -62,7 +62,7 @@ export async function POST(request: Request) {
           }
         });
         await prisma.socialPostTarget.update({
-          where: { id: target.id },
+          where: { id: target.id, organizationId: actor.organizationId },
           data: {
             status: SocialTargetStatus.PUBLISHED,
             attempts: { increment: 1 },
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
         }
       });
       await prisma.socialPostTarget.update({
-        where: { id: target.id },
+        where: { id: target.id, organizationId: actor.organizationId },
         data: {
           status: nextStatus,
           attempts: { increment: 1 },

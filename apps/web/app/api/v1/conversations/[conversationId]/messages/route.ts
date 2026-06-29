@@ -95,7 +95,7 @@ export async function POST(request: Request, context: ConversationMessagesRouteC
     });
 
     await prisma.conversation.update({
-      where: { id: conversationId },
+      where: { id: conversationId, organizationId: actor.organizationId },
       data: { updatedAt: new Date() }
     });
 

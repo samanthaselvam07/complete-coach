@@ -29,7 +29,7 @@ export async function DELETE(_request: Request, context: TrainingProgramTemplate
     }
 
     await prisma.trainingProgramTemplate.update({
-      where: { id: template.id },
+      where: { id: template.id, organizationId: actor.organizationId },
       data: { deletedAt: new Date() }
     });
 
@@ -67,7 +67,7 @@ export async function PATCH(request: Request, context: TrainingProgramTemplateRo
     }
 
     const template = await prisma.trainingProgramTemplate.update({
-      where: { id: existingTemplate.id },
+      where: { id: existingTemplate.id, organizationId: actor.organizationId },
       data: getTrainingTemplateUpdateData(input)
     });
 

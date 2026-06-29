@@ -34,7 +34,7 @@ export async function POST(_request: Request, context: VerifySenderDomainRouteCo
 
     const resendDomain = await verifyResendDomain(senderDomain.providerDomainId);
     const updatedDomain = await prisma.organizationSenderDomain.update({
-      where: { id: senderDomain.id },
+      where: { id: senderDomain.id, organizationId: actor.organizationId },
       data: mapResendDomainToUpdate(resendDomain)
     });
 

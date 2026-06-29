@@ -48,7 +48,7 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
     }
 
     const client = await prisma.client.update({
-      where: { id: clientId },
+      where: { id: clientId, organizationId: actor.organizationId },
       data: {
         ...(input.firstName ? { firstName: input.firstName } : {}),
         ...(input.lastName ? { lastName: input.lastName } : {}),

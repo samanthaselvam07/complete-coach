@@ -50,7 +50,7 @@ export async function PATCH(request: Request, context: FoodRouteContext) {
     }
 
     const food = await prisma.foodLibraryItem.update({
-      where: { id: foodId },
+      where: { id: foodId, organizationId: actor.organizationId },
       data: getFoodUpdateData(input)
     });
 
@@ -88,7 +88,7 @@ export async function DELETE(_request: Request, context: FoodRouteContext) {
     }
 
     await prisma.foodLibraryItem.update({
-      where: { id: foodId },
+      where: { id: foodId, organizationId: actor.organizationId },
       data: { deletedAt: new Date() }
     });
 

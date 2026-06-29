@@ -30,7 +30,7 @@ export async function PATCH(request: Request, context: MealPlanTemplateRouteCont
     }
 
     const template = await prisma.mealPlanTemplate.update({
-      where: { id: templateId },
+      where: { id: templateId, organizationId: actor.organizationId },
       data: getMealPlanTemplateUpdateData(input)
     });
 
@@ -71,7 +71,7 @@ export async function DELETE(_request: Request, context: MealPlanTemplateRouteCo
     }
 
     const template = await prisma.mealPlanTemplate.update({
-      where: { id: templateId },
+      where: { id: templateId, organizationId: actor.organizationId },
       data: { deletedAt: new Date() }
     });
 

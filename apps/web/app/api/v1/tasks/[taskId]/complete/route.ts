@@ -25,7 +25,7 @@ export async function POST(_request: Request, context: TaskCompleteRouteContext)
     }
 
     const task = await prisma.task.update({
-      where: { id: taskId },
+      where: { id: taskId, organizationId: actor.organizationId },
       data: {
         status: TaskStatus.COMPLETED,
         completedAt: new Date()

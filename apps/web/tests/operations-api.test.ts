@@ -454,7 +454,7 @@ describe("operations persistence APIs", () => {
     expect(mocks.prisma.task.update).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
-        where: { id: "task_1" },
+        where: { id: "task_1", organizationId: "org_1" },
         data: expect.objectContaining({ status: TaskStatus.COMPLETED })
       })
     );

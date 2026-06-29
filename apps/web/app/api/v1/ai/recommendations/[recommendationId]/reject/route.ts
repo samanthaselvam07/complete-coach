@@ -31,7 +31,7 @@ export async function POST(request: Request, context: RejectRecommendationRouteC
     }
 
     const updated = await prisma.aiOutput.update({
-      where: { id: recommendation.id },
+      where: { id: recommendation.id, organizationId: actor.organizationId },
       data: {
         status: AiOutputStatus.REJECTED,
         rejectedByUserId: actor.userId,

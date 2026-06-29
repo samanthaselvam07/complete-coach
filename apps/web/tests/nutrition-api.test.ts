@@ -363,7 +363,7 @@ describe("nutrition persistence APIs", () => {
     );
     expect(mocks.prisma.foodLibraryItem.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: "food_private" },
+        where: { id: "food_private", organizationId: "org_1" },
         data: expect.objectContaining({
           name: "Updated Coach Chicken Breast",
           calories: 175,
@@ -434,7 +434,7 @@ describe("nutrition persistence APIs", () => {
       })
     );
     expect(mocks.prisma.foodLibraryItem.update).toHaveBeenCalledWith({
-      where: { id: "food_private" },
+      where: { id: "food_private", organizationId: "org_1" },
       data: { deletedAt: expect.any(Date) }
     });
     expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
@@ -575,7 +575,7 @@ describe("nutrition persistence APIs", () => {
     expect(payload.data).toMatchObject({ id: "meal_template_1", name: "Edited Hypertrophy Meal Plan" });
     expect(mocks.prisma.mealPlanTemplate.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: "meal_template_1" },
+        where: { id: "meal_template_1", organizationId: "org_1" },
         data: expect.objectContaining({
           name: "Edited Hypertrophy Meal Plan",
           targetCalories: 2900,
@@ -611,7 +611,7 @@ describe("nutrition persistence APIs", () => {
     expect(response.status).toBe(200);
     expect(payload.data).toEqual({ id: "meal_template_1", deleted: true });
     expect(mocks.prisma.mealPlanTemplate.update).toHaveBeenCalledWith({
-      where: { id: "meal_template_1" },
+      where: { id: "meal_template_1", organizationId: "org_1" },
       data: { deletedAt: expect.any(Date) }
     });
     expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(

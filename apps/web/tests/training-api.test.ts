@@ -359,7 +359,7 @@ describe("training persistence APIs", () => {
       }
     });
     expect(mocks.prisma.trainingProgramTemplate.update).toHaveBeenCalledWith({
-      where: { id: "template_1" },
+      where: { id: "template_1", organizationId: "org_1" },
       data: { deletedAt: expect.any(Date) }
     });
     expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
@@ -417,7 +417,7 @@ describe("training persistence APIs", () => {
     expect(payload.data).toMatchObject({ id: "template_1", name: "Edited Strength Foundation", durationWeeks: 10 });
     expect(mocks.prisma.trainingProgramTemplate.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: "template_1" },
+        where: { id: "template_1", organizationId: "org_1" },
         data: expect.objectContaining({
           name: "Edited Strength Foundation",
           durationWeeks: 10,

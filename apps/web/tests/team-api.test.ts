@@ -288,7 +288,7 @@ describe("team management APIs", () => {
 
     expect(response.status).toBe(200);
     expect(mocks.prisma.organizationMembership.update).toHaveBeenCalledWith({
-      where: { id: "membership_2" },
+      where: { id: "membership_2", organizationId: "org_1" },
       data: { role: MembershipRole.ADMIN },
       include: { user: true }
     });
@@ -334,7 +334,7 @@ describe("team management APIs", () => {
 
     expect(response.status).toBe(204);
     expect(mocks.prisma.organizationMembership.update).toHaveBeenCalledWith({
-      where: { id: "membership_2" },
+      where: { id: "membership_2", organizationId: "org_1" },
       data: { status: MembershipStatus.REMOVED }
     });
     expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(

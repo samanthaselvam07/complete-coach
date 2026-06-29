@@ -215,7 +215,7 @@ describe("payments and packages APIs", () => {
       }
     });
     expect(mocks.prisma.coachingPackage.update).toHaveBeenCalledWith({
-      where: { id: "package_1" },
+      where: { id: "package_1", organizationId: "org_1" },
       data: {
         name: "Gold Plus",
         status: PackageStatus.ARCHIVED

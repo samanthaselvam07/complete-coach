@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       });
 
       await transaction.teamInvitation.update({
-        where: { id: invitation.id },
+        where: { id: invitation.id, organizationId: invitation.organizationId },
         data: {
           status: TeamInvitationStatus.ACCEPTED,
           acceptedAt: new Date()

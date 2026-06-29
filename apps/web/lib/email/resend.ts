@@ -37,7 +37,7 @@ export async function sendTransactionalEmail(input: SendTransactionalEmailInput)
 
   if (!apiKey || !fromEmail) {
     const failedDelivery = await prisma.emailDelivery.update({
-      where: { id: queuedDelivery.id },
+      where: { id: queuedDelivery.id, organizationId: input.organizationId },
       data: {
         status: EmailDeliveryStatus.FAILED,
         eventType: "configuration_missing",
@@ -74,7 +74,7 @@ export async function sendTransactionalEmail(input: SendTransactionalEmailInput)
 
     const payload = (await response.json()) as ResendEmailResponse;
     const sentDelivery = await prisma.emailDelivery.update({
-      where: { id: queuedDelivery.id },
+      where: { id: queuedDelivery.id, organizationId: input.organizationId },
       data: {
         status: EmailDeliveryStatus.SENT,
         providerEmailId: payload.id ?? null,
@@ -85,7 +85,7 @@ export async function sendTransactionalEmail(input: SendTransactionalEmailInput)
     return serializeEmailDelivery(sentDelivery);
   } catch (error) {
     const failedDelivery = await prisma.emailDelivery.update({
-      where: { id: queuedDelivery.id },
+      where: { id: queuedDelivery.id, organizationId: input.organizationId },
       data: {
         status: EmailDeliveryStatus.FAILED,
         eventType: "email.failed",
