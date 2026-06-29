@@ -1006,4 +1006,54 @@ describe("AddExercisePage", () => {
       })
     );
   });
+
+  it("saves an exercise when optional video upload and numeric targets are unavailable", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      if (String(input) === "/api/v1/exercises/media-upload-url") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ error: { message: "Object storage is not configured." } }), {
+            status: 503
+          })
+        );
+      }
+
+      if (String(input) === "/api/v1/exercises" && init?.method === "POST") {
+        return Promise.resolve(new Response(JSON.stringify({ data: { id: "exercise_created" } }), { status: 201 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    });
+
+    render(createElement(AddExercisePage));
+
+    fireEvent.change(screen.getByLabelText("Exercise Name"), {
+      target: { value: "Fallback Video Squat" }
+    });
+    fireEvent.change(screen.getByLabelText("Rest timer"), {
+      target: { value: "" }
+    });
+    fireEvent.change(screen.getByLabelText("RPE target"), {
+      target: { value: "" }
+    });
+    fireEvent.change(screen.getByLabelText("Exercise video file"), {
+      target: { files: [new File(["demo"], "fallback-video.mp4", { type: "video/mp4" })] }
+    });
+
+    expect(await screen.findByText("fallback-video.mp4 selected. Video upload unavailable, but the exercise can still be saved.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Save Exercise" })[0]);
+
+    await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/training/exercises"));
+
+    const createCall = fetchMock.mock.calls.find(([input, init]) => input === "/api/v1/exercises" && init?.method === "POST");
+    expect(createCall).toBeDefined();
+    const body = JSON.parse(String(createCall?.[1]?.body));
+    expect(body).toMatchObject({
+      name: "Fallback Video Squat",
+      defaultReps: "8-12"
+    });
+    expect(body).not.toHaveProperty("videoObjectKey");
+    expect(body).not.toHaveProperty("defaultRestSeconds");
+    expect(body).not.toHaveProperty("defaultRpe");
+  });
 });

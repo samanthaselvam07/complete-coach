@@ -95,6 +95,8 @@ export function AddExercisePage() {
     setUploadingVideo(true);
     setStatusMessage(null);
     setErrorMessage(null);
+    setVideoFilename(file.name);
+    setVideoObjectKey(null);
 
     try {
       const signedUrlResponse = await fetch("/api/v1/exercises/media-upload-url", {
@@ -124,10 +126,11 @@ export function AddExercisePage() {
       }
 
       setVideoObjectKey(signedUrlPayload.data.objectKey);
-      setVideoFilename(file.name);
       setStatusMessage("Exercise video uploaded and ready to save.");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Exercise video could not be uploaded.");
+    } catch {
+      setVideoObjectKey(null);
+      setErrorMessage(null);
+      setStatusMessage(`${file.name} selected. Video upload unavailable, but the exercise can still be saved.`);
     } finally {
       setUploadingVideo(false);
     }
@@ -378,7 +381,9 @@ export function AddExercisePage() {
                   />
                 </label>
                 {videoFilename ? (
-                  <p className="mt-3 text-xs font-medium text-emerald-700">{videoFilename} uploaded.</p>
+                  <p className="mt-3 text-xs font-medium text-emerald-700">
+                    {videoObjectKey ? `${videoFilename} uploaded.` : `${videoFilename} selected.`}
+                  </p>
                 ) : null}
               </div>
             </section>
