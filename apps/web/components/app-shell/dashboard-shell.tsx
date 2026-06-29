@@ -16,7 +16,7 @@ interface DashboardShellProps {
   children: React.ReactNode;
 }
 
-const PUBLIC_PATHS = new Set(["/sign-in"]);
+const PUBLIC_PATHS = new Set(["/sign-in", "/sign-up"]);
 
 function isPublicPath(pathname: string | null) {
   return Boolean(pathname && PUBLIC_PATHS.has(pathname));

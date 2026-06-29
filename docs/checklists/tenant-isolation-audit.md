@@ -110,7 +110,7 @@ Stage 6 findings:
 
 ### Stage 7 - Production Verification
 
-Status: Not started
+Status: In progress
 
 - [ ] Run end-to-end sign-up in Vercel against Neon preview.
 - [ ] Create two organizations and verify records created in one never appear in the other.
@@ -118,6 +118,12 @@ Status: Not started
 - [ ] Verify local dev auth bypass cannot activate unless `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS=1`.
 - [ ] Verify production environment does not include local bypass env flags or demo seed toggles.
 - [ ] Run full verification gate before marking the audit complete.
+
+Stage 7 findings:
+
+- Confirmed `app.completecoach.fit` points at the latest `complete-coach` production deployment, while `completecoach.fit` remains the separate landing project.
+- Initial live browser verification found `/sign-up` redirected to `/sign-in` because the global dashboard shell only treated `/sign-in` as public.
+- Added `/sign-up` to the public shell allowlist and expanded the shell auth-boundary regression test to cover both public auth pages.
 
 ## Completed Verification Evidence
 
@@ -129,9 +135,11 @@ Status: Not started
 - `pnpm --filter @complete-coach/web test -- client-crm-api submissions-checkins-api education-api notifications-email-api package-stripe-sync-api operations-api training-api nutrition-api supplementation-api audit-api dashboard-crm-summary-api dashboard-metadata-api`: passed.
 - `pnpm --filter @complete-coach/web test -- ai-api forms-api notifications-email-api nutrition-api operations-api package-stripe-sync-api payments-api team-api training-api tenant-query-patterns`: passed.
 - `pnpm --filter @complete-coach/web test -- auth-signup-api auth-ui dashboard-page dashboard-metadata-api dashboard-crm-summary-api operations-api`: passed.
+- `pnpm --filter @complete-coach/web test -- app-shell auth-ui auth-signup-api`: passed.
 - `rg -n "where:\s*\{\s*id[:}]" apps/web/app/api/v1 apps/web/lib apps/web/tests/tenant-query-patterns.test.ts`: only tenant-scoped writes and documented organization/type-only exceptions remain.
 - `pnpm --filter @complete-coach/web typecheck`: passed.
 - `AUTH_SECRET=... DATABASE_URL=... DIRECT_URL=... pnpm --filter @complete-coach/web exec next build --webpack`: passed.
+- `npx vercel inspect app.completecoach.fit --scope team_urIw9URwV9XUJWjSSYfaXPCp`: confirmed the app alias resolves to the ready production deployment.
 - `pnpm --filter @complete-coach/web lint`: currently blocked by unrelated existing UI lint issues in check-in detail, client profile dashboard, meal plans, packages, and training program builder.
 
 ## Fixture Leakage Rules

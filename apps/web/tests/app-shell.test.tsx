@@ -316,12 +316,15 @@ describe("dashboard shell auth boundary", () => {
     useSessionMock.mockReturnValue({ data: null, status: "unauthenticated" });
   });
 
-  it("renders public routes without app navigation for signed-out users", () => {
-    navigationMocks.pathname = "/sign-in";
+  it.each([
+    ["/sign-in", "Welcome back"],
+    ["/sign-up", "Create your workspace"]
+  ])("renders public route %s without app navigation for signed-out users", (pathname, heading) => {
+    navigationMocks.pathname = pathname;
 
-    render(createElement(DashboardShell, null, createElement("h1", null, "Welcome back")));
+    render(createElement(DashboardShell, null, createElement("h1", null, heading)));
 
-    expect(screen.getByRole("heading", { name: /welcome back/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: /primary navigation/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("searchbox", { name: /search tasks/i })).not.toBeInTheDocument();
     expect(navigationMocks.replace).not.toHaveBeenCalled();
