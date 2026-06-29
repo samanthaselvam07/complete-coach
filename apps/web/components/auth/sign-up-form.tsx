@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useMemo, useState } from "react";
 
@@ -15,6 +16,7 @@ export function SignUpForm() {
   const [organizationName, setOrganizationName] = useState("");
   const [status, setStatus] = useState<SignUpStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const router = useRouter();
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", []);
 
   return (
@@ -45,11 +47,19 @@ export function SignUpForm() {
         }
 
         setStatus("success");
-        await signIn("credentials", {
+        const signInResult = await signIn("credentials", {
           email,
           password,
-          redirectTo: "/"
+          redirect: false
         });
+
+        if (signInResult?.error) {
+          setStatus("error");
+          setErrorMessage("Workspace created, but we could not sign you in automatically. Please sign in.");
+          return;
+        }
+
+        router.replace("/");
       }}
     >
       <div className="space-y-2">

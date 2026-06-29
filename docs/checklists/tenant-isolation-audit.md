@@ -124,6 +124,7 @@ Stage 7 findings:
 - Confirmed `app.completecoach.fit` points at the latest `complete-coach` production deployment, while `completecoach.fit` remains the separate landing project.
 - Initial live browser verification found `/sign-up` redirected to `/sign-in` because the global dashboard shell only treated `/sign-in` as public.
 - Added `/sign-up` to the public shell allowlist and expanded the shell auth-boundary regression test to cover both public auth pages.
+- Follow-up live browser verification confirmed the public sign-up page rendered, then exposed an auth callback redirect to the landing domain. Auth forms now sign in without automatic Auth.js redirects and navigate to `/` on the app origin after successful credential authentication.
 
 ## Completed Verification Evidence
 

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -9,6 +9,9 @@ import { SignUpForm } from "@/components/auth/sign-up-form";
 const signInMock = vi.fn();
 const signOutMock = vi.fn();
 const useSessionMock = vi.fn();
+const navigationMocks = vi.hoisted(() => ({
+  replace: vi.fn()
+}));
 
 vi.mock("next-auth/react", () => ({
   signIn: (...args: unknown[]) => signInMock(...args),
@@ -16,11 +19,18 @@ vi.mock("next-auth/react", () => ({
   useSession: () => useSessionMock()
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    replace: navigationMocks.replace
+  })
+}));
+
 describe("auth UI", () => {
   beforeEach(() => {
     signInMock.mockReset();
     signOutMock.mockReset();
     useSessionMock.mockReset();
+    navigationMocks.replace.mockReset();
   });
 
   it("shows a sign-in link when no session is present", () => {
@@ -63,7 +73,9 @@ describe("auth UI", () => {
     expect(signOutMock).toHaveBeenCalledWith({ redirectTo: "/sign-in" });
   });
 
-  it("submits credentials through Auth.js without exposing passwords in the URL", () => {
+  it("submits credentials through Auth.js without exposing passwords in the URL", async () => {
+    signInMock.mockResolvedValue({});
+
     render(createElement(SignInForm));
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -74,14 +86,18 @@ describe("auth UI", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
-    expect(signInMock).toHaveBeenCalledWith("credentials", {
-      email: "coach@example.com",
-      password: "correct-password",
-      redirectTo: "/"
+    await waitFor(() => {
+      expect(signInMock).toHaveBeenCalledWith("credentials", {
+        email: "coach@example.com",
+        password: "correct-password",
+        redirect: false
+      });
     });
+    expect(navigationMocks.replace).toHaveBeenCalledWith("/");
   });
 
   it("creates a coach account then signs into the clean organization workspace", async () => {
+    signInMock.mockResolvedValue({});
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -126,8 +142,9 @@ describe("auth UI", () => {
     expect(signInMock).toHaveBeenCalledWith("credentials", {
       email: "coach@example.com",
       password: "correct-password",
-      redirectTo: "/"
+      redirect: false
     });
+    expect(navigationMocks.replace).toHaveBeenCalledWith("/");
 
     fetchMock.mockRestore();
   });

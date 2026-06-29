@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 
@@ -9,17 +10,22 @@ import { Input } from "@/components/ui/input";
 export function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   return (
     <form
       className="space-y-5"
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
-        void signIn("credentials", {
+        const result = await signIn("credentials", {
           email,
           password,
-          redirectTo: "/"
+          redirect: false
         });
+
+        if (!result?.error) {
+          router.replace("/");
+        }
       }}
     >
       <div className="space-y-2">
