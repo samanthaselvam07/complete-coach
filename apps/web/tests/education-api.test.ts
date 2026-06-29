@@ -210,6 +210,34 @@ describe("education resource persistence APIs", () => {
     );
   });
 
+  it("does not read or update education resources outside the active organization", async () => {
+    mocks.prisma.educationResource.findFirst.mockResolvedValue(null);
+
+    const readResponse = await getEducationResource(
+      new Request("http://test.local/api/v1/education-resources/org_2_resource"),
+      {
+        params: Promise.resolve({ resourceId: "org_2_resource" })
+      }
+    );
+    const updateResponse = await updateEducationResource(
+      new Request("http://test.local/api/v1/education-resources/org_2_resource", {
+        method: "PATCH",
+        body: JSON.stringify({ title: "No access" })
+      }),
+      { params: Promise.resolve({ resourceId: "org_2_resource" }) }
+    );
+
+    expect(readResponse.status).toBe(404);
+    expect(updateResponse.status).toBe(404);
+    expect(mocks.prisma.educationResource.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: "org_2_resource", organizationId: "org_1" })
+      })
+    );
+    expect(mocks.prisma.educationResource.update).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
   it("assigns resources to active organization clients", async () => {
     mocks.prisma.educationResource.findFirst.mockResolvedValue(educationResource);
     mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1" });

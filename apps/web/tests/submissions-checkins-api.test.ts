@@ -264,6 +264,39 @@ describe("submissions, check-ins, and metrics APIs", () => {
     expect(submissionResponse.status).toBe(404);
   });
 
+  it("does not read assignments or submissions outside the active organization", async () => {
+    mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(null);
+    mocks.prisma.formSubmission.findFirst.mockResolvedValueOnce(null);
+
+    const assignmentResponse = await getAssignment(
+      new Request("http://test.local/api/v1/form-assignments/org_2_assignment"),
+      { params: Promise.resolve({ assignmentId: "org_2_assignment" }) }
+    );
+    const submissionResponse = await getSubmission(
+      new Request("http://test.local/api/v1/form-submissions/org_2_submission"),
+      { params: Promise.resolve({ submissionId: "org_2_submission" }) }
+    );
+
+    expect(assignmentResponse.status).toBe(404);
+    expect(submissionResponse.status).toBe(404);
+    expect(mocks.prisma.formAssignment.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "org_2_assignment",
+          organizationId: "org_1"
+        }
+      })
+    );
+    expect(mocks.prisma.formSubmission.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "org_2_submission",
+          organizationId: "org_1"
+        }
+      })
+    );
+  });
+
   it("submits an assignment, creates a check-in, and upserts extracted metrics idempotently", async () => {
     mocks.prisma.formAssignment.findFirst.mockResolvedValue(assignmentRecord);
     mocks.prisma.formSubmission.create.mockResolvedValue(submissionRecord);
@@ -325,6 +358,41 @@ describe("submissions, check-ins, and metrics APIs", () => {
 
     expect(response.status).toBe(422);
     expect(mocks.prisma.formSubmission.create).not.toHaveBeenCalled();
+  });
+
+  it("does not submit assignments outside the active organization", async () => {
+    mocks.prisma.formAssignment.findFirst.mockResolvedValue(null);
+
+    const response = await submitAssignment(
+      new Request("http://test.local/api/v1/form-assignments/org_2_assignment/submit", {
+        method: "POST",
+        body: JSON.stringify({
+          answers: {
+            "body-weight": 82.5,
+            energy: 8
+          }
+        })
+      }),
+      { params: Promise.resolve({ assignmentId: "org_2_assignment" }) }
+    );
+    const payload = (await response.json()) as { error: { code: string } };
+
+    expect(response.status).toBe(404);
+    expect(payload.error.code).toBe("not_found");
+    expect(mocks.prisma.formAssignment.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "org_2_assignment",
+          organizationId: "org_1"
+        }
+      })
+    );
+    expect(mocks.prisma.$transaction).not.toHaveBeenCalled();
+    expect(mocks.prisma.formSubmission.create).not.toHaveBeenCalled();
+    expect(mocks.prisma.formAssignment.update).not.toHaveBeenCalled();
+    expect(mocks.prisma.checkIn.create).not.toHaveBeenCalled();
+    expect(mocks.prisma.clientMeasurement.upsert).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
   });
 
   it("lists tenant-scoped form submissions", async () => {

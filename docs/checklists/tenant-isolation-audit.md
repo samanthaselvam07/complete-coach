@@ -50,7 +50,7 @@ Status: Done
 
 ### Stage 4 - Cross-Org API Tests
 
-Status: In progress
+Status: Done
 
 - [x] Dashboard CRM summary API asserts organization-scoped reads.
 - [x] Dashboard metadata API asserts organization-scoped reads.
@@ -60,12 +60,12 @@ Status: In progress
 - [x] Nutrition assignment creation rejects an inaccessible meal template and does not create assignment or audit side effects.
 - [x] Supplement assignment creation rejects an inaccessible supplement template and does not create assignment or audit side effects.
 - [x] Audit log API filters by `organizationId` and blocks roles without audit access.
-- [ ] Add explicit cross-org negative tests for client detail/profile update/archive routes.
-- [ ] Add explicit cross-org negative tests for CRM lead detail/update/activity/stage-transition routes.
-- [ ] Add explicit cross-org negative tests for forms, form assignments, and form submissions.
-- [ ] Add explicit cross-org negative tests for messages, notifications, packages, Stripe package sync, education resources, food writes, exercise writes, and supplement coach details.
-- [ ] Add write-side tests proving client-provided `organizationId` fields are ignored or rejected.
-- [ ] Add regression tests for list endpoints with `clientId`, `templateId`, `leadId`, or `targetId` filters to ensure those filters remain inside active org scope.
+- [x] Added explicit cross-org negative tests for client detail/profile update/archive routes.
+- [x] Added explicit cross-org negative tests for CRM lead detail/update/activity/stage-transition routes.
+- [x] Added explicit cross-org negative tests for forms, form assignments, and form submissions.
+- [x] Confirmed explicit cross-org negative tests for messages, notifications, packages, Stripe package sync, education resources, food writes, exercise writes, and supplement coach details.
+- [x] Added write-side tests proving client-provided `organizationId` fields are ignored in client and lead creation.
+- [x] Added regression tests for list endpoints with `clientId`, `templateId`, `leadId`, or `targetId` filters to ensure those filters remain inside active org scope.
 
 ### Stage 5 - Database And Query Isolation Review
 
@@ -107,6 +107,9 @@ Status: Not started
 - `pnpm --filter @complete-coach/web test -- active-organization local-dev-session dashboard-metadata-api dashboard-crm-summary-api operations-api dashboard-page`: passed.
 - `pnpm --filter @complete-coach/web test -- dashboard-page submissions-checkins-api training-api nutrition-api supplementation-api audit-api`: passed.
 - `pnpm --filter @complete-coach/web test -- fixture-leakage`: passed.
+- `pnpm --filter @complete-coach/web test -- client-crm-api`: passed.
+- `pnpm --filter @complete-coach/web test -- submissions-checkins-api forms-api client-crm-api`: passed.
+- `pnpm --filter @complete-coach/web test -- client-crm-api submissions-checkins-api education-api notifications-email-api package-stripe-sync-api operations-api training-api nutrition-api supplementation-api audit-api dashboard-crm-summary-api dashboard-metadata-api`: passed.
 - `pnpm --filter @complete-coach/web typecheck`: passed.
 - `AUTH_SECRET=... DATABASE_URL=... DIRECT_URL=... pnpm --filter @complete-coach/web exec next build --webpack`: passed.
 - `pnpm --filter @complete-coach/web lint`: currently blocked by unrelated existing UI lint issues in check-in detail, client profile dashboard, meal plans, packages, and training program builder.

@@ -155,6 +155,29 @@ describe("notification APIs and Resend email workflows", () => {
     );
   });
 
+  it("does not mark notifications outside the active organization as read", async () => {
+    mocks.prisma.notification.findFirst.mockResolvedValue(null);
+
+    const response = await markNotificationRead(
+      new Request("http://test.local/api/v1/notifications/org_2_notification/read", { method: "POST" }),
+      { params: Promise.resolve({ notificationId: "org_2_notification" }) }
+    );
+    const payload = (await response.json()) as { error: { code: string } };
+
+    expect(response.status).toBe(404);
+    expect(payload.error.code).toBe("not_found");
+    expect(mocks.prisma.notification.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "org_2_notification",
+          organizationId: "org_1",
+          recipientUserId: "user_1"
+        }
+      })
+    );
+    expect(mocks.prisma.notification.update).not.toHaveBeenCalled();
+  });
+
   it("marks all current-user notifications as read", async () => {
     mocks.prisma.notification.updateMany.mockResolvedValue({ count: 3 });
 

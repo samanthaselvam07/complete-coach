@@ -3,8 +3,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClientStatus, LeadStage, LeadStatus } from "@/app/generated/prisma/enums";
 import { GET as getClients, POST as postClient } from "@/app/api/v1/clients/route";
 import { GET as getClient, PATCH as patchClient } from "@/app/api/v1/clients/[clientId]/route";
+import { POST as archiveClient } from "@/app/api/v1/clients/[clientId]/archive/route";
+import {
+  GET as getClientProfile,
+  PATCH as patchClientProfile
+} from "@/app/api/v1/clients/[clientId]/profile/route";
 import { GET as getLeads, POST as postLead } from "@/app/api/v1/leads/route";
 import { GET as getLead, PATCH as patchLead } from "@/app/api/v1/leads/[leadId]/route";
+import {
+  GET as getLeadActivities,
+  POST as postLeadActivity
+} from "@/app/api/v1/leads/[leadId]/activities/route";
+import { POST as postLeadStageTransition } from "@/app/api/v1/leads/[leadId]/stage-transitions/route";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -21,6 +31,14 @@ const mocks = vi.hoisted(() => ({
       findFirst: vi.fn(),
       update: vi.fn()
     },
+    clientProfile: {
+      upsert: vi.fn()
+    },
+    leadActivity: {
+      findMany: vi.fn(),
+      create: vi.fn()
+    },
+    $transaction: vi.fn(),
     auditLog: {
       create: vi.fn()
     }
@@ -56,6 +74,10 @@ describe("client and CRM API tenancy", () => {
     mocks.prisma.lead.create.mockReset();
     mocks.prisma.lead.findFirst.mockReset();
     mocks.prisma.lead.update.mockReset();
+    mocks.prisma.clientProfile.upsert.mockReset();
+    mocks.prisma.leadActivity.findMany.mockReset();
+    mocks.prisma.leadActivity.create.mockReset();
+    mocks.prisma.$transaction.mockReset();
     mocks.prisma.auditLog.create.mockReset();
   });
 
@@ -82,6 +104,7 @@ describe("client and CRM API tenancy", () => {
           firstName: "Emma",
           lastName: "Thompson",
           email: "EMMA@example.com",
+          organizationId: "org_2",
           status: "new"
         })
       })
@@ -259,6 +282,62 @@ describe("client and CRM API tenancy", () => {
     expect(mocks.prisma.client.update).not.toHaveBeenCalled();
   });
 
+  it("does not archive clients outside the active organization scope", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue(null);
+
+    const response = await archiveClient(
+      new Request("http://test.local/api/v1/clients/org_2_client/archive", { method: "POST" }),
+      { params: Promise.resolve({ clientId: "org_2_client" }) }
+    );
+    const payload = (await response.json()) as { error: { code: string } };
+
+    expect(response.status).toBe(404);
+    expect(payload.error.code).toBe("not_found");
+    expect(mocks.prisma.client.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "org_2_client",
+          organizationId: "org_1",
+          deletedAt: null
+        }
+      })
+    );
+    expect(mocks.prisma.client.update).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("does not read or update client profiles outside the active organization scope", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue(null);
+
+    const readResponse = await getClientProfile(
+      new Request("http://test.local/api/v1/clients/org_2_client/profile"),
+      { params: Promise.resolve({ clientId: "org_2_client" }) }
+    );
+    const updateResponse = await patchClientProfile(
+      new Request("http://test.local/api/v1/clients/org_2_client/profile", {
+        method: "PATCH",
+        body: JSON.stringify({ bio: "Blocked profile update" })
+      }),
+      { params: Promise.resolve({ clientId: "org_2_client" }) }
+    );
+
+    expect(readResponse.status).toBe(404);
+    expect(updateResponse.status).toBe(404);
+    expect(mocks.prisma.client.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "org_2_client",
+          organizationId: "org_1",
+          deletedAt: null
+        }
+      })
+    );
+    expect(mocks.prisma.clientProfile.upsert).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
   it("scopes lead list queries to the active organization", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.lead.findMany.mockResolvedValue([
@@ -318,6 +397,7 @@ describe("client and CRM API tenancy", () => {
         body: JSON.stringify({
           name: "Jessica Martinez",
           email: "JESSICA@example.com",
+          organizationId: "org_2",
           status: "hot",
           stage: "initial-contact"
         })
@@ -456,5 +536,65 @@ describe("client and CRM API tenancy", () => {
 
     expect(response.status).toBe(404);
     expect(mocks.prisma.lead.update).not.toHaveBeenCalled();
+  });
+
+  it("does not read or create activities for leads outside the active organization scope", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.lead.findFirst.mockResolvedValue(null);
+
+    const readResponse = await getLeadActivities(
+      new Request("http://test.local/api/v1/leads/org_2_lead/activities"),
+      { params: Promise.resolve({ leadId: "org_2_lead" }) }
+    );
+    const createResponse = await postLeadActivity(
+      new Request("http://test.local/api/v1/leads/org_2_lead/activities", {
+        method: "POST",
+        body: JSON.stringify({ type: "note", body: "Blocked activity" })
+      }),
+      { params: Promise.resolve({ leadId: "org_2_lead" }) }
+    );
+
+    expect(readResponse.status).toBe(404);
+    expect(createResponse.status).toBe(404);
+    expect(mocks.prisma.lead.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "org_2_lead",
+          organizationId: "org_1",
+          deletedAt: null
+        }
+      })
+    );
+    expect(mocks.prisma.leadActivity.findMany).not.toHaveBeenCalled();
+    expect(mocks.prisma.leadActivity.create).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("does not transition lead stages outside the active organization scope", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.lead.findFirst.mockResolvedValue(null);
+
+    const response = await postLeadStageTransition(
+      new Request("http://test.local/api/v1/leads/org_2_lead/stage-transitions", {
+        method: "POST",
+        body: JSON.stringify({ stage: "proposal" })
+      }),
+      { params: Promise.resolve({ leadId: "org_2_lead" }) }
+    );
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.lead.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "org_2_lead",
+          organizationId: "org_1",
+          deletedAt: null
+        }
+      })
+    );
+    expect(mocks.prisma.$transaction).not.toHaveBeenCalled();
+    expect(mocks.prisma.lead.update).not.toHaveBeenCalled();
+    expect(mocks.prisma.leadActivity.create).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
   });
 });
