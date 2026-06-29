@@ -170,8 +170,7 @@ describe("Training program builder exercise panel", () => {
     expect(within(squatRow).getByLabelText("RIR")).toHaveValue("2");
     expect(within(squatRow).getByLabelText("Rest time")).toHaveValue("150");
     expect(squatRow).toHaveAttribute("draggable", "true");
-    expect(within(squatRow).getByText("Exercise video")).toBeInTheDocument();
-    expect(within(squatRow).getByText("No video attached yet.")).toBeInTheDocument();
+    expect(within(squatRow).getByText("No video")).toBeInTheDocument();
     expect(within(squatRow).getByRole("button", { name: "Delete Back Squat" })).toBeInTheDocument();
     expect(within(deadliftRow).getByRole("button", { name: "Move Romanian Deadlift exercise" })).toBeInTheDocument();
     expect(deadliftRow).toHaveAttribute("draggable", "true");
@@ -199,6 +198,25 @@ describe("Training program builder exercise panel", () => {
 
   it("opens a custom exercise dialog with video link and upload options", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      if (String(input) === "/api/v1/exercises/media-upload-url" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                objectKey: "organizations/org_1/training/exercises/video/00000000-0000-4000-8000-000000000000.mp4",
+                uploadUrl: "https://r2.example/custom-exercise-upload",
+                requiredHeaders: { "Content-Type": "video/mp4" }
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (String(input) === "https://r2.example/custom-exercise-upload" && init?.method === "PUT") {
+        return Promise.resolve(new Response(null, { status: 200 }));
+      }
+
       if (String(input) === "/api/v1/exercises" && init?.method === "POST") {
         const body = JSON.parse(String(init.body)) as {
           name: string;
@@ -207,6 +225,7 @@ describe("Training program builder exercise panel", () => {
           defaultReps?: string;
           defaultRestSeconds?: number;
           defaultRpe?: number;
+          videoObjectKey?: string;
           executionCues?: string[];
         };
 
@@ -220,7 +239,7 @@ describe("Training program builder exercise panel", () => {
                 scope: "private",
                 equipment: null,
                 difficulty: "intermediate",
-                videoObjectKey: null,
+                videoObjectKey: body.videoObjectKey ?? null,
                 primaryMuscles: [body.category],
                 defaultSets: body.defaultSets,
                 defaultReps: body.defaultReps,
@@ -262,10 +281,104 @@ describe("Training program builder exercise panel", () => {
     expect(within(exerciseRow).getByLabelText("Sets")).toHaveValue("3");
     expect(within(exerciseRow).getByLabelText("Reps")).toHaveValue("10-12");
     expect(within(exerciseRow).getByLabelText("Rest time")).toHaveValue("90");
-    expect(within(exerciseRow).getByText("Video link added")).toBeInTheDocument();
-    expect(within(exerciseRow).getByText("single-leg-squat.mp4")).toBeInTheDocument();
-    expect(within(exerciseRow).getByRole("link", { name: "Open source" })).toHaveAttribute("href", "https://www.youtube.com/watch?v=demo");
-    expect(within(exerciseRow).getByTitle("Single Leg Squat video")).toHaveAttribute("src", "https://www.youtube.com/embed/demo");
+    expect(within(exerciseRow).getByRole("button", { name: "View Single Leg Squat exercise video" })).toBeInTheDocument();
+    expect(within(exerciseRow).queryByTitle("Single Leg Squat video")).not.toBeInTheDocument();
+
+    fireEvent.click(within(exerciseRow).getByRole("button", { name: "View Single Leg Squat exercise video" }));
+
+    const videoDialog = await screen.findByRole("dialog", { name: "Single Leg Squat exercise video" });
+    expect(within(videoDialog).getByRole("link", { name: "Open source" })).toHaveAttribute("href", "https://www.youtube.com/watch?v=demo");
+    expect(within(videoDialog).getByTitle("Single Leg Squat video")).toHaveAttribute("src", "https://www.youtube.com/embed/demo");
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "/api/v1/exercises/media-upload-url",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("single-leg-squat.mp4")
+      })
+    );
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://r2.example/custom-exercise-upload",
+      expect.objectContaining({
+        method: "PUT",
+        headers: { "Content-Type": "video/mp4" },
+        body: videoFile
+      })
+    );
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "/api/v1/exercises",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("organizations/org_1/training/exercises/video/00000000-0000-4000-8000-000000000000.mp4")
+      })
+    );
+  });
+
+  it("still creates a custom exercise when video upload storage is unavailable", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      if (String(input) === "/api/v1/exercises/media-upload-url" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ error: { message: "Object storage is not configured." } }), {
+            status: 503
+          })
+        );
+      }
+
+      if (String(input) === "/api/v1/exercises" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as {
+          name: string;
+          category: string;
+          defaultSets?: number;
+          defaultReps?: string;
+          defaultRestSeconds?: number;
+          defaultRpe?: number;
+          videoObjectKey?: string;
+          executionCues?: string[];
+        };
+
+        expect(body.videoObjectKey).toBeUndefined();
+        expect(body.executionCues).toBeUndefined();
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "exercise_storage_fallback_split_squat",
+                name: body.name,
+                category: body.category,
+                scope: "private",
+                equipment: null,
+                difficulty: "intermediate",
+                videoObjectKey: null,
+                primaryMuscles: [body.category],
+                defaultSets: body.defaultSets,
+                defaultReps: body.defaultReps,
+                defaultRestSeconds: body.defaultRestSeconds,
+                defaultRpe: body.defaultRpe,
+                executionCues: body.executionCues
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(TrainingProgramsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
+    await screen.findByRole("button", { name: "Add custom exercise" });
+
+    const videoFile = new File(["demo"], "fallback-video.mp4", { type: "video/mp4" });
+    await addCustomExercise("Storage Fallback Split Squat", { file: videoFile });
+
+    const exerciseRow = screen.getByRole("group", { name: "Storage Fallback Split Squat exercise row" });
+    expect(within(exerciseRow).getByDisplayValue("Storage Fallback Split Squat")).toBeInTheDocument();
+    expect(within(exerciseRow).queryByText("fallback-video.mp4")).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Add custom exercise" })).not.toBeInTheDocument();
   });
 
   it("keeps the dialog open and shows an error when a custom exercise cannot be persisted", async () => {

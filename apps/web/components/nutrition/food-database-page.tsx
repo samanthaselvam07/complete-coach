@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Download, Grid2X2, List as ListIcon, Plus, Search, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Grid2X2, List as ListIcon, Plus, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
@@ -27,6 +27,7 @@ interface ApiFood {
 
 type FoodDatabaseSource = Food["source"];
 type FoodDatabaseView = "cards" | "list";
+type FoodDatabaseSort = "az" | "za";
 type NewFoodFormState = {
   name: string;
   calories: string;
@@ -95,6 +96,7 @@ export function FoodDatabasePage() {
   const [apiFoods, setApiFoods] = useState<ApiFood[]>([]);
   const [loadingFoods, setLoadingFoods] = useState(true);
   const [viewMode, setViewMode] = useState<FoodDatabaseView>("cards");
+  const [sortOrder, setSortOrder] = useState<FoodDatabaseSort>("az");
   const [savingFood, setSavingFood] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -143,6 +145,9 @@ export function FoodDatabasePage() {
       (food) =>
         food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         food.category.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((firstFood, secondFood) =>
+      sortOrder === "az" ? firstFood.name.localeCompare(secondFood.name) : secondFood.name.localeCompare(firstFood.name)
     );
   const totalPages = Math.max(1, Math.ceil(filteredFoods.length / FOODS_PER_PAGE));
   const effectivePage = Math.min(currentPage, totalPages);
@@ -207,50 +212,82 @@ export function FoodDatabasePage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8">
       <div className="mb-8">
-        <div className="mb-2 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-950">Food Database</h1>
-            <p className="text-slate-600">Curate your custom ingredients or import from verified global libraries.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 rounded-lg border border-indigo-600 bg-white px-5 py-3 font-semibold text-indigo-600 transition-colors hover:bg-indigo-50">
-              <Download className="size-4" aria-hidden="true" />
-              Import
-            </button>
-            <button
-              type="button"
-              disabled={savingFood}
-              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
-              onClick={() => setNewFoodModalOpen(true)}
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              Create New Food
-            </button>
-          </div>
-        </div>
+        <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-950">Food Database</h1>
+        <p className="text-slate-600">Curate your custom ingredients or import from verified global libraries.</p>
       </div>
 
       {loadingFoods ? <p className="mb-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">Loading persisted food library...</p> : null}
       {statusMessage ? <SavedToast message={statusMessage} /> : null}
       {errorMessage ? <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p> : null}
 
-      <div className="relative mb-6">
-        <label htmlFor="food-search" className="sr-only">
-          Search foods
+      <section className="mb-6 grid gap-4 xl:grid-cols-[1fr_auto_auto_auto] xl:items-center">
+        <label className="relative">
+          <span className="sr-only">Search foods</span>
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <input
+            type="search"
+            value={searchQuery}
+            placeholder="Search thousands of ingredients..."
+            className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setCurrentPage(1);
+            }}
+          />
         </label>
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
-        <input
-          id="food-search"
-          type="search"
-          value={searchQuery}
-          placeholder="Search thousands of ingredients..."
-          className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          onChange={(event) => {
-            setSearchQuery(event.target.value);
-            setCurrentPage(1);
-          }}
-        />
-      </div>
+
+        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+          Sort foods
+          <select
+            value={sortOrder}
+            onChange={(event) => {
+              setSortOrder(event.target.value as FoodDatabaseSort);
+              setCurrentPage(1);
+            }}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="az">A-Z</option>
+            <option value="za">Z-A</option>
+          </select>
+        </label>
+
+        <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1" aria-label="Food database view">
+          <button
+            type="button"
+            aria-label="Card view"
+            aria-pressed={viewMode === "cards"}
+            className={cn(
+              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
+              viewMode === "cards" ? "bg-indigo-50 text-indigo-700" : ""
+            )}
+            onClick={() => setViewMode("cards")}
+          >
+            <Grid2X2 className="size-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label="List view"
+            aria-pressed={viewMode === "list"}
+            className={cn(
+              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
+              viewMode === "list" ? "bg-indigo-50 text-indigo-700" : ""
+            )}
+            onClick={() => setViewMode("list")}
+          >
+            <ListIcon className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <button
+          type="button"
+          disabled={savingFood}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+          onClick={() => setNewFoodModalOpen(true)}
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          New Entry
+        </button>
+      </section>
 
       <div className="mb-5 flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
         <div className="flex flex-wrap items-center gap-2">
@@ -288,32 +325,6 @@ export function FoodDatabasePage() {
             <span className="text-sm text-gray-500">
               Showing {visibleFoods.length} of {filteredFoods.length} results
             </span>
-            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm" aria-label="Food database view">
-              <button
-                type="button"
-                aria-label="Card view"
-                aria-pressed={viewMode === "cards"}
-                className={cn(
-                  "inline-flex size-9 items-center justify-center rounded-md transition-colors",
-                  viewMode === "cards" ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-indigo-50 hover:text-indigo-700"
-                )}
-                onClick={() => setViewMode("cards")}
-              >
-                <Grid2X2 className="size-4" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                aria-label="List view"
-                aria-pressed={viewMode === "list"}
-                className={cn(
-                  "inline-flex size-9 items-center justify-center rounded-md transition-colors",
-                  viewMode === "list" ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-indigo-50 hover:text-indigo-700"
-                )}
-                onClick={() => setViewMode("list")}
-              >
-                <ListIcon className="size-4" aria-hidden="true" />
-              </button>
-            </div>
           </div>
         </div>
 

@@ -15,6 +15,18 @@ afterEach(() => {
 });
 
 describe("AddExercisePage defaults", () => {
+  it("renders compact rest, RPE and RIR target controls", () => {
+    render(createElement(AddExercisePage));
+
+    expect(screen.getByTestId("exercise-default-metrics")).toHaveClass("gap-2");
+    expect(screen.getByTestId("rest-timer-control")).toHaveClass("px-2");
+    expect(screen.getByTestId("rpe-target-control")).toHaveClass("px-2");
+    expect(screen.getByTestId("rir-target-control")).toHaveClass("px-2");
+    expect(screen.getByLabelText("Rest timer")).toHaveClass("h-9");
+    expect(screen.getByLabelText("RPE target")).toHaveClass("h-9");
+    expect(screen.getByLabelText("RIR target")).toHaveClass("h-9");
+  });
+
   it("saves a free-form rep target with rest, RPE, RIR and external video link defaults", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(

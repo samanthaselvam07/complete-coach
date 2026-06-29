@@ -217,23 +217,45 @@ describe("MealPlansPage", () => {
     expect(screen.getByRole("button", { name: "Create New Nutritional Plan" })).toBeInTheDocument();
   });
 
-  it("toggles meal plan library between card and list views", async () => {
+  it("renders meal plans as a list-only library", async () => {
     mockMealPlanLibrary();
     render(createElement(MealPlansPage));
 
     expect(await screen.findByText("Hypertrophy Phase II")).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Meal plan list" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Meal plan cards" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Card view" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "List view" })).not.toBeInTheDocument();
+  });
+
+  it("toggles meal templates between card and list views", async () => {
+    mockMealPlanLibrary();
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
+
+    expect(screen.getByText("High-Protein Breakfast Bowl")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("region", { name: "Meal plan cards" })).toBeInTheDocument();
-    expect(screen.queryByRole("table", { name: "Meal plan list" })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Meal template cards" })).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Meal template list" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "List view" }));
     expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("table", { name: "Meal plan list" })).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Meal plan cards" })).not.toBeInTheDocument();
+    const templateTable = screen.getByRole("table", { name: "Meal template list" });
+    const templateRow = within(templateTable).getByRole("row", {
+      name: /High-Protein Breakfast Bowl Meal template protocol/i
+    });
+
+    expect(templateTable).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Meal template cards" })).not.toBeInTheDocument();
+    expect(templateRow).toHaveTextContent("520 cal");
+    expect(templateRow).toHaveTextContent("P 45g");
+    expect(templateRow).toHaveTextContent("C 55g");
+    expect(templateRow).toHaveTextContent("F 12g");
 
     fireEvent.click(screen.getByRole("button", { name: "Card view" }));
     expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("region", { name: "Meal plan cards" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Meal template cards" })).toBeInTheDocument();
   });
 
   it("opens the meal plan quick action menu and closes it from the page overlay", async () => {
@@ -244,7 +266,7 @@ describe("MealPlansPage", () => {
 
     const menu = screen.getByRole("menu", { name: /meal plan actions/i });
     expect(menu).toHaveClass("z-[60]");
-    expect(menu.closest("article")).toHaveClass("z-40");
+    expect(menu.closest("tr")).toHaveClass("z-40");
     expect(within(menu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Assign to" })).toBeInTheDocument();
@@ -1460,6 +1482,10 @@ describe("FoodDatabasePage", () => {
       "placeholder",
       "Search thousands of ingredients..."
     );
+    expect(screen.getByLabelText("Sort foods")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New Entry" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Import" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Create New Food" })).not.toBeInTheDocument();
     expect(screen.getByText("Source:")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "USDA" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "AUS/NZ" })).toBeInTheDocument();
@@ -1772,7 +1798,7 @@ describe("FoodDatabasePage", () => {
     render(createElement(FoodDatabasePage));
 
     await screen.findByText("No persisted foods match the current filters.");
-    fireEvent.click(screen.getByRole("button", { name: "Create New Food" }));
+    fireEvent.click(screen.getByRole("button", { name: "New Entry" }));
     const dialog = screen.getByRole("dialog", { name: "Add Own Food item for your nutrition plan" });
     fireEvent.change(within(dialog).getByPlaceholderText("Enter food name"), { target: { value: "Coach Blueberries" } });
     fireEvent.change(within(dialog).getByPlaceholderText("Enter total calories"), { target: { value: "85" } });
@@ -1801,7 +1827,7 @@ describe("FoodDatabasePage", () => {
     render(createElement(FoodDatabasePage));
 
     await screen.findByText("No persisted foods match the current filters.");
-    fireEvent.click(screen.getByRole("button", { name: "Create New Food" }));
+    fireEvent.click(screen.getByRole("button", { name: "New Entry" }));
 
     const dialog = screen.getByRole("dialog", { name: "Add Own Food item for your nutrition plan" });
     expect(within(dialog).getByPlaceholderText("Enter food name")).toBeInTheDocument();
@@ -1838,7 +1864,7 @@ describe("FoodDatabasePage", () => {
     render(createElement(FoodDatabasePage));
 
     await screen.findByText("No persisted foods match the current filters.");
-    fireEvent.click(screen.getByRole("button", { name: "Create New Food" }));
+    fireEvent.click(screen.getByRole("button", { name: "New Entry" }));
     const dialog = screen.getByRole("dialog", { name: "Add Own Food item for your nutrition plan" });
     fireEvent.change(within(dialog).getByPlaceholderText("Enter food name"), { target: { value: "Invalid Macro Food" } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Add" }));

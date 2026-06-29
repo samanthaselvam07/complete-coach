@@ -285,20 +285,28 @@ export function AddExercisePage() {
                   <p className="mt-2 text-xs text-gray-500">Use any coaching format. This is not restricted to a numeric range.</p>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <label htmlFor="rest-timer" className="grid gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                    Rest timer
+                <div data-testid="exercise-default-metrics" className="grid gap-2 sm:grid-cols-3">
+                  <label
+                    htmlFor="rest-timer"
+                    data-testid="rest-timer-control"
+                    className="grid gap-1 rounded-xl bg-gray-50 px-2 py-2 text-[11px] font-semibold uppercase tracking-normal text-gray-500"
+                  >
+                    <span className="truncate">Rest timer</span>
                     <input
                       id="rest-timer"
                       type="number"
                       min="0"
                       value={restSeconds}
-                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="h-9 min-w-0 rounded-lg border border-gray-300 px-2 py-1 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       onChange={(event) => setRestSeconds(event.target.value)}
                     />
                   </label>
-                  <label htmlFor="rpe-target" className="grid gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                    RPE target
+                  <label
+                    htmlFor="rpe-target"
+                    data-testid="rpe-target-control"
+                    className="grid gap-1 rounded-xl bg-gray-50 px-2 py-2 text-[11px] font-semibold uppercase tracking-normal text-gray-500"
+                  >
+                    <span className="truncate">RPE target</span>
                     <input
                       id="rpe-target"
                       type="number"
@@ -306,18 +314,22 @@ export function AddExercisePage() {
                       max="10"
                       step="0.5"
                       value={rpeTarget}
-                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="h-9 min-w-0 rounded-lg border border-gray-300 px-2 py-1 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       onChange={(event) => setRpeTarget(event.target.value)}
                     />
                   </label>
-                  <label htmlFor="rir-target" className="grid gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                    RIR target
+                  <label
+                    htmlFor="rir-target"
+                    data-testid="rir-target-control"
+                    className="grid gap-1 rounded-xl bg-gray-50 px-2 py-2 text-[11px] font-semibold uppercase tracking-normal text-gray-500"
+                  >
+                    <span className="truncate">RIR target</span>
                     <input
                       id="rir-target"
                       type="text"
                       value={rirTarget}
                       placeholder="e.g. 1-2"
-                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="h-9 min-w-0 rounded-lg border border-gray-300 px-2 py-1 text-sm font-semibold normal-case tracking-normal text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       onChange={(event) => setRirTarget(event.target.value)}
                     />
                   </label>

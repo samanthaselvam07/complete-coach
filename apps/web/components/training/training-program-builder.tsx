@@ -94,7 +94,19 @@ interface CustomExerciseInput {
   rpe: string;
   rir: string;
   videoUrl?: string;
+  videoObjectKey?: string;
   videoFileName?: string;
+}
+
+interface ExerciseMediaUploadResponse {
+  data?: {
+    objectKey: string;
+    uploadUrl: string;
+    requiredHeaders: Record<string, string>;
+  };
+  error?: {
+    message?: string;
+  };
 }
 
 const customExerciseBodyParts = [
@@ -644,128 +656,168 @@ function ProgramBuilderSection({
   onExerciseMove: (exerciseId: string, targetExerciseId: string) => void;
 }) {
   const sectionLabel = getProgramSectionLabel(section);
+  const [selectedVideoExercise, setSelectedVideoExercise] = useState<TrainingProgramExerciseDraft | null>(null);
 
   return (
-    <div
-      className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4"
-      onDragOver={(event) => event.preventDefault()}
-      onDrop={(event) => {
-        event.preventDefault();
-        const exerciseName = event.dataTransfer.getData("text/plain");
+    <>
+      <div
+        className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 p-4"
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          event.preventDefault();
+          const exerciseName = event.dataTransfer.getData("text/plain");
 
-        if (exerciseName) {
-          onExerciseDrop(exerciseName);
-        }
-      }}
-    >
-      <h2 className="mb-3 text-sm font-black text-slate-900">{sectionLabel}</h2>
-      <div className="space-y-3">
-        {exercises.map((exercise) => (
-          <div
-            key={exercise.id}
-            role="group"
-            aria-label={`${exercise.exerciseName || "Untitled exercise"} exercise row`}
-            draggable
-            className="grid cursor-grab gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm active:cursor-grabbing lg:grid-cols-[2.5rem_minmax(12rem,2fr)_repeat(5,minmax(4.25rem,1fr))_2.5rem]"
-            onDragStart={(event) => {
-              event.dataTransfer.setData("application/x-complete-coach-exercise-id", exercise.id);
-              event.dataTransfer.effectAllowed = "move";
-            }}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault();
-              const exerciseId = event.dataTransfer.getData("application/x-complete-coach-exercise-id");
-
-              if (exerciseId) {
-                onExerciseMove(exerciseId, exercise.id);
-              }
-            }}
-          >
-            <button
-              type="button"
-              aria-label={`Move ${exercise.exerciseName || "untitled"} exercise`}
-              className="mt-6 inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-            >
-              <GripVertical className="size-4" aria-hidden="true" />
-            </button>
-            <ExerciseField label="Exercise name" value={exercise.exerciseName} onChange={(exerciseName) => onExerciseChange(exercise.id, { exerciseName })} />
-            <ExerciseField label="Sets" value={exercise.sets} inputMode="numeric" onChange={(sets) => onExerciseChange(exercise.id, { sets })} />
-            <ExerciseField label="Reps" value={exercise.reps} onChange={(reps) => onExerciseChange(exercise.id, { reps })} />
-            <ExerciseField label="RPE" value={exercise.rpe} onChange={(rpe) => onExerciseChange(exercise.id, { rpe })} />
-            <ExerciseField label="RIR" value={exercise.rir} onChange={(rir) => onExerciseChange(exercise.id, { rir })} />
-            <ExerciseField label="Rest time" value={exercise.restSeconds} inputMode="numeric" onChange={(restSeconds) => onExerciseChange(exercise.id, { restSeconds })} />
-            {exercise.customVideoUrl || exercise.customVideoFileName ? (
-              <div className="lg:col-start-2 lg:col-end-8 -mt-1 flex flex-wrap gap-2 text-xs font-bold text-indigo-700">
-                {exercise.customVideoUrl ? <span className="rounded-full bg-indigo-50 px-3 py-1">Video link added</span> : null}
-                {exercise.customVideoFileName ? <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{exercise.customVideoFileName}</span> : null}
-              </div>
-            ) : null}
-            <ExerciseVideoPreview exercise={exercise} />
-            <button
-              type="button"
-              aria-label={`Delete ${exercise.exerciseName || "untitled exercise"}`}
-              className="mt-6 inline-flex size-9 items-center justify-center rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700"
-              onClick={() => onExerciseDelete(exercise.id)}
-            >
-              <Trash2 className="size-4" aria-hidden="true" />
-            </button>
-          </div>
-        ))}
-      </div>
-      <button
-        type="button"
-        aria-label={`Add ${sectionLabel.toLowerCase()} exercise`}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-200 bg-indigo-50 px-4 py-4 text-sm font-bold text-indigo-700 transition-colors hover:border-indigo-400 hover:bg-indigo-100"
-        onClick={onAddExercise}
+          if (exerciseName) {
+            onExerciseDrop(exerciseName);
+          }
+        }}
       >
-        <Plus className="size-4" aria-hidden="true" />
-        Add an Exercise
-      </button>
-    </div>
+        <h2 className="mb-3 text-sm font-black text-slate-900">{sectionLabel}</h2>
+        <div className="space-y-3">
+          {exercises.map((exercise) => (
+            <div
+              key={exercise.id}
+              role="group"
+              aria-label={`${exercise.exerciseName || "Untitled exercise"} exercise row`}
+              draggable
+              className="grid cursor-grab gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm active:cursor-grabbing lg:grid-cols-[4.5rem_2.5rem_minmax(12rem,2fr)_repeat(5,minmax(4.25rem,1fr))_2.5rem]"
+              onDragStart={(event) => {
+                event.dataTransfer.setData("application/x-complete-coach-exercise-id", exercise.id);
+                event.dataTransfer.effectAllowed = "move";
+              }}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                const exerciseId = event.dataTransfer.getData("application/x-complete-coach-exercise-id");
+
+                if (exerciseId) {
+                  onExerciseMove(exerciseId, exercise.id);
+                }
+              }}
+            >
+              <ExerciseVideoThumbnail exercise={exercise} onView={() => setSelectedVideoExercise(exercise)} />
+              <button
+                type="button"
+                aria-label={`Move ${exercise.exerciseName || "untitled"} exercise`}
+                className="mt-6 inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              >
+                <GripVertical className="size-4" aria-hidden="true" />
+              </button>
+              <ExerciseField label="Exercise name" value={exercise.exerciseName} onChange={(exerciseName) => onExerciseChange(exercise.id, { exerciseName })} />
+              <ExerciseField label="Sets" value={exercise.sets} inputMode="numeric" onChange={(sets) => onExerciseChange(exercise.id, { sets })} />
+              <ExerciseField label="Reps" value={exercise.reps} onChange={(reps) => onExerciseChange(exercise.id, { reps })} />
+              <ExerciseField label="RPE" value={exercise.rpe} onChange={(rpe) => onExerciseChange(exercise.id, { rpe })} />
+              <ExerciseField label="RIR" value={exercise.rir} onChange={(rir) => onExerciseChange(exercise.id, { rir })} />
+              <ExerciseField label="Rest time" value={exercise.restSeconds} inputMode="numeric" onChange={(restSeconds) => onExerciseChange(exercise.id, { restSeconds })} />
+              <button
+                type="button"
+                aria-label={`Delete ${exercise.exerciseName || "untitled exercise"}`}
+                className="mt-6 inline-flex size-9 items-center justify-center rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700"
+                onClick={() => onExerciseDelete(exercise.id)}
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          aria-label={`Add ${sectionLabel.toLowerCase()} exercise`}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-200 bg-indigo-50 px-4 py-4 text-sm font-bold text-indigo-700 transition-colors hover:border-indigo-400 hover:bg-indigo-100"
+          onClick={onAddExercise}
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          Add an Exercise
+        </button>
+      </div>
+      {selectedVideoExercise ? <ExerciseVideoDialog exercise={selectedVideoExercise} onClose={() => setSelectedVideoExercise(null)} /> : null}
+    </>
   );
 }
 
-function ExerciseVideoPreview({ exercise }: { exercise: TrainingProgramExerciseDraft }) {
+function ExerciseVideoThumbnail({ exercise, onView }: { exercise: TrainingProgramExerciseDraft; onView: () => void }) {
+  const hasVideoReference = Boolean(exercise.customVideoUrl || exercise.customVideoFileName);
+
+  if (!hasVideoReference) {
+    return (
+      <div className="flex size-16 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center text-[0.65rem] font-black uppercase tracking-wide text-slate-400">
+        <PlayCircle className="mb-1 size-4" aria-hidden="true" />
+        No video
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      aria-label={`View ${exercise.exerciseName || "untitled"} exercise video`}
+      className="flex size-16 flex-col items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-center text-[0.65rem] font-black uppercase tracking-wide text-indigo-700 shadow-sm transition-colors hover:border-indigo-400 hover:bg-indigo-100"
+      onClick={(event) => {
+        event.stopPropagation();
+        onView();
+      }}
+    >
+      <PlayCircle className="mb-1 size-5" aria-hidden="true" />
+      Video
+    </button>
+  );
+}
+
+function ExerciseVideoDialog({ exercise, onClose }: { exercise: TrainingProgramExerciseDraft; onClose: () => void }) {
   const embedUrl = getEmbeddableExerciseVideoUrl(exercise.customVideoUrl);
   const hasVideoReference = Boolean(exercise.customVideoUrl || exercise.customVideoFileName);
 
   return (
-    <div className="lg:col-start-2 lg:col-end-8 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-500">
-          <PlayCircle className="size-4 text-indigo-600" aria-hidden="true" />
-          Exercise video
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" onClick={onClose}>
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="exercise-video-dialog-title"
+        className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">Exercise video</p>
+            <h2 id="exercise-video-dialog-title" className="mt-1 text-2xl font-black text-slate-950">
+              {exercise.exerciseName || "Exercise"} exercise video
+            </h2>
+          </div>
+          <button type="button" aria-label="Close exercise video" className="rounded-xl p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-4" aria-hidden="true" />
+          </button>
         </div>
+
+        {embedUrl ? (
+          <iframe
+            title={`${exercise.exerciseName || "Exercise"} video`}
+            src={embedUrl}
+            className="mt-5 aspect-video w-full rounded-2xl border border-slate-200 bg-slate-950"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        ) : (
+          <div className="mt-5 flex min-h-64 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
+            {hasVideoReference ? (
+              <span>{exercise.customVideoFileName ? `${exercise.customVideoFileName} attached` : "External video attached. Open source to view."}</span>
+            ) : (
+              <span>No video attached yet.</span>
+            )}
+          </div>
+        )}
+
         {exercise.customVideoUrl ? (
           <a
             href={exercise.customVideoUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-xs font-bold text-indigo-700 hover:text-indigo-900"
+            className="mt-4 inline-flex rounded-xl border border-indigo-200 px-4 py-2 text-sm font-bold text-indigo-700 hover:bg-indigo-50"
             onClick={(event) => event.stopPropagation()}
           >
             Open source
           </a>
         ) : null}
-      </div>
-
-      {embedUrl ? (
-        <iframe
-          title={`${exercise.exerciseName || "Exercise"} video`}
-          src={embedUrl}
-          className="mt-3 aspect-video w-full rounded-xl border border-slate-200 bg-slate-950"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
-      ) : (
-        <div className="mt-3 flex min-h-24 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white px-4 py-5 text-center text-sm text-slate-500">
-          {hasVideoReference ? (
-            <span>{exercise.customVideoFileName ? `${exercise.customVideoFileName} attached` : "External video attached. Open source to view."}</span>
-          ) : (
-            <span>No video attached yet.</span>
-          )}
-        </div>
-      )}
+      </section>
     </div>
   );
 }
@@ -787,6 +839,7 @@ function CustomExerciseDialog({
   const [rpe, setRpe] = useState("");
   const [rir, setRir] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoFileName, setVideoFileName] = useState("");
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -797,6 +850,19 @@ function CustomExerciseDialog({
     setErrorMessage("");
 
     try {
+      let videoObjectKey: string | undefined;
+      let uploadedVideoFileName: string | undefined;
+
+      if (videoFile) {
+        try {
+          videoObjectKey = await uploadCustomExerciseVideo(videoFile);
+          uploadedVideoFileName = videoFileName || videoFile.name;
+        } catch {
+          videoObjectKey = undefined;
+          uploadedVideoFileName = undefined;
+        }
+      }
+
       await onCreate({
         exerciseName: exerciseName.trim(),
         bodyPart,
@@ -806,7 +872,8 @@ function CustomExerciseDialog({
         rpe: rpe.trim(),
         rir: rir.trim(),
         videoUrl: videoUrl.trim() || undefined,
-        videoFileName: videoFileName || undefined
+        videoObjectKey,
+        videoFileName: uploadedVideoFileName
       });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Custom exercise could not be saved.");
@@ -900,9 +967,14 @@ function CustomExerciseDialog({
             </span>
             <input
               type="file"
-              accept="video/*"
+              accept="video/mp4,video/quicktime,video/webm"
               className="mt-3 block w-full text-sm font-medium text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-bold file:text-indigo-700"
-              onChange={(event) => setVideoFileName(event.target.files?.[0]?.name ?? "")}
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null;
+
+                setVideoFile(file);
+                setVideoFileName(file?.name ?? "");
+              }}
             />
             {videoFileName ? <span className="mt-2 block text-xs text-slate-500">{videoFileName}</span> : null}
           </label>
@@ -1162,6 +1234,7 @@ async function createOrganizationExercise(input: CustomExerciseInput): Promise<A
       ...(defaultRpe !== null ? { defaultRpe } : {}),
       ...(input.rir.trim() ? { defaultRir: input.rir.trim() } : {}),
       ...(input.videoUrl ? { videoUrl: input.videoUrl } : {}),
+      ...(input.videoObjectKey ? { videoObjectKey: input.videoObjectKey } : {}),
       ...(executionCues.length > 0 ? { executionCues } : {})
     })
   });
@@ -1177,6 +1250,36 @@ async function createOrganizationExercise(input: CustomExerciseInput): Promise<A
   }
 
   return payload.data;
+}
+
+async function uploadCustomExerciseVideo(file: File) {
+  const signedUrlResponse = await fetch("/api/v1/exercises/media-upload-url", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mediaType: "video",
+      filename: file.name,
+      contentType: file.type,
+      byteSize: file.size
+    })
+  });
+  const signedUrlPayload = (await signedUrlResponse.json()) as ExerciseMediaUploadResponse;
+
+  if (!signedUrlResponse.ok || !signedUrlPayload.data) {
+    throw new Error(signedUrlPayload.error?.message ?? "Video upload could not be authorized.");
+  }
+
+  const uploadResponse = await fetch(signedUrlPayload.data.uploadUrl, {
+    method: "PUT",
+    headers: signedUrlPayload.data.requiredHeaders,
+    body: file
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error("Video upload failed.");
+  }
+
+  return signedUrlPayload.data.objectKey;
 }
 
 function buildCustomExerciseNotes(exercise: TrainingProgramExerciseDraft) {

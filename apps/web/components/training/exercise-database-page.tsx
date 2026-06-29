@@ -21,7 +21,8 @@ interface ApiExercise {
 
 export function ExerciseDatabasePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"card" | "list">("card");
+  const [sortOrder, setSortOrder] = useState<"az" | "za">("az");
+  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const [apiExercises, setApiExercises] = useState<ApiExercise[]>([]);
   const [loadingExercises, setLoadingExercises] = useState(true);
 
@@ -60,77 +61,87 @@ export function ExerciseDatabasePage() {
   }, []);
 
   const sourceExercises: Array<ApiExercise | Exercise> = apiExercises;
-  const filteredExercises = sourceExercises.filter(
-    (exercise) =>
-      exercise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      exercise.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getExerciseMeta(exercise).toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredExercises = sourceExercises
+    .filter(
+      (exercise) =>
+        exercise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        exercise.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getExerciseMeta(exercise).toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((firstExercise, secondExercise) =>
+      sortOrder === "az"
+        ? firstExercise.name.localeCompare(secondExercise.name)
+        : secondExercise.name.localeCompare(firstExercise.name)
+    );
 
   return (
     <div className="p-6 md:p-8">
       <div className="mb-8">
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Exercise database</h1>
-          </div>
-          <Link
-            href="/training/exercises/add"
-            className="flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-white transition-colors hover:bg-indigo-700"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            Add Exercise
-          </Link>
-        </div>
+        <h1 className="text-3xl font-bold">Exercise database</h1>
       </div>
 
-      <div className="mb-8 flex flex-col gap-4 xl:flex-row xl:items-center">
-        <div className="relative flex-1">
-          <label htmlFor="exercise-search" className="sr-only">
-            Search exercises
-          </label>
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+      <section className="mb-8 grid gap-4 xl:grid-cols-[1fr_auto_auto_auto] xl:items-center">
+        <label className="relative">
+          <span className="sr-only">Search exercises</span>
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
           <input
-            id="exercise-search"
             type="search"
             value={searchQuery}
             placeholder="Search exercises..."
-            className="w-full rounded-lg border border-gray-200 py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
             onChange={(event) => setSearchQuery(event.target.value)}
           />
-        </div>
+        </label>
 
-        <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+        <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+          Sort exercises
+          <select
+            value={sortOrder}
+            onChange={(event) => setSortOrder(event.target.value as "az" | "za")}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="az">A-Z</option>
+            <option value="za">Z-A</option>
+          </select>
+        </label>
+
+        <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1" aria-label="Exercise view">
           <button
             type="button"
             aria-label="Card view"
-            aria-pressed={viewMode === "card"}
+            aria-pressed={viewMode === "cards"}
             className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-              viewMode === "card" ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-50"
+              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
+              viewMode === "cards" ? "bg-indigo-50 text-indigo-700" : ""
             )}
-            onClick={() => setViewMode("card")}
+            onClick={() => setViewMode("cards")}
           >
             <Grid2X2 className="size-4" aria-hidden="true" />
-            Cards
           </button>
           <button
             type="button"
             aria-label="List view"
             aria-pressed={viewMode === "list"}
             className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-              viewMode === "list" ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-50"
+              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
+              viewMode === "list" ? "bg-indigo-50 text-indigo-700" : ""
             )}
             onClick={() => setViewMode("list")}
           >
             <List className="size-4" aria-hidden="true" />
-            List
           </button>
         </div>
-      </div>
 
-      {viewMode === "card" ? (
+        <Link
+          href="/training/exercises/add"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-700"
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          New Entry
+        </Link>
+      </section>
+
+      {viewMode === "cards" ? (
         <section aria-label="Exercise cards" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {filteredExercises.map((exercise) => (
             <article key={exercise.id} className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg">

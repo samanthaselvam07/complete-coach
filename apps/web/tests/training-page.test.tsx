@@ -831,6 +831,9 @@ describe("ExerciseDatabasePage", () => {
     expect(await screen.findByText("Persisted Tempo Squat")).toBeInTheDocument();
     expect(screen.getByLabelText("Verified Complete Coach exercise")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Exercise database" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: /search exercises/i })).toHaveAttribute("placeholder", "Search exercises...");
+    expect(screen.getByLabelText("Sort exercises")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "New Entry" })).toHaveAttribute("href", "/training/exercises/add");
     expect(screen.queryByText("The Movement Vault")).not.toBeInTheDocument();
     expect(screen.queryByText(/biomechanically optimized/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Muscle" })).not.toBeInTheDocument();
