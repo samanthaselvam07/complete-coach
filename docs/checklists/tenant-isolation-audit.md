@@ -1,6 +1,6 @@
 # Tenant Isolation And Fixture Leakage Audit Roadmap
 
-Last updated: 2026-06-29
+Last updated: 2026-06-30
 
 This checklist tracks the clean-slate rollout for organization isolation. Complete Coach must never show another organization data set, demo fixture rows, or local-only state after a new coach creates an account.
 
@@ -114,7 +114,7 @@ Status: In progress
 
 - [x] Run end-to-end sign-up in Vercel against Neon preview.
 - [x] Create two organizations and verify records created in one never appear in the other.
-- [ ] Verify dashboard, clients, CRM, training, nutrition, supplementation, forms, messages, organization settings, and billing surfaces for both empty and populated org states.
+- [x] Verify dashboard, clients, CRM, training, nutrition, supplementation, forms, messages, organization settings, and billing surfaces for both empty and populated org states.
 - [ ] Verify local dev auth bypass cannot activate unless `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS=1`.
 - [ ] Verify production environment does not include local bypass env flags or demo seed toggles.
 - [ ] Run full verification gate before marking the audit complete.
@@ -129,6 +129,11 @@ Stage 7 findings:
 - Live sign-up verification after migration created a fresh organization on `app.completecoach.fit`, landed on the clean dashboard, returned no HTTP errors, and confirmed the AI recommendations endpoint now returns `200 {"data":[]}` for the new organization.
 - The fresh organization dashboard showed zero clients/tasks/check-ins/CRM counts and did not include fixture names such as `Marcus Rodriguez`, `Sarah Johnson`, `Payment Secured`, or `Complete Coach Demo`.
 - Cross-organization production verification created two fresh organizations with marker `stage7-cross-org-1782786500450`. Org A created a client, lead, task, and training template; Org B could not list those records and direct ID access returned 404 for client, lead, task update, and training template update.
+- Wider production surface verification created an empty organization and a populated organization with marker `stage7-wide-1782786970357`.
+- The populated organization successfully created a client, lead, task, training template, meal plan template, supplement protocol template, form, coaching package, conversation, and message through live APIs.
+- The empty organization returned zero records for clients, leads, tasks, training templates, meal plan templates, supplement templates, forms, packages, and conversations, and none of those list APIs leaked the populated organization marker.
+- Direct cross-organization access from the empty organization returned 404 for client detail, lead detail, task update, training template update, meal plan template update, form detail, package update, and conversation messages.
+- Live page sweeps loaded dashboard, clients, CRM, training programs, meal plans, food database, supplement plans, supplement database, forms, messages, organization settings, and packages for both empty and populated organizations. All returned 200 and no fixture strings were found.
 
 ## Completed Verification Evidence
 
@@ -149,6 +154,7 @@ Stage 7 findings:
 - `pnpm --filter @complete-coach/web exec prisma migrate status`: passed, database schema is up to date.
 - `node /private/tmp/stage7-verify.mjs`: passed, live sign-up created `stage7-1782784149384@completecoach.fit` with no HTTP errors and no fixture data visible.
 - `node /private/tmp/stage7-cross-org-verify.mjs`: passed, live cross-org marker `stage7-cross-org-1782786500450` confirmed Org B list responses were empty and direct cross-org access returned expected 404s.
+- `node /private/tmp/stage7-wide-sweep.mjs`: passed, live wide surface marker `stage7-wide-1782786970357` confirmed empty/populated API isolation, representative direct cross-org 404s, and 12 major pages loading without fixture hits.
 - `pnpm --filter @complete-coach/web lint`: currently blocked by unrelated existing UI lint issues in check-in detail, client profile dashboard, meal plans, packages, and training program builder.
 
 ## Fixture Leakage Rules
@@ -179,4 +185,4 @@ Stage 7 findings:
 ## Open Risks
 
 - Lint is not currently a clean gate because unrelated UI issues predate this audit slice.
-- Remaining Stage 7 production work should still cover the wider empty/populated surface sweep, local bypass gating, production env flag review, and the final verification gate.
+- Remaining Stage 7 production work should still cover local bypass gating, production env flag review, and the final verification gate.
