@@ -113,7 +113,7 @@ Stage 6 findings:
 Status: In progress
 
 - [x] Run end-to-end sign-up in Vercel against Neon preview.
-- [ ] Create two organizations and verify records created in one never appear in the other.
+- [x] Create two organizations and verify records created in one never appear in the other.
 - [ ] Verify dashboard, clients, CRM, training, nutrition, supplementation, forms, messages, organization settings, and billing surfaces for both empty and populated org states.
 - [ ] Verify local dev auth bypass cannot activate unless `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS=1`.
 - [ ] Verify production environment does not include local bypass env flags or demo seed toggles.
@@ -128,6 +128,7 @@ Stage 7 findings:
 - Production Neon was eight migrations behind the deployed application schema. Applied the pending migrations with `prisma migrate deploy`; `prisma migrate status` now reports the database schema is up to date.
 - Live sign-up verification after migration created a fresh organization on `app.completecoach.fit`, landed on the clean dashboard, returned no HTTP errors, and confirmed the AI recommendations endpoint now returns `200 {"data":[]}` for the new organization.
 - The fresh organization dashboard showed zero clients/tasks/check-ins/CRM counts and did not include fixture names such as `Marcus Rodriguez`, `Sarah Johnson`, `Payment Secured`, or `Complete Coach Demo`.
+- Cross-organization production verification created two fresh organizations with marker `stage7-cross-org-1782786500450`. Org A created a client, lead, task, and training template; Org B could not list those records and direct ID access returned 404 for client, lead, task update, and training template update.
 
 ## Completed Verification Evidence
 
@@ -147,6 +148,7 @@ Stage 7 findings:
 - `pnpm --filter @complete-coach/web exec prisma migrate deploy`: applied eight pending production Neon migrations successfully.
 - `pnpm --filter @complete-coach/web exec prisma migrate status`: passed, database schema is up to date.
 - `node /private/tmp/stage7-verify.mjs`: passed, live sign-up created `stage7-1782784149384@completecoach.fit` with no HTTP errors and no fixture data visible.
+- `node /private/tmp/stage7-cross-org-verify.mjs`: passed, live cross-org marker `stage7-cross-org-1782786500450` confirmed Org B list responses were empty and direct cross-org access returned expected 404s.
 - `pnpm --filter @complete-coach/web lint`: currently blocked by unrelated existing UI lint issues in check-in detail, client profile dashboard, meal plans, packages, and training program builder.
 
 ## Fixture Leakage Rules
@@ -177,4 +179,4 @@ Stage 7 findings:
 ## Open Risks
 
 - Lint is not currently a clean gate because unrelated UI issues predate this audit slice.
-- Remaining Stage 7 production work should still cover cross-organization data visibility and the wider empty/populated surface sweep.
+- Remaining Stage 7 production work should still cover the wider empty/populated surface sweep, local bypass gating, production env flag review, and the final verification gate.
