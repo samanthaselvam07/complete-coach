@@ -112,7 +112,7 @@ Stage 6 findings:
 
 Status: In progress
 
-- [ ] Run end-to-end sign-up in Vercel against Neon preview.
+- [x] Run end-to-end sign-up in Vercel against Neon preview.
 - [ ] Create two organizations and verify records created in one never appear in the other.
 - [ ] Verify dashboard, clients, CRM, training, nutrition, supplementation, forms, messages, organization settings, and billing surfaces for both empty and populated org states.
 - [ ] Verify local dev auth bypass cannot activate unless `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS=1`.
@@ -125,6 +125,9 @@ Stage 7 findings:
 - Initial live browser verification found `/sign-up` redirected to `/sign-in` because the global dashboard shell only treated `/sign-in` as public.
 - Added `/sign-up` to the public shell allowlist and expanded the shell auth-boundary regression test to cover both public auth pages.
 - Follow-up live browser verification confirmed the public sign-up page rendered, then exposed an auth callback redirect to the landing domain. Auth forms now sign in without automatic Auth.js redirects and navigate to `/` on the app origin after successful credential authentication.
+- Production Neon was eight migrations behind the deployed application schema. Applied the pending migrations with `prisma migrate deploy`; `prisma migrate status` now reports the database schema is up to date.
+- Live sign-up verification after migration created a fresh organization on `app.completecoach.fit`, landed on the clean dashboard, returned no HTTP errors, and confirmed the AI recommendations endpoint now returns `200 {"data":[]}` for the new organization.
+- The fresh organization dashboard showed zero clients/tasks/check-ins/CRM counts and did not include fixture names such as `Marcus Rodriguez`, `Sarah Johnson`, `Payment Secured`, or `Complete Coach Demo`.
 
 ## Completed Verification Evidence
 
@@ -141,6 +144,9 @@ Stage 7 findings:
 - `pnpm --filter @complete-coach/web typecheck`: passed.
 - `AUTH_SECRET=... DATABASE_URL=... DIRECT_URL=... pnpm --filter @complete-coach/web exec next build --webpack`: passed.
 - `npx vercel inspect app.completecoach.fit --scope team_urIw9URwV9XUJWjSSYfaXPCp`: confirmed the app alias resolves to the ready production deployment.
+- `pnpm --filter @complete-coach/web exec prisma migrate deploy`: applied eight pending production Neon migrations successfully.
+- `pnpm --filter @complete-coach/web exec prisma migrate status`: passed, database schema is up to date.
+- `node /private/tmp/stage7-verify.mjs`: passed, live sign-up created `stage7-1782784149384@completecoach.fit` with no HTTP errors and no fixture data visible.
 - `pnpm --filter @complete-coach/web lint`: currently blocked by unrelated existing UI lint issues in check-in detail, client profile dashboard, meal plans, packages, and training program builder.
 
 ## Fixture Leakage Rules
@@ -171,4 +177,4 @@ Stage 7 findings:
 ## Open Risks
 
 - Lint is not currently a clean gate because unrelated UI issues predate this audit slice.
-- Production verification has not yet been performed against a fresh Vercel/Neon preview organization.
+- Remaining Stage 7 production work should still cover cross-organization data visibility and the wider empty/populated surface sweep.
