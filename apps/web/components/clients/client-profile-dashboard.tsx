@@ -17,7 +17,7 @@ export function ClientProfileDashboard({ client }: { client: ClientProfile }) {
       <aside className="space-y-6">
         <CheckInHistoryCard client={client} />
         <GoalsCountdownsCard />
-        <ActivityLogCard clientId={client.id} />
+        <ActivityLogCard />
       </aside>
     </div>
   );
@@ -132,7 +132,7 @@ function GoalsCountdownsCard() {
   );
 }
 
-function ActivityLogCard({ clientId: _clientId }: { clientId: string }) {
+function ActivityLogCard() {
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center justify-between">

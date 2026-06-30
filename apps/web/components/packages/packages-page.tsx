@@ -107,7 +107,6 @@ export function PackagesPage() {
   }, []);
 
   const stats = useMemo(() => buildPackageStats(packages), [packages]);
-  const editingPackage = editingPackageId ? packages.find((coachingPackage) => coachingPackage.id === editingPackageId) : null;
   const filteredClients = useMemo(() => {
     const normalizedSearch = clientSearch.trim().toLowerCase();
 

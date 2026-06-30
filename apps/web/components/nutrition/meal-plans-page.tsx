@@ -237,7 +237,7 @@ export function MealPlansPage() {
   const [createdPlans, setCreatedPlans] = useState<MealAssignmentRow[]>([]);
   const [createdTemplates, setCreatedTemplates] = useState<MealTemplateCard[]>([]);
   const [hiddenMealPlanIds, setHiddenMealPlanIds] = useState<string[]>([]);
-  const [mealPlanOverrides, setMealPlanOverrides] = useState<Record<string, Partial<MealAssignmentRow>>>({});
+  const [mealPlanOverrides] = useState<Record<string, Partial<MealAssignmentRow>>>({});
   const [source, setSource] = useState<MealPlanSource>("api");
   const [loading, setLoading] = useState(true);
   const [mealTemplateView, setMealTemplateView] = useState<MealPlanLibraryView>("cards");
@@ -976,8 +976,6 @@ function FullMealPlanFields({
     if (search) {
       params.set("search", search);
     }
-
-    setApiFoods([]);
 
     async function loadFoodOptions() {
       try {

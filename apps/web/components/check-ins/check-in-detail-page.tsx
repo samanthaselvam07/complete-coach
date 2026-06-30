@@ -50,14 +50,11 @@ export function CheckInDetailPage({
     : `/clients/${clientId}/check-ins/${checkInId}`;
   const backHref = embedded ? `/clients/${clientId}?tab=check-ins` : `/clients/${clientId}`;
   const selectedCheckIn = useMemo(() => checkIns.find((item) => item.id === checkInId) ?? checkIns[0] ?? null, [checkInId, checkIns]);
-  const comparedCheckIn = useMemo(
-    () => checkIns.find((item) => item.id === selectedComparisonId) ?? checkIns.find((item) => item.id !== selectedCheckIn?.id) ?? null,
-    [checkIns, selectedCheckIn?.id, selectedComparisonId]
-  );
   const checkInOptions = checkIns.map((item) => ({ id: item.id, label: `${item.name} - ${formatCheckInDate(item.submittedAt)}` }));
   const compareOptions = checkInOptions.filter((option) => option.id !== selectedCheckIn?.id);
   const currentCheckInValue = selectedCheckIn?.id ?? "";
   const selectedCompareValue = comparisonSelection || selectedComparisonId || compareOptions[0]?.id || "";
+  const comparedCheckIn = checkIns.find((item) => item.id === selectedCompareValue) ?? checkIns.find((item) => item.id !== selectedCheckIn?.id) ?? null;
 
   useEffect(() => {
     let active = true;
@@ -93,17 +90,6 @@ export function CheckInDetailPage({
       active = false;
     };
   }, [clientId]);
-
-  useEffect(() => {
-    if (selectedComparisonId) {
-      setComparisonSelection(selectedComparisonId);
-      return;
-    }
-
-    if (compareOptions[0]?.id && !comparisonSelection) {
-      setComparisonSelection(compareOptions[0].id);
-    }
-  }, [compareOptions, comparisonSelection, selectedComparisonId]);
 
   return (
     <main className={embedded ? "overflow-hidden rounded-xl border border-slate-200 bg-white" : "min-h-screen bg-gray-50"}>

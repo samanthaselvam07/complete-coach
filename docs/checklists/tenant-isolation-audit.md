@@ -136,7 +136,7 @@ Stage 7 findings:
 - Live page sweeps loaded dashboard, clients, CRM, training programs, meal plans, food database, supplement plans, supplement database, forms, messages, organization settings, and packages for both empty and populated organizations. All returned 200 and no fixture strings were found.
 - Local dev auth bypass verification passed: `isLocalDevAuthBypassEnabled` only returns true when `NODE_ENV=development` and `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS=1`; production mode stays disabled even if the bypass flag is present.
 - Vercel production environment review found only production secrets required by the app (`AUTH_SECRET`, `DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`). No production `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS` was present, and demo coach credentials were scoped only to the old `feat/019-production-hardening` preview branch.
-- Final verification gate was attempted on 2026-06-30. Typecheck, full unit tests, and webpack build passed. Coverage executed all tests but failed the configured branch threshold at 75.3% against the 80% requirement, and lint remains blocked by six existing UI lint issues.
+- Final verification gate was attempted on 2026-06-30. Typecheck, lint, full unit tests, and webpack build passed. Coverage executed all tests but failed the configured branch threshold at 75.26% against the 80% requirement.
 
 ## Completed Verification Evidence
 
@@ -162,8 +162,8 @@ Stage 7 findings:
 - `npx vercel env ls --scope team_urIw9URwV9XUJWjSSYfaXPCp`: confirmed no production local-bypass flag and no production demo coach credentials.
 - `pnpm --filter @complete-coach/web test`: passed, 79 files and 666 tests.
 - `bash -lc 'set -a; source .env; set +a; pnpm --filter @complete-coach/web exec next build --webpack'`: passed.
-- `pnpm --filter @complete-coach/web coverage`: ran all 666 tests, but failed the configured global branch coverage threshold with 75.3% branch coverage against 80%.
-- `pnpm --filter @complete-coach/web lint`: currently blocked by unrelated existing UI lint issues in check-in detail, client profile dashboard, meal plans, packages, and training program builder.
+- `pnpm --filter @complete-coach/web lint`: passed.
+- `pnpm --filter @complete-coach/web coverage`: ran all 666 tests, but failed the configured global branch coverage threshold with 75.26% branch coverage against 80%.
 
 ## Fixture Leakage Rules
 
@@ -192,6 +192,5 @@ Stage 7 findings:
 
 ## Open Risks
 
-- Lint is not currently a clean gate because unrelated existing UI issues predate this audit slice: `check-in-detail-page.tsx`, `client-profile-dashboard.tsx`, `meal-plans-page.tsx`, `packages-page.tsx`, and `training-program-builder.tsx`.
-- Coverage is not currently a clean gate because global branch coverage is 75.3%, below the configured 80% threshold.
-- Remaining Stage 7 production work should focus on clearing lint and branch coverage, then rerunning the final verification gate before marking the audit complete.
+- Coverage is not currently a clean gate because global branch coverage is 75.26%, below the configured 80% threshold.
+- Remaining Stage 7 production work should focus on clearing branch coverage, then rerunning the final verification gate before marking the audit complete.

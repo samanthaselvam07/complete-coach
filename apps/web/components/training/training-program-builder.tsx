@@ -310,7 +310,7 @@ export function TrainingProgramBuilder({
   }
 
   async function addCustomExercise(section: TrainingProgramSection, input: CustomExerciseInput) {
-    let savedExercise: ApiExercise | null = null;
+    let savedExercise: ApiExercise | null;
 
     try {
       savedExercise = await createOrganizationExercise(input);
