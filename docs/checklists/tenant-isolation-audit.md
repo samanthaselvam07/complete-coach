@@ -115,8 +115,8 @@ Status: In progress
 - [x] Run end-to-end sign-up in Vercel against Neon preview.
 - [x] Create two organizations and verify records created in one never appear in the other.
 - [x] Verify dashboard, clients, CRM, training, nutrition, supplementation, forms, messages, organization settings, and billing surfaces for both empty and populated org states.
-- [ ] Verify local dev auth bypass cannot activate unless `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS=1`.
-- [ ] Verify production environment does not include local bypass env flags or demo seed toggles.
+- [x] Verify local dev auth bypass cannot activate unless `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS=1`.
+- [x] Verify production environment does not include local bypass env flags or demo seed toggles.
 - [ ] Run full verification gate before marking the audit complete.
 
 Stage 7 findings:
@@ -134,6 +134,9 @@ Stage 7 findings:
 - The empty organization returned zero records for clients, leads, tasks, training templates, meal plan templates, supplement templates, forms, packages, and conversations, and none of those list APIs leaked the populated organization marker.
 - Direct cross-organization access from the empty organization returned 404 for client detail, lead detail, task update, training template update, meal plan template update, form detail, package update, and conversation messages.
 - Live page sweeps loaded dashboard, clients, CRM, training programs, meal plans, food database, supplement plans, supplement database, forms, messages, organization settings, and packages for both empty and populated organizations. All returned 200 and no fixture strings were found.
+- Local dev auth bypass verification passed: `isLocalDevAuthBypassEnabled` only returns true when `NODE_ENV=development` and `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS=1`; production mode stays disabled even if the bypass flag is present.
+- Vercel production environment review found only production secrets required by the app (`AUTH_SECRET`, `DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`). No production `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS` was present, and demo coach credentials were scoped only to the old `feat/019-production-hardening` preview branch.
+- Final verification gate was attempted on 2026-06-30. Typecheck, full unit tests, and webpack build passed. Coverage executed all tests but failed the configured branch threshold at 75.3% against the 80% requirement, and lint remains blocked by six existing UI lint issues.
 
 ## Completed Verification Evidence
 
@@ -155,6 +158,11 @@ Stage 7 findings:
 - `node /private/tmp/stage7-verify.mjs`: passed, live sign-up created `stage7-1782784149384@completecoach.fit` with no HTTP errors and no fixture data visible.
 - `node /private/tmp/stage7-cross-org-verify.mjs`: passed, live cross-org marker `stage7-cross-org-1782786500450` confirmed Org B list responses were empty and direct cross-org access returned expected 404s.
 - `node /private/tmp/stage7-wide-sweep.mjs`: passed, live wide surface marker `stage7-wide-1782786970357` confirmed empty/populated API isolation, representative direct cross-org 404s, and 12 major pages loading without fixture hits.
+- `pnpm --filter @complete-coach/web test -- local-dev-session`: passed, including the production-mode bypass-disabled assertion.
+- `npx vercel env ls --scope team_urIw9URwV9XUJWjSSYfaXPCp`: confirmed no production local-bypass flag and no production demo coach credentials.
+- `pnpm --filter @complete-coach/web test`: passed, 79 files and 666 tests.
+- `bash -lc 'set -a; source .env; set +a; pnpm --filter @complete-coach/web exec next build --webpack'`: passed.
+- `pnpm --filter @complete-coach/web coverage`: ran all 666 tests, but failed the configured global branch coverage threshold with 75.3% branch coverage against 80%.
 - `pnpm --filter @complete-coach/web lint`: currently blocked by unrelated existing UI lint issues in check-in detail, client profile dashboard, meal plans, packages, and training program builder.
 
 ## Fixture Leakage Rules
@@ -184,5 +192,6 @@ Stage 7 findings:
 
 ## Open Risks
 
-- Lint is not currently a clean gate because unrelated UI issues predate this audit slice.
-- Remaining Stage 7 production work should still cover local bypass gating, production env flag review, and the final verification gate.
+- Lint is not currently a clean gate because unrelated existing UI issues predate this audit slice: `check-in-detail-page.tsx`, `client-profile-dashboard.tsx`, `meal-plans-page.tsx`, `packages-page.tsx`, and `training-program-builder.tsx`.
+- Coverage is not currently a clean gate because global branch coverage is 75.3%, below the configured 80% threshold.
+- Remaining Stage 7 production work should focus on clearing lint and branch coverage, then rerunning the final verification gate before marking the audit complete.

@@ -1225,7 +1225,9 @@ describe("Education persistence pages", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Publish as Resource" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Resource published.");
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Resource published.");
+    });
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/education-resources",
       expect.objectContaining({
