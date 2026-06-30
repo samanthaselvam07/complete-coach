@@ -12,7 +12,9 @@ import {
   createMealPlanTemplateSchema,
   createFoodSchema,
   getFoodCreateData,
+  getFoodUpdateData,
   getMealPlanTemplateCreateData,
+  getMealPlanTemplateUpdateData,
   serializeFood,
   serializeMealPlanAssignment,
   serializeMealPlanTemplate,
@@ -80,6 +82,42 @@ describe("nutrition record mappers", () => {
         }
       ]
     });
+
+    expect(buildFoodWhere("org_1", { source: "AUS/NZ", limit: 50, sort: "name" })).toMatchObject({
+      AND: [
+        {
+          OR: [
+            { metadataJson: { path: ["source"], equals: "AUS/NZ" } },
+            { metadataJson: { path: ["source"], equals: "AUS-NZ" } },
+            { metadataJson: { path: ["source"], equals: "AUSTRALIA_NEW_ZEALAND" } },
+            { metadataJson: { path: ["sourceId"], equals: "fsanz_afcd" } },
+            { metadataJson: { path: ["sourceId"], equals: "fsanz_ausnut" } },
+            { metadataJson: { path: ["sourceId"], equals: "fsanz_branded" } }
+          ]
+        }
+      ]
+    });
+    expect(buildFoodWhere("org_1", { source: "EFSA", limit: 50, sort: "name" })).toMatchObject({
+      AND: [
+        {
+          OR: [
+            { metadataJson: { path: ["source"], equals: "EFSA" } },
+            { metadataJson: { path: ["source"], equals: "EU" } },
+            { metadataJson: { path: ["sourceId"], equals: "efsa_foodex2" } }
+          ]
+        }
+      ]
+    });
+    expect(buildFoodWhere("org_1", { source: "USDA", limit: 50, sort: "name" })).toMatchObject({
+      AND: [
+        {
+          OR: [
+            { metadataJson: { path: ["source"], equals: "USDA" } },
+            { metadataJson: { path: ["sourceId"], equals: "usda_fdc" } }
+          ]
+        }
+      ]
+    });
   });
 
   it("builds meal template filters and create payloads", () => {
@@ -131,6 +169,54 @@ describe("nutrition record mappers", () => {
       name: "Chicken Breast",
       proteinGrams: 31,
       metadataJson: { source: "coach" }
+    });
+  });
+
+  it("normalizes food and meal template update payloads without dropping zero values", () => {
+    expect(
+      getFoodUpdateData({
+        name: "Updated Chicken",
+        category: "Protein",
+        servingSize: "100g",
+        calories: 0,
+        proteinGrams: 0,
+        carbsGrams: 0,
+        fatGrams: 0,
+        fiberGrams: 0,
+        metadata: { source: "coach" }
+      })
+    ).toEqual({
+      name: "Updated Chicken",
+      category: "Protein",
+      servingSize: "100g",
+      calories: 0,
+      proteinGrams: 0,
+      carbsGrams: 0,
+      fatGrams: 0,
+      fiberGrams: 0,
+      metadataJson: { source: "coach" }
+    });
+
+    expect(
+      getMealPlanTemplateUpdateData({
+        name: "Updated Plan",
+        phase: "",
+        targetCalories: 0,
+        proteinGrams: 0,
+        carbsGrams: 0,
+        fatGrams: 0,
+        status: "archived",
+        template: mealTemplateJson
+      })
+    ).toEqual({
+      name: "Updated Plan",
+      phase: "",
+      targetCalories: 0,
+      proteinGrams: 0,
+      carbsGrams: 0,
+      fatGrams: 0,
+      status: MealPlanTemplateStatus.ARCHIVED,
+      templateJson: mealTemplateJson
     });
   });
 
@@ -306,5 +392,47 @@ describe("nutrition record mappers", () => {
       startsOn: "2026-05-18",
       endsOn: "2026-05-25"
     });
+
+    expect(
+      serializeMealPlanAssignment({
+        id: "meal_assignment_completed",
+        organizationId: "org_1",
+        clientId: "client_1",
+        templateId: null,
+        name: "Completed Meal Plan",
+        phase: null,
+        targetCalories: 2000,
+        proteinGrams: 120,
+        carbsGrams: 200,
+        fatGrams: 55,
+        status: MealPlanAssignmentStatus.COMPLETED,
+        snapshotJson: {},
+        startsOn: "2026-05-18",
+        endsOn: null,
+        createdAt: "2026-05-18T00:00:00.000Z",
+        updatedAt: "2026-05-18T01:00:00.000Z"
+      })
+    ).toMatchObject({ status: "completed" });
+
+    expect(
+      serializeMealPlanAssignment({
+        id: "meal_assignment_cancelled",
+        organizationId: "org_1",
+        clientId: "client_1",
+        templateId: null,
+        name: "Cancelled Meal Plan",
+        phase: null,
+        targetCalories: 2000,
+        proteinGrams: 120,
+        carbsGrams: 200,
+        fatGrams: 55,
+        status: MealPlanAssignmentStatus.CANCELLED,
+        snapshotJson: {},
+        startsOn: "2026-05-18",
+        endsOn: null,
+        createdAt: "2026-05-18T00:00:00.000Z",
+        updatedAt: "2026-05-18T01:00:00.000Z"
+      })
+    ).toMatchObject({ status: "cancelled" });
   });
 });

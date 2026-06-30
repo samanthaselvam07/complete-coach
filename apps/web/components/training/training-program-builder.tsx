@@ -85,7 +85,7 @@ interface ApiExercise {
 
 type BuilderExerciseLibraryItem = ApiExercise | Exercise;
 
-interface CustomExerciseInput {
+export interface CustomExerciseInput {
   exerciseName: string;
   bodyPart: string;
   sets: string;
@@ -96,6 +96,21 @@ interface CustomExerciseInput {
   videoUrl?: string;
   videoObjectKey?: string;
   videoFileName?: string;
+}
+
+export interface CustomExerciseApiPayload {
+  name: string;
+  category: string;
+  primaryMuscles: string[];
+  difficulty: "intermediate";
+  defaultSets: number;
+  defaultReps: string;
+  defaultRestSeconds: number;
+  defaultRpe?: number;
+  defaultRir?: string;
+  videoUrl?: string;
+  videoObjectKey?: string;
+  executionCues?: string[];
 }
 
 interface ExerciseMediaUploadResponse {
@@ -1171,7 +1186,7 @@ function ExerciseField({
   );
 }
 
-function createBlankTrainingDay(dayNumber: number): TrainingProgramDayDraft {
+export function createBlankTrainingDay(dayNumber: number): TrainingProgramDayDraft {
   return {
     id: `day-${dayNumber}`,
     name: `Day ${dayNumber}`,
@@ -1179,17 +1194,17 @@ function createBlankTrainingDay(dayNumber: number): TrainingProgramDayDraft {
   };
 }
 
-function parsePositiveInteger(value: string, fallback: number) {
+export function parsePositiveInteger(value: string, fallback: number) {
   const parsedValue = Number.parseInt(value, 10);
   return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
 }
 
-function parseOptionalNumber(value: string) {
+export function parseOptionalNumber(value: string) {
   const parsedValue = Number.parseFloat(value);
   return Number.isFinite(parsedValue) ? parsedValue : null;
 }
 
-function getEmbeddableExerciseVideoUrl(videoUrl?: string) {
+export function getEmbeddableExerciseVideoUrl(videoUrl?: string) {
   if (!videoUrl) {
     return null;
   }
@@ -1220,30 +1235,10 @@ function getEmbeddableExerciseVideoUrl(videoUrl?: string) {
 }
 
 async function createOrganizationExercise(input: CustomExerciseInput): Promise<ApiExercise> {
-  const defaultSets = parsePositiveInteger(input.sets, 3);
-  const defaultRestSeconds = parsePositiveInteger(input.restSeconds, 120);
-  const defaultRpe = parseOptionalNumber(input.rpe);
-  const executionCues = [
-    input.videoFileName ? `Uploaded video file: ${input.videoFileName}` : ""
-  ].filter(Boolean);
-
   const response = await fetch("/api/v1/exercises", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: input.exerciseName,
-      category: input.bodyPart,
-      primaryMuscles: [input.bodyPart],
-      difficulty: "intermediate",
-      defaultSets,
-      defaultReps: input.reps.trim() || "8-10",
-      defaultRestSeconds,
-      ...(defaultRpe !== null ? { defaultRpe } : {}),
-      ...(input.rir.trim() ? { defaultRir: input.rir.trim() } : {}),
-      ...(input.videoUrl ? { videoUrl: input.videoUrl } : {}),
-      ...(input.videoObjectKey ? { videoObjectKey: input.videoObjectKey } : {}),
-      ...(executionCues.length > 0 ? { executionCues } : {})
-    })
+    body: JSON.stringify(getCustomExerciseApiPayload(input))
   });
 
   if (!response.ok) {
@@ -1257,6 +1252,28 @@ async function createOrganizationExercise(input: CustomExerciseInput): Promise<A
   }
 
   return payload.data;
+}
+
+export function getCustomExerciseApiPayload(input: CustomExerciseInput): CustomExerciseApiPayload {
+  const defaultRpe = parseOptionalNumber(input.rpe);
+  const executionCues = [
+    input.videoFileName ? `Uploaded video file: ${input.videoFileName}` : ""
+  ].filter(Boolean);
+
+  return {
+    name: input.exerciseName,
+    category: input.bodyPart,
+    primaryMuscles: [input.bodyPart],
+    difficulty: "intermediate",
+    defaultSets: parsePositiveInteger(input.sets, 3),
+    defaultReps: input.reps.trim() || "8-10",
+    defaultRestSeconds: parsePositiveInteger(input.restSeconds, 120),
+    ...(defaultRpe !== null ? { defaultRpe } : {}),
+    ...(input.rir.trim() ? { defaultRir: input.rir.trim() } : {}),
+    ...(input.videoUrl ? { videoUrl: input.videoUrl } : {}),
+    ...(input.videoObjectKey ? { videoObjectKey: input.videoObjectKey } : {}),
+    ...(executionCues.length > 0 ? { executionCues } : {})
+  };
 }
 
 async function uploadCustomExerciseVideo(file: File) {
@@ -1289,7 +1306,7 @@ async function uploadCustomExerciseVideo(file: File) {
   return signedUrlPayload.data.objectKey;
 }
 
-function buildCustomExerciseNotes(exercise: TrainingProgramExerciseDraft) {
+export function buildCustomExerciseNotes(exercise: TrainingProgramExerciseDraft) {
   const notes = [
     exercise.customVideoUrl ? `Video link: ${exercise.customVideoUrl}` : null,
     exercise.customVideoFileName ? `Uploaded video: ${exercise.customVideoFileName}` : null
@@ -1298,7 +1315,7 @@ function buildCustomExerciseNotes(exercise: TrainingProgramExerciseDraft) {
   return notes.length > 0 ? notes.join("\n") : "";
 }
 
-function getProgramSectionLabel(section: TrainingProgramSection) {
+export function getProgramSectionLabel(section: TrainingProgramSection) {
   const labels: Record<TrainingProgramSection, string> = {
     warmUp: "Warm up",
     workout: "Workout",
@@ -1308,7 +1325,7 @@ function getProgramSectionLabel(section: TrainingProgramSection) {
   return labels[section];
 }
 
-function getBuilderExerciseMeta(exercise: BuilderExerciseLibraryItem) {
+export function getBuilderExerciseMeta(exercise: BuilderExerciseLibraryItem) {
   if ("variations" in exercise) {
     return `${exercise.category} - ${exercise.variations} variations`;
   }

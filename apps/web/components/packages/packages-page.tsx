@@ -791,7 +791,7 @@ async function fetchPackages() {
   }
 }
 
-function buildPackageStats(packages: ApiPackage[]) {
+export function buildPackageStats(packages: ApiPackage[]) {
   const totalRevenue = packages.reduce((sum, coachingPackage) => sum + coachingPackage.projectedMonthlyRevenue, 0);
   const totalClients = packages.reduce((sum, coachingPackage) => sum + coachingPackage.activeSubscriptions, 0);
   const topPackage = packages.reduce<ApiPackage | null>(
@@ -810,7 +810,7 @@ function buildPackageStats(packages: ApiPackage[]) {
   ];
 }
 
-function packageToFormState(coachingPackage: ApiPackage): PackageFormState {
+export function packageToFormState(coachingPackage: ApiPackage): PackageFormState {
   return {
     name: coachingPackage.name,
     description: coachingPackage.description ?? "",
@@ -821,7 +821,7 @@ function packageToFormState(coachingPackage: ApiPackage): PackageFormState {
   };
 }
 
-function formStateToPayload(formState: PackageFormState) {
+export function formStateToPayload(formState: PackageFormState) {
   const price = Number(formState.price);
   const name = formState.name.trim();
 
@@ -843,7 +843,7 @@ function formStateToPayload(formState: PackageFormState) {
   };
 }
 
-function formatCents(amount: number) {
+export function formatCents(amount: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

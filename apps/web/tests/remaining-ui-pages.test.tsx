@@ -12,6 +12,7 @@ import SupplementPlansRoute from "@/app/supplementation/plans/page";
 import SupplementationRoute from "@/app/supplementation/page";
 import TeamManagementRoute from "@/app/team-management/page";
 import { MessagesPage } from "@/components/messages/messages-page";
+import { AuditLogPage } from "@/components/audit/audit-log-page";
 import { AddResourcePage } from "@/components/education/add-resource-page";
 import { EducationPage } from "@/components/education/education-page";
 import { OrganizationSettingsPage } from "@/components/organization/organization-settings-page";
@@ -602,6 +603,171 @@ describe("MessagesPage", () => {
       })
     );
     await waitFor(() => expect(screen.getByRole("textbox", { name: /type a message/i })).toHaveValue(""));
+  });
+
+  it("shows a clean empty state when conversations cannot be loaded", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable."));
+
+    render(createElement(MessagesPage));
+
+    expect(await screen.findByText("No conversations loaded from Neon yet.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Open conversation with/i })).not.toBeInTheDocument();
+  });
+
+  it("handles fallback conversation labels, invalid dates, blank sends, and failed sends", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/v1/conversations?")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "conversation_title",
+                  clientName: null,
+                  title: "Fallback Title",
+                  latestMessage: null,
+                  updatedAt: "not-a-date"
+                },
+                {
+                  id: "conversation_default",
+                  clientName: null,
+                  title: null,
+                  latestMessage: {
+                    id: "message_latest",
+                    senderType: "client",
+                    body: "Latest fallback message",
+                    createdAt: "also-not-a-date"
+                  },
+                  updatedAt: "2026-05-18T09:15:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/conversations/conversation_title/messages?limit=100") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 503 }));
+      }
+
+      if (url === "/api/v1/conversations/conversation_title/messages" && init?.method === "POST") {
+        return Promise.resolve(new Response(JSON.stringify({ error: "unavailable" }), { status: 503 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(MessagesPage));
+
+    expect(await screen.findByRole("button", { name: /Open conversation with Fallback Title/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Open conversation with Client conversation/i })).toBeInTheDocument();
+    expect(screen.getByText("not-a-date")).toBeInTheDocument();
+    expect(screen.getByText("also-not-a-date")).toBeInTheDocument();
+    expect(screen.getByText("No messages yet")).toBeInTheDocument();
+
+    const textbox = screen.getByRole("textbox", { name: /type a message/i });
+    fireEvent.change(textbox, { target: { value: "   " } });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/v1/conversations/conversation_title/messages",
+      expect.objectContaining({ method: "POST" })
+    );
+
+    fireEvent.change(textbox, { target: { value: "Please review this." } });
+    fireEvent.keyDown(textbox, { key: "Enter", shiftKey: true });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    fireEvent.keyDown(textbox, { key: "Enter", shiftKey: false });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Message could not be sent");
+  });
+});
+
+describe("AuditLogPage", () => {
+  it("loads audit events, paginates older records, and renders fallback fields", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/audit-logs?limit=50") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "audit_1",
+                  action: "client.updated",
+                  actor: { id: "user_1", name: "Owner Coach" },
+                  targetType: "client",
+                  targetId: "client_1",
+                  metadata: { field: "status" },
+                  ipAddress: null,
+                  createdAt: "2026-05-18T09:15:00.000Z"
+                }
+              ]
+            }),
+            { status: 200, headers: { "x-next-cursor": "audit_older" } }
+          )
+        );
+      }
+
+      if (url === "/api/v1/audit-logs?limit=50&cursor=audit_older") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "audit_2",
+                  action: "organization.created",
+                  actor: null,
+                  targetType: null,
+                  targetId: null,
+                  metadata: null,
+                  ipAddress: null,
+                  createdAt: "2026-05-17T09:15:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(AuditLogPage));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Loading audit events");
+    expect(await screen.findByText("Owner Coach")).toBeInTheDocument();
+    expect(screen.getByText("client / client_1")).toBeInTheDocument();
+    expect(screen.getByText(JSON.stringify({ field: "status" }))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Load older events" }));
+
+    expect(await screen.findByText("System/API")).toBeInTheDocument();
+    expect(screen.getByText("organization")).toBeInTheDocument();
+    expect(screen.getByText("None")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/audit-logs?limit=50&cursor=audit_older");
+  });
+
+  it("shows audit log empty and error states without shell chrome when embedded", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: "unavailable" }), { status: 503 }));
+
+    const { unmount } = render(createElement(AuditLogPage, { embedded: true }));
+
+    expect(await screen.findByText("No audit events found.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Audit Log" })).not.toBeInTheDocument();
+    unmount();
+
+    render(createElement(AuditLogPage, { embedded: true }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Audit events could not be loaded.");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
 

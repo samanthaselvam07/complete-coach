@@ -507,7 +507,7 @@ async function loadTeamCapacityMembers() {
   }
 }
 
-function isTeamCapacityMember(value: unknown): value is TeamCapacityMember {
+export function isTeamCapacityMember(value: unknown): value is TeamCapacityMember {
   if (typeof value !== "object" || value === null) {
     return false;
   }
@@ -554,7 +554,7 @@ async function loadDashboardMetadata() {
   }
 }
 
-function buildFinancialReportingUrl(period: RevenuePeriod, startDate?: string, endDate?: string) {
+export function buildFinancialReportingUrl(period: RevenuePeriod, startDate?: string, endDate?: string) {
   const params = new URLSearchParams({ period });
 
   if (period === "custom" && startDate && endDate) {
@@ -565,7 +565,7 @@ function buildFinancialReportingUrl(period: RevenuePeriod, startDate?: string, e
   return `/api/v1/dashboard/financial-reporting?${params.toString()}`;
 }
 
-function mapFinancialReport(report: ApiFinancialReport): RevenueMetric | null {
+export function mapFinancialReport(report: ApiFinancialReport): RevenueMetric | null {
   if (!report || typeof report.amount !== "number" || !Array.isArray(report.bars)) {
     return null;
   }
@@ -578,7 +578,7 @@ function mapFinancialReport(report: ApiFinancialReport): RevenueMetric | null {
   };
 }
 
-function mapApiTask(task: ApiTask): DashboardTask {
+export function mapApiTask(task: ApiTask): DashboardTask {
   return {
     id: task.id,
     text: task.title,
@@ -589,7 +589,7 @@ function mapApiTask(task: ApiTask): DashboardTask {
   };
 }
 
-function sortDashboardTasks(tasks: DashboardTask[]) {
+export function sortDashboardTasks(tasks: DashboardTask[]) {
   return [...tasks].sort((firstTask, secondTask) => {
     if (firstTask.completed !== secondTask.completed) {
       return firstTask.completed ? 1 : -1;
@@ -605,7 +605,7 @@ function sortDashboardTasks(tasks: DashboardTask[]) {
   });
 }
 
-function getDueTimestamp(dueAt?: string | null) {
+export function getDueTimestamp(dueAt?: string | null) {
   if (!dueAt) {
     return Number.MAX_SAFE_INTEGER;
   }
@@ -614,7 +614,7 @@ function getDueTimestamp(dueAt?: string | null) {
   return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
 }
 
-function getPriorityRank(priority?: DashboardTask["priority"]) {
+export function getPriorityRank(priority?: DashboardTask["priority"]) {
   const priorityRanks: Record<NonNullable<DashboardTask["priority"]>, number> = {
     high: 0,
     medium: 1,
@@ -624,18 +624,18 @@ function getPriorityRank(priority?: DashboardTask["priority"]) {
   return priority ? priorityRanks[priority] : 3;
 }
 
-function getDueAtFromDateInput(dueDate: string) {
+export function getDueAtFromDateInput(dueDate: string) {
   return dueDate ? `${dueDate}T00:00:00.000Z` : null;
 }
 
-function getActiveTaskCount(tasks: Record<DashboardTaskCategory, DashboardTask[]>) {
+export function getActiveTaskCount(tasks: Record<DashboardTaskCategory, DashboardTask[]>) {
   return Object.values(tasks).reduce(
     (total, categoryTasks) => total + categoryTasks.filter((task) => !task.completed).length,
     0
   );
 }
 
-function formatDashboardDate(date: Date, timezone: string) {
+export function formatDashboardDate(date: Date, timezone: string) {
   const parts = getDashboardDateParts(date, timezone);
   const weekday = parts.find((part) => part.type === "weekday")?.value ?? "";
   const month = parts.find((part) => part.type === "month")?.value ?? "";
@@ -644,11 +644,11 @@ function formatDashboardDate(date: Date, timezone: string) {
   return `${weekday}, ${month} ${day}${getOrdinalSuffix(day)}`;
 }
 
-function getDashboardWeekday(date: Date, timezone: string) {
+export function getDashboardWeekday(date: Date, timezone: string) {
   return getDashboardDateParts(date, timezone).find((part) => part.type === "weekday")?.value ?? "Today";
 }
 
-function getClientsCheckingInOnDay(clients: ApiClientSummary[], weekday: string) {
+export function getClientsCheckingInOnDay(clients: ApiClientSummary[], weekday: string) {
   return clients
     .filter((client) => normalizeWeekday(client.checkInDay) === normalizeWeekday(weekday))
     .map((client) => ({
@@ -658,11 +658,11 @@ function getClientsCheckingInOnDay(clients: ApiClientSummary[], weekday: string)
     }));
 }
 
-function normalizeWeekday(value?: string | null) {
+export function normalizeWeekday(value?: string | null) {
   return value?.trim().toLowerCase() ?? "";
 }
 
-function getDashboardDateParts(date: Date, timezone: string) {
+export function getDashboardDateParts(date: Date, timezone: string) {
   try {
     return new Intl.DateTimeFormat("en-US", {
       weekday: "long",
@@ -680,7 +680,7 @@ function getDashboardDateParts(date: Date, timezone: string) {
   }
 }
 
-function getOrdinalSuffix(day: number) {
+export function getOrdinalSuffix(day: number) {
   if (day >= 11 && day <= 13) {
     return "th";
   }
@@ -697,11 +697,11 @@ function getOrdinalSuffix(day: number) {
   }
 }
 
-function getBrowserTimezone() {
+export function getBrowserTimezone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 
-function formatCents(amount: number, currency = "USD") {
+export function formatCents(amount: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency.toUpperCase(),
@@ -709,7 +709,7 @@ function formatCents(amount: number, currency = "USD") {
   }).format(amount / 100);
 }
 
-function getDefaultCustomDateRange() {
+export function getDefaultCustomDateRange() {
   const now = new Date();
   const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));

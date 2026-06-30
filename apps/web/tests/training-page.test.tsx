@@ -874,6 +874,15 @@ describe("ExerciseDatabasePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Card view" }));
     expect(screen.getByRole("region", { name: "Exercise cards" })).toBeInTheDocument();
   });
+
+  it("keeps the exercise database empty when the API is unavailable", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ error: "unavailable" }), { status: 503 }));
+
+    render(createElement(ExerciseDatabasePage));
+
+    expect(await screen.findByText("No exercises loaded from the database yet.")).toBeInTheDocument();
+    expect(screen.queryByRole("article")).not.toBeInTheDocument();
+  });
 });
 
 describe("AddExercisePage", () => {

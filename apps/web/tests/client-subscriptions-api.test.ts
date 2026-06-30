@@ -233,6 +233,24 @@ describe("client subscription APIs", () => {
     expect(mocks.prisma.clientSubscription.create).not.toHaveBeenCalled();
   });
 
+  it("returns not found when the active organization record is missing", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    mocks.prisma.organization.findUnique.mockResolvedValue(null);
+    mocks.prisma.client.findFirst.mockResolvedValue(clientRecord);
+    mocks.prisma.coachingPackage.findFirst.mockResolvedValue(packageRecord);
+    mocks.prisma.clientSubscription.findFirst.mockResolvedValue(null);
+
+    const response = await createClientSubscription(
+      new Request("http://test.local/api/v1/client-subscriptions", {
+        method: "POST",
+        body: JSON.stringify({ clientId: "client_1", packageId: "package_1" })
+      })
+    );
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.clientSubscription.create).not.toHaveBeenCalled();
+  });
+
   it("returns service unavailable when Stripe is not configured", async () => {
     const response = await createClientSubscription(
       new Request("http://test.local/api/v1/client-subscriptions", {
@@ -283,6 +301,72 @@ describe("client subscription APIs", () => {
     );
 
     expect(response.status).toBe(422);
+    expect(mocks.prisma.clientSubscription.create).not.toHaveBeenCalled();
+  });
+
+  it("returns not found for packages outside the active organization", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    mocks.prisma.organization.findUnique.mockResolvedValue({ id: "org_1", stripeConnectAccountId: "acct_1" });
+    mocks.prisma.client.findFirst.mockResolvedValue(clientRecord);
+    mocks.prisma.coachingPackage.findFirst.mockResolvedValue(null);
+    mocks.prisma.clientSubscription.findFirst.mockResolvedValue(null);
+
+    const response = await createClientSubscription(
+      new Request("http://test.local/api/v1/client-subscriptions", {
+        method: "POST",
+        body: JSON.stringify({ clientId: "client_1", packageId: "package_other" })
+      })
+    );
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.clientSubscription.create).not.toHaveBeenCalled();
+  });
+
+  it("requires a Stripe price before creating a monthly subscription", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    mocks.prisma.organization.findUnique.mockResolvedValue({ id: "org_1", stripeConnectAccountId: "acct_1" });
+    mocks.prisma.client.findFirst.mockResolvedValue(clientRecord);
+    mocks.prisma.coachingPackage.findFirst.mockResolvedValue({
+      ...packageRecord,
+      stripePriceId: null
+    });
+    mocks.prisma.clientSubscription.findFirst.mockResolvedValue(null);
+
+    const response = await createClientSubscription(
+      new Request("http://test.local/api/v1/client-subscriptions", {
+        method: "POST",
+        body: JSON.stringify({ clientId: "client_1", packageId: "package_1" })
+      })
+    );
+
+    expect(response.status).toBe(409);
+    expect(mocks.prisma.clientSubscription.create).not.toHaveBeenCalled();
+  });
+
+  it("maps Stripe Checkout request failures to a gateway error", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    process.env.STRIPE_API_BASE_URL = "https://stripe.test";
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ id: "cus_1" }))
+      .mockResolvedValueOnce(Response.json({ error: { message: "checkout unavailable" } }, { status: 400 }));
+    vi.stubGlobal("fetch", fetchMock);
+    mocks.prisma.organization.findUnique.mockResolvedValue({ id: "org_1", stripeConnectAccountId: "acct_1" });
+    mocks.prisma.client.findFirst.mockResolvedValue(clientRecord);
+    mocks.prisma.coachingPackage.findFirst.mockResolvedValue(packageRecord);
+    mocks.prisma.clientSubscription.findFirst.mockResolvedValue(null);
+
+    const response = await createClientSubscription(
+      new Request("http://test.local/api/v1/client-subscriptions", {
+        method: "POST",
+        body: JSON.stringify({ clientId: "client_1", packageId: "package_1" })
+      })
+    );
+    const payload = (await response.json()) as { error: { code: string; details: { status: number } } };
+
+    expect(response.status).toBe(502);
+    expect(payload.error.code).toBe("stripe_request_failed");
+    expect(payload.error.details.status).toBe(400);
     expect(mocks.prisma.clientSubscription.create).not.toHaveBeenCalled();
   });
 

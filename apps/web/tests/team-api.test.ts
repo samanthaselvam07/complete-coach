@@ -91,10 +91,18 @@ describe("team management APIs", () => {
   });
 
   it("lists organization-scoped members with active client capacity and pending invitations", async () => {
-    mocks.prisma.organizationMembership.findMany.mockResolvedValue([membershipRecord]);
+    mocks.prisma.organizationMembership.findMany.mockResolvedValue([
+      { ...membershipRecord, id: "membership_owner", userId: "user_owner", role: MembershipRole.OWNER, user: { ...membershipRecord.user, id: "user_owner", email: "owner@example.com" } },
+      { ...membershipRecord, id: "membership_admin", userId: "user_admin", role: MembershipRole.ADMIN, user: { ...membershipRecord.user, id: "user_admin", email: "admin@example.com" } },
+      membershipRecord,
+      { ...membershipRecord, id: "membership_assistant", userId: "user_assistant", role: MembershipRole.ASSISTANT, user: { ...membershipRecord.user, id: "user_assistant", email: "assistant@example.com" } }
+    ]);
     mocks.prisma.teamInvitation.findMany.mockResolvedValue([]);
     mocks.prisma.client.groupBy.mockResolvedValue([
-      { primaryCoachUserId: "user_2", _count: { _all: 18 } }
+      { primaryCoachUserId: "user_owner", _count: { _all: 44 } },
+      { primaryCoachUserId: "user_admin", _count: { _all: 40 } },
+      { primaryCoachUserId: "user_2", _count: { _all: 18 } },
+      { primaryCoachUserId: "user_assistant", _count: { _all: 3 } }
     ]);
 
     const response = await listTeamMembers();
@@ -111,15 +119,18 @@ describe("team management APIs", () => {
     };
 
     expect(response.status).toBe(200);
-    expect(payload.data.members).toHaveLength(1);
+    expect(payload.data.members).toHaveLength(4);
     expect(payload.data.members[0]).toEqual(
       expect.objectContaining({
-        userId: "user_2",
-        activeClientCount: 18,
+        userId: "user_owner",
+        activeClientCount: 44,
         capacityLimit: 40,
-        capacityPercent: 45
+        capacityPercent: 100
       })
     );
+    expect(payload.data.members[1]).toEqual(expect.objectContaining({ userId: "user_admin", capacityLimit: 40, capacityPercent: 100 }));
+    expect(payload.data.members[2]).toEqual(expect.objectContaining({ userId: "user_2", capacityLimit: 40, capacityPercent: 45 }));
+    expect(payload.data.members[3]).toEqual(expect.objectContaining({ userId: "user_assistant", capacityLimit: 0, capacityPercent: 0 }));
     expect(mocks.prisma.organizationMembership.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { organizationId: "org_1" } })
     );
@@ -299,6 +310,34 @@ describe("team management APIs", () => {
     );
   });
 
+  it("updates member status with a status audit event", async () => {
+    mocks.prisma.organizationMembership.findFirst.mockResolvedValue(membershipRecord);
+    mocks.prisma.organizationMembership.update.mockResolvedValue({
+      ...membershipRecord,
+      status: MembershipStatus.SUSPENDED
+    });
+
+    const response = await updateTeamMember(
+      new Request("http://test.local/api/v1/team-members/membership_2", {
+        method: "PATCH",
+        body: JSON.stringify({ status: "suspended" })
+      }),
+      { params: Promise.resolve({ membershipId: "membership_2" }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.organizationMembership.update).toHaveBeenCalledWith({
+      where: { id: "membership_2", organizationId: "org_1" },
+      data: { status: MembershipStatus.SUSPENDED },
+      include: { user: true }
+    });
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: "membership.status_changed" })
+      })
+    );
+  });
+
   it("prevents demoting the last active owner", async () => {
     mocks.prisma.organizationMembership.findFirst.mockResolvedValue({
       ...membershipRecord,
@@ -342,5 +381,38 @@ describe("team management APIs", () => {
         data: expect.objectContaining({ action: "membership.removed" })
       })
     );
+  });
+
+  it("removes an owner when another active owner remains", async () => {
+    mocks.prisma.organizationMembership.findFirst.mockResolvedValue({
+      ...membershipRecord,
+      role: MembershipRole.OWNER
+    });
+    mocks.prisma.organizationMembership.count.mockResolvedValue(2);
+    mocks.prisma.organizationMembership.update.mockResolvedValue({
+      ...membershipRecord,
+      role: MembershipRole.OWNER,
+      status: MembershipStatus.REMOVED
+    });
+
+    const response = await removeTeamMember(
+      new Request("http://test.local/api/v1/team-members/membership_2", {
+        method: "DELETE"
+      }),
+      { params: Promise.resolve({ membershipId: "membership_2" }) }
+    );
+
+    expect(response.status).toBe(204);
+    expect(mocks.prisma.organizationMembership.count).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        role: MembershipRole.OWNER,
+        status: MembershipStatus.ACTIVE
+      }
+    });
+    expect(mocks.prisma.organizationMembership.update).toHaveBeenCalledWith({
+      where: { id: "membership_2", organizationId: "org_1" },
+      data: { status: MembershipStatus.REMOVED }
+    });
   });
 });

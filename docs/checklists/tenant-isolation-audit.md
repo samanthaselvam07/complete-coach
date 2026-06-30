@@ -110,14 +110,14 @@ Stage 6 findings:
 
 ### Stage 7 - Production Verification
 
-Status: In progress
+Status: Done
 
 - [x] Run end-to-end sign-up in Vercel against Neon preview.
 - [x] Create two organizations and verify records created in one never appear in the other.
 - [x] Verify dashboard, clients, CRM, training, nutrition, supplementation, forms, messages, organization settings, and billing surfaces for both empty and populated org states.
 - [x] Verify local dev auth bypass cannot activate unless `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS=1`.
 - [x] Verify production environment does not include local bypass env flags or demo seed toggles.
-- [ ] Run full verification gate before marking the audit complete.
+- [x] Run full verification gate before marking the audit complete.
 
 Stage 7 findings:
 
@@ -136,7 +136,7 @@ Stage 7 findings:
 - Live page sweeps loaded dashboard, clients, CRM, training programs, meal plans, food database, supplement plans, supplement database, forms, messages, organization settings, and packages for both empty and populated organizations. All returned 200 and no fixture strings were found.
 - Local dev auth bypass verification passed: `isLocalDevAuthBypassEnabled` only returns true when `NODE_ENV=development` and `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS=1`; production mode stays disabled even if the bypass flag is present.
 - Vercel production environment review found only production secrets required by the app (`AUTH_SECRET`, `DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`). No production `NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS` was present, and demo coach credentials were scoped only to the old `feat/019-production-hardening` preview branch.
-- Final verification gate was attempted on 2026-06-30. Typecheck, lint, full unit tests, and webpack build passed. Coverage executed all tests but failed the configured branch threshold at 75.26% against the 80% requirement.
+- Final verification gate passed on 2026-06-30. Lint, typecheck, full unit tests, coverage, and webpack production build all passed. Coverage executed 702 tests with 90.59% statements, 80.01% branches, 91.51% functions, and 90.61% lines.
 
 ## Completed Verification Evidence
 
@@ -160,10 +160,11 @@ Stage 7 findings:
 - `node /private/tmp/stage7-wide-sweep.mjs`: passed, live wide surface marker `stage7-wide-1782786970357` confirmed empty/populated API isolation, representative direct cross-org 404s, and 12 major pages loading without fixture hits.
 - `pnpm --filter @complete-coach/web test -- local-dev-session`: passed, including the production-mode bypass-disabled assertion.
 - `npx vercel env ls --scope team_urIw9URwV9XUJWjSSYfaXPCp`: confirmed no production local-bypass flag and no production demo coach credentials.
-- `pnpm --filter @complete-coach/web test`: passed, 79 files and 666 tests.
-- `bash -lc 'set -a; source .env; set +a; pnpm --filter @complete-coach/web exec next build --webpack'`: passed.
 - `pnpm --filter @complete-coach/web lint`: passed.
-- `pnpm --filter @complete-coach/web coverage`: ran all 666 tests, but failed the configured global branch coverage threshold with 75.26% branch coverage against 80%.
+- `pnpm --filter @complete-coach/web typecheck`: passed.
+- `pnpm --filter @complete-coach/web test`: passed, 81 files and 702 tests.
+- `pnpm --filter @complete-coach/web coverage`: passed, 81 files and 702 tests, with 80.01% branch coverage against the configured 80% threshold.
+- `bash -lc 'set -a; source .env; set +a; pnpm --filter @complete-coach/web exec next build --webpack'`: passed.
 
 ## Fixture Leakage Rules
 
@@ -192,5 +193,4 @@ Stage 7 findings:
 
 ## Open Risks
 
-- Coverage is not currently a clean gate because global branch coverage is 75.26%, below the configured 80% threshold.
-- Remaining Stage 7 production work should focus on clearing branch coverage, then rerunning the final verification gate before marking the audit complete.
+- No open tenant-isolation audit risks remain from this checklist. Continue enforcing the fixture-import guard, cross-org API tests, and full verification gate for future tenant-scoped work.

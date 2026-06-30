@@ -32,6 +32,7 @@ const ownerSession = {
 
 describe("GET /api/v1/dashboard/financial-reporting", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     mocks.auth.mockReset();
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.clientSubscription.findMany.mockReset();
@@ -97,9 +98,76 @@ describe("GET /api/v1/dashboard/financial-reporting", () => {
       new Request("http://test.local/api/v1/dashboard/financial-reporting?period=custom&startDate=2026-06-01")
     );
     const payload = (await response.json()) as { error: { code: string } };
+    const missingStartResponse = await getFinancialReporting(
+      new Request("http://test.local/api/v1/dashboard/financial-reporting?period=custom&endDate=2026-06-30")
+    );
+    const missingStartPayload = (await missingStartResponse.json()) as { error: { code: string } };
 
     expect(response.status).toBe(422);
     expect(payload.error.code).toBe("validation_failed");
+    expect(missingStartResponse.status).toBe(422);
+    expect(missingStartPayload.error.code).toBe("validation_failed");
     expect(mocks.prisma.clientSubscription.findMany).not.toHaveBeenCalled();
+  });
+
+  it("resolves weekly, quarterly, yearly, and custom date ranges without local revenue fallback", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-17T12:30:00.000Z"));
+    mocks.prisma.clientSubscription.findMany.mockResolvedValue([]);
+
+    const periods = [
+      {
+        query: "period=weekly",
+        label: "Weekly Revenue",
+        startDate: "2026-06-15",
+        endDate: "2026-06-21"
+      },
+      {
+        query: "period=quarterly",
+        label: "Quarterly Revenue",
+        startDate: "2026-04-01",
+        endDate: "2026-06-30"
+      },
+      {
+        query: "period=yearly",
+        label: "Yearly Revenue",
+        startDate: "2026-01-01",
+        endDate: "2026-12-31"
+      },
+      {
+        query: "period=custom&startDate=2026-06-03&endDate=2026-06-09",
+        label: "Custom Revenue",
+        startDate: "2026-06-03",
+        endDate: "2026-06-09"
+      }
+    ];
+
+    for (const period of periods) {
+      const response = await getFinancialReporting(
+        new Request(`http://test.local/api/v1/dashboard/financial-reporting?${period.query}`)
+      );
+      const payload = (await response.json()) as {
+        data: {
+          amount: number;
+          bars: number[];
+          label: string;
+          source: string;
+          startDate: string;
+          endDate: string;
+        };
+      };
+
+      expect(response.status).toBe(200);
+      expect(payload.data).toEqual(
+        expect.objectContaining({
+          amount: 0,
+          bars: [10, 10, 10, 10, 10, 10, 10],
+          label: period.label,
+          source: "stripe",
+          startDate: period.startDate,
+          endDate: period.endDate
+        })
+      );
+    }
   });
 });

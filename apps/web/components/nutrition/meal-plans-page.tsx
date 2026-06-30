@@ -1252,20 +1252,20 @@ function FullMealPlanFields({
         body: JSON.stringify({
           name: quickAddFoodForm.name.trim() || "Coach Food",
           category: "Custom",
-          servingSize: formatServingSize(quickAddFoodForm),
-          calories: parseNumberInput(quickAddFoodForm.calories),
-          proteinGrams: parseNumberInput(quickAddFoodForm.protein),
-          carbsGrams: parseNumberInput(quickAddFoodForm.carbs),
-          fatGrams: parseNumberInput(quickAddFoodForm.fat),
-          fiberGrams: parseNumberInput(quickAddFoodForm.fiber),
+          servingSize: formatMealBuilderServingSize(quickAddFoodForm),
+          calories: parseMealBuilderNumberInput(quickAddFoodForm.calories),
+          proteinGrams: parseMealBuilderNumberInput(quickAddFoodForm.protein),
+          carbsGrams: parseMealBuilderNumberInput(quickAddFoodForm.carbs),
+          fatGrams: parseMealBuilderNumberInput(quickAddFoodForm.fat),
+          fiberGrams: parseMealBuilderNumberInput(quickAddFoodForm.fiber),
           metadata: {
             source: foodSource,
-            sugarGrams: parseNumberInput(quickAddFoodForm.sugar),
-            polyolsGrams: parseNumberInput(quickAddFoodForm.polyols),
-            saturatedGrams: parseNumberInput(quickAddFoodForm.saturated),
-            polyunsaturatedGrams: parseNumberInput(quickAddFoodForm.polyunsaturated),
-            monounsaturatedGrams: parseNumberInput(quickAddFoodForm.monounsaturated),
-            saltGrams: parseNumberInput(quickAddFoodForm.salt),
+            sugarGrams: parseMealBuilderNumberInput(quickAddFoodForm.sugar),
+            polyolsGrams: parseMealBuilderNumberInput(quickAddFoodForm.polyols),
+            saturatedGrams: parseMealBuilderNumberInput(quickAddFoodForm.saturated),
+            polyunsaturatedGrams: parseMealBuilderNumberInput(quickAddFoodForm.polyunsaturated),
+            monounsaturatedGrams: parseMealBuilderNumberInput(quickAddFoodForm.monounsaturated),
+            saltGrams: parseMealBuilderNumberInput(quickAddFoodForm.salt),
             servingDescription: quickAddFoodForm.servingDescription
           }
         })
@@ -1671,7 +1671,7 @@ function FullMealPlanFields({
   );
 }
 
-function createBuilderDay(dayNumber: number): BuilderDay {
+export function createBuilderDay(dayNumber: number): BuilderDay {
   return {
     id: `day_${dayNumber}_${Date.now()}`,
     name: `Day ${dayNumber}`,
@@ -1679,7 +1679,7 @@ function createBuilderDay(dayNumber: number): BuilderDay {
   };
 }
 
-function createMacroBuilderDay(dayNumber: number, overrides: Partial<Omit<MacroBuilderDay, "id">> = {}): MacroBuilderDay {
+export function createMacroBuilderDay(dayNumber: number, overrides: Partial<Omit<MacroBuilderDay, "id">> = {}): MacroBuilderDay {
   return {
     id: `macro-day-${dayNumber}`,
     name: `Day ${dayNumber}`,
@@ -1692,7 +1692,7 @@ function createMacroBuilderDay(dayNumber: number, overrides: Partial<Omit<MacroB
   };
 }
 
-function createMacroBuilderMeal(mealNumber: number, overrides: Partial<Omit<MacroBuilderMeal, "id">> = {}): MacroBuilderMeal {
+export function createMacroBuilderMeal(mealNumber: number, overrides: Partial<Omit<MacroBuilderMeal, "id">> = {}): MacroBuilderMeal {
   return {
     id: `macro-meal-${mealNumber}-${Date.now()}`,
     title: `Meal ${mealNumber}`,
@@ -1733,7 +1733,7 @@ function createBuilderMeal(mealNumber: number, name = `Meal ${mealNumber}`): Bui
   };
 }
 
-function createBuilderDaysFromTemplate(template?: ApiMealPlanTemplate | null): BuilderDay[] {
+export function createBuilderDaysFromTemplate(template?: ApiMealPlanTemplate | null): BuilderDay[] {
   const templateDays = template?.template.days;
 
   if (!templateDays || templateDays.length === 0) {
@@ -1752,7 +1752,7 @@ function createBuilderDaysFromTemplate(template?: ApiMealPlanTemplate | null): B
   }));
 }
 
-function createBuilderFoodFromTemplateFood(food: ApiMealPlanTemplateFood, index: number): BuilderFood {
+export function createBuilderFoodFromTemplateFood(food: ApiMealPlanTemplateFood, index: number): BuilderFood {
   const parsedServing = parseServingAmount(food.servingSize);
   const measurementUnit = food.measurementUnit ?? parsedServing?.unit ?? "serving";
 
@@ -1772,7 +1772,7 @@ function createBuilderFoodFromTemplateFood(food: ApiMealPlanTemplateFood, index:
   };
 }
 
-function createBuilderMealsFromMealTemplate(template: MealTemplateCard): BuilderMeal[] {
+export function createBuilderMealsFromMealTemplate(template: MealTemplateCard): BuilderMeal[] {
   const firstTemplateDay = template.template?.days?.[0] ?? template.apiTemplate?.template.days?.[0];
   const templateMeals = firstTemplateDay?.meals ?? [];
 
@@ -1820,7 +1820,7 @@ function cloneBuilderMeal(meal: BuilderMeal, mealNumber: number): BuilderMeal {
   };
 }
 
-function createBuilderFood(food: Food, amount: number, unit?: FoodMeasurementUnit): BuilderFood {
+export function createBuilderFood(food: Food, amount: number, unit?: FoodMeasurementUnit): BuilderFood {
   const parsedServing = parseServingAmount(food.serving);
   const defaultUnit = parsedServing?.unit ?? "serving";
   const selectedUnit = unit ?? defaultUnit;
@@ -1846,7 +1846,7 @@ function createBuilderFood(food: Food, amount: number, unit?: FoodMeasurementUni
   };
 }
 
-function mapApiFoodToBuilderFood(food: ApiFoodLibraryItem): Food {
+export function mapApiFoodToBuilderFood(food: ApiFoodLibraryItem): Food {
   return {
     id: food.id,
     name: food.name,
@@ -1933,7 +1933,7 @@ function rescaleBuilderFood(food: BuilderFood, nextAmount: number): BuilderFood 
   };
 }
 
-function parseServingAmount(serving: string) {
+export function parseServingAmount(serving: string) {
   const match = serving.match(/(\d+(?:\.\d+)?)\s*(g|gram|grams|ml|mL|millilitre|millilitres|milliliter|milliliters|oz|ounce|ounces)\b/i);
 
   if (!match) {
@@ -1946,7 +1946,7 @@ function parseServingAmount(serving: string) {
   };
 }
 
-function normaliseServingUnit(unit: string): FoodMeasurementUnit {
+export function normaliseServingUnit(unit: string): FoodMeasurementUnit {
   const lowerUnit = unit.toLowerCase();
 
   if (lowerUnit === "gram" || lowerUnit === "grams") {
@@ -1968,7 +1968,7 @@ function normaliseServingUnit(unit: string): FoodMeasurementUnit {
   return "serving";
 }
 
-function getFoodQuantityMultiplier(food: Pick<Food, "serving">, amount: number, unit: FoodMeasurementUnit) {
+export function getFoodQuantityMultiplier(food: Pick<Food, "serving">, amount: number, unit: FoodMeasurementUnit) {
   const parsedServing = parseServingAmount(food.serving);
 
   if (!parsedServing) {
@@ -1980,13 +1980,13 @@ function getFoodQuantityMultiplier(food: Pick<Food, "serving">, amount: number, 
   return convertedAmount === null ? amount : convertedAmount / parsedServing.amount;
 }
 
-function parseNumberInput(value: string) {
+export function parseMealBuilderNumberInput(value: string) {
   const parsed = Number.parseFloat(value);
 
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function formatServingSize(form: NewFoodFormState) {
+export function formatMealBuilderServingSize(form: NewFoodFormState) {
   const servingSize = form.servingSize.trim();
 
   if (!servingSize) {
@@ -1996,7 +1996,7 @@ function formatServingSize(form: NewFoodFormState) {
   return `${servingSize} ${form.servingDescription}`;
 }
 
-function convertMeasurementToServingUnit(amount: number, unit: FoodMeasurementUnit, servingUnit: FoodMeasurementUnit) {
+export function convertMeasurementToServingUnit(amount: number, unit: FoodMeasurementUnit, servingUnit: FoodMeasurementUnit) {
   if (unit === servingUnit) {
     return amount;
   }
@@ -2026,7 +2026,7 @@ function convertMeasurementToServingUnit(amount: number, unit: FoodMeasurementUn
   return null;
 }
 
-function getFoodQuantityDisplay(food: BuilderFood) {
+export function getFoodQuantityDisplay(food: BuilderFood) {
   const parsedServing = parseServingAmount(food.serving);
   const unit = food.measurementUnit ?? parsedServing?.unit;
 
@@ -2093,7 +2093,7 @@ function formatQuantityInputValue(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-function calculateMealTotals(meal: BuilderMeal) {
+export function calculateMealTotals(meal: BuilderMeal) {
   return meal.foods.reduce(
     (totals, food) => ({
       calories: totals.calories + food.calories,
@@ -2105,7 +2105,7 @@ function calculateMealTotals(meal: BuilderMeal) {
   );
 }
 
-function calculateDayTotals(day?: BuilderDay) {
+export function calculateDayTotals(day?: BuilderDay) {
   const totals = {
     calories: 0,
     protein: 0,
@@ -2127,7 +2127,7 @@ function calculateDayTotals(day?: BuilderDay) {
   return totals;
 }
 
-function calculatePlanTotals(days: BuilderDay[]) {
+export function calculatePlanTotals(days: BuilderDay[]) {
   return days.reduce(
     (totals, day) => {
       const dayTotals = calculateDayTotals(day);
@@ -2144,7 +2144,7 @@ function calculatePlanTotals(days: BuilderDay[]) {
   );
 }
 
-function calculateMacroDayTotals(day: MacroBuilderDay, eachMeal: boolean) {
+export function calculateMacroDayTotals(day: MacroBuilderDay, eachMeal: boolean) {
   if (!eachMeal) {
     return {
       calories: Number(day.calories) || 0,
@@ -2165,7 +2165,7 @@ function calculateMacroDayTotals(day: MacroBuilderDay, eachMeal: boolean) {
   );
 }
 
-function calculateMacroPlanSummary(days: MacroBuilderDay[], eachMeal = false) {
+export function calculateMacroPlanSummary(days: MacroBuilderDay[], eachMeal = false) {
   return days.reduce(
     (totals, day) => {
       const dayTotals = calculateMacroDayTotals(day, eachMeal);
@@ -2181,7 +2181,7 @@ function calculateMacroPlanSummary(days: MacroBuilderDay[], eachMeal = false) {
   );
 }
 
-function calculateTemplateTotals(template: ApiMealPlanTemplate["template"]) {
+export function calculateTemplateTotals(template: ApiMealPlanTemplate["template"]) {
   return (template.days ?? []).reduce(
     (totals, day) => {
       day.meals.forEach((meal) => {
@@ -2199,7 +2199,7 @@ function calculateTemplateTotals(template: ApiMealPlanTemplate["template"]) {
   );
 }
 
-function getFullMealPlanTemplatePayload(days: BuilderDay[]): ApiMealPlanTemplate["template"] {
+export function getFullMealPlanTemplatePayload(days: BuilderDay[]): ApiMealPlanTemplate["template"] {
   const templateDays = days.length > 0 ? days : [createBuilderDay(1)];
 
   return {
@@ -2226,7 +2226,7 @@ function getFullMealPlanTemplatePayload(days: BuilderDay[]): ApiMealPlanTemplate
   };
 }
 
-function getMacroMealPlanTemplatePayload(days: MacroBuilderDay[], eachMeal: boolean): ApiMealPlanTemplate["template"] {
+export function getMacroMealPlanTemplatePayload(days: MacroBuilderDay[], eachMeal: boolean): ApiMealPlanTemplate["template"] {
   const templateDays = days.length > 0 ? days : [createMacroBuilderDay(1)];
 
   return {
@@ -2300,7 +2300,7 @@ function getMealTemplateSaveInput(template: MealTemplateCard): MealPlanTemplateS
   };
 }
 
-function appendMealTemplateToPlanTemplate(planTemplate: ApiMealPlanTemplate, mealTemplate: MealTemplateCard): MealPlanTemplateSaveInput {
+export function appendMealTemplateToPlanTemplate(planTemplate: ApiMealPlanTemplate, mealTemplate: MealTemplateCard): MealPlanTemplateSaveInput {
   const mealTemplatePayload = mealTemplate.template ?? mealTemplate.apiTemplate?.template ?? getMealTemplateSaveInput(mealTemplate).template;
   const mealsToAdd = (mealTemplatePayload.days ?? [])
     .flatMap((day) => day.meals)
@@ -2361,7 +2361,7 @@ function getFoodServingLabel(food: BuilderFood) {
   return `${formatMacroValue(quantityDisplay.amount)} ${quantityDisplay.unit}`;
 }
 
-function calculateNutrientTotals(day?: BuilderDay) {
+export function calculateNutrientTotals(day?: BuilderDay) {
   const macroTotals = calculateDayTotals(day);
   const totals: Record<string, number> = {
     protein: macroTotals.protein,

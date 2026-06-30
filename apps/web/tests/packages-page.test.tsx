@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
-import { PackagesPage } from "@/components/packages/packages-page";
+import { buildPackageStats, formatCents, formStateToPayload, packageToFormState, PackagesPage } from "@/components/packages/packages-page";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -49,6 +49,45 @@ const persistedPackages = [
 ];
 
 describe("PackagesPage", () => {
+  it("normalizes package stats, forms, payloads, and currency helpers", () => {
+    const emptyStats = buildPackageStats([]);
+    const packageStats = buildPackageStats(persistedPackages as never);
+
+    expect(emptyStats.map((stat) => stat.value)).toEqual([0, "$0", "No packages", "94%"]);
+    expect(packageStats.map((stat) => stat.value)).toEqual([4, "$1,797", "API Platinum", "94%"]);
+    expect(packageToFormState({ ...persistedPackages[0], description: null, color: null } as never)).toEqual({
+      name: "API Platinum",
+      description: "",
+      price: "599",
+      billingInterval: "monthly",
+      features: "Custom training\nWeekly reviews",
+      color: "indigo"
+    });
+    expect(
+      formStateToPayload({
+        name: "  Builder Package  ",
+        description: "  ",
+        price: "199.995",
+        billingInterval: "one-time",
+        features: " Coaching review \n\n Meal plan ",
+        color: ""
+      })
+    ).toEqual({
+      name: "Builder Package",
+      description: undefined,
+      priceAmount: 20000,
+      currency: "usd",
+      billingInterval: "one-time",
+      features: ["Coaching review", "Meal plan"],
+      color: undefined
+    });
+    expect(formStateToPayload({ name: " ", description: "", price: "10", billingInterval: "monthly", features: "", color: "gray" })).toBeNull();
+    expect(formStateToPayload({ name: "Bad", description: "", price: "bad", billingInterval: "monthly", features: "", color: "gray" })).toBeNull();
+    expect(formStateToPayload({ name: "Bad", description: "", price: "-1", billingInterval: "monthly", features: "", color: "gray" })).toBeNull();
+    expect(formatCents(12000)).toBe("$120");
+    expect(formatCents(12345)).toBe("$123.45");
+  });
+
   it("loads packages and revenue stats from the persistence API", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ data: persistedPackages }), { status: 200 })
@@ -325,6 +364,124 @@ describe("PackagesPage", () => {
 
     expect(await screen.findByText("No packages")).toBeInTheDocument();
     expect(screen.queryByText("Platinum Elite")).not.toBeInTheDocument();
+  });
+
+  it("shows package write errors without adding local fallback data", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/packages?status=active&limit=100" && !init) {
+        return Promise.resolve(new Response(JSON.stringify({ data: [persistedPackages[1]] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/packages" && init?.method === "POST") {
+        return Promise.resolve(new Response(JSON.stringify({ error: "unavailable" }), { status: 503 }));
+      }
+
+      if (url === "/api/v1/packages/package_api_2" && init?.method === "PATCH") {
+        return Promise.resolve(new Response(JSON.stringify({ error: "unavailable" }), { status: 503 }));
+      }
+
+      if (url === "/api/v1/packages/package_api_2/stripe-sync" && init?.method === "POST") {
+        return Promise.resolve(new Response(JSON.stringify({ error: "connect_required" }), { status: 503 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(PackagesPage));
+
+    expect(await screen.findAllByText("API Launch")).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "Create New Package" }));
+    fireEvent.change(screen.getByLabelText("Package Name"), { target: { value: "Failed Package" } });
+    fireEvent.change(screen.getByLabelText("Price"), { target: { value: "99" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Package" }));
+    expect(await screen.findByText("Package could not be saved. Try again.")).toBeInTheDocument();
+    expect(screen.queryByText("Failed Package")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sync Stripe" }));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/packages/package_api_2/stripe-sync", { method: "POST" })
+    );
+    expect(screen.getByRole("button", { name: "Sync Stripe" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Archive API Launch" }));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/packages/package_api_2",
+        expect.objectContaining({ method: "PATCH" })
+      )
+    );
+    expect(screen.getAllByText("API Launch")).toHaveLength(2);
+  });
+
+  it("handles package assignment roster and checkout failures", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/packages?status=active&limit=100" && !init) {
+        return Promise.resolve(new Response(JSON.stringify({ data: [persistedPackages[0]] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/clients?status=active&limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "client_1",
+                  name: "Sarah Johnson",
+                  packageName: "Unassigned",
+                  status: "active"
+                },
+                {
+                  id: "client_2",
+                  name: "Marcus Rodriguez",
+                  packageName: "Unassigned",
+                  status: "active"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/client-subscriptions" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ error: { message: "Stripe Connect account is not ready." } }), {
+            status: 400
+          })
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(PackagesPage));
+
+    expect(await screen.findAllByText("API Platinum")).toHaveLength(2);
+    fireEvent.click(screen.getAllByRole("button", { name: "Assign to Client" }).at(-1)!);
+    expect(await screen.findByRole("dialog", { name: "Assign Package Payment" })).toBeInTheDocument();
+
+    expect(screen.getByRole("button", { name: "Create payment link" })).toBeDisabled();
+
+    fireEvent.change(screen.getByPlaceholderText("Search active clients..."), {
+      target: { value: "marcus" }
+    });
+    expect(screen.getByRole("button", { name: /Marcus Rodriguez/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Sarah Johnson/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Marcus Rodriguez/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Create payment link" }));
+
+    expect(await screen.findByText("Stripe Connect account is not ready.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/client-subscriptions",
+      expect.objectContaining({ method: "POST" })
+    );
   });
 });
 

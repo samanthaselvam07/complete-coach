@@ -1,11 +1,127 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DashboardPage } from "@/components/dashboard/dashboard-page";
+import {
+  buildFinancialReportingUrl,
+  formatCents,
+  formatDashboardDate,
+  getActiveTaskCount,
+  getBrowserTimezone,
+  getClientsCheckingInOnDay,
+  getDashboardDateParts,
+  getDashboardWeekday,
+  getDefaultCustomDateRange,
+  getDueAtFromDateInput,
+  getDueTimestamp,
+  getOrdinalSuffix,
+  getPriorityRank,
+  isTeamCapacityMember,
+  mapApiTask,
+  mapFinancialReport,
+  normalizeWeekday,
+  sortDashboardTasks,
+  DashboardPage
+} from "@/components/dashboard/dashboard-page";
 
 afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
+});
+
+describe("dashboard view model helpers", () => {
+  it("normalizes financial reporting, dates, task ordering, and check-in schedules", () => {
+    expect(buildFinancialReportingUrl("monthly")).toBe("/api/v1/dashboard/financial-reporting?period=monthly");
+    expect(buildFinancialReportingUrl("custom", "2026-06-01", "2026-06-30")).toBe(
+      "/api/v1/dashboard/financial-reporting?period=custom&startDate=2026-06-01&endDate=2026-06-30"
+    );
+    expect(buildFinancialReportingUrl("custom", "2026-06-01")).toBe("/api/v1/dashboard/financial-reporting?period=custom");
+    expect(mapFinancialReport({ label: "Revenue", amount: 12345, currency: "aud", change: "+5%", bars: [1, 2] })).toEqual({
+      label: "Revenue",
+      value: "A$123.45",
+      change: "+5%",
+      bars: [1, 2]
+    });
+    expect(mapFinancialReport(null as never)).toBeNull();
+    expect(mapFinancialReport({ label: "Bad", amount: "123", currency: "usd", change: "", bars: [] } as never)).toBeNull();
+    expect(mapFinancialReport({ label: "Bad", amount: 123, currency: "usd", change: "", bars: null } as never)).toBeNull();
+
+    const apiTask = {
+      id: "task-high",
+      title: "High priority",
+      category: "current-client-care",
+      priority: "high",
+      dueAt: "2026-06-03T00:00:00.000Z",
+      status: "open"
+    } as const;
+    const mappedTask = mapApiTask(apiTask);
+    const sortedTasks = sortDashboardTasks([
+      { ...mappedTask, id: "done", completed: true, dueAt: "2026-06-01T00:00:00.000Z" },
+      { ...mappedTask, id: "invalid", priority: "low", dueAt: "not-a-date" },
+      { ...mappedTask, id: "medium", priority: "medium", dueAt: "2026-06-03T00:00:00.000Z" },
+      mappedTask
+    ]);
+
+    expect(mappedTask).toMatchObject({ text: "High priority", completed: false });
+    expect(sortedTasks.map((task) => task.id)).toEqual(["task-high", "medium", "invalid", "done"]);
+    expect(getDueTimestamp(null)).toBe(Number.MAX_SAFE_INTEGER);
+    expect(getDueTimestamp("not-a-date")).toBe(Number.MAX_SAFE_INTEGER);
+    expect(getPriorityRank("high")).toBeLessThan(getPriorityRank("low"));
+    expect(getPriorityRank()).toBe(3);
+    expect(getDueAtFromDateInput("2026-06-20")).toBe("2026-06-20T00:00:00.000Z");
+    expect(getDueAtFromDateInput("")).toBeNull();
+    expect(
+      getActiveTaskCount({
+        "current-client-care": [mappedTask, { ...mappedTask, id: "done", completed: true }],
+        "business-operations": [],
+        "new-client-onboarding": [{ ...mappedTask, id: "onboarding" }],
+        "social-media": [{ ...mappedTask, id: "admin" }]
+      })
+    ).toBe(3);
+
+    const date = new Date("2026-06-21T12:00:00.000Z");
+    expect(formatDashboardDate(date, "UTC")).toBe("Sunday, June 21st");
+    expect(getDashboardWeekday(date, "UTC")).toBe("Sunday");
+    expect(getDashboardDateParts(date, "Invalid/Zone").some((part) => part.type === "weekday")).toBe(true);
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 23].map(getOrdinalSuffix)).toEqual([
+      "st",
+      "nd",
+      "rd",
+      "th",
+      "th",
+      "th",
+      "th",
+      "st",
+      "nd",
+      "rd"
+    ]);
+    expect(normalizeWeekday(" Monday ")).toBe("monday");
+    expect(normalizeWeekday()).toBe("");
+    expect(
+      getClientsCheckingInOnDay(
+        [
+          { id: "client-1", name: "Ava", checkInDay: " Monday " },
+          { id: "client-2", name: "Ben", checkInDay: null }
+        ] as never,
+        "monday"
+      )
+    ).toEqual([{ id: "client-1", name: "Ava", checkInDay: " Monday " }]);
+    expect(formatCents(12000, "usd")).toBe("$120");
+    expect(formatCents(12345, "usd")).toBe("$123.45");
+    expect(getBrowserTimezone()).toEqual(expect.any(String));
+    expect(getDefaultCustomDateRange()).toMatchObject({ startDate: expect.stringMatching(/^\d{4}-\d{2}-01$/) });
+    expect(
+      isTeamCapacityMember({
+        id: "member",
+        role: "coach",
+        status: "active",
+        activeClientCount: 12,
+        capacityLimit: 20,
+        capacityPercent: 60
+      })
+    ).toBe(true);
+    expect(isTeamCapacityMember(null)).toBe(false);
+    expect(isTeamCapacityMember({ id: "member", role: "coach" })).toBe(false);
+  });
 });
 
 describe("DashboardPage", () => {

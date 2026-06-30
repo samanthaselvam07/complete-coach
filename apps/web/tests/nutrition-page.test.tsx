@@ -1,11 +1,57 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FoodDatabasePage } from "@/components/nutrition/food-database-page";
 import {
+  FoodDatabasePage,
+  formatNutrientValue,
+  formatServingSize,
+  getDetailedNutrientRows,
+  getFoodFibre,
+  getFoodImageSrc,
+  getFoodMacro,
+  getFoodMacroRows,
+  getFoodServing,
+  getFoodSource,
+  getMetadataNutrientRows,
+  getPaginationPages,
+  getSourceDescription,
+  inferNutrientUnit,
+  isApiFood,
+  isDeletableFood,
+  isImportedNutrient,
+  isVerifiedFood,
+  parseNumberInput,
+  toTitleLabel
+} from "@/components/nutrition/food-database-page";
+import {
+  appendMealTemplateToPlanTemplate,
+  calculateDayTotals,
+  calculateMacroDayTotals,
+  calculateMacroPlanSummary,
+  calculateMealTotals,
+  calculateNutrientTotals,
+  calculatePlanTotals,
+  calculateTemplateTotals,
+  convertMeasurementToServingUnit,
+  createBuilderDay,
+  createBuilderDaysFromTemplate,
+  createBuilderFood,
+  createBuilderFoodFromTemplateFood,
+  createBuilderMealsFromMealTemplate,
+  createMacroBuilderDay,
+  createMacroBuilderMeal,
+  formatMealBuilderServingSize,
+  getFullMealPlanTemplatePayload,
+  getFoodQuantityDisplay,
+  getFoodQuantityMultiplier,
+  getMacroMealPlanTemplatePayload,
   getMealAssignmentRows,
   getMealTemplateCards,
-  MealPlansPage
+  mapApiFoodToBuilderFood,
+  MealPlansPage,
+  normaliseServingUnit,
+  parseMealBuilderNumberInput,
+  parseServingAmount
 } from "@/components/nutrition/meal-plans-page";
 import { NutritionPage } from "@/components/nutrition/nutrition-page";
 
@@ -1468,6 +1514,488 @@ describe("meal plan view model helpers", () => {
       fats: 93,
       lastEdited: "May 19, 2026"
     });
+  });
+
+  it("maps API foods across source and micronutrient metadata branches", () => {
+    expect(
+      mapApiFoodToBuilderFood({
+        id: "aus_food",
+        name: "AUS oats",
+        category: "Carbs",
+        servingSize: "100 g",
+        calories: 389,
+        proteinGrams: 13,
+        carbsGrams: 66,
+        fatGrams: 7,
+        fiberGrams: null,
+        metadata: { source: "AUS-NZ", nutrients: { iron: "4.7", invalid: "not-number" } }
+      })
+    ).toMatchObject({
+      source: "AUS/NZ",
+      fibre: 0,
+      micronutrients: { iron: 4.7 }
+    });
+
+    expect(
+      mapApiFoodToBuilderFood({
+        id: "efsa_food",
+        name: "EU yoghurt",
+        category: "Protein",
+        servingSize: "150 g",
+        calories: 120,
+        proteinGrams: 15,
+        carbsGrams: 8,
+        fatGrams: 2,
+        fiberGrams: 1,
+        metadata: { sourceId: "efsa_foodex2" }
+      }).source
+    ).toBe("EFSA");
+
+    expect(
+      mapApiFoodToBuilderFood({
+        id: "usda_food",
+        name: "Chicken",
+        category: "Protein",
+        servingSize: "100 g",
+        calories: 165,
+        proteinGrams: 31,
+        carbsGrams: 0,
+        fatGrams: 3.6,
+        fiberGrams: 0,
+        metadata: "not-record"
+      })
+    ).toMatchObject({ source: "USDA", micronutrients: undefined });
+  });
+
+  it("builds foods and totals across serving conversion branches", () => {
+    const gramsFood = createBuilderFood(
+      {
+        id: "rice",
+        name: "Rice",
+        serving: "100 g",
+        source: "AUS/NZ",
+        calories: 130,
+        protein: 2.7,
+        carbs: 28,
+        fats: 0.3,
+        fibre: 1.3,
+        micronutrients: { magnesium: 12 },
+        category: "Carbs"
+      },
+      50,
+      "g"
+    );
+    const ounceFood = createBuilderFood(
+      {
+        id: "almonds",
+        name: "Almonds",
+        serving: "1 oz",
+        source: "USDA",
+        calories: 164,
+        protein: 6,
+        carbs: 6,
+        fats: 14,
+        fibre: 3.5,
+        micronutrients: { calcium: 76 },
+        category: "Fats"
+      },
+      28.3495,
+      "g"
+    );
+    const cupFood = createBuilderFood(
+      {
+        id: "milk",
+        name: "Milk",
+        serving: "250 ml",
+        source: "EFSA",
+        calories: 150,
+        protein: 8,
+        carbs: 12,
+        fats: 8,
+        fibre: 0,
+        micronutrients: { calcium: 300 },
+        category: "Dairy"
+      },
+      1,
+      "cups"
+    );
+    const servingFood = createBuilderFood(
+      {
+        id: "custom",
+        name: "Custom food",
+        serving: "one portion",
+        source: "USDA",
+        calories: 100,
+        protein: 10,
+        carbs: 5,
+        fats: 2,
+        fibre: 1,
+        micronutrients: {},
+        category: "Custom"
+      },
+      -1
+    );
+    const meal = { id: "meal", name: "Meal", notes: "notes", foods: [gramsFood, ounceFood, cupFood, servingFood] };
+    const day = { id: "day", name: "Day", meals: [meal] };
+
+    expect(gramsFood).toMatchObject({ calories: 65, quantity: 0.5, micronutrients: { magnesium: 6 } });
+    expect(ounceFood.quantity).toBeCloseTo(1);
+    expect(cupFood.quantity).toBe(1);
+    expect(servingFood.quantity).toBe(1);
+    expect(calculateMealTotals(meal).calories).toBeCloseTo(479);
+    expect(calculateDayTotals(day).fibre).toBeCloseTo(5.15);
+    expect(calculatePlanTotals([day, { id: "empty", name: "Empty", meals: [] }]).calories).toBeCloseTo(479);
+    expect(calculateNutrientTotals(day)).toMatchObject({
+      protein: expect.any(Number),
+      carbs: expect.any(Number),
+      netCarbs: expect.any(Number),
+      fibre: expect.any(Number),
+      fat: expect.any(Number),
+      calcium: 376
+    });
+    expect(calculateDayTotals()).toEqual({ calories: 0, protein: 0, carbs: 0, fats: 0, fibre: 0 });
+    expect(calculateNutrientTotals()).toMatchObject({ protein: 0, carbs: 0, netCarbs: 0, fibre: 0, fat: 0 });
+  });
+
+  it("builds full and macro meal plan payloads with fallback branches", () => {
+    const templateFood = createBuilderFoodFromTemplateFood(
+      {
+        foodName: "Template oats",
+        servingSize: "40 g",
+        calories: 150,
+        proteinGrams: 5,
+        carbsGrams: 27,
+        fatGrams: 3,
+        fiberGrams: 4,
+        micronutrients: { iron: 2 }
+      },
+      0
+    );
+    const templateDays = createBuilderDaysFromTemplate({
+      id: "template",
+      name: "Template",
+      phase: null,
+      targetCalories: 1800,
+      proteinGrams: 130,
+      carbsGrams: 180,
+      fatGrams: 50,
+      status: "draft",
+      updatedAt: "2026-06-01T00:00:00.000Z",
+      template: {
+        days: [
+          {
+            name: "",
+            meals: [
+              {
+                meal: "",
+                notes: undefined,
+                foods: [
+                  {
+                    foodName: "Chicken",
+                    servingSize: "100 g",
+                    calories: 165,
+                    proteinGrams: 31,
+                    carbsGrams: 0,
+                    fatGrams: 3.6
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    });
+    const fallbackDays = createBuilderDaysFromTemplate(null);
+    const fullPayload = getFullMealPlanTemplatePayload([
+      {
+        ...createBuilderDay(1),
+        name: " ",
+        meals: [{ id: "m1", name: " ", notes: "coach notes", foods: [templateFood] }]
+      }
+    ]);
+    const emptyFullPayload = getFullMealPlanTemplatePayload([]);
+
+    expect(templateDays[0]).toMatchObject({ name: "Day 1", meals: [expect.objectContaining({ name: "Meal 1" })] });
+    expect(fallbackDays[0]).toMatchObject({ name: "Day 1" });
+    expect(fullPayload.days?.[0]?.meals[0]).toMatchObject({ meal: "Meal", notes: "coach notes" });
+    expect(emptyFullPayload.days?.[0]?.meals[0].meal).toBe("Main Meal");
+
+    const dayTotals = createMacroBuilderDay(1, { protein: "150", carbs: "220", fats: "70", calories: "2100", meals: [] });
+    const mealTotals = createMacroBuilderDay(2, {
+      meals: [
+        createMacroBuilderMeal(1, { title: "", protein: "30", carbs: "45", fats: "10", calories: "390" }),
+        createMacroBuilderMeal(2, { title: "Dinner", protein: "bad", carbs: "20", fats: "5", calories: "200" })
+      ]
+    });
+
+    expect(calculateMacroDayTotals(dayTotals, false)).toEqual({ calories: 2100, protein: 150, carbs: 220, fats: 70 });
+    expect(calculateMacroDayTotals(mealTotals, true)).toEqual({ calories: 590, protein: 30, carbs: 65, fats: 15 });
+    expect(calculateMacroPlanSummary([dayTotals, mealTotals], true)).toEqual({ calories: 590, protein: 30, carbs: 65, fats: 15 });
+    expect(getMacroMealPlanTemplatePayload([mealTotals], true).days?.[0]?.meals[0].meal).toBe("Meal 1");
+    expect(getMacroMealPlanTemplatePayload([], false).days?.[0]?.meals[0].foods[0]).toMatchObject({
+      foodName: "Daily macro target",
+      servingSize: "Macro target"
+    });
+  });
+
+  it("imports meal templates and appends them to existing plans with fallback meals", () => {
+    const templateTotals = calculateTemplateTotals({
+      days: [
+        {
+          name: "Day 1",
+          meals: [
+            {
+              meal: "Breakfast",
+              foods: [
+                { foodName: "Oats", servingSize: "60 g", calories: 220, proteinGrams: 8, carbsGrams: 38, fatGrams: 4 },
+                { foodName: "Whey", servingSize: "30 g", calories: 120, proteinGrams: 24, carbsGrams: 2, fatGrams: 1 }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+    const templateCard = {
+      id: "template-card",
+      name: "Breakfast Template",
+      description: "Meal template",
+      calories: 340,
+      protein: 32,
+      carbs: 40,
+      fats: 5,
+      badge: "published",
+      apiTemplate: null,
+      template: {
+        days: [
+          {
+            name: "Template day",
+            meals: [
+              {
+                meal: "",
+                notes: "import notes",
+                foods: [{ foodName: "Eggs", servingSize: "2 eggs", calories: 140, proteinGrams: 12, carbsGrams: 1, fatGrams: 10 }]
+              }
+            ]
+          }
+        ]
+      }
+    };
+    const fallbackTemplateCard = {
+      ...templateCard,
+      id: "fallback-card",
+      template: null,
+      apiTemplate: {
+        id: "fallback-template",
+        name: "Breakfast Template",
+        phase: null,
+        targetCalories: 340,
+        proteinGrams: 32,
+        carbsGrams: 40,
+        fatGrams: 5,
+        status: "draft" as const,
+        updatedAt: "2026-06-01T00:00:00.000Z",
+        template: { days: [] }
+      }
+    };
+    const planTemplate = {
+      id: "plan",
+      name: "Client Plan",
+      phase: null,
+      targetCalories: 2400,
+      proteinGrams: 170,
+      carbsGrams: 250,
+      fatGrams: 70,
+      status: "archived" as const,
+      updatedAt: "2026-06-01T00:00:00.000Z",
+      template: { days: [] }
+    };
+
+    expect(templateTotals).toEqual({ calories: 340, protein: 32, carbs: 40, fats: 5 });
+    expect(createBuilderMealsFromMealTemplate(templateCard)[0]).toMatchObject({ name: "Breakfast Template", notes: "import notes" });
+    expect(createBuilderMealsFromMealTemplate(fallbackTemplateCard)[0]).toMatchObject({
+      name: "Breakfast Template",
+      foods: [expect.objectContaining({ serving: "Template meal" })]
+    });
+    expect(appendMealTemplateToPlanTemplate(planTemplate, templateCard)).toMatchObject({
+      name: "Client Plan",
+      phase: "Full meal plan",
+      status: "draft",
+      template: { days: [expect.objectContaining({ meals: [expect.objectContaining({ meal: "Breakfast Template" })] })] }
+    });
+    expect(appendMealTemplateToPlanTemplate(planTemplate, fallbackTemplateCard).template.days?.[0]?.meals[0]).toMatchObject({
+      meal: "Breakfast Template",
+      foods: [expect.objectContaining({ servingSize: "Meal template" })]
+    });
+  });
+
+  it("converts and displays builder food quantities across measurement branches", () => {
+    expect(parseServingAmount("100 grams, boneless")).toEqual({ amount: 100, unit: "g" });
+    expect(parseServingAmount("250 millilitres")).toEqual({ amount: 250, unit: "ml" });
+    expect(parseServingAmount("2 ounces")).toEqual({ amount: 2, unit: "oz" });
+    expect(parseServingAmount("single serve")).toBeNull();
+
+    expect(normaliseServingUnit("grams")).toBe("g");
+    expect(normaliseServingUnit("milliliter")).toBe("ml");
+    expect(normaliseServingUnit("ounces")).toBe("oz");
+    expect(normaliseServingUnit("cups")).toBe("cups");
+    expect(normaliseServingUnit("unknown")).toBe("serving");
+
+    expect(convertMeasurementToServingUnit(2, "oz", "g")).toBeCloseTo(56.699);
+    expect(convertMeasurementToServingUnit(56.699, "g", "oz")).toBeCloseTo(2);
+    expect(convertMeasurementToServingUnit(1, "cups", "ml")).toBe(250);
+    expect(convertMeasurementToServingUnit(2, "tbsp", "ml")).toBe(30);
+    expect(convertMeasurementToServingUnit(3, "tsp", "ml")).toBe(15);
+    expect(convertMeasurementToServingUnit(4, "serving", "serving")).toBe(4);
+    expect(convertMeasurementToServingUnit(1, "cups", "g")).toBeNull();
+
+    expect(getFoodQuantityMultiplier({ serving: "100 g" }, 50, "g")).toBe(0.5);
+    expect(getFoodQuantityMultiplier({ serving: "100 g" }, 1, "oz")).toBeCloseTo(0.283495);
+    expect(getFoodQuantityMultiplier({ serving: "1 oz" }, 28.3495, "g")).toBeCloseTo(1);
+    expect(getFoodQuantityMultiplier({ serving: "250 ml" }, 1, "cups")).toBe(1);
+    expect(getFoodQuantityMultiplier({ serving: "250 ml" }, 2, "tbsp")).toBe(0.12);
+    expect(getFoodQuantityMultiplier({ serving: "250 ml" }, 5, "tsp")).toBe(0.1);
+    expect(getFoodQuantityMultiplier({ serving: "serving" }, 3, "serving")).toBe(3);
+    expect(getFoodQuantityMultiplier({ serving: "100 g" }, 2, "cups")).toBe(2);
+
+    expect(getFoodQuantityDisplay({ serving: "100 g", quantity: 0.5, measurementUnit: "g" } as never)).toEqual({
+      amount: 50,
+      unit: "g"
+    });
+    expect(getFoodQuantityDisplay({ serving: "100 g", quantity: 1, measurementUnit: "oz" } as never)).toEqual({
+      amount: expect.closeTo(3.5274),
+      unit: "oz"
+    });
+    expect(getFoodQuantityDisplay({ serving: "1 oz", quantity: 2, measurementUnit: "g" } as never)).toEqual({
+      amount: expect.closeTo(56.699),
+      unit: "g"
+    });
+    expect(getFoodQuantityDisplay({ serving: "250 ml", quantity: 1, measurementUnit: "cups" } as never)).toEqual({
+      amount: 1,
+      unit: "cups"
+    });
+    expect(getFoodQuantityDisplay({ serving: "250 ml", quantity: 1, measurementUnit: "tbsp" } as never)).toEqual({
+      amount: expect.closeTo(16.6667),
+      unit: "tbsp"
+    });
+    expect(getFoodQuantityDisplay({ serving: "250 ml", quantity: 1, measurementUnit: "tsp" } as never)).toEqual({
+      amount: 50,
+      unit: "tsp"
+    });
+    expect(getFoodQuantityDisplay({ serving: "single serve", quantity: 1 } as never)).toEqual({
+      amount: 1,
+      unit: "serving"
+    });
+    expect(getFoodQuantityDisplay({ serving: "single serve", quantity: 2 } as never)).toEqual({
+      amount: 2,
+      unit: "servings"
+    });
+
+    expect(parseMealBuilderNumberInput("42.5")).toBe(42.5);
+    expect(parseMealBuilderNumberInput("not a number")).toBe(0);
+    expect(formatMealBuilderServingSize({ servingSize: " 120 ", servingDescription: "g" } as never)).toBe("120 g");
+    expect(formatMealBuilderServingSize({ servingSize: " ", servingDescription: "serving" } as never)).toBe("serving");
+  });
+});
+
+describe("food database view model helpers", () => {
+  it("normalizes food source, verification, macro, nutrient, and pagination branches", () => {
+    const legacyFood = {
+      id: "legacy-food",
+      name: "Legacy Chicken",
+      category: "Protein",
+      source: "AUS/NZ",
+      serving: "100 g",
+      calories: 165,
+      protein: 31,
+      carbs: 0,
+      fats: 3.6,
+      fibre: 0,
+      micronutrients: { vitaminA: 12, customNutrientGrams: 1.25, bad: Number.NaN }
+    } as const;
+    const privateFood = {
+      id: "private-food",
+      scope: "private",
+      name: "Coach Food",
+      category: "Custom",
+      servingSize: "1 Grams",
+      calories: 100,
+      proteinGrams: 10,
+      carbsGrams: 20,
+      fatGrams: 5,
+      fiberGrams: null,
+      metadata: {
+        source: "AUS-NZ",
+        sourceId: "fsanz_ausnut",
+        sourceVersion: "ignored",
+        servingDescription: "ignored",
+        nutrientsPer100g: [
+          { name: "calcium", unit: "mg", value: 120, sourceNutrientId: "ca" },
+          { name: "Imported Zinc", unit: "mg", value: 2 },
+          { name: "Bad", unit: "mg", value: "2" }
+        ]
+      }
+    } as const;
+    const efsaFood = {
+      ...privateFood,
+      id: "efsa-food",
+      scope: "global",
+      metadata: { source: "EU", sourceId: "efsa_foodex2", vitaminD: 10, sugarGrams: 4 }
+    } as const;
+    const usdaFood = { ...privateFood, id: "usda-food", metadata: { sourceId: "usda_fdc", magnesium: 22 } } as const;
+
+    expect(getFoodServing(legacyFood)).toBe("100 g");
+    expect(getFoodServing(privateFood)).toBe("1 Grams");
+    expect(parseNumberInput("12.5")).toBe(12.5);
+    expect(parseNumberInput("bad")).toBe(0);
+    expect(formatServingSize({ servingSize: " 250 ", servingDescription: "Ml" } as never)).toBe("250 Ml");
+    expect(formatServingSize({ servingSize: " ", servingDescription: "Grams" } as never)).toBe("Grams");
+    expect(getFoodSource(legacyFood)).toBe("AUS/NZ");
+    expect(getFoodSource(privateFood)).toBe("AUS/NZ");
+    expect(getFoodSource(efsaFood)).toBe("EFSA");
+    expect(getFoodSource(usdaFood)).toBe("USDA");
+    expect(getFoodSource({ ...privateFood, metadata: { source: "unknown" } })).toBe("USDA");
+    expect(isVerifiedFood(legacyFood)).toBe(true);
+    expect(isVerifiedFood(privateFood)).toBe(false);
+    expect(isVerifiedFood(efsaFood)).toBe(true);
+    expect(isDeletableFood(legacyFood)).toBe(false);
+    expect(isDeletableFood(privateFood)).toBe(true);
+    expect(getSourceDescription("AUS/NZ")).toBe("Australia & New Zealand");
+    expect(getSourceDescription("UNKNOWN" as never)).toBe("Verified food library");
+
+    expect(getFoodMacro(legacyFood, "protein")).toBe(31);
+    expect(getFoodMacro(legacyFood, "carbs")).toBe(0);
+    expect(getFoodMacro(legacyFood, "fats")).toBe(3.6);
+    expect(getFoodMacro(privateFood, "protein")).toBe(10);
+    expect(getFoodMacro(privateFood, "carbs")).toBe(20);
+    expect(getFoodMacro(privateFood, "fats")).toBe(5);
+    expect(getFoodFibre(legacyFood)).toBe(0);
+    expect(getFoodFibre(privateFood)).toBe(0);
+    expect(getFoodMacroRows(privateFood).map((row) => row.label)).toEqual(["Calories", "Protein", "Carbs", "Fats", "Fibre"]);
+    expect(isApiFood(privateFood)).toBe(true);
+    expect(isApiFood(legacyFood)).toBe(false);
+
+    expect(getDetailedNutrientRows(legacyFood).map((row) => row.label)).toEqual(["Custom Nutrient", "Vitamin A"]);
+    expect(getMetadataNutrientRows(null)).toEqual([]);
+    expect(getMetadataNutrientRows(privateFood.metadata).map((row) => row.label)).toEqual(["Calcium", "Imported Zinc"]);
+    expect(getMetadataNutrientRows(efsaFood.metadata)).toEqual([
+      { key: "sugarGrams", label: "Sugars", value: "4 g" },
+      { key: "vitaminD", label: "Vitamin D", value: "10 IU" }
+    ]);
+    expect(isImportedNutrient(null)).toBe(false);
+    expect(isImportedNutrient({ name: "Calcium", unit: "mg", value: 10 })).toBe(true);
+    expect(isImportedNutrient({ name: "Calcium", unit: "mg", value: "10" })).toBe(false);
+
+    expect(getPaginationPages(2, 5)).toEqual([1, 2, 3, 4, 5]);
+    expect(getPaginationPages(10, 20)).toEqual([1, 9, 10, 11, 20]);
+    expect(getPaginationPages(1, 20)).toEqual([1, 2, 20]);
+    expect(inferNutrientUnit("sugarGrams")).toBe("g");
+    expect(inferNutrientUnit("transFat")).toBe("g");
+    expect(inferNutrientUnit("calcium")).toBe("mg");
+    expect(toTitleLabel("customNutrientGrams")).toBe("Custom Nutrient");
+    expect(formatNutrientValue(10)).toBe("10");
+    expect(formatNutrientValue(10.25)).toBe("10.3");
+    expect(getFoodImageSrc("Chicken Breast")).toContain("data:image/svg+xml");
+    expect(getFoodImageSrc("Unknown Food")).toContain("data:image/svg+xml");
   });
 });
 

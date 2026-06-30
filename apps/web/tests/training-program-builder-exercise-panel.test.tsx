@@ -2,10 +2,235 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import {
+  buildCustomExerciseNotes,
+  createBlankTrainingDay,
+  createBlankTrainingProgramDraft,
+  createTrainingProgramDraftFromTemplate,
+  getBuilderExerciseMeta,
+  getCustomExerciseApiPayload,
+  getEmbeddableExerciseVideoUrl,
+  getProgramSectionLabel,
+  getTrainingProgramTemplatePayload,
+  parseOptionalNumber,
+  parsePositiveInteger
+} from "@/components/training/training-program-builder";
 import { TrainingProgramsPage } from "@/components/training/training-programs-page";
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+describe("training program builder view model helpers", () => {
+  it("builds drafts, template payloads, video embeds, notes, and exercise metadata", () => {
+    const blankDraft = createBlankTrainingProgramDraft();
+    const blankDay = createBlankTrainingDay(3);
+
+    expect(blankDraft).toMatchObject({ sourceTemplateId: null, title: "", durationWeeks: "8", activeDayId: "day-1" });
+    expect(blankDay).toEqual({ id: "day-3", name: "Day 3", exercises: [] });
+    expect(parsePositiveInteger("5", 3)).toBe(5);
+    expect(parsePositiveInteger("0", 3)).toBe(3);
+    expect(parsePositiveInteger("bad", 3)).toBe(3);
+    expect(parseOptionalNumber("8.5")).toBe(8.5);
+    expect(parseOptionalNumber("bad")).toBeNull();
+
+    const template = {
+      id: "template-1",
+      name: "Hypertrophy",
+      description: null,
+      goal: null,
+      template: {
+        instructions: undefined,
+        days: [
+          {
+            name: "",
+            exercises: [
+              {
+                exerciseName: "Back Squat",
+                sets: 4,
+                reps: "6-8",
+                restSeconds: undefined,
+                section: undefined
+              }
+            ]
+          }
+        ]
+      }
+    };
+    const copiedDraft = createTrainingProgramDraftFromTemplate(template);
+    const editableDraft = createTrainingProgramDraftFromTemplate({ ...template, template: { days: [] } }, { copy: false });
+    const payload = getTrainingProgramTemplatePayload(
+      {
+        ...blankDraft,
+        title: " ",
+        tags: " ",
+        durationWeeks: "bad",
+        overview: " ",
+        instructions: "  keep bracing  ",
+        days: [
+          {
+            id: "day-1",
+            name: " ",
+            exercises: [
+              {
+                id: "exercise-1",
+                section: "workout",
+                exerciseName: " ",
+                sets: "0",
+                reps: " ",
+                rpe: " 8 ",
+                rir: " 2 ",
+                restSeconds: "",
+                customVideoUrl: "https://youtu.be/abc123",
+                customVideoFileName: "demo.mp4"
+              }
+            ]
+          }
+        ]
+      },
+      7
+    );
+
+    expect(copiedDraft).toMatchObject({
+      sourceTemplateId: null,
+      title: "Hypertrophy Copy",
+      tags: "",
+      durationWeeks: "1",
+      overview: "",
+      instructions: "",
+      days: [expect.objectContaining({ name: "Day 1" })]
+    });
+    expect(copiedDraft.days[0]?.exercises[0]).toMatchObject({ section: "workout", restSeconds: "" });
+    expect(editableDraft).toMatchObject({ sourceTemplateId: "template-1", title: "Hypertrophy", durationWeeks: "1" });
+    expect(payload).toMatchObject({
+      name: "Strength Template 7",
+      description: "Coach-created template from the program library.",
+      goal: "custom",
+      durationWeeks: 1,
+      status: "draft",
+      template: {
+        instructions: "keep bracing",
+        days: [
+          {
+            name: "Day 1",
+            exercises: [
+              expect.objectContaining({
+                exerciseId: "manual-entry",
+                exerciseName: "Manual Exercise",
+                sets: 3,
+                reps: "8-10",
+                restSeconds: 120,
+                notes: "Video link: https://youtu.be/abc123\nUploaded video: demo.mp4"
+              })
+            ]
+          }
+        ]
+      }
+    });
+
+    expect(getEmbeddableExerciseVideoUrl()).toBeNull();
+    expect(getEmbeddableExerciseVideoUrl("not a url")).toBeNull();
+    expect(getEmbeddableExerciseVideoUrl("https://www.youtube.com/watch?v=abc123")).toBe("https://www.youtube.com/embed/abc123");
+    expect(getEmbeddableExerciseVideoUrl("https://m.youtube.com/watch")).toBeNull();
+    expect(getEmbeddableExerciseVideoUrl("https://youtu.be/shortid")).toBe("https://www.youtube.com/embed/shortid");
+    expect(getEmbeddableExerciseVideoUrl("https://vimeo.com/12345")).toBe("https://player.vimeo.com/video/12345");
+    expect(getEmbeddableExerciseVideoUrl("https://example.com/video")).toBeNull();
+    expect(
+      buildCustomExerciseNotes({
+        id: "exercise-1",
+        section: "workout",
+        exerciseName: "Manual Exercise",
+        sets: "3",
+        reps: "8-10",
+        rpe: "",
+        rir: "",
+        restSeconds: "120",
+        customVideoUrl: "",
+        customVideoFileName: ""
+      })
+    ).toBe("");
+    expect(getProgramSectionLabel("warmUp")).toBe("Warm up");
+    expect(getProgramSectionLabel("workout")).toBe("Workout");
+    expect(getProgramSectionLabel("coolDown")).toBe("Cool Down");
+    expect(getBuilderExerciseMeta({ id: "legacy", name: "Legacy", category: "Legs", variations: 4 } as never)).toBe("Legs - 4 variations");
+    expect(
+      getBuilderExerciseMeta({
+        id: "api",
+        name: "Api Exercise",
+        category: "Back",
+        scope: "global",
+        equipment: "Cable",
+        difficulty: "intermediate",
+        videoObjectKey: null,
+        primaryMuscles: ["Lats", "Biceps"]
+      })
+    ).toBe("Back - Cable - Lats, Biceps");
+    expect(
+      getBuilderExerciseMeta({
+        id: "api-empty",
+        name: "Api Exercise",
+        category: "Mobility",
+        scope: "global",
+        equipment: null,
+        difficulty: "beginner",
+        videoObjectKey: null,
+        primaryMuscles: []
+      })
+    ).toBe("Mobility - No muscles tagged");
+  });
+
+  it("builds organization exercise payloads with defaults and optional media fields", () => {
+    expect(
+      getCustomExerciseApiPayload({
+        exerciseName: "Tempo Goblet Squat",
+        bodyPart: "Quads",
+        sets: "",
+        reps: " ",
+        restSeconds: "0",
+        rpe: "",
+        rir: " ",
+        videoUrl: "",
+        videoObjectKey: "",
+        videoFileName: ""
+      })
+    ).toEqual({
+      name: "Tempo Goblet Squat",
+      category: "Quads",
+      primaryMuscles: ["Quads"],
+      difficulty: "intermediate",
+      defaultSets: 3,
+      defaultReps: "8-10",
+      defaultRestSeconds: 120
+    });
+
+    expect(
+      getCustomExerciseApiPayload({
+        exerciseName: "Cable Pulldown",
+        bodyPart: "Back",
+        sets: "4",
+        reps: "10-12",
+        restSeconds: "75",
+        rpe: "8.5",
+        rir: "2",
+        videoUrl: "https://example.com/pulldown",
+        videoObjectKey: "organizations/org_1/training/exercises/video/pulldown.mp4",
+        videoFileName: "pulldown.mp4"
+      })
+    ).toEqual({
+      name: "Cable Pulldown",
+      category: "Back",
+      primaryMuscles: ["Back"],
+      difficulty: "intermediate",
+      defaultSets: 4,
+      defaultReps: "10-12",
+      defaultRestSeconds: 75,
+      defaultRpe: 8.5,
+      defaultRir: "2",
+      videoUrl: "https://example.com/pulldown",
+      videoObjectKey: "organizations/org_1/training/exercises/video/pulldown.mp4",
+      executionCues: ["Uploaded video file: pulldown.mp4"]
+    });
+  });
 });
 
 async function addCustomExercise(

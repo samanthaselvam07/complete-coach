@@ -778,17 +778,17 @@ function MicronutrientSection({ title, fields }: { title: string; fields: string
   );
 }
 
-function getFoodServing(food: ApiFood | Food) {
+export function getFoodServing(food: ApiFood | Food) {
   return "serving" in food ? food.serving : food.servingSize;
 }
 
-function parseNumberInput(value: string) {
+export function parseNumberInput(value: string) {
   const parsed = Number.parseFloat(value);
 
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function formatServingSize(form: NewFoodFormState) {
+export function formatServingSize(form: NewFoodFormState) {
   const servingSize = form.servingSize.trim();
 
   if (!servingSize) {
@@ -798,7 +798,7 @@ function formatServingSize(form: NewFoodFormState) {
   return `${servingSize} ${form.servingDescription}`;
 }
 
-function getFoodSource(food: ApiFood | Food): FoodDatabaseSource {
+export function getFoodSource(food: ApiFood | Food): FoodDatabaseSource {
   if (!isApiFood(food)) {
     return food.source;
   }
@@ -828,19 +828,19 @@ function getFoodSource(food: ApiFood | Food): FoodDatabaseSource {
   return "USDA";
 }
 
-function isVerifiedFood(food: ApiFood | Food) {
+export function isVerifiedFood(food: ApiFood | Food) {
   return "scope" in food ? food.scope === "global" : true;
 }
 
-function isDeletableFood(food: ApiFood | Food) {
+export function isDeletableFood(food: ApiFood | Food) {
   return "scope" in food && food.scope === "private";
 }
 
-function getSourceDescription(source: FoodDatabaseSource) {
+export function getSourceDescription(source: FoodDatabaseSource) {
   return databaseSources.find((databaseSource) => databaseSource.id === source)?.detail ?? "Verified food library";
 }
 
-function getFoodMacro(food: ApiFood | Food, macro: "protein" | "carbs" | "fats") {
+export function getFoodMacro(food: ApiFood | Food, macro: "protein" | "carbs" | "fats") {
   if ("protein" in food) {
     return macro === "protein" ? food.protein : macro === "carbs" ? food.carbs : food.fats;
   }
@@ -848,7 +848,7 @@ function getFoodMacro(food: ApiFood | Food, macro: "protein" | "carbs" | "fats")
   return macro === "protein" ? food.proteinGrams : macro === "carbs" ? food.carbsGrams : food.fatGrams;
 }
 
-function getFoodFibre(food: ApiFood | Food) {
+export function getFoodFibre(food: ApiFood | Food) {
   if ("fibre" in food) {
     return food.fibre;
   }
@@ -856,7 +856,7 @@ function getFoodFibre(food: ApiFood | Food) {
   return food.fiberGrams ?? 0;
 }
 
-function getFoodMacroRows(food: ApiFood | Food) {
+export function getFoodMacroRows(food: ApiFood | Food) {
   return [
     { label: "Calories", value: `${formatNutrientValue(food.calories)} kcal`, tone: "text-slate-950" },
     { label: "Protein", value: `${formatNutrientValue(getFoodMacro(food, "protein"))} g`, tone: "text-blue-600" },
@@ -866,7 +866,7 @@ function getFoodMacroRows(food: ApiFood | Food) {
   ];
 }
 
-function getDetailedNutrientRows(food: ApiFood | Food) {
+export function getDetailedNutrientRows(food: ApiFood | Food) {
   if (isApiFood(food)) {
     return getMetadataNutrientRows(food.metadata);
   }
@@ -881,11 +881,11 @@ function getDetailedNutrientRows(food: ApiFood | Food) {
     .sort((first, second) => first.label.localeCompare(second.label));
 }
 
-function isApiFood(food: ApiFood | Food): food is ApiFood {
+export function isApiFood(food: ApiFood | Food): food is ApiFood {
   return "servingSize" in food;
 }
 
-function getMetadataNutrientRows(metadata: ApiFood["metadata"]) {
+export function getMetadataNutrientRows(metadata: ApiFood["metadata"]) {
   if (!metadata) {
     return [];
   }
@@ -911,7 +911,7 @@ function getMetadataNutrientRows(metadata: ApiFood["metadata"]) {
     .sort((first, second) => first.label.localeCompare(second.label));
 }
 
-function isImportedNutrient(value: unknown): value is { name: string; unit: string; value: number; sourceNutrientId?: string } {
+export function isImportedNutrient(value: unknown): value is { name: string; unit: string; value: number; sourceNutrientId?: string } {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -921,7 +921,7 @@ function isImportedNutrient(value: unknown): value is { name: string; unit: stri
   return typeof candidate.name === "string" && typeof candidate.unit === "string" && typeof candidate.value === "number";
 }
 
-function getPaginationPages(currentPage: number, totalPages: number) {
+export function getPaginationPages(currentPage: number, totalPages: number) {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, index) => index + 1);
   }
@@ -1009,22 +1009,22 @@ const nutrientUnits: Record<string, string> = {
   cholesterol: "mg"
 };
 
-function inferNutrientUnit(key: string) {
+export function inferNutrientUnit(key: string) {
   return key.endsWith("Grams") || key.toLowerCase().includes("fat") || key.toLowerCase().includes("sugar") ? "g" : "mg";
 }
 
-function toTitleLabel(value: string) {
+export function toTitleLabel(value: string) {
   return value
     .replace(/Grams$/, "")
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function formatNutrientValue(value: number) {
+export function formatNutrientValue(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
 }
 
-function getFoodImageSrc(name: string) {
+export function getFoodImageSrc(name: string) {
   const palettes: Record<string, { bg: string; fg: string }> = {
     "Chicken Breast": { bg: "#f3d4d4", fg: "#9f1239" },
     "Basmati Rice": { bg: "#eee5d1", fg: "#92400e" },
