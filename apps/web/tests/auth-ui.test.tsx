@@ -124,7 +124,7 @@ describe("auth UI", () => {
     fireEvent.change(screen.getByLabelText(/business name/i), {
       target: { value: "Demo Coaching" }
     });
-    fireEvent.click(screen.getByRole("button", { name: /create clean workspace/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
 
     await screen.findByText(/workspace created/i);
 

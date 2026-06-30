@@ -111,7 +111,6 @@ export function SignUpForm() {
             setPassword(event.target.value);
           }}
         />
-        <p className="text-xs text-slate-500">Use at least 8 characters.</p>
       </div>
 
       <div className="space-y-2">
@@ -147,7 +146,7 @@ export function SignUpForm() {
         disabled={status === "submitting"}
         className="h-11 w-full rounded-xl bg-indigo-700 text-white hover:bg-indigo-800"
       >
-        {status === "submitting" ? "Creating workspace..." : "Create clean workspace"}
+        {status === "submitting" ? "Signing up..." : "Sign up"}
       </Button>
     </form>
   );

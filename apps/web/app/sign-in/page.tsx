@@ -1,4 +1,3 @@
-import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -12,43 +11,18 @@ export default function SignInPage() {
   }
 
   return (
-    <section className="min-h-[calc(100vh-5rem)] bg-[radial-gradient(circle_at_top_left,rgba(79,70,229,0.16),transparent_32rem),linear-gradient(135deg,#f8fafc_0%,#eef2ff_100%)] px-8 py-12">
-      <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/80 px-4 py-2 text-sm font-semibold text-indigo-700 shadow-sm">
-            <ShieldCheck className="size-4" aria-hidden="true" />
-            Secure coach workspace
-          </div>
-          <h1 className="max-w-3xl text-5xl font-black tracking-tight text-slate-950">
-            Sign in to manage clients, programming, and team operations.
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-            Complete Coach now uses Auth.js with Neon-backed users and organization memberships.
-            Product surfaces now load their records from the Neon-backed application APIs.
+    <section className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-slate-50 px-6 py-12">
+      <Card className="w-full max-w-md border-slate-200 bg-white shadow-xl shadow-slate-950/5">
+        <CardContent className="p-8">
+          <h1 className="mb-8 text-center text-3xl font-black tracking-tight text-slate-950">Sign in</h1>
+          <SignInForm />
+          <p className="mt-6 text-center text-sm text-slate-600">
+            <Link href="/sign-up" className="font-bold text-indigo-700 hover:text-indigo-900">
+              Sign up
+            </Link>
           </p>
-        </div>
-
-        <Card className="border-indigo-100 bg-white/95 shadow-2xl shadow-indigo-950/10">
-          <CardContent className="p-8">
-            <div className="mb-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700">
-                Complete Coach
-              </p>
-              <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Welcome back</h2>
-              <p className="mt-2 text-sm text-slate-600">
-                Use the owner credentials configured through the environment.
-              </p>
-            </div>
-            <SignInForm />
-            <p className="mt-6 text-center text-sm text-slate-600">
-              New to Complete Coach?{" "}
-              <Link href="/sign-up" className="font-bold text-indigo-700 hover:text-indigo-900">
-                Create a clean workspace
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
     </section>
   );
 }

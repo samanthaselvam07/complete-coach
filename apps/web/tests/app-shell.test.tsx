@@ -317,8 +317,8 @@ describe("dashboard shell auth boundary", () => {
   });
 
   it.each([
-    ["/sign-in", "Welcome back"],
-    ["/sign-up", "Create your workspace"]
+    ["/sign-in", "Sign in"],
+    ["/sign-up", "Sign up"]
   ])("renders public route %s without app navigation for signed-out users", (pathname, heading) => {
     navigationMocks.pathname = pathname;
 
