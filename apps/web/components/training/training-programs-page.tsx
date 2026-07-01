@@ -196,10 +196,14 @@ export function TrainingProgramsPage() {
     [assignmentRows, hiddenProgramIds, localProgramRows, programSearchQuery]
   );
 
-  async function createTemplateFromDraft(draft: TrainingProgramDraft) {
+  async function createTemplateFromDraft(
+    draft: TrainingProgramDraft,
+    options: { closeBuilder?: boolean; successMessage?: string; throwOnError?: boolean } = {}
+  ) {
     setSaving(true);
     setStatusMessage(null);
     setErrorMessage(null);
+    const closeBuilder = options.closeBuilder ?? true;
 
     try {
       const response = await fetch("/api/v1/training-program-templates", {
@@ -220,12 +224,17 @@ export function TrainingProgramsPage() {
 
       setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
       setSource("api");
-      setActiveTab("Program templates");
-      setProgramDraft(null);
-      setCreationDialogMode(null);
-      setStatusMessage("Program template saved.");
-    } catch {
+      if (closeBuilder) {
+        setActiveTab("Program templates");
+        setProgramDraft(null);
+        setCreationDialogMode(null);
+      }
+      setStatusMessage(options.successMessage ?? "Program template saved.");
+    } catch (error) {
       setErrorMessage("Program template could not be saved to the database.");
+      if (options.throwOnError) {
+        throw error;
+      }
     } finally {
       setSaving(false);
     }
@@ -411,6 +420,13 @@ export function TrainingProgramsPage() {
         onCancel={() => setProgramDraft(null)}
         onSave={() => void saveCustomProgramFromDraft(programDraft)}
         onSaveAsTemplate={() => createTemplateFromDraft(programDraft)}
+        onSaveDayAsTemplate={(dayDraft) =>
+          createTemplateFromDraft(dayDraft, {
+            closeBuilder: false,
+            successMessage: `${dayDraft.title} saved as a template.`,
+            throwOnError: true
+          })
+        }
       />
     );
   }

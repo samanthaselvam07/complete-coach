@@ -6,7 +6,9 @@ import {
   buildCustomExerciseNotes,
   createBlankTrainingDay,
   createBlankTrainingProgramDraft,
+  createTrainingProgramDraftForDayTemplate,
   createTrainingProgramDraftFromTemplate,
+  duplicateTrainingDay,
   getBuilderExerciseMeta,
   getCustomExerciseApiPayload,
   getEmbeddableExerciseVideoUrl,
@@ -25,9 +27,42 @@ describe("training program builder view model helpers", () => {
   it("builds drafts, template payloads, video embeds, notes, and exercise metadata", () => {
     const blankDraft = createBlankTrainingProgramDraft();
     const blankDay = createBlankTrainingDay(3);
+    const duplicatedDay = duplicateTrainingDay(
+      {
+        id: "day-source",
+        name: "Lower Body",
+        exercises: [
+          {
+            id: "exercise-source",
+            section: "workout",
+            exerciseName: "Back Squat",
+            sets: "4",
+            reps: "6-8",
+            rpe: "8",
+            rir: "2",
+            restSeconds: "180"
+          }
+        ]
+      },
+      2,
+      "Lower Body Copy"
+    );
+    const singleDayDraft = createTrainingProgramDraftForDayTemplate(
+      { ...blankDraft, title: "Hypertrophy", days: [duplicatedDay], activeDayId: duplicatedDay.id },
+      duplicatedDay
+    );
 
     expect(blankDraft).toMatchObject({ sourceTemplateId: null, title: "", durationWeeks: "8", activeDayId: "day-1" });
     expect(blankDay).toEqual({ id: "day-3", name: "Day 3", exercises: [] });
+    expect(duplicatedDay).toMatchObject({ name: "Lower Body Copy", exercises: [expect.objectContaining({ exerciseName: "Back Squat" })] });
+    expect(duplicatedDay.id).not.toBe("day-source");
+    expect(duplicatedDay.exercises[0]?.id).not.toBe("exercise-source");
+    expect(singleDayDraft).toMatchObject({
+      sourceTemplateId: null,
+      title: "Hypertrophy - Lower Body Copy",
+      durationWeeks: "1",
+      days: [duplicatedDay]
+    });
     expect(parsePositiveInteger("5", 3)).toBe(5);
     expect(parsePositiveInteger("0", 3)).toBe(3);
     expect(parsePositiveInteger("bad", 3)).toBe(3);
@@ -270,6 +305,77 @@ async function addCustomExercise(
 }
 
 describe("Training program builder exercise panel", () => {
+  it("supports day-level duplicate, delete, and save day as template actions", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/training-program-templates?limit=100") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/training-program-assignments?limit=100") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/training-program-templates" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "template-lower-body",
+                name: "Lower Body",
+                description: "Coach-created template from the program library.",
+                goal: "custom",
+                durationWeeks: 1,
+                status: "published",
+                template: JSON.parse(String(init.body)).template,
+                updatedAt: "2026-07-01T00:00:00.000Z"
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(TrainingProgramsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
+
+    expect(screen.getByRole("button", { name: "Delete day" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add training day" }));
+    fireEvent.change(screen.getByLabelText(/Day Name/i), { target: { value: "Lower Body" } });
+    fireEvent.click(screen.getByRole("button", { name: "Duplicate day" }));
+
+    expect(screen.getByDisplayValue("Lower Body Copy")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete day" }));
+
+    expect(screen.getByDisplayValue("Lower Body")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete day" })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save day as template" }));
+
+    await waitFor(() => {
+      const createCall = fetchMock.mock.calls.find(
+        ([input, init]) => input === "/api/v1/training-program-templates" && init?.method === "POST"
+      );
+
+      expect(createCall).toBeTruthy();
+      const body = JSON.parse(String(createCall?.[1]?.body)) as { name: string; durationWeeks: number; template: { days: Array<{ name: string }> } };
+      expect(body.name).toBe("Lower Body");
+      expect(body.durationWeeks).toBe(1);
+      expect(body.template.days).toEqual([{ name: "Lower Body", exercises: [] }]);
+    });
+
+    expect(await screen.findByText("Lower Body saved as a template.")).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Program builder canvas" })).toBeInTheDocument();
+  });
+
   it("opens a side exercise database in the program builder and adds searched exercises", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);

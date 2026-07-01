@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Copy, GripVertical, PlayCircle, Plus, Search, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Copy, GripVertical, PlayCircle, Plus, Save, Search, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { Exercise } from "@/lib/training/training-models";
@@ -259,7 +259,8 @@ export function TrainingProgramBuilder({
   onDraftChange,
   onCancel,
   onSave,
-  onSaveAsTemplate
+  onSaveAsTemplate,
+  onSaveDayAsTemplate
 }: {
   draft: TrainingProgramDraft;
   saving: boolean;
@@ -267,10 +268,12 @@ export function TrainingProgramBuilder({
   onCancel: () => void;
   onSave: () => void;
   onSaveAsTemplate: () => void;
+  onSaveDayAsTemplate: (draft: TrainingProgramDraft) => Promise<void>;
 }) {
   const activeDay = draft.days.find((day) => day.id === draft.activeDayId) ?? draft.days[0];
   const [exercisePanelSection, setExercisePanelSection] = useState<TrainingProgramSection | null>(null);
   const [customExerciseSection, setCustomExerciseSection] = useState<TrainingProgramSection | null>(null);
+  const [dayTemplateMessage, setDayTemplateMessage] = useState<string | null>(null);
 
   function updateDraft(updates: Partial<TrainingProgramDraft>) {
     onDraftChange({ ...draft, ...updates });
@@ -291,6 +294,47 @@ export function TrainingProgramBuilder({
       activeDayId: newDay.id,
       days: [...draft.days, newDay]
     });
+  }
+
+  function duplicateActiveDay() {
+    const activeDayIndex = draft.days.findIndex((day) => day.id === activeDay.id);
+    const duplicatedDay = duplicateTrainingDay(activeDay, draft.days.length + 1, `${activeDay.name || "Day"} Copy`);
+    const nextDays = [...draft.days];
+    nextDays.splice(activeDayIndex + 1, 0, duplicatedDay);
+
+    onDraftChange({
+      ...draft,
+      activeDayId: duplicatedDay.id,
+      days: nextDays
+    });
+    setDayTemplateMessage(null);
+  }
+
+  function deleteActiveDay() {
+    if (draft.days.length <= 1) {
+      return;
+    }
+
+    const activeDayIndex = draft.days.findIndex((day) => day.id === activeDay.id);
+    const remainingDays = draft.days.filter((day) => day.id !== activeDay.id);
+    const nextActiveDay = remainingDays[Math.max(0, activeDayIndex - 1)] ?? remainingDays[0];
+
+    onDraftChange({
+      ...draft,
+      activeDayId: nextActiveDay.id,
+      days: remainingDays
+    });
+    setDayTemplateMessage(null);
+  }
+
+  async function saveActiveDayAsTemplate() {
+    setDayTemplateMessage(null);
+    try {
+      await onSaveDayAsTemplate(createTrainingProgramDraftForDayTemplate(draft, activeDay));
+      setDayTemplateMessage(`${activeDay.name || "Training day"} saved as a template.`);
+    } catch {
+      setDayTemplateMessage("Day template could not be saved.");
+    }
   }
 
   function addExercise(
@@ -528,6 +572,40 @@ export function TrainingProgramBuilder({
             />
           </label>
 
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              onClick={duplicateActiveDay}
+            >
+              <Copy className="size-4" aria-hidden="true" />
+              Duplicate day
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-sm font-bold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={saving}
+              onClick={() => void saveActiveDayAsTemplate()}
+            >
+              <Save className="size-4" aria-hidden="true" />
+              {saving ? "Saving..." : "Save day as template"}
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={draft.days.length <= 1}
+              onClick={deleteActiveDay}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              Delete day
+            </button>
+          </div>
+          {dayTemplateMessage ? (
+            <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+              {dayTemplateMessage}
+            </p>
+          ) : null}
+
           {(["warmUp", "workout", "coolDown"] as TrainingProgramSection[]).map((section) => (
             <ProgramBuilderSection
               key={section}
@@ -639,6 +717,40 @@ export function createTrainingProgramDraftFromTemplate(
     instructions: template.template.instructions ?? "",
     activeDayId: firstDay.id,
     days: days.length > 0 ? days : [firstDay]
+  };
+}
+
+export function duplicateTrainingDay(
+  day: TrainingProgramDayDraft,
+  dayNumber: number,
+  name = `${day.name || `Day ${dayNumber}`} Copy`
+): TrainingProgramDayDraft {
+  const nextDayId = `day-${dayNumber}-${Date.now()}`;
+
+  return {
+    id: nextDayId,
+    name,
+    exercises: day.exercises.map((exercise, exerciseIndex) => ({
+      ...exercise,
+      id: `${nextDayId}-${exercise.section}-${exerciseIndex + 1}`
+    }))
+  };
+}
+
+export function createTrainingProgramDraftForDayTemplate(
+  draft: TrainingProgramDraft,
+  day: TrainingProgramDayDraft
+): TrainingProgramDraft {
+  const dayName = day.name.trim() || "Training Day";
+  const programTitle = draft.title.trim();
+
+  return {
+    ...draft,
+    sourceTemplateId: null,
+    title: programTitle ? `${programTitle} - ${dayName}` : dayName,
+    durationWeeks: "1",
+    activeDayId: day.id,
+    days: [day]
   };
 }
 
