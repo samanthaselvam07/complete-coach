@@ -535,30 +535,61 @@ export function TrainingProgramBuilder({
             />
           </label>
 
-          <div role="tablist" aria-label="Training days" className="mt-5 flex items-center overflow-hidden rounded-2xl border border-indigo-100 bg-indigo-50/70 p-1">
-            {draft.days.map((day, dayIndex) => (
+          <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-2 xl:flex-row xl:items-center xl:justify-between">
+            <div role="tablist" aria-label="Training days" className="flex min-w-0 flex-wrap items-center gap-1">
+              {draft.days.map((day, dayIndex) => (
+                <button
+                  key={day.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={day.id === draft.activeDayId}
+                  className={cn(
+                    "rounded-xl px-4 py-2.5 text-sm font-bold transition-colors",
+                    day.id === draft.activeDayId ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:bg-white/70 hover:text-slate-900"
+                  )}
+                  onClick={() => updateDraft({ activeDayId: day.id })}
+                >
+                  {day.name || `Day ${dayIndex + 1}`}
+                </button>
+              ))}
               <button
-                key={day.id}
                 type="button"
-                role="tab"
-                aria-selected={day.id === draft.activeDayId}
-                className={cn(
-                  "rounded-xl px-4 py-2.5 text-sm font-bold transition-colors",
-                  day.id === draft.activeDayId ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-900"
-                )}
-                onClick={() => updateDraft({ activeDayId: day.id })}
+                aria-label="Add training day"
+                className="rounded-xl p-2 text-indigo-600 transition-colors hover:bg-white"
+                onClick={addTrainingDay}
               >
-                {day.name || `Day ${dayIndex + 1}`}
+                <Plus className="size-4" aria-hidden="true" />
               </button>
-            ))}
-            <button
-              type="button"
-              aria-label="Add training day"
-              className="ml-2 rounded-xl p-2 text-indigo-600 transition-colors hover:bg-white"
-              onClick={addTrainingDay}
-            >
-              <Plus className="size-4" aria-hidden="true" />
-            </button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-bold text-indigo-700 shadow-sm transition-colors hover:bg-indigo-100"
+                onClick={duplicateActiveDay}
+              >
+                <Copy className="size-4" aria-hidden="true" />
+                Duplicate day
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-bold text-indigo-700 shadow-sm transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={saving}
+                onClick={() => void saveActiveDayAsTemplate()}
+              >
+                <Save className="size-4" aria-hidden="true" />
+                {saving ? "Saving..." : "Save day as template"}
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-bold text-red-600 shadow-sm transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={draft.days.length <= 1}
+                onClick={deleteActiveDay}
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+                Delete day
+              </button>
+            </div>
           </div>
 
           <label className="mt-5 block max-w-2xl text-sm font-bold text-slate-800">
@@ -572,34 +603,6 @@ export function TrainingProgramBuilder({
             />
           </label>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-              onClick={duplicateActiveDay}
-            >
-              <Copy className="size-4" aria-hidden="true" />
-              Duplicate day
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-sm font-bold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={saving}
-              onClick={() => void saveActiveDayAsTemplate()}
-            >
-              <Save className="size-4" aria-hidden="true" />
-              {saving ? "Saving..." : "Save day as template"}
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={draft.days.length <= 1}
-              onClick={deleteActiveDay}
-            >
-              <Trash2 className="size-4" aria-hidden="true" />
-              Delete day
-            </button>
-          </div>
           {dayTemplateMessage ? (
             <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
               {dayTemplateMessage}
