@@ -116,8 +116,19 @@ export function FinancialCard({
       </div>
 
       {loading ? (
-        <div role="status" className="rounded-lg bg-gray-50 px-3 py-4 text-xs font-medium text-gray-500">
-          Loading Stripe revenue from Neon.
+        <div role="status" aria-label="Preparing revenue analytics." className="space-y-3 rounded-lg bg-gray-50 px-3 py-4">
+          <span className="sr-only">Preparing revenue analytics.</span>
+          <div className="h-4 w-2/3 animate-pulse rounded-full bg-gray-200" aria-hidden="true" />
+          <div className="h-8 w-1/2 animate-pulse rounded-full bg-gray-100" aria-hidden="true" />
+          <div className="flex h-16 items-end gap-1" aria-hidden="true">
+            {[42, 58, 36, 70, 52].map((height, index) => (
+              <div
+                key={`${metric.label}-loading-${index}`}
+                className="flex-1 animate-pulse rounded-t bg-indigo-100"
+                style={{ height: `${height}%` }}
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <>

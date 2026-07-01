@@ -49,9 +49,11 @@ export function WorkTodoSection({ tasks, loading = false, onToggleTask, onAddTas
 
               <div className="space-y-2">
                 {loading ? (
-                  <p role="status" className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">
-                    Loading tasks from Neon.
-                  </p>
+                  <div role="status" aria-label={`Preparing ${category.label} tasks.`} className="space-y-2 rounded-lg bg-gray-50 px-3 py-3">
+                    <span className="sr-only">Preparing {category.label} tasks.</span>
+                    <div className="h-3 w-4/5 animate-pulse rounded-full bg-gray-200" aria-hidden="true" />
+                    <div className="h-3 w-2/3 animate-pulse rounded-full bg-gray-100" aria-hidden="true" />
+                  </div>
                 ) : visibleTasks.length > 0 ? visibleTasks.map((task) => (
                   <button
                     key={task.id}

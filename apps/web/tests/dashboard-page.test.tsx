@@ -130,14 +130,15 @@ describe("DashboardPage", () => {
 
     render(createElement(DashboardPage));
 
-    expect(screen.getByText("Loading dashboard data from Neon.")).toBeInTheDocument();
-    expect(screen.getByText("Loading Stripe revenue from Neon.")).toBeInTheDocument();
-    expect(screen.getByText("Loading team capacity from Neon.")).toBeInTheDocument();
-    expect(screen.getByText("Loading check-ins from Neon.")).toBeInTheDocument();
-    expect(screen.getByText("Loading client check-in schedule from Neon.")).toBeInTheDocument();
-    expect(screen.getAllByText("Loading tasks from Neon.")).toHaveLength(4);
-    expect(screen.getByText("Loading CRM data from Neon.")).toBeInTheDocument();
-    expect(screen.getByText("Loading coaching team from Neon.")).toBeInTheDocument();
+    expect(screen.getByText("Preparing your dashboard...")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Preparing revenue analytics." })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Preparing team capacity." })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Preparing check-ins." })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Preparing client check-in schedule." })).toBeInTheDocument();
+    expect(screen.getAllByRole("status", { name: /Preparing .* tasks\./ })).toHaveLength(4);
+    expect(screen.getByRole("status", { name: "Preparing CRM pipeline." })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Preparing coaching team." })).toBeInTheDocument();
+    expect(screen.queryByText(/Neon/i)).not.toBeInTheDocument();
     expect(screen.queryByText("$0")).not.toBeInTheDocument();
     expect(screen.queryByText("5")).not.toBeInTheDocument();
     expect(screen.queryByText("/0")).not.toBeInTheDocument();
@@ -338,7 +339,7 @@ describe("DashboardPage", () => {
 
     expect(within(clientWork).queryByText("Prepare onboarding packet")).not.toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Dashboard tasks are unavailable until the Neon-backed task API loads."
+      "Dashboard tasks are unavailable until the task database reconnects."
     );
   });
 

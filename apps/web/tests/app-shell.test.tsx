@@ -335,7 +335,8 @@ describe("dashboard shell auth boundary", () => {
 
     render(createElement(DashboardShell, null, createElement("h1", null, "Dashboard")));
 
-    expect(screen.getByText(/loading secure workspace/i)).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: /opening complete coach workspace/i })).toBeInTheDocument();
+    expect(screen.getByText("Opening your workspace")).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: /primary navigation/i })).not.toBeInTheDocument();
     expect(navigationMocks.replace).toHaveBeenCalledWith("/sign-in");
   });

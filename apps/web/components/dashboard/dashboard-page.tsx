@@ -159,7 +159,7 @@ export function DashboardPage() {
   const todaysCheckInClients = getClientsCheckingInOnDay(activeClients, dashboardWeekday);
   const dashboardSubtitle = dashboardLoaded
     ? `${formatDashboardDate(now, coachTimezone)} - ${activeTaskCount} ${activeTaskCount === 1 ? "pipeline action requires" : "pipeline actions require"} attention.`
-    : "Loading dashboard data from Neon.";
+    : "Preparing your dashboard...";
 
   const toggleTask = async (category: DashboardTaskCategory, taskId: string) => {
     const targetTask = tasks[category].find((task) => task.id === taskId);
@@ -211,7 +211,7 @@ export function DashboardPage() {
     const dueAt = getDueAtFromDateInput(task.dueDate);
 
     if (taskSource !== "api") {
-      setTaskSaveError("Dashboard tasks are unavailable until the Neon-backed task API loads.");
+      setTaskSaveError("Dashboard tasks are unavailable until the task database reconnects.");
       return;
     }
 

@@ -94,9 +94,9 @@ export function LivePipeline({ loading = false }: { loading?: boolean }) {
           <div className="mb-3 flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Leads / customers by stage</h3>
-              <p className="text-xs text-gray-500">{loading ? "Loading total" : `${summary.totalLeadsAndCustomers} total`}</p>
+              <p className="text-xs text-gray-500">{loading ? "Syncing total" : `${summary.totalLeadsAndCustomers} total`}</p>
             </div>
-            <span className="rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">{loading ? "Loading" : "Live"}</span>
+            <span className="rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">{loading ? "Syncing" : "Live"}</span>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-[116px_1fr]">
@@ -113,9 +113,12 @@ export function LivePipeline({ loading = false }: { loading?: boolean }) {
 
             <div className="space-y-2">
               {loading ? (
-                <p role="status" className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">
-                  Loading CRM data from Neon.
-                </p>
+                <div role="status" aria-label="Preparing CRM pipeline." className="space-y-2 rounded-lg bg-gray-50 px-3 py-3">
+                  <span className="sr-only">Preparing CRM pipeline.</span>
+                  <div className="h-3 w-4/5 animate-pulse rounded-full bg-gray-200" aria-hidden="true" />
+                  <div className="h-3 w-2/3 animate-pulse rounded-full bg-gray-100" aria-hidden="true" />
+                  <div className="h-3 w-3/5 animate-pulse rounded-full bg-gray-100" aria-hidden="true" />
+                </div>
               ) : summary.stageBreakdown.length > 0 ? (
                 summary.stageBreakdown.map((stage, index) => (
                   <div key={stage.stage} className="flex items-center justify-between gap-2 text-xs">

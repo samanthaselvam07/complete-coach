@@ -47,11 +47,11 @@ export function ClientCapacityCard({ members = fallbackCapacityMembers, loading 
     >
       <div className="mb-4 flex items-center justify-between">
         <span className="text-xs uppercase tracking-wider text-gray-500">Client Capacity</span>
-        <span className="rounded bg-indigo-100 px-2 py-1 text-xs text-indigo-700">{loading ? "Loading" : `${capacityPercent}% LOAD`}</span>
+        <span className="rounded bg-indigo-100 px-2 py-1 text-xs text-indigo-700">{loading ? "Syncing" : `${capacityPercent}% LOAD`}</span>
       </div>
       <p className="mb-2 text-sm font-semibold text-gray-700">Team Capacity</p>
       {loading ? (
-        <CardLoadingState label="Loading team capacity from Neon." />
+        <CardLoadingState label="Preparing team capacity." />
       ) : (
         <>
           <div className="mb-4">
@@ -100,7 +100,7 @@ export function PriorityTasksCard({ pendingCheckIns = 0, loading = false }: Prio
       </div>
       <div className="rounded-lg bg-orange-50 p-3 text-center">
         {loading ? (
-          <CardLoadingState label="Loading check-ins from Neon." />
+          <CardLoadingState label="Preparing check-ins." />
         ) : (
           <>
             <div className="mb-1 text-2xl font-bold text-orange-600">{pendingCheckIns}</div>
@@ -134,7 +134,7 @@ export function TodaysCheckInsCard({ weekday, clients, loading = false }: Todays
       </div>
       <p className="mb-2 text-sm font-semibold text-gray-700">{weekday} Check-Ins</p>
       {loading ? (
-        <CardLoadingState label="Loading client check-in schedule from Neon." />
+        <CardLoadingState label="Preparing client check-in schedule." />
       ) : (
         <>
           <div className="mb-2">
@@ -166,7 +166,7 @@ export function TeamSnapshotCard({ members = fallbackCapacityMembers, loading = 
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold">Coaching Team</h2>
-          <p className="text-xs text-gray-500">{loading ? "Loading coaches from Neon" : `${coachMembers.length} active coaches`}</p>
+          <p className="text-xs text-gray-500">{loading ? "Syncing coaching team" : `${coachMembers.length} active coaches`}</p>
         </div>
         <Link href="/team-management" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">
           View all coaches
@@ -174,7 +174,7 @@ export function TeamSnapshotCard({ members = fallbackCapacityMembers, loading = 
       </div>
 
       {loading ? (
-        <CardLoadingState label="Loading coaching team from Neon." />
+        <CardLoadingState label="Preparing coaching team." />
       ) : <div className="space-y-3">
         {visibleMembers.map((member, index) => (
           <div key={member.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
@@ -218,8 +218,11 @@ export function TeamSnapshotCard({ members = fallbackCapacityMembers, loading = 
 
 function CardLoadingState({ label }: { label: string }) {
   return (
-    <div role="status" className="rounded-lg bg-gray-50 px-3 py-4 text-xs font-medium text-gray-500">
-      {label}
+    <div role="status" aria-label={label} className="space-y-2 rounded-lg bg-gray-50 px-3 py-4">
+      <span className="sr-only">{label}</span>
+      <div className="h-3 w-3/4 animate-pulse rounded-full bg-gray-200" aria-hidden="true" />
+      <div className="h-3 w-1/2 animate-pulse rounded-full bg-gray-100" aria-hidden="true" />
+      <div className="mt-3 h-2 w-full animate-pulse rounded-full bg-indigo-100" aria-hidden="true" />
     </div>
   );
 }

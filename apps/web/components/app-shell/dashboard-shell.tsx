@@ -32,8 +32,26 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
 function PublicLoadingScreen() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6 text-sm font-medium text-slate-600">
-      Loading secure workspace...
+    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
+      <div role="status" aria-label="Opening Complete Coach workspace" className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-semibold text-gray-950">Complete Coach</p>
+            <p className="text-xs text-gray-500">Opening your workspace</p>
+          </div>
+        </div>
+        <div className="space-y-3" aria-hidden="true">
+          <div className="h-3 w-4/5 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-3 w-3/5 animate-pulse rounded-full bg-gray-100" />
+          <div className="grid grid-cols-3 gap-2 pt-2">
+            <div className="h-14 animate-pulse rounded-xl bg-indigo-50" />
+            <div className="h-14 animate-pulse rounded-xl bg-violet-50" />
+            <div className="h-14 animate-pulse rounded-xl bg-orange-50" />
+          </div>
+        </div>
+        <span className="sr-only">Opening Complete Coach workspace.</span>
+      </div>
     </main>
   );
 }
