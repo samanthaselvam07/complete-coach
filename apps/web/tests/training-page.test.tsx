@@ -901,9 +901,43 @@ describe("ExerciseDatabasePage", () => {
     expect(within(dialog).getByText("Brace before each rep")).toBeInTheDocument();
   });
 
+  it("limits the exercise database to 20 entries per page", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: Array.from({ length: 21 }, (_, index) => ({
+            id: `api-exercise-${index + 1}`,
+            name: `Exercise ${String(index + 1).padStart(2, "0")}`,
+            category: "General",
+            scope: "global",
+            equipment: "Bodyweight",
+            difficulty: "intermediate",
+            videoObjectKey: null,
+            videoUrl: null,
+            primaryMuscles: ["Full body"]
+          }))
+        }),
+        { status: 200 }
+      )
+    );
+
+    render(createElement(ExerciseDatabasePage));
+
+    expect(await screen.findByText("Exercise 01")).toBeInTheDocument();
+    expect(screen.getByText("Exercise 20")).toBeInTheDocument();
+    expect(screen.queryByText("Exercise 21")).not.toBeInTheDocument();
+    expect(screen.getByText("Showing 1-20 of 21 exercises")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Page 2" }));
+
+    expect(screen.getByText("Exercise 21")).toBeInTheDocument();
+    expect(screen.queryByText("Exercise 01")).not.toBeInTheDocument();
+    expect(screen.getByText("Showing 21-21 of 21 exercises")).toBeInTheDocument();
+  });
+
   it("opens exercise video previews through the media URL API", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
-      if (String(input) === "/api/v1/exercises?limit=100") {
+      if (String(input) === "/api/v1/exercises?limit=5000") {
         return Promise.resolve(
           new Response(
             JSON.stringify({

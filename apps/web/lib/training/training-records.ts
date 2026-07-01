@@ -89,7 +89,7 @@ export const exerciseListQuerySchema = z.object({
   scope: z.enum(libraryScopeValues).optional(),
   category: z.string().trim().max(80).optional(),
   search: z.string().trim().max(100).optional(),
-  limit: z.coerce.number().int().min(1).max(100).default(50)
+  limit: z.coerce.number().int().min(1).max(5000).default(50)
 });
 
 export const createExerciseSchema = z.object({

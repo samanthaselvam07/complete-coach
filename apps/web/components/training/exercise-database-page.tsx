@@ -8,6 +8,9 @@ import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loadi
 import type { Exercise } from "@/lib/training/training-models";
 import { cn } from "@/lib/utils";
 
+const EXERCISE_DATABASE_FETCH_LIMIT = 5000;
+const EXERCISES_PER_PAGE = 20;
+
 interface ApiExercise {
   id: string;
   name: string;
@@ -45,13 +48,14 @@ export function ExerciseDatabasePage() {
   const [videoPreview, setVideoPreview] = useState<ExerciseVideoPreview | null>(null);
   const [videoPreviewError, setVideoPreviewError] = useState<string | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<ApiExercise | Exercise | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     let active = true;
 
     async function loadExercises() {
       try {
-        const response = await fetch("/api/v1/exercises?limit=100");
+        const response = await fetch(`/api/v1/exercises?limit=${EXERCISE_DATABASE_FETCH_LIMIT}`);
 
         if (!response.ok) {
           throw new Error("Exercise API unavailable.");
@@ -93,6 +97,12 @@ export function ExerciseDatabasePage() {
         ? firstExercise.name.localeCompare(secondExercise.name)
         : secondExercise.name.localeCompare(firstExercise.name)
     );
+  const totalPages = Math.max(1, Math.ceil(filteredExercises.length / EXERCISES_PER_PAGE));
+  const activePage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (activePage - 1) * EXERCISES_PER_PAGE;
+  const paginatedExercises = filteredExercises.slice(pageStartIndex, pageStartIndex + EXERCISES_PER_PAGE);
+  const visibleStart = filteredExercises.length > 0 ? pageStartIndex + 1 : 0;
+  const visibleEnd = Math.min(pageStartIndex + EXERCISES_PER_PAGE, filteredExercises.length);
 
   const openVideoPreview = async (exercise: ApiExercise | Exercise) => {
     setVideoExerciseName(exercise.name);
@@ -140,7 +150,10 @@ export function ExerciseDatabasePage() {
             value={searchQuery}
             placeholder="Search exercises..."
             className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-            onChange={(event) => setSearchQuery(event.target.value)}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setCurrentPage(1);
+            }}
           />
         </label>
 
@@ -148,7 +161,10 @@ export function ExerciseDatabasePage() {
           Sort exercises
           <select
             value={sortOrder}
-            onChange={(event) => setSortOrder(event.target.value as "az" | "za")}
+            onChange={(event) => {
+              setSortOrder(event.target.value as "az" | "za");
+              setCurrentPage(1);
+            }}
             className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="az">A-Z</option>
@@ -194,7 +210,7 @@ export function ExerciseDatabasePage() {
 
       {viewMode === "cards" ? (
         <section aria-label="Exercise cards" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {filteredExercises.map((exercise) => (
+          {paginatedExercises.map((exercise) => (
             <article key={exercise.id} className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg">
               <div className="relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br from-gray-950 to-indigo-950">
                 <div className="absolute right-3 top-3 flex items-center gap-1 rounded bg-black/50 px-2 py-1 text-white backdrop-blur-sm">
@@ -234,7 +250,7 @@ export function ExerciseDatabasePage() {
         </section>
       ) : (
         <section aria-label="Exercise list" className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          {filteredExercises.map((exercise) => (
+          {paginatedExercises.map((exercise) => (
             <article key={exercise.id} className="grid gap-3 border-b border-gray-100 p-4 last:border-b-0 md:grid-cols-[1fr_auto_auto_auto] md:items-center">
               <div>
                 <h2 className="font-semibold text-gray-900">{exercise.name}</h2>
@@ -270,6 +286,17 @@ export function ExerciseDatabasePage() {
         <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
           No exercises loaded from the database yet.
         </div>
+      ) : null}
+
+      {!loadingExercises && filteredExercises.length > 0 ? (
+        <ExercisePagination
+          activePage={activePage}
+          totalPages={totalPages}
+          visibleStart={visibleStart}
+          visibleEnd={visibleEnd}
+          totalItems={filteredExercises.length}
+          onPageChange={setCurrentPage}
+        />
       ) : null}
 
       {videoExerciseName ? (
@@ -329,6 +356,76 @@ function ExerciseSourceBadge({ exercise }: { exercise: ApiExercise | Exercise })
       Coach added
     </span>
   );
+}
+
+function ExercisePagination({
+  activePage,
+  totalPages,
+  visibleStart,
+  visibleEnd,
+  totalItems,
+  onPageChange
+}: {
+  activePage: number;
+  totalPages: number;
+  visibleStart: number;
+  visibleEnd: number;
+  totalItems: number;
+  onPageChange: (page: number) => void;
+}) {
+  const pageNumbers = getVisiblePageNumbers(activePage, totalPages);
+
+  return (
+    <nav
+      aria-label="Exercise pagination"
+      className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p className="text-sm font-medium text-slate-600">
+        Showing {visibleStart}-{visibleEnd} of {totalItems} exercises
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={activePage === 1}
+          onClick={() => onPageChange(Math.max(1, activePage - 1))}
+        >
+          Previous
+        </button>
+        {pageNumbers.map((page) => (
+          <button
+            key={page}
+            type="button"
+            aria-label={`Page ${page}`}
+            aria-current={page === activePage ? "page" : undefined}
+            className={cn(
+              "size-9 rounded-lg border text-sm font-bold transition",
+              page === activePage
+                ? "border-indigo-600 bg-indigo-600 text-white"
+                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            )}
+            onClick={() => onPageChange(page)}
+          >
+            {page}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={activePage === totalPages}
+          onClick={() => onPageChange(Math.min(totalPages, activePage + 1))}
+        >
+          Next
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+function getVisiblePageNumbers(activePage: number, totalPages: number) {
+  const firstPage = Math.max(1, Math.min(activePage - 2, totalPages - 4));
+  const lastPage = Math.min(totalPages, firstPage + 4);
+  return Array.from({ length: lastPage - firstPage + 1 }, (_, index) => firstPage + index);
 }
 
 function ExerciseDetailDialog({
