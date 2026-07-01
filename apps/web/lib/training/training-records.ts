@@ -116,6 +116,7 @@ export const trainingTemplateExerciseSchema = z.object({
   rpe: z.string().trim().max(20).optional(),
   rir: z.string().trim().max(20).optional(),
   section: z.enum(trainingProgramSectionValues).optional(),
+  videoObjectKey: z.string().trim().max(500).optional(),
   cues: jsonStringArraySchema.optional(),
   notes: z.string().trim().max(1000).optional()
 });

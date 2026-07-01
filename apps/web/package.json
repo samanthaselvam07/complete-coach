@@ -20,6 +20,8 @@
     "food:import:candidates": "tsx scripts/import-food-candidates.ts",
     "food:import:fsanz": "tsx scripts/import-fsanz-foods.ts",
     "food:import:usda": "tsx scripts/import-usda-foods.ts",
+    "exercise:import:csv": "tsx scripts/import-exercises-csv.ts",
+    "exercise:upload-videos": "tsx scripts/upload-exercise-videos.ts",
     "supplement:import:csv": "tsx scripts/import-supplements-csv.ts",
     "postinstall": "prisma generate",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm coverage && pnpm build && pnpm e2e"

@@ -50,6 +50,7 @@ export interface ApiTrainingTemplate {
         rpe?: string;
         rir?: string;
         section?: TrainingProgramSection;
+        videoObjectKey?: string;
       }>;
     }>;
     instructions?: string;

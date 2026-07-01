@@ -773,7 +773,14 @@ describe("ExerciseDatabasePage", () => {
               difficulty: "intermediate",
               videoObjectKey: null,
               videoUrl: null,
-              primaryMuscles: ["Quads"]
+              primaryMuscles: ["Quads"],
+              secondaryMuscles: ["Glutes"],
+              defaultSets: 4,
+              defaultReps: "6-8",
+              defaultRestSeconds: 120,
+              defaultRpe: 8,
+              defaultRir: "2",
+              executionCues: ["Brace before each rep", "Keep ribs stacked over hips"]
             },
             {
               id: "api-press",
@@ -868,11 +875,83 @@ describe("ExerciseDatabasePage", () => {
 
     const list = screen.getByRole("region", { name: "Exercise list" });
     expect(within(list).getByText("High-Bar Back Squat")).toBeInTheDocument();
-    expect(within(list).getAllByText("Global").length).toBeGreaterThan(0);
+    expect(within(list).getAllByText("Verified").length).toBeGreaterThan(0);
     expect(within(list).getAllByLabelText("Verified Complete Coach exercise").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Card view" }));
     expect(screen.getByRole("region", { name: "Exercise cards" })).toBeInTheDocument();
+  });
+
+  it("opens full exercise details from the database", async () => {
+    mockExercisesApi();
+    render(createElement(ExerciseDatabasePage));
+
+    expect(await screen.findByText("High-Bar Back Squat")).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "View details" })[0]);
+
+    const dialog = await screen.findByRole("dialog", { name: "High-Bar Back Squat details" });
+    expect(within(dialog).getByText("Verified")).toBeInTheDocument();
+    expect(within(dialog).getByText("Barbell")).toBeInTheDocument();
+    expect(within(dialog).getByText("intermediate")).toBeInTheDocument();
+    expect(within(dialog).getByText("Quads")).toBeInTheDocument();
+    expect(within(dialog).getByText("Glutes")).toBeInTheDocument();
+    expect(within(dialog).getByText("6-8")).toBeInTheDocument();
+    expect(within(dialog).getByText("2m")).toBeInTheDocument();
+    expect(within(dialog).getByText("Brace before each rep")).toBeInTheDocument();
+  });
+
+  it("opens exercise video previews through the media URL API", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      if (String(input) === "/api/v1/exercises?limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "api-squat",
+                  name: "High-Bar Back Squat",
+                  category: "Legs",
+                  scope: "global",
+                  equipment: "Barbell",
+                  difficulty: "intermediate",
+                  videoObjectKey: "global/training/exercises/video/high-bar-back-squat.mp4",
+                  videoUrl: null,
+                  primaryMuscles: ["Quads"]
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (String(input) === "/api/v1/exercises/api-squat/media-url") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                mediaType: "video",
+                source: "uploaded",
+                url: "https://r2.example/high-bar-back-squat.mp4?X-Amz-Signature=test",
+                expiresAt: "2026-07-01T00:10:00.000Z"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(ExerciseDatabasePage));
+
+    expect(await screen.findByText("High-Bar Back Squat")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "View video" }));
+
+    expect(await screen.findByRole("dialog", { name: "High-Bar Back Squat video" })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises/api-squat/media-url");
   });
 
   it("keeps the exercise database empty when the API is unavailable", async () => {

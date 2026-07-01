@@ -20,6 +20,29 @@ pnpm --dir apps/web env:validate
 pnpm --dir apps/web check
 ```
 
+## Exercise Library Imports
+Use dry-runs first. Add `--commit` only after the create/update/skip counts look right.
+
+```bash
+pnpm --dir apps/web exercise:import:csv ./data/imports/exercises.csv
+pnpm --dir apps/web exercise:import:csv ./data/imports/exercises.csv --commit
+```
+
+Exercise video files should live in R2, not Neon. Neon stores only the exercise metadata and `videoObjectKey`.
+
+```bash
+pnpm --dir apps/web exercise:upload-videos --dir "/path/to/google-drive/exercise-videos"
+pnpm --dir apps/web exercise:upload-videos --dir "/path/to/google-drive/exercise-videos" --commit
+```
+
+When filenames do not match exercise names, provide a mapping CSV with `exercise name` and `video filename` columns:
+
+```bash
+pnpm --dir apps/web exercise:upload-videos --dir "/path/to/videos" --mapping ./data/imports/exercise-video-map.csv --commit
+```
+
+Committed video uploads require `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET_NAME`.
+
 ## Database And Auth Foundation
 ```bash
 pnpm --dir apps/web db:generate

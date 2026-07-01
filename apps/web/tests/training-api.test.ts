@@ -8,6 +8,7 @@ import {
 } from "@/app/generated/prisma/enums";
 import { GET as getExercises, POST as createExercise } from "@/app/api/v1/exercises/route";
 import { GET as getExercise, PATCH as updateExercise } from "@/app/api/v1/exercises/[exerciseId]/route";
+import { GET as getExerciseMediaUrl } from "@/app/api/v1/exercises/[exerciseId]/media-url/route";
 import {
   GET as getTrainingTemplates,
   POST as createTrainingTemplate
@@ -579,6 +580,42 @@ describe("training persistence APIs", () => {
         })
       })
     );
+  });
+
+  it("creates signed playback URLs for uploaded exercise videos", async () => {
+    mocks.prisma.exerciseLibraryItem.findFirst.mockResolvedValue({
+      id: "exercise_global",
+      videoObjectKey: "global/training/exercises/video/barbell-back-squat.mp4",
+      videoUrl: null
+    });
+
+    const response = await getExerciseMediaUrl(
+      new Request("http://test.local/api/v1/exercises/exercise_global/media-url"),
+      { params: Promise.resolve({ exerciseId: "exercise_global" }) }
+    );
+    const payload = (await response.json()) as { data: { source: string; url: string; expiresAt: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.source).toBe("uploaded");
+    expect(payload.data.url).toContain("X-Amz-Signature=");
+    expect(payload.data.url).toContain("complete-coach-test");
+    expect(payload.data.url).toContain("global/training/exercises/video/barbell-back-squat.mp4");
+    expect(payload.data.expiresAt).toBeTruthy();
+  });
+
+  it("returns not found when an exercise has no video media", async () => {
+    mocks.prisma.exerciseLibraryItem.findFirst.mockResolvedValue({
+      id: "exercise_global",
+      videoObjectKey: null,
+      videoUrl: null
+    });
+
+    const response = await getExerciseMediaUrl(
+      new Request("http://test.local/api/v1/exercises/exercise_global/media-url"),
+      { params: Promise.resolve({ exerciseId: "exercise_global" }) }
+    );
+
+    expect(response.status).toBe(404);
   });
 
   it("validates exercise media upload type and size before signing", async () => {

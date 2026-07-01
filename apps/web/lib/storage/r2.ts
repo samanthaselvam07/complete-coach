@@ -14,6 +14,12 @@ interface PresignPutInput {
   now?: Date;
 }
 
+interface PresignGetInput {
+  objectKey: string;
+  expiresInSeconds?: number;
+  now?: Date;
+}
+
 const service = "s3";
 const region = "auto";
 
@@ -59,6 +65,44 @@ export function createR2PresignedPutUrl(config: R2Config, input: PresignPutInput
   const canonicalHeaders = `content-type:${input.contentType}\nhost:${host}\n`;
   const canonicalRequest = [
     "PUT",
+    canonicalUri,
+    canonicalQueryString,
+    canonicalHeaders,
+    signedHeaders,
+    "UNSIGNED-PAYLOAD"
+  ].join("\n");
+  const stringToSign = [
+    "AWS4-HMAC-SHA256",
+    amzDate,
+    credentialScope,
+    createHash("sha256").update(canonicalRequest).digest("hex")
+  ].join("\n");
+  const signingKey = getSignatureKey(config.secretAccessKey, dateStamp);
+  const signature = createHmac("sha256", signingKey).update(stringToSign).digest("hex");
+
+  return `https://${host}${canonicalUri}?${canonicalQueryString}&X-Amz-Signature=${signature}`;
+}
+
+export function createR2PresignedGetUrl(config: R2Config, input: PresignGetInput) {
+  const now = input.now ?? new Date();
+  const expiresInSeconds = input.expiresInSeconds ?? 300;
+  const amzDate = formatAmzDate(now);
+  const dateStamp = amzDate.slice(0, 8);
+  const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const host = `${config.accountId}.r2.cloudflarestorage.com`;
+  const canonicalUri = `/${encodePathSegment(config.bucketName)}/${encodeObjectKey(input.objectKey)}`;
+  const signedHeaders = "host";
+  const queryParams: Record<string, string> = {
+    "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
+    "X-Amz-Credential": `${config.accessKeyId}/${credentialScope}`,
+    "X-Amz-Date": amzDate,
+    "X-Amz-Expires": String(expiresInSeconds),
+    "X-Amz-SignedHeaders": signedHeaders
+  };
+  const canonicalQueryString = canonicalizeQuery(queryParams);
+  const canonicalHeaders = `host:${host}\n`;
+  const canonicalRequest = [
+    "GET",
     canonicalUri,
     canonicalQueryString,
     canonicalHeaders,

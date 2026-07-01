@@ -23,6 +23,7 @@ export interface TrainingProgramExerciseDraft {
   restSeconds: string;
   customVideoUrl?: string;
   customVideoFileName?: string;
+  exerciseVideoObjectKey?: string;
 }
 
 export interface TrainingProgramDayDraft {
@@ -52,6 +53,7 @@ export interface TrainingProgramTemplateDraftSource {
     days?: Array<{
       name: string;
       exercises: Array<{
+        exerciseId?: string;
         exerciseName: string;
         sets: number;
         reps: string;
@@ -59,6 +61,7 @@ export interface TrainingProgramTemplateDraftSource {
         rpe?: string;
         rir?: string;
         section?: TrainingProgramSection;
+        videoObjectKey?: string;
       }>;
     }>;
     instructions?: string;
@@ -121,6 +124,15 @@ interface ExerciseMediaUploadResponse {
   };
   error?: {
     message?: string;
+  };
+}
+
+interface ExerciseVideoPreviewResponse {
+  data?: {
+    mediaType: "video";
+    source: "uploaded" | "external";
+    url: string;
+    expiresAt: string | null;
   };
 }
 
@@ -284,7 +296,7 @@ export function TrainingProgramBuilder({
   function addExercise(
     section: TrainingProgramSection,
     exerciseName = "",
-    customInput: Partial<CustomExerciseInput> & { exerciseId?: string } = {}
+    customInput: Partial<CustomExerciseInput> & { exerciseId?: string; exerciseVideoObjectKey?: string } = {}
   ) {
     const sectionExerciseCount = activeDay.exercises.filter((exercise) => exercise.section === section).length + 1;
 
@@ -302,7 +314,8 @@ export function TrainingProgramBuilder({
           rir: customInput.rir || "",
           restSeconds: customInput.restSeconds || "120",
           customVideoUrl: customInput.videoUrl,
-          customVideoFileName: customInput.videoFileName
+          customVideoFileName: customInput.videoFileName,
+          exerciseVideoObjectKey: customInput.exerciseVideoObjectKey
         }
       ]
     });
@@ -320,7 +333,8 @@ export function TrainingProgramBuilder({
       restSeconds: "defaultRestSeconds" in exercise && exercise.defaultRestSeconds !== null && exercise.defaultRestSeconds !== undefined ? String(exercise.defaultRestSeconds) : "120",
       rpe: "defaultRpe" in exercise && exercise.defaultRpe !== null && exercise.defaultRpe !== undefined ? String(exercise.defaultRpe) : "",
       rir: "defaultRir" in exercise && exercise.defaultRir ? exercise.defaultRir : "",
-      videoUrl: "videoUrl" in exercise && exercise.videoUrl ? exercise.videoUrl : undefined
+      videoUrl: "videoUrl" in exercise && exercise.videoUrl ? exercise.videoUrl : undefined,
+      exerciseVideoObjectKey: "videoObjectKey" in exercise && exercise.videoObjectKey ? exercise.videoObjectKey : undefined
     });
   }
 
@@ -341,7 +355,8 @@ export function TrainingProgramBuilder({
       rpe: input.rpe,
       rir: input.rir,
       videoUrl: input.videoUrl,
-      videoFileName: input.videoFileName
+      videoFileName: input.videoFileName,
+      exerciseVideoObjectKey: savedExercise?.videoObjectKey ?? input.videoObjectKey
     });
     setCustomExerciseSection(null);
   }
@@ -602,13 +617,15 @@ export function createTrainingProgramDraftFromTemplate(
       name: day.name || `Day ${dayIndex + 1}`,
       exercises: day.exercises.map((exercise, exerciseIndex) => ({
         id: `exercise-${dayIndex + 1}-${exerciseIndex + 1}`,
+        exerciseId: exercise.exerciseId,
         section: exercise.section ?? "workout",
         exerciseName: exercise.exerciseName,
         sets: String(exercise.sets),
         reps: exercise.reps,
         rpe: exercise.rpe ?? "",
         rir: exercise.rir ?? "",
-        restSeconds: String(exercise.restSeconds ?? "")
+        restSeconds: String(exercise.restSeconds ?? ""),
+        exerciseVideoObjectKey: exercise.videoObjectKey
       }))
     })) ?? [];
   const firstDay = days[0] ?? createBlankTrainingDay(1);
@@ -652,6 +669,7 @@ export function getTrainingProgramTemplatePayload(
           rir: exercise.rir.trim(),
           restSeconds: parsePositiveInteger(exercise.restSeconds, 120),
           section: exercise.section,
+          ...(exercise.exerciseVideoObjectKey ? { videoObjectKey: exercise.exerciseVideoObjectKey } : {}),
           ...(buildCustomExerciseNotes(exercise) ? { notes: buildCustomExerciseNotes(exercise) } : {})
         }))
       })),
@@ -758,7 +776,7 @@ function ProgramBuilderSection({
 }
 
 function ExerciseVideoThumbnail({ exercise, onView }: { exercise: TrainingProgramExerciseDraft; onView: () => void }) {
-  const hasVideoReference = Boolean(exercise.customVideoUrl || exercise.customVideoFileName);
+  const hasVideoReference = Boolean(exercise.customVideoUrl || exercise.customVideoFileName || exercise.exerciseVideoObjectKey);
 
   if (!hasVideoReference) {
     return (
@@ -786,8 +804,43 @@ function ExerciseVideoThumbnail({ exercise, onView }: { exercise: TrainingProgra
 }
 
 function ExerciseVideoDialog({ exercise, onClose }: { exercise: TrainingProgramExerciseDraft; onClose: () => void }) {
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
+  const [uploadedVideoError, setUploadedVideoError] = useState<string | null>(null);
   const embedUrl = getEmbeddableExerciseVideoUrl(exercise.customVideoUrl);
-  const hasVideoReference = Boolean(exercise.customVideoUrl || exercise.customVideoFileName);
+  const hasVideoReference = Boolean(exercise.customVideoUrl || exercise.customVideoFileName || exercise.exerciseVideoObjectKey);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadUploadedVideoUrl() {
+      if (!exercise.exerciseId || !exercise.exerciseVideoObjectKey || exercise.customVideoUrl) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/v1/exercises/${exercise.exerciseId}/media-url`);
+        const payload = (await response.json()) as ExerciseVideoPreviewResponse;
+
+        if (!response.ok || !payload.data?.url) {
+          throw new Error("Exercise video is unavailable.");
+        }
+
+        if (active) {
+          setUploadedVideoUrl(payload.data.url);
+        }
+      } catch {
+        if (active) {
+          setUploadedVideoError("Exercise video is unavailable right now.");
+        }
+      }
+    }
+
+    void loadUploadedVideoUrl();
+
+    return () => {
+      active = false;
+    };
+  }, [exercise.customVideoUrl, exercise.exerciseId, exercise.exerciseVideoObjectKey]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" onClick={onClose}>
@@ -810,7 +863,16 @@ function ExerciseVideoDialog({ exercise, onClose }: { exercise: TrainingProgramE
           </button>
         </div>
 
-        {embedUrl ? (
+        {uploadedVideoUrl ? (
+          <video
+            controls
+            title={`${exercise.exerciseName || "Exercise"} video`}
+            src={uploadedVideoUrl}
+            className="mt-5 aspect-video w-full rounded-2xl border border-slate-200 bg-slate-950"
+          >
+            <track kind="captions" />
+          </video>
+        ) : embedUrl ? (
           <iframe
             title={`${exercise.exerciseName || "Exercise"} video`}
             src={embedUrl}
@@ -820,8 +882,16 @@ function ExerciseVideoDialog({ exercise, onClose }: { exercise: TrainingProgramE
           />
         ) : (
           <div className="mt-5 flex min-h-64 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
-            {hasVideoReference ? (
-              <span>{exercise.customVideoFileName ? `${exercise.customVideoFileName} attached` : "External video attached. Open source to view."}</span>
+            {uploadedVideoError ? (
+              <span>{uploadedVideoError}</span>
+            ) : hasVideoReference ? (
+              <span>
+                {exercise.customVideoFileName
+                  ? `${exercise.customVideoFileName} attached`
+                  : exercise.exerciseVideoObjectKey
+                    ? "Loading uploaded exercise video..."
+                    : "External video attached. Open source to view."}
+              </span>
             ) : (
               <span>No video attached yet.</span>
             )}
@@ -1035,13 +1105,22 @@ function ExerciseDatabaseSidePanel({
   const [apiExercises, setApiExercises] = useState<ApiExercise[]>([]);
   const [loadingExercises, setLoadingExercises] = useState(true);
   const sectionLabel = getProgramSectionLabel(activeSection);
+  const trimmedSearchQuery = searchQuery.trim();
 
   useEffect(() => {
     let active = true;
 
     async function loadExercises() {
+      setLoadingExercises(true);
+
       try {
-        const response = await fetch("/api/v1/exercises?limit=100");
+        const params = new URLSearchParams({ limit: "100" });
+
+        if (trimmedSearchQuery) {
+          params.set("search", trimmedSearchQuery);
+        }
+
+        const response = await fetch(`/api/v1/exercises?${params.toString()}`);
 
         if (!response.ok) {
           throw new Error("Exercise API unavailable.");
@@ -1068,7 +1147,7 @@ function ExerciseDatabaseSidePanel({
     return () => {
       active = false;
     };
-  }, []);
+  }, [trimmedSearchQuery]);
 
   const sourceExercises: BuilderExerciseLibraryItem[] = apiExercises;
   const filteredExercises = useMemo(

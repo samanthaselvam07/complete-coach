@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -46,11 +46,13 @@ describe("training program builder view model helpers", () => {
             name: "",
             exercises: [
               {
+                exerciseId: "back-squat",
                 exerciseName: "Back Squat",
                 sets: 4,
                 reps: "6-8",
                 restSeconds: undefined,
-                section: undefined
+                section: undefined,
+                videoObjectKey: "global/training/exercises/video/back-squat.mp4"
               }
             ]
           }
@@ -82,7 +84,8 @@ describe("training program builder view model helpers", () => {
                 rir: " 2 ",
                 restSeconds: "",
                 customVideoUrl: "https://youtu.be/abc123",
-                customVideoFileName: "demo.mp4"
+                customVideoFileName: "demo.mp4",
+                exerciseVideoObjectKey: "global/training/exercises/video/manual-exercise.mp4"
               }
             ]
           }
@@ -100,7 +103,12 @@ describe("training program builder view model helpers", () => {
       instructions: "",
       days: [expect.objectContaining({ name: "Day 1" })]
     });
-    expect(copiedDraft.days[0]?.exercises[0]).toMatchObject({ section: "workout", restSeconds: "" });
+    expect(copiedDraft.days[0]?.exercises[0]).toMatchObject({
+      exerciseId: "back-squat",
+      section: "workout",
+      restSeconds: "",
+      exerciseVideoObjectKey: "global/training/exercises/video/back-squat.mp4"
+    });
     expect(editableDraft).toMatchObject({ sourceTemplateId: "template-1", title: "Hypertrophy", durationWeeks: "1" });
     expect(payload).toMatchObject({
       name: "Strength Template 7",
@@ -120,6 +128,7 @@ describe("training program builder view model helpers", () => {
                 sets: 3,
                 reps: "8-10",
                 restSeconds: 120,
+                videoObjectKey: "global/training/exercises/video/manual-exercise.mp4",
                 notes: "Video link: https://youtu.be/abc123\nUploaded video: demo.mp4"
               })
             ]
@@ -312,6 +321,7 @@ describe("Training program builder exercise panel", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises?limit=100");
 
     fireEvent.change(screen.getByLabelText("Search exercise database"), { target: { value: "squat" } });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises?limit=100&search=squat"));
     expect(screen.getByText("High-Bar Back Squat")).toBeInTheDocument();
     expect(screen.queryByText("Incline DB Press")).not.toBeInTheDocument();
 
@@ -319,6 +329,78 @@ describe("Training program builder exercise panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add High-Bar Back Squat to Workout" }));
 
     expect(screen.getByDisplayValue("High-Bar Back Squat")).toBeInTheDocument();
+  });
+
+  it("adds imported exercise videos to program rows and opens signed playback", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      if (String(input).startsWith("/api/v1/exercises?")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "api-high-bar-squat",
+                  name: "High-Bar Back Squat",
+                  category: "Quads",
+                  scope: "global",
+                  equipment: "Barbell",
+                  difficulty: "intermediate",
+                  videoObjectKey: "global/training/exercises/video/high-bar-back-squat.mp4",
+                  videoUrl: null,
+                  primaryMuscles: ["Quads", "Glutes"],
+                  defaultSets: 4,
+                  defaultReps: "6-8",
+                  defaultRestSeconds: 180
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (String(input) === "/api/v1/exercises/api-high-bar-squat/media-url") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                mediaType: "video",
+                source: "uploaded",
+                url: "https://r2.example/high-bar-back-squat.mp4?X-Amz-Signature=test",
+                expiresAt: "2026-07-01T00:10:00.000Z"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(TrainingProgramsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
+    await screen.findByText("High-Bar Back Squat");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add High-Bar Back Squat to Workout" }));
+
+    const exerciseRow = screen.getByRole("group", { name: "High-Bar Back Squat exercise row" });
+    expect(within(exerciseRow).getByLabelText("Sets")).toHaveValue("4");
+    expect(within(exerciseRow).getByLabelText("Reps")).toHaveValue("6-8");
+    expect(within(exerciseRow).getByLabelText("Rest time")).toHaveValue("180");
+    expect(within(exerciseRow).getByRole("button", { name: "View High-Bar Back Squat exercise video" })).toBeInTheDocument();
+
+    fireEvent.click(within(exerciseRow).getByRole("button", { name: "View High-Bar Back Squat exercise video" }));
+
+    const videoDialog = await screen.findByRole("dialog", { name: "High-Bar Back Squat exercise video" });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises/api-high-bar-squat/media-url"));
+    expect(within(videoDialog).getByTitle("High-Bar Back Squat video")).toHaveAttribute(
+      "src",
+      "https://r2.example/high-bar-back-squat.mp4?X-Amz-Signature=test"
+    );
   });
 
   it("supports compact movable rows and row deletion in the builder", async () => {
