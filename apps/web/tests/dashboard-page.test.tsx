@@ -130,14 +130,9 @@ describe("DashboardPage", () => {
 
     render(createElement(DashboardPage));
 
-    expect(screen.getByText("Preparing your dashboard...")).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: "Preparing revenue analytics." })).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: "Preparing team capacity." })).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: "Preparing check-ins." })).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: "Preparing client check-in schedule." })).toBeInTheDocument();
-    expect(screen.getAllByRole("status", { name: /Preparing .* tasks\./ })).toHaveLength(4);
-    expect(screen.getByRole("status", { name: "Preparing CRM pipeline." })).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: "Preparing coaching team." })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Preparing Complete Coach dashboard." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Preparing your dashboard" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: "Coach Operations Dashboard" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Neon/i)).not.toBeInTheDocument();
     expect(screen.queryByText("$0")).not.toBeInTheDocument();
     expect(screen.queryByText("5")).not.toBeInTheDocument();
@@ -149,7 +144,7 @@ describe("DashboardPage", () => {
 
     render(createElement(DashboardPage));
 
-    expect(screen.getByRole("heading", { level: 1, name: "Coach Operations Dashboard" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Coach Operations Dashboard" })).toBeInTheDocument();
     expect(screen.getByText("Monthly Revenue")).toBeInTheDocument();
     expect(await screen.findByText("$0")).toBeInTheDocument();
     expect(screen.getByText("Awaiting database data")).toBeInTheDocument();
@@ -235,7 +230,7 @@ describe("DashboardPage", () => {
 
     render(createElement(DashboardPage));
 
-    fireEvent.click(screen.getByRole("button", { name: /change revenue period/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /change revenue period/i }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Weekly" }));
 
     expect(screen.getByText("Weekly Revenue")).toBeInTheDocument();
@@ -304,7 +299,7 @@ describe("DashboardPage", () => {
 
     render(createElement(DashboardPage));
 
-    fireEvent.click(screen.getByRole("button", { name: /change revenue period/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /change revenue period/i }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Custom" }));
     fireEvent.change(screen.getByLabelText("Custom revenue start date"), { target: { value: "2026-06-01" } });
     fireEvent.change(screen.getByLabelText("Custom revenue end date"), { target: { value: "2026-06-15" } });
@@ -319,12 +314,12 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Stripe custom range")).toBeInTheDocument();
   });
 
-  it("does not create local dashboard tasks when the task API is unavailable", () => {
+  it("does not create local dashboard tasks when the task API is unavailable", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 
     render(createElement(DashboardPage));
 
-    fireEvent.click(screen.getByRole("button", { name: "Add Task" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Add Task" }));
     fireEvent.change(screen.getByLabelText("Task Description"), {
       target: { value: "Prepare onboarding packet" }
     });
@@ -343,12 +338,12 @@ describe("DashboardPage", () => {
     );
   });
 
-  it("places the add task action in the work to-do header", () => {
+  it("places the add task action in the work to-do header", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
 
     render(createElement(DashboardPage));
 
-    const businessOpsCard = screen.getByRole("region", { name: "Business Ops/Admin" });
+    const businessOpsCard = await screen.findByRole("region", { name: "Business Ops/Admin" });
     const addTaskButton = screen.getByRole("button", { name: "Add Task" });
 
     expect(addTaskButton).toBeInTheDocument();
@@ -408,7 +403,7 @@ describe("DashboardPage", () => {
 
     render(createElement(DashboardPage));
 
-    const workToDoHeading = screen.getByRole("heading", { name: "Work To-Do" });
+    const workToDoHeading = await screen.findByRole("heading", { name: "Work To-Do" });
     const priorityFlags = await screen.findByRole("region", { name: "Priority Flagged Clients" });
 
     expect(workToDoHeading.compareDocumentPosition(priorityFlags) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

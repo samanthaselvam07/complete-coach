@@ -9,7 +9,7 @@ interface CrmStageSummary {
   count: number;
 }
 
-interface CrmSummary {
+export interface CrmSummary {
   newLeadsLastFiveDays: number;
   totalLeadsAndCustomers: number;
   stageBreakdown: CrmStageSummary[];
@@ -18,36 +18,29 @@ interface CrmSummary {
 
 const chartColors = ["#4f46e5", "#2563eb", "#9333ea", "#f97316", "#16a34a"];
 
-const emptyCrmSummary: CrmSummary = {
+export const emptyCrmSummary: CrmSummary = {
   newLeadsLastFiveDays: 0,
   totalLeadsAndCustomers: 0,
   stageBreakdown: [],
   updatedAt: new Date(0).toISOString()
 };
 
-export function LivePipeline({ loading = false }: { loading?: boolean }) {
-  const [summary, setSummary] = useState<CrmSummary>(emptyCrmSummary);
+interface LivePipelineProps {
+  initialSummary?: CrmSummary | null;
+  loading?: boolean;
+}
+
+export function LivePipeline({ initialSummary = null, loading = false }: LivePipelineProps) {
+  const [summary, setSummary] = useState<CrmSummary>(() => initialSummary ?? emptyCrmSummary);
 
   useEffect(() => {
     let isActive = true;
 
     async function loadCrmSummary() {
-      try {
-        const response = await fetch("/api/v1/dashboard/crm-summary");
+      const nextSummary = await fetchCrmSummary();
 
-        if (!response.ok) {
-          throw new Error("CRM summary unavailable.");
-        }
-
-        const payload = (await response.json()) as { data?: CrmSummary };
-
-        if (isActive && isCrmSummary(payload.data)) {
-          setSummary(payload.data);
-        }
-      } catch {
-        if (isActive) {
-          setSummary(emptyCrmSummary);
-        }
+      if (isActive) {
+        setSummary(nextSummary);
       }
     }
 
@@ -148,7 +141,27 @@ export function LivePipeline({ loading = false }: { loading?: boolean }) {
   );
 }
 
-function isCrmSummary(value: unknown): value is CrmSummary {
+export async function fetchCrmSummary() {
+  try {
+    const response = await fetch("/api/v1/dashboard/crm-summary");
+
+    if (!response.ok) {
+      throw new Error("CRM summary unavailable.");
+    }
+
+    const payload = (await response.json()) as { data?: CrmSummary };
+
+    if (isCrmSummary(payload.data)) {
+      return payload.data;
+    }
+  } catch {
+    return emptyCrmSummary;
+  }
+
+  return emptyCrmSummary;
+}
+
+export function isCrmSummary(value: unknown): value is CrmSummary {
   return (
     typeof value === "object" &&
     value !== null &&

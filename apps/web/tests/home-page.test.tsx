@@ -5,15 +5,16 @@ import { metadata } from "@/app/layout";
 import HomePage from "@/app/page";
 
 describe("HomePage", () => {
-  it("renders the dashboard stub heading", () => {
+  it("renders the dashboard boot screen before data resolves", () => {
     render(createElement(HomePage));
 
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "Coach Operations Dashboard"
+        name: "Preparing your dashboard"
       })
     ).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Preparing Complete Coach dashboard." })).toBeInTheDocument();
   });
 
   it("uses the landing page favicon asset", () => {
