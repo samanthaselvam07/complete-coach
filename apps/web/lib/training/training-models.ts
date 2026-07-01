@@ -1,3 +1,5 @@
+import { anatomicalFilterLabels } from "@/lib/training/muscle-volume";
+
 export interface Exercise {
   id: string;
   name: string;
@@ -7,4 +9,4 @@ export interface Exercise {
   variations: number;
 }
 
-export const muscleGroups = ["Chest", "Back", "Glutes", "Hamstrings", "Shoulders", "Triceps", "Torso", "Quads"];
+export const muscleGroups = anatomicalFilterLabels;

@@ -9,6 +9,8 @@ import { SavedToast } from "@/components/ui/saved-toast";
 import { muscleGroups } from "@/lib/training/training-models";
 import { cn } from "@/lib/utils";
 
+import { AnatomicalFilterMultiSelect } from "./anatomical-filter-multi-select";
+
 export function AddExercisePage() {
   const router = useRouter();
   const [exerciseName, setExerciseName] = useState("");
@@ -20,7 +22,7 @@ export function AddExercisePage() {
   const [rpeTarget, setRpeTarget] = useState("8");
   const [rirTarget, setRirTarget] = useState("1-2");
   const [videoUrl, setVideoUrl] = useState("");
-  const [selectedMuscles, setSelectedMuscles] = useState<string[]>(["Chest", "Shoulders"]);
+  const [anatomicalFilter, setAnatomicalFilter] = useState<string[]>([muscleGroups[0] ?? "Pectoralis Major"]);
   const [coachingCues, setCoachingCues] = useState([
     "Retract scapula",
     "Drive elbows to hips",
@@ -33,14 +35,6 @@ export function AddExercisePage() {
   const [videoFilename, setVideoFilename] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const toggleMuscle = (muscle: string) => {
-    setSelectedMuscles((currentMuscles) =>
-      currentMuscles.includes(muscle)
-        ? currentMuscles.filter((currentMuscle) => currentMuscle !== muscle)
-        : [...currentMuscles, muscle]
-    );
-  };
 
   const addCoachingCue = () => {
     const trimmedCue = newCue.trim();
@@ -66,7 +60,7 @@ export function AddExercisePage() {
           name: exerciseName,
           category,
           equipment,
-          primaryMuscles: selectedMuscles,
+          primaryMuscles: anatomicalFilter,
           difficulty: "intermediate",
           defaultSets: sets,
           defaultReps: repTarget.trim() || undefined,
@@ -217,31 +211,14 @@ export function AddExercisePage() {
               </div>
             </section>
 
-            <section className="rounded-xl border border-gray-200 bg-white p-6" aria-label="Anatomy Filter">
-              <CardHeader icon="T" title="Anatomy Filter" tone="bg-blue-100 text-blue-600" />
-              <p className="mb-4 text-sm text-gray-600">Filter anatomical targets for precise protocols</p>
-              <div className="flex flex-wrap gap-2">
-                {muscleGroups.map((muscle) => (
-                  <button
-                    key={muscle}
-                    type="button"
-                    aria-pressed={selectedMuscles.includes(muscle)}
-                    className={cn(
-                      "rounded-full px-4 py-2 text-sm font-medium transition-all",
-                      selectedMuscles.includes(muscle)
-                        ? muscle === "Chest"
-                          ? "bg-blue-600 text-white"
-                          : muscle === "Shoulders"
-                            ? "bg-orange-500 text-white"
-                            : "bg-indigo-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    )}
-                    onClick={() => toggleMuscle(muscle)}
-                  >
-                    {muscle}
-                  </button>
-                ))}
-              </div>
+            <section className="rounded-xl border border-gray-200 bg-white p-6" aria-label="Exercise anatomical target">
+              <CardHeader icon="T" title="Anatomical Filter" tone="bg-blue-100 text-blue-600" />
+              <p className="mb-4 text-sm text-gray-600">Select the anatomical target this exercise should light up in the training heatmap.</p>
+              <AnatomicalFilterMultiSelect
+                selectedMuscles={anatomicalFilter}
+                onChange={setAnatomicalFilter}
+                helperText="Select one or more anatomical targets for the heatmap."
+              />
             </section>
 
             <section className="rounded-xl border border-gray-200 bg-white p-6">

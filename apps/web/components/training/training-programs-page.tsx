@@ -51,6 +51,7 @@ export interface ApiTrainingTemplate {
         rir?: string;
         section?: TrainingProgramSection;
         videoObjectKey?: string;
+        primaryMuscles?: string[];
       }>;
     }>;
     instructions?: string;

@@ -68,6 +68,7 @@ describe("AddExercisePage defaults", () => {
     fireEvent.change(screen.getByLabelText("YouTube or external video link"), {
       target: { value: "https://www.youtube.com/watch?v=tempo-squat" }
     });
+    selectExercisePageAnatomicalFilters(["Rectus Femoris", "Vastus Lateralis"]);
     fireEvent.click(screen.getAllByRole("button", { name: "Save Exercise" })[0]);
 
     await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/training/exercises"));
@@ -80,7 +81,30 @@ describe("AddExercisePage defaults", () => {
       defaultRestSeconds: 150,
       defaultRpe: 8.5,
       defaultRir: "1-2",
-      videoUrl: "https://www.youtube.com/watch?v=tempo-squat"
+      videoUrl: "https://www.youtube.com/watch?v=tempo-squat",
+      primaryMuscles: ["Rectus Femoris", "Vastus Lateralis"]
     });
   });
 });
+
+function selectExercisePageAnatomicalFilters(targetMuscles: string[]) {
+  fireEvent.click(screen.getByRole("button", { name: "Anatomical Filter" }));
+
+  targetMuscles.forEach((muscle) => {
+    const checkbox = screen.getByRole("checkbox", { name: muscle }) as HTMLInputElement;
+
+    if (!checkbox.checked) {
+      fireEvent.click(checkbox);
+    }
+  });
+
+  const defaultMuscle = "Pectoralis Major";
+
+  if (!targetMuscles.includes(defaultMuscle)) {
+    const defaultCheckbox = screen.getByRole("checkbox", { name: defaultMuscle }) as HTMLInputElement;
+
+    if (defaultCheckbox.checked) {
+      fireEvent.click(defaultCheckbox);
+    }
+  }
+}

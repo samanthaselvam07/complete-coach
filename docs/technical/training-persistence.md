@@ -121,5 +121,11 @@ Rules:
 - `POST /api/v1/training-program-assignments`
 - `GET /api/v1/clients/{client_id}/training-programs`
 
+## Training Builder Anatomy Heatmap
+- The program builder anatomy volume map uses the licensed Fitness Visuals Rive asset at `apps/web/public/vendor/fitness-visuals/human_anatomy_basic.riv`.
+- The asset is rendered as-is through `@rive-app/react-canvas`; do not trace, recolor, decompile, or replace it with derived SVG artwork.
+- `apps/web/lib/training/muscle-volume.ts` maps Complete Coach exercise muscle groups to the Rive view-model boolean inputs.
+- The builder renders the `Front` and `Back` artboards side by side so coaches can see daily training volume across anterior and posterior muscle groups.
+
 ## Remaining M5 Work
 None. M5 is complete.

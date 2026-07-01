@@ -3,9 +3,11 @@
 import { ArrowLeft, Copy, GripVertical, PlayCircle, Plus, Save, Search, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import type { Exercise } from "@/lib/training/training-models";
+import { muscleGroups, type Exercise } from "@/lib/training/training-models";
 import { cn } from "@/lib/utils";
 
+import { AnatomicalFilterMultiSelect } from "./anatomical-filter-multi-select";
+import { MuscleVolumeHeatmap } from "./muscle-volume-heatmap";
 import type { ProgramTemplateCard } from "./training-programs-page";
 
 export type CreationDialogMode = "choice" | "template";
@@ -21,6 +23,8 @@ export interface TrainingProgramExerciseDraft {
   rpe: string;
   rir: string;
   restSeconds: string;
+  bodyPart?: string;
+  primaryMuscles?: string[];
   customVideoUrl?: string;
   customVideoFileName?: string;
   exerciseVideoObjectKey?: string;
@@ -62,6 +66,7 @@ export interface TrainingProgramTemplateDraftSource {
         rir?: string;
         section?: TrainingProgramSection;
         videoObjectKey?: string;
+        primaryMuscles?: string[];
       }>;
     }>;
     instructions?: string;
@@ -91,6 +96,7 @@ type BuilderExerciseLibraryItem = ApiExercise | Exercise;
 export interface CustomExerciseInput {
   exerciseName: string;
   bodyPart: string;
+  primaryMuscles: string[];
   sets: string;
   reps: string;
   restSeconds: string;
@@ -135,20 +141,6 @@ interface ExerciseVideoPreviewResponse {
     expiresAt: string | null;
   };
 }
-
-const customExerciseBodyParts = [
-  "Chest",
-  "Back",
-  "Shoulders",
-  "Quads",
-  "Hamstrings",
-  "Glutes",
-  "Calves",
-  "Biceps",
-  "Triceps",
-  "Core",
-  "Full Body"
-];
 
 const builderFieldClassName =
   "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-normal text-slate-950 placeholder:text-slate-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
@@ -340,7 +332,7 @@ export function TrainingProgramBuilder({
   function addExercise(
     section: TrainingProgramSection,
     exerciseName = "",
-    customInput: Partial<CustomExerciseInput> & { exerciseId?: string; exerciseVideoObjectKey?: string } = {}
+    customInput: Partial<CustomExerciseInput> & { exerciseId?: string; bodyPart?: string; primaryMuscles?: string[]; exerciseVideoObjectKey?: string } = {}
   ) {
     const sectionExerciseCount = activeDay.exercises.filter((exercise) => exercise.section === section).length + 1;
 
@@ -357,6 +349,8 @@ export function TrainingProgramBuilder({
           rpe: customInput.rpe || "",
           rir: customInput.rir || "",
           restSeconds: customInput.restSeconds || "120",
+          bodyPart: customInput.bodyPart,
+          primaryMuscles: customInput.primaryMuscles ?? [],
           customVideoUrl: customInput.videoUrl,
           customVideoFileName: customInput.videoFileName,
           exerciseVideoObjectKey: customInput.exerciseVideoObjectKey
@@ -370,16 +364,7 @@ export function TrainingProgramBuilder({
   }
 
   function addLibraryExercise(section: TrainingProgramSection, exercise: BuilderExerciseLibraryItem) {
-    addExercise(section, exercise.name, {
-      exerciseId: exercise.id,
-      sets: "defaultSets" in exercise && exercise.defaultSets ? String(exercise.defaultSets) : "3",
-      reps: "defaultReps" in exercise && exercise.defaultReps ? exercise.defaultReps : "8-10",
-      restSeconds: "defaultRestSeconds" in exercise && exercise.defaultRestSeconds !== null && exercise.defaultRestSeconds !== undefined ? String(exercise.defaultRestSeconds) : "120",
-      rpe: "defaultRpe" in exercise && exercise.defaultRpe !== null && exercise.defaultRpe !== undefined ? String(exercise.defaultRpe) : "",
-      rir: "defaultRir" in exercise && exercise.defaultRir ? exercise.defaultRir : "",
-      videoUrl: "videoUrl" in exercise && exercise.videoUrl ? exercise.videoUrl : undefined,
-      exerciseVideoObjectKey: "videoObjectKey" in exercise && exercise.videoObjectKey ? exercise.videoObjectKey : undefined
-    });
+    addExercise(section, exercise.name, getBuilderExerciseDropPayload(exercise));
   }
 
   async function addCustomExercise(section: TrainingProgramSection, input: CustomExerciseInput) {
@@ -400,7 +385,9 @@ export function TrainingProgramBuilder({
       rir: input.rir,
       videoUrl: input.videoUrl,
       videoFileName: input.videoFileName,
-      exerciseVideoObjectKey: savedExercise?.videoObjectKey ?? input.videoObjectKey
+      exerciseVideoObjectKey: savedExercise?.videoObjectKey ?? input.videoObjectKey,
+      bodyPart: savedExercise?.category ?? input.bodyPart,
+      primaryMuscles: savedExercise?.primaryMuscles ?? input.primaryMuscles
     });
     setCustomExerciseSection(null);
   }
@@ -609,6 +596,10 @@ export function TrainingProgramBuilder({
             </p>
           ) : null}
 
+          <div className="mt-5">
+            <MuscleVolumeHeatmap activeDay={activeDay} />
+          </div>
+
           {(["warmUp", "workout", "coolDown"] as TrainingProgramSection[]).map((section) => (
             <ProgramBuilderSection
               key={section}
@@ -617,7 +608,7 @@ export function TrainingProgramBuilder({
               onAddExercise={() => openExercisePanel(section)}
               onExerciseChange={updateExercise}
               onExerciseDelete={deleteExercise}
-              onExerciseDrop={(exerciseName) => addExercise(section, exerciseName)}
+              onExerciseDrop={(exerciseName, metadata) => addExercise(section, exerciseName, metadata)}
               onExerciseMove={moveExercise}
             />
           ))}
@@ -706,7 +697,8 @@ export function createTrainingProgramDraftFromTemplate(
         rpe: exercise.rpe ?? "",
         rir: exercise.rir ?? "",
         restSeconds: String(exercise.restSeconds ?? ""),
-        exerciseVideoObjectKey: exercise.videoObjectKey
+        exerciseVideoObjectKey: exercise.videoObjectKey,
+        primaryMuscles: exercise.primaryMuscles ?? []
       }))
     })) ?? [];
   const firstDay = days[0] ?? createBlankTrainingDay(1);
@@ -785,6 +777,7 @@ export function getTrainingProgramTemplatePayload(
           restSeconds: parsePositiveInteger(exercise.restSeconds, 120),
           section: exercise.section,
           ...(exercise.exerciseVideoObjectKey ? { videoObjectKey: exercise.exerciseVideoObjectKey } : {}),
+          primaryMuscles: exercise.primaryMuscles ?? [],
           ...(buildCustomExerciseNotes(exercise) ? { notes: buildCustomExerciseNotes(exercise) } : {})
         }))
       })),
@@ -805,7 +798,10 @@ function ProgramBuilderSection({
   section: TrainingProgramSection;
   exercises: TrainingProgramExerciseDraft[];
   onAddExercise: () => void;
-  onExerciseDrop: (exerciseName: string) => void;
+  onExerciseDrop: (
+    exerciseName: string,
+    metadata?: Partial<CustomExerciseInput> & { exerciseId?: string; bodyPart?: string; primaryMuscles?: string[]; exerciseVideoObjectKey?: string }
+  ) => void;
   onExerciseChange: (exerciseId: string, updates: Partial<TrainingProgramExerciseDraft>) => void;
   onExerciseDelete: (exerciseId: string) => void;
   onExerciseMove: (exerciseId: string, targetExerciseId: string) => void;
@@ -820,9 +816,12 @@ function ProgramBuilderSection({
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault();
+          const exercisePayload = parseBuilderExerciseDropPayload(event.dataTransfer.getData("application/x-complete-coach-library-exercise"));
           const exerciseName = event.dataTransfer.getData("text/plain");
 
-          if (exerciseName) {
+          if (exercisePayload) {
+            onExerciseDrop(exercisePayload.exerciseName, exercisePayload);
+          } else if (exerciseName) {
             onExerciseDrop(exerciseName);
           }
         }}
@@ -1039,7 +1038,7 @@ function CustomExerciseDialog({
   onCreate: (input: CustomExerciseInput) => Promise<void>;
 }) {
   const [exerciseName, setExerciseName] = useState("");
-  const [bodyPart, setBodyPart] = useState(customExerciseBodyParts[0]);
+  const [selectedMuscles, setSelectedMuscles] = useState<string[]>([muscleGroups[0] ?? "Pectoralis Major"]);
   const [sets, setSets] = useState("3");
   const [reps, setReps] = useState("8-10");
   const [restSeconds, setRestSeconds] = useState("120");
@@ -1057,6 +1056,8 @@ function CustomExerciseDialog({
     setErrorMessage("");
 
     try {
+      const primaryMuscles = selectedMuscles.length > 0 ? selectedMuscles : [muscleGroups[0] ?? "Pectoralis Major"];
+
       let videoObjectKey: string | undefined;
       let uploadedVideoFileName: string | undefined;
 
@@ -1072,7 +1073,8 @@ function CustomExerciseDialog({
 
       await onCreate({
         exerciseName: exerciseName.trim(),
-        bodyPart,
+        bodyPart: primaryMuscles[0] ?? "Pectoralis Major",
+        primaryMuscles,
         sets: sets.trim() || "3",
         reps: reps.trim() || "8-10",
         restSeconds: restSeconds.trim() || "120",
@@ -1122,16 +1124,11 @@ function CustomExerciseDialog({
             />
           </label>
 
-          <label className="block text-sm font-bold text-slate-800">
-            Body part worked
-            <select value={bodyPart} className={builderFieldClassName} onChange={(event) => setBodyPart(event.target.value)}>
-              {customExerciseBodyParts.map((bodyPartOption) => (
-                <option key={bodyPartOption} value={bodyPartOption}>
-                  {bodyPartOption}
-                </option>
-              ))}
-            </select>
-          </label>
+          <AnatomicalFilterMultiSelect
+            selectedMuscles={selectedMuscles}
+            onChange={setSelectedMuscles}
+            helperText="Select every anatomical target this exercise should light up in the heatmap."
+          />
 
           <div className="grid gap-3 md:grid-cols-5">
             <label className="text-sm font-bold text-slate-800">
@@ -1332,6 +1329,7 @@ function ExerciseDatabaseSidePanel({
               className="flex w-full cursor-grab items-start gap-3 text-left"
               onDragStart={(event) => {
                 event.dataTransfer.setData("text/plain", exercise.name);
+                event.dataTransfer.setData("application/x-complete-coach-library-exercise", JSON.stringify(getBuilderExerciseDropPayload(exercise)));
                 event.dataTransfer.effectAllowed = "copy";
               }}
             >
@@ -1457,7 +1455,7 @@ export function getCustomExerciseApiPayload(input: CustomExerciseInput): CustomE
   return {
     name: input.exerciseName,
     category: input.bodyPart,
-    primaryMuscles: [input.bodyPart],
+    primaryMuscles: input.primaryMuscles.length > 0 ? input.primaryMuscles : [input.bodyPart],
     difficulty: "intermediate",
     defaultSets: parsePositiveInteger(input.sets, 3),
     defaultReps: input.reps.trim() || "8-10",
@@ -1528,4 +1526,37 @@ export function getBuilderExerciseMeta(exercise: BuilderExerciseLibraryItem) {
   const equipment = exercise.equipment ? `${exercise.equipment} - ` : "";
 
   return `${exercise.category} - ${equipment}${muscles}`;
+}
+
+export function getBuilderExerciseDropPayload(exercise: BuilderExerciseLibraryItem) {
+  return {
+    exerciseId: exercise.id,
+    exerciseName: exercise.name,
+    sets: "defaultSets" in exercise && exercise.defaultSets ? String(exercise.defaultSets) : "3",
+    reps: "defaultReps" in exercise && exercise.defaultReps ? exercise.defaultReps : "8-10",
+    restSeconds:
+      "defaultRestSeconds" in exercise && exercise.defaultRestSeconds !== null && exercise.defaultRestSeconds !== undefined
+        ? String(exercise.defaultRestSeconds)
+        : "120",
+    rpe: "defaultRpe" in exercise && exercise.defaultRpe !== null && exercise.defaultRpe !== undefined ? String(exercise.defaultRpe) : "",
+    rir: "defaultRir" in exercise && exercise.defaultRir ? exercise.defaultRir : "",
+    videoUrl: "videoUrl" in exercise && exercise.videoUrl ? exercise.videoUrl : undefined,
+    exerciseVideoObjectKey: "videoObjectKey" in exercise && exercise.videoObjectKey ? exercise.videoObjectKey : undefined,
+    bodyPart: exercise.category,
+    primaryMuscles: "primaryMuscles" in exercise ? exercise.primaryMuscles : [exercise.category]
+  };
+}
+
+export function parseBuilderExerciseDropPayload(payload: string) {
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    const parsedPayload = JSON.parse(payload) as ReturnType<typeof getBuilderExerciseDropPayload>;
+
+    return typeof parsedPayload.exerciseName === "string" ? parsedPayload : null;
+  } catch {
+    return null;
+  }
 }

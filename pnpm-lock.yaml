@@ -28,6 +28,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.14)(react@19.2.5)
+      '@rive-app/react-canvas':
+        specifier: 4.29.3
+        version: 4.29.3(react@19.2.5)
       '@sentry/nextjs':
         specifier: 10.56.0
         version: 10.56.0(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(next@16.2.7(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(webpack@5.107.2(esbuild@0.27.7)(postcss@8.5.12))
@@ -1090,6 +1093,14 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@rive-app/canvas@2.38.3':
+    resolution: {integrity: sha512-WMDG5Ox4GMSdbszcEc7cvNDNryNEgRyRbwva68K4Hc89rtauso7oPyaQgKFVs4kliYwIc8aCvyVI2cAeRJomkg==}
+
+  '@rive-app/react-canvas@4.29.3':
+    resolution: {integrity: sha512-Z9VfK2XeS1zuX6QU9OAL/FAUAgN8/ATaj3HfHZ8rjEhZS0WIlTyEOX+3HBUm6XAgnydshkhADbVHOO+OqcpKJA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0
 
   '@rolldown/binding-android-arm64@1.0.0-rc.17':
     resolution: {integrity: sha512-s70pVGhw4zqGeFnXWvAzJDlvxhlRollagdCCKRgOsgUOH3N1l0LIxf83AtGzmb5SiVM4Hjl5HyarMRfdfj3DaQ==}
@@ -4145,6 +4156,13 @@ snapshots:
       react: 19.2.5
     optionalDependencies:
       '@types/react': 19.2.14
+
+  '@rive-app/canvas@2.38.3': {}
+
+  '@rive-app/react-canvas@4.29.3(react@19.2.5)':
+    dependencies:
+      '@rive-app/canvas': 2.38.3
+      react: 19.2.5
 
   '@rolldown/binding-android-arm64@1.0.0-rc.17':
     optional: true

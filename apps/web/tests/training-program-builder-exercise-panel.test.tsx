@@ -9,11 +9,13 @@ import {
   createTrainingProgramDraftForDayTemplate,
   createTrainingProgramDraftFromTemplate,
   duplicateTrainingDay,
+  getBuilderExerciseDropPayload,
   getBuilderExerciseMeta,
   getCustomExerciseApiPayload,
   getEmbeddableExerciseVideoUrl,
   getProgramSectionLabel,
   getTrainingProgramTemplatePayload,
+  parseBuilderExerciseDropPayload,
   parseOptionalNumber,
   parsePositiveInteger
 } from "@/components/training/training-program-builder";
@@ -221,13 +223,42 @@ describe("training program builder view model helpers", () => {
         primaryMuscles: []
       })
     ).toBe("Mobility - No muscles tagged");
+    const dropPayload = getBuilderExerciseDropPayload({
+      id: "api-drop",
+      name: "Drop Squat",
+      category: "Quads",
+      scope: "global",
+      equipment: "Barbell",
+      difficulty: "intermediate",
+      videoObjectKey: null,
+      primaryMuscles: ["Quads", "Glutes"],
+      defaultSets: 5,
+      defaultReps: "5",
+      defaultRestSeconds: 180,
+      defaultRpe: 9,
+      defaultRir: "1"
+    });
+
+    expect(dropPayload).toMatchObject({
+      exerciseId: "api-drop",
+      exerciseName: "Drop Squat",
+      primaryMuscles: ["Quads", "Glutes"],
+      sets: "5",
+      reps: "5",
+      restSeconds: "180",
+      rpe: "9",
+      rir: "1"
+    });
+    expect(parseBuilderExerciseDropPayload(JSON.stringify(dropPayload))).toEqual(dropPayload);
+    expect(parseBuilderExerciseDropPayload("not json")).toBeNull();
   });
 
   it("builds organization exercise payloads with defaults and optional media fields", () => {
     expect(
       getCustomExerciseApiPayload({
         exerciseName: "Tempo Goblet Squat",
-        bodyPart: "Quads",
+        bodyPart: "Rectus Femoris",
+        primaryMuscles: ["Rectus Femoris"],
         sets: "",
         reps: " ",
         restSeconds: "0",
@@ -239,8 +270,8 @@ describe("training program builder view model helpers", () => {
       })
     ).toEqual({
       name: "Tempo Goblet Squat",
-      category: "Quads",
-      primaryMuscles: ["Quads"],
+      category: "Rectus Femoris",
+      primaryMuscles: ["Rectus Femoris"],
       difficulty: "intermediate",
       defaultSets: 3,
       defaultReps: "8-10",
@@ -250,7 +281,8 @@ describe("training program builder view model helpers", () => {
     expect(
       getCustomExerciseApiPayload({
         exerciseName: "Cable Pulldown",
-        bodyPart: "Back",
+        bodyPart: "Latissimus Dorsi",
+        primaryMuscles: ["Latissimus Dorsi", "Biceps"],
         sets: "4",
         reps: "10-12",
         restSeconds: "75",
@@ -262,8 +294,8 @@ describe("training program builder view model helpers", () => {
       })
     ).toEqual({
       name: "Cable Pulldown",
-      category: "Back",
-      primaryMuscles: ["Back"],
+      category: "Latissimus Dorsi",
+      primaryMuscles: ["Latissimus Dorsi", "Biceps"],
       difficulty: "intermediate",
       defaultSets: 4,
       defaultReps: "10-12",
@@ -279,13 +311,13 @@ describe("training program builder view model helpers", () => {
 
 async function addCustomExercise(
   name: string,
-  options: { bodyPart?: string; sets?: string; reps?: string; restSeconds?: string; rpe?: string; rir?: string; videoUrl?: string; file?: File } = {}
+  options: { bodyPart?: string; bodyParts?: string[]; sets?: string; reps?: string; restSeconds?: string; rpe?: string; rir?: string; videoUrl?: string; file?: File } = {}
 ) {
   fireEvent.click(screen.getByRole("button", { name: "Add custom exercise" }));
 
   const dialog = screen.getByRole("dialog", { name: "Add custom exercise" });
   fireEvent.change(within(dialog).getByLabelText("Exercise name"), { target: { value: name } });
-  fireEvent.change(within(dialog).getByLabelText("Body part worked"), { target: { value: options.bodyPart ?? "Quads" } });
+  selectAnatomicalFilters(dialog, options.bodyParts ?? [options.bodyPart ?? "Rectus Femoris"]);
   fireEvent.change(within(dialog).getByLabelText("Sets"), { target: { value: options.sets ?? "4" } });
   fireEvent.change(within(dialog).getByLabelText("Reps"), { target: { value: options.reps ?? "6-8" } });
   fireEvent.change(within(dialog).getByLabelText("Rest time"), { target: { value: options.restSeconds ?? "150" } });
@@ -302,6 +334,28 @@ async function addCustomExercise(
 
   fireEvent.click(within(dialog).getByRole("button", { name: "Add exercise" }));
   return screen.findByRole("group", { name: `${name} exercise row` });
+}
+
+function selectAnatomicalFilters(dialog: HTMLElement, targetMuscles: string[]) {
+  fireEvent.click(within(dialog).getByRole("button", { name: "Anatomical Filter" }));
+
+  targetMuscles.forEach((muscle) => {
+    const checkbox = within(dialog).getByRole("checkbox", { name: muscle }) as HTMLInputElement;
+
+    if (!checkbox.checked) {
+      fireEvent.click(checkbox);
+    }
+  });
+
+  const defaultMuscle = "Pectoralis Major";
+
+  if (!targetMuscles.includes(defaultMuscle)) {
+    const defaultCheckbox = within(dialog).getByRole("checkbox", { name: defaultMuscle }) as HTMLInputElement;
+
+    if (defaultCheckbox.checked) {
+      fireEvent.click(defaultCheckbox);
+    }
+  }
 }
 
 describe("Training program builder exercise panel", () => {
@@ -423,7 +477,9 @@ describe("Training program builder exercise panel", () => {
 
     expect(await screen.findByRole("complementary", { name: "Exercise database panel" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Exercise Database" })).toBeInTheDocument();
-    expect(screen.getByRole("main", { name: "Program builder canvas" })).toBeInTheDocument();
+    const builderCanvas = screen.getByRole("main", { name: "Program builder canvas" });
+    expect(builderCanvas).toBeInTheDocument();
+    expect(within(builderCanvas).getByRole("region", { name: "Day 1 muscle volume heatmap" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises?limit=100");
 
     fireEvent.change(screen.getByLabelText("Search exercise database"), { target: { value: "squat" } });
@@ -435,6 +491,11 @@ describe("Training program builder exercise panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add High-Bar Back Squat to Workout" }));
 
     expect(screen.getByDisplayValue("High-Bar Back Squat")).toBeInTheDocument();
+    const heatmap = within(builderCanvas).getByRole("region", { name: "Day 1 muscle volume heatmap" });
+    expect(within(heatmap).getByText("Day 1 volume map")).toBeInTheDocument();
+    expect(within(heatmap).getByText("Quads")).toBeInTheDocument();
+    expect(within(heatmap).getByText("Glutes")).toBeInTheDocument();
+    expect(within(heatmap).getAllByText("3 sets")).toHaveLength(2);
   });
 
   it("adds imported exercise videos to program rows and opens signed playback", async () => {
@@ -556,13 +617,13 @@ describe("Training program builder exercise panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
     await screen.findByRole("button", { name: "Add custom exercise" });
     await addCustomExercise("Back Squat");
-    await addCustomExercise("Romanian Deadlift", { bodyPart: "Hamstrings" });
+    await addCustomExercise("Romanian Deadlift", { bodyPart: "Biceps Femoris" });
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/exercises",
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining("\"primaryMuscles\":[\"Quads\"]")
+        body: expect.stringContaining("\"primaryMuscles\":[\"Rectus Femoris\"]")
       })
     );
     expect(fetchMock).toHaveBeenCalledWith(
@@ -678,7 +739,7 @@ describe("Training program builder exercise panel", () => {
 
     const videoFile = new File(["demo"], "single-leg-squat.mp4", { type: "video/mp4" });
     await addCustomExercise("Single Leg Squat", {
-      bodyPart: "Glutes",
+      bodyPart: "Gluteus Maximus",
       sets: "3",
       reps: "10-12",
       restSeconds: "90",

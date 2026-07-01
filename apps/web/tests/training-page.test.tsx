@@ -33,6 +33,28 @@ describe("TrainingPage", () => {
   });
 });
 
+function selectExercisePageAnatomicalFilters(targetMuscles: string[]) {
+  fireEvent.click(screen.getByRole("button", { name: "Anatomical Filter" }));
+
+  targetMuscles.forEach((muscle) => {
+    const checkbox = screen.getByRole("checkbox", { name: muscle }) as HTMLInputElement;
+
+    if (!checkbox.checked) {
+      fireEvent.click(checkbox);
+    }
+  });
+
+  const defaultMuscle = "Pectoralis Major";
+
+  if (!targetMuscles.includes(defaultMuscle)) {
+    const defaultCheckbox = screen.getByRole("checkbox", { name: defaultMuscle }) as HTMLInputElement;
+
+    if (defaultCheckbox.checked) {
+      fireEvent.click(defaultCheckbox);
+    }
+  }
+}
+
 describe("TrainingProgramsPage", () => {
   it("switches between custom programs and program templates", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
@@ -1018,14 +1040,21 @@ describe("AddExercisePage", () => {
     expect(screen.getByText("Brace before each rep")).toBeInTheDocument();
   });
 
-  it("toggles anatomical target pills", () => {
+  it("selects multiple anatomical filters from the heatmap target dropdown", () => {
     render(createElement(AddExercisePage));
 
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByRole("button", { name: "Anatomical Filter" }));
 
-    expect(screen.getByRole("button", { name: "Back" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Chest" }));
-    expect(screen.getByRole("button", { name: "Chest" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("checkbox", { name: "Pectoralis Major" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Latissimus Dorsi" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Rectus Femoris" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Latissimus Dorsi" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Rectus Femoris" }));
+
+    expect(screen.getByText("3 selected")).toBeInTheDocument();
+    expect(screen.getAllByText("Latissimus Dorsi").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Rectus Femoris").length).toBeGreaterThan(0);
   });
 
   it("saves a new exercise through the persistence API", async () => {
@@ -1049,6 +1078,7 @@ describe("AddExercisePage", () => {
     fireEvent.change(screen.getByLabelText("Exercise Name"), {
       target: { value: "Tempo Goblet Squat" }
     });
+    selectExercisePageAnatomicalFilters(["Latissimus Dorsi", "Rectus Femoris"]);
     fireEvent.click(screen.getAllByRole("button", { name: "Save Exercise" })[0]);
 
     await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/training/exercises"));
@@ -1056,7 +1086,7 @@ describe("AddExercisePage", () => {
       "/api/v1/exercises",
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining("Tempo Goblet Squat")
+        body: expect.stringContaining("\"primaryMuscles\":[\"Latissimus Dorsi\",\"Rectus Femoris\"]")
       })
     );
   });

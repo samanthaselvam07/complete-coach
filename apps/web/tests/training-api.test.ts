@@ -115,7 +115,8 @@ const templateRecord = {
             exerciseName: "Tempo Split Squat",
             sets: 3,
             reps: "8/side",
-            restSeconds: 120
+            restSeconds: 120,
+            primaryMuscles: ["Quads", "Glutes"]
           }
         ]
       }
