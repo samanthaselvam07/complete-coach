@@ -510,7 +510,7 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
                 <div className="space-y-6">
                   {loadingVersion ? (
                     <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm font-medium text-indigo-800">
-                      Loading saved form fields...
+                      Preparing saved form fields...
                     </div>
                   ) : null}
                   {fields.map((field, index) => (

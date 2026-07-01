@@ -252,7 +252,7 @@ function IntegrationsPanel() {
   const [stripeStatus, setStripeStatus] = useState(() => stripeError ?? "Not connected");
   const [isOpeningStripeDashboard, setIsOpeningStripeDashboard] = useState(false);
   const [connections, setConnections] = useState<SocialConnection[]>([]);
-  const [socialStatusMessage, setSocialStatusMessage] = useState("Loading social channels...");
+  const [socialStatusMessage, setSocialStatusMessage] = useState("Preparing social channels...");
 
   useEffect(() => {
     let mounted = true;
@@ -838,7 +838,7 @@ function EmailDnsPanel() {
     fromLocalPart: "hello",
     senderName: "Complete Coach"
   });
-  const [statusMessage, setStatusMessage] = useState("Loading sender domains...");
+  const [statusMessage, setStatusMessage] = useState("Preparing sender domains...");
   const [isSaving, setIsSaving] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
 

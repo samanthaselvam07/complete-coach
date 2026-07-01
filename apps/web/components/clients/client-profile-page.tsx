@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { CheckInDetailPage } from "@/components/check-ins/check-in-detail-page";
 import { CheckInHistoryPanel, DailyCheckInsPanel } from "@/components/clients/client-check-in-panels";
 import { ClientProfileDashboard } from "@/components/clients/client-profile-dashboard";
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import type { ClientProfile, ClientSummary } from "@/lib/clients/client-models";
 import { cn } from "@/lib/utils";
 
@@ -174,9 +175,10 @@ export function ClientProfilePage({
 
   if (!client && loadingClient) {
     return (
-      <div className="p-8">
-        <p className="text-sm text-gray-500">Loading client profile...</p>
-      </div>
+      <CompleteCoachLoadingScreen
+        title="Preparing client profile"
+        label="Preparing client profile."
+      />
     );
   }
 

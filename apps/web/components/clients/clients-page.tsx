@@ -5,6 +5,7 @@ import { Archive, Check, ChevronDown, Download, Eye, Filter, Pencil, Plus, Searc
 import { useEffect, useState } from "react";
 import type { Route } from "next";
 
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import type { ClientSummary, ClientStatus } from "@/lib/clients/client-models";
 import { cn } from "@/lib/utils";
 import {
@@ -37,6 +38,7 @@ export function ClientsPage() {
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [clientFormError, setClientFormError] = useState<string | null>(null);
   const [savingClient, setSavingClient] = useState(false);
+  const [loadingClients, setLoadingClients] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -57,6 +59,10 @@ export function ClientsPage() {
       } catch {
         if (active) {
           setClients([]);
+        }
+      } finally {
+        if (active) {
+          setLoadingClients(false);
         }
       }
     }
@@ -163,6 +169,12 @@ export function ClientsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8">
+      {loadingClients ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing client roster"
+          label="Preparing client roster."
+        />
+      ) : null}
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-start">
         <div>
           <h1 className="mb-2 text-3xl font-bold">Client Roster</h1>

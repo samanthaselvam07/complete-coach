@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { FormBuilder } from "./form-builder";
 import { FormManagement } from "./form-management";
 
@@ -84,12 +85,20 @@ export function FormsPage() {
   };
 
   return currentView === "management" ? (
-    <FormManagement
-      forms={forms}
-      loadingForms={loadingForms}
-      onCreateForm={handleCreateForm}
-      onEditForm={handleEditForm}
-    />
+    <>
+      {loadingForms ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing forms"
+          label="Preparing forms library."
+        />
+      ) : null}
+      <FormManagement
+        forms={forms}
+        loadingForms={loadingForms}
+        onCreateForm={handleCreateForm}
+        onEditForm={handleEditForm}
+      />
+    </>
   ) : (
     <FormBuilder
       form={selectedForm}

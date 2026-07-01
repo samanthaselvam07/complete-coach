@@ -3,6 +3,7 @@
 import { MessageSquare, MoreVertical, Paperclip, Phone, Search, Send, Smile, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ChatMessage } from "@/lib/operations/message-models";
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 
 interface ApiConversation {
   id: string;
@@ -36,6 +37,7 @@ export function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [messagesByConversation, setMessagesByConversation] = useState<Record<string, ChatMessage[]>>({});
   const [messageError, setMessageError] = useState("");
+  const [loadingConversations, setLoadingConversations] = useState(true);
 
   useEffect(() => {
     let isActive = true;
@@ -50,14 +52,25 @@ export function MessagesPage() {
 
         const payload = (await response.json()) as { data: ApiConversation[] };
         const apiConversations = payload.data.map(mapApiConversation);
+        const firstConversationId = apiConversations[0]?.id ?? "";
+        let firstMessages: ChatMessage[] = [];
+
+        if (firstConversationId) {
+          const messagesResponse = await fetch(`/api/v1/conversations/${firstConversationId}/messages?limit=100`);
+
+          if (messagesResponse.ok) {
+            const messagesPayload = (await messagesResponse.json()) as { data?: ApiMessage[] };
+            firstMessages = (messagesPayload.data ?? []).map(mapApiMessage);
+          }
+        }
 
         if (!isActive) {
           return;
         }
 
         setConversationList(apiConversations);
-        setSelectedConversation(apiConversations[0]?.id ?? "");
-        setMessagesByConversation({});
+        setSelectedConversation(firstConversationId);
+        setMessagesByConversation(firstConversationId ? { [firstConversationId]: firstMessages } : {});
       } catch {
         if (!isActive) {
           return;
@@ -66,6 +79,10 @@ export function MessagesPage() {
         setConversationList([]);
         setSelectedConversation("");
         setMessagesByConversation({});
+      } finally {
+        if (isActive) {
+          setLoadingConversations(false);
+        }
       }
     }
 
@@ -166,6 +183,12 @@ export function MessagesPage() {
 
   return (
     <main className="flex h-[calc(100vh-88px)] min-h-[720px] overflow-hidden">
+      {loadingConversations ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing messages"
+          label="Preparing messages."
+        />
+      ) : null}
       <aside className="flex w-full max-w-sm flex-col border-r border-slate-200 bg-white">
         <div className="border-b border-slate-200 p-4">
           <h1 className="mb-4 text-2xl font-black">Messages</h1>

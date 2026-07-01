@@ -3,6 +3,7 @@
 import { Calendar, Clock, GripVertical, Mail, MapPin, Pencil, Phone, Plus, Search, Tag, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { pipelineStages, type Lead, type LeadStageId, type LeadStatus } from "@/lib/crm/lead-models";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,7 @@ export function CRMPage() {
   const [leadForm, setLeadForm] = useState<LeadFormState>(emptyLeadForm);
   const [leadFormError, setLeadFormError] = useState<string | null>(null);
   const [savingLead, setSavingLead] = useState(false);
+  const [loadingLeads, setLoadingLeads] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -63,6 +65,10 @@ export function CRMPage() {
       } catch {
         if (active) {
           setLeads([]);
+        }
+      } finally {
+        if (active) {
+          setLoadingLeads(false);
         }
       }
     }
@@ -174,6 +180,12 @@ export function CRMPage() {
 
   return (
     <div className="p-6 md:p-8">
+      {loadingLeads ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing CRM"
+          label="Preparing CRM pipeline."
+        />
+      ) : null}
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold">Client Relationship Management</h1>
         <p className="text-gray-600">Manage leads and track client acquisition pipeline</p>

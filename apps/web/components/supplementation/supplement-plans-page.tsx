@@ -6,6 +6,7 @@ import {
   type ActiveSupplementProtocol,
   type ProtocolTemplate
 } from "@/lib/supplements/protocol-display";
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { SavedToast } from "@/components/ui/saved-toast";
 
 type TabId = "active" | "library";
@@ -37,6 +38,7 @@ export function SupplementPlansPage() {
   const [activeTab, setActiveTab] = useState<TabId>("active");
   const [activeProtocols, setActiveProtocols] = useState<ActiveSupplementProtocol[]>([]);
   const [templates, setTemplates] = useState<ProtocolTemplate[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
   const [templateDraft, setTemplateDraft] = useState<ProtocolTemplateDraft | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -109,6 +111,10 @@ export function SupplementPlansPage() {
           setActiveProtocols([]);
           setTemplates([]);
         }
+      } finally {
+        if (mounted) {
+          setLoadingPlans(false);
+        }
       }
     }
 
@@ -121,6 +127,12 @@ export function SupplementPlansPage() {
 
   return (
     <main className="space-y-8 p-6 lg:p-8">
+      {loadingPlans ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing supplement protocols"
+          label="Preparing supplement protocols."
+        />
+      ) : null}
       <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="mb-2 text-3xl font-black">Supplementation Hub</h1>

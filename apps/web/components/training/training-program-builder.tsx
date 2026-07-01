@@ -1125,7 +1125,7 @@ function ExerciseDatabaseSidePanel({
       </div>
 
       <div className="max-h-[calc(100vh-18rem)] space-y-3 overflow-y-auto p-4">
-        {loadingExercises ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Loading exercise database...</p> : null}
+        {loadingExercises ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Preparing exercise database...</p> : null}
         {!loadingExercises && filteredExercises.length === 0 ? (
           <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">No exercises match that search.</p>
         ) : null}

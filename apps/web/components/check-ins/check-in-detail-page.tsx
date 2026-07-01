@@ -4,6 +4,8 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useMemo, useState } from "react";
 
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
+
 interface ApiCheckInRecord {
   id: string;
   clientId?: string;
@@ -91,6 +93,15 @@ export function CheckInDetailPage({
     };
   }, [clientId]);
 
+  if (loading && !embedded) {
+    return (
+      <CompleteCoachLoadingScreen
+        title="Preparing check-in"
+        label="Preparing check-in detail."
+      />
+    );
+  }
+
   return (
     <main className={embedded ? "overflow-hidden rounded-xl border border-slate-200 bg-white" : "min-h-screen bg-gray-50"}>
       <header className="flex flex-col gap-3 border-b border-slate-200 bg-white px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
@@ -149,7 +160,7 @@ export function CheckInDetailPage({
       </header>
 
       {loading ? (
-        <section className="bg-white p-6 text-sm text-slate-500">Loading check-in from the database...</section>
+        <section className="bg-white p-6 text-sm text-slate-500">Preparing check-in...</section>
       ) : !selectedCheckIn ? (
         <section className="bg-white p-6 text-sm text-slate-500">No persisted check-in was found for this client.</section>
       ) : isComparing && comparedCheckIn ? (

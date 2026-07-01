@@ -71,7 +71,7 @@ export function FormManagement({
         <div className="space-y-3">
           {loadingForms ? (
             <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500">
-              Loading persisted forms...
+              Preparing forms...
             </div>
           ) : null}
           {!loadingForms && forms.length === 0 ? (

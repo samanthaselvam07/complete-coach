@@ -12,6 +12,7 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { Input } from "@/components/ui/input";
 
 type TeamRole = "owner" | "admin" | "coach" | "assistant";
@@ -38,6 +39,7 @@ interface TeamInvitation {
 export function TeamManagementPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(true);
   const [source, setSource] = useState<"api" | "unavailable">("unavailable");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -70,6 +72,10 @@ export function TeamManagementPage() {
           setMembers([]);
           setInvitations([]);
           setSource("unavailable");
+        }
+      } finally {
+        if (active) {
+          setLoadingTeam(false);
         }
       }
     }
@@ -161,6 +167,12 @@ export function TeamManagementPage() {
 
   return (
     <main className="min-h-screen space-y-8 bg-gray-50 p-6 lg:p-8">
+      {loadingTeam ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing team management"
+          label="Preparing team management."
+        />
+      ) : null}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-950">Team Management</h1>

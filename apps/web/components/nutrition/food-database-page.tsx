@@ -4,6 +4,7 @@ import { Check, ChevronLeft, ChevronRight, Grid2X2, List as ListIcon, Plus, Sear
 import { useEffect, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import type { Food } from "@/lib/nutrition/nutrition-models";
 import { cn } from "@/lib/utils";
 
@@ -152,6 +153,7 @@ export function FoodDatabasePage() {
   const totalPages = Math.max(1, Math.ceil(filteredFoods.length / FOODS_PER_PAGE));
   const effectivePage = Math.min(currentPage, totalPages);
   const visibleFoods = filteredFoods.slice((effectivePage - 1) * FOODS_PER_PAGE, effectivePage * FOODS_PER_PAGE);
+
   const paginationPages = getPaginationPages(effectivePage, totalPages);
 
   async function createFood() {
@@ -235,12 +237,17 @@ export function FoodDatabasePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8">
+      {loadingFoods ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing food database"
+          label="Preparing food database."
+        />
+      ) : null}
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-black tracking-tight text-slate-950">Food Database</h1>
         <p className="text-slate-600">Curate your custom ingredients or import from verified global libraries.</p>
       </div>
 
-      {loadingFoods ? <p className="mb-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">Loading persisted food library...</p> : null}
       {statusMessage ? <SavedToast message={statusMessage} /> : null}
       {errorMessage ? <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p> : null}
 

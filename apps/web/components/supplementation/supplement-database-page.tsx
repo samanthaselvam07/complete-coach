@@ -3,6 +3,7 @@
 import { Check, ChevronLeft, ChevronRight, Grid2X2, List, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { cn } from "@/lib/utils";
 
 const categoryOptions = ["Morning", "Evening", "Anytime"] as const;
@@ -58,6 +59,7 @@ export function SupplementDatabasePage() {
   const [viewMode, setViewMode] = useState<SupplementViewMode>("cards");
   const [currentPage, setCurrentPage] = useState(1);
   const [supplements, setSupplements] = useState<SupplementLibraryEntry[]>([]);
+  const [loadingSupplements, setLoadingSupplements] = useState(true);
   const [coachDetails, setCoachDetails] = useState<Record<string, CoachSupplementDetails>>({});
   const [coachDetailsLoadingId, setCoachDetailsLoadingId] = useState<string | null>(null);
   const [coachDetailsSavingId, setCoachDetailsSavingId] = useState<string | null>(null);
@@ -90,6 +92,10 @@ export function SupplementDatabasePage() {
       } catch {
         if (mounted) {
           setSupplements([]);
+        }
+      } finally {
+        if (mounted) {
+          setLoadingSupplements(false);
         }
       }
     }
@@ -251,6 +257,12 @@ export function SupplementDatabasePage() {
 
   return (
     <main className="space-y-8 p-6 lg:p-8">
+      {loadingSupplements ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing supplement database"
+          label="Preparing supplement database."
+        />
+      ) : null}
       <header>
         <div className="mb-2 flex flex-wrap items-center gap-3">
           <h1 className="text-3xl font-black">Supplementation Library</h1>
@@ -568,7 +580,7 @@ function SupplementDetailsDialog({
 
             {isLoadingCoachDetails ? (
               <p className="rounded-xl bg-slate-50 p-4 text-sm font-bold text-slate-600">
-                Loading coach supplement details...
+                Preparing coach supplement details...
               </p>
             ) : editing ? (
               <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">

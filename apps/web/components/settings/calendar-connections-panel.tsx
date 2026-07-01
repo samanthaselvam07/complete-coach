@@ -52,7 +52,7 @@ const calendarProviders: Array<{
 
 export function CalendarConnectionsPanel({ scope, redirectTo, title, description }: CalendarConnectionsPanelProps) {
   const [connections, setConnections] = useState<CalendarConnection[]>([]);
-  const [statusMessage, setStatusMessage] = useState("Loading calendar connections...");
+  const [statusMessage, setStatusMessage] = useState("Preparing calendar connections...");
   const [connectingApple, setConnectingApple] = useState(false);
 
   useEffect(() => {

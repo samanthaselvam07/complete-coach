@@ -10,6 +10,7 @@ import {
   type CheckInTab,
   type CheckInListRecord
 } from "@/lib/check-ins/check-in-display";
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { cn } from "@/lib/utils";
 
 const sortOptions: Array<{ value: CheckInSort; label: string }> = [
@@ -85,6 +86,12 @@ export function CheckInManagementPage() {
 
   return (
     <div className="p-6 md:p-8">
+      {loadingCheckIns ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing check-ins"
+          label="Preparing check-in review center."
+        />
+      ) : null}
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold">Check In Review Center</h1>
         <p className="text-gray-600">Review submitted client check-ins and timing status.</p>
@@ -152,11 +159,6 @@ export function CheckInManagementPage() {
       </div>
 
       <section aria-label="Check-in list" className="space-y-4">
-        {loadingCheckIns ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-500">
-            Loading persisted check-ins...
-          </div>
-        ) : null}
         {displayedCheckIns.map((checkIn) => {
           const submittedAt = toDate(checkIn.submittedAt);
           const assignedDay = toDate(checkIn.assignedDay ?? checkIn.submittedAt);
@@ -195,7 +197,7 @@ export function CheckInManagementPage() {
         })}
       </section>
 
-      {!loadingCheckIns && displayedCheckIns.length === 0 ? (
+      {displayedCheckIns.length === 0 ? (
         <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
           No {activeTab === "pending" ? "pending" : "completed"} check-ins found.
         </div>

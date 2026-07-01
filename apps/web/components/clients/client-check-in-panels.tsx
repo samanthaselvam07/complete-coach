@@ -73,7 +73,7 @@ export function CheckInHistoryPanel({ clientId }: { clientId: string }) {
       </section>
 
       {loading ? (
-        <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Loading check-ins from the database...</p>
+        <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Preparing check-ins...</p>
       ) : checkIns.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
           No persisted check-ins were found for this client.

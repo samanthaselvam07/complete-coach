@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Bell, Calendar, ChevronLeft, ChevronRight, Search, Settings, Share2 } from "lucide-react";
 
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
+
 type SocialConnection = {
   id: string;
   provider: "instagram" | "facebook" | "x";
@@ -41,6 +43,7 @@ export function SocialMediaPage() {
   const [caption, setCaption] = useState("");
   const [scheduledFor, setScheduledFor] = useState("");
   const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>([]);
+  const [loadingSocialData, setLoadingSocialData] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -70,6 +73,10 @@ export function SocialMediaPage() {
         if (isMounted) {
           setConnections([]);
           setPosts([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingSocialData(false);
         }
       }
     }
@@ -148,6 +155,12 @@ export function SocialMediaPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
+      {loadingSocialData ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing social planner"
+          label="Preparing social planner."
+        />
+      ) : null}
       <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
         <h1 className="text-2xl font-black text-slate-950">Social Planner</h1>
         <div className="flex flex-wrap items-center gap-3">

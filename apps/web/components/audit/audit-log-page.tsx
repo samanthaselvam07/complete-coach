@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 
 interface AuditRecord {
   id: string;
@@ -71,6 +72,12 @@ export function AuditLogPage({ embedded = false }: AuditLogPageProps) {
 
   return (
     <Container className={embedded ? "space-y-6" : "space-y-8 p-6 lg:p-8"}>
+      {loading && !embedded ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing audit log"
+          label="Preparing audit log."
+        />
+      ) : null}
       {!embedded ? (
         <header>
           <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
@@ -84,7 +91,7 @@ export function AuditLogPage({ embedded = false }: AuditLogPageProps) {
       ) : null}
 
       {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
-      {loading ? <p role="status" className="text-sm text-slate-500">Loading audit events...</p> : null}
+      {loading ? <p role="status" className="text-sm text-slate-500">Preparing audit events...</p> : null}
 
       {!loading && !error ? (
         <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">

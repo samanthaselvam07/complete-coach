@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Check, Grid2X2, List, Play, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import type { Exercise } from "@/lib/training/training-models";
 import { cn } from "@/lib/utils";
 
@@ -76,6 +77,12 @@ export function ExerciseDatabasePage() {
 
   return (
     <div className="p-6 md:p-8">
+      {loadingExercises ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing exercise database"
+          label="Preparing exercise database."
+        />
+      ) : null}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Exercise database</h1>
       </div>

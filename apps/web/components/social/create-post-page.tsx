@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { SavedToast } from "@/components/ui/saved-toast";
 
 type SocialConnection = {
@@ -105,6 +106,12 @@ export function CreatePostPage() {
 
   return (
     <main className="space-y-8 p-6 lg:p-8">
+      {loadingConnections ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing social accounts"
+          label="Preparing social accounts."
+        />
+      ) : null}
       <header className="max-w-3xl">
         <p className="mb-2 text-xs font-bold uppercase tracking-wide text-indigo-600">Content planner</p>
         <h1 className="mb-2 text-3xl font-black text-slate-950">Create Post</h1>
@@ -142,8 +149,7 @@ export function CreatePostPage() {
 
           <fieldset className="space-y-2">
             <legend className="text-sm font-bold text-slate-700">Accounts</legend>
-            {loadingConnections ? <p className="text-sm text-slate-500">Loading social accounts...</p> : null}
-            {!loadingConnections && connections.length === 0 ? (
+            {connections.length === 0 ? (
               <p className="text-sm text-slate-500">Connect a social account before scheduling posts.</p>
             ) : null}
             {connections.map((connection) => (

@@ -3,6 +3,8 @@
 import { ChevronRight, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
+
 interface ApiEducationResource {
   id: string;
   title: string;
@@ -30,6 +32,7 @@ export function EducationPage() {
   const [activeTab, setActiveTab] = useState<(typeof educationTabs)[number]>("All Content");
   const [resources, setResources] = useState<ResourceCard[]>([]);
   const [resourceSource, setResourceSource] = useState<"api" | "unavailable">("unavailable");
+  const [loadingResources, setLoadingResources] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -54,6 +57,10 @@ export function EducationPage() {
           setResources([]);
           setResourceSource("unavailable");
         }
+      } finally {
+        if (mounted) {
+          setLoadingResources(false);
+        }
       }
     }
 
@@ -74,6 +81,12 @@ export function EducationPage() {
 
   return (
     <main className="space-y-8 p-6 lg:p-8">
+      {loadingResources ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing education library"
+          label="Preparing education library."
+        />
+      ) : null}
       <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-3xl">
           <h1 className="mb-3 text-4xl font-black tracking-tight">

@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientSummary } from "@/lib/clients/client-models";
+import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { cn } from "@/lib/utils";
 
@@ -415,6 +416,12 @@ export function TrainingProgramsPage() {
 
   return (
     <div className="p-6 md:p-8">
+      {loading && !programDraft ? (
+        <CompleteCoachLoadingScreen
+          title="Preparing program library"
+          label="Preparing program library."
+        />
+      ) : null}
       <div className="mb-8">
         <div className="mb-4 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
@@ -433,7 +440,6 @@ export function TrainingProgramsPage() {
         </div>
       </div>
 
-      {loading ? <p className="mb-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">Loading persisted program library...</p> : null}
       {statusMessage ? <SavedToast message={statusMessage} /> : null}
       {errorMessage ? <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p> : null}
 

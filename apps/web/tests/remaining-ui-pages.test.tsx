@@ -739,7 +739,7 @@ describe("AuditLogPage", () => {
 
     render(createElement(AuditLogPage));
 
-    expect(screen.getByRole("status")).toHaveTextContent("Loading audit events");
+    expect(screen.getByRole("status", { name: "Preparing audit log." })).toHaveTextContent("Preparing audit log");
     expect(await screen.findByText("Owner Coach")).toBeInTheDocument();
     expect(screen.getByText("client / client_1")).toBeInTheDocument();
     expect(screen.getByText(JSON.stringify({ field: "status" }))).toBeInTheDocument();
