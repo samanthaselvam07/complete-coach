@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { createElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import SignInPage from "@/app/sign-in/page";
+import SignUpPage from "@/app/sign-up/page";
 import { UserMenu } from "@/components/app-shell/user-menu";
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { SignUpForm } from "@/components/auth/sign-up-form";
@@ -10,6 +12,7 @@ const signInMock = vi.fn();
 const signOutMock = vi.fn();
 const useSessionMock = vi.fn();
 const navigationMocks = vi.hoisted(() => ({
+  redirect: vi.fn(),
   replace: vi.fn()
 }));
 
@@ -20,6 +23,7 @@ vi.mock("next-auth/react", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
+  redirect: (...args: unknown[]) => navigationMocks.redirect(...args),
   useRouter: () => ({
     replace: navigationMocks.replace
   })
@@ -30,6 +34,7 @@ describe("auth UI", () => {
     signInMock.mockReset();
     signOutMock.mockReset();
     useSessionMock.mockReset();
+    navigationMocks.redirect.mockReset();
     navigationMocks.replace.mockReset();
   });
 
@@ -94,6 +99,18 @@ describe("auth UI", () => {
       });
     });
     expect(navigationMocks.replace).toHaveBeenCalledWith("/");
+  });
+
+  it("keeps plain auth pages linked between sign in and sign up", () => {
+    render(createElement(SignInPage));
+
+    expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
+
+    render(createElement(SignUpPage));
+
+    expect(screen.getByRole("heading", { name: "Sign up" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/sign-in");
   });
 
   it("creates a coach account then signs into the clean organization workspace", async () => {
