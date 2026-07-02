@@ -27,6 +27,7 @@ export function MuscleVolumeHeatmap({ activeDay, variant = "default" }: MuscleVo
   const activeRiveMuscles = getActiveRiveMuscleProperties(volumeRows);
   const totalSets = activeVolumeRows.reduce((total, row) => total + row.sets, 0);
   const isCompact = variant === "compact";
+  const heatmapStateKey = `${activeDay.id}:${activeRiveMuscles.join("|")}`;
 
   return (
     <section
@@ -52,7 +53,7 @@ export function MuscleVolumeHeatmap({ activeDay, variant = "default" }: MuscleVo
 
       <div className={cn("mt-4 grid gap-4", isCompact ? "" : "2xl:grid-cols-[minmax(18rem,0.7fr)_minmax(20rem,1fr)]")}>
         <div className="rounded-3xl border border-white bg-white p-3 shadow-sm">
-          <FitnessVisualsRiveHeatmap activeMuscles={activeRiveMuscles} variant={variant} />
+          <FitnessVisualsRiveHeatmap key={heatmapStateKey} activeMuscles={activeRiveMuscles} variant={variant} />
         </div>
 
         <div className={cn("grid content-start gap-2", isCompact ? "" : "sm:grid-cols-2")}>
