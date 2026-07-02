@@ -6,6 +6,7 @@ import {
   TrainingProgramAssignmentStatus,
   TrainingProgramTemplateStatus
 } from "@/app/generated/prisma/enums";
+import { normalizeMuscleGroup } from "@/lib/training/muscle-volume";
 
 export const libraryScopeValues = ["global", "private"] as const;
 export const exerciseDifficultyValues = ["beginner", "intermediate", "advanced"] as const;
@@ -348,7 +349,7 @@ export function serializeExercise(record: ExerciseRecord) {
     name: record.name,
     category: record.category,
     equipment: record.equipment,
-    primaryMuscles: coerceStringArray(record.primaryMuscles),
+    primaryMuscles: coerceExercisePrimaryMuscles(record.primaryMuscles, record.category),
     secondaryMuscles: coerceStringArray(record.secondaryMuscles),
     difficulty: exerciseDifficultyFromPrisma[record.difficulty],
     videoObjectKey: record.videoObjectKey,
@@ -405,7 +406,68 @@ export function serializeTrainingAssignment(record: TrainingAssignmentRecord) {
 }
 
 function coerceStringArray(value: unknown) {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+
+  return [];
+}
+
+function coerceLegacyStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => coerceLegacyStringArray(item));
+  }
+
+  if (typeof value === "string") {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return [];
+    }
+
+    if (trimmedValue.startsWith("[") || trimmedValue.startsWith("{")) {
+      try {
+        return coerceLegacyStringArray(JSON.parse(trimmedValue) as unknown);
+      } catch {
+        return splitStringList(trimmedValue);
+      }
+    }
+
+    return splitStringList(trimmedValue);
+  }
+
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return coerceLegacyStringArray(
+      record.primaryMuscles ??
+        record.primary_muscles ??
+        record.muscles ??
+        record.targetMuscles ??
+        record.target_muscles ??
+        record.values ??
+        record.items
+    );
+  }
+
+  return [];
+}
+
+function coerceExercisePrimaryMuscles(value: unknown, category: string) {
+  const muscles = coerceLegacyStringArray(value);
+  const hasHeatmapMuscle = muscles.some((muscle) => normalizeMuscleGroup(muscle));
+
+  if (hasHeatmapMuscle) {
+    return muscles;
+  }
+
+  return normalizeMuscleGroup(category) ? [category] : muscles;
+}
+
+function splitStringList(value: string) {
+  return value
+    .split(/[;,|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function toIsoString(value: Date | string) {

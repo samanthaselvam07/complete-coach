@@ -33,8 +33,11 @@ describe("training muscle volume model", () => {
     expect(parseExerciseSetVolume("")).toBe(0);
     expect(normalizeMuscleGroup("quadriceps")).toBe("Quads");
     expect(normalizeMuscleGroup("abs")).toBe("Core");
+    expect(normalizeMuscleGroup("Lower Body")).toBe("Quads");
+    expect(normalizeMuscleGroup("Posterior Chain")).toBe("Hamstrings");
     expect(normalizeMuscleGroup("not tagged")).toBeNull();
     expect(resolveExerciseMuscles({ sets: "3", primaryMuscles: ["Quads", "quadriceps"], bodyPart: "Legs" })).toEqual(["Quads"]);
+    expect(resolveExerciseMuscles({ sets: "3", primaryMuscles: ["General"], bodyPart: "Lower Body" })).toEqual(["Quads"]);
   });
 
   it("maps active Complete Coach muscle groups to the Fitness Visuals Rive muscle inputs", () => {

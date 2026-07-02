@@ -23,6 +23,7 @@ import {
 } from "@/app/api/v1/training-program-assignments/route";
 import { GET as getClientTrainingPrograms } from "@/app/api/v1/clients/[clientId]/training-programs/route";
 import { POST as createExerciseMediaUploadUrl } from "@/app/api/v1/exercises/media-upload-url/route";
+import { serializeExercise } from "@/lib/training/training-records";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -188,6 +189,26 @@ describe("training persistence APIs", () => {
         })
       })
     );
+  });
+
+  it("normalizes legacy preloaded exercise muscle metadata for the heatmap", () => {
+    expect(
+      serializeExercise({
+        ...globalExercise,
+        category: "Legs",
+        primaryMuscles: "Quads; Glutes",
+        secondaryMuscles: { muscles: "Hamstrings|Calves" }
+      }).primaryMuscles
+    ).toEqual(["Quads", "Glutes"]);
+
+    expect(
+      serializeExercise({
+        ...globalExercise,
+        category: "Lower Body",
+        primaryMuscles: ["General"],
+        secondaryMuscles: []
+      }).primaryMuscles
+    ).toEqual(["Lower Body"]);
   });
 
   it("creates private tenant exercises and audit logs the write", async () => {
