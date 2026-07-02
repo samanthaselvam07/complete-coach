@@ -607,6 +607,7 @@ describe("training persistence APIs", () => {
   it("creates signed playback URLs for uploaded exercise videos", async () => {
     mocks.prisma.exerciseLibraryItem.findFirst.mockResolvedValue({
       id: "exercise_global",
+      imageObjectKey: null,
       videoObjectKey: "global/training/exercises/video/barbell-back-squat.mp4",
       videoUrl: null
     });
@@ -625,9 +626,33 @@ describe("training persistence APIs", () => {
     expect(payload.data.expiresAt).toBeTruthy();
   });
 
+  it("creates signed preview URLs for uploaded exercise images", async () => {
+    mocks.prisma.exerciseLibraryItem.findFirst.mockResolvedValue({
+      id: "exercise_global",
+      imageObjectKey: "global/training/exercises/image/barbell-back-squat.jpg",
+      videoObjectKey: "global/training/exercises/video/barbell-back-squat.mp4",
+      videoUrl: null
+    });
+
+    const response = await getExerciseMediaUrl(
+      new Request("http://test.local/api/v1/exercises/exercise_global/media-url?type=image"),
+      { params: Promise.resolve({ exerciseId: "exercise_global" }) }
+    );
+    const payload = (await response.json()) as { data: { mediaType: string; source: string; url: string; expiresAt: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.mediaType).toBe("image");
+    expect(payload.data.source).toBe("uploaded");
+    expect(payload.data.url).toContain("X-Amz-Signature=");
+    expect(payload.data.url).toContain("complete-coach-test");
+    expect(payload.data.url).toContain("global/training/exercises/image/barbell-back-squat.jpg");
+    expect(payload.data.expiresAt).toBeTruthy();
+  });
+
   it("returns not found when an exercise has no video media", async () => {
     mocks.prisma.exerciseLibraryItem.findFirst.mockResolvedValue({
       id: "exercise_global",
+      imageObjectKey: null,
       videoObjectKey: null,
       videoUrl: null
     });

@@ -32,7 +32,7 @@ interface ApiExercise {
 }
 
 interface ExerciseVideoPreview {
-  mediaType: "video";
+  mediaType: "video" | "image";
   source: "uploaded" | "external";
   url: string;
   expiresAt: string | null;
@@ -212,19 +212,17 @@ export function ExerciseDatabasePage() {
         <section aria-label="Exercise cards" className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {paginatedExercises.map((exercise) => (
             <article key={exercise.id} className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg">
-              <div className="relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br from-gray-950 to-indigo-950">
-                <div className="absolute right-3 top-3 flex items-center gap-1 rounded bg-black/50 px-2 py-1 text-white backdrop-blur-sm">
-                  <Play className="size-3" aria-hidden="true" />
-                  <span className="text-xs">{getExerciseVideoCount(exercise)}</span>
-                </div>
-              </div>
+              <ExerciseThumbnail
+                exercise={exercise}
+                variant="card"
+                onOpenVideo={(selectedExercise) => void openVideoPreview(selectedExercise)}
+              />
               <div className="p-4">
                 <h2 className="mb-2 font-semibold text-gray-900">{exercise.name}</h2>
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <span className="rounded bg-indigo-100 px-2 py-1 text-xs text-indigo-700">{exercise.category}</span>
                   <ExerciseSourceBadge exercise={exercise} />
                 </div>
-                <p className="text-xs text-gray-500">{getExerciseMeta(exercise)}</p>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -233,16 +231,6 @@ export function ExerciseDatabasePage() {
                   >
                     View details
                   </button>
-                  {getExerciseVideoCount(exercise) > 0 ? (
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 px-3 py-2 text-xs font-bold text-indigo-700 transition hover:bg-indigo-50"
-                      onClick={() => void openVideoPreview(exercise)}
-                    >
-                      <Play className="size-3" aria-hidden="true" />
-                      View video
-                    </button>
-                  ) : null}
                 </div>
               </div>
             </article>
@@ -251,10 +239,14 @@ export function ExerciseDatabasePage() {
       ) : (
         <section aria-label="Exercise list" className="overflow-hidden rounded-xl border border-gray-200 bg-white">
           {paginatedExercises.map((exercise) => (
-            <article key={exercise.id} className="grid gap-3 border-b border-gray-100 p-4 last:border-b-0 md:grid-cols-[1fr_auto_auto_auto] md:items-center">
-              <div>
+            <article key={exercise.id} className="grid gap-3 border-b border-gray-100 p-4 last:border-b-0 md:grid-cols-[auto_1fr_auto_auto_auto] md:items-center">
+              <ExerciseThumbnail
+                exercise={exercise}
+                variant="list"
+                onOpenVideo={(selectedExercise) => void openVideoPreview(selectedExercise)}
+              />
+              <div className="min-w-0">
                 <h2 className="font-semibold text-gray-900">{exercise.name}</h2>
-                <p className="mt-1 text-xs text-gray-500">{getExerciseMeta(exercise)}</p>
               </div>
               <span className="rounded bg-indigo-100 px-2 py-1 text-xs text-indigo-700">{exercise.category}</span>
               <ExerciseSourceBadge exercise={exercise} />
@@ -266,16 +258,6 @@ export function ExerciseDatabasePage() {
                 >
                   View details
                 </button>
-                {getExerciseVideoCount(exercise) > 0 ? (
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-200 px-3 py-2 text-xs font-bold text-indigo-700 transition hover:bg-indigo-50"
-                    onClick={() => void openVideoPreview(exercise)}
-                  >
-                    <Play className="size-3" aria-hidden="true" />
-                    View video
-                  </button>
-                ) : null}
               </div>
             </article>
           ))}
@@ -334,6 +316,91 @@ function getExerciseMeta(exercise: ApiExercise | Exercise) {
   }
 
   return exercise.primaryMuscles.length > 0 ? exercise.primaryMuscles.join(", ") : "No muscles tagged";
+}
+
+function getExerciseImageCount(exercise: ApiExercise | Exercise) {
+  return "imageObjectKey" in exercise && exercise.imageObjectKey ? 1 : 0;
+}
+
+function ExerciseThumbnail({
+  exercise,
+  variant,
+  onOpenVideo
+}: {
+  exercise: ApiExercise | Exercise;
+  variant: "card" | "list";
+  onOpenVideo: (exercise: ApiExercise | Exercise) => void;
+}) {
+  const [imagePreview, setImagePreview] = useState<ExerciseVideoPreview | null>(null);
+  const hasVideo = getExerciseVideoCount(exercise) > 0;
+  const hasImage = getExerciseImageCount(exercise) > 0;
+
+  useEffect(() => {
+    let active = true;
+
+    if (!hasImage) {
+      return undefined;
+    }
+
+    async function loadImagePreview() {
+      try {
+        const response = await fetch(`/api/v1/exercises/${exercise.id}/media-url?type=image`);
+        const payload = (await response.json()) as { data?: ExerciseVideoPreview };
+
+        if (active && response.ok && payload.data) {
+          setImagePreview(payload.data);
+        }
+      } catch {
+        if (active) {
+          setImagePreview(null);
+        }
+      }
+    }
+
+    void loadImagePreview();
+
+    return () => {
+      active = false;
+    };
+  }, [exercise.id, hasImage]);
+
+  return (
+    <button
+      type="button"
+      aria-label={hasVideo ? `Open video for ${exercise.name}` : `${exercise.name} thumbnail`}
+      disabled={!hasVideo}
+      className={cn(
+        "relative overflow-hidden bg-gradient-to-br from-gray-950 to-indigo-950 text-white transition",
+        hasVideo ? "cursor-pointer hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" : "cursor-default",
+        variant === "card" ? "flex h-48 w-full items-center justify-center" : "size-14 rounded-lg"
+      )}
+      onClick={() => {
+        if (hasVideo) {
+          onOpenVideo(exercise);
+        }
+      }}
+    >
+      {imagePreview?.source === "uploaded" ? (
+        <img
+          src={imagePreview.url}
+          alt=""
+          className="absolute inset-0 size-full object-cover"
+        />
+      ) : null}
+      <span className="absolute inset-0 bg-slate-950/10" aria-hidden="true" />
+      {hasVideo ? (
+        <span
+          className={cn(
+            "absolute grid place-items-center rounded-full bg-black/55 backdrop-blur-sm",
+            variant === "card" ? "size-12" : "inset-0 rounded-lg"
+          )}
+          aria-hidden="true"
+        >
+          <Play className={variant === "card" ? "size-5" : "size-4"} />
+        </span>
+      ) : null}
+    </button>
+  );
 }
 
 function ExerciseSourceBadge({ exercise }: { exercise: ApiExercise | Exercise }) {

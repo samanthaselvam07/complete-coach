@@ -973,6 +973,7 @@ describe("ExerciseDatabasePage", () => {
                   difficulty: "intermediate",
                   videoObjectKey: "global/training/exercises/video/high-bar-back-squat.mp4",
                   videoUrl: null,
+                  imageObjectKey: "global/training/exercises/image/high-bar-back-squat.jpg",
                   primaryMuscles: ["Quads"]
                 }
               ]
@@ -998,16 +999,34 @@ describe("ExerciseDatabasePage", () => {
         );
       }
 
+      if (String(input) === "/api/v1/exercises/api-squat/media-url?type=image") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                mediaType: "image",
+                source: "uploaded",
+                url: "https://r2.example/high-bar-back-squat.jpg?X-Amz-Signature=test",
+                expiresAt: "2026-07-01T00:10:00.000Z"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     });
 
     render(createElement(ExerciseDatabasePage));
 
     expect(await screen.findByText("High-Bar Back Squat")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "View video" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Open video for High-Bar Back Squat" }));
 
     expect(await screen.findByRole("dialog", { name: "High-Bar Back Squat video" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises/api-squat/media-url");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises/api-squat/media-url?type=image");
+    expect(screen.queryByRole("button", { name: "View video" })).not.toBeInTheDocument();
   });
 
   it("keeps the exercise database empty when the API is unavailable", async () => {

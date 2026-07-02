@@ -11,10 +11,11 @@ interface ExerciseMediaUrlRouteContext {
 
 const playbackUrlTtlSeconds = 600;
 
-export async function GET(_request: Request, context: ExerciseMediaUrlRouteContext) {
+export async function GET(request: Request, context: ExerciseMediaUrlRouteContext) {
   try {
     const actor = requireActiveActor(await auth(), "training:read");
     const { exerciseId } = await context.params;
+    const mediaType = new URL(request.url).searchParams.get("type") === "image" ? "image" : "video";
     const exercise = await prisma.exerciseLibraryItem.findFirst({
       where: {
         id: exerciseId,
@@ -23,6 +24,7 @@ export async function GET(_request: Request, context: ExerciseMediaUrlRouteConte
       },
       select: {
         id: true,
+        imageObjectKey: true,
         videoObjectKey: true,
         videoUrl: true
       }
@@ -30,6 +32,30 @@ export async function GET(_request: Request, context: ExerciseMediaUrlRouteConte
 
     if (!exercise) {
       return errorResponse("not_found", "Exercise not found.", 404);
+    }
+
+    if (mediaType === "image") {
+      if (!exercise.imageObjectKey) {
+        return errorResponse("not_found", "Exercise image not found.", 404);
+      }
+
+      const r2Config = getR2Config();
+
+      if (!r2Config) {
+        return errorResponse("storage_unconfigured", "Object storage is not configured.", 503);
+      }
+
+      const expiresAt = new Date(Date.now() + playbackUrlTtlSeconds * 1000).toISOString();
+
+      return dataResponse({
+        mediaType: "image",
+        source: "uploaded",
+        url: createR2PresignedGetUrl(r2Config, {
+          objectKey: exercise.imageObjectKey,
+          expiresInSeconds: playbackUrlTtlSeconds
+        }),
+        expiresAt
+      });
     }
 
     if (exercise.videoUrl) {
