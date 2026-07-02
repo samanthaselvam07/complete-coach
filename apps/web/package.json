@@ -22,6 +22,7 @@
     "food:import:usda": "tsx scripts/import-usda-foods.ts",
     "exercise:import:csv": "tsx scripts/import-exercises-csv.ts",
     "exercise:upload-videos": "tsx scripts/upload-exercise-videos.ts",
+    "exercise:upload-thumbnails": "tsx scripts/upload-exercise-thumbnails.ts",
     "supplement:import:csv": "tsx scripts/import-supplements-csv.ts",
     "postinstall": "prisma generate",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm coverage && pnpm build && pnpm e2e"

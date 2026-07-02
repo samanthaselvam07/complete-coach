@@ -11,9 +11,14 @@ import { parseExerciseCsv } from "@/lib/training/exercise-csv-parser";
 import { normaliseExerciseCsvRow } from "@/lib/training/exercise-import-normalizer";
 import { buildExerciseImportPlan } from "@/lib/training/exercise-import-processor";
 import {
+  applyExerciseImageImport,
   applyExerciseVideoImport,
+  buildExerciseImageMappings,
   buildExerciseVideoMappings,
+  getExerciseImageObjectKey,
   getExerciseVideoObjectKey,
+  type ExerciseImageImportRepository,
+  type ExerciseImageStorage,
   type ExerciseVideoImportRepository,
   type ExerciseVideoStorage
 } from "@/lib/training/exercise-video-importer";
@@ -184,6 +189,63 @@ describe("exercise video import", () => {
   });
 });
 
+describe("exercise thumbnail import", () => {
+  it("builds deterministic R2 object keys for global exercise thumbnails", () => {
+    expect(getExerciseImageObjectKey("Barbell Back Squat", "Back Squat Demo.JPEG")).toBe(
+      "global/training/exercises/image/barbell-back-squat.jpg"
+    );
+  });
+
+  it("matches local thumbnails to exercises by mapping CSV or file stem", () => {
+    const mappings = buildExerciseImageMappings({
+      exercises: [
+        { id: "squat", name: "Barbell Back Squat", imageObjectKey: null },
+        { id: "press", name: "Incline DB Press", imageObjectKey: null }
+      ],
+      localFiles: [
+        "/images/barbell-back-squat.jpg",
+        "/images/press-demo.webp"
+      ],
+      mappingRows: [{ exerciseName: "Incline DB Press", imageFilename: "press-demo.webp" }]
+    });
+
+    expect(mappings.map((mapping) => mapping.exerciseId)).toEqual(["press", "squat"]);
+    expect(mappings[0].filePath).toBe("/images/press-demo.webp");
+    expect(mappings[1].filePath).toBe("/images/barbell-back-squat.jpg");
+  });
+
+  it("uploads matched thumbnails and stores object keys against global exercises", async () => {
+    const repository = createImageRepository([
+      { id: "squat", name: "Barbell Back Squat", imageObjectKey: null }
+    ]);
+    const storage = createImageStorage();
+
+    const result = await applyExerciseImageImport({
+      localFiles: ["/images/barbell-back-squat.jpg"],
+      repository,
+      storage,
+      dryRun: false
+    });
+
+    expect(result.uploaded).toEqual([
+      {
+        exerciseId: "squat",
+        exerciseName: "Barbell Back Squat",
+        objectKey: "global/training/exercises/image/barbell-back-squat.jpg"
+      }
+    ]);
+    expect(storage.uploadImage).toHaveBeenCalledWith({
+      filePath: "/images/barbell-back-squat.jpg",
+      contentType: "image/jpeg",
+      objectKey: "global/training/exercises/image/barbell-back-squat.jpg"
+    });
+    expect(repository.updateExerciseImage).toHaveBeenCalledWith(
+      "squat",
+      "global/training/exercises/image/barbell-back-squat.jpg"
+    );
+  });
+});
+
 function createExerciseRepository(
   existingExercises: Awaited<ReturnType<ExerciseImportRepository["listExistingGlobalExercises"]>> = []
 ) {
@@ -207,4 +269,19 @@ function createVideoStorage() {
   return {
     uploadVideo: vi.fn().mockResolvedValue(undefined)
   } satisfies ExerciseVideoStorage;
+}
+
+function createImageRepository(
+  exercises: Awaited<ReturnType<ExerciseImageImportRepository["listGlobalExercises"]>>
+) {
+  return {
+    listGlobalExercises: vi.fn().mockResolvedValue(exercises),
+    updateExerciseImage: vi.fn().mockResolvedValue({ id: "updated-exercise" })
+  } satisfies ExerciseImageImportRepository;
+}
+
+function createImageStorage() {
+  return {
+    uploadImage: vi.fn().mockResolvedValue(undefined)
+  } satisfies ExerciseImageStorage;
 }

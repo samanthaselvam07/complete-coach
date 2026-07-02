@@ -28,11 +28,15 @@ pnpm --dir apps/web exercise:import:csv ./data/imports/exercises.csv
 pnpm --dir apps/web exercise:import:csv ./data/imports/exercises.csv --commit
 ```
 
-Exercise video files should live in R2, not Neon. Neon stores only the exercise metadata and `videoObjectKey`.
+Exercise video and thumbnail files should live in R2, not Neon. Neon stores only the exercise metadata plus `videoObjectKey` and `imageObjectKey`.
+The upload commands scan nested body-part folders recursively.
 
 ```bash
 pnpm --dir apps/web exercise:upload-videos --dir "/path/to/google-drive/exercise-videos"
 pnpm --dir apps/web exercise:upload-videos --dir "/path/to/google-drive/exercise-videos" --commit
+
+pnpm --dir apps/web exercise:upload-thumbnails --dir "/path/to/google-drive/exercise-thumbnails"
+pnpm --dir apps/web exercise:upload-thumbnails --dir "/path/to/google-drive/exercise-thumbnails" --commit
 ```
 
 When filenames do not match exercise names, provide a mapping CSV with `exercise name` and `video filename` columns:
@@ -41,7 +45,13 @@ When filenames do not match exercise names, provide a mapping CSV with `exercise
 pnpm --dir apps/web exercise:upload-videos --dir "/path/to/videos" --mapping ./data/imports/exercise-video-map.csv --commit
 ```
 
-Committed video uploads require `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET_NAME`.
+Thumbnail mappings use `exercise name` plus `thumbnail filename` or `image filename` columns:
+
+```bash
+pnpm --dir apps/web exercise:upload-thumbnails --dir "/path/to/thumbnails" --mapping ./data/imports/exercise-thumbnail-map.csv --commit
+```
+
+Committed media uploads require `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET_NAME`.
 
 ## Database And Auth Foundation
 ```bash
