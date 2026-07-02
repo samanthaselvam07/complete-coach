@@ -38,6 +38,10 @@ describe("training muscle volume model", () => {
     expect(normalizeMuscleGroup("not tagged")).toBeNull();
     expect(resolveExerciseMuscles({ sets: "3", primaryMuscles: ["Quads", "quadriceps"], bodyPart: "Legs" })).toEqual(["Quads"]);
     expect(resolveExerciseMuscles({ sets: "3", primaryMuscles: ["General"], bodyPart: "Lower Body" })).toEqual(["Quads"]);
+    expect(resolveExerciseMuscles({ sets: "3", exerciseName: "Barbell Back Squat", primaryMuscles: ["General"], bodyPart: "General" })).toEqual([
+      "Quads",
+      "Glutes"
+    ]);
   });
 
   it("maps active Complete Coach muscle groups to the Fitness Visuals Rive muscle inputs", () => {

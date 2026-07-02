@@ -24,6 +24,7 @@ export interface MuscleVolumeRow {
 
 export interface MuscleVolumeExercise {
   sets: string;
+  exerciseName?: string;
   primaryMuscles?: string[];
   bodyPart?: string;
 }
@@ -208,7 +209,11 @@ export function resolveExerciseMuscles(exercise: MuscleVolumeExercise): AnatomyM
     .map((muscle) => normalizeMuscleGroup(muscle))
     .filter((muscleGroup): muscleGroup is AnatomyMuscleGroup => Boolean(muscleGroup));
 
-  return Array.from(new Set(mappedMuscles));
+  if (mappedMuscles.length > 0) {
+    return Array.from(new Set(mappedMuscles));
+  }
+
+  return inferMuscleGroupsFromExerciseName(exercise.exerciseName);
 }
 
 function resolveExerciseRiveProperties(exercise: MuscleVolumeExercise) {
@@ -227,6 +232,13 @@ function resolveExerciseRiveProperties(exercise: MuscleVolumeExercise) {
 
     return [{ muscleGroup, riveProperties: fitnessVisualsRiveMuscleMap[muscleGroup] ?? [] }];
   });
+
+  if (resolvedProperties.length === 0) {
+    return inferMuscleGroupsFromExerciseName(exercise.exerciseName).map((muscleGroup) => ({
+      muscleGroup,
+      riveProperties: fitnessVisualsRiveMuscleMap[muscleGroup] ?? []
+    }));
+  }
 
   const dedupedByGroup = new Map<AnatomyMuscleGroup, Set<FitnessVisualsRiveMuscleProperty>>();
 
@@ -296,6 +308,28 @@ export function normalizeMuscleGroup(value?: string | null): AnatomyMuscleGroup 
   }
 
   return aliases[normalizedValue] ?? null;
+}
+
+function inferMuscleGroupsFromExerciseName(value?: string | null): AnatomyMuscleGroup[] {
+  const normalizedValue = value?.trim().toLowerCase() ?? "";
+
+  if (!normalizedValue) {
+    return [];
+  }
+
+  const rules: Array<{ pattern: RegExp; groups: AnatomyMuscleGroup[] }> = [
+    { pattern: /\b(squat|lunge|split squat|leg press|step[- ]?up|leg extension)\b/, groups: ["Quads", "Glutes"] },
+    { pattern: /\b(deadlift|romanian deadlift|rdl|hip thrust|glute bridge|leg curl|hamstring curl)\b/, groups: ["Hamstrings", "Glutes"] },
+    { pattern: /\b(bench|chest press|push[- ]?up|pec|flye|fly)\b/, groups: ["Chest", "Triceps", "Shoulders"] },
+    { pattern: /\b(row|pulldown|pull[- ]?up|chin[- ]?up|lat|face pull)\b/, groups: ["Back", "Biceps"] },
+    { pattern: /\b(shoulder press|overhead press|lateral raise|front raise|rear delt)\b/, groups: ["Shoulders"] },
+    { pattern: /\b(curl|bicep)\b/, groups: ["Biceps"] },
+    { pattern: /\b(tricep|pushdown|skull crusher|dip)\b/, groups: ["Triceps"] },
+    { pattern: /\b(crunch|plank|sit[- ]?up|leg raise|pallof|core|ab)\b/, groups: ["Core"] },
+    { pattern: /\b(calf|calves)\b/, groups: ["Calves"] }
+  ];
+
+  return rules.find((rule) => rule.pattern.test(normalizedValue))?.groups ?? [];
 }
 
 function normalizeOptionKey(value: string) {

@@ -251,6 +251,24 @@ describe("training program builder view model helpers", () => {
     });
     expect(parseBuilderExerciseDropPayload(JSON.stringify(dropPayload))).toEqual(dropPayload);
     expect(parseBuilderExerciseDropPayload("not json")).toBeNull();
+
+    expect(
+      getBuilderExerciseDropPayload({
+        id: "legacy-imported-squat",
+        name: "Imported Squat",
+        category: "General",
+        primary_muscles: "Rectus Femoris; Gluteus Maximus",
+        default_sets: 4,
+        default_reps: "6-8",
+        default_rest_seconds: 150
+      } as never)
+    ).toMatchObject({
+      exerciseId: "legacy-imported-squat",
+      primaryMuscles: ["Rectus Femoris", "Gluteus Maximus"],
+      sets: "4",
+      reps: "6-8",
+      restSeconds: "150"
+    });
   });
 
   it("builds organization exercise payloads with defaults and optional media fields", () => {

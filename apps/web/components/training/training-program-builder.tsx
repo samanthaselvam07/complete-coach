@@ -1529,21 +1529,33 @@ export function getBuilderExerciseMeta(exercise: BuilderExerciseLibraryItem) {
 }
 
 export function getBuilderExerciseDropPayload(exercise: BuilderExerciseLibraryItem) {
+  const exerciseRecord = exercise as BuilderExerciseLibraryItem & Record<string, unknown>;
+  const primaryMuscles = getLegacyStringList(
+    exerciseRecord.primaryMuscles ??
+      exerciseRecord.primary_muscles ??
+      exerciseRecord.muscleGroups ??
+      exerciseRecord.muscle_groups ??
+      exerciseRecord.bodyParts ??
+      exerciseRecord.body_parts ??
+      exerciseRecord.anatomicalFilter ??
+      exerciseRecord.anatomical_filter ??
+      exerciseRecord.targetMuscles ??
+      exerciseRecord.target_muscles ??
+      exerciseRecord.muscles
+  );
+
   return {
     exerciseId: exercise.id,
     exerciseName: exercise.name,
-    sets: "defaultSets" in exercise && exercise.defaultSets ? String(exercise.defaultSets) : "3",
-    reps: "defaultReps" in exercise && exercise.defaultReps ? exercise.defaultReps : "8-10",
-    restSeconds:
-      "defaultRestSeconds" in exercise && exercise.defaultRestSeconds !== null && exercise.defaultRestSeconds !== undefined
-        ? String(exercise.defaultRestSeconds)
-        : "120",
-    rpe: "defaultRpe" in exercise && exercise.defaultRpe !== null && exercise.defaultRpe !== undefined ? String(exercise.defaultRpe) : "",
-    rir: "defaultRir" in exercise && exercise.defaultRir ? exercise.defaultRir : "",
+    sets: getLegacyDefaultValue(exerciseRecord, "defaultSets", "default_sets") ?? "3",
+    reps: getLegacyDefaultValue(exerciseRecord, "defaultReps", "default_reps") ?? "8-10",
+    restSeconds: getLegacyDefaultValue(exerciseRecord, "defaultRestSeconds", "default_rest_seconds") ?? "120",
+    rpe: getLegacyDefaultValue(exerciseRecord, "defaultRpe", "default_rpe") ?? "",
+    rir: getLegacyDefaultValue(exerciseRecord, "defaultRir", "default_rir") ?? "",
     videoUrl: "videoUrl" in exercise && exercise.videoUrl ? exercise.videoUrl : undefined,
     exerciseVideoObjectKey: "videoObjectKey" in exercise && exercise.videoObjectKey ? exercise.videoObjectKey : undefined,
     bodyPart: exercise.category,
-    primaryMuscles: "primaryMuscles" in exercise ? exercise.primaryMuscles : [exercise.category]
+    primaryMuscles: primaryMuscles.length > 0 ? primaryMuscles : [exercise.category]
   };
 }
 
@@ -1559,4 +1571,66 @@ export function parseBuilderExerciseDropPayload(payload: string) {
   } catch {
     return null;
   }
+}
+
+function getLegacyDefaultValue(record: Record<string, unknown>, camelKey: string, snakeKey: string) {
+  const value = record[camelKey] ?? record[snakeKey];
+
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  return String(value);
+}
+
+function getLegacyStringList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => getLegacyStringList(item));
+  }
+
+  if (typeof value === "string") {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return [];
+    }
+
+    if (trimmedValue.startsWith("[") || trimmedValue.startsWith("{")) {
+      try {
+        return getLegacyStringList(JSON.parse(trimmedValue) as unknown);
+      } catch {
+        return splitLegacyStringList(trimmedValue);
+      }
+    }
+
+    return splitLegacyStringList(trimmedValue);
+  }
+
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return getLegacyStringList(
+      record.primaryMuscles ??
+        record.primary_muscles ??
+        record.muscleGroups ??
+        record.muscle_groups ??
+        record.bodyParts ??
+        record.body_parts ??
+        record.anatomicalFilter ??
+        record.anatomical_filter ??
+        record.targetMuscles ??
+        record.target_muscles ??
+        record.muscles ??
+        record.values ??
+        record.items
+    );
+  }
+
+  return [];
+}
+
+function splitLegacyStringList(value: string) {
+  return value
+    .split(/[;,|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
