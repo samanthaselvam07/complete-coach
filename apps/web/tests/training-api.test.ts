@@ -191,6 +191,20 @@ describe("training persistence APIs", () => {
     );
   });
 
+  it("can list recent organization exercises for the builder search", async () => {
+    mocks.prisma.exerciseLibraryItem.findMany.mockResolvedValue([privateExercise]);
+
+    const response = await getExercises(new Request("http://test.local/api/v1/exercises?search=squat&limit=20&sort=recent"));
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.exerciseLibraryItem.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ scope: "desc" }, { updatedAt: "desc" }, { name: "asc" }],
+        take: 20
+      })
+    );
+  });
+
   it("normalizes legacy preloaded exercise muscle metadata for the heatmap", () => {
     expect(
       serializeExercise({

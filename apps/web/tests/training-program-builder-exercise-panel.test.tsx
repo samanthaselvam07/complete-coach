@@ -89,7 +89,8 @@ describe("training program builder view model helpers", () => {
                 reps: "6-8",
                 restSeconds: undefined,
                 section: undefined,
-                videoObjectKey: "global/training/exercises/video/back-squat.mp4"
+                videoObjectKey: "global/training/exercises/video/back-squat.mp4",
+                imageObjectKey: "global/training/exercises/image/back-squat.jpg"
               }
             ]
           }
@@ -122,7 +123,8 @@ describe("training program builder view model helpers", () => {
                 restSeconds: "",
                 customVideoUrl: "https://youtu.be/abc123",
                 customVideoFileName: "demo.mp4",
-                exerciseVideoObjectKey: "global/training/exercises/video/manual-exercise.mp4"
+                exerciseVideoObjectKey: "global/training/exercises/video/manual-exercise.mp4",
+                exerciseImageObjectKey: "global/training/exercises/image/manual-exercise.jpg"
               }
             ]
           }
@@ -144,7 +146,8 @@ describe("training program builder view model helpers", () => {
       exerciseId: "back-squat",
       section: "workout",
       restSeconds: "",
-      exerciseVideoObjectKey: "global/training/exercises/video/back-squat.mp4"
+      exerciseVideoObjectKey: "global/training/exercises/video/back-squat.mp4",
+      exerciseImageObjectKey: "global/training/exercises/image/back-squat.jpg"
     });
     expect(editableDraft).toMatchObject({ sourceTemplateId: "template-1", title: "Hypertrophy", durationWeeks: "1" });
     expect(payload).toMatchObject({
@@ -166,6 +169,7 @@ describe("training program builder view model helpers", () => {
                 reps: "8-10",
                 restSeconds: 120,
                 videoObjectKey: "global/training/exercises/video/manual-exercise.mp4",
+                imageObjectKey: "global/training/exercises/image/manual-exercise.jpg",
                 notes: "Video link: https://youtu.be/abc123\nUploaded video: demo.mp4"
               })
             ]
@@ -208,6 +212,7 @@ describe("training program builder view model helpers", () => {
         equipment: "Cable",
         difficulty: "intermediate",
         videoObjectKey: null,
+        imageObjectKey: null,
         primaryMuscles: ["Lats", "Biceps"]
       })
     ).toBe("Back - Cable - Lats, Biceps");
@@ -220,6 +225,7 @@ describe("training program builder view model helpers", () => {
         equipment: null,
         difficulty: "beginner",
         videoObjectKey: null,
+        imageObjectKey: null,
         primaryMuscles: []
       })
     ).toBe("Mobility - No muscles tagged");
@@ -230,7 +236,8 @@ describe("training program builder view model helpers", () => {
       scope: "global",
       equipment: "Barbell",
       difficulty: "intermediate",
-      videoObjectKey: null,
+      videoObjectKey: "global/training/exercises/video/drop-squat.mp4",
+      imageObjectKey: "global/training/exercises/image/drop-squat.jpg",
       primaryMuscles: ["Quads", "Glutes"],
       defaultSets: 5,
       defaultReps: "5",
@@ -247,7 +254,9 @@ describe("training program builder view model helpers", () => {
       reps: "5",
       restSeconds: "180",
       rpe: "9",
-      rir: "1"
+      rir: "1",
+      exerciseVideoObjectKey: "global/training/exercises/video/drop-squat.mp4",
+      exerciseImageObjectKey: "global/training/exercises/image/drop-squat.jpg"
     });
     expect(parseBuilderExerciseDropPayload(JSON.stringify(dropPayload))).toEqual(dropPayload);
     expect(parseBuilderExerciseDropPayload("not json")).toBeNull();
@@ -465,6 +474,7 @@ describe("Training program builder exercise panel", () => {
                   equipment: "Barbell",
                   difficulty: "intermediate",
                   videoObjectKey: null,
+                  imageObjectKey: null,
                   primaryMuscles: ["Quads", "Glutes"]
                 },
                 {
@@ -475,6 +485,7 @@ describe("Training program builder exercise panel", () => {
                   equipment: "Dumbbells",
                   difficulty: "intermediate",
                   videoObjectKey: null,
+                  imageObjectKey: null,
                   primaryMuscles: ["Chest"]
                 }
               ]
@@ -498,14 +509,14 @@ describe("Training program builder exercise panel", () => {
     const builderCanvas = screen.getByRole("main", { name: "Program builder canvas" });
     expect(builderCanvas).toBeInTheDocument();
     expect(within(builderCanvas).getByRole("region", { name: "Day 1 muscle volume heatmap" })).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises?limit=100");
+    expect(screen.getByText("Search to add an exercise.")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringMatching(/^\/api\/v1\/exercises\?/));
 
     fireEvent.change(screen.getByLabelText("Search exercise database"), { target: { value: "squat" } });
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises?limit=100&search=squat"));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises?limit=20&search=squat&sort=recent"));
     expect(screen.getByText("High-Bar Back Squat")).toBeInTheDocument();
     expect(screen.queryByText("Incline DB Press")).not.toBeInTheDocument();
 
-    expect(screen.getByRole("button", { name: "Drag High-Bar Back Squat into Workout" })).toHaveAttribute("draggable", "true");
     fireEvent.click(screen.getByRole("button", { name: "Add High-Bar Back Squat to Workout" }));
 
     expect(screen.getByDisplayValue("High-Bar Back Squat")).toBeInTheDocument();
@@ -532,6 +543,7 @@ describe("Training program builder exercise panel", () => {
                   difficulty: "intermediate",
                   videoObjectKey: "global/training/exercises/video/high-bar-back-squat.mp4",
                   videoUrl: null,
+                  imageObjectKey: "global/training/exercises/image/high-bar-back-squat.jpg",
                   primaryMuscles: ["Quads", "Glutes"],
                   defaultSets: 4,
                   defaultReps: "6-8",
@@ -560,6 +572,22 @@ describe("Training program builder exercise panel", () => {
         );
       }
 
+      if (String(input) === "/api/v1/exercises/api-high-bar-squat/media-url?type=image") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                mediaType: "image",
+                source: "uploaded",
+                url: "https://r2.example/high-bar-back-squat.jpg?X-Amz-Signature=test",
+                expiresAt: "2026-07-01T00:10:00.000Z"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     });
 
@@ -568,6 +596,7 @@ describe("Training program builder exercise panel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create New Program" }));
     fireEvent.click(screen.getByRole("button", { name: "Start From Scratch" }));
     fireEvent.click(screen.getByRole("button", { name: "Add workout exercise" }));
+    fireEvent.change(screen.getByLabelText("Search exercise database"), { target: { value: "squat" } });
     await screen.findByText("High-Bar Back Squat");
 
     fireEvent.click(screen.getByRole("button", { name: "Add High-Bar Back Squat to Workout" }));
@@ -577,6 +606,7 @@ describe("Training program builder exercise panel", () => {
     expect(within(exerciseRow).getByLabelText("Reps")).toHaveValue("6-8");
     expect(within(exerciseRow).getByLabelText("Rest time")).toHaveValue("180");
     expect(within(exerciseRow).getByRole("button", { name: "View High-Bar Back Squat exercise video" })).toBeInTheDocument();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises/api-high-bar-squat/media-url?type=image"));
 
     fireEvent.click(within(exerciseRow).getByRole("button", { name: "View High-Bar Back Squat exercise video" }));
 

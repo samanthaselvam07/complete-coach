@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Copy, GripVertical, PlayCircle, Plus, Save, Search, Trash2, Upload, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { muscleGroups, type Exercise } from "@/lib/training/training-models";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,7 @@ export interface TrainingProgramExerciseDraft {
   customVideoUrl?: string;
   customVideoFileName?: string;
   exerciseVideoObjectKey?: string;
+  exerciseImageObjectKey?: string;
 }
 
 export interface TrainingProgramDayDraft {
@@ -66,6 +67,7 @@ export interface TrainingProgramTemplateDraftSource {
         rir?: string;
         section?: TrainingProgramSection;
         videoObjectKey?: string;
+        imageObjectKey?: string;
         primaryMuscles?: string[];
       }>;
     }>;
@@ -82,6 +84,7 @@ interface ApiExercise {
   difficulty: "beginner" | "intermediate" | "advanced";
   videoObjectKey: string | null;
   videoUrl?: string | null;
+  imageObjectKey?: string | null;
   primaryMuscles: string[];
   defaultSets?: number | null;
   defaultReps?: string | null;
@@ -135,7 +138,7 @@ interface ExerciseMediaUploadResponse {
 
 interface ExerciseVideoPreviewResponse {
   data?: {
-    mediaType: "video";
+    mediaType: "video" | "image";
     source: "uploaded" | "external";
     url: string;
     expiresAt: string | null;
@@ -332,7 +335,13 @@ export function TrainingProgramBuilder({
   function addExercise(
     section: TrainingProgramSection,
     exerciseName = "",
-    customInput: Partial<CustomExerciseInput> & { exerciseId?: string; bodyPart?: string; primaryMuscles?: string[]; exerciseVideoObjectKey?: string } = {}
+    customInput: Partial<CustomExerciseInput> & {
+      exerciseId?: string;
+      bodyPart?: string;
+      primaryMuscles?: string[];
+      exerciseVideoObjectKey?: string;
+      exerciseImageObjectKey?: string;
+    } = {}
   ) {
     const sectionExerciseCount = activeDay.exercises.filter((exercise) => exercise.section === section).length + 1;
 
@@ -353,7 +362,8 @@ export function TrainingProgramBuilder({
           primaryMuscles: customInput.primaryMuscles ?? [],
           customVideoUrl: customInput.videoUrl,
           customVideoFileName: customInput.videoFileName,
-          exerciseVideoObjectKey: customInput.exerciseVideoObjectKey
+          exerciseVideoObjectKey: customInput.exerciseVideoObjectKey,
+          exerciseImageObjectKey: customInput.exerciseImageObjectKey
         }
       ]
     });
@@ -698,6 +708,7 @@ export function createTrainingProgramDraftFromTemplate(
         rir: exercise.rir ?? "",
         restSeconds: String(exercise.restSeconds ?? ""),
         exerciseVideoObjectKey: exercise.videoObjectKey,
+        exerciseImageObjectKey: exercise.imageObjectKey,
         primaryMuscles: exercise.primaryMuscles ?? []
       }))
     })) ?? [];
@@ -777,6 +788,7 @@ export function getTrainingProgramTemplatePayload(
           restSeconds: parsePositiveInteger(exercise.restSeconds, 120),
           section: exercise.section,
           ...(exercise.exerciseVideoObjectKey ? { videoObjectKey: exercise.exerciseVideoObjectKey } : {}),
+          ...(exercise.exerciseImageObjectKey ? { imageObjectKey: exercise.exerciseImageObjectKey } : {}),
           primaryMuscles: exercise.primaryMuscles ?? [],
           ...(buildCustomExerciseNotes(exercise) ? { notes: buildCustomExerciseNotes(exercise) } : {})
         }))
@@ -800,7 +812,13 @@ function ProgramBuilderSection({
   onAddExercise: () => void;
   onExerciseDrop: (
     exerciseName: string,
-    metadata?: Partial<CustomExerciseInput> & { exerciseId?: string; bodyPart?: string; primaryMuscles?: string[]; exerciseVideoObjectKey?: string }
+    metadata?: Partial<CustomExerciseInput> & {
+      exerciseId?: string;
+      bodyPart?: string;
+      primaryMuscles?: string[];
+      exerciseVideoObjectKey?: string;
+      exerciseImageObjectKey?: string;
+    }
   ) => void;
   onExerciseChange: (exerciseId: string, updates: Partial<TrainingProgramExerciseDraft>) => void;
   onExerciseDelete: (exerciseId: string) => void;
@@ -891,12 +909,43 @@ function ProgramBuilderSection({
 
 function ExerciseVideoThumbnail({ exercise, onView }: { exercise: TrainingProgramExerciseDraft; onView: () => void }) {
   const hasVideoReference = Boolean(exercise.customVideoUrl || exercise.customVideoFileName || exercise.exerciseVideoObjectKey);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadThumbnailUrl() {
+      if (!exercise.exerciseId || !exercise.exerciseImageObjectKey) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/v1/exercises/${exercise.exerciseId}/media-url?type=image`);
+        const payload = (await response.json()) as ExerciseVideoPreviewResponse;
+
+        if (active && response.ok && payload.data?.url) {
+          setThumbnailUrl(payload.data.url);
+        }
+      } catch {
+        if (active) {
+          setThumbnailUrl(null);
+        }
+      }
+    }
+
+    void loadThumbnailUrl();
+
+    return () => {
+      active = false;
+    };
+  }, [exercise.exerciseId, exercise.exerciseImageObjectKey]);
 
   if (!hasVideoReference) {
     return (
-      <div className="flex size-16 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center text-[0.65rem] font-black uppercase tracking-wide text-slate-400">
-        <PlayCircle className="mb-1 size-4" aria-hidden="true" />
-        No video
+      <div className="relative flex size-16 items-center justify-center overflow-hidden rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center text-[0.65rem] font-black uppercase tracking-wide text-slate-400">
+        {thumbnailUrl ? <img src={thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" /> : null}
+        <span className="absolute inset-0 bg-white/50" aria-hidden="true" />
+        <PlayCircle className="relative size-4" aria-hidden="true" />
       </div>
     );
   }
@@ -905,14 +954,17 @@ function ExerciseVideoThumbnail({ exercise, onView }: { exercise: TrainingProgra
     <button
       type="button"
       aria-label={`View ${exercise.exerciseName || "untitled"} exercise video`}
-      className="flex size-16 flex-col items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-center text-[0.65rem] font-black uppercase tracking-wide text-indigo-700 shadow-sm transition-colors hover:border-indigo-400 hover:bg-indigo-100"
+      className="relative flex size-16 items-center justify-center overflow-hidden rounded-xl border border-indigo-200 bg-indigo-950 text-center text-[0.65rem] font-black uppercase tracking-wide text-white shadow-sm transition hover:border-indigo-400 hover:brightness-110"
       onClick={(event) => {
         event.stopPropagation();
         onView();
       }}
     >
-      <PlayCircle className="mb-1 size-5" aria-hidden="true" />
-      Video
+      {thumbnailUrl ? <img src={thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" /> : null}
+      <span className="absolute inset-0 bg-slate-950/25" aria-hidden="true" />
+      <span className="relative grid size-8 place-items-center rounded-full bg-black/55 backdrop-blur-sm" aria-hidden="true">
+        <PlayCircle className="size-5" />
+      </span>
     </button>
   );
 }
@@ -1215,22 +1267,24 @@ function ExerciseDatabaseSidePanel({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [apiExercises, setApiExercises] = useState<ApiExercise[]>([]);
-  const [loadingExercises, setLoadingExercises] = useState(true);
+  const [loadingExercises, setLoadingExercises] = useState(false);
   const sectionLabel = getProgramSectionLabel(activeSection);
   const trimmedSearchQuery = searchQuery.trim();
 
   useEffect(() => {
     let active = true;
 
+    if (!trimmedSearchQuery) {
+      return () => {
+        active = false;
+      };
+    }
+
     async function loadExercises() {
       setLoadingExercises(true);
 
       try {
-        const params = new URLSearchParams({ limit: "100" });
-
-        if (trimmedSearchQuery) {
-          params.set("search", trimmedSearchQuery);
-        }
+        const params = new URLSearchParams({ limit: "20", search: trimmedSearchQuery, sort: "recent" });
 
         const response = await fetch(`/api/v1/exercises?${params.toString()}`);
 
@@ -1262,19 +1316,7 @@ function ExerciseDatabaseSidePanel({
   }, [trimmedSearchQuery]);
 
   const sourceExercises: BuilderExerciseLibraryItem[] = apiExercises;
-  const filteredExercises = useMemo(
-    () =>
-      sourceExercises.filter((exercise) => {
-        const query = searchQuery.trim().toLowerCase();
-
-        if (!query) {
-          return true;
-        }
-
-        return exercise.name.toLowerCase().includes(query) || exercise.category.toLowerCase().includes(query);
-      }),
-    [searchQuery, sourceExercises]
-  );
+  const filteredExercises = trimmedSearchQuery ? sourceExercises : [];
 
   return (
     <aside
@@ -1316,41 +1358,88 @@ function ExerciseDatabaseSidePanel({
       </div>
 
       <div className="max-h-[calc(100vh-18rem)] space-y-3 overflow-y-auto p-4">
+        {!trimmedSearchQuery ? (
+          <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Search to add an exercise.</p>
+        ) : null}
         {loadingExercises ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Preparing exercise database...</p> : null}
-        {!loadingExercises && filteredExercises.length === 0 ? (
+        {trimmedSearchQuery && !loadingExercises && filteredExercises.length === 0 ? (
           <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">No exercises match that search.</p>
         ) : null}
         {filteredExercises.map((exercise) => (
-          <article key={exercise.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <button
-              type="button"
-              draggable
-              aria-label={`Drag ${exercise.name} into ${sectionLabel}`}
-              className="flex w-full cursor-grab items-start gap-3 text-left"
-              onDragStart={(event) => {
-                event.dataTransfer.setData("text/plain", exercise.name);
-                event.dataTransfer.setData("application/x-complete-coach-library-exercise", JSON.stringify(getBuilderExerciseDropPayload(exercise)));
-                event.dataTransfer.effectAllowed = "copy";
-              }}
-            >
-              <GripVertical className="mt-1 size-4 shrink-0 text-slate-400" aria-hidden="true" />
-              <span>
-                <span className="block font-black text-slate-900">{exercise.name}</span>
-                <span className="mt-1 block text-xs text-slate-500">{getBuilderExerciseMeta(exercise)}</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              aria-label={`Add ${exercise.name} to ${sectionLabel}`}
-              className="mt-3 w-full rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
-              onClick={() => onAddExercise(exercise)}
-            >
-              Add to {sectionLabel}
-            </button>
-          </article>
+          <ExerciseSearchResult
+            key={exercise.id}
+            exercise={exercise}
+            sectionLabel={sectionLabel}
+            onAddExercise={onAddExercise}
+          />
         ))}
       </div>
     </aside>
+  );
+}
+
+function ExerciseSearchResult({
+  exercise,
+  sectionLabel,
+  onAddExercise
+}: {
+  exercise: BuilderExerciseLibraryItem;
+  sectionLabel: string;
+  onAddExercise: (exercise: BuilderExerciseLibraryItem) => void;
+}) {
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const imageObjectKey = "imageObjectKey" in exercise ? exercise.imageObjectKey : null;
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadThumbnailUrl() {
+      if (!imageObjectKey) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/v1/exercises/${exercise.id}/media-url?type=image`);
+        const payload = (await response.json()) as ExerciseVideoPreviewResponse;
+
+        if (active && response.ok && payload.data?.url) {
+          setThumbnailUrl(payload.data.url);
+        }
+      } catch {
+        if (active) {
+          setThumbnailUrl(null);
+        }
+      }
+    }
+
+    void loadThumbnailUrl();
+
+    return () => {
+      active = false;
+    };
+  }, [exercise.id, imageObjectKey]);
+
+  return (
+    <button
+      type="button"
+      draggable
+      aria-label={`Add ${exercise.name} to ${sectionLabel}`}
+      className="grid w-full cursor-grab grid-cols-[1fr_3.5rem] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/50 active:cursor-grabbing"
+      onClick={() => onAddExercise(exercise)}
+      onDragStart={(event) => {
+        event.dataTransfer.setData("text/plain", exercise.name);
+        event.dataTransfer.setData("application/x-complete-coach-library-exercise", JSON.stringify(getBuilderExerciseDropPayload(exercise)));
+        event.dataTransfer.effectAllowed = "copy";
+      }}
+    >
+      <span className="min-w-0">
+        <span className="block truncate font-black text-slate-900">{exercise.name}</span>
+      </span>
+      <span className="relative size-14 overflow-hidden rounded-xl bg-gradient-to-br from-slate-950 to-indigo-950">
+        {thumbnailUrl ? <img src={thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" /> : null}
+        <span className="absolute inset-0 bg-slate-950/10" aria-hidden="true" />
+      </span>
+    </button>
   );
 }
 
@@ -1554,6 +1643,7 @@ export function getBuilderExerciseDropPayload(exercise: BuilderExerciseLibraryIt
     rir: getLegacyDefaultValue(exerciseRecord, "defaultRir", "default_rir") ?? "",
     videoUrl: "videoUrl" in exercise && exercise.videoUrl ? exercise.videoUrl : undefined,
     exerciseVideoObjectKey: "videoObjectKey" in exercise && exercise.videoObjectKey ? exercise.videoObjectKey : undefined,
+    exerciseImageObjectKey: "imageObjectKey" in exercise && exercise.imageObjectKey ? exercise.imageObjectKey : undefined,
     bodyPart: exercise.category,
     primaryMuscles: primaryMuscles.length > 0 ? primaryMuscles : [exercise.category]
   };

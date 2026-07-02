@@ -90,6 +90,7 @@ export const exerciseListQuerySchema = z.object({
   scope: z.enum(libraryScopeValues).optional(),
   category: z.string().trim().max(80).optional(),
   search: z.string().trim().max(100).optional(),
+  sort: z.enum(["name", "recent"]).default("name"),
   limit: z.coerce.number().int().min(1).max(5000).default(50)
 });
 
@@ -118,6 +119,7 @@ export const trainingTemplateExerciseSchema = z.object({
   rir: z.string().trim().max(20).optional(),
   section: z.enum(trainingProgramSectionValues).optional(),
   videoObjectKey: z.string().trim().max(500).optional(),
+  imageObjectKey: z.string().trim().max(500).optional(),
   primaryMuscles: jsonStringArraySchema.optional(),
   cues: jsonStringArraySchema.optional(),
   notes: z.string().trim().max(1000).optional()
@@ -157,7 +159,7 @@ export const createTrainingAssignmentSchema = z.object({
   endsOn: z.string().date().optional()
 });
 
-export type ExerciseListQuery = z.infer<typeof exerciseListQuerySchema>;
+export type ExerciseListQuery = z.input<typeof exerciseListQuerySchema>;
 export type CreateExerciseInput = z.infer<typeof createExerciseSchema>;
 export type UpdateExerciseInput = z.infer<typeof updateExerciseSchema>;
 export type TrainingTemplateListQuery = z.infer<typeof trainingTemplateListQuerySchema>;

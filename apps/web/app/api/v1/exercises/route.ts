@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const query = exerciseListQuerySchema.parse(Object.fromEntries(new URL(request.url).searchParams));
     const exercises = await prisma.exerciseLibraryItem.findMany({
       where: buildExerciseWhere(actor.organizationId, query),
-      orderBy: [{ scope: "asc" }, { name: "asc" }],
+      orderBy: query.sort === "recent" ? [{ scope: "desc" }, { updatedAt: "desc" }, { name: "asc" }] : [{ scope: "asc" }, { name: "asc" }],
       take: query.limit
     });
 
