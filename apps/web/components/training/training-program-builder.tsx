@@ -852,7 +852,7 @@ function ProgramBuilderSection({
               role="group"
               aria-label={`${exercise.exerciseName || "Untitled exercise"} exercise row`}
               draggable
-              className="grid cursor-grab gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm active:cursor-grabbing lg:grid-cols-[4.5rem_2.5rem_minmax(12rem,2fr)_repeat(5,minmax(4.25rem,1fr))_2.5rem]"
+              className="grid cursor-grab gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm active:cursor-grabbing lg:grid-cols-[2.5rem_4.5rem_minmax(12rem,2fr)_repeat(5,minmax(4.25rem,1fr))_2.5rem]"
               onDragStart={(event) => {
                 event.dataTransfer.setData("application/x-complete-coach-exercise-id", exercise.id);
                 event.dataTransfer.effectAllowed = "move";
@@ -867,7 +867,6 @@ function ProgramBuilderSection({
                 }
               }}
             >
-              <ExerciseVideoThumbnail exercise={exercise} onView={() => setSelectedVideoExercise(exercise)} />
               <button
                 type="button"
                 aria-label={`Move ${exercise.exerciseName || "untitled"} exercise`}
@@ -875,6 +874,7 @@ function ProgramBuilderSection({
               >
                 <GripVertical className="size-4" aria-hidden="true" />
               </button>
+              <ExerciseVideoThumbnail exercise={exercise} onView={() => setSelectedVideoExercise(exercise)} />
               <ExerciseField label="Exercise name" value={exercise.exerciseName} onChange={(exerciseName) => onExerciseChange(exercise.id, { exerciseName })} />
               <ExerciseField label="Sets" value={exercise.sets} inputMode="numeric" onChange={(sets) => onExerciseChange(exercise.id, { sets })} />
               <ExerciseField label="Reps" value={exercise.reps} onChange={(reps) => onExerciseChange(exercise.id, { reps })} />
