@@ -124,7 +124,8 @@ describe("training program builder view model helpers", () => {
                 customVideoUrl: "https://youtu.be/abc123",
                 customVideoFileName: "demo.mp4",
                 exerciseVideoObjectKey: "global/training/exercises/video/manual-exercise.mp4",
-                exerciseImageObjectKey: "global/training/exercises/image/manual-exercise.jpg"
+                exerciseImageObjectKey: "global/training/exercises/image/manual-exercise.jpg",
+                clientNotes: "Keep these reps smooth and controlled."
               }
             ]
           }
@@ -170,7 +171,7 @@ describe("training program builder view model helpers", () => {
                 restSeconds: 120,
                 videoObjectKey: "global/training/exercises/video/manual-exercise.mp4",
                 imageObjectKey: "global/training/exercises/image/manual-exercise.jpg",
-                notes: "Video link: https://youtu.be/abc123\nUploaded video: demo.mp4"
+                notes: "Keep these reps smooth and controlled.\nVideo link: https://youtu.be/abc123\nUploaded video: demo.mp4"
               })
             ]
           }
@@ -196,9 +197,10 @@ describe("training program builder view model helpers", () => {
         rir: "",
         restSeconds: "120",
         customVideoUrl: "",
-        customVideoFileName: ""
+        customVideoFileName: "",
+        clientNotes: "Drive through the full foot."
       })
-    ).toBe("");
+    ).toBe("Drive through the full foot.");
     expect(getProgramSectionLabel("warmUp")).toBe("Warm up");
     expect(getProgramSectionLabel("workout")).toBe("Workout");
     expect(getProgramSectionLabel("coolDown")).toBe("Cool Down");
@@ -803,6 +805,7 @@ describe("Training program builder exercise panel", () => {
     expect(within(exerciseRow).getByLabelText("Sets")).toHaveValue("3");
     expect(within(exerciseRow).getByLabelText("Reps")).toHaveValue("10-12");
     expect(within(exerciseRow).getByLabelText("Rest time")).toHaveValue("90");
+    expect(within(exerciseRow).getByRole("button", { name: "Add client notes for Single Leg Squat" })).toBeInTheDocument();
     expect(within(exerciseRow).getByRole("button", { name: "View Single Leg Squat exercise video" })).toBeInTheDocument();
     expect(within(exerciseRow).queryByTitle("Single Leg Squat video")).not.toBeInTheDocument();
 

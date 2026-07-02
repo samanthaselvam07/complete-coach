@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Copy, GripVertical, PlayCircle, Plus, Save, Search, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Copy, GripVertical, MessageSquareText, PlayCircle, Plus, Save, Search, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { muscleGroups, type Exercise } from "@/lib/training/training-models";
@@ -29,6 +29,7 @@ export interface TrainingProgramExerciseDraft {
   customVideoFileName?: string;
   exerciseVideoObjectKey?: string;
   exerciseImageObjectKey?: string;
+  clientNotes?: string;
 }
 
 export interface TrainingProgramDayDraft {
@@ -68,6 +69,7 @@ export interface TrainingProgramTemplateDraftSource {
         section?: TrainingProgramSection;
         videoObjectKey?: string;
         imageObjectKey?: string;
+        notes?: string;
         primaryMuscles?: string[];
       }>;
     }>;
@@ -709,6 +711,7 @@ export function createTrainingProgramDraftFromTemplate(
         restSeconds: String(exercise.restSeconds ?? ""),
         exerciseVideoObjectKey: exercise.videoObjectKey,
         exerciseImageObjectKey: exercise.imageObjectKey,
+        clientNotes: exercise.notes ?? "",
         primaryMuscles: exercise.primaryMuscles ?? []
       }))
     })) ?? [];
@@ -826,6 +829,7 @@ function ProgramBuilderSection({
 }) {
   const sectionLabel = getProgramSectionLabel(section);
   const [selectedVideoExercise, setSelectedVideoExercise] = useState<TrainingProgramExerciseDraft | null>(null);
+  const [selectedNotesExercise, setSelectedNotesExercise] = useState<TrainingProgramExerciseDraft | null>(null);
 
   return (
     <>
@@ -852,7 +856,7 @@ function ProgramBuilderSection({
               role="group"
               aria-label={`${exercise.exerciseName || "Untitled exercise"} exercise row`}
               draggable
-              className="grid cursor-grab gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm active:cursor-grabbing lg:grid-cols-[2.5rem_4.5rem_minmax(12rem,2fr)_repeat(5,minmax(4.25rem,1fr))_2.5rem]"
+              className="grid cursor-grab gap-3 rounded-xl border border-indigo-100 bg-white p-3 shadow-sm active:cursor-grabbing lg:grid-cols-[2.5rem_4.5rem_minmax(12rem,2fr)_repeat(5,minmax(4.25rem,1fr))_2.5rem_2.5rem]"
               onDragStart={(event) => {
                 event.dataTransfer.setData("application/x-complete-coach-exercise-id", exercise.id);
                 event.dataTransfer.effectAllowed = "move";
@@ -883,6 +887,19 @@ function ProgramBuilderSection({
               <ExerciseField label="Rest time" value={exercise.restSeconds} inputMode="numeric" onChange={(restSeconds) => onExerciseChange(exercise.id, { restSeconds })} />
               <button
                 type="button"
+                aria-label={`Add client notes for ${exercise.exerciseName || "untitled exercise"}`}
+                className={cn(
+                  "mt-6 inline-flex size-9 items-center justify-center rounded-lg border transition",
+                  exercise.clientNotes?.trim()
+                    ? "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                    : "border-slate-200 text-slate-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                )}
+                onClick={() => setSelectedNotesExercise(exercise)}
+              >
+                <MessageSquareText className="size-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
                 aria-label={`Delete ${exercise.exerciseName || "untitled exercise"}`}
                 className="mt-6 inline-flex size-9 items-center justify-center rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700"
                 onClick={() => onExerciseDelete(exercise.id)}
@@ -903,7 +920,78 @@ function ProgramBuilderSection({
         </button>
       </div>
       {selectedVideoExercise ? <ExerciseVideoDialog exercise={selectedVideoExercise} onClose={() => setSelectedVideoExercise(null)} /> : null}
+      {selectedNotesExercise ? (
+        <ClientNotesDialog
+          exercise={selectedNotesExercise}
+          onClose={() => setSelectedNotesExercise(null)}
+          onSave={(clientNotes) => {
+            onExerciseChange(selectedNotesExercise.id, { clientNotes });
+            setSelectedNotesExercise(null);
+          }}
+        />
+      ) : null}
     </>
+  );
+}
+
+function ClientNotesDialog({
+  exercise,
+  onClose,
+  onSave
+}: {
+  exercise: TrainingProgramExerciseDraft;
+  onClose: () => void;
+  onSave: (clientNotes: string) => void;
+}) {
+  const [clientNotes, setClientNotes] = useState(exercise.clientNotes ?? "");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" onClick={onClose}>
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="client-notes-dialog-title"
+        className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">Client notes</p>
+            <h2 id="client-notes-dialog-title" className="mt-1 text-2xl font-black text-slate-950">
+              {exercise.exerciseName || "Exercise"} notes
+            </h2>
+          </div>
+          <button type="button" aria-label="Close client notes" className="rounded-xl p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <label className="mt-5 block text-sm font-bold text-slate-800">
+          Notes visible to client
+          <textarea
+            value={clientNotes}
+            rows={6}
+            maxLength={1000}
+            placeholder="Add coaching notes, setup cues, tempo reminders, or anything this client should see."
+            className={builderFieldClassName}
+            onChange={(event) => setClientNotes(event.target.value)}
+          />
+        </label>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button type="button" className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700"
+            onClick={() => onSave(clientNotes.trim())}
+          >
+            Save notes
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -1589,6 +1677,7 @@ async function uploadCustomExerciseVideo(file: File) {
 
 export function buildCustomExerciseNotes(exercise: TrainingProgramExerciseDraft) {
   const notes = [
+    exercise.clientNotes?.trim() ? exercise.clientNotes.trim() : null,
     exercise.customVideoUrl ? `Video link: ${exercise.customVideoUrl}` : null,
     exercise.customVideoFileName ? `Uploaded video: ${exercise.customVideoFileName}` : null
   ].filter(Boolean);
