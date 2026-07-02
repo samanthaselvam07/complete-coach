@@ -187,6 +187,21 @@ describe("exercise video import", () => {
       "global/training/exercises/video/barbell-back-squat.mp4"
     );
   });
+
+  it("skips videos that are already linked", async () => {
+    const mappings = buildExerciseVideoMappings({
+      exercises: [
+        {
+          id: "squat",
+          name: "Barbell Back Squat",
+          videoObjectKey: "global/training/exercises/video/barbell-back-squat.mp4"
+        }
+      ],
+      localFiles: ["/videos/barbell-back-squat.mp4"]
+    });
+
+    expect(mappings).toEqual([]);
+  });
 });
 
 describe("exercise thumbnail import", () => {
@@ -243,6 +258,21 @@ describe("exercise thumbnail import", () => {
       "squat",
       "global/training/exercises/image/barbell-back-squat.jpg"
     );
+  });
+
+  it("skips thumbnails that are already linked", async () => {
+    const mappings = buildExerciseImageMappings({
+      exercises: [
+        {
+          id: "squat",
+          name: "Barbell Back Squat",
+          imageObjectKey: "global/training/exercises/image/barbell-back-squat.jpg"
+        }
+      ],
+      localFiles: ["/images/barbell-back-squat.jpg"]
+    });
+
+    expect(mappings).toEqual([]);
   });
 });
 

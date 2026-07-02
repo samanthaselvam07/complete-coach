@@ -1,5 +1,6 @@
 import { readdir, stat } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 
 import { LibraryScope } from "@/app/generated/prisma/enums";
 import { createR2PresignedPutUrl, getR2Config } from "@/lib/storage/r2";
@@ -74,6 +75,13 @@ export type ExerciseVideoStorage = {
 
 export type ExerciseImageStorage = {
   uploadImage(input: { filePath: string; objectKey: string; contentType: string }): Promise<void>;
+};
+
+type ExerciseMediaImportProgress = {
+  uploaded: number;
+  total: number;
+  exerciseName: string;
+  objectKey: string;
 };
 
 type PrismaExerciseVideoImportClient = {
@@ -184,27 +192,13 @@ export function createR2ExerciseVideoStorage(
 ): ExerciseVideoStorage {
   return {
     async uploadVideo(input) {
-      const fileStats = await stat(input.filePath);
-
-      if (fileStats.size > getExerciseMediaMaxBytes("video")) {
-        throw new Error(`${basename(input.filePath)} exceeds the maximum exercise video size.`);
-      }
-
-      const file = await import("node:fs/promises").then((fs) => fs.readFile(input.filePath));
-      const uploadUrl = createR2PresignedPutUrl(config, {
+      await uploadMediaToR2({
+        filePath: input.filePath,
         objectKey: input.objectKey,
         contentType: input.contentType,
-        expiresInSeconds: 900
+        maxBytes: getExerciseMediaMaxBytes("video"),
+        config
       });
-      const response = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": input.contentType },
-        body: new Uint8Array(file)
-      });
-
-      if (!response.ok) {
-        throw new Error(`R2 upload failed for ${basename(input.filePath)} (${response.status}).`);
-      }
     }
   };
 }
@@ -245,20 +239,36 @@ async function uploadMediaToR2({
   }
 
   const file = await import("node:fs/promises").then((fs) => fs.readFile(filePath));
-  const uploadUrl = createR2PresignedPutUrl(config, {
-    objectKey,
-    contentType,
-    expiresInSeconds: 900
-  });
-  const response = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: { "Content-Type": contentType },
-    body: new Uint8Array(file)
-  });
+  let lastError: unknown;
 
-  if (!response.ok) {
-    throw new Error(`R2 upload failed for ${basename(filePath)} (${response.status}).`);
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      const uploadUrl = createR2PresignedPutUrl(config, {
+        objectKey,
+        contentType,
+        expiresInSeconds: 900
+      });
+      const response = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": contentType },
+        body: new Uint8Array(file)
+      });
+
+      if (response.ok) {
+        return;
+      }
+
+      lastError = new Error(`R2 upload failed for ${basename(filePath)} (${response.status}).`);
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < 4) {
+      await sleep(1_000 * attempt);
+    }
   }
+
+  throw lastError instanceof Error ? lastError : new Error(`R2 upload failed for ${basename(filePath)}.`);
 }
 
 export async function listExerciseVideoFiles(directory: string): Promise<string[]> {
@@ -298,13 +308,17 @@ export async function applyExerciseVideoImport({
   mappingRows = [],
   repository,
   storage,
-  dryRun = true
+  dryRun = true,
+  concurrency = 1,
+  onProgress
 }: {
   localFiles: string[];
   mappingRows?: ExerciseVideoMappingRow[];
   repository: ExerciseVideoImportRepository;
   storage: ExerciseVideoStorage;
   dryRun?: boolean;
+  concurrency?: number;
+  onProgress?: (progress: ExerciseMediaImportProgress) => void;
 }): Promise<AppliedExerciseVideoImportResult> {
   const exercises = await repository.listGlobalExercises();
   const planned = buildExerciseVideoMappings({ exercises, localFiles, mappingRows });
@@ -315,7 +329,7 @@ export async function applyExerciseVideoImport({
     return { dryRun, planned, uploaded, skipped };
   }
 
-  for (const mapping of planned) {
+  await runWithConcurrency(planned, concurrency, async (mapping) => {
     await storage.uploadVideo({
       filePath: mapping.filePath,
       objectKey: mapping.objectKey,
@@ -327,7 +341,13 @@ export async function applyExerciseVideoImport({
       exerciseName: mapping.exerciseName,
       objectKey: mapping.objectKey
     });
-  }
+    onProgress?.({
+      uploaded: uploaded.length,
+      total: planned.length,
+      exerciseName: mapping.exerciseName,
+      objectKey: mapping.objectKey
+    });
+  });
 
   return { dryRun, planned, uploaded, skipped };
 }
@@ -337,13 +357,17 @@ export async function applyExerciseImageImport({
   mappingRows = [],
   repository,
   storage,
-  dryRun = true
+  dryRun = true,
+  concurrency = 1,
+  onProgress
 }: {
   localFiles: string[];
   mappingRows?: ExerciseImageMappingRow[];
   repository: ExerciseImageImportRepository;
   storage: ExerciseImageStorage;
   dryRun?: boolean;
+  concurrency?: number;
+  onProgress?: (progress: ExerciseMediaImportProgress) => void;
 }): Promise<AppliedExerciseImageImportResult> {
   const exercises = await repository.listGlobalExercises();
   const planned = buildExerciseImageMappings({ exercises, localFiles, mappingRows });
@@ -354,7 +378,7 @@ export async function applyExerciseImageImport({
     return { dryRun, planned, uploaded, skipped };
   }
 
-  for (const mapping of planned) {
+  await runWithConcurrency(planned, concurrency, async (mapping) => {
     await storage.uploadImage({
       filePath: mapping.filePath,
       objectKey: mapping.objectKey,
@@ -366,7 +390,13 @@ export async function applyExerciseImageImport({
       exerciseName: mapping.exerciseName,
       objectKey: mapping.objectKey
     });
-  }
+    onProgress?.({
+      uploaded: uploaded.length,
+      total: planned.length,
+      exerciseName: mapping.exerciseName,
+      objectKey: mapping.objectKey
+    });
+  });
 
   return { dryRun, planned, uploaded, skipped };
 }
@@ -390,7 +420,7 @@ export function buildExerciseVideoMappings({
     const exercise = exercisesByName.get(normaliseExerciseName(row.exerciseName));
     const filePath = filesByBasename.get(row.videoFilename.trim().toLowerCase());
 
-    if (!exercise || !filePath || mappedExerciseIds.has(exercise.id)) {
+    if (!exercise || exercise.videoObjectKey || !filePath || mappedExerciseIds.has(exercise.id)) {
       continue;
     }
 
@@ -410,7 +440,7 @@ export function buildExerciseVideoMappings({
   }
 
   for (const exercise of exercises) {
-    if (mappedExerciseIds.has(exercise.id)) {
+    if (exercise.videoObjectKey || mappedExerciseIds.has(exercise.id)) {
       continue;
     }
 
@@ -453,7 +483,7 @@ export function buildExerciseImageMappings({
     const exercise = exercisesByName.get(normaliseExerciseName(row.exerciseName));
     const filePath = filesByBasename.get(row.imageFilename.trim().toLowerCase());
 
-    if (!exercise || !filePath || mappedExerciseIds.has(exercise.id)) {
+    if (!exercise || exercise.imageObjectKey || !filePath || mappedExerciseIds.has(exercise.id)) {
       continue;
     }
 
@@ -473,7 +503,7 @@ export function buildExerciseImageMappings({
   }
 
   for (const exercise of exercises) {
-    if (mappedExerciseIds.has(exercise.id)) {
+    if (exercise.imageObjectKey || mappedExerciseIds.has(exercise.id)) {
       continue;
     }
 
@@ -529,6 +559,9 @@ function buildSkippedVideoMappings({
   const plannedExerciseIds = new Set(planned.map((mapping) => mapping.exerciseId));
   const plannedFiles = new Set(planned.map((mapping) => mapping.filePath));
   const exercisesByName = new Map(exercises.map((exercise) => [normaliseExerciseName(exercise.name), exercise]));
+  const linkedExerciseFileStems = new Set(
+    exercises.filter((exercise) => exercise.videoObjectKey).map((exercise) => normaliseExerciseName(exercise.name))
+  );
   const filesByBasename = new Set(localFiles.map((filePath) => basename(filePath).toLowerCase()));
   const skipped: AppliedExerciseVideoImportResult["skipped"] = [];
 
@@ -536,18 +569,30 @@ function buildSkippedVideoMappings({
     const exercise = exercisesByName.get(normaliseExerciseName(row.exerciseName));
     if (!exercise) {
       skipped.push({ exerciseName: row.exerciseName, reason: "Exercise not found." });
+    } else if (exercise.videoObjectKey) {
+      skipped.push({ exerciseName: exercise.name, reason: "Exercise already has a linked video." });
     } else if (!filesByBasename.has(row.videoFilename.trim().toLowerCase())) {
       skipped.push({ exerciseName: exercise.name, reason: "Mapped video file not found." });
     }
   }
 
   for (const exercise of exercises) {
+    if (exercise.videoObjectKey) {
+      skipped.push({ exerciseName: exercise.name, reason: "Exercise already has a linked video." });
+      continue;
+    }
+
     if (!plannedExerciseIds.has(exercise.id)) {
       skipped.push({ exerciseName: exercise.name, reason: "No matching video file found." });
     }
   }
 
   for (const filePath of localFiles) {
+    if (linkedExerciseFileStems.has(normaliseFileStem(filePath))) {
+      skipped.push({ filePath, reason: "Matching exercise already has a linked video." });
+      continue;
+    }
+
     if (!plannedFiles.has(filePath)) {
       skipped.push({ filePath, reason: "No matching exercise found for video file." });
     }
@@ -570,24 +615,40 @@ function buildSkippedImageMappings({
   const plannedExerciseIds = new Set(planned.map((mapping) => mapping.exerciseId));
   const plannedFiles = new Set(planned.map((mapping) => mapping.filePath));
   const exercisesByName = new Map(exercises.map((exercise) => [normaliseExerciseName(exercise.name), exercise]));
+  const linkedExerciseFileStems = new Set(
+    exercises.filter((exercise) => exercise.imageObjectKey).map((exercise) => normaliseExerciseName(exercise.name))
+  );
   const filesByBasename = new Set(localFiles.map((filePath) => basename(filePath).toLowerCase()));
   const skipped: AppliedExerciseImageImportResult["skipped"] = [];
 
   for (const row of mappingRows) {
-    if (!exercisesByName.has(normaliseExerciseName(row.exerciseName))) {
+    const exercise = exercisesByName.get(normaliseExerciseName(row.exerciseName));
+    if (!exercise) {
       skipped.push({ exerciseName: row.exerciseName, reason: "Exercise was not found in the global library." });
+    } else if (exercise.imageObjectKey) {
+      skipped.push({ exerciseName: exercise.name, reason: "Exercise already has a linked image." });
     } else if (!filesByBasename.has(row.imageFilename.trim().toLowerCase())) {
       skipped.push({ exerciseName: row.exerciseName, reason: "Mapped image file was not found." });
     }
   }
 
   for (const exercise of exercises) {
+    if (exercise.imageObjectKey) {
+      skipped.push({ exerciseName: exercise.name, reason: "Exercise already has a linked image." });
+      continue;
+    }
+
     if (!plannedExerciseIds.has(exercise.id)) {
       skipped.push({ exerciseName: exercise.name, reason: "No matching image file found." });
     }
   }
 
   for (const filePath of localFiles) {
+    if (linkedExerciseFileStems.has(normaliseFileStem(filePath))) {
+      skipped.push({ filePath, reason: "Matching exercise already has a linked image." });
+      continue;
+    }
+
     if (!plannedFiles.has(filePath)) {
       skipped.push({ filePath, reason: "Image file did not match a global exercise." });
     }
@@ -598,4 +659,23 @@ function buildSkippedImageMappings({
 
 function normaliseFileStem(filePath: string) {
   return normaliseExerciseName(basename(filePath, extname(filePath)));
+}
+
+async function runWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<void>
+) {
+  const workerCount = Math.max(1, Math.min(Math.floor(concurrency) || 1, items.length || 1));
+  let nextIndex = 0;
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < items.length) {
+        const item = items[nextIndex];
+        nextIndex += 1;
+        await worker(item);
+      }
+    })
+  );
 }

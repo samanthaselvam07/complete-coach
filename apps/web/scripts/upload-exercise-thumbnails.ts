@@ -36,13 +36,20 @@ const result = await applyExerciseImageImport({
   mappingRows,
   repository,
   storage,
-  dryRun
+  dryRun,
+  concurrency: args.concurrency,
+  onProgress: (progress) => {
+    if (progress.uploaded === 1 || progress.uploaded % 100 === 0 || progress.uploaded === progress.total) {
+      console.log(`progress: uploaded ${progress.uploaded}/${progress.total} (${progress.exerciseName})`);
+    }
+  }
 });
 
 console.log("Exercise thumbnail upload");
 console.log(`mode: ${dryRun ? "dry-run" : "commit"}`);
 console.log(`directory: ${args.directory}`);
 console.log(`mapping: ${args.mapping ?? "filename stem matching"}`);
+console.log(`concurrency: ${args.concurrency}`);
 console.log(`imageFiles: ${localFiles.length}`);
 console.log(`planned: ${result.planned.length}`);
 console.log(`uploaded: ${result.uploaded.length}`);
@@ -64,6 +71,7 @@ if (result.skipped.length) {
 }
 
 await prisma.$disconnect();
+process.exit(0);
 
 function getRepository(dryRunMode: boolean) {
   if (process.env.DATABASE_URL) {
@@ -109,7 +117,10 @@ function parseMappingCsv(contents: string): ExerciseImageMappingRow[] {
 }
 
 function parseArgs(argv: string[]) {
-  const parsed: { _: string[]; commit?: boolean; directory?: string; mapping?: string } = { _: [] };
+  const parsed: { _: string[]; commit?: boolean; concurrency: number; directory?: string; mapping?: string } = {
+    _: [],
+    concurrency: 1
+  };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -121,11 +132,17 @@ function parseArgs(argv: string[]) {
     } else if (arg === "--mapping") {
       parsed.mapping = argv[index + 1];
       index += 1;
+    } else if (arg === "--concurrency") {
+      parsed.concurrency = Number.parseInt(argv[index + 1], 10);
+      index += 1;
     } else {
       parsed._.push(arg);
     }
   }
 
   parsed.directory ??= parsed._[0];
+  if (!Number.isFinite(parsed.concurrency) || parsed.concurrency < 1) {
+    parsed.concurrency = 1;
+  }
   return parsed;
 }
