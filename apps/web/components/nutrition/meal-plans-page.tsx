@@ -242,6 +242,7 @@ export function MealPlansPage() {
   const [source, setSource] = useState<MealPlanSource>("api");
   const [loading, setLoading] = useState(true);
   const [mealTemplateView, setMealTemplateView] = useState<MealPlanLibraryView>("cards");
+  const [librarySearchQuery, setLibrarySearchQuery] = useState("");
   const [templatePlanTarget, setTemplatePlanTarget] = useState<MealTemplateCard | null>(null);
   const [builderMode, setBuilderMode] = useState<NutritionPlanBuilderMode | null>(null);
   const [editingPlan, setEditingPlan] = useState<MealAssignmentRow | null>(null);
@@ -308,6 +309,14 @@ export function MealPlansPage() {
         .filter((assignment) => !hiddenMealPlanIds.includes(assignment.id))
         .map((assignment) => ({ ...assignment, ...(mealPlanOverrides[assignment.id] ?? {}) })),
     [assignments, createdPlans, hiddenMealPlanIds, mealPlanOverrides, source, templates]
+  );
+  const filteredAssignmentRows = useMemo(
+    () => filterMealAssignments(assignmentRows, librarySearchQuery),
+    [assignmentRows, librarySearchQuery]
+  );
+  const filteredTemplateCards = useMemo(
+    () => filterMealTemplates(templateCards, librarySearchQuery),
+    [templateCards, librarySearchQuery]
   );
 
   function openPlanTypeDialog() {
@@ -601,7 +610,10 @@ export function MealPlansPage() {
                 "border-b-2 pb-3 text-sm font-medium transition-colors",
                 activeTab === tab ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-600 hover:text-gray-900"
               )}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => {
+                setActiveTab(tab);
+                setLibrarySearchQuery("");
+              }}
             >
               {tab}
             </button>
@@ -609,9 +621,21 @@ export function MealPlansPage() {
         </div>
       </div>
 
+      <label className="relative mb-6 block">
+        <span className="sr-only">Search {activeTab.toLowerCase()}</span>
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+        <input
+          type="search"
+          value={librarySearchQuery}
+          placeholder={activeTab === "Meal Plans" ? "Search meal plans..." : "Search meal templates..."}
+          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+          onChange={(event) => setLibrarySearchQuery(event.target.value)}
+        />
+      </label>
+
       {activeTab === "Meal Plans" ? (
         <ActiveAssignmentsPanel
-          assignments={assignmentRows}
+          assignments={filteredAssignmentRows}
           onEdit={editMealPlan}
           onDelete={deleteMealPlan}
           onCopy={copyMealPlan}
@@ -619,7 +643,7 @@ export function MealPlansPage() {
         />
       ) : (
         <MasterTemplatesPanel
-          templates={templateCards}
+          templates={filteredTemplateCards}
           canAssign={source === "api"}
           view={mealTemplateView}
           onViewChange={setMealTemplateView}
@@ -4108,6 +4132,52 @@ export function getMealAssignmentRows(
     }));
 
   return [...draftPlanRows, ...assignedRows];
+}
+
+export function filterMealAssignments(assignments: MealAssignmentRow[], query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return assignments;
+  }
+
+  return assignments.filter((assignment) =>
+    [
+      assignment.planName,
+      assignment.status,
+      `${assignment.activeClientCount} clients`,
+      `${assignment.calories} cal`,
+      `protein ${assignment.protein}`,
+      `carbs ${assignment.carbs}`,
+      `fat ${assignment.fats}`
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedQuery)
+  );
+}
+
+export function filterMealTemplates(templates: MealTemplateCard[], query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return templates;
+  }
+
+  return templates.filter((template) =>
+    [
+      template.name,
+      template.description,
+      template.badge,
+      `${template.calories} cal`,
+      `protein ${template.protein}`,
+      `carbs ${template.carbs}`,
+      `fat ${template.fats}`
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedQuery)
+  );
 }
 
 export function formatDisplayDate(value: string) {

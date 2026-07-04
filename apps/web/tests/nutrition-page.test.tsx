@@ -40,6 +40,8 @@ import {
   createBuilderMealsFromMealTemplate,
   createMacroBuilderDay,
   createMacroBuilderMeal,
+  filterMealAssignments,
+  filterMealTemplates,
   formatMealBuilderServingSize,
   getFullMealPlanTemplatePayload,
   getFoodQuantityDisplay,
@@ -245,12 +247,30 @@ describe("MealPlansPage", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Meal Plan Library" })).toBeInTheDocument();
     expect(await screen.findByText("Hypertrophy Phase II")).toBeInTheDocument();
 
+    const mealPlanSearch = screen.getByRole("searchbox", { name: "Search meal plans" });
+    expect(mealPlanSearch).toHaveAttribute("placeholder", "Search meal plans...");
+
+    fireEvent.change(mealPlanSearch, { target: { value: "zzzz" } });
+    expect(screen.queryByText("Hypertrophy Phase II")).not.toBeInTheDocument();
+
+    fireEvent.change(mealPlanSearch, { target: { value: "hypertrophy" } });
+    expect(screen.getByText("Hypertrophy Phase II")).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
+
+    const templateSearch = screen.getByRole("searchbox", { name: "Search meal templates" });
+    expect(templateSearch).toHaveValue("");
+    expect(templateSearch).toHaveAttribute("placeholder", "Search meal templates...");
 
     expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent(
       "High-Protein Breakfast Bowl"
     );
     expect(screen.queryByText("Hypertrophy Phase II")).not.toBeInTheDocument();
+
+    fireEvent.change(templateSearch, { target: { value: "breakfast" } });
+    expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent(
+      "High-Protein Breakfast Bowl"
+    );
   });
 
   it("renders meal-plan actions", () => {
@@ -1514,6 +1534,49 @@ describe("meal plan view model helpers", () => {
       fats: 93,
       lastEdited: "May 19, 2026"
     });
+  });
+
+  it("filters meal plans and templates by visible library terms", () => {
+    const assignments = getMealAssignmentRows("api", [
+      {
+        id: "meal_assignment_api",
+        clientId: "client_api",
+        clientName: null,
+        templateId: "meal_template_api",
+        name: "Persisted Hypertrophy Fuel",
+        phase: "Hypertrophy",
+        targetCalories: 2800,
+        proteinGrams: 210,
+        carbsGrams: 280,
+        fatGrams: 93,
+        status: "active",
+        snapshot: { targetCalories: 2900, proteinGrams: 215 },
+        startsOn: "2026-05-01",
+        endsOn: null,
+        updatedAt: "2026-05-18T00:00:00.000Z"
+      }
+    ]);
+    const templates = getMealTemplateCards("api", [
+      {
+        id: "meal_template_api",
+        name: "High-Protein Breakfast Bowl",
+        phase: "Breakfast",
+        targetCalories: 560,
+        proteinGrams: 48,
+        carbsGrams: 52,
+        fatGrams: 18,
+        status: "published",
+        template: { days: [] },
+        updatedAt: "2026-05-18T00:00:00.000Z"
+      }
+    ]);
+
+    expect(filterMealAssignments(assignments, "hypertrophy")).toHaveLength(1);
+    expect(filterMealAssignments(assignments, "protein 215")).toHaveLength(1);
+    expect(filterMealAssignments(assignments, "breakfast")).toEqual([]);
+    expect(filterMealTemplates(templates, "breakfast")).toHaveLength(1);
+    expect(filterMealTemplates(templates, "protein 48")).toHaveLength(1);
+    expect(filterMealTemplates(templates, "hypertrophy")).toEqual([]);
   });
 
   it("maps API foods across source and micronutrient metadata branches", () => {
