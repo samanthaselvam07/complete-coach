@@ -19,6 +19,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: navigationMocks.pu
 afterEach(() => {
   vi.restoreAllMocks();
   navigationMocks.push.mockReset();
+  window.localStorage?.clear();
 });
 
 describe("TrainingPage", () => {
@@ -892,8 +893,7 @@ describe("ExerciseDatabasePage", () => {
 
     expect(await screen.findByText("High-Bar Back Squat")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
 
     const list = screen.getByRole("region", { name: "Exercise list" });
     expect(within(list).getByText("High-Bar Back Squat")).toBeInTheDocument();

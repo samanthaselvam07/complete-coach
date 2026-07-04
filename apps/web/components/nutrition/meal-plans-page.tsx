@@ -3,16 +3,17 @@
 import { Calendar, CheckCircle2, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { CardListViewToggle, type CardListViewMode } from "@/components/ui/card-list-view-toggle";
 import type { ClientSummary } from "@/lib/clients/client-models";
 import type { Food } from "@/lib/nutrition/nutrition-models";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { SavedToast } from "@/components/ui/saved-toast";
+import { usePersistedCardListView } from "@/components/ui/use-persisted-card-list-view";
 import { cn } from "@/lib/utils";
 
 type MealPlanTab = "Meal Plans" | "Meal Templates";
 type NutritionPlanBuilderMode = "full" | "macro-day" | "macro-meal";
 export type MealPlanSource = "api" | "fixtures";
-type MealPlanLibraryView = "cards" | "list";
 
 type FoodDatabaseSource = "AUS/NZ" | "EFSA" | "USDA";
 type FoodMeasurementUnit = "g" | "ml" | "oz" | "cups" | "tbsp" | "tsp" | "serving";
@@ -241,7 +242,7 @@ export function MealPlansPage() {
   const [mealPlanOverrides] = useState<Record<string, Partial<MealAssignmentRow>>>({});
   const [source, setSource] = useState<MealPlanSource>("api");
   const [loading, setLoading] = useState(true);
-  const [mealTemplateView, setMealTemplateView] = useState<MealPlanLibraryView>("cards");
+  const [mealTemplateView, setMealTemplateView] = usePersistedCardListView("complete-coach:meal-template-library-view");
   const [librarySearchQuery, setLibrarySearchQuery] = useState("");
   const [templatePlanTarget, setTemplatePlanTarget] = useState<MealTemplateCard | null>(null);
   const [builderMode, setBuilderMode] = useState<NutritionPlanBuilderMode | null>(null);
@@ -3713,8 +3714,8 @@ function MasterTemplatesPanel({
 }: {
   templates: MealTemplateCard[];
   canAssign: boolean;
-  view: MealPlanLibraryView;
-  onViewChange: (view: MealPlanLibraryView) => void;
+  view: CardListViewMode;
+  onViewChange: (view: CardListViewMode) => void;
   onOpenTemplate: (template: MealTemplateCard) => void;
   onUseTemplate: (template: MealTemplateCard) => void;
   onDeleteTemplate: (template: MealTemplateCard) => void;
@@ -3733,22 +3734,7 @@ function MasterTemplatesPanel({
         />
       ) : null}
       <div className="mb-4 flex justify-end">
-        <div className="inline-flex rounded-xl bg-slate-100 p-1" aria-label="Meal template view options">
-          {(["cards", "list"] as MealPlanLibraryView[]).map((viewOption) => (
-            <button
-              key={viewOption}
-              type="button"
-              aria-pressed={view === viewOption}
-              className={cn(
-                "rounded-lg px-4 py-2 text-sm font-bold transition-colors",
-                view === viewOption ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-950"
-              )}
-              onClick={() => onViewChange(viewOption)}
-            >
-              {viewOption === "cards" ? "Card view" : "List view"}
-            </button>
-          ))}
-        </div>
+        <CardListViewToggle label="Meal template view options" value={view} onChange={onViewChange} />
       </div>
 
       {view === "cards" ? (

@@ -1,10 +1,12 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Grid2X2, List as ListIcon, Plus, Search, Trash2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Plus, Search, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { CardListViewToggle } from "@/components/ui/card-list-view-toggle";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
+import { usePersistedCardListView } from "@/components/ui/use-persisted-card-list-view";
 import type { Food } from "@/lib/nutrition/nutrition-models";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +29,6 @@ interface ApiFood {
 }
 
 type FoodDatabaseSource = Food["source"];
-type FoodDatabaseView = "cards" | "list";
 type FoodDatabaseSort = "az" | "za";
 type NewFoodFormState = {
   name: string;
@@ -96,7 +97,7 @@ export function FoodDatabasePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [apiFoods, setApiFoods] = useState<ApiFood[]>([]);
   const [loadingFoods, setLoadingFoods] = useState(true);
-  const [viewMode, setViewMode] = useState<FoodDatabaseView>("cards");
+  const [viewMode, setViewMode] = usePersistedCardListView("complete-coach:food-database-view");
   const [sortOrder, setSortOrder] = useState<FoodDatabaseSort>("az");
   const [savingFood, setSavingFood] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -282,32 +283,7 @@ export function FoodDatabasePage() {
           </select>
         </label>
 
-        <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1" aria-label="Food database view">
-          <button
-            type="button"
-            aria-label="Card view"
-            aria-pressed={viewMode === "cards"}
-            className={cn(
-              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
-              viewMode === "cards" ? "bg-indigo-50 text-indigo-700" : ""
-            )}
-            onClick={() => setViewMode("cards")}
-          >
-            <Grid2X2 className="size-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            aria-label="List view"
-            aria-pressed={viewMode === "list"}
-            className={cn(
-              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
-              viewMode === "list" ? "bg-indigo-50 text-indigo-700" : ""
-            )}
-            onClick={() => setViewMode("list")}
-          >
-            <ListIcon className="size-4" aria-hidden="true" />
-          </button>
-        </div>
+        <CardListViewToggle label="Food database view" value={viewMode} onChange={setViewMode} />
 
         <button
           type="button"

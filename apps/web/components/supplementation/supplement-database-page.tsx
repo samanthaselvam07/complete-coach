@@ -1,16 +1,17 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Grid2X2, List, Plus, Search, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { CardListViewToggle } from "@/components/ui/card-list-view-toggle";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
+import { usePersistedCardListView } from "@/components/ui/use-persisted-card-list-view";
 import { cn } from "@/lib/utils";
 
 const categoryOptions = ["Morning", "Evening", "Anytime"] as const;
 const timingOptions = ["Morning", "Mid-day", "Evening", "Anytime"] as const;
 const supplementsPerPage = 12;
 
-type SupplementViewMode = "cards" | "list";
 type SupplementSort = "az" | "za";
 
 interface ApiSupplement {
@@ -56,7 +57,7 @@ export function SupplementDatabasePage() {
   const [selectedSupplement, setSelectedSupplement] = useState<SupplementLibraryEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<SupplementSort>("az");
-  const [viewMode, setViewMode] = useState<SupplementViewMode>("cards");
+  const [viewMode, setViewMode] = usePersistedCardListView("complete-coach:supplement-database-view");
   const [currentPage, setCurrentPage] = useState(1);
   const [supplements, setSupplements] = useState<SupplementLibraryEntry[]>([]);
   const [loadingSupplements, setLoadingSupplements] = useState(true);
@@ -307,32 +308,7 @@ export function SupplementDatabasePage() {
           </select>
         </label>
 
-        <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1" aria-label="Supplement view">
-          <button
-            type="button"
-            aria-label="Card view"
-            aria-pressed={viewMode === "cards"}
-            onClick={() => setViewMode("cards")}
-            className={cn(
-              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
-              viewMode === "cards" ? "bg-indigo-50 text-indigo-700" : ""
-            )}
-          >
-            <Grid2X2 className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="List view"
-            aria-pressed={viewMode === "list"}
-            onClick={() => setViewMode("list")}
-            className={cn(
-              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
-              viewMode === "list" ? "bg-indigo-50 text-indigo-700" : ""
-            )}
-          >
-            <List className="h-4 w-4" />
-          </button>
-        </div>
+        <CardListViewToggle label="Supplement view" value={viewMode} onChange={setViewMode} />
 
         <button
           type="button"

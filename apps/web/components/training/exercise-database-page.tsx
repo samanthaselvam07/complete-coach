@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ExternalLink, Grid2X2, List, Play, Plus, Search, X } from "lucide-react";
+import { Check, ExternalLink, Play, Plus, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { CardListViewToggle } from "@/components/ui/card-list-view-toggle";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
+import { usePersistedCardListView } from "@/components/ui/use-persisted-card-list-view";
 import type { Exercise } from "@/lib/training/training-models";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +43,7 @@ interface ExerciseVideoPreview {
 export function ExerciseDatabasePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"az" | "za">("az");
-  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+  const [viewMode, setViewMode] = usePersistedCardListView("complete-coach:exercise-database-view");
   const [apiExercises, setApiExercises] = useState<ApiExercise[]>([]);
   const [loadingExercises, setLoadingExercises] = useState(true);
   const [videoExerciseName, setVideoExerciseName] = useState<string | null>(null);
@@ -172,32 +174,7 @@ export function ExerciseDatabasePage() {
           </select>
         </label>
 
-        <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1" aria-label="Exercise view">
-          <button
-            type="button"
-            aria-label="Card view"
-            aria-pressed={viewMode === "cards"}
-            className={cn(
-              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
-              viewMode === "cards" ? "bg-indigo-50 text-indigo-700" : ""
-            )}
-            onClick={() => setViewMode("cards")}
-          >
-            <Grid2X2 className="size-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            aria-label="List view"
-            aria-pressed={viewMode === "list"}
-            className={cn(
-              "rounded-lg p-2 text-slate-500 transition hover:text-indigo-700",
-              viewMode === "list" ? "bg-indigo-50 text-indigo-700" : ""
-            )}
-            onClick={() => setViewMode("list")}
-          >
-            <List className="size-4" aria-hidden="true" />
-          </button>
-        </div>
+        <CardListViewToggle label="Exercise view" value={viewMode} onChange={setViewMode} />
 
         <Link
           href="/training/exercises/add"

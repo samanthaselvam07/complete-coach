@@ -1,8 +1,10 @@
 "use client";
 
-import { Calendar, ClipboardCopy, Edit, Grid2X2, List, MoreVertical, Search, Trash2, Users, UserPlus, Zap } from "lucide-react";
+import { Calendar, ClipboardCopy, Edit, MoreVertical, Search, Trash2, Users, UserPlus, Zap } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 
+import { CardListViewToggle } from "@/components/ui/card-list-view-toggle";
+import { usePersistedCardListView } from "@/components/ui/use-persisted-card-list-view";
 import type { ClientSummary } from "@/lib/clients/client-models";
 import { cn } from "@/lib/utils";
 
@@ -169,7 +171,7 @@ export function TemplatesPanel({
   onAssignTemplate: (template: ProgramTemplateCard) => void;
 }) {
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"card" | "list">("card");
+  const [viewMode, setViewMode] = usePersistedCardListView("complete-coach:program-template-library-view");
 
   return (
     <section role="tabpanel" aria-label="Program templates" className="relative">
@@ -182,37 +184,10 @@ export function TemplatesPanel({
         />
       ) : null}
       <div className="mb-6 flex justify-end">
-        <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
-          <button
-            type="button"
-            aria-label="Card view"
-            aria-pressed={viewMode === "card"}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-              viewMode === "card" ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-50"
-            )}
-            onClick={() => setViewMode("card")}
-          >
-            <Grid2X2 className="size-4" aria-hidden="true" />
-            Cards
-          </button>
-          <button
-            type="button"
-            aria-label="List view"
-            aria-pressed={viewMode === "list"}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-              viewMode === "list" ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-50"
-            )}
-            onClick={() => setViewMode("list")}
-          >
-            <List className="size-4" aria-hidden="true" />
-            List
-          </button>
-        </div>
+        <CardListViewToggle label="Program template view options" value={viewMode} onChange={setViewMode} />
       </div>
 
-      {viewMode === "card" ? (
+      {viewMode === "cards" ? (
         <div role="region" aria-label="Program template cards" className="grid gap-6 md:grid-cols-3">
           {templates.map((template) => {
             const isActionMenuOpen = openActionMenuId === template.id;

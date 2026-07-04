@@ -6,6 +6,7 @@ import { TrainingProgramsPage } from "@/components/training/training-programs-pa
 
 afterEach(() => {
   vi.restoreAllMocks();
+  window.localStorage?.clear();
 });
 
 function mockTrainingLibraryApi() {
@@ -249,7 +250,9 @@ describe("TrainingProgramsPage quick actions", () => {
 
     fireEvent.click(await screen.findByRole("tab", { name: "Program templates" }));
 
-    expect(screen.getByRole("region", { name: "Program template cards" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
+    const defaultList = screen.getByRole("region", { name: "Program template list" });
+    expect(within(defaultList).getByText("Body Recomp v3")).toBeInTheDocument();
     expect(screen.queryByText("PUBLISHED")).not.toBeInTheDocument();
     expect(screen.queryByText("DRAFT")).not.toBeInTheDocument();
 
@@ -258,6 +261,9 @@ describe("TrainingProgramsPage quick actions", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Close program template actions" }));
     expect(screen.queryByRole("menu", { name: "Actions for Body Recomp v3" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Card view" }));
+    expect(screen.getByRole("region", { name: "Program template cards" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "List view" }));
 

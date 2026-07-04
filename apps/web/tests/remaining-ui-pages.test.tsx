@@ -22,6 +22,7 @@ import { SupplementationPage } from "@/components/supplementation/supplementatio
 
 afterEach(() => {
   vi.restoreAllMocks();
+  window.localStorage?.clear();
 });
 
 const routeSmokeCases = [
@@ -1014,7 +1015,7 @@ describe("SupplementDatabasePage", () => {
     fireEvent.change(screen.getByLabelText("Sort supplements"), { target: { value: "za" } });
     expect(screen.getByText("Zinc Complex")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("list", { name: "Supplement list" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "View details for Zinc Complex" }));

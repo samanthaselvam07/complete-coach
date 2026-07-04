@@ -59,6 +59,7 @@ import { NutritionPage } from "@/components/nutrition/nutrition-page";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  window.localStorage?.clear();
 });
 
 const apiMealPlanTemplates = [
@@ -301,11 +302,6 @@ describe("MealPlansPage", () => {
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
 
     expect(screen.getByText("High-Protein Breakfast Bowl")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("region", { name: "Meal template cards" })).toBeInTheDocument();
-    expect(screen.queryByRole("table", { name: "Meal template list" })).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "List view" }));
     expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
     const templateTable = screen.getByRole("table", { name: "Meal template list" });
     const templateRow = within(templateTable).getByRole("row", {
@@ -322,6 +318,10 @@ describe("MealPlansPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Card view" }));
     expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("region", { name: "Meal template cards" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("table", { name: "Meal template list" })).toBeInTheDocument();
   });
 
   it("opens the meal plan quick action menu and closes it from the page overlay", async () => {
@@ -348,7 +348,6 @@ describe("MealPlansPage", () => {
     render(createElement(MealPlansPage));
 
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
-    fireEvent.click(screen.getByRole("button", { name: "List view" }));
     fireEvent.click(screen.getByRole("button", { name: "More actions for High-Protein Breakfast Bowl" }));
 
     const menu = screen.getByRole("menu", { name: /meal plan actions for high-protein breakfast bowl/i });
@@ -797,7 +796,7 @@ describe("MealPlansPage", () => {
     render(createElement(MealPlansPage));
 
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
-    fireEvent.click(await screen.findByRole("button", { name: "View Persisted Breakfast Template" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Persisted Breakfast Template" }));
 
     expect(screen.getByRole("dialog", { name: "Persisted Breakfast Template" })).toBeInTheDocument();
     expect(screen.getByText("Prep oats with cinnamon.")).toBeInTheDocument();
@@ -1340,7 +1339,6 @@ describe("MealPlansPage", () => {
     render(createElement(MealPlansPage));
 
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
-    fireEvent.click(screen.getByRole("button", { name: "List view" }));
     fireEvent.click(screen.getByRole("button", { name: "More actions for High-Protein Breakfast Bowl" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Assign to existing meal plan" }));
     expect(screen.getByRole("dialog", { name: "Add Meal Template to Meal Plan" })).toBeInTheDocument();
@@ -1478,6 +1476,7 @@ describe("MealPlansPage", () => {
     render(createElement(MealPlansPage));
 
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(screen.getByRole("button", { name: "Card view" }));
     fireEvent.click(screen.getByRole("button", { name: "Use Template" }));
     fireEvent.click(screen.getByRole("radio", { name: "Select Persisted Hypertrophy Fuel" }));
     fireEvent.click(screen.getByRole("button", { name: "Add to Meal Plan" }));
@@ -2110,7 +2109,7 @@ describe("FoodDatabasePage", () => {
     expect(screen.getByRole("button", { name: "AUS/NZ" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "EFSA" })).toBeInTheDocument();
     expect(screen.getAllByText("FoodData Central").length).toBeGreaterThan(0);
-    expect(await screen.findByAltText("Chicken Breast")).toBeInTheDocument();
+    expect(await screen.findByRole("list", { name: "Food list" })).toHaveTextContent("Chicken Breast");
     expect(screen.queryByRole("button", { name: "All Ingredients" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Proteins" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Carbs" })).not.toBeInTheDocument();
@@ -2177,14 +2176,8 @@ describe("FoodDatabasePage", () => {
     render(createElement(FoodDatabasePage));
 
     expect(await screen.findByText("API Turkey Mince")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("region", { name: "Food grid" })).toBeInTheDocument();
-    expect(screen.queryByRole("list", { name: "Food list" })).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "List view" }));
-
-    const list = screen.getByRole("list", { name: "Food list" });
     expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
+    const list = screen.getByRole("list", { name: "Food list" });
     expect(within(list).getByText("API Turkey Mince")).toBeInTheDocument();
     expect(within(list).getByText("Proteins")).toBeInTheDocument();
     expect(within(list).getByText("100g cooked")).toBeInTheDocument();
@@ -2195,11 +2188,33 @@ describe("FoodDatabasePage", () => {
     expect(screen.getByRole("region", { name: "Food grid" })).toBeInTheDocument();
   });
 
+  it("restores the saved food database view preference", async () => {
+    const storedValues = new Map<string, string>();
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: {
+        clear: () => storedValues.clear(),
+        getItem: (key: string) => storedValues.get(key) ?? null,
+        removeItem: (key: string) => storedValues.delete(key),
+        setItem: (key: string, value: string) => storedValues.set(key, value)
+      }
+    });
+    window.localStorage.setItem("complete-coach:food-database-view", "cards");
+    mockFoodLibrary();
+
+    render(createElement(FoodDatabasePage));
+
+    expect(await screen.findByText("Chicken Breast")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true"));
+    expect(screen.getByRole("region", { name: "Food grid" })).toBeInTheDocument();
+  });
+
   it("opens a nutrient breakdown modal from a food card", async () => {
     mockFoodLibrary();
 
     render(createElement(FoodDatabasePage));
 
+    fireEvent.click(await screen.findByRole("button", { name: "Card view" }));
     const chickenCard = (await screen.findByRole("heading", { name: "Chicken Breast" })).closest("button");
     expect(chickenCard).not.toBeNull();
     fireEvent.click(chickenCard!);
@@ -2571,14 +2586,14 @@ describe("FoodDatabasePage", () => {
     await screen.findByText("Chicken Breast");
     fireEvent.click(screen.getByRole("button", { name: "AUS/NZ" }));
 
-    const grid = screen.getByRole("region", { name: "Food grid" });
-    expect(await within(grid).findByText("Basmati Rice")).toBeInTheDocument();
-    expect(within(grid).queryByText("Chicken Breast")).not.toBeInTheDocument();
+    const list = screen.getByRole("list", { name: "Food list" });
+    expect(await within(list).findByText("Basmati Rice")).toBeInTheDocument();
+    expect(within(list).queryByText("Chicken Breast")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "EFSA" }));
 
-    expect(within(grid).getByText("Raw Avocado")).toBeInTheDocument();
-    expect(within(grid).queryByText("Basmati Rice")).not.toBeInTheDocument();
+    expect(within(list).getByText("Raw Avocado")).toBeInTheDocument();
+    expect(within(list).queryByText("Basmati Rice")).not.toBeInTheDocument();
   });
 
 });
