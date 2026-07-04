@@ -1116,7 +1116,7 @@ describe("MealPlansPage", () => {
       "Search foods..."
     );
     expect(within(foodDrawer).getByRole("button", { name: "AUS/NZ" })).toBeInTheDocument();
-    expect(within(foodDrawer).getByRole("button", { name: "EFSA" })).toBeInTheDocument();
+    expect(within(foodDrawer).queryByRole("button", { name: "EFSA" })).not.toBeInTheDocument();
     expect(within(foodDrawer).getByRole("button", { name: "USDA" })).toBeInTheDocument();
     expect(within(foodDrawer).getByText("Showing recent AUS/NZ foods")).toBeInTheDocument();
     expect(within(foodDrawer).getByRole("list", { name: "Selectable foods" })).toBeInTheDocument();
@@ -1131,10 +1131,7 @@ describe("MealPlansPage", () => {
     const selectedFoodsRegion = within(foodDrawer).getByRole("region", { name: "Selected foods" });
     expect(selectedFoodsRegion).toHaveClass("lg:min-w-[26rem]");
     expect(within(selectedFoodsRegion).getByRole("list", { name: "Selected food quantity list" })).toHaveClass("overflow-y-auto");
-    fireEvent.click(within(foodDrawer).getByRole("button", { name: "EFSA" }));
-    fireEvent.click(await within(foodDrawer).findByRole("checkbox", { name: "Select Raw Avocado" }));
-    expect(within(selectedFoodsRegion).getAllByRole("listitem")).toHaveLength(3);
-    fireEvent.click(within(foodDrawer).getByRole("checkbox", { name: "Select Raw Avocado" }));
+    expect(within(selectedFoodsRegion).getAllByRole("listitem")).toHaveLength(2);
     expect(within(foodDrawer).getByLabelText("Quantity for Chicken Breast")).toHaveValue(100);
     expect(within(foodDrawer).getByLabelText("Measurement for Chicken Breast")).toHaveClass("w-full");
     fireEvent.change(within(foodDrawer).getByLabelText("Quantity for Chicken Breast"), { target: { value: "200" } });
@@ -2107,7 +2104,8 @@ describe("FoodDatabasePage", () => {
     expect(screen.getByText("Source:")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "USDA" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "AUS/NZ" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "EFSA" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "EFSA" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Recent Ingredients" })).not.toBeInTheDocument();
     expect(screen.getAllByText("FoodData Central").length).toBeGreaterThan(0);
     expect(await screen.findByRole("list", { name: "Food list" })).toHaveTextContent("Chicken Breast");
     expect(screen.queryByRole("button", { name: "All Ingredients" })).not.toBeInTheDocument();
@@ -2590,9 +2588,9 @@ describe("FoodDatabasePage", () => {
     expect(await within(list).findByText("Basmati Rice")).toBeInTheDocument();
     expect(within(list).queryByText("Chicken Breast")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "EFSA" }));
+    fireEvent.click(screen.getByRole("button", { name: "USDA" }));
 
-    expect(within(list).getByText("Raw Avocado")).toBeInTheDocument();
+    expect(within(list).getByText("Chicken Breast")).toBeInTheDocument();
     expect(within(list).queryByText("Basmati Rice")).not.toBeInTheDocument();
   });
 

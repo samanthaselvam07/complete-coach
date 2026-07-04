@@ -49,8 +49,7 @@ type NewFoodFormState = {
 
 const databaseSources = [
   { id: "USDA", label: "USDA", detail: "FoodData Central" },
-  { id: "AUS/NZ", label: "AUS/NZ", detail: "Australia & New Zealand" },
-  { id: "EFSA", label: "EFSA", detail: "European Food Safety Authority" }
+  { id: "AUS/NZ", label: "AUS/NZ", detail: "Australia & New Zealand" }
 ] as const;
 
 const servingDescriptionOptions = ["Grams", "Ounces", "Qty", "Cups", "Oz", "Tbsp", "Tsp", "Ml"];
@@ -326,8 +325,7 @@ export function FoodDatabasePage() {
       </div>
 
       <div className="mb-6">
-        <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <h2 className="text-xl font-bold">Recent Ingredients</h2>
+        <div className="mb-4 flex justify-end">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm text-gray-500">
               Showing {visibleFoods.length} of {filteredFoods.length} results

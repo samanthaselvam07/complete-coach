@@ -17,7 +17,7 @@ export type MealPlanSource = "api" | "fixtures";
 
 type FoodDatabaseSource = "AUS/NZ" | "EFSA" | "USDA";
 type FoodMeasurementUnit = "g" | "ml" | "oz" | "cups" | "tbsp" | "tsp" | "serving";
-const VERIFIED_FOOD_SOURCES = new Set(["USDA", "AUS/NZ", "EFSA"]);
+const VERIFIED_FOOD_SOURCES = new Set(["USDA", "AUS/NZ"]);
 const FOOD_SELECTOR_RECENT_LIMIT = 8;
 const servingDescriptionOptions = ["Grams", "Ounces", "Qty", "Cups", "Oz", "Tbsp", "Tsp", "Ml"];
 
@@ -2607,7 +2607,7 @@ function FoodDatabaseDrawer({
   onAddFoods: (selections: Array<{ foodId: string; quantity: number; unit: FoodMeasurementUnit }>) => void;
   onClose: () => void;
 }) {
-  const sources: FoodDatabaseSource[] = ["AUS/NZ", "EFSA", "USDA"];
+  const sources: FoodDatabaseSource[] = ["AUS/NZ", "USDA"];
   const measurementUnits: FoodMeasurementUnit[] = ["g", "ml", "oz", "cups", "tbsp", "tsp", "serving"];
   const [selectedFoods, setSelectedFoods] = useState<Record<string, { quantity: string; unit: FoodMeasurementUnit }>>({});
   const selectedFoodEntries = foodOptions.filter((food) => selectedFoods[food.id]);
