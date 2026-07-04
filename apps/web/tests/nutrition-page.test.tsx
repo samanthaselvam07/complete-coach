@@ -343,6 +343,32 @@ describe("MealPlansPage", () => {
     expect(screen.queryByRole("menu", { name: /meal plan actions/i })).not.toBeInTheDocument();
   });
 
+  it("opens meal template list quick actions and closes them from the page overlay", async () => {
+    mockMealPlanLibrary();
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    fireEvent.click(screen.getByRole("button", { name: "More actions for High-Protein Breakfast Bowl" }));
+
+    const menu = screen.getByRole("menu", { name: /meal plan actions for high-protein breakfast bowl/i });
+    const templateTable = screen.getByRole("table", { name: "Meal template list" });
+    const templateRow = within(templateTable).getByRole("row", {
+      name: /High-Protein Breakfast Bowl Meal template protocol/i
+    });
+
+    expect(menu).toHaveClass("z-[60]");
+    expect(templateRow).toHaveClass("z-40");
+    expect(within(menu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Assign to existing meal plan" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Copy" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close meal template actions" }));
+
+    expect(screen.queryByRole("menu", { name: /meal plan actions for high-protein breakfast bowl/i })).not.toBeInTheDocument();
+  });
+
   it("runs meal plan quick actions for edit, unavailable copy, delete, and assign", async () => {
     mockMealPlanLibrary();
     render(createElement(MealPlansPage));
@@ -1314,7 +1340,9 @@ describe("MealPlansPage", () => {
     render(createElement(MealPlansPage));
 
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
-    fireEvent.click(screen.getByRole("button", { name: "Use Template" }));
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    fireEvent.click(screen.getByRole("button", { name: "More actions for High-Protein Breakfast Bowl" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Assign to existing meal plan" }));
     expect(screen.getByRole("dialog", { name: "Add Meal Template to Meal Plan" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Client")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("radio", { name: "Select Hypertrophy Phase II" }));

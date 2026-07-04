@@ -500,6 +500,10 @@ export function MealPlansPage() {
     setErrorMessage(`${assignment.planName} could not be copied until database-backed copy is available.`);
   }
 
+  function copyMealTemplate(template: MealTemplateCard) {
+    setErrorMessage(`${template.name} could not be copied until database-backed copy is available.`);
+  }
+
   function assignMealPlanToClient(assignment: MealAssignmentRow, client: ClientSummary) {
     void assignment;
     void client;
@@ -653,6 +657,7 @@ export function MealPlansPage() {
             setErrorMessage(null);
           }}
           onDeleteTemplate={deleteMealTemplate}
+          onCopyTemplate={copyMealTemplate}
         />
       )}
 
@@ -3474,6 +3479,8 @@ function MealPlanInlineActions({
 function MealPlanActionMenu({
   id,
   planName,
+  assignLabel = "Assign to",
+  assignDisabled = false,
   onEdit,
   onDelete,
   onAssign,
@@ -3481,6 +3488,8 @@ function MealPlanActionMenu({
 }: {
   id: string;
   planName: string;
+  assignLabel?: string;
+  assignDisabled?: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onAssign: () => void;
@@ -3489,7 +3498,7 @@ function MealPlanActionMenu({
   const actions = [
     { label: "Edit", icon: Edit, onSelect: onEdit },
     { label: "Delete", icon: Trash2, onSelect: onDelete },
-    { label: "Assign to", icon: UserPlus, onSelect: onAssign },
+    { label: assignLabel, icon: UserPlus, onSelect: onAssign, disabled: assignDisabled },
     { label: "Copy", icon: ClipboardCopy, onSelect: onCopy }
   ];
 
@@ -3500,18 +3509,88 @@ function MealPlanActionMenu({
       aria-label={`Meal plan actions for ${planName}`}
       className="absolute right-0 top-10 z-[60] w-44 rounded-xl border border-gray-200 bg-white py-2 shadow-xl"
     >
-      {actions.map(({ label, icon: Icon, onSelect }) => (
+      {actions.map(({ label, icon: Icon, onSelect, disabled }) => (
         <button
           key={label}
           type="button"
           role="menuitem"
-          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+          disabled={disabled}
+          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white"
           onClick={onSelect}
         >
           <Icon className="size-4 text-slate-500" aria-hidden="true" />
           {label}
         </button>
       ))}
+    </div>
+  );
+}
+
+function MealTemplateInlineActions({
+  template,
+  menuOpen,
+  canAssign,
+  onEdit,
+  onDelete,
+  onAssign,
+  onCopy,
+  onMenuToggle,
+  onMenuClose
+}: {
+  template: MealTemplateCard;
+  menuOpen: boolean;
+  canAssign: boolean;
+  onEdit: (template: MealTemplateCard) => void;
+  onDelete: (template: MealTemplateCard) => void;
+  onAssign: (template: MealTemplateCard) => void;
+  onCopy: (template: MealTemplateCard) => void;
+  onMenuToggle: () => void;
+  onMenuClose: () => void;
+}) {
+  return (
+    <div className="relative inline-flex items-center justify-end gap-2">
+      <button
+        type="button"
+        aria-label={`Edit ${template.name}`}
+        className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
+        onClick={() => onEdit(template)}
+      >
+        <Edit className="size-4" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        aria-label={`More actions for ${template.name}`}
+        aria-expanded={menuOpen}
+        aria-controls={`meal-template-actions-${template.id}`}
+        className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+        onClick={onMenuToggle}
+      >
+        <MoreVertical className="size-4" aria-hidden="true" />
+      </button>
+      {menuOpen ? (
+        <MealPlanActionMenu
+          id={`meal-template-actions-${template.id}`}
+          planName={template.name}
+          assignLabel="Assign to existing meal plan"
+          assignDisabled={!canAssign}
+          onEdit={() => {
+            onMenuClose();
+            onEdit(template);
+          }}
+          onDelete={() => {
+            onMenuClose();
+            onDelete(template);
+          }}
+          onAssign={() => {
+            onMenuClose();
+            onAssign(template);
+          }}
+          onCopy={() => {
+            onMenuClose();
+            onCopy(template);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -3629,7 +3708,8 @@ function MasterTemplatesPanel({
   onViewChange,
   onOpenTemplate,
   onUseTemplate,
-  onDeleteTemplate
+  onDeleteTemplate,
+  onCopyTemplate
 }: {
   templates: MealTemplateCard[];
   canAssign: boolean;
@@ -3638,9 +3718,20 @@ function MasterTemplatesPanel({
   onOpenTemplate: (template: MealTemplateCard) => void;
   onUseTemplate: (template: MealTemplateCard) => void;
   onDeleteTemplate: (template: MealTemplateCard) => void;
+  onCopyTemplate: (template: MealTemplateCard) => void;
 }) {
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+
   return (
-    <section role="tabpanel" aria-label="Meal Templates">
+    <section role="tabpanel" aria-label="Meal Templates" className="relative overflow-visible">
+      {openActionMenuId ? (
+        <button
+          type="button"
+          aria-label="Close meal template actions"
+          className="fixed inset-0 z-20 cursor-default bg-transparent"
+          onClick={() => setOpenActionMenuId(null)}
+        />
+      ) : null}
       <div className="mb-4 flex justify-end">
         <div className="inline-flex rounded-xl bg-slate-100 p-1" aria-label="Meal template view options">
           {(["cards", "list"] as MealPlanLibraryView[]).map((viewOption) => (
@@ -3724,51 +3815,49 @@ function MasterTemplatesPanel({
           ))}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="overflow-visible rounded-xl border border-gray-200 bg-white">
           <table role="table" aria-label="Meal template list" className="w-full border-collapse">
             <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-600">
               <tr>
                 <th className="px-6 py-4 text-left">Template</th>
                 <th className="px-6 py-4 text-left">Calories / Macros</th>
-                <th className="px-6 py-4 text-left">Actions</th>
+                <th className="w-0 px-4 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {templates.map((template) => (
-                <tr key={template.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <button type="button" className="text-left font-medium text-gray-900 hover:text-indigo-700" onClick={() => onOpenTemplate(template)}>
-                      {template.name}
-                    </button>
-                    <div className="text-xs text-gray-500">{template.description}</div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    <span className="font-medium text-gray-900">{template.calories} cal</span>
-                    <span className="ml-3 font-medium text-indigo-600">P {template.protein}g</span>
-                    <span className="ml-2 font-medium text-green-600">C {template.carbs}g</span>
-                    <span className="ml-2 font-medium text-orange-600">F {template.fats}g</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300"
-                        disabled={!canAssign}
-                        onClick={() => onUseTemplate(template)}
-                      >
-                        Use Template
+              {templates.map((template) => {
+                const menuOpen = openActionMenuId === template.id;
+
+                return (
+                  <tr key={template.id} className={cn("relative border-b border-gray-100 last:border-0 hover:bg-gray-50", menuOpen ? "z-40" : "z-0")}>
+                    <td className="px-6 py-4">
+                      <button type="button" className="text-left font-medium text-gray-900 hover:text-indigo-700" onClick={() => onOpenTemplate(template)}>
+                        {template.name}
                       </button>
-                      <button
-                        type="button"
-                        className="rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-                        onClick={() => onDeleteTemplate(template)}
-                      >
-                        Delete Template
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      <div className="text-xs text-gray-500">{template.description}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-700">
+                      <span className="font-medium text-gray-900">{template.calories} cal</span>
+                      <span className="ml-3 font-medium text-indigo-600">P {template.protein}g</span>
+                      <span className="ml-2 font-medium text-green-600">C {template.carbs}g</span>
+                      <span className="ml-2 font-medium text-orange-600">F {template.fats}g</span>
+                    </td>
+                    <td className="relative w-0 py-4 pl-2 pr-4 text-right">
+                      <MealTemplateInlineActions
+                        template={template}
+                        menuOpen={menuOpen}
+                        canAssign={canAssign}
+                        onEdit={onOpenTemplate}
+                        onDelete={onDeleteTemplate}
+                        onAssign={onUseTemplate}
+                        onCopy={onCopyTemplate}
+                        onMenuToggle={() => setOpenActionMenuId((currentId) => (currentId === template.id ? null : template.id))}
+                        onMenuClose={() => setOpenActionMenuId(null)}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
