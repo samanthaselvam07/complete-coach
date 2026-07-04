@@ -102,6 +102,17 @@ export const createSupplementTemplateSchema = z.object({
   template: supplementTemplateJsonSchema
 });
 
+export const updateSupplementTemplateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(160).optional(),
+    description: z.string().trim().max(2000).optional(),
+    status: z.enum(supplementTemplateStatusValues).optional(),
+    template: supplementTemplateJsonSchema.optional()
+  })
+  .refine((input) => Object.keys(input).length > 0, {
+    message: "At least one template field must be provided."
+  });
+
 export const createSupplementAssignmentSchema = z.object({
   clientId: z.string().min(1),
   templateId: z.string().min(1),
@@ -115,6 +126,7 @@ type CreateSupplementInput = z.infer<typeof createSupplementSchema>;
 type SupplementCoachDetailsInput = z.infer<typeof supplementCoachDetailsSchema>;
 type SupplementTemplateListQuery = z.infer<typeof supplementTemplateListQuerySchema>;
 type CreateSupplementTemplateInput = z.infer<typeof createSupplementTemplateSchema>;
+type UpdateSupplementTemplateInput = z.infer<typeof updateSupplementTemplateSchema>;
 
 interface SupplementRecord {
   id: string;
@@ -262,6 +274,15 @@ export function getSupplementTemplateCreateData(
     description: input.description,
     status: templateStatusToPrisma[input.status],
     templateJson: input.template as InputJsonValue
+  };
+}
+
+export function getSupplementTemplateUpdateData(input: UpdateSupplementTemplateInput) {
+  return {
+    ...(input.name !== undefined ? { name: input.name } : {}),
+    ...(input.description !== undefined ? { description: input.description } : {}),
+    ...(input.status !== undefined ? { status: templateStatusToPrisma[input.status] } : {}),
+    ...(input.template !== undefined ? { templateJson: input.template as InputJsonValue } : {})
   };
 }
 

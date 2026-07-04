@@ -60,7 +60,8 @@ describe("SupplementationPage", () => {
     expect(screen.queryByText("Active Plans")).not.toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Supplement Protocols" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Protocol Templates" })).toBeInTheDocument();
-    expect(await screen.findByText("0 protocols stored")).toBeInTheDocument();
+    expect(await screen.findByText("No supplement protocols have been assigned yet.")).toBeInTheDocument();
+    expect(screen.queryByText(/protocols stored/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Alex Rivera")).not.toBeInTheDocument();
     expect(screen.queryByText("Vitamin D3 + K2")).not.toBeInTheDocument();
   });
@@ -1068,9 +1069,15 @@ describe("SupplementPlansPage", () => {
                 {
                   id: "assignment_api",
                   name: "Vitamin D3 + K2",
+                  clientId: "client_alex",
+                  templateId: "template_api",
                   clientName: "Alex Rivera",
                   status: "active",
+                  startsOn: "2026-06-04",
+                  createdAt: "2026-06-01T00:00:00.000Z",
+                  compliance: 91,
                   snapshot: {
+                    templateId: "template_api",
                     template: {
                       phases: [
                         {
@@ -1116,15 +1123,38 @@ describe("SupplementPlansPage", () => {
     expect(screen.queryByText("Library")).not.toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Supplement Protocols" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Protocol Templates" })).toBeInTheDocument();
+    expect(screen.queryByText(/protocols stored/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/reusable templates/i)).not.toBeInTheDocument();
     expect(await screen.findByText("Alex Rivera")).toBeInTheDocument();
+    expect(screen.getByText("Vitamin D3 + K2")).toBeInTheDocument();
+    expect(screen.getByText("Jun 1, 2026")).toBeInTheDocument();
+    expect(screen.getByText("Jun 4, 2026")).toBeInTheDocument();
+    expect(screen.getByText("91%")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Vitamin D3 + K2" }));
+    const protocolMenu = screen.getByRole("menu", { name: "Supplement protocol actions for Vitamin D3 + K2" });
+    expect(within(protocolMenu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+    expect(within(protocolMenu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
+    expect(within(protocolMenu).getByRole("menuitem", { name: "Assign to" })).toBeInTheDocument();
+    expect(within(protocolMenu).getByRole("menuitem", { name: "Copy" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close supplement protocol actions" }));
+    expect(screen.queryByRole("menu", { name: "Supplement protocol actions for Vitamin D3 + K2" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
 
     expect(await screen.findByText("Creatine Monohydrate")).toBeInTheDocument();
     expect(screen.queryByText("Alex Rivera")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /View Details/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Creatine Monohydrate" }));
+    const templateMenu = screen.getByRole("menu", { name: "Supplement template actions for Creatine Monohydrate" });
+    expect(within(templateMenu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
+    expect(within(templateMenu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
+    expect(within(templateMenu).getByRole("menuitem", { name: "Assign to" })).toBeInTheDocument();
+    expect(within(templateMenu).getByRole("menuitem", { name: "Copy" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close protocol template actions" }));
+    expect(screen.queryByRole("menu", { name: "Supplement template actions for Creatine Monohydrate" })).not.toBeInTheDocument();
   });
 
-  it("creates and duplicates supplement protocol templates through the persistence API", async () => {
+  it("creates, edits, assigns, duplicates, and deletes supplement protocol templates through the persistence API", async () => {
     let nextTemplateId = 1;
     vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
@@ -1152,12 +1182,72 @@ describe("SupplementPlansPage", () => {
         );
       }
 
+      if (url === "/api/v1/supplement-plan-templates/template_created_1" && init?.method === "PATCH") {
+        const body = JSON.parse(String(init.body)) as { name: string; description: string; status: string; template: { phases: Array<{ supplements: unknown[] }> } };
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "template_created_1",
+                name: body.name,
+                description: body.description,
+                status: body.status,
+                template: body.template
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/supplement-plan-templates/template_created_1" && init?.method === "DELETE") {
+        return Promise.resolve(new Response(JSON.stringify({ data: { id: "template_created_1", deleted: true } }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/clients?limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                { id: "client_alex", name: "Alex Rivera", packageName: "Performance" },
+                { id: "client_james", name: "James Chen", packageName: "Hypertrophy" }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/supplement-plan-assignments" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as { clientId: string; templateId: string; name: string };
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "assignment_created",
+                name: body.name,
+                clientId: body.clientId,
+                templateId: body.templateId,
+                clientName: "Alex Rivera",
+                status: "active",
+                startsOn: "2026-06-04",
+                createdAt: "2026-06-04T00:00:00.000Z",
+                snapshot: { templateId: body.templateId, template: { phases: [{ supplements: [{ supplementName: "Supplement 1" }] }] } }
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     });
 
     render(createElement(SupplementPlansPage));
 
-    expect(await screen.findByText("0 protocols stored")).toBeInTheDocument();
+    expect(await screen.findByText("No supplement protocols have been assigned yet.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Create Template" }));
     const createDialog = screen.getByRole("dialog", { name: "Create Protocol Template" });
     fireEvent.change(within(createDialog).getByLabelText("Template name"), { target: { value: "Sleep Support Stack" } });
@@ -1166,16 +1256,34 @@ describe("SupplementPlansPage", () => {
     fireEvent.click(within(createDialog).getByRole("button", { name: "Save Template" }));
 
     expect(await screen.findByText("Sleep Support Stack")).toBeInTheDocument();
-    expect(screen.getByText("Sleep Support Stack template saved.")).toBeInTheDocument();
+    expect(screen.getByText("Sleep Support Stack saved.")).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Duplicate" })[0]);
-    expect(await screen.findByText("Sleep Support Stack (copy)")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Edit Sleep Support Stack" }));
+    const editDialog = screen.getByRole("dialog", { name: "Edit Protocol Template" });
+    fireEvent.change(within(editDialog).getByLabelText("Template name"), { target: { value: "Sleep Support Stack Updated" } });
+    fireEvent.click(within(editDialog).getByRole("button", { name: "Save Template" }));
+    expect(await screen.findByText("Sleep Support Stack Updated")).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Assign" })[0]);
-    expect(screen.getByText("Assigning a protocol requires selecting a persisted client from the Neon roster.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Sleep Support Stack Updated" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy" }));
+    expect(await screen.findByText("Sleep Support Stack Updated (copy)")).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
-    expect(screen.getByText("Editing persisted protocol templates needs the Neon template update endpoint.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Sleep Support Stack Updated (copy)" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Assign to" }));
+    const assignDialog = await screen.findByRole("dialog", { name: "Assign Protocol Template" });
+    fireEvent.change(within(assignDialog).getByPlaceholderText("Search clients..."), { target: { value: "alex" } });
+    fireEvent.click(within(assignDialog).getByLabelText("Select Alex Rivera"));
+    await waitFor(() => expect(within(assignDialog).getByRole("button", { name: "Confirm Assignment" })).not.toBeDisabled());
+    fireEvent.click(within(assignDialog).getByRole("button", { name: "Confirm Assignment" }));
+    expect(await screen.findByText("Sleep Support Stack Updated (copy) assigned.")).toBeInTheDocument();
+    expect(screen.getByText(/Alex Rivera/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
+    const templatesPanel = screen.getByRole("tabpanel", { name: "Protocol Templates" });
+    fireEvent.click(within(templatesPanel).getByRole("button", { name: "More actions for Sleep Support Stack Updated (copy)" }));
+    fireEvent.click(within(templatesPanel).getByRole("menuitem", { name: "Delete" }));
+    await waitFor(() => expect(within(templatesPanel).queryByRole("heading", { name: "Sleep Support Stack Updated (copy)" })).not.toBeInTheDocument());
+    expect(within(templatesPanel).getByRole("heading", { name: "Sleep Support Stack Updated" })).toBeInTheDocument();
   });
 
   it("loads persisted active protocols and templates", async () => {
@@ -1190,9 +1298,14 @@ describe("SupplementPlansPage", () => {
                 {
                   id: "assignment_api",
                   name: "Hydration Support",
+                  clientId: "client_1",
+                  templateId: "template_api",
                   clientName: "Persisted Client",
                   status: "active",
+                  startsOn: "2026-06-02",
+                  createdAt: "2026-06-01T00:00:00.000Z",
                   snapshot: {
+                    templateId: "template_api",
                     template: {
                       phases: [
                         {
@@ -1250,8 +1363,12 @@ describe("SupplementPlansPage", () => {
                 {
                   id: "assignment_paused",
                   name: "Paused Support",
+                  clientId: "client_1",
+                  templateId: null,
                   clientName: null,
                   status: "paused",
+                  startsOn: "2026-06-02",
+                  createdAt: "2026-06-01T00:00:00.000Z",
                   snapshot: null
                 }
               ]
@@ -1286,7 +1403,8 @@ describe("SupplementPlansPage", () => {
     render(createElement(SupplementPlansPage));
 
     expect(await screen.findByText("Unassigned client")).toBeInTheDocument();
-    expect(screen.getByText("In Review")).toBeInTheDocument();
+    expect(screen.getByText("Inactive")).toBeInTheDocument();
+    expect(screen.getByText("Not logged")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
 

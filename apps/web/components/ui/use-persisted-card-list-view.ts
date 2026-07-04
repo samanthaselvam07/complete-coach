@@ -15,13 +15,14 @@ export function usePersistedCardListView(storageKey: string) {
   return [viewMode, updateViewMode] as const;
 }
 
-function getStoredViewMode(storageKey: string) {
+function getStoredViewMode(storageKey: string): CardListViewMode | null {
   try {
     if (typeof window === "undefined") {
       return null;
     }
 
-    return window.localStorage?.getItem(storageKey) ?? null;
+    const storedViewMode = window.localStorage?.getItem(storageKey);
+    return storedViewMode === "cards" || storedViewMode === "list" ? storedViewMode : null;
   } catch {
     return null;
   }

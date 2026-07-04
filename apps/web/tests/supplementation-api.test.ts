@@ -15,9 +15,14 @@ import {
   POST as createSupplementTemplate
 } from "@/app/api/v1/supplement-plan-templates/route";
 import {
+  DELETE as deleteSupplementTemplate,
+  PATCH as updateSupplementTemplate
+} from "@/app/api/v1/supplement-plan-templates/[templateId]/route";
+import {
   GET as getSupplementAssignments,
   POST as createSupplementAssignment
 } from "@/app/api/v1/supplement-plan-assignments/route";
+import { DELETE as deleteSupplementAssignment } from "@/app/api/v1/supplement-plan-assignments/[assignmentId]/route";
 import {
   buildSupplementTemplateWhere,
   buildSupplementWhere,
@@ -41,11 +46,14 @@ const mocks = vi.hoisted(() => ({
     supplementPlanTemplate: {
       create: vi.fn(),
       findMany: vi.fn(),
-      findFirst: vi.fn()
+      findFirst: vi.fn(),
+      updateMany: vi.fn()
     },
     supplementPlanAssignment: {
       create: vi.fn(),
-      findMany: vi.fn()
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      deleteMany: vi.fn()
     },
     client: {
       findFirst: vi.fn()
@@ -169,8 +177,11 @@ describe("supplementation persistence APIs", () => {
     mocks.prisma.supplementPlanTemplate.create.mockReset();
     mocks.prisma.supplementPlanTemplate.findMany.mockReset();
     mocks.prisma.supplementPlanTemplate.findFirst.mockReset();
+    mocks.prisma.supplementPlanTemplate.updateMany.mockReset();
     mocks.prisma.supplementPlanAssignment.create.mockReset();
     mocks.prisma.supplementPlanAssignment.findMany.mockReset();
+    mocks.prisma.supplementPlanAssignment.findFirst.mockReset();
+    mocks.prisma.supplementPlanAssignment.deleteMany.mockReset();
     mocks.prisma.client.findFirst.mockReset();
   });
 
@@ -355,6 +366,62 @@ describe("supplementation persistence APIs", () => {
     );
   });
 
+  it("updates and soft deletes supplement templates for the active organization", async () => {
+    mocks.prisma.supplementPlanTemplate.findFirst.mockResolvedValue(supplementTemplate);
+    mocks.prisma.supplementPlanTemplate.updateMany.mockResolvedValue({ count: 1 });
+    mocks.prisma.supplementPlanTemplate.findFirst
+      .mockResolvedValueOnce(supplementTemplate)
+      .mockResolvedValueOnce({
+        ...supplementTemplate,
+        name: "Updated Hydration Support"
+      });
+
+    const updateResponse = await updateSupplementTemplate(
+      new Request("http://test.local/api/v1/supplement-plan-templates/supplement_template_1", {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: "Updated Hydration Support"
+        })
+      }),
+      { params: Promise.resolve({ templateId: "supplement_template_1" }) }
+    );
+    const updatePayload = (await updateResponse.json()) as { data: { name: string } };
+
+    expect(updateResponse.status).toBe(200);
+    expect(updatePayload.data.name).toBe("Updated Hydration Support");
+    expect(mocks.prisma.supplementPlanTemplate.updateMany).toHaveBeenCalledWith({
+      where: { id: "supplement_template_1", organizationId: "org_1", deletedAt: null },
+      data: { name: "Updated Hydration Support" }
+    });
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: "supplement_plan_template.updated" })
+      })
+    );
+
+    mocks.prisma.auditLog.create.mockClear();
+    mocks.prisma.supplementPlanTemplate.findFirst.mockResolvedValue(supplementTemplate);
+    mocks.prisma.supplementPlanTemplate.updateMany.mockResolvedValue({ count: 1 });
+
+    const deleteResponse = await deleteSupplementTemplate(
+      new Request("http://test.local/api/v1/supplement-plan-templates/supplement_template_1", {
+        method: "DELETE"
+      }),
+      { params: Promise.resolve({ templateId: "supplement_template_1" }) }
+    );
+
+    expect(deleteResponse.status).toBe(200);
+    expect(mocks.prisma.supplementPlanTemplate.updateMany).toHaveBeenLastCalledWith({
+      where: { id: "supplement_template_1", organizationId: "org_1", deletedAt: null },
+      data: { deletedAt: expect.any(Date) }
+    });
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: "supplement_plan_template.deleted" })
+      })
+    );
+  });
+
   it("assigns supplement templates with immutable snapshots", async () => {
     mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1" });
     mocks.prisma.supplementPlanTemplate.findFirst.mockResolvedValue(supplementTemplate);
@@ -385,6 +452,28 @@ describe("supplementation persistence APIs", () => {
             templateName: "Hydration Support"
           })
         })
+      })
+    );
+  });
+
+  it("deletes supplement assignments for the active organization", async () => {
+    mocks.prisma.supplementPlanAssignment.findFirst.mockResolvedValue(supplementAssignment);
+    mocks.prisma.supplementPlanAssignment.deleteMany.mockResolvedValue({ count: 1 });
+
+    const response = await deleteSupplementAssignment(
+      new Request("http://test.local/api/v1/supplement-plan-assignments/supplement_assignment_1", {
+        method: "DELETE"
+      }),
+      { params: Promise.resolve({ assignmentId: "supplement_assignment_1" }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.supplementPlanAssignment.deleteMany).toHaveBeenCalledWith({
+      where: { id: "supplement_assignment_1", organizationId: "org_1" }
+    });
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: "supplement_plan_assignment.deleted" })
       })
     );
   });
