@@ -632,7 +632,7 @@ export function MealPlansPage() {
           type="search"
           value={librarySearchQuery}
           placeholder={activeTab === "Meal Plans" ? "Search meal plans..." : "Search meal templates..."}
-          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm shadow-sm outline-none focus:border-indigo-500 focus:bg-slate-50 focus:ring-2 focus:ring-indigo-500/20"
           onChange={(event) => setLibrarySearchQuery(event.target.value)}
         />
       </label>
