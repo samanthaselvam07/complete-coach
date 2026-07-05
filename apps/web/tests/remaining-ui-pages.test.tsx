@@ -1146,6 +1146,15 @@ describe("SupplementPlansPage", () => {
     expect(screen.getByRole("tab", { name: "Protocol Templates" })).toBeInTheDocument();
     expect(screen.queryByText(/protocols stored/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/reusable templates/i)).not.toBeInTheDocument();
+    expect(screen.getAllByRole("columnheader").map((header) => header.textContent)).toEqual([
+      "Supplement Plan",
+      "Status",
+      "Assigned Clients",
+      "Plan Created",
+      "Assigned",
+      "Compliance",
+      "Actions"
+    ]);
     expect(await screen.findAllByText("Vitamin D3 + K2")).toHaveLength(2);
     expect(screen.queryByText("Alex Rivera")).not.toBeInTheDocument();
     expect(screen.queryByText("James Chen")).not.toBeInTheDocument();

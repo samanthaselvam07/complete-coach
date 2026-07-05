@@ -490,12 +490,12 @@ function SupplementProtocolsTable({
       <table className="w-full min-w-[980px] text-sm">
         <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-600">
           <tr>
+            <th className="px-6 py-4">Supplement Plan</th>
             <th className="px-6 py-4">Status</th>
             <th className="px-6 py-4">Assigned Clients</th>
             <th className="px-6 py-4">Plan Created</th>
             <th className="px-6 py-4">Assigned</th>
             <th className="px-6 py-4">Compliance</th>
-            <th className="px-6 py-4">Supplement Plan</th>
             <th className="px-6 py-4">Actions</th>
           </tr>
         </thead>
@@ -507,6 +507,10 @@ function SupplementProtocolsTable({
 
               return (
                 <tr key={protocol.id} className={`relative border-b border-slate-100 last:border-0 ${menuOpen ? "z-[70]" : "z-0"}`}>
+                  <td className="px-6 py-4">
+                    <p className="font-semibold text-slate-950">{protocol.protocol}</p>
+                    <p className="mt-1 text-xs text-slate-500">{protocol.supplements.join(", ") || "No supplements listed"}</p>
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`rounded-full px-3 py-1 text-xs font-bold ${protocol.status === "Active" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
                       {protocol.status}
@@ -528,10 +532,6 @@ function SupplementProtocolsTable({
                         <span>{protocol.compliance}%</span>
                       </div>
                     )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-slate-950">{protocol.protocol}</p>
-                    <p className="mt-1 text-xs text-slate-500">{protocol.supplements.join(", ") || "No supplements listed"}</p>
                   </td>
                   <td className="relative px-6 py-4">
                     <SupplementInlineActions
