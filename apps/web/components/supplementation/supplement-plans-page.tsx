@@ -721,7 +721,7 @@ function ProtocolTemplateGrid({
                 className={`relative grid grid-cols-12 items-center gap-4 border-b border-slate-100 px-6 py-4 last:border-0 hover:bg-slate-50 ${menuOpen ? "z-[70]" : "z-0"}`}
               >
                 <div className="col-span-5">
-                  <h2 className="font-semibold text-slate-950">{protocol.name}</h2>
+                  <h2 className="text-sm font-semibold text-slate-950">{protocol.name}</h2>
                 </div>
                 <div className="col-span-2">
                   <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">{protocol.category}</span>
@@ -729,7 +729,7 @@ function ProtocolTemplateGrid({
                 <div className="col-span-2 text-sm text-slate-600">
                   {protocol.supplements} supplement{protocol.supplements === 1 ? "" : "s"}
                 </div>
-                <div className="col-span-2 truncate text-sm text-slate-500">{protocol.description}</div>
+                <div className="col-span-2 whitespace-normal break-words text-sm leading-5 text-slate-500">{protocol.description}</div>
                 <div className="col-span-1">
                   <SupplementInlineActions
                     id={`supplement-template-actions-${protocol.id}`}

@@ -1203,6 +1203,8 @@ describe("SupplementPlansPage", () => {
     expect(await screen.findByText("Creatine Monohydrate")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Protocol template list" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("heading", { name: "Creatine Monohydrate" })).toHaveClass("text-sm");
+    expect(screen.getByText("Performance support protocol.")).toHaveClass("whitespace-normal", "break-words");
     expect(screen.queryByText("Alex Rivera")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /View Details/i })).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Search protocol templates"), { target: { value: "magnesium" } });
