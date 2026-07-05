@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Plus, Save, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, LinkIcon, Plus, Save, Search, Trash2 } from "lucide-react";
+import type { DragEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
@@ -26,6 +27,7 @@ interface ProtocolSupplement {
   specificTime: string;
   dosage: string;
   instructions: string;
+  productUrl: string;
 }
 
 const timingPresets: TimingPreset[] = ["Morning", "Afternoon", "Evening"];
@@ -36,8 +38,14 @@ export function SupplementProtocolBuilderPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ApiSupplement[]>([]);
   const [selectedSupplements, setSelectedSupplements] = useState<ProtocolSupplement[]>([]);
+  const [activeLinkSupplementId, setActiveLinkSupplementId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const supplementSearchLookup = useMemo(
+    () => new Map(searchResults.map((supplement) => [supplement.id, supplement])),
+    [searchResults]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -97,10 +105,21 @@ export function SupplementProtocolBuilderPage() {
           timingPreset: getTimingPreset(supplement.recommendedTiming),
           specificTime: "",
           dosage: supplement.dosage ?? "",
-          instructions: ""
+          instructions: "",
+          productUrl: ""
         }
       ];
     });
+  }
+
+  function handleSupplementDrop(event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+    const supplementId = event.dataTransfer.getData("application/complete-coach-supplement-id");
+    const supplement = supplementSearchLookup.get(supplementId);
+
+    if (supplement) {
+      addSupplement(supplement);
+    }
   }
 
   function updateSupplement(id: string, updates: Partial<ProtocolSupplement>) {
@@ -138,7 +157,7 @@ export function SupplementProtocolBuilderPage() {
                   supplementName: supplement.supplementName,
                   dosage: supplement.dosage.trim(),
                   timing: formatTiming(supplement.timingPreset, supplement.specificTime),
-                  notes: supplement.instructions.trim()
+                  notes: formatSupplementNotes(supplement.instructions, supplement.productUrl)
                 }))
               }
             ]
@@ -205,7 +224,7 @@ export function SupplementProtocolBuilderPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <aside className="flex max-h-[calc(100vh-18rem)] min-h-[34rem] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-black text-slate-950">Supplement Database</h2>
           <p className="mt-1 text-sm leading-6 text-slate-500">Search your global and organisation supplement library.</p>
           <label className="relative mt-4 block">
@@ -220,22 +239,29 @@ export function SupplementProtocolBuilderPage() {
               onChange={(event) => setSearchQuery(event.target.value)}
             />
           </label>
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 flex-1 space-y-3 overflow-y-auto pr-2">
             {searchResults.length > 0 ? (
               searchResults.map((supplement) => (
-                <div key={supplement.id} className="rounded-xl border border-slate-200 p-4">
+                <div
+                  key={supplement.id}
+                  className="rounded-xl border border-slate-200 p-4"
+                  draggable
+                  onDragStart={(event) => {
+                    event.dataTransfer.setData("application/complete-coach-supplement-id", supplement.id);
+                    event.dataTransfer.effectAllowed = "copy";
+                  }}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-bold text-slate-950">{supplement.name}</p>
-                      <p className="mt-1 text-xs text-slate-500">{supplement.category}</p>
                     </div>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-100"
+                      aria-label={`Add ${supplement.name}`}
+                      className="inline-flex size-9 items-center justify-center rounded-lg bg-indigo-600 text-white transition hover:bg-indigo-700"
                       onClick={() => addSupplement(supplement)}
                     >
-                      <Plus className="size-3" aria-hidden="true" />
-                      Add {supplement.name}
+                      <Plus className="size-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
@@ -248,7 +274,12 @@ export function SupplementProtocolBuilderPage() {
           </div>
         </aside>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section
+          aria-label="Protocol Builder drop zone"
+          className="flex max-h-[calc(100vh-18rem)] min-h-[34rem] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={handleSupplementDrop}
+        >
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-black text-slate-950">Protocol Builder</h2>
@@ -260,23 +291,45 @@ export function SupplementProtocolBuilderPage() {
           </div>
 
           {selectedSupplements.length > 0 ? (
-            <div className="space-y-4">
+            <div className="flex-1 space-y-4 overflow-y-auto pr-2">
               {selectedSupplements.map((supplement) => (
                 <article key={supplement.id} className="rounded-2xl border border-slate-200 p-4">
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <div>
                       <h3 className="text-base font-black text-slate-950">{supplement.supplementName}</h3>
-                      <p className="mt-1 text-sm text-slate-500">{supplement.category}</p>
                     </div>
-                    <button
-                      type="button"
-                      aria-label={`Remove ${supplement.supplementName}`}
-                      className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600"
-                      onClick={() => removeSupplement(supplement.id)}
-                    >
-                      <Trash2 className="size-4" aria-hidden="true" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        aria-label={`Add link for ${supplement.supplementName}`}
+                        className="rounded-lg p-2 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
+                        onClick={() => setActiveLinkSupplementId((current) => (current === supplement.id ? null : supplement.id))}
+                      >
+                        <LinkIcon className="size-4" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${supplement.supplementName}`}
+                        className="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                        onClick={() => removeSupplement(supplement.id)}
+                      >
+                        <Trash2 className="size-4" aria-hidden="true" />
+                      </button>
+                    </div>
                   </div>
+                  {activeLinkSupplementId === supplement.id || supplement.productUrl ? (
+                    <label className="mb-4 grid gap-2">
+                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Supplement link</span>
+                      <input
+                        type="url"
+                        aria-label={`Supplement link for ${supplement.supplementName}`}
+                        value={supplement.productUrl}
+                        className="rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                        placeholder="https://"
+                        onChange={(event) => updateSupplement(supplement.id, { productUrl: event.target.value })}
+                      />
+                    </label>
+                  ) : null}
                   <div className="grid gap-4 lg:grid-cols-4">
                     <label className="grid gap-2">
                       <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Timing preset</span>
@@ -329,7 +382,7 @@ export function SupplementProtocolBuilderPage() {
               ))}
             </div>
           ) : (
-            <p className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm font-semibold text-slate-500">
+            <p className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm font-semibold text-slate-500">
               Add supplements from the database to start building this protocol.
             </p>
           )}
@@ -355,4 +408,10 @@ function getTimingPreset(value?: string | null): TimingPreset {
 
 function formatTiming(preset: TimingPreset, specificTime: string) {
   return specificTime ? `${preset} at ${specificTime}` : preset;
+}
+
+function formatSupplementNotes(instructions: string, productUrl: string) {
+  const noteParts = [instructions.trim(), productUrl.trim() ? `Supplement link: ${productUrl.trim()}` : ""].filter(Boolean);
+
+  return noteParts.join("\n");
 }

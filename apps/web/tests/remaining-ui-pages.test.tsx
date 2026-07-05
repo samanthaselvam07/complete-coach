@@ -1095,6 +1095,15 @@ describe("SupplementProtocolBuilderPage", () => {
                   dosage: "5g",
                   scope: "global",
                   tags: []
+                },
+                {
+                  id: "supplement_beta_alanine",
+                  name: "Beta Alanine",
+                  category: "Performance",
+                  recommendedTiming: "Afternoon",
+                  dosage: "3.2g",
+                  scope: "global",
+                  tags: []
                 }
               ]
             }),
@@ -1130,10 +1139,24 @@ describe("SupplementProtocolBuilderPage", () => {
     fireEvent.change(screen.getByLabelText("Search supplement database"), { target: { value: "creatine" } });
     expect(await screen.findByText("Creatine Monohydrate")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Add Creatine Monohydrate" }));
+    const addCreatineButton = screen.getByRole("button", { name: "Add Creatine Monohydrate" });
+    expect(addCreatineButton).not.toHaveTextContent("Creatine Monohydrate");
+    fireEvent.click(addCreatineButton);
+    const dragData = createTestDataTransfer();
+    const betaAlanineCard = screen.getByText("Beta Alanine").closest("[draggable='true']");
+    expect(betaAlanineCard).not.toBeNull();
+    fireEvent.dragStart(betaAlanineCard as Element, { dataTransfer: dragData });
+    fireEvent.drop(screen.getByLabelText("Protocol Builder drop zone"), { dataTransfer: dragData });
+    expect(screen.getAllByText("Beta Alanine")).toHaveLength(2);
+    expect(screen.queryByText("Performance")).not.toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText("Timing preset for Creatine Monohydrate"), { target: { value: "Morning" } });
     fireEvent.change(screen.getByLabelText("Specific time for Creatine Monohydrate"), { target: { value: "07:30" } });
     fireEvent.change(screen.getByLabelText("Dosage for Creatine Monohydrate"), { target: { value: "5g" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add link for Creatine Monohydrate" }));
+    fireEvent.change(screen.getByLabelText("Supplement link for Creatine Monohydrate"), {
+      target: { value: "https://example.com/creatine" }
+    });
     const instructionsField = screen.getByLabelText("Instructions for Creatine Monohydrate");
     expect(instructionsField.tagName.toLowerCase()).toBe("textarea");
     fireEvent.change(instructionsField, {
@@ -1156,7 +1179,14 @@ describe("SupplementProtocolBuilderPage", () => {
                 supplementName: "Creatine Monohydrate",
                 dosage: "5g",
                 timing: "Morning at 07:30",
-                notes: "Take with breakfast and 500ml water. Keep this note visible without horizontal scrolling."
+                notes: "Take with breakfast and 500ml water. Keep this note visible without horizontal scrolling.\nSupplement link: https://example.com/creatine"
+              },
+              {
+                supplementId: "supplement_beta_alanine",
+                supplementName: "Beta Alanine",
+                dosage: "3.2g",
+                timing: "Afternoon",
+                notes: ""
               }
             ]
           }
@@ -1165,6 +1195,18 @@ describe("SupplementProtocolBuilderPage", () => {
     });
   });
 });
+
+function createTestDataTransfer() {
+  const data = new Map<string, string>();
+
+  return {
+    effectAllowed: "all",
+    getData: (type: string) => data.get(type) ?? "",
+    setData: (type: string, value: string) => {
+      data.set(type, value);
+    }
+  };
+}
 
 describe("SupplementPlansPage", () => {
   it("switches between persisted active protocols and protocol templates", async () => {
