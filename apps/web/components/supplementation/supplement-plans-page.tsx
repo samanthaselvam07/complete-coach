@@ -471,6 +471,12 @@ function SupplementProtocolsTable({
   onDuplicate: (protocol: ActiveSupplementProtocol) => void;
   onDelete: (protocol: ActiveSupplementProtocol) => void;
 }) {
+  const assignmentCounts = protocols.reduce((counts, protocol) => {
+    const key = protocol.templateId ?? protocol.protocol;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+    return counts;
+  }, new Map<string, number>());
+
   return (
     <div role="tabpanel" aria-label="Supplement Protocols" className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm">
       {openActionMenuId ? (
@@ -484,12 +490,12 @@ function SupplementProtocolsTable({
       <table className="w-full min-w-[980px] text-sm">
         <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-600">
           <tr>
-            <th className="px-6 py-4">Client</th>
-            <th className="px-6 py-4">Supplement Plan</th>
             <th className="px-6 py-4">Status</th>
+            <th className="px-6 py-4">Assigned Clients</th>
             <th className="px-6 py-4">Plan Created</th>
             <th className="px-6 py-4">Assigned</th>
             <th className="px-6 py-4">Compliance</th>
+            <th className="px-6 py-4">Supplement Plan</th>
             <th className="px-6 py-4">Actions</th>
           </tr>
         </thead>
@@ -497,18 +503,17 @@ function SupplementProtocolsTable({
           {protocols.length > 0 ? (
             protocols.map((protocol) => {
               const menuOpen = openActionMenuId === `protocol-${protocol.id}`;
+              const assignedClientCount = assignmentCounts.get(protocol.templateId ?? protocol.protocol) ?? 1;
 
               return (
                 <tr key={protocol.id} className={`relative border-b border-slate-100 last:border-0 ${menuOpen ? "z-[70]" : "z-0"}`}>
-                  <td className="px-6 py-4 font-bold">{protocol.clientName}</td>
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-slate-950">{protocol.protocol}</p>
-                    <p className="mt-1 text-xs text-slate-500">{protocol.supplements.join(", ") || "No supplements listed"}</p>
-                  </td>
                   <td className="px-6 py-4">
                     <span className={`rounded-full px-3 py-1 text-xs font-bold ${protocol.status === "Active" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
                       {protocol.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 font-semibold text-slate-950">
+                    {assignedClientCount} active {assignedClientCount === 1 ? "client" : "clients"}
                   </td>
                   <td className="px-6 py-4 text-slate-600">{protocol.createdOn}</td>
                   <td className="px-6 py-4 text-slate-600">{protocol.assignedOn}</td>
@@ -523,6 +528,10 @@ function SupplementProtocolsTable({
                         <span>{protocol.compliance}%</span>
                       </div>
                     )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-semibold text-slate-950">{protocol.protocol}</p>
+                    <p className="mt-1 text-xs text-slate-500">{protocol.supplements.join(", ") || "No supplements listed"}</p>
                   </td>
                   <td className="relative px-6 py-4">
                     <SupplementInlineActions

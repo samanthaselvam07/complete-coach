@@ -1086,6 +1086,27 @@ describe("SupplementPlansPage", () => {
                       ]
                     }
                   }
+                },
+                {
+                  id: "assignment_api_two",
+                  name: "Vitamin D3 + K2",
+                  clientId: "client_james",
+                  templateId: "template_api",
+                  clientName: "James Chen",
+                  status: "active",
+                  startsOn: "2026-06-05",
+                  createdAt: "2026-06-01T00:00:00.000Z",
+                  compliance: 88,
+                  snapshot: {
+                    templateId: "template_api",
+                    template: {
+                      phases: [
+                        {
+                          supplements: [{ supplementName: "Vitamin D" }, { supplementName: "Vitamin K" }]
+                        }
+                      ]
+                    }
+                  }
                 }
               ]
             }),
@@ -1125,13 +1146,15 @@ describe("SupplementPlansPage", () => {
     expect(screen.getByRole("tab", { name: "Protocol Templates" })).toBeInTheDocument();
     expect(screen.queryByText(/protocols stored/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/reusable templates/i)).not.toBeInTheDocument();
-    expect(await screen.findByText("Alex Rivera")).toBeInTheDocument();
-    expect(screen.getByText("Vitamin D3 + K2")).toBeInTheDocument();
-    expect(screen.getByText("Jun 1, 2026")).toBeInTheDocument();
+    expect(await screen.findAllByText("Vitamin D3 + K2")).toHaveLength(2);
+    expect(screen.queryByText("Alex Rivera")).not.toBeInTheDocument();
+    expect(screen.queryByText("James Chen")).not.toBeInTheDocument();
+    expect(screen.getAllByText("2 active clients")).toHaveLength(2);
+    expect(screen.getAllByText("Jun 1, 2026")).toHaveLength(2);
     expect(screen.getByText("Jun 4, 2026")).toBeInTheDocument();
     expect(screen.getByText("91%")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "More actions for Vitamin D3 + K2" }));
-    const protocolMenu = screen.getByRole("menu", { name: "Supplement protocol actions for Vitamin D3 + K2" });
+    fireEvent.click(screen.getAllByRole("button", { name: "More actions for Vitamin D3 + K2" })[0]);
+    const protocolMenu = screen.getAllByRole("menu", { name: "Supplement protocol actions for Vitamin D3 + K2" })[0];
     expect(within(protocolMenu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
     expect(within(protocolMenu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
     expect(within(protocolMenu).getByRole("menuitem", { name: "Assign to" })).toBeInTheDocument();
@@ -1276,7 +1299,8 @@ describe("SupplementPlansPage", () => {
     await waitFor(() => expect(within(assignDialog).getByRole("button", { name: "Confirm Assignment" })).not.toBeDisabled());
     fireEvent.click(within(assignDialog).getByRole("button", { name: "Confirm Assignment" }));
     expect(await screen.findByText("Sleep Support Stack Updated (copy) assigned.")).toBeInTheDocument();
-    expect(screen.getByText(/Alex Rivera/)).toBeInTheDocument();
+    expect(screen.queryByText(/Alex Rivera/)).not.toBeInTheDocument();
+    expect(screen.getByText("1 active client")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
     const templatesPanel = screen.getByRole("tabpanel", { name: "Protocol Templates" });
@@ -1346,7 +1370,9 @@ describe("SupplementPlansPage", () => {
 
     render(createElement(SupplementPlansPage));
 
-    expect(await screen.findByText("Persisted Client")).toBeInTheDocument();
+    expect(await screen.findByText("Hydration Support")).toBeInTheDocument();
+    expect(screen.queryByText("Persisted Client")).not.toBeInTheDocument();
+    expect(screen.getByText("1 active client")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
 
@@ -1402,7 +1428,9 @@ describe("SupplementPlansPage", () => {
 
     render(createElement(SupplementPlansPage));
 
-    expect(await screen.findByText("Unassigned client")).toBeInTheDocument();
+    expect(await screen.findByText("Paused Support")).toBeInTheDocument();
+    expect(screen.queryByText("Unassigned client")).not.toBeInTheDocument();
+    expect(screen.getByText("1 active client")).toBeInTheDocument();
     expect(screen.getByText("Inactive")).toBeInTheDocument();
     expect(screen.getByText("Not logged")).toBeInTheDocument();
 
