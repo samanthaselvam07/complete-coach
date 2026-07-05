@@ -401,7 +401,7 @@ export function SupplementPlansPage() {
           onClick={() => setTemplateDraft(createTemplateDraft())}
         >
           <Plus className="h-4 w-4" />
-          Create Template
+          Create Protocol
         </button>
       </header>
       {statusMessage ? <SavedToast message={statusMessage} /> : null}

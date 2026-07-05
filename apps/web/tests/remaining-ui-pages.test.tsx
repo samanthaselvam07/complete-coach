@@ -68,7 +68,7 @@ describe("SupplementationPage", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Supplementation Hub" })).toBeInTheDocument();
     expect(screen.getByText("Manage client protocols and track compliance")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Create Template/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Create Protocol/i })).toBeInTheDocument();
     expect(screen.queryByText("Protocol Compliance")).not.toBeInTheDocument();
     expect(screen.queryByText("94.2%")).not.toBeInTheDocument();
     expect(screen.queryByText("Active Plans")).not.toBeInTheDocument();
@@ -1318,7 +1318,7 @@ describe("SupplementPlansPage", () => {
     render(createElement(SupplementPlansPage));
 
     expect(await screen.findByText("No supplement protocols have been assigned yet.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Create Template" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create Protocol" }));
     const createDialog = screen.getByRole("dialog", { name: "Create Protocol Template" });
     fireEvent.change(within(createDialog).getByLabelText("Template name"), { target: { value: "Sleep Support Stack" } });
     fireEvent.change(within(createDialog).getByLabelText("Description"), { target: { value: "Evening recovery protocol." } });
