@@ -3,8 +3,10 @@
 import { ClipboardCopy, Edit, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { CardListViewToggle, type CardListViewMode } from "@/components/ui/card-list-view-toggle";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { SavedToast } from "@/components/ui/saved-toast";
+import { usePersistedCardListView } from "@/components/ui/use-persisted-card-list-view";
 import type { ActiveSupplementProtocol, ProtocolTemplate } from "@/lib/supplements/protocol-display";
 
 type TabId = "active" | "library";
@@ -63,6 +65,42 @@ interface AssignableClient {
   status?: string;
 }
 
+function filterSupplementProtocols(protocols: ActiveSupplementProtocol[], query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return protocols;
+  }
+
+  return protocols.filter((protocol) =>
+    [
+      protocol.protocol,
+      protocol.status,
+      protocol.createdOn,
+      protocol.assignedOn,
+      protocol.supplements.join(" ")
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedQuery)
+  );
+}
+
+function filterProtocolTemplates(templates: ProtocolTemplate[], query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return templates;
+  }
+
+  return templates.filter((template) =>
+    [template.name, template.category, template.description, `${template.supplements} supplements`]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedQuery)
+  );
+}
+
 export function SupplementPlansPage() {
   const [activeTab, setActiveTab] = useState<TabId>("active");
   const [activeProtocols, setActiveProtocols] = useState<ActiveSupplementProtocol[]>([]);
@@ -76,6 +114,17 @@ export function SupplementPlansPage() {
   const [selectedClientId, setSelectedClientId] = useState("");
   const [assigning, setAssigning] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [librarySearchQuery, setLibrarySearchQuery] = useState("");
+  const [templateViewMode, setTemplateViewMode] = usePersistedCardListView("complete-coach:protocol-template-library-view");
+
+  const filteredActiveProtocols = useMemo(
+    () => filterSupplementProtocols(activeProtocols, librarySearchQuery),
+    [activeProtocols, librarySearchQuery]
+  );
+  const filteredTemplates = useMemo(
+    () => filterProtocolTemplates(templates, librarySearchQuery),
+    [templates, librarySearchQuery]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -390,10 +439,30 @@ export function SupplementPlansPage() {
             </button>
           </div>
         </div>
+        <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <label className="relative block flex-1">
+            <span className="sr-only">{activeTab === "active" ? "Search supplement protocols" : "Search protocol templates"}</span>
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <input
+              aria-label={activeTab === "active" ? "Search supplement protocols" : "Search protocol templates"}
+              value={librarySearchQuery}
+              placeholder={activeTab === "active" ? "Search supplement protocols..." : "Search protocol templates..."}
+              className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              onChange={(event) => {
+                setLibrarySearchQuery(event.target.value);
+                setOpenActionMenuId(null);
+              }}
+            />
+          </label>
+          {activeTab === "library" ? (
+            <CardListViewToggle label="Protocol template view options" value={templateViewMode} onChange={setTemplateViewMode} />
+          ) : null}
+        </div>
 
         {activeTab === "active" ? (
           <SupplementProtocolsTable
-            protocols={activeProtocols}
+            protocols={filteredActiveProtocols}
+            emptyMessage={activeProtocols.length > 0 && filteredActiveProtocols.length === 0 ? "No supplement protocols match your search." : "No supplement protocols have been assigned yet."}
             openActionMenuId={openActionMenuId}
             onActionMenuToggle={setOpenActionMenuId}
             onAssign={openAssignDialog}
@@ -403,7 +472,9 @@ export function SupplementPlansPage() {
           />
         ) : (
           <ProtocolTemplateGrid
-            templates={templates}
+            templates={filteredTemplates}
+            emptyMessage={templates.length > 0 && filteredTemplates.length === 0 ? "No protocol templates match your search." : "No protocol templates have been created yet."}
+            viewMode={templateViewMode}
             openActionMenuId={openActionMenuId}
             onActionMenuToggle={setOpenActionMenuId}
             onAssign={openAssignDialog}
@@ -456,6 +527,7 @@ export function SupplementPlansPage() {
 
 function SupplementProtocolsTable({
   protocols,
+  emptyMessage,
   openActionMenuId,
   onActionMenuToggle,
   onAssign,
@@ -464,6 +536,7 @@ function SupplementProtocolsTable({
   onDelete
 }: {
   protocols: ActiveSupplementProtocol[];
+  emptyMessage: string;
   openActionMenuId: string | null;
   onActionMenuToggle: (id: string | null) => void;
   onAssign: (template: ProtocolTemplate) => void;
@@ -553,7 +626,7 @@ function SupplementProtocolsTable({
           ) : (
             <tr>
               <td colSpan={7} className="px-6 py-10 text-center text-sm font-semibold text-slate-500">
-                No supplement protocols have been assigned yet.
+                {emptyMessage}
               </td>
             </tr>
           )}
@@ -565,6 +638,8 @@ function SupplementProtocolsTable({
 
 function ProtocolTemplateGrid({
   templates,
+  emptyMessage,
+  viewMode,
   openActionMenuId,
   onActionMenuToggle,
   onAssign,
@@ -573,6 +648,8 @@ function ProtocolTemplateGrid({
   onDelete
 }: {
   templates: ProtocolTemplate[];
+  emptyMessage: string;
+  viewMode: CardListViewMode;
   openActionMenuId: string | null;
   onActionMenuToggle: (id: string | null) => void;
   onAssign: (template: ProtocolTemplate) => void;
@@ -581,7 +658,7 @@ function ProtocolTemplateGrid({
   onDelete: (template: ProtocolTemplate) => void;
 }) {
   return (
-    <div role="tabpanel" aria-label="Protocol Templates" className="relative grid gap-6 lg:grid-cols-3">
+    <div role="tabpanel" aria-label="Protocol Templates" className="relative">
       {openActionMenuId ? (
         <button
           type="button"
@@ -590,39 +667,86 @@ function ProtocolTemplateGrid({
           onClick={() => onActionMenuToggle(null)}
         />
       ) : null}
-      {templates.length > 0 ? (
-        templates.map((protocol) => {
-          const menuOpen = openActionMenuId === `template-${protocol.id}`;
+      {templates.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm font-semibold text-slate-500">
+          {emptyMessage}
+        </div>
+      ) : viewMode === "cards" ? (
+        <div role="region" aria-label="Protocol template cards" className="grid gap-6 lg:grid-cols-3">
+          {templates.map((protocol) => {
+            const menuOpen = openActionMenuId === `template-${protocol.id}`;
 
-          return (
-            <article key={protocol.id} className={`relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-lg ${menuOpen ? "z-[70]" : "z-0"}`}>
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-100 text-xl font-black text-indigo-700">
-                  {protocol.name.slice(0, 1)}
+            return (
+              <article key={protocol.id} className={`relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-lg ${menuOpen ? "z-[70]" : "z-0"}`}>
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-100 text-xl font-black text-indigo-700">
+                    {protocol.name.slice(0, 1)}
+                  </div>
+                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">{protocol.category}</span>
                 </div>
-                <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">{protocol.category}</span>
-              </div>
-              <h2 className="mb-2 font-black">{protocol.name}</h2>
-              <p className="mb-4 text-sm leading-6 text-slate-600">{protocol.description}</p>
-              <p className="mb-4 text-sm text-slate-500">{protocol.supplements} supplement{protocol.supplements === 1 ? "" : "s"}</p>
-              <SupplementInlineActions
-                id={`supplement-template-actions-${protocol.id}`}
-                label={`Supplement template actions for ${protocol.name}`}
-                menuOpen={menuOpen}
-                itemName={protocol.name}
-                onMenuToggle={() => onActionMenuToggle(menuOpen ? null : `template-${protocol.id}`)}
-                onMenuClose={() => onActionMenuToggle(null)}
-                onEdit={() => onEdit(createTemplateDraftFromTemplate(protocol))}
-                onDelete={() => onDelete(protocol)}
-                onAssign={() => onAssign(protocol)}
-                onCopy={() => onDuplicate(protocol)}
-              />
-            </article>
-          );
-        })
+                <h2 className="mb-2 font-black">{protocol.name}</h2>
+                <p className="mb-4 text-sm leading-6 text-slate-600">{protocol.description}</p>
+                <p className="mb-4 text-sm text-slate-500">{protocol.supplements} supplement{protocol.supplements === 1 ? "" : "s"}</p>
+                <SupplementInlineActions
+                  id={`supplement-template-actions-${protocol.id}`}
+                  label={`Supplement template actions for ${protocol.name}`}
+                  menuOpen={menuOpen}
+                  itemName={protocol.name}
+                  onMenuToggle={() => onActionMenuToggle(menuOpen ? null : `template-${protocol.id}`)}
+                  onMenuClose={() => onActionMenuToggle(null)}
+                  onEdit={() => onEdit(createTemplateDraftFromTemplate(protocol))}
+                  onDelete={() => onDelete(protocol)}
+                  onAssign={() => onAssign(protocol)}
+                  onCopy={() => onDuplicate(protocol)}
+                />
+              </article>
+            );
+          })}
+        </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm font-semibold text-slate-500 lg:col-span-3">
-          No protocol templates have been created yet.
+        <div role="region" aria-label="Protocol template list" className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="grid grid-cols-12 gap-4 border-b border-slate-200 bg-slate-50 px-6 py-4 text-xs font-bold uppercase tracking-wide text-slate-600">
+            <div className="col-span-5">Template Name</div>
+            <div className="col-span-2">Category</div>
+            <div className="col-span-2">Supplements</div>
+            <div className="col-span-2">Description</div>
+            <div className="col-span-1">Actions</div>
+          </div>
+          {templates.map((protocol) => {
+            const menuOpen = openActionMenuId === `template-${protocol.id}`;
+
+            return (
+              <article
+                key={protocol.id}
+                className={`relative grid grid-cols-12 items-center gap-4 border-b border-slate-100 px-6 py-4 last:border-0 hover:bg-slate-50 ${menuOpen ? "z-[70]" : "z-0"}`}
+              >
+                <div className="col-span-5">
+                  <h2 className="font-semibold text-slate-950">{protocol.name}</h2>
+                </div>
+                <div className="col-span-2">
+                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">{protocol.category}</span>
+                </div>
+                <div className="col-span-2 text-sm text-slate-600">
+                  {protocol.supplements} supplement{protocol.supplements === 1 ? "" : "s"}
+                </div>
+                <div className="col-span-2 truncate text-sm text-slate-500">{protocol.description}</div>
+                <div className="col-span-1">
+                  <SupplementInlineActions
+                    id={`supplement-template-actions-${protocol.id}`}
+                    label={`Supplement template actions for ${protocol.name}`}
+                    menuOpen={menuOpen}
+                    itemName={protocol.name}
+                    onMenuToggle={() => onActionMenuToggle(menuOpen ? null : `template-${protocol.id}`)}
+                    onMenuClose={() => onActionMenuToggle(null)}
+                    onEdit={() => onEdit(createTemplateDraftFromTemplate(protocol))}
+                    onDelete={() => onDelete(protocol)}
+                    onAssign={() => onAssign(protocol)}
+                    onCopy={() => onDuplicate(protocol)}
+                  />
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
     </div>

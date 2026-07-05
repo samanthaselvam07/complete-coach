@@ -25,6 +25,20 @@ afterEach(() => {
   window.localStorage?.clear();
 });
 
+function installTestLocalStorage() {
+  const storage = new Map<string, string>();
+
+  Object.defineProperty(window, "localStorage", {
+    configurable: true,
+    value: {
+      clear: () => storage.clear(),
+      getItem: (key: string) => storage.get(key) ?? null,
+      removeItem: (key: string) => storage.delete(key),
+      setItem: (key: string, value: string) => storage.set(key, value)
+    }
+  });
+}
+
 const routeSmokeCases = [
   ["education", EducationRoute, "Elevate Your Athletes."],
   ["education add", AddResourceRoute, "Upload New Resource"],
@@ -1060,6 +1074,8 @@ describe("SupplementDatabasePage", () => {
 
 describe("SupplementPlansPage", () => {
   it("switches between persisted active protocols and protocol templates", async () => {
+    installTestLocalStorage();
+
     vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       if (String(input) === "/api/v1/supplement-plan-assignments?limit=100") {
         return Promise.resolve(
@@ -1126,6 +1142,13 @@ describe("SupplementPlansPage", () => {
                   description: "Performance support protocol.",
                   status: "published",
                   template: { phases: [{ supplements: [{ supplementName: "Creatine" }] }] }
+                },
+                {
+                  id: "template_sleep",
+                  name: "Magnesium Sleep",
+                  description: "Evening relaxation protocol.",
+                  status: "published",
+                  template: { phases: [{ supplements: [{ supplementName: "Magnesium Glycinate" }] }] }
                 }
               ]
             }),
@@ -1162,6 +1185,10 @@ describe("SupplementPlansPage", () => {
     expect(screen.getAllByText("Jun 1, 2026")).toHaveLength(2);
     expect(screen.getByText("Jun 4, 2026")).toBeInTheDocument();
     expect(screen.getByText("91%")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Search supplement protocols"), { target: { value: "magnesium" } });
+    expect(screen.queryByText("Vitamin D3 + K2")).not.toBeInTheDocument();
+    expect(screen.getByText("No supplement protocols match your search.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Search supplement protocols"), { target: { value: "" } });
     fireEvent.click(screen.getAllByRole("button", { name: "More actions for Vitamin D3 + K2" })[0]);
     const protocolMenu = screen.getAllByRole("menu", { name: "Supplement protocol actions for Vitamin D3 + K2" })[0];
     expect(within(protocolMenu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
@@ -1174,8 +1201,17 @@ describe("SupplementPlansPage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
 
     expect(await screen.findByText("Creatine Monohydrate")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Protocol template list" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByText("Alex Rivera")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /View Details/i })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Search protocol templates"), { target: { value: "magnesium" } });
+    expect(screen.queryByText("Creatine Monohydrate")).not.toBeInTheDocument();
+    expect(screen.getByText("Magnesium Sleep")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Card view" }));
+    expect(screen.getByRole("region", { name: "Protocol template cards" })).toBeInTheDocument();
+    expect(window.localStorage.getItem("complete-coach:protocol-template-library-view")).toBe("cards");
+    fireEvent.change(screen.getByLabelText("Search protocol templates"), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: "More actions for Creatine Monohydrate" }));
     const templateMenu = screen.getByRole("menu", { name: "Supplement template actions for Creatine Monohydrate" });
     expect(within(templateMenu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
