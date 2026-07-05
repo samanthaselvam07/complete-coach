@@ -22,6 +22,8 @@ type TdeeSex = "female" | "male";
 type TdeeActivityLevel = "sedentary" | "light" | "active" | "very_active";
 type TdeeGoal = "maintenance" | "fat_loss" | "growth";
 type TdeeGrowthApproach = "conservative" | "moderate" | "aggressive";
+type TdeeGrowthMode = "kcal" | "percent";
+type TdeeMacroMode = "percent" | "g_per_kg";
 const VERIFIED_FOOD_SOURCES = new Set(["USDA", "AUS/NZ"]);
 const FOOD_SELECTOR_RECENT_LIMIT = 8;
 const servingDescriptionOptions = ["Grams", "Ounces", "Qty", "Cups", "Oz", "Tbsp", "Tsp", "Ml"];
@@ -89,8 +91,16 @@ interface TdeeCalculationInput {
   activityLevel: TdeeActivityLevel;
   goal: TdeeGoal;
   deficitPercent: number;
+  growthMode: TdeeGrowthMode;
   growthApproach: TdeeGrowthApproach;
-  macroSplit: {
+  growthPercent: number;
+  macroMode: TdeeMacroMode;
+  macroSplitPercent: {
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+  macroSplitGramsPerKg: {
     protein: number;
     carbs: number;
     fats: number;
@@ -104,7 +114,9 @@ interface TdeeCalculationResult {
   proteinGrams: number;
   carbsGrams: number;
   fatGrams: number;
+  macroCalories: number;
   growthRange?: [number, number];
+  growthPercent?: number;
 }
 
 type NewFoodFormState = {
@@ -2623,18 +2635,38 @@ export function calculateTdeeTargets(input: TdeeCalculationInput): TdeeCalculati
   }
 
   if (input.goal === "growth") {
-    growthRange = TDEE_GROWTH_SURPLUS_RANGES[input.growthApproach];
-    targetCalories = tdee + (growthRange[0] + growthRange[1]) / 2;
+    if (input.growthMode === "percent") {
+      targetCalories = tdee * (1 + input.growthPercent / 100);
+    } else {
+      growthRange = TDEE_GROWTH_SURPLUS_RANGES[input.growthApproach];
+      targetCalories = tdee + (growthRange[0] + growthRange[1]) / 2;
+    }
   }
+
+  const macroGrams =
+    input.macroMode === "g_per_kg"
+      ? {
+          proteinGrams: input.weightKg * input.macroSplitGramsPerKg.protein,
+          carbsGrams: input.weightKg * input.macroSplitGramsPerKg.carbs,
+          fatGrams: input.weightKg * input.macroSplitGramsPerKg.fats
+        }
+      : {
+          proteinGrams: (targetCalories * (input.macroSplitPercent.protein / 100)) / 4,
+          carbsGrams: (targetCalories * (input.macroSplitPercent.carbs / 100)) / 4,
+          fatGrams: (targetCalories * (input.macroSplitPercent.fats / 100)) / 9
+        };
+  const macroCalories = macroGrams.proteinGrams * 4 + macroGrams.carbsGrams * 4 + macroGrams.fatGrams * 9;
 
   return {
     rmr: Math.round(rmr),
     tdee: Math.round(tdee),
     calories: Math.round(targetCalories),
-    proteinGrams: Math.round((targetCalories * (input.macroSplit.protein / 100)) / 4),
-    carbsGrams: Math.round((targetCalories * (input.macroSplit.carbs / 100)) / 4),
-    fatGrams: Math.round((targetCalories * (input.macroSplit.fats / 100)) / 9),
-    growthRange
+    proteinGrams: Math.round(macroGrams.proteinGrams),
+    carbsGrams: Math.round(macroGrams.carbsGrams),
+    fatGrams: Math.round(macroGrams.fatGrams),
+    macroCalories: Math.round(macroCalories),
+    growthRange,
+    growthPercent: input.goal === "growth" && input.growthMode === "percent" ? input.growthPercent : undefined
   };
 }
 
@@ -2647,22 +2679,34 @@ function TdeeCalculatorDialog({ onApply, onClose }: { onApply: (result: TdeeCalc
   const [activityLevel, setActivityLevel] = useState<TdeeActivityLevel>("active");
   const [goal, setGoal] = useState<TdeeGoal>("maintenance");
   const [deficitPercent, setDeficitPercent] = useState("15");
+  const [growthMode, setGrowthMode] = useState<TdeeGrowthMode>("kcal");
   const [growthApproach, setGrowthApproach] = useState<TdeeGrowthApproach>("conservative");
+  const [growthPercent, setGrowthPercent] = useState("10");
+  const [macroMode, setMacroMode] = useState<TdeeMacroMode>("percent");
   const [proteinPercent, setProteinPercent] = useState("30");
   const [carbsPercent, setCarbsPercent] = useState("40");
   const [fatPercent, setFatPercent] = useState("30");
+  const [proteinGramsPerKg, setProteinGramsPerKg] = useState("2");
+  const [carbsGramsPerKg, setCarbsGramsPerKg] = useState("4");
+  const [fatGramsPerKg, setFatGramsPerKg] = useState("1");
   const selectedFormula = TDEE_FORMULAS.find((formula) => formula.id === formulaId) ?? TDEE_FORMULAS[0];
-  const macroSplit = {
+  const macroSplitPercent = {
     protein: Number(proteinPercent),
     carbs: Number(carbsPercent),
     fats: Number(fatPercent)
   };
-  const macroTotal = macroSplit.protein + macroSplit.carbs + macroSplit.fats;
+  const macroSplitGramsPerKg = {
+    protein: Number(proteinGramsPerKg),
+    carbs: Number(carbsGramsPerKg),
+    fats: Number(fatGramsPerKg)
+  };
+  const macroTotal = macroSplitPercent.protein + macroSplitPercent.carbs + macroSplitPercent.fats;
   const parsedInput = {
     age: Number(age),
     heightCm: Number(heightCm),
     weightKg: Number(weightKg),
-    deficitPercent: Number(deficitPercent)
+    deficitPercent: Number(deficitPercent),
+    growthPercent: Number(growthPercent)
   };
   const canCalculate =
     Number.isFinite(parsedInput.age) &&
@@ -2673,13 +2717,22 @@ function TdeeCalculatorDialog({ onApply, onClose }: { onApply: (result: TdeeCalc
     parsedInput.weightKg > 0 &&
     Number.isFinite(parsedInput.deficitPercent) &&
     parsedInput.deficitPercent >= 0 &&
-    Number.isFinite(macroSplit.protein) &&
-    Number.isFinite(macroSplit.carbs) &&
-    Number.isFinite(macroSplit.fats) &&
-    macroSplit.protein >= 0 &&
-    macroSplit.carbs >= 0 &&
-    macroSplit.fats >= 0 &&
-    macroTotal === 100;
+    Number.isFinite(parsedInput.growthPercent) &&
+    parsedInput.growthPercent >= 0 &&
+    (macroMode === "percent"
+      ? Number.isFinite(macroSplitPercent.protein) &&
+        Number.isFinite(macroSplitPercent.carbs) &&
+        Number.isFinite(macroSplitPercent.fats) &&
+        macroSplitPercent.protein >= 0 &&
+        macroSplitPercent.carbs >= 0 &&
+        macroSplitPercent.fats >= 0 &&
+        macroTotal === 100
+      : Number.isFinite(macroSplitGramsPerKg.protein) &&
+        Number.isFinite(macroSplitGramsPerKg.carbs) &&
+        Number.isFinite(macroSplitGramsPerKg.fats) &&
+        macroSplitGramsPerKg.protein >= 0 &&
+        macroSplitGramsPerKg.carbs >= 0 &&
+        macroSplitGramsPerKg.fats >= 0);
   const result = canCalculate
     ? calculateTdeeTargets({
         formulaId,
@@ -2690,8 +2743,12 @@ function TdeeCalculatorDialog({ onApply, onClose }: { onApply: (result: TdeeCalc
         activityLevel,
         goal,
         deficitPercent: parsedInput.deficitPercent,
+        growthMode,
         growthApproach,
-        macroSplit
+        growthPercent: parsedInput.growthPercent,
+        macroMode,
+        macroSplitPercent,
+        macroSplitGramsPerKg
       })
     : null;
 
@@ -2769,18 +2826,33 @@ function TdeeCalculatorDialog({ onApply, onClose }: { onApply: (result: TdeeCalc
               </label>
               {goal === "fat_loss" ? <TdeeNumberField label="Deficit" value={deficitPercent} onChange={setDeficitPercent} suffix="%" /> : null}
               {goal === "growth" ? (
-                <label className="grid gap-2">
-                  <span className="text-sm font-bold text-slate-800">Growth approach</span>
-                  <select
-                    value={growthApproach}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
-                    onChange={(event) => setGrowthApproach(event.target.value as TdeeGrowthApproach)}
-                  >
-                    <option value="conservative">Conservative +100 to +250 kcal</option>
-                    <option value="moderate">Moderate +250 to +500 kcal</option>
-                    <option value="aggressive">Aggressive +500 to +750 kcal</option>
-                  </select>
-                </label>
+                <div className="grid gap-3 sm:col-span-2">
+                  <SegmentedControl
+                    label="Growth adjustment"
+                    value={growthMode}
+                    options={[
+                      { label: "Kcal surplus", value: "kcal" },
+                      { label: "% surplus", value: "percent" }
+                    ]}
+                    onChange={(value) => setGrowthMode(value as TdeeGrowthMode)}
+                  />
+                  {growthMode === "kcal" ? (
+                    <label className="grid gap-2">
+                      <span className="text-sm font-bold text-slate-800">Growth approach</span>
+                      <select
+                        value={growthApproach}
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                        onChange={(event) => setGrowthApproach(event.target.value as TdeeGrowthApproach)}
+                      >
+                        <option value="conservative">Conservative +100 to +250 kcal</option>
+                        <option value="moderate">Moderate +250 to +500 kcal</option>
+                        <option value="aggressive">Aggressive +500 to +750 kcal</option>
+                      </select>
+                    </label>
+                  ) : (
+                    <TdeeNumberField label="Growth surplus" value={growthPercent} onChange={setGrowthPercent} suffix="%" />
+                  )}
+                </div>
               ) : null}
             </div>
           </div>
@@ -2790,28 +2862,49 @@ function TdeeCalculatorDialog({ onApply, onClose }: { onApply: (result: TdeeCalc
               <p className="text-sm font-black uppercase tracking-wide text-slate-500">Macro spread</p>
               <p className="mt-1 text-sm text-slate-600">Adjust the split after the calorie target is calculated.</p>
             </div>
-            <div className="grid gap-3">
-              <TdeeNumberField label="Protein" value={proteinPercent} onChange={setProteinPercent} suffix="%" />
-              <TdeeNumberField label="Carbs" value={carbsPercent} onChange={setCarbsPercent} suffix="%" />
-              <TdeeNumberField label="Fat" value={fatPercent} onChange={setFatPercent} suffix="%" />
-            </div>
-            <p className={cn("rounded-xl px-3 py-2 text-sm font-bold", macroTotal === 100 ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700")}>
-              Current macro split: {Number.isFinite(macroTotal) ? macroTotal : 0}%
-            </p>
+            <SegmentedControl
+              label="Macro method"
+              value={macroMode}
+              options={[
+                { label: "% split", value: "percent" },
+                { label: "g/kg body weight", value: "g_per_kg" }
+              ]}
+              onChange={(value) => setMacroMode(value as TdeeMacroMode)}
+            />
+            {macroMode === "percent" ? (
+              <>
+                <div className="grid gap-3">
+                  <TdeeNumberField label="Protein" value={proteinPercent} onChange={setProteinPercent} suffix="%" />
+                  <TdeeNumberField label="Carbs" value={carbsPercent} onChange={setCarbsPercent} suffix="%" />
+                  <TdeeNumberField label="Fat" value={fatPercent} onChange={setFatPercent} suffix="%" />
+                </div>
+                <p className={cn("rounded-xl px-3 py-2 text-sm font-bold", macroTotal === 100 ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700")}>
+                  Current macro split: {Number.isFinite(macroTotal) ? macroTotal : 0}%
+                </p>
+              </>
+            ) : (
+              <div className="grid gap-3">
+                <TdeeNumberField label="Protein" value={proteinGramsPerKg} onChange={setProteinGramsPerKg} suffix="g/kg" />
+                <TdeeNumberField label="Carbs" value={carbsGramsPerKg} onChange={setCarbsGramsPerKg} suffix="g/kg" />
+                <TdeeNumberField label="Fat" value={fatGramsPerKg} onChange={setFatGramsPerKg} suffix="g/kg" />
+              </div>
+            )}
 
             {result ? (
               <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
                 <TdeeResultRow label="RMR" value={`${result.rmr} kcal`} />
                 <TdeeResultRow label="TDEE" value={`${result.tdee} kcal`} />
                 {result.growthRange ? <TdeeResultRow label="Growth range" value={`${result.tdee + result.growthRange[0]} to ${result.tdee + result.growthRange[1]} kcal`} /> : null}
+                {result.growthPercent !== undefined ? <TdeeResultRow label="Growth surplus" value={`${result.growthPercent}%`} /> : null}
                 <TdeeResultRow label="Target" value={`${result.calories} kcal`} highlight />
                 <TdeeResultRow label="Protein" value={`${result.proteinGrams} g`} />
                 <TdeeResultRow label="Carbs" value={`${result.carbsGrams} g`} />
                 <TdeeResultRow label="Fat" value={`${result.fatGrams} g`} />
+                {macroMode === "g_per_kg" ? <TdeeResultRow label="Macro calories" value={`${result.macroCalories} kcal`} /> : null}
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
-                Fill out the required fields and keep the macro split at 100% to calculate calorie and macronutrient targets.
+                Fill out the required fields and use a valid macro setup to calculate calorie and macronutrient targets.
               </p>
             )}
           </aside>
@@ -2834,6 +2927,39 @@ function TdeeCalculatorDialog({ onApply, onClose }: { onApply: (result: TdeeCalc
             Apply to meal plan
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SegmentedControl({
+  label,
+  value,
+  options,
+  onChange
+}: {
+  label: string;
+  value: string;
+  options: Array<{ label: string; value: string }>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="grid gap-2">
+      <span className="text-sm font-bold text-slate-800">{label}</span>
+      <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={cn(
+              "flex-1 rounded-lg px-3 py-2 text-sm font-black transition-colors",
+              value === option.value ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
+            )}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
     </div>
   );

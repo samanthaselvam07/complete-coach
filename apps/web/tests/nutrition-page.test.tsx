@@ -1789,8 +1789,12 @@ describe("meal plan view model helpers", () => {
         activityLevel: "active",
         goal: "maintenance",
         deficitPercent: 15,
+        growthMode: "kcal",
         growthApproach: "conservative",
-        macroSplit: { protein: 30, carbs: 40, fats: 30 }
+        growthPercent: 10,
+        macroMode: "percent",
+        macroSplitPercent: { protein: 30, carbs: 40, fats: 30 },
+        macroSplitGramsPerKg: { protein: 2, carbs: 4, fats: 1 }
       })
     ).toMatchObject({
       rmr: 1412,
@@ -1811,8 +1815,12 @@ describe("meal plan view model helpers", () => {
         activityLevel: "active",
         goal: "growth",
         deficitPercent: 15,
+        growthMode: "kcal",
         growthApproach: "moderate",
-        macroSplit: { protein: 25, carbs: 45, fats: 30 }
+        growthPercent: 10,
+        macroMode: "percent",
+        macroSplitPercent: { protein: 25, carbs: 45, fats: 30 },
+        macroSplitGramsPerKg: { protein: 2, carbs: 4, fats: 1 }
       })
     ).toMatchObject({
       calories: 2564,
@@ -1820,6 +1828,32 @@ describe("meal plan view model helpers", () => {
       proteinGrams: 160,
       carbsGrams: 288,
       fatGrams: 85
+    });
+
+    expect(
+      calculateTdeeTargets({
+        formulaId: "mifflin_bw",
+        sex: "female",
+        age: 32,
+        heightCm: 165,
+        weightKg: 70,
+        activityLevel: "active",
+        goal: "growth",
+        deficitPercent: 15,
+        growthMode: "percent",
+        growthApproach: "moderate",
+        growthPercent: 8,
+        macroMode: "g_per_kg",
+        macroSplitPercent: { protein: 30, carbs: 40, fats: 30 },
+        macroSplitGramsPerKg: { protein: 2.2, carbs: 3.5, fats: 0.8 }
+      })
+    ).toMatchObject({
+      calories: 2364,
+      growthPercent: 8,
+      proteinGrams: 154,
+      carbsGrams: 245,
+      fatGrams: 56,
+      macroCalories: 2100
     });
   });
 
