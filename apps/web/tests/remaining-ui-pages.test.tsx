@@ -8,6 +8,7 @@ import OrganizationSettingsRoute from "@/app/organization-settings/page";
 import PackagesRoute from "@/app/packages/page";
 import SocialMediaRoute from "@/app/social-media/page";
 import SupplementDatabaseRoute from "@/app/supplementation/database/page";
+import SupplementProtocolBuilderRoute from "@/app/supplementation/plans/create/page";
 import SupplementPlansRoute from "@/app/supplementation/plans/page";
 import SupplementationRoute from "@/app/supplementation/page";
 import TeamManagementRoute from "@/app/team-management/page";
@@ -17,6 +18,7 @@ import { AddResourcePage } from "@/components/education/add-resource-page";
 import { EducationPage } from "@/components/education/education-page";
 import { OrganizationSettingsPage } from "@/components/organization/organization-settings-page";
 import { SupplementDatabasePage } from "@/components/supplementation/supplement-database-page";
+import { SupplementProtocolBuilderPage } from "@/components/supplementation/supplement-protocol-builder-page";
 import { SupplementPlansPage } from "@/components/supplementation/supplement-plans-page";
 import { SupplementationPage } from "@/components/supplementation/supplementation-page";
 
@@ -44,6 +46,7 @@ const routeSmokeCases = [
   ["education add", AddResourceRoute, "Upload New Resource"],
   ["supplementation", SupplementationRoute, "Supplementation Hub"],
   ["supplement plans", SupplementPlansRoute, "Supplementation Hub"],
+  ["supplement protocol builder", SupplementProtocolBuilderRoute, "Create Supplement Protocol"],
   ["supplement database", SupplementDatabaseRoute, "Supplementation Library"],
   ["messages", MessagesRoute, "Messages"],
   ["organization settings", OrganizationSettingsRoute, "Organisation Settings"],
@@ -68,7 +71,7 @@ describe("SupplementationPage", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Supplementation Hub" })).toBeInTheDocument();
     expect(screen.getByText("Manage client protocols and track compliance")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Create Protocol/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Create Protocol/i })).toHaveAttribute("href", "/supplementation/plans/create");
     expect(screen.queryByText("Protocol Compliance")).not.toBeInTheDocument();
     expect(screen.queryByText("94.2%")).not.toBeInTheDocument();
     expect(screen.queryByText("Active Plans")).not.toBeInTheDocument();
@@ -1072,6 +1075,95 @@ describe("SupplementDatabasePage", () => {
   });
 });
 
+describe("SupplementProtocolBuilderPage", () => {
+  it("adds supplements from the database and saves a configured protocol", async () => {
+    let savedPayload: unknown = null;
+
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/v1/supplements")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "supplement_creatine",
+                  name: "Creatine Monohydrate",
+                  category: "Performance",
+                  recommendedTiming: "Morning",
+                  dosage: "5g",
+                  scope: "global",
+                  tags: []
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/supplement-plan-templates" && init?.method === "POST") {
+        savedPayload = JSON.parse(String(init.body));
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "template_creatine",
+                ...(savedPayload as Record<string, unknown>)
+              }
+            }),
+            { status: 201 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(SupplementProtocolBuilderPage));
+
+    expect(screen.getByRole("heading", { name: "Create Supplement Protocol" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Protocol name"), { target: { value: "Creatine Loading Protocol" } });
+    fireEvent.change(screen.getByLabelText("Protocol description"), { target: { value: "Performance supplement plan." } });
+    fireEvent.change(screen.getByLabelText("Search supplement database"), { target: { value: "creatine" } });
+    expect(await screen.findByText("Creatine Monohydrate")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Creatine Monohydrate" }));
+    fireEvent.change(screen.getByLabelText("Timing preset for Creatine Monohydrate"), { target: { value: "Morning" } });
+    fireEvent.change(screen.getByLabelText("Specific time for Creatine Monohydrate"), { target: { value: "07:30" } });
+    fireEvent.change(screen.getByLabelText("Dosage for Creatine Monohydrate"), { target: { value: "5g" } });
+    fireEvent.change(screen.getByLabelText("Instructions for Creatine Monohydrate"), {
+      target: { value: "Take with breakfast and 500ml water." }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save Protocol" }));
+
+    await waitFor(() => expect(screen.getByText("Creatine Loading Protocol saved.")).toBeInTheDocument());
+    expect(savedPayload).toEqual({
+      name: "Creatine Loading Protocol",
+      description: "Performance supplement plan.",
+      status: "published",
+      template: {
+        phases: [
+          {
+            name: "Daily Supplement Protocol",
+            supplements: [
+              {
+                supplementId: "supplement_creatine",
+                supplementName: "Creatine Monohydrate",
+                dosage: "5g",
+                timing: "Morning at 07:30",
+                notes: "Take with breakfast and 500ml water."
+              }
+            ]
+          }
+        ]
+      }
+    });
+  });
+});
+
 describe("SupplementPlansPage", () => {
   it("switches between persisted active protocols and protocol templates", async () => {
     installTestLocalStorage();
@@ -1224,13 +1316,32 @@ describe("SupplementPlansPage", () => {
     expect(screen.queryByRole("menu", { name: "Supplement template actions for Creatine Monohydrate" })).not.toBeInTheDocument();
   });
 
-  it("creates, edits, assigns, duplicates, and deletes supplement protocol templates through the persistence API", async () => {
-    let nextTemplateId = 1;
+  it("edits, assigns, duplicates, and deletes supplement protocol templates through the persistence API", async () => {
+    let nextTemplateId = 2;
     vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
-      if (url === "/api/v1/supplement-plan-assignments?limit=100" || url === "/api/v1/supplement-plan-templates?limit=100") {
+      if (url === "/api/v1/supplement-plan-assignments?limit=100") {
         return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/supplement-plan-templates?limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "template_created_1",
+                  name: "Sleep Support Stack",
+                  description: "Evening recovery protocol.",
+                  status: "published",
+                  template: { phases: [{ supplements: [{ supplementName: "Supplement 1" }] }] }
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
       }
 
       if (url === "/api/v1/supplement-plan-templates" && init?.method === "POST") {
@@ -1271,8 +1382,9 @@ describe("SupplementPlansPage", () => {
         );
       }
 
-      if (url === "/api/v1/supplement-plan-templates/template_created_1" && init?.method === "DELETE") {
-        return Promise.resolve(new Response(JSON.stringify({ data: { id: "template_created_1", deleted: true } }), { status: 200 }));
+      if (url.startsWith("/api/v1/supplement-plan-templates/template_created_") && init?.method === "DELETE") {
+        const id = url.split("/").at(-1) ?? "template_created_1";
+        return Promise.resolve(new Response(JSON.stringify({ data: { id, deleted: true } }), { status: 200 }));
       }
 
       if (url === "/api/v1/clients?limit=100") {
@@ -1318,15 +1430,9 @@ describe("SupplementPlansPage", () => {
     render(createElement(SupplementPlansPage));
 
     expect(await screen.findByText("No supplement protocols have been assigned yet.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Create Protocol" }));
-    const createDialog = screen.getByRole("dialog", { name: "Create Protocol Template" });
-    fireEvent.change(within(createDialog).getByLabelText("Template name"), { target: { value: "Sleep Support Stack" } });
-    fireEvent.change(within(createDialog).getByLabelText("Description"), { target: { value: "Evening recovery protocol." } });
-    fireEvent.change(within(createDialog).getByLabelText("Supplement count"), { target: { value: "3" } });
-    fireEvent.click(within(createDialog).getByRole("button", { name: "Save Template" }));
-
+    expect(screen.getByRole("link", { name: "Create Protocol" })).toHaveAttribute("href", "/supplementation/plans/create");
+    fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
     expect(await screen.findByText("Sleep Support Stack")).toBeInTheDocument();
-    expect(screen.getByText("Sleep Support Stack saved.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Edit Sleep Support Stack" }));
     const editDialog = screen.getByRole("dialog", { name: "Edit Protocol Template" });

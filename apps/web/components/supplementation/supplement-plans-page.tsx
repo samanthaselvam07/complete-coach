@@ -1,6 +1,7 @@
 "use client";
 
 import { ClipboardCopy, Edit, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { CardListViewToggle, type CardListViewMode } from "@/components/ui/card-list-view-toggle";
@@ -395,14 +396,13 @@ export function SupplementPlansPage() {
           <h1 className="mb-2 text-3xl font-black">Supplementation Hub</h1>
           <p className="text-sm text-slate-600">Manage client protocols and track compliance</p>
         </div>
-        <button
-          type="button"
+        <Link
+          href="/supplementation/plans/create"
           className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-700"
-          onClick={() => setTemplateDraft(createTemplateDraft())}
         >
           <Plus className="h-4 w-4" />
           Create Protocol
-        </button>
+        </Link>
       </header>
       {statusMessage ? <SavedToast message={statusMessage} /> : null}
 
