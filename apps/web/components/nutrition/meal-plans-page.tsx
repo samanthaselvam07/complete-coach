@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, CheckCircle2, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
+import { Calculator, Calendar, CheckCircle2, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { CardListViewToggle, type CardListViewMode } from "@/components/ui/card-list-view-toggle";
@@ -17,9 +17,95 @@ export type MealPlanSource = "api" | "fixtures";
 
 type FoodDatabaseSource = "AUS/NZ" | "EFSA" | "USDA";
 type FoodMeasurementUnit = "g" | "ml" | "oz" | "cups" | "tbsp" | "tsp" | "serving";
+type TdeeFormulaId = "mifflin_bw" | "tinsley_bw" | "ten_haaf_bw" | "owen_bw" | "de_lorenzo_bw";
+type TdeeSex = "female" | "male";
+type TdeeActivityLevel = "sedentary" | "light" | "active" | "very_active";
+type TdeeGoal = "maintenance" | "fat_loss" | "growth";
+type TdeeGrowthApproach = "conservative" | "moderate" | "aggressive";
 const VERIFIED_FOOD_SOURCES = new Set(["USDA", "AUS/NZ"]);
 const FOOD_SELECTOR_RECENT_LIMIT = 8;
 const servingDescriptionOptions = ["Grams", "Ounces", "Qty", "Cups", "Oz", "Tbsp", "Tsp", "Ml"];
+
+const TDEE_FORMULAS: Array<{
+  id: TdeeFormulaId;
+  label: string;
+  recommended?: boolean;
+  formula: string;
+  calculateRmr: (input: TdeeCalculationInput) => number;
+}> = [
+  {
+    id: "mifflin_bw",
+    label: "Mifflin-St. Jeor body weight",
+    recommended: true,
+    formula: "RMR = 9.99 x bodyWeightKg + 6.25 x heightCm - 4.92 x age + 166 x sex - 161. TDEE = RMR x activity factor.",
+    calculateRmr: ({ weightKg, heightCm, age, sex }) => 9.99 * weightKg + 6.25 * heightCm - 4.92 * age + 166 * (sex === "male" ? 1 : 0) - 161
+  },
+  {
+    id: "tinsley_bw",
+    label: "Tinsley body weight",
+    formula: "RMR = 24.8 x bodyWeightKg + 10. TDEE = RMR x activity factor.",
+    calculateRmr: ({ weightKg }) => 24.8 * weightKg + 10
+  },
+  {
+    id: "ten_haaf_bw",
+    label: "ten Haaf body weight",
+    formula: "RMR = 0.239 x (49.94 x bodyWeightKg + 24.59 x heightCm - 34.014 x age + 799.257 x sex + 122.502). TDEE = RMR x activity factor.",
+    calculateRmr: ({ weightKg, heightCm, age, sex }) =>
+      0.239 * (49.94 * weightKg + 24.59 * heightCm - 34.014 * age + 799.257 * (sex === "male" ? 1 : 0) + 122.502)
+  },
+  {
+    id: "owen_bw",
+    label: "Owen body weight",
+    formula: "Male RMR = 879 + 10.2 x bodyWeightKg. Female RMR = 795 + 7.18 x bodyWeightKg. TDEE = RMR x activity factor.",
+    calculateRmr: ({ weightKg, sex }) => (sex === "male" ? 879 + 10.2 * weightKg : 795 + 7.18 * weightKg)
+  },
+  {
+    id: "de_lorenzo_bw",
+    label: "De Lorenzo body weight",
+    formula: "RMR = 9 x bodyWeightKg + 11.7 x heightCm - 857. TDEE = RMR x activity factor.",
+    calculateRmr: ({ weightKg, heightCm }) => 9 * weightKg + 11.7 * heightCm - 857
+  }
+];
+
+const TDEE_ACTIVITY_FACTORS: Record<TdeeActivityLevel, { label: string; factor: number }> = {
+  sedentary: { label: "Sedentary", factor: 1.2 },
+  light: { label: "Lightly active", factor: 1.375 },
+  active: { label: "Active", factor: 1.55 },
+  very_active: { label: "Very active", factor: 1.725 }
+};
+
+const TDEE_GROWTH_SURPLUS_RANGES: Record<TdeeGrowthApproach, [number, number]> = {
+  conservative: [100, 250],
+  moderate: [250, 500],
+  aggressive: [500, 750]
+};
+
+interface TdeeCalculationInput {
+  formulaId: TdeeFormulaId;
+  sex: TdeeSex;
+  age: number;
+  heightCm: number;
+  weightKg: number;
+  activityLevel: TdeeActivityLevel;
+  goal: TdeeGoal;
+  deficitPercent: number;
+  growthApproach: TdeeGrowthApproach;
+  macroSplit: {
+    protein: number;
+    carbs: number;
+    fats: number;
+  };
+}
+
+interface TdeeCalculationResult {
+  rmr: number;
+  tdee: number;
+  calories: number;
+  proteinGrams: number;
+  carbsGrams: number;
+  fatGrams: number;
+  growthRange?: [number, number];
+}
 
 type NewFoodFormState = {
   name: string;
@@ -986,6 +1072,7 @@ function FullMealPlanFields({
   const [quickAddFoodSaving, setQuickAddFoodSaving] = useState(false);
   const [quickAddFoodError, setQuickAddFoodError] = useState<string | null>(null);
   const [showMealTemplateDialog, setShowMealTemplateDialog] = useState(false);
+  const [showTdeeCalculator, setShowTdeeCalculator] = useState(false);
   const activeDay = days.find((day) => day.id === activeDayId) ?? days.at(-1);
   const dayTotals = calculateDayTotals(activeDay);
   const nutrientTotals = calculateNutrientTotals(activeDay);
@@ -1368,6 +1455,14 @@ function FullMealPlanFields({
     );
   };
 
+  const applyTdeeTargets = (result: TdeeCalculationResult) => {
+    setCalories(String(result.calories));
+    setProtein(String(result.proteinGrams));
+    setCarbs(String(result.carbsGrams));
+    setFats(String(result.fatGrams));
+    setShowTdeeCalculator(false);
+  };
+
   const filteredFoods = apiFoods;
 
   return (
@@ -1394,6 +1489,14 @@ function FullMealPlanFields({
           />
         </div>
         <div className="hidden flex-wrap items-center gap-2 lg:flex">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 hover:bg-indigo-100"
+            onClick={() => setShowTdeeCalculator(true)}
+          >
+            <Calculator className="size-4" aria-hidden="true" />
+            TDEE Calculator
+          </button>
           <span className="text-xs font-black uppercase text-slate-700">DAY TOTAL</span>
           <MacroPill value={`${formatMacroValue(dayTotals.calories)} Kcal`} />
           <MacroPill value={`${formatMacroValue(dayTotals.protein)} g Protein`} />
@@ -1676,6 +1779,8 @@ function FullMealPlanFields({
         />
       ) : null}
 
+      {showTdeeCalculator ? <TdeeCalculatorDialog onApply={applyTdeeTargets} onClose={() => setShowTdeeCalculator(false)} /> : null}
+
       {activeFoodTarget ? (
         <FoodDatabaseDrawer
           source={foodSource}
@@ -1934,7 +2039,15 @@ function getApiFoodSource(food: ApiFoodLibraryItem): FoodDatabaseSource {
 }
 
 function getApiFoodMicronutrients(metadata: unknown) {
-  if (!isRecord(metadata) || !isRecord(metadata.nutrients)) {
+  if (!isRecord(metadata)) {
+    return undefined;
+  }
+
+  if (Array.isArray(metadata.nutrientsPer100g)) {
+    return getImportedNutrientMap(metadata.nutrientsPer100g);
+  }
+
+  if (!isRecord(metadata.nutrients)) {
     return undefined;
   }
 
@@ -1943,6 +2056,82 @@ function getApiFoodMicronutrients(metadata: unknown) {
       .map(([key, value]) => [key, Number(value)])
       .filter((entry): entry is [string, number] => Number.isFinite(entry[1]))
   );
+}
+
+function getImportedNutrientMap(nutrients: unknown[]) {
+  const entries = nutrients
+    .filter(isImportedFoodNutrient)
+    .map((nutrient) => {
+      const key = getImportedNutrientKey(nutrient.name);
+      return key ? [key, nutrient.value] : null;
+    })
+    .filter((entry): entry is [string, number] => entry !== null);
+
+  if (entries.length === 0) {
+    return undefined;
+  }
+
+  return Object.fromEntries(entries);
+}
+
+function isImportedFoodNutrient(value: unknown): value is { name: string; value: number } {
+  return (
+    isRecord(value) &&
+    typeof value.name === "string" &&
+    typeof value.value === "number" &&
+    Number.isFinite(value.value)
+  );
+}
+
+function getImportedNutrientKey(name: string) {
+  const normalized = name.trim().toLowerCase();
+
+  if (normalized === "cystine") return "cystine";
+  if (normalized === "histidine") return "histidine";
+  if (normalized === "isoleucine") return "isoleucine";
+  if (normalized === "leucine") return "leucine";
+  if (normalized === "lysine") return "lysine";
+  if (normalized === "methionine") return "methionine";
+  if (normalized === "phenylalanine") return "phenylalanine";
+  if (normalized === "threonine") return "threonine";
+  if (normalized === "tryptophan") return "tryptophan";
+  if (normalized === "tyrosine") return "tyrosine";
+  if (normalized === "valine") return "valine";
+
+  if (normalized.includes("fiber") || normalized.includes("fibre")) return "fibre";
+  if (normalized === "starch") return "starch";
+  if (normalized.includes("sugars")) return "sugars";
+  if (normalized.includes("fatty acids, total monounsaturated")) return "monounsaturated";
+  if (normalized.includes("fatty acids, total polyunsaturated")) return "polyunsaturated";
+  if (normalized.includes("fatty acids, total saturated")) return "saturated";
+  if (normalized.includes("fatty acids, total trans")) return "transFats";
+  if (normalized.includes("cholesterol")) return "cholesterol";
+
+  if (normalized === "thiamin") return "vitaminB1";
+  if (normalized === "riboflavin") return "vitaminB2";
+  if (normalized === "niacin") return "vitaminB3";
+  if (normalized.includes("pantothenic acid")) return "vitaminB5";
+  if (normalized.includes("vitamin b-6")) return "vitaminB6";
+  if (normalized.includes("vitamin b-12")) return "vitaminB12";
+  if (normalized.includes("folate")) return "folate";
+  if (normalized.includes("vitamin a")) return "vitaminA";
+  if (normalized.includes("vitamin c")) return "vitaminC";
+  if (normalized.includes("vitamin d")) return "vitaminD";
+  if (normalized.includes("vitamin e")) return "vitaminE";
+  if (normalized.includes("vitamin k")) return "vitaminK";
+
+  if (normalized.includes("calcium")) return "calcium";
+  if (normalized.includes("copper")) return "copper";
+  if (normalized.includes("iron")) return "iron";
+  if (normalized.includes("magnesium")) return "magnesium";
+  if (normalized.includes("manganese")) return "manganese";
+  if (normalized.includes("phosphorus")) return "phosphorus";
+  if (normalized.includes("potassium")) return "potassium";
+  if (normalized.includes("selenium")) return "selenium";
+  if (normalized.includes("sodium")) return "sodium";
+  if (normalized.includes("zinc")) return "zinc";
+
+  return null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -2420,6 +2609,262 @@ export function calculateNutrientTotals(day?: BuilderDay) {
 
 function formatMacroValue(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+export function calculateTdeeTargets(input: TdeeCalculationInput): TdeeCalculationResult {
+  const formula = TDEE_FORMULAS.find((item) => item.id === input.formulaId) ?? TDEE_FORMULAS[0];
+  const rmr = formula.calculateRmr(input);
+  const tdee = rmr * TDEE_ACTIVITY_FACTORS[input.activityLevel].factor;
+  let targetCalories = tdee;
+  let growthRange: [number, number] | undefined;
+
+  if (input.goal === "fat_loss") {
+    targetCalories = tdee * (1 - input.deficitPercent / 100);
+  }
+
+  if (input.goal === "growth") {
+    growthRange = TDEE_GROWTH_SURPLUS_RANGES[input.growthApproach];
+    targetCalories = tdee + (growthRange[0] + growthRange[1]) / 2;
+  }
+
+  return {
+    rmr: Math.round(rmr),
+    tdee: Math.round(tdee),
+    calories: Math.round(targetCalories),
+    proteinGrams: Math.round((targetCalories * (input.macroSplit.protein / 100)) / 4),
+    carbsGrams: Math.round((targetCalories * (input.macroSplit.carbs / 100)) / 4),
+    fatGrams: Math.round((targetCalories * (input.macroSplit.fats / 100)) / 9),
+    growthRange
+  };
+}
+
+function TdeeCalculatorDialog({ onApply, onClose }: { onApply: (result: TdeeCalculationResult) => void; onClose: () => void }) {
+  const [formulaId, setFormulaId] = useState<TdeeFormulaId>("mifflin_bw");
+  const [sex, setSex] = useState<TdeeSex>("female");
+  const [age, setAge] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+  const [weightKg, setWeightKg] = useState("");
+  const [activityLevel, setActivityLevel] = useState<TdeeActivityLevel>("active");
+  const [goal, setGoal] = useState<TdeeGoal>("maintenance");
+  const [deficitPercent, setDeficitPercent] = useState("15");
+  const [growthApproach, setGrowthApproach] = useState<TdeeGrowthApproach>("conservative");
+  const [proteinPercent, setProteinPercent] = useState("30");
+  const [carbsPercent, setCarbsPercent] = useState("40");
+  const [fatPercent, setFatPercent] = useState("30");
+  const selectedFormula = TDEE_FORMULAS.find((formula) => formula.id === formulaId) ?? TDEE_FORMULAS[0];
+  const macroSplit = {
+    protein: Number(proteinPercent),
+    carbs: Number(carbsPercent),
+    fats: Number(fatPercent)
+  };
+  const macroTotal = macroSplit.protein + macroSplit.carbs + macroSplit.fats;
+  const parsedInput = {
+    age: Number(age),
+    heightCm: Number(heightCm),
+    weightKg: Number(weightKg),
+    deficitPercent: Number(deficitPercent)
+  };
+  const canCalculate =
+    Number.isFinite(parsedInput.age) &&
+    parsedInput.age > 0 &&
+    Number.isFinite(parsedInput.heightCm) &&
+    parsedInput.heightCm > 0 &&
+    Number.isFinite(parsedInput.weightKg) &&
+    parsedInput.weightKg > 0 &&
+    Number.isFinite(parsedInput.deficitPercent) &&
+    parsedInput.deficitPercent >= 0 &&
+    Number.isFinite(macroSplit.protein) &&
+    Number.isFinite(macroSplit.carbs) &&
+    Number.isFinite(macroSplit.fats) &&
+    macroSplit.protein >= 0 &&
+    macroSplit.carbs >= 0 &&
+    macroSplit.fats >= 0 &&
+    macroTotal === 100;
+  const result = canCalculate
+    ? calculateTdeeTargets({
+        formulaId,
+        sex,
+        age: parsedInput.age,
+        heightCm: parsedInput.heightCm,
+        weightKg: parsedInput.weightKg,
+        activityLevel,
+        goal,
+        deficitPercent: parsedInput.deficitPercent,
+        growthApproach,
+        macroSplit
+      })
+    : null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+      <div role="dialog" aria-modal="true" aria-label="TDEE calculator" className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Meal plan target calculator</p>
+            <h3 className="mt-1 text-2xl font-black text-slate-950">TDEE Calculator</h3>
+          </div>
+          <button type="button" aria-label="Close TDEE calculator" className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onClick={onClose}>
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="grid gap-6 px-6 py-5 lg:grid-cols-[1fr_0.9fr]">
+          <div className="space-y-5">
+            <label className="grid gap-2">
+              <span className="text-sm font-bold text-slate-800">Calculation method</span>
+              <select
+                value={formulaId}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                onChange={(event) => setFormulaId(event.target.value as TdeeFormulaId)}
+              >
+                {TDEE_FORMULAS.map((formula) => (
+                  <option key={formula.id} value={formula.id}>
+                    {formula.label}
+                    {formula.recommended ? " (recommended)" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="rounded-xl bg-slate-100 p-4 text-sm text-slate-700">
+              <p className="mb-2 font-black text-slate-900">{selectedFormula.label}</p>
+              <p>{selectedFormula.formula}</p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2">
+                <span className="text-sm font-bold text-slate-800">Sex</span>
+                <select value={sex} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm" onChange={(event) => setSex(event.target.value as TdeeSex)}>
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                </select>
+              </label>
+              <TdeeNumberField label="Age" value={age} onChange={setAge} suffix="years" />
+              <TdeeNumberField label="Height" value={heightCm} onChange={setHeightCm} suffix="cm" />
+              <TdeeNumberField label="Weight" value={weightKg} onChange={setWeightKg} suffix="kg" />
+              <label className="grid gap-2 sm:col-span-2">
+                <span className="text-sm font-bold text-slate-800">Activity level</span>
+                <select
+                  value={activityLevel}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                  onChange={(event) => setActivityLevel(event.target.value as TdeeActivityLevel)}
+                >
+                  {Object.entries(TDEE_ACTIVITY_FACTORS).map(([value, option]) => (
+                    <option key={value} value={value}>
+                      {option.label} - {option.factor}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2">
+                <span className="text-sm font-bold text-slate-800">Goal</span>
+                <select value={goal} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm" onChange={(event) => setGoal(event.target.value as TdeeGoal)}>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="fat_loss">Fat loss</option>
+                  <option value="growth">Growth phase</option>
+                </select>
+              </label>
+              {goal === "fat_loss" ? <TdeeNumberField label="Deficit" value={deficitPercent} onChange={setDeficitPercent} suffix="%" /> : null}
+              {goal === "growth" ? (
+                <label className="grid gap-2">
+                  <span className="text-sm font-bold text-slate-800">Growth approach</span>
+                  <select
+                    value={growthApproach}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                    onChange={(event) => setGrowthApproach(event.target.value as TdeeGrowthApproach)}
+                  >
+                    <option value="conservative">Conservative +100 to +250 kcal</option>
+                    <option value="moderate">Moderate +250 to +500 kcal</option>
+                    <option value="aggressive">Aggressive +500 to +750 kcal</option>
+                  </select>
+                </label>
+              ) : null}
+            </div>
+          </div>
+
+          <aside className="space-y-5 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div>
+              <p className="text-sm font-black uppercase tracking-wide text-slate-500">Macro spread</p>
+              <p className="mt-1 text-sm text-slate-600">Adjust the split after the calorie target is calculated.</p>
+            </div>
+            <div className="grid gap-3">
+              <TdeeNumberField label="Protein" value={proteinPercent} onChange={setProteinPercent} suffix="%" />
+              <TdeeNumberField label="Carbs" value={carbsPercent} onChange={setCarbsPercent} suffix="%" />
+              <TdeeNumberField label="Fat" value={fatPercent} onChange={setFatPercent} suffix="%" />
+            </div>
+            <p className={cn("rounded-xl px-3 py-2 text-sm font-bold", macroTotal === 100 ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700")}>
+              Current macro split: {Number.isFinite(macroTotal) ? macroTotal : 0}%
+            </p>
+
+            {result ? (
+              <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
+                <TdeeResultRow label="RMR" value={`${result.rmr} kcal`} />
+                <TdeeResultRow label="TDEE" value={`${result.tdee} kcal`} />
+                {result.growthRange ? <TdeeResultRow label="Growth range" value={`${result.tdee + result.growthRange[0]} to ${result.tdee + result.growthRange[1]} kcal`} /> : null}
+                <TdeeResultRow label="Target" value={`${result.calories} kcal`} highlight />
+                <TdeeResultRow label="Protein" value={`${result.proteinGrams} g`} />
+                <TdeeResultRow label="Carbs" value={`${result.carbsGrams} g`} />
+                <TdeeResultRow label="Fat" value={`${result.fatGrams} g`} />
+              </div>
+            ) : (
+              <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
+                Fill out the required fields and keep the macro split at 100% to calculate calorie and macronutrient targets.
+              </p>
+            )}
+          </aside>
+        </div>
+
+        <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
+          <button type="button" className="rounded-xl bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={!result}
+            className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            onClick={() => {
+              if (result) {
+                onApply(result);
+              }
+            }}
+          >
+            Apply to meal plan
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TdeeNumberField({ label, value, suffix, onChange }: { label: string; value: string; suffix: string; onChange: (value: string) => void }) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-sm font-bold text-slate-800">{label}</span>
+      <span className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100">
+        <input
+          type="number"
+          min="0"
+          step="any"
+          value={value}
+          className="w-full border-0 px-4 py-3 text-sm outline-none"
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <span className="border-l border-slate-200 bg-slate-50 px-3 py-3 text-xs font-black uppercase text-slate-500">{suffix}</span>
+      </span>
+    </label>
+  );
+}
+
+function TdeeResultRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-4 text-sm">
+      <span className="font-semibold text-slate-500">{label}</span>
+      <span className={cn("font-black", highlight ? "text-indigo-700" : "text-slate-950")}>{value}</span>
+    </div>
+  );
 }
 
 interface NutrientRowDefinition {

@@ -32,6 +32,7 @@ import {
   calculateNutrientTotals,
   calculatePlanTotals,
   calculateTemplateTotals,
+  calculateTdeeTargets,
   convertMeasurementToServingUnit,
   createBuilderDay,
   createBuilderDaysFromTemplate,
@@ -1652,6 +1653,39 @@ describe("meal plan view model helpers", () => {
         metadata: "not-record"
       })
     ).toMatchObject({ source: "USDA", micronutrients: undefined });
+
+    expect(
+      mapApiFoodToBuilderFood({
+        id: "usda_food_with_nutrients",
+        name: "USDA spinach",
+        category: "Vegetables",
+        servingSize: "100 g",
+        calories: 23,
+        proteinGrams: 2.9,
+        carbsGrams: 3.6,
+        fatGrams: 0.4,
+        fiberGrams: 2.2,
+        metadata: {
+          sourceId: "usda_fdc",
+          nutrientsPer100g: [
+            { name: "Calcium, Ca", unit: "MG", value: 99, sourceNutrientId: "301" },
+            { name: "Potassium, K", unit: "MG", value: 558, sourceNutrientId: "306" },
+            { name: "Vitamin C, total ascorbic acid", unit: "MG", value: 28.1, sourceNutrientId: "401" },
+            { name: "Thiamin", unit: "MG", value: 0.078, sourceNutrientId: "404" },
+            { name: "Energy", unit: "KCAL", value: 23, sourceNutrientId: "208" },
+            { name: "Invalid", unit: "MG", value: "bad", sourceNutrientId: "bad" }
+          ]
+        }
+      })
+    ).toMatchObject({
+      source: "USDA",
+      micronutrients: {
+        calcium: 99,
+        potassium: 558,
+        vitaminC: 28.1,
+        vitaminB1: 0.078
+      }
+    });
   });
 
   it("builds foods and totals across serving conversion branches", () => {
@@ -1742,6 +1776,51 @@ describe("meal plan view model helpers", () => {
     });
     expect(calculateDayTotals()).toEqual({ calories: 0, protein: 0, carbs: 0, fats: 0, fibre: 0 });
     expect(calculateNutrientTotals()).toMatchObject({ protein: 0, carbs: 0, netCarbs: 0, fibre: 0, fat: 0 });
+  });
+
+  it("calculates TDEE targets with recommended body weight and growth phase formulas", () => {
+    expect(
+      calculateTdeeTargets({
+        formulaId: "mifflin_bw",
+        sex: "female",
+        age: 32,
+        heightCm: 165,
+        weightKg: 70,
+        activityLevel: "active",
+        goal: "maintenance",
+        deficitPercent: 15,
+        growthApproach: "conservative",
+        macroSplit: { protein: 30, carbs: 40, fats: 30 }
+      })
+    ).toMatchObject({
+      rmr: 1412,
+      tdee: 2189,
+      calories: 2189,
+      proteinGrams: 164,
+      carbsGrams: 219,
+      fatGrams: 73
+    });
+
+    expect(
+      calculateTdeeTargets({
+        formulaId: "mifflin_bw",
+        sex: "female",
+        age: 32,
+        heightCm: 165,
+        weightKg: 70,
+        activityLevel: "active",
+        goal: "growth",
+        deficitPercent: 15,
+        growthApproach: "moderate",
+        macroSplit: { protein: 25, carbs: 45, fats: 30 }
+      })
+    ).toMatchObject({
+      calories: 2564,
+      growthRange: [250, 500],
+      proteinGrams: 160,
+      carbsGrams: 288,
+      fatGrams: 85
+    });
   });
 
   it("builds full and macro meal plan payloads with fallback branches", () => {
