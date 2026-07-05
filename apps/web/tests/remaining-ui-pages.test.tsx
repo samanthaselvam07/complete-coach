@@ -1134,8 +1134,10 @@ describe("SupplementProtocolBuilderPage", () => {
     fireEvent.change(screen.getByLabelText("Timing preset for Creatine Monohydrate"), { target: { value: "Morning" } });
     fireEvent.change(screen.getByLabelText("Specific time for Creatine Monohydrate"), { target: { value: "07:30" } });
     fireEvent.change(screen.getByLabelText("Dosage for Creatine Monohydrate"), { target: { value: "5g" } });
-    fireEvent.change(screen.getByLabelText("Instructions for Creatine Monohydrate"), {
-      target: { value: "Take with breakfast and 500ml water." }
+    const instructionsField = screen.getByLabelText("Instructions for Creatine Monohydrate");
+    expect(instructionsField.tagName.toLowerCase()).toBe("textarea");
+    fireEvent.change(instructionsField, {
+      target: { value: "Take with breakfast and 500ml water. Keep this note visible without horizontal scrolling." }
     });
     fireEvent.click(screen.getByRole("button", { name: "Save Protocol" }));
 
@@ -1154,7 +1156,7 @@ describe("SupplementProtocolBuilderPage", () => {
                 supplementName: "Creatine Monohydrate",
                 dosage: "5g",
                 timing: "Morning at 07:30",
-                notes: "Take with breakfast and 500ml water."
+                notes: "Take with breakfast and 500ml water. Keep this note visible without horizontal scrolling."
               }
             ]
           }

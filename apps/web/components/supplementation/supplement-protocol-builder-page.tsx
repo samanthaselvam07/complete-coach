@@ -313,12 +313,13 @@ export function SupplementProtocolBuilderPage() {
                         onChange={(event) => updateSupplement(supplement.id, { dosage: event.target.value })}
                       />
                     </label>
-                    <label className="grid gap-2 lg:col-span-1">
+                    <label className="grid gap-2 lg:col-span-4">
                       <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Instructions</span>
-                      <input
+                      <textarea
                         aria-label={`Instructions for ${supplement.supplementName}`}
                         value={supplement.instructions}
-                        className="rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                        rows={3}
+                        className="min-h-24 resize-y whitespace-pre-wrap rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                         placeholder="How the client should take it"
                         onChange={(event) => updateSupplement(supplement.id, { instructions: event.target.value })}
                       />
