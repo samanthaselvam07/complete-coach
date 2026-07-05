@@ -22,8 +22,15 @@ import { SupplementProtocolBuilderPage } from "@/components/supplementation/supp
 import { SupplementPlansPage } from "@/components/supplementation/supplement-plans-page";
 import { SupplementationPage } from "@/components/supplementation/supplementation-page";
 
+const navigationMocks = vi.hoisted(() => ({ push: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: navigationMocks.push })
+}));
+
 afterEach(() => {
   vi.restoreAllMocks();
+  navigationMocks.push.mockReset();
   window.localStorage?.clear();
 });
 
@@ -1077,7 +1084,7 @@ describe("SupplementDatabasePage", () => {
 
 describe("SupplementProtocolBuilderPage", () => {
   it("adds supplements from the database and saves a configured protocol", async () => {
-    let savedPayload: unknown = null;
+    const savedRequests: Array<{ url: string; method: string; body: unknown }> = [];
 
     vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
@@ -1116,7 +1123,8 @@ describe("SupplementProtocolBuilderPage", () => {
       }
 
       if (url === "/api/v1/supplement-plan-templates" && init?.method === "POST") {
-        savedPayload = JSON.parse(String(init.body));
+        const savedPayload = JSON.parse(String(init.body)) as Record<string, unknown>;
+        savedRequests.push({ url, method: "POST", body: savedPayload });
 
         return Promise.resolve(
           new Response(
@@ -1127,6 +1135,23 @@ describe("SupplementProtocolBuilderPage", () => {
               }
             }),
             { status: 201 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/supplement-plan-templates/template_creatine" && init?.method === "PATCH") {
+        const savedPayload = JSON.parse(String(init.body)) as Record<string, unknown>;
+        savedRequests.push({ url, method: "PATCH", body: savedPayload });
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "template_creatine",
+                ...savedPayload
+              }
+            }),
+            { status: 200 }
           )
         );
       }
@@ -1175,7 +1200,10 @@ describe("SupplementProtocolBuilderPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save Protocol" }));
 
     await waitFor(() => expect(screen.getByText("Creatine Loading Protocol saved.")).toBeInTheDocument());
-    expect(savedPayload).toEqual({
+    expect(savedRequests[0]).toEqual({
+      url: "/api/v1/supplement-plan-templates",
+      method: "POST",
+      body: {
       name: "Creatine Loading Protocol",
       description: "Performance supplement plan.",
       status: "published",
@@ -1197,6 +1225,118 @@ describe("SupplementProtocolBuilderPage", () => {
                 dosage: "3.2g",
                 timing: "Afternoon",
                 notes: ""
+              }
+            ]
+          }
+        ]
+      }
+      }
+    });
+
+    fireEvent.change(screen.getByLabelText("Protocol description"), { target: { value: "Updated performance supplement plan." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Protocol" }));
+    await waitFor(() => expect(savedRequests).toHaveLength(2));
+    expect(savedRequests[1]).toMatchObject({
+      url: "/api/v1/supplement-plan-templates/template_creatine",
+      method: "PATCH",
+      body: {
+        name: "Creatine Loading Protocol",
+        description: "Updated performance supplement plan.",
+        status: "published"
+      }
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Save and Close" }));
+    await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/supplementation/plans"));
+  });
+
+  it("loads a saved protocol template into the builder for editing", async () => {
+    const savedRequests: Array<{ url: string; method: string; body: unknown }> = [];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/v1/supplements")) {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/supplement-plan-templates/template_saved" && !init?.method) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "template_saved",
+                name: "Sleep Stack",
+                description: "Saved evening protocol.",
+                status: "published",
+                template: {
+                  phases: [
+                    {
+                      name: "Daily Supplement Protocol",
+                      supplements: [
+                        {
+                          supplementId: "supplement_magnesium",
+                          supplementName: "Magnesium Glycinate",
+                          dosage: "300mg",
+                          timing: "Evening at 21:00",
+                          notes: "Take after dinner.\nSupplement link: https://example.com/magnesium"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/supplement-plan-templates/template_saved" && init?.method === "PATCH") {
+        const savedPayload = JSON.parse(String(init.body));
+        savedRequests.push({ url, method: "PATCH", body: savedPayload });
+        return Promise.resolve(new Response(JSON.stringify({ data: { id: "template_saved", ...savedPayload } }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(SupplementProtocolBuilderPage, { templateId: "template_saved" }));
+
+    expect(await screen.findByRole("heading", { name: "Edit Supplement Protocol" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Protocol name")).toHaveValue("Sleep Stack");
+    expect(screen.getByLabelText("Protocol description")).toHaveValue("Saved evening protocol.");
+    expect(screen.getByText("Magnesium Glycinate")).toBeInTheDocument();
+    expect(screen.getByLabelText("Dosage for Magnesium Glycinate")).toHaveValue("300mg");
+    expect(screen.getByLabelText("Timing preset for Magnesium Glycinate")).toHaveValue("Evening");
+    expect(screen.getByLabelText("Specific time for Magnesium Glycinate")).toHaveValue("21:00");
+    expect(screen.getByLabelText("Instructions for Magnesium Glycinate")).toHaveValue("Take after dinner.");
+    expect(screen.getByLabelText("Supplement link for Magnesium Glycinate")).toHaveValue("https://example.com/magnesium");
+
+    fireEvent.change(screen.getByLabelText("Dosage for Magnesium Glycinate"), { target: { value: "350mg" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Protocol" }));
+
+    await waitFor(() => expect(savedRequests).toHaveLength(1));
+    expect(savedRequests[0]).toMatchObject({
+      url: "/api/v1/supplement-plan-templates/template_saved",
+      method: "PATCH",
+      body: {
+        name: "Sleep Stack",
+        description: "Saved evening protocol.",
+        status: "published"
+      }
+    });
+    expect(savedRequests[0]?.body).toMatchObject({
+      template: {
+        phases: [
+          {
+            supplements: [
+              {
+                supplementId: "supplement_magnesium",
+                supplementName: "Magnesium Glycinate",
+                dosage: "350mg",
+                timing: "Evening at 21:00",
+                notes: "Take after dinner.\nSupplement link: https://example.com/magnesium"
               }
             ]
           }
@@ -1489,32 +1629,29 @@ describe("SupplementPlansPage", () => {
     expect(await screen.findByText("Sleep Support Stack")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Edit Sleep Support Stack" }));
-    const editDialog = screen.getByRole("dialog", { name: "Edit Protocol Template" });
-    fireEvent.change(within(editDialog).getByLabelText("Template name"), { target: { value: "Sleep Support Stack Updated" } });
-    fireEvent.click(within(editDialog).getByRole("button", { name: "Save Template" }));
-    expect(await screen.findByText("Sleep Support Stack Updated")).toBeInTheDocument();
+    expect(navigationMocks.push).toHaveBeenCalledWith("/supplementation/plans/template_created_1/edit");
 
-    fireEvent.click(screen.getByRole("button", { name: "More actions for Sleep Support Stack Updated" }));
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Sleep Support Stack" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Copy" }));
-    expect(await screen.findByText("Sleep Support Stack Updated (copy)")).toBeInTheDocument();
+    expect(await screen.findByText("Sleep Support Stack (copy)")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "More actions for Sleep Support Stack Updated (copy)" }));
+    fireEvent.click(screen.getByRole("button", { name: "More actions for Sleep Support Stack (copy)" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Assign to" }));
     const assignDialog = await screen.findByRole("dialog", { name: "Assign Protocol Template" });
     fireEvent.change(within(assignDialog).getByPlaceholderText("Search clients..."), { target: { value: "alex" } });
     fireEvent.click(within(assignDialog).getByLabelText("Select Alex Rivera"));
     await waitFor(() => expect(within(assignDialog).getByRole("button", { name: "Confirm Assignment" })).not.toBeDisabled());
     fireEvent.click(within(assignDialog).getByRole("button", { name: "Confirm Assignment" }));
-    expect(await screen.findByText("Sleep Support Stack Updated (copy) assigned.")).toBeInTheDocument();
+    expect(await screen.findByText("Sleep Support Stack (copy) assigned.")).toBeInTheDocument();
     expect(screen.queryByText(/Alex Rivera/)).not.toBeInTheDocument();
     expect(screen.getByText("1 active client")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Protocol Templates" }));
     const templatesPanel = screen.getByRole("tabpanel", { name: "Protocol Templates" });
-    fireEvent.click(within(templatesPanel).getByRole("button", { name: "More actions for Sleep Support Stack Updated (copy)" }));
+    fireEvent.click(within(templatesPanel).getByRole("button", { name: "More actions for Sleep Support Stack (copy)" }));
     fireEvent.click(within(templatesPanel).getByRole("menuitem", { name: "Delete" }));
-    await waitFor(() => expect(within(templatesPanel).queryByRole("heading", { name: "Sleep Support Stack Updated (copy)" })).not.toBeInTheDocument());
-    expect(within(templatesPanel).getByRole("heading", { name: "Sleep Support Stack Updated" })).toBeInTheDocument();
+    await waitFor(() => expect(within(templatesPanel).queryByRole("heading", { name: "Sleep Support Stack (copy)" })).not.toBeInTheDocument());
+    expect(within(templatesPanel).getByRole("heading", { name: "Sleep Support Stack" })).toBeInTheDocument();
   });
 
   it("loads persisted active protocols and templates", async () => {

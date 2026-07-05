@@ -200,6 +200,7 @@ AI output statuses:
 - `PATCH /api/v1/supplements/{supplement_id}/coach-details`: upserts the active organization's supplement-specific coach overlay. Body: optional `coachDosageInstructions`, optional `coachNotes`, optional `affiliateLink`.
 - `GET /api/v1/supplement-plan-templates`: lists active-organization supplement templates. Query: optional `status`, optional `limit`.
 - `POST /api/v1/supplement-plan-templates`: creates a template with validated `name`, optional `description`, `status`, and structured phase/supplement `template` JSON.
+- `GET /api/v1/supplement-plan-templates/{template_id}`: returns one active-organization supplement template for editing.
 - `PATCH /api/v1/supplement-plan-templates/{template_id}`: updates an existing active-organization supplement template in place. Body accepts any explicit subset of `name`, optional `description`, `status`, and structured phase/supplement `template` JSON.
 - `DELETE /api/v1/supplement-plan-templates/{template_id}`: soft-deletes an active-organization supplement template and writes an audit event.
 - `GET /api/v1/supplement-plan-assignments`: returns organization-scoped supplement assignments with client names. Query: optional `clientId`, optional `limit`.

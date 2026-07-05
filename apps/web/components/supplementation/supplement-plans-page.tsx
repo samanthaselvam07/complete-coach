@@ -1,7 +1,9 @@
 "use client";
 
 import { ClipboardCopy, Edit, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { CardListViewToggle, type CardListViewMode } from "@/components/ui/card-list-view-toggle";
@@ -103,12 +105,12 @@ function filterProtocolTemplates(templates: ProtocolTemplate[], query: string) {
 }
 
 export function SupplementPlansPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("active");
   const [activeProtocols, setActiveProtocols] = useState<ActiveSupplementProtocol[]>([]);
   const [templates, setTemplates] = useState<ProtocolTemplate[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
-  const [templateDraft, setTemplateDraft] = useState<ProtocolTemplateDraft | null>(null);
   const [assigningTemplate, setAssigningTemplate] = useState<ProtocolTemplate | null>(null);
   const [clients, setClients] = useState<AssignableClient[]>([]);
   const [clientSearch, setClientSearch] = useState("");
@@ -178,30 +180,6 @@ export function SupplementPlansPage() {
 
     if (!response.ok) {
       throw new Error("Supplement template could not be saved.");
-    }
-
-    const payload = (await response.json()) as { data?: ApiSupplementTemplate };
-
-    if (!payload.data) {
-      throw new Error("Supplement template response was empty.");
-    }
-
-    return mapApiTemplateToCard(payload.data);
-  }
-
-  async function updatePersistedTemplate(draft: ProtocolTemplateDraft) {
-    if (!draft.id) {
-      return createPersistedTemplate(draft);
-    }
-
-    const response = await fetch(`/api/v1/supplement-plan-templates/${draft.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(getTemplatePayload(draft))
-    });
-
-    if (!response.ok) {
-      throw new Error("Supplement template could not be updated.");
     }
 
     const payload = (await response.json()) as { data?: ApiSupplementTemplate };
@@ -388,6 +366,15 @@ export function SupplementPlansPage() {
     }
   }
 
+  function openProtocolBuilder(templateId: string | null) {
+    if (!templateId) {
+      setStatusMessage("This protocol cannot be edited because it is not linked to a saved protocol template.");
+      return;
+    }
+
+    router.push(`/supplementation/plans/${templateId}/edit` as Route);
+  }
+
   return (
     <main className="space-y-8 p-6 lg:p-8">
       {loadingPlans ? <CompleteCoachLoadingScreen title="Preparing supplement protocols" label="Preparing supplement protocols." /> : null}
@@ -466,7 +453,7 @@ export function SupplementPlansPage() {
             openActionMenuId={openActionMenuId}
             onActionMenuToggle={setOpenActionMenuId}
             onAssign={openAssignDialog}
-            onEdit={setTemplateDraft}
+            onEdit={openProtocolBuilder}
             onDuplicate={duplicateAssignment}
             onDelete={deleteAssignment}
           />
@@ -478,35 +465,12 @@ export function SupplementPlansPage() {
             openActionMenuId={openActionMenuId}
             onActionMenuToggle={setOpenActionMenuId}
             onAssign={openAssignDialog}
-            onEdit={setTemplateDraft}
+            onEdit={openProtocolBuilder}
             onDuplicate={duplicateTemplate}
             onDelete={deleteTemplate}
           />
         )}
       </section>
-
-      {templateDraft ? (
-        <ProtocolTemplateDialog
-          draft={templateDraft}
-          onChange={setTemplateDraft}
-          onClose={() => setTemplateDraft(null)}
-          onSave={async (draft) => {
-            try {
-              const savedTemplate = await updatePersistedTemplate(draft);
-              setTemplates((currentTemplates) =>
-                currentTemplates.some((template) => template.id === savedTemplate.id)
-                  ? currentTemplates.map((template) => (template.id === savedTemplate.id ? savedTemplate : template))
-                  : [savedTemplate, ...currentTemplates]
-              );
-              setActiveTab("library");
-              setTemplateDraft(null);
-              setStatusMessage(`${savedTemplate.name} saved.`);
-            } catch {
-              setStatusMessage("Supplement template could not be saved.");
-            }
-          }}
-        />
-      ) : null}
 
       {assigningTemplate ? (
         <AssignTemplateDialog
@@ -540,7 +504,7 @@ function SupplementProtocolsTable({
   openActionMenuId: string | null;
   onActionMenuToggle: (id: string | null) => void;
   onAssign: (template: ProtocolTemplate) => void;
-  onEdit: (draft: ProtocolTemplateDraft) => void;
+  onEdit: (templateId: string | null) => void;
   onDuplicate: (protocol: ActiveSupplementProtocol) => void;
   onDelete: (protocol: ActiveSupplementProtocol) => void;
 }) {
@@ -614,7 +578,7 @@ function SupplementProtocolsTable({
                       itemName={protocol.protocol}
                       onMenuToggle={() => onActionMenuToggle(menuOpen ? null : `protocol-${protocol.id}`)}
                       onMenuClose={() => onActionMenuToggle(null)}
-                      onEdit={() => onEdit(createTemplateDraftFromProtocol(protocol))}
+                      onEdit={() => onEdit(protocol.templateId)}
                       onDelete={() => onDelete(protocol)}
                       onAssign={() => onAssign(createProtocolTemplateFromProtocol(protocol))}
                       onCopy={() => onDuplicate(protocol)}
@@ -653,7 +617,7 @@ function ProtocolTemplateGrid({
   openActionMenuId: string | null;
   onActionMenuToggle: (id: string | null) => void;
   onAssign: (template: ProtocolTemplate) => void;
-  onEdit: (draft: ProtocolTemplateDraft) => void;
+  onEdit: (templateId: string | null) => void;
   onDuplicate: (template: ProtocolTemplate) => void;
   onDelete: (template: ProtocolTemplate) => void;
 }) {
@@ -694,7 +658,7 @@ function ProtocolTemplateGrid({
                   itemName={protocol.name}
                   onMenuToggle={() => onActionMenuToggle(menuOpen ? null : `template-${protocol.id}`)}
                   onMenuClose={() => onActionMenuToggle(null)}
-                  onEdit={() => onEdit(createTemplateDraftFromTemplate(protocol))}
+                  onEdit={() => onEdit(protocol.id)}
                   onDelete={() => onDelete(protocol)}
                   onAssign={() => onAssign(protocol)}
                   onCopy={() => onDuplicate(protocol)}
@@ -738,7 +702,7 @@ function ProtocolTemplateGrid({
                     itemName={protocol.name}
                     onMenuToggle={() => onActionMenuToggle(menuOpen ? null : `template-${protocol.id}`)}
                     onMenuClose={() => onActionMenuToggle(null)}
-                    onEdit={() => onEdit(createTemplateDraftFromTemplate(protocol))}
+                    onEdit={() => onEdit(protocol.id)}
                     onDelete={() => onDelete(protocol)}
                     onAssign={() => onAssign(protocol)}
                     onCopy={() => onDuplicate(protocol)}
@@ -871,81 +835,6 @@ function SupplementActionMenu({
   );
 }
 
-function ProtocolTemplateDialog({
-  draft,
-  onChange,
-  onClose,
-  onSave
-}: {
-  draft: ProtocolTemplateDraft;
-  onChange: (draft: ProtocolTemplateDraft) => void;
-  onClose: () => void;
-  onSave: (draft: ProtocolTemplateDraft) => void | Promise<void>;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="supplement-template-title" className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h2 id="supplement-template-title" className="text-xl font-black text-slate-950">
-            {draft.id ? "Edit Protocol Template" : "Create Protocol Template"}
-          </h2>
-          <button type="button" aria-label="Close template editor" className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="grid gap-5 px-6 py-6">
-          <label className="grid gap-2">
-            <span className="text-sm font-bold text-slate-700">Template name</span>
-            <input
-              value={draft.name}
-              className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              onChange={(event) => onChange({ ...draft, name: event.target.value })}
-            />
-          </label>
-          <label className="grid gap-2">
-            <span className="text-sm font-bold text-slate-700">Category</span>
-            <select
-              value={draft.category}
-              className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              onChange={(event) => onChange({ ...draft, category: event.target.value as ProtocolTemplate["category"] })}
-            >
-              <option>General Health</option>
-              <option>Performance</option>
-              <option>Recovery</option>
-            </select>
-          </label>
-          <label className="grid gap-2">
-            <span className="text-sm font-bold text-slate-700">Description</span>
-            <textarea
-              value={draft.description}
-              className="min-h-28 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              onChange={(event) => onChange({ ...draft, description: event.target.value })}
-            />
-          </label>
-          <label className="grid gap-2">
-            <span className="text-sm font-bold text-slate-700">Supplement count</span>
-            <input
-              type="number"
-              min="1"
-              value={draft.supplements}
-              className="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              onChange={(event) => onChange(updateDraftSupplementCount(draft, Number(event.target.value)))}
-            />
-          </label>
-        </div>
-        <div className="flex justify-end gap-3 border-t border-slate-200 px-6 py-4">
-          <button type="button" className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50" onClick={onClose}>
-            Cancel
-          </button>
-          <button type="button" className="rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700" onClick={() => onSave(draft)}>
-            Save Template
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function AssignTemplateDialog({
   template,
   clients,
@@ -1074,44 +963,6 @@ function mapApiTemplateToCard(template: ApiSupplementTemplate): ProtocolTemplate
   };
 }
 
-function createTemplateDraft(template: Partial<ProtocolTemplateDraft> = {}): ProtocolTemplateDraft {
-  const category = template.category ?? "General Health";
-  const supplements = Math.max(1, template.supplements ?? 1);
-
-  return {
-    id: template.id,
-    name: template.name ?? "",
-    category,
-    description: template.description ?? "",
-    supplements,
-    status: template.status ?? "draft",
-    template: template.template ?? createTemplateJson(category, supplements)
-  };
-}
-
-function createTemplateDraftFromTemplate(template: ProtocolTemplate): ProtocolTemplateDraft {
-  return createTemplateDraft({
-    id: template.id,
-    name: template.name,
-    category: template.category,
-    description: template.description,
-    supplements: template.supplements,
-    status: template.status,
-    template: template.template
-  });
-}
-
-function createTemplateDraftFromProtocol(protocol: ActiveSupplementProtocol): ProtocolTemplateDraft {
-  return createTemplateDraft({
-    id: protocol.templateId ?? undefined,
-    name: protocol.protocol,
-    category: "General Health",
-    description: `Template linked to ${protocol.clientName}'s supplement plan.`,
-    supplements: Math.max(1, protocol.supplements.length),
-    template: protocol.template
-  });
-}
-
 function createProtocolTemplateFromProtocol(protocol: ActiveSupplementProtocol): ProtocolTemplate {
   return {
     id: protocol.templateId ?? protocol.id,
@@ -1121,15 +972,6 @@ function createProtocolTemplateFromProtocol(protocol: ActiveSupplementProtocol):
     supplements: Math.max(1, protocol.supplements.length),
     status: "draft",
     template: protocol.template
-  };
-}
-
-function updateDraftSupplementCount(draft: ProtocolTemplateDraft, value: number): ProtocolTemplateDraft {
-  const supplements = Math.max(1, Number.isFinite(value) ? value : 1);
-  return {
-    ...draft,
-    supplements,
-    template: createTemplateJson(draft.category, supplements, draft.template)
   };
 }
 

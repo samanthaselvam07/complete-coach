@@ -16,6 +16,7 @@ import {
 } from "@/app/api/v1/supplement-plan-templates/route";
 import {
   DELETE as deleteSupplementTemplate,
+  GET as getSupplementTemplate,
   PATCH as updateSupplementTemplate
 } from "@/app/api/v1/supplement-plan-templates/[templateId]/route";
 import {
@@ -364,6 +365,27 @@ describe("supplementation persistence APIs", () => {
         })
       })
     );
+  });
+
+  it("loads a single supplement template for editing within the active organization", async () => {
+    mocks.prisma.supplementPlanTemplate.findFirst.mockResolvedValue(supplementTemplate);
+
+    const response = await getSupplementTemplate(
+      new Request("http://test.local/api/v1/supplement-plan-templates/supplement_template_1"),
+      { params: Promise.resolve({ templateId: "supplement_template_1" }) }
+    );
+    const payload = (await response.json()) as { data: { id: string; template: unknown } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual(
+      expect.objectContaining({
+        id: "supplement_template_1",
+        template: supplementTemplateJson
+      })
+    );
+    expect(mocks.prisma.supplementPlanTemplate.findFirst).toHaveBeenCalledWith({
+      where: { id: "supplement_template_1", organizationId: "org_1", deletedAt: null }
+    });
   });
 
   it("updates and soft deletes supplement templates for the active organization", async () => {

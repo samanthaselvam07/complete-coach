@@ -12,6 +12,28 @@ interface SupplementTemplateRouteContext {
   params: Promise<{ templateId: string }>;
 }
 
+export async function GET(_request: Request, context: SupplementTemplateRouteContext) {
+  try {
+    const actor = requireActiveActor(await auth(), "supplements:read");
+    const { templateId } = await context.params;
+    const template = await prisma.supplementPlanTemplate.findFirst({
+      where: {
+        id: templateId,
+        organizationId: actor.organizationId,
+        deletedAt: null
+      }
+    });
+
+    if (!template) {
+      return errorResponse("not_found", "Supplement plan template not found.", 404);
+    }
+
+    return dataResponse(serializeSupplementTemplate(template));
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
 export async function PATCH(request: Request, context: SupplementTemplateRouteContext) {
   try {
     const actor = requireActiveActor(await auth(), "supplements:write");

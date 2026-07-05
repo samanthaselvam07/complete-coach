@@ -25,6 +25,7 @@
 - [x] `POST /api/v1/supplements` creates active-organization private supplements.
 - [x] `GET /api/v1/supplement-plan-templates` lists active-organization supplement templates.
 - [x] `POST /api/v1/supplement-plan-templates` creates active-organization supplement templates.
+- [x] `GET /api/v1/supplement-plan-templates/{template_id}` returns one active-organization supplement template for editing.
 - [x] `GET /api/v1/supplement-plan-assignments` lists active-organization supplement assignments.
 - [x] `POST /api/v1/supplement-plan-assignments` assigns supplement templates to active-organization clients.
 

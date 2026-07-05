@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft, FileText, LinkIcon, Plus, Save, Search, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { DragEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -20,6 +21,27 @@ interface ApiSupplement {
   scope?: string;
 }
 
+interface ApiSupplementTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  status: string;
+  template: SupplementTemplateJson | null;
+}
+
+interface SupplementTemplateJson {
+  phases: Array<{
+    name: string;
+    supplements: Array<{
+      supplementId?: string;
+      supplementName: string;
+      dosage: string;
+      timing: string;
+      notes?: string;
+    }>;
+  }>;
+}
+
 interface ProtocolSupplement {
   id: string;
   supplementId?: string;
@@ -35,7 +57,9 @@ interface ProtocolSupplement {
 
 const timingPresets: TimingPreset[] = ["Morning", "Afternoon", "Evening"];
 
-export function SupplementProtocolBuilderPage() {
+export function SupplementProtocolBuilderPage({ templateId }: { templateId?: string }) {
+  const router = useRouter();
+  const [persistedTemplateId, setPersistedTemplateId] = useState(templateId ?? "");
   const [protocolName, setProtocolName] = useState("");
   const [description, setDescription] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,6 +67,7 @@ export function SupplementProtocolBuilderPage() {
   const [selectedSupplements, setSelectedSupplements] = useState<ProtocolSupplement[]>([]);
   const [activeLinkSupplementId, setActiveLinkSupplementId] = useState<string | null>(null);
   const [activeClinicalSupplementId, setActiveClinicalSupplementId] = useState<string | null>(null);
+  const [loadingTemplate, setLoadingTemplate] = useState(Boolean(templateId));
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -87,6 +112,52 @@ export function SupplementProtocolBuilderPage() {
       cancelled = true;
     };
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (!templateId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadTemplate() {
+      setLoadingTemplate(true);
+
+      try {
+        const response = await fetch(`/api/v1/supplement-plan-templates/${templateId}`);
+
+        if (!response.ok) {
+          throw new Error("Supplement protocol could not be loaded.");
+        }
+
+        const payload = (await response.json()) as { data?: ApiSupplementTemplate };
+
+        if (!payload.data || cancelled) {
+          return;
+        }
+
+        const template = payload.data;
+        setPersistedTemplateId(template.id);
+        setProtocolName(template.name);
+        setDescription(template.description ?? "");
+        setSelectedSupplements(mapTemplateToProtocolSupplements(template.template));
+      } catch {
+        if (!cancelled) {
+          setStatusMessage("Supplement protocol could not be loaded.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingTemplate(false);
+        }
+      }
+    }
+
+    void loadTemplate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [templateId]);
 
   const canSave = useMemo(
     () => protocolName.trim().length > 0 && selectedSupplements.length > 0 && selectedSupplements.every((supplement) => supplement.dosage.trim()),
@@ -137,7 +208,7 @@ export function SupplementProtocolBuilderPage() {
     setSelectedSupplements((current) => current.filter((supplement) => supplement.id !== id));
   }
 
-  async function saveProtocol() {
+  async function saveProtocol({ closeAfterSave = false }: { closeAfterSave?: boolean } = {}) {
     if (!canSave) {
       setStatusMessage("Add a protocol name and at least one supplement with dosage.");
       return;
@@ -146,8 +217,8 @@ export function SupplementProtocolBuilderPage() {
     setSaving(true);
 
     try {
-      const response = await fetch("/api/v1/supplement-plan-templates", {
-        method: "POST",
+      const response = await fetch(persistedTemplateId ? `/api/v1/supplement-plan-templates/${persistedTemplateId}` : "/api/v1/supplement-plan-templates", {
+        method: persistedTemplateId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: protocolName.trim(),
@@ -174,7 +245,18 @@ export function SupplementProtocolBuilderPage() {
         throw new Error("Protocol save failed.");
       }
 
+      const payload = (await response.json()) as { data?: ApiSupplementTemplate };
+      const savedId = payload.data?.id;
+
+      if (savedId) {
+        setPersistedTemplateId(savedId);
+      }
+
       setStatusMessage(`${protocolName.trim()} saved.`);
+
+      if (closeAfterSave) {
+        router.push("/supplementation/plans");
+      }
     } catch {
       setStatusMessage("Supplement protocol could not be saved.");
     } finally {
@@ -191,7 +273,7 @@ export function SupplementProtocolBuilderPage() {
             <ArrowLeft className="size-4" aria-hidden="true" />
             Back to supplement protocols
           </Link>
-          <h1 className="text-3xl font-black text-slate-950">Create Supplement Protocol</h1>
+          <h1 className="text-3xl font-black text-slate-950">{persistedTemplateId ? "Edit Supplement Protocol" : "Create Supplement Protocol"}</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
             Build a reusable protocol from your supplement database, then configure dosage, timing, and client-facing instructions.
           </p>
@@ -199,11 +281,19 @@ export function SupplementProtocolBuilderPage() {
         <button
           type="button"
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-          disabled={saving || !canSave}
-          onClick={saveProtocol}
+          disabled={saving || loadingTemplate || !canSave}
+          onClick={() => void saveProtocol()}
         >
           <Save className="size-4" aria-hidden="true" />
           {saving ? "Saving..." : "Save Protocol"}
+        </button>
+        <button
+          type="button"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          disabled={saving || loadingTemplate || !canSave}
+          onClick={() => void saveProtocol({ closeAfterSave: true })}
+        >
+          Save and Close
         </button>
       </header>
 
@@ -429,6 +519,51 @@ function getTimingPreset(value?: string | null): TimingPreset {
 
 function formatTiming(preset: TimingPreset, specificTime: string) {
   return specificTime ? `${preset} at ${specificTime}` : preset;
+}
+
+function mapTemplateToProtocolSupplements(template: SupplementTemplateJson | null): ProtocolSupplement[] {
+  return (
+    template?.phases?.flatMap((phase, phaseIndex) =>
+      phase.supplements.map((supplement, supplementIndex) => {
+        const { instructions, productUrl } = parseSupplementNotes(supplement.notes ?? "");
+        const { timingPreset, specificTime } = parseTiming(supplement.timing);
+
+        return {
+          id: `protocol-supplement-${supplement.supplementId ?? `${phaseIndex}-${supplementIndex}`}`,
+          supplementId: supplement.supplementId,
+          supplementName: supplement.supplementName,
+          category: phase.name,
+          timingPreset,
+          specificTime,
+          dosage: supplement.dosage,
+          instructions,
+          productUrl,
+          clinicalNotes: ""
+        };
+      })
+    ) ?? []
+  );
+}
+
+function parseTiming(timing: string): { timingPreset: TimingPreset; specificTime: string } {
+  const [presetValue, timeValue] = timing.split(" at ");
+  const timingPreset = getTimingPreset(presetValue);
+
+  return {
+    timingPreset,
+    specificTime: timeValue ?? ""
+  };
+}
+
+function parseSupplementNotes(notes: string) {
+  const lines = notes.split("\n");
+  const linkPrefix = "Supplement link:";
+  const productUrlLine = lines.find((line) => line.trim().startsWith(linkPrefix));
+
+  return {
+    instructions: lines.filter((line) => !line.trim().startsWith(linkPrefix)).join("\n").trim(),
+    productUrl: productUrlLine?.replace(linkPrefix, "").trim() ?? ""
+  };
 }
 
 function formatSupplementNotes(instructions: string, productUrl: string) {

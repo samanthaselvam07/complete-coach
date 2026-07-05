@@ -79,6 +79,7 @@ Rules:
 - `POST /api/v1/supplements`
 - `GET /api/v1/supplement-plan-templates`
 - `POST /api/v1/supplement-plan-templates`
+- `GET /api/v1/supplement-plan-templates/{template_id}`
 - `GET /api/v1/supplement-plan-assignments`
 - `POST /api/v1/supplement-plan-assignments`
 - `GET /api/v1/education-resources`
