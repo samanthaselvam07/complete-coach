@@ -1584,11 +1584,11 @@ function FullMealPlanFields({
                               />
                               <span className="text-sm font-bold text-slate-700">{quantityDisplay.unit}</span>
                             </span>
-                            <span role="cell">{formatMacroValue(food.calories)} kcal</span>
-                            <span role="cell">{formatMacroValue(food.protein)}g protein</span>
-                            <span role="cell">{formatMacroValue(food.carbs)}g carbs</span>
-                            <span role="cell">{formatMacroValue(food.fats)}g fat</span>
-                            <span role="cell">{formatMacroValue(food.fibre)}g fibre</span>
+                            <span role="cell">{formatMacroValue(food.calories)}</span>
+                            <span role="cell">{formatMacroValue(food.protein)}</span>
+                            <span role="cell">{formatMacroValue(food.carbs)}</span>
+                            <span role="cell">{formatMacroValue(food.fats)}</span>
+                            <span role="cell">{formatMacroValue(food.fibre)}</span>
                             <span role="cell" className="flex justify-end">
                               <button
                                 type="button"
