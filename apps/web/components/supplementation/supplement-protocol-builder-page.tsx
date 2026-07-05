@@ -159,11 +159,6 @@ export function SupplementProtocolBuilderPage({ templateId }: { templateId?: str
     };
   }, [templateId]);
 
-  const canSave = useMemo(
-    () => protocolName.trim().length > 0 && selectedSupplements.length > 0 && selectedSupplements.every((supplement) => supplement.dosage.trim()),
-    [protocolName, selectedSupplements]
-  );
-
   function addSupplement(supplement: ApiSupplement) {
     setSelectedSupplements((current) => {
       if (current.some((item) => item.supplementId === supplement.id)) {
@@ -208,9 +203,31 @@ export function SupplementProtocolBuilderPage({ templateId }: { templateId?: str
     setSelectedSupplements((current) => current.filter((supplement) => supplement.id !== id));
   }
 
+  function getSaveValidationMessage() {
+    if (!protocolName.trim()) {
+      return "Add a protocol name before saving.";
+    }
+
+    if (selectedSupplements.length === 0) {
+      return "Add at least one supplement before saving.";
+    }
+
+    const missingDosageNames = selectedSupplements
+      .filter((supplement) => !supplement.dosage.trim())
+      .map((supplement) => supplement.supplementName);
+
+    if (missingDosageNames.length > 0) {
+      return `Add dosage for ${missingDosageNames.join(", ")} before saving.`;
+    }
+
+    return null;
+  }
+
   async function saveProtocol({ closeAfterSave = false }: { closeAfterSave?: boolean } = {}) {
-    if (!canSave) {
-      setStatusMessage("Add a protocol name and at least one supplement with dosage.");
+    const validationMessage = getSaveValidationMessage();
+
+    if (validationMessage) {
+      setStatusMessage(validationMessage);
       return;
     }
 
@@ -267,7 +284,7 @@ export function SupplementProtocolBuilderPage({ templateId }: { templateId?: str
   return (
     <main className="space-y-8 p-6 lg:p-8">
       {statusMessage ? <SavedToast message={statusMessage} /> : null}
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <header>
         <div>
           <Link href="/supplementation/plans" className="mb-4 inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600">
             <ArrowLeft className="size-4" aria-hidden="true" />
@@ -278,23 +295,6 @@ export function SupplementProtocolBuilderPage({ templateId }: { templateId?: str
             Build a reusable protocol from your supplement database, then configure dosage, timing, and client-facing instructions.
           </p>
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-          disabled={saving || loadingTemplate || !canSave}
-          onClick={() => void saveProtocol()}
-        >
-          <Save className="size-4" aria-hidden="true" />
-          {saving ? "Saving..." : "Save Protocol"}
-        </button>
-        <button
-          type="button"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-          disabled={saving || loadingTemplate || !canSave}
-          onClick={() => void saveProtocol({ closeAfterSave: true })}
-        >
-          Save and Close
-        </button>
       </header>
 
       <section className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-2">
@@ -498,6 +498,29 @@ export function SupplementProtocolBuilderPage({ templateId }: { templateId?: str
             </p>
           )}
         </section>
+      </section>
+
+      <section
+        aria-label="Supplement protocol save actions"
+        className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-end"
+      >
+        <button
+          type="button"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          disabled={saving || loadingTemplate}
+          onClick={() => void saveProtocol()}
+        >
+          <Save className="size-4" aria-hidden="true" />
+          {saving ? "Saving..." : "Save Protocol"}
+        </button>
+        <button
+          type="button"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          disabled={saving || loadingTemplate}
+          onClick={() => void saveProtocol({ closeAfterSave: true })}
+        >
+          Save and Close
+        </button>
       </section>
     </main>
   );

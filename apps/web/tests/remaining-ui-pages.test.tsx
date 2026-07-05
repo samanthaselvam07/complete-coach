@@ -1162,6 +1162,12 @@ describe("SupplementProtocolBuilderPage", () => {
     render(createElement(SupplementProtocolBuilderPage));
 
     expect(screen.getByRole("heading", { name: "Create Supplement Protocol" })).toBeInTheDocument();
+    const saveActions = screen.getByRole("region", { name: "Supplement protocol save actions" });
+    expect(within(saveActions).getByRole("button", { name: "Save Protocol" })).not.toBeDisabled();
+    expect(within(saveActions).getByRole("button", { name: "Save and Close" })).not.toBeDisabled();
+    fireEvent.click(within(saveActions).getByRole("button", { name: "Save Protocol" }));
+    expect(await screen.findByText("Add a protocol name before saving.")).toBeInTheDocument();
+    expect(savedRequests).toHaveLength(0);
     fireEvent.change(screen.getByLabelText("Protocol name"), { target: { value: "Creatine Loading Protocol" } });
     fireEvent.change(screen.getByLabelText("Protocol description"), { target: { value: "Performance supplement plan." } });
     fireEvent.change(screen.getByLabelText("Search supplement database"), { target: { value: "creatine" } });
@@ -1179,6 +1185,9 @@ describe("SupplementProtocolBuilderPage", () => {
     expect(screen.queryByText("Performance")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Dosage for Creatine Monohydrate")).toHaveValue("");
     expect(screen.getByLabelText("Dosage for Beta Alanine")).toHaveValue("");
+    fireEvent.click(within(saveActions).getByRole("button", { name: "Save Protocol" }));
+    expect(await screen.findByText("Add dosage for Creatine Monohydrate, Beta Alanine before saving.")).toBeInTheDocument();
+    expect(savedRequests).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: "View clinical notes for Creatine Monohydrate" }));
     expect(screen.getByText(/Database dosage: 5g/i)).toBeInTheDocument();
     expect(screen.getByText(/strong evidence for strength and power output/i)).toBeInTheDocument();
@@ -1197,7 +1206,7 @@ describe("SupplementProtocolBuilderPage", () => {
     fireEvent.change(instructionsField, {
       target: { value: "Take with breakfast and 500ml water. Keep this note visible without horizontal scrolling." }
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save Protocol" }));
+    fireEvent.click(within(saveActions).getByRole("button", { name: "Save Protocol" }));
 
     await waitFor(() => expect(screen.getByText("Creatine Loading Protocol saved.")).toBeInTheDocument());
     expect(savedRequests[0]).toEqual({
@@ -1234,7 +1243,7 @@ describe("SupplementProtocolBuilderPage", () => {
     });
 
     fireEvent.change(screen.getByLabelText("Protocol description"), { target: { value: "Updated performance supplement plan." } });
-    fireEvent.click(screen.getByRole("button", { name: "Save Protocol" }));
+    fireEvent.click(within(saveActions).getByRole("button", { name: "Save Protocol" }));
     await waitFor(() => expect(savedRequests).toHaveLength(2));
     expect(savedRequests[1]).toMatchObject({
       url: "/api/v1/supplement-plan-templates/template_creatine",
@@ -1246,7 +1255,7 @@ describe("SupplementProtocolBuilderPage", () => {
       }
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Save and Close" }));
+    fireEvent.click(within(saveActions).getByRole("button", { name: "Save and Close" }));
     await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/supplementation/plans"));
   });
 
