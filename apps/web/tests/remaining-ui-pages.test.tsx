@@ -1093,6 +1093,8 @@ describe("SupplementProtocolBuilderPage", () => {
                   category: "Performance",
                   recommendedTiming: "Morning",
                   dosage: "5g",
+                  clinicalDescription: "Creatine monohydrate has strong evidence for strength and power output.",
+                  bioavailabilityNotes: "Best tolerated with food for this client group.",
                   scope: "global",
                   tags: []
                 },
@@ -1102,6 +1104,7 @@ describe("SupplementProtocolBuilderPage", () => {
                   category: "Performance",
                   recommendedTiming: "Afternoon",
                   dosage: "3.2g",
+                  clinicalDescription: "Monitor tingles and split dosage if needed.",
                   scope: "global",
                   tags: []
                 }
@@ -1149,10 +1152,17 @@ describe("SupplementProtocolBuilderPage", () => {
     fireEvent.drop(screen.getByLabelText("Protocol Builder drop zone"), { dataTransfer: dragData });
     expect(screen.getAllByText("Beta Alanine")).toHaveLength(2);
     expect(screen.queryByText("Performance")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Dosage for Creatine Monohydrate")).toHaveValue("");
+    expect(screen.getByLabelText("Dosage for Beta Alanine")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "View clinical notes for Creatine Monohydrate" }));
+    expect(screen.getByText(/Database dosage: 5g/i)).toBeInTheDocument();
+    expect(screen.getByText(/strong evidence for strength and power output/i)).toBeInTheDocument();
+    expect(screen.getByText(/Best tolerated with food/i)).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Timing preset for Creatine Monohydrate"), { target: { value: "Morning" } });
     fireEvent.change(screen.getByLabelText("Specific time for Creatine Monohydrate"), { target: { value: "07:30" } });
     fireEvent.change(screen.getByLabelText("Dosage for Creatine Monohydrate"), { target: { value: "5g" } });
+    fireEvent.change(screen.getByLabelText("Dosage for Beta Alanine"), { target: { value: "3.2g" } });
     fireEvent.click(screen.getByRole("button", { name: "Add link for Creatine Monohydrate" }));
     fireEvent.change(screen.getByLabelText("Supplement link for Creatine Monohydrate"), {
       target: { value: "https://example.com/creatine" }

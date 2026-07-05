@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, LinkIcon, Plus, Save, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, LinkIcon, Plus, Save, Search, Trash2 } from "lucide-react";
 import type { DragEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -15,6 +15,8 @@ interface ApiSupplement {
   category: string;
   recommendedTiming?: string | null;
   dosage?: string | null;
+  bioavailabilityNotes?: string | null;
+  clinicalDescription?: string | null;
   scope?: string;
 }
 
@@ -28,6 +30,7 @@ interface ProtocolSupplement {
   dosage: string;
   instructions: string;
   productUrl: string;
+  clinicalNotes: string;
 }
 
 const timingPresets: TimingPreset[] = ["Morning", "Afternoon", "Evening"];
@@ -39,6 +42,7 @@ export function SupplementProtocolBuilderPage() {
   const [searchResults, setSearchResults] = useState<ApiSupplement[]>([]);
   const [selectedSupplements, setSelectedSupplements] = useState<ProtocolSupplement[]>([]);
   const [activeLinkSupplementId, setActiveLinkSupplementId] = useState<string | null>(null);
+  const [activeClinicalSupplementId, setActiveClinicalSupplementId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -104,9 +108,10 @@ export function SupplementProtocolBuilderPage() {
           category: supplement.category,
           timingPreset: getTimingPreset(supplement.recommendedTiming),
           specificTime: "",
-          dosage: supplement.dosage ?? "",
+          dosage: "",
           instructions: "",
-          productUrl: ""
+          productUrl: "",
+          clinicalNotes: formatClinicalNotes(supplement)
         }
       ];
     });
@@ -299,6 +304,16 @@ export function SupplementProtocolBuilderPage() {
                       <h3 className="text-base font-black text-slate-950">{supplement.supplementName}</h3>
                     </div>
                     <div className="flex items-center gap-1">
+                      {supplement.clinicalNotes ? (
+                        <button
+                          type="button"
+                          aria-label={`View clinical notes for ${supplement.supplementName}`}
+                          className="rounded-lg p-2 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
+                          onClick={() => setActiveClinicalSupplementId((current) => (current === supplement.id ? null : supplement.id))}
+                        >
+                          <FileText className="size-4" aria-hidden="true" />
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         aria-label={`Add link for ${supplement.supplementName}`}
@@ -329,6 +344,12 @@ export function SupplementProtocolBuilderPage() {
                         onChange={(event) => updateSupplement(supplement.id, { productUrl: event.target.value })}
                       />
                     </label>
+                  ) : null}
+                  {activeClinicalSupplementId === supplement.id ? (
+                    <div className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50/70 p-4 text-sm leading-6 text-slate-700">
+                      <p className="mb-2 text-xs font-black uppercase tracking-wide text-indigo-700">Clinical notes</p>
+                      <p className="whitespace-pre-wrap">{supplement.clinicalNotes}</p>
+                    </div>
                   ) : null}
                   <div className="grid gap-4 lg:grid-cols-4">
                     <label className="grid gap-2">
@@ -414,4 +435,14 @@ function formatSupplementNotes(instructions: string, productUrl: string) {
   const noteParts = [instructions.trim(), productUrl.trim() ? `Supplement link: ${productUrl.trim()}` : ""].filter(Boolean);
 
   return noteParts.join("\n");
+}
+
+function formatClinicalNotes(supplement: ApiSupplement) {
+  const notes = [
+    supplement.dosage?.trim() ? `Database dosage: ${supplement.dosage.trim()}` : "",
+    supplement.clinicalDescription?.trim() ? `Clinical notes: ${supplement.clinicalDescription.trim()}` : "",
+    supplement.bioavailabilityNotes?.trim() ? `Bioavailability: ${supplement.bioavailabilityNotes.trim()}` : ""
+  ].filter(Boolean);
+
+  return notes.join("\n\n");
 }
