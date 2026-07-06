@@ -1,10 +1,11 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { createElement } from "react";
+import { act, createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FormsPage } from "@/components/forms/forms-page";
 
 describe("FormsPage", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -406,10 +407,22 @@ describe("FormsPage", () => {
     const menu = screen.getByRole("menu", { name: "Actions for Coaching Application" });
     expect(within(menu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
 
+    vi.useFakeTimers();
     fireEvent.click(within(menu).getByRole("menuitem", { name: "Get link" }));
 
+    await act(async () => {
+      await Promise.resolve();
+    });
+
     expect(writeText).toHaveBeenCalledWith("http://localhost:3000/forms/respond/application-share");
-    expect(await screen.findByText("Form link copied.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Copied");
+    expect(screen.getByText("Form link copied.")).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("shows an empty persisted state when the forms API is unavailable", async () => {

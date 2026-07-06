@@ -6,9 +6,10 @@ import { useEffect, useState } from "react";
 interface SavedToastProps {
   durationMs?: number;
   message?: string;
+  title?: string;
 }
 
-export function SavedToast({ durationMs = 5000, message = "Saved" }: SavedToastProps) {
+export function SavedToast({ durationMs = 5000, message = "Saved", title = "Saved" }: SavedToastProps) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -32,8 +33,8 @@ export function SavedToast({ durationMs = 5000, message = "Saved" }: SavedToastP
         <CheckCircle2 className="size-4" aria-hidden="true" />
       </span>
       <span>
-        <span className="block font-black text-slate-950">Saved</span>
-        {message !== "Saved" ? <span className="mt-0.5 block text-slate-500">{message}</span> : null}
+        <span className="block font-black text-slate-950">{title}</span>
+        {message !== title ? <span className="mt-0.5 block text-slate-500">{message}</span> : null}
       </span>
     </div>
   );

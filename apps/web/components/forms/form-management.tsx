@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Copy, Edit3, FileText, MoreVertical, X } from "lucide-react";
 
 import {
@@ -7,6 +7,7 @@ import {
   getPresetOptionsForTemplate,
   type FormField
 } from "@/lib/forms/form-config";
+import { SavedToast } from "@/components/ui/saved-toast";
 import type { PersistedFormSummary, PersistedFormType } from "./forms-page";
 
 type FormFilterId = "all" | PersistedFormType;
@@ -307,6 +308,18 @@ function RecentPersistedFormRow({
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
   const shareUrl = getFormShareUrl(form);
 
+  useEffect(() => {
+    if (!copyStatus) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCopyStatus(null);
+    }, 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [copyStatus]);
+
   const copyFormLink = async () => {
     await navigator.clipboard?.writeText(shareUrl);
     setCopyStatus("Form link copied.");
@@ -353,11 +366,7 @@ function RecentPersistedFormRow({
         </button>
       </div>
 
-      {copyStatus ? (
-        <span role="status" className="absolute right-4 top-full mt-1 text-xs font-semibold text-emerald-700">
-          {copyStatus}
-        </span>
-      ) : null}
+      {copyStatus ? <SavedToast durationMs={3000} message={copyStatus} title="Copied" /> : null}
 
       {menuOpen ? (
         <>
