@@ -471,6 +471,8 @@ describe("FormsPage", () => {
 
     expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
+    expect(screen.getByRole("heading", { level: 1, name: "Form Builder" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: "Create a New Form" })).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/forms",
       expect.objectContaining({
@@ -483,6 +485,73 @@ describe("FormsPage", () => {
       expect.objectContaining({
         method: "POST",
         body: expect.stringContaining("Full Legal Name")
+      })
+    );
+  });
+
+  it("saves a form and returns to the form library when save and close is used", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "form_saved_close_1",
+              name: "Application Form",
+              description: "Application description",
+              type: "application",
+              status: "draft",
+              shareSlug: "application-form",
+              shareUrlPath: "/forms/respond/application-form",
+              currentVersionId: null,
+              createdAt: "2026-05-14T00:00:00.000Z",
+              updatedAt: "2026-05-14T00:00:00.000Z"
+            }
+          }),
+          { status: 201 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "version_saved_close_1",
+              formId: "form_saved_close_1",
+              versionNumber: 1,
+              schema: { title: "Application Form", description: "Application description", fields: [] },
+              ui: { primaryColor: "#6366f1" },
+              publishedAt: null,
+              createdAt: "2026-05-14T00:00:00.000Z"
+            }
+          }),
+          { status: 201 }
+        )
+      );
+
+    render(createElement(FormsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: /use application forms template/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue to builder" }));
+    fireEvent.change(screen.getByLabelText("Form title"), { target: { value: "Application Form" } });
+    fireEvent.change(screen.getByLabelText("Form description"), { target: { value: "Application description" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save and Close" }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Create a New Form" })).toBeInTheDocument();
+    expect(screen.getByText("Application Form")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: "Form Builder" })).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/forms",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Application Form")
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/forms/form_saved_close_1/versions",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("Application description")
       })
     );
   });

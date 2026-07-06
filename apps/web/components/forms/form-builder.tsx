@@ -466,7 +466,7 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
               className="rounded-lg bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
               onClick={saveAndClose}
             >
-              {saving ? "Saving..." : "Save and close"}
+              {saving ? "Saving..." : "Save and Close"}
             </button>
           </div>
         </div>
