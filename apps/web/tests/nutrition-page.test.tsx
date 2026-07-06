@@ -402,8 +402,10 @@ describe("MealPlansPage", () => {
 
     expect(screen.getByRole("heading", { level: 2, name: "Hypertrophy Phase II" })).toBeInTheDocument();
     expect(screen.getByLabelText("Nutrition plan title")).toHaveValue("Hypertrophy Phase II");
-    expect(screen.getByText("0 Kcal")).toBeInTheDocument();
-    expect(screen.getByText("0 g Protein")).toBeInTheDocument();
+    expect(screen.getByText("0/2900 Kcal")).toBeInTheDocument();
+    expect(screen.getByText("0/215 g Protein")).toBeInTheDocument();
+    expect(screen.getByText("0/305 g Carbs")).toBeInTheDocument();
+    expect(screen.getByText("0/82 g Fat")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
@@ -1002,6 +1004,29 @@ describe("MealPlansPage", () => {
         body: expect.stringContaining("Contest Prep Meal Plan")
       })
     );
+  });
+
+  it("applies TDEE calculator targets to full meal plan day totals", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+
+    render(createElement(MealPlansPage));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create New Nutritional Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Full Meal Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "TDEE Calculator" }));
+
+    const dialog = screen.getByRole("dialog", { name: "TDEE calculator" });
+    const [ageInput, heightInput, weightInput] = within(dialog).getAllByRole("spinbutton");
+    fireEvent.change(ageInput, { target: { value: "32" } });
+    fireEvent.change(heightInput, { target: { value: "165" } });
+    fireEvent.change(weightInput, { target: { value: "70" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Apply to meal plan" }));
+
+    expect(screen.queryByRole("dialog", { name: "TDEE calculator" })).not.toBeInTheDocument();
+    expect(screen.getByText("0/2189 Kcal")).toBeInTheDocument();
+    expect(screen.getByText("0/164 g Protein")).toBeInTheDocument();
+    expect(screen.getByText("0/219 g Carbs")).toBeInTheDocument();
+    expect(screen.getByText("0/73 g Fat")).toBeInTheDocument();
   });
 
   it("builds full meal plans with editable day tabs, meal actions, food search, and meal template import", async () => {
@@ -1800,6 +1825,7 @@ describe("meal plan view model helpers", () => {
       rmr: 1412,
       tdee: 2189,
       calories: 2189,
+      calculatedCalories: 2189,
       proteinGrams: 164,
       carbsGrams: 219,
       fatGrams: 73
@@ -1823,7 +1849,8 @@ describe("meal plan view model helpers", () => {
         macroSplitGramsPerKg: { protein: 2, carbs: 4, fats: 1 }
       })
     ).toMatchObject({
-      calories: 2564,
+      calories: 2557,
+      calculatedCalories: 2564,
       growthRange: [250, 500],
       proteinGrams: 160,
       carbsGrams: 288,
@@ -1848,12 +1875,12 @@ describe("meal plan view model helpers", () => {
         macroSplitGramsPerKg: { protein: 2.2, carbs: 3.5, fats: 0.8 }
       })
     ).toMatchObject({
-      calories: 2364,
+      calories: 2100,
+      calculatedCalories: 2364,
       growthPercent: 8,
       proteinGrams: 154,
       carbsGrams: 245,
-      fatGrams: 56,
-      macroCalories: 2100
+      fatGrams: 56
     });
   });
 

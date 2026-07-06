@@ -114,7 +114,7 @@ interface TdeeCalculationResult {
   proteinGrams: number;
   carbsGrams: number;
   fatGrams: number;
-  macroCalories: number;
+  calculatedCalories: number;
   growthRange?: [number, number];
   growthPercent?: number;
 }
@@ -1343,16 +1343,6 @@ function FullMealPlanFields({
       return;
     }
 
-    const addedTotals = selectedFoods.reduce(
-      (totals, food) => ({
-        calories: totals.calories + food.calories,
-        protein: totals.protein + food.protein,
-        carbs: totals.carbs + food.carbs,
-        fats: totals.fats + food.fats
-      }),
-      { calories: 0, protein: 0, carbs: 0, fats: 0 }
-    );
-
     setDays((currentDays) =>
       currentDays.map((day) =>
         day.id === activeFoodTarget.dayId
@@ -1365,10 +1355,6 @@ function FullMealPlanFields({
           : day
       )
     );
-    setCalories(String((Number(calories) || 0) + addedTotals.calories));
-    setProtein(String((Number(protein) || 0) + addedTotals.protein));
-    setCarbs(String((Number(carbs) || 0) + addedTotals.carbs));
-    setFats(String((Number(fats) || 0) + addedTotals.fats));
     setActiveFoodTarget(null);
   };
 
@@ -1510,10 +1496,10 @@ function FullMealPlanFields({
             TDEE Calculator
           </button>
           <span className="text-xs font-black uppercase text-slate-700">DAY TOTAL</span>
-          <MacroPill value={`${formatMacroValue(dayTotals.calories)} Kcal`} />
-          <MacroPill value={`${formatMacroValue(dayTotals.protein)} g Protein`} />
-          <MacroPill value={`${formatMacroValue(dayTotals.carbs)} g Carbs`} />
-          <MacroPill value={`${formatMacroValue(dayTotals.fats)} g Fat`} />
+          <MacroPill value={formatTotalAgainstTarget(dayTotals.calories, calories, "Kcal")} />
+          <MacroPill value={formatTotalAgainstTarget(dayTotals.protein, protein, "g Protein")} />
+          <MacroPill value={formatTotalAgainstTarget(dayTotals.carbs, carbs, "g Carbs")} />
+          <MacroPill value={formatTotalAgainstTarget(dayTotals.fats, fats, "g Fat")} />
           <MacroPill value={`${formatMacroValue(dayTotals.fibre)} g Fibre`} />
         </div>
       </div>
@@ -2623,6 +2609,20 @@ function formatMacroValue(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
+function formatTotalAgainstTarget(actual: number, targetValue: string, label: string) {
+  const target = Number(targetValue);
+
+  if (!Number.isFinite(target) || target <= 0) {
+    return `${formatMacroValue(actual)} ${label}`;
+  }
+
+  if (formatMacroValue(actual) === formatMacroValue(target)) {
+    return `${formatMacroValue(actual)} ${label}`;
+  }
+
+  return `${formatMacroValue(actual)}/${formatMacroValue(target)} ${label}`;
+}
+
 export function calculateTdeeTargets(input: TdeeCalculationInput): TdeeCalculationResult {
   const formula = TDEE_FORMULAS.find((item) => item.id === input.formulaId) ?? TDEE_FORMULAS[0];
   const rmr = formula.calculateRmr(input);
@@ -2655,16 +2655,19 @@ export function calculateTdeeTargets(input: TdeeCalculationInput): TdeeCalculati
           carbsGrams: (targetCalories * (input.macroSplitPercent.carbs / 100)) / 4,
           fatGrams: (targetCalories * (input.macroSplitPercent.fats / 100)) / 9
         };
-  const macroCalories = macroGrams.proteinGrams * 4 + macroGrams.carbsGrams * 4 + macroGrams.fatGrams * 9;
+  const roundedProteinGrams = Math.round(macroGrams.proteinGrams);
+  const roundedCarbsGrams = Math.round(macroGrams.carbsGrams);
+  const roundedFatGrams = Math.round(macroGrams.fatGrams);
+  const macroCalories = roundedProteinGrams * 4 + roundedCarbsGrams * 4 + roundedFatGrams * 9;
 
   return {
     rmr: Math.round(rmr),
     tdee: Math.round(tdee),
-    calories: Math.round(targetCalories),
-    proteinGrams: Math.round(macroGrams.proteinGrams),
-    carbsGrams: Math.round(macroGrams.carbsGrams),
-    fatGrams: Math.round(macroGrams.fatGrams),
-    macroCalories: Math.round(macroCalories),
+    calories: macroCalories,
+    calculatedCalories: Math.round(targetCalories),
+    proteinGrams: roundedProteinGrams,
+    carbsGrams: roundedCarbsGrams,
+    fatGrams: roundedFatGrams,
     growthRange,
     growthPercent: input.goal === "growth" && input.growthMode === "percent" ? input.growthPercent : undefined
   };
@@ -2896,11 +2899,11 @@ function TdeeCalculatorDialog({ onApply, onClose }: { onApply: (result: TdeeCalc
                 <TdeeResultRow label="TDEE" value={`${result.tdee} kcal`} />
                 {result.growthRange ? <TdeeResultRow label="Growth range" value={`${result.tdee + result.growthRange[0]} to ${result.tdee + result.growthRange[1]} kcal`} /> : null}
                 {result.growthPercent !== undefined ? <TdeeResultRow label="Growth surplus" value={`${result.growthPercent}%`} /> : null}
+                <TdeeResultRow label="Calculated target" value={`${result.calculatedCalories} kcal`} />
                 <TdeeResultRow label="Target" value={`${result.calories} kcal`} highlight />
                 <TdeeResultRow label="Protein" value={`${result.proteinGrams} g`} />
                 <TdeeResultRow label="Carbs" value={`${result.carbsGrams} g`} />
                 <TdeeResultRow label="Fat" value={`${result.fatGrams} g`} />
-                {macroMode === "g_per_kg" ? <TdeeResultRow label="Macro calories" value={`${result.macroCalories} kcal`} /> : null}
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
