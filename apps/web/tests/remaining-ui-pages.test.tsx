@@ -22,15 +22,25 @@ import { SupplementProtocolBuilderPage } from "@/components/supplementation/supp
 import { SupplementPlansPage } from "@/components/supplementation/supplement-plans-page";
 import { SupplementationPage } from "@/components/supplementation/supplementation-page";
 
-const navigationMocks = vi.hoisted(() => ({ push: vi.fn() }));
+const navigationMocks = vi.hoisted(() => ({
+  push: vi.fn(),
+  refresh: vi.fn(),
+  replace: vi.fn()
+}));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: navigationMocks.push })
+  useRouter: () => ({
+    push: navigationMocks.push,
+    refresh: navigationMocks.refresh,
+    replace: navigationMocks.replace
+  })
 }));
 
 afterEach(() => {
   vi.restoreAllMocks();
   navigationMocks.push.mockReset();
+  navigationMocks.refresh.mockReset();
+  navigationMocks.replace.mockReset();
   window.localStorage?.clear();
 });
 
@@ -1256,7 +1266,13 @@ describe("SupplementProtocolBuilderPage", () => {
     });
 
     fireEvent.click(within(saveActions).getByRole("button", { name: "Save and Close" }));
-    await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/supplementation/plans"));
+    await waitFor(() => expect(savedRequests).toHaveLength(3));
+    expect(savedRequests[2]).toMatchObject({
+      url: "/api/v1/supplement-plan-templates/template_creatine",
+      method: "PATCH"
+    });
+    expect(navigationMocks.replace).toHaveBeenCalledWith("/supplementation/plans");
+    expect(navigationMocks.refresh).toHaveBeenCalled();
   });
 
   it("loads a saved protocol template into the builder for editing", async () => {

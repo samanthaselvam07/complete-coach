@@ -272,7 +272,8 @@ export function SupplementProtocolBuilderPage({ templateId }: { templateId?: str
       setStatusMessage(`${protocolName.trim()} saved.`);
 
       if (closeAfterSave) {
-        router.push("/supplementation/plans");
+        router.replace("/supplementation/plans");
+        router.refresh();
       }
     } catch {
       setStatusMessage("Supplement protocol could not be saved.");
