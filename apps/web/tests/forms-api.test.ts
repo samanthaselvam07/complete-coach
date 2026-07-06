@@ -169,6 +169,30 @@ describe("forms API", () => {
     );
   });
 
+  it("still creates a form when audit logging fails", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.form.create.mockResolvedValue(formRecord);
+    mocks.prisma.auditLog.create.mockRejectedValue(new Error("audit unavailable"));
+
+    const response = await postForm(
+      new Request("http://test.local/api/v1/forms", {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Weekly Check-In",
+          description: "Weekly client review",
+          type: "check-in"
+        })
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(payload.data).toMatchObject({
+      id: "form_1",
+      name: "Weekly Check-In"
+    });
+  });
+
   it("creates terms and conditions forms", async () => {
     const termsFormRecord = {
       ...formRecord,
@@ -428,6 +452,38 @@ describe("forms API", () => {
         })
       })
     );
+  });
+
+  it("still creates form versions when audit logging fails", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.form.findFirst.mockResolvedValue(formRecord);
+    mocks.prisma.formVersion.aggregate.mockResolvedValue({ _max: { versionNumber: 2 } });
+    mocks.prisma.formVersion.create.mockResolvedValue({
+      id: "version_3",
+      formId: "form_1",
+      versionNumber: 3,
+      schemaJson: validDefinition,
+      uiJson: null,
+      publishedAt: null,
+      createdAt: new Date("2026-05-14T00:00:00.000Z")
+    });
+    mocks.prisma.auditLog.create.mockRejectedValue(new Error("audit unavailable"));
+
+    const response = await postFormVersion(
+      new Request("http://test.local/api/v1/forms/form_1/versions", {
+        method: "POST",
+        body: JSON.stringify({ schema: validDefinition })
+      }),
+      { params: Promise.resolve({ formId: "form_1" }) }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(payload.data).toMatchObject({
+      id: "version_3",
+      formId: "form_1",
+      versionNumber: 3
+    });
   });
 
   it("creates a first version and persists optional UI metadata", async () => {

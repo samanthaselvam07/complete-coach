@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { dataResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
+import { logger, redactLogValue } from "@/lib/observability/logger";
 import {
   buildFormWhere,
   createFormSchema,
@@ -34,19 +35,28 @@ export async function POST(request: Request) {
       data: getFormCreateData(actor.organizationId, actor.userId, input)
     });
 
-    await prisma.auditLog.create({
-      data: {
-        organizationId: actor.organizationId,
-        actorUserId: actor.userId,
-        action: "form.created",
-        targetType: "form",
-        targetId: form.id,
-        metadata: {
-          type: input.type,
-          status: input.status
+    try {
+      await prisma.auditLog.create({
+        data: {
+          organizationId: actor.organizationId,
+          actorUserId: actor.userId,
+          action: "form.created",
+          targetType: "form",
+          targetId: form.id,
+          metadata: {
+            type: input.type,
+            status: input.status
+          }
         }
-      }
-    });
+      });
+    } catch (auditError) {
+      logger.warn({
+        event: "forms.audit_log_failed",
+        action: "form.created",
+        formId: form.id,
+        error: redactLogValue(auditError)
+      });
+    }
 
     return dataResponse(serializeForm(form), {
       status: 201,

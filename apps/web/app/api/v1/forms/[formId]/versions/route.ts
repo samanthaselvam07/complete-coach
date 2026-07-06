@@ -4,6 +4,7 @@ import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
 import { createFormVersionSchema, serializeFormVersion } from "@/lib/forms/form-records";
+import { logger, redactLogValue } from "@/lib/observability/logger";
 
 interface FormVersionRouteContext {
   params: Promise<{ formId: string }>;
@@ -46,19 +47,29 @@ export async function POST(request: Request, context: FormVersionRouteContext) {
       }
     });
 
-    await prisma.auditLog.create({
-      data: {
-        organizationId: actor.organizationId,
-        actorUserId: actor.userId,
-        action: "form.version.created",
-        targetType: "form",
-        targetId: formId,
-        metadata: {
-          formVersionId: version.id,
-          versionNumber
+    try {
+      await prisma.auditLog.create({
+        data: {
+          organizationId: actor.organizationId,
+          actorUserId: actor.userId,
+          action: "form.version.created",
+          targetType: "form",
+          targetId: formId,
+          metadata: {
+            formVersionId: version.id,
+            versionNumber
+          }
         }
-      }
-    });
+      });
+    } catch (auditError) {
+      logger.warn({
+        event: "forms.audit_log_failed",
+        action: "form.version.created",
+        formId,
+        formVersionId: version.id,
+        error: redactLogValue(auditError)
+      });
+    }
 
     return dataResponse(serializeFormVersion(version), {
       status: 201,
