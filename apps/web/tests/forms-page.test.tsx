@@ -81,6 +81,8 @@ describe("FormsPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /start from scratch/i }));
 
+    expect(screen.getByLabelText("Form title")).toHaveValue("New form");
+
     const preview = screen.getByRole("region", { name: "Form preview" });
     expect(within(preview).queryByTestId("form-field")).not.toBeInTheDocument();
 

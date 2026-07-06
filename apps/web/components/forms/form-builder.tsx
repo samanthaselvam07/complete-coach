@@ -44,7 +44,7 @@ interface PersistedFormDetail extends PersistedFormSummary {
 export function FormBuilder({ form, templateType, presetFields, onBack, onPersistedForm }: FormBuilderProps) {
   const [fields, setFields] = useState<FormField[]>(presetFields ?? []);
   const [persistedForm, setPersistedForm] = useState<PersistedFormSummary | null>(form);
-  const [formTitle, setFormTitle] = useState(form?.name ?? getTemplateName(templateType));
+  const [formTitle, setFormTitle] = useState(form?.name ?? (templateType ? getTemplateName(templateType) : "New form"));
   const [formDescription, setFormDescription] = useState(form?.description ?? "Please provide your details for coach review.");
   const [primaryColor, setPrimaryColor] = useState("#6366f1");
   const [successMessage, setSuccessMessage] = useState(
