@@ -81,7 +81,7 @@ function getKnownDatabaseError(error: unknown) {
     return null;
   }
 
-  if (error.code === "P2021") {
+  if (error.code === "P2021" || error.code === "P2022") {
     return {
       code: "database_schema_unavailable",
       message: "Database schema is not ready. Run migrations before using this endpoint.",
