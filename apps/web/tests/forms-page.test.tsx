@@ -397,6 +397,9 @@ describe("FormsPage", () => {
     render(createElement(FormsPage));
 
     expect(await screen.findByText("Coaching Application")).toBeInTheDocument();
+    expect(screen.getByText(/last edited/i)).toBeInTheDocument();
+    expect(screen.queryByText(/published/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/draft/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Open actions for Coaching Application" }));
 

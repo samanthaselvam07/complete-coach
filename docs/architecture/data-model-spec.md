@@ -357,6 +357,8 @@ Indexes:
 - `organization_id,type`.
 - Unique `organization_id,share_slug`.
 
+Public form response URLs use `share_slug` to load the latest saved form version without requiring coach authentication. Public responses that include extractable name or email answers create or update organization-scoped CRM leads rather than writing to client-scoped `form_submissions`.
+
 ### `form_versions`
 Purpose: immutable versioned schema.
 
@@ -419,7 +421,7 @@ Indexes:
 - `organization_id,status,submitted_at`.
 - `organization_id,form_id,submitted_at`.
 
-Application form submissions also create or update an organization-scoped CRM lead when a name or email can be extracted from the immutable form schema and submitted answers. Matching uses `organization_id,email` so application form submissions cannot attach to leads in another organization.
+Assigned application form submissions also create or update an organization-scoped CRM lead when a name or email can be extracted from the immutable form schema and submitted answers. Matching uses `organization_id,email` so application form submissions cannot attach to leads in another organization.
 
 ### `check_ins`
 Purpose: typed review queue item that may originate from a form submission.

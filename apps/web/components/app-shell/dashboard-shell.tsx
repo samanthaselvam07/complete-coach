@@ -17,9 +17,10 @@ interface DashboardShellProps {
 }
 
 const PUBLIC_PATHS = new Set(["/sign-in", "/sign-up"]);
+const PUBLIC_PATH_PREFIXES = ["/forms/respond/"];
 
 function isPublicPath(pathname: string | null) {
-  return Boolean(pathname && PUBLIC_PATHS.has(pathname));
+  return Boolean(pathname && (PUBLIC_PATHS.has(pathname) || PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))));
 }
 
 export function DashboardShell({ children }: DashboardShellProps) {

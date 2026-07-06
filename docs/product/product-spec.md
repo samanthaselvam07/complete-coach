@@ -110,9 +110,9 @@ Forms include:
 - Template-specific preset question checklists before customization.
 - Form builder with text, long text, agreement/content blocks, number, multiple choice, radio button, rating out of 10, phone, email, date, time, photo, dropdown, and checkbox fields.
 - Click or drag-and-drop field insertion into an independently scrollable builder canvas.
-- Draft and published states.
-- Organization-scoped share links that coaches can copy from the form library.
-- Form submission storage.
+- Internal draft/published states.
+- Organization-scoped share links that coaches can copy from the form library and public recipients can open without signing in.
+- Assigned client form submission storage and public form responses that create or update CRM leads when contact details are supplied.
 - Check-in review queue.
 
 Check-ins require:

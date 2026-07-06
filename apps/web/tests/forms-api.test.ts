@@ -6,6 +6,10 @@ import { GET as getForm, PATCH as patchForm } from "@/app/api/v1/forms/[formId]/
 import { POST as postFormVersion } from "@/app/api/v1/forms/[formId]/versions/route";
 import { POST as publishForm } from "@/app/api/v1/forms/[formId]/publish/route";
 import { POST as postFormAssignment } from "@/app/api/v1/forms/[formId]/assignments/route";
+import {
+  GET as getPublicForm,
+  POST as postPublicForm
+} from "@/app/api/v1/forms/respond/[shareSlug]/route";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -27,6 +31,14 @@ const mocks = vi.hoisted(() => ({
       update: vi.fn()
     },
     formAssignment: {
+      create: vi.fn()
+    },
+    lead: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn()
+    },
+    leadActivity: {
       create: vi.fn()
     },
     auditLog: {
@@ -95,6 +107,10 @@ describe("forms API", () => {
     mocks.prisma.formVersion.findFirst.mockReset();
     mocks.prisma.formVersion.update.mockReset();
     mocks.prisma.formAssignment.create.mockReset();
+    mocks.prisma.lead.create.mockReset();
+    mocks.prisma.lead.findFirst.mockReset();
+    mocks.prisma.lead.update.mockReset();
+    mocks.prisma.leadActivity.create.mockReset();
     mocks.prisma.auditLog.create.mockReset();
   });
 
@@ -127,6 +143,120 @@ describe("forms API", () => {
         where: expect.objectContaining({
           organizationId: "org_1",
           type: FormType.CHECK_IN
+        })
+      })
+    );
+  });
+
+  it("returns a public form by share slug without requiring authentication", async () => {
+    mocks.prisma.form.findFirst.mockResolvedValue({
+      ...formRecord,
+      organizationId: "org_1",
+      shareSlug: "application-share",
+      type: FormType.APPLICATION,
+      versions: [
+        {
+          id: "version_public_1",
+          formId: "form_1",
+          versionNumber: 2,
+          schemaJson: {
+            title: "Coaching Application",
+            description: "Apply for coaching.",
+            fields: [
+              { id: "full-name", type: "short-text", label: "Full name", required: true },
+              { id: "email", type: "email", label: "Email address", required: true }
+            ]
+          },
+          uiJson: { successMessage: "Application received." },
+          publishedAt: null,
+          createdAt: new Date("2026-05-14T00:00:00.000Z")
+        }
+      ]
+    });
+
+    const response = await getPublicForm(new Request("http://test.local/api/v1/forms/respond/application-share"), {
+      params: Promise.resolve({ shareSlug: "application-share" })
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toMatchObject({
+      id: "form_1",
+      shareSlug: "application-share",
+      versionId: "version_public_1",
+      schema: {
+        title: "Coaching Application"
+      }
+    });
+    expect(mocks.auth).not.toHaveBeenCalled();
+    expect(mocks.prisma.form.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          shareSlug: "application-share",
+          deletedAt: null
+        }
+      })
+    );
+  });
+
+  it("creates or updates a CRM lead from public form submissions", async () => {
+    mocks.prisma.form.findFirst.mockResolvedValue({
+      ...formRecord,
+      organizationId: "org_1",
+      name: "Coaching Application",
+      shareSlug: "application-share",
+      type: FormType.APPLICATION,
+      versions: [
+        {
+          id: "version_public_1",
+          formId: "form_1",
+          versionNumber: 2,
+          schemaJson: {
+            title: "Coaching Application",
+            fields: [
+              { id: "full-name", type: "short-text", label: "Full name", required: true },
+              { id: "email", type: "email", label: "Email address", required: true },
+              { id: "goal", type: "long-text", label: "Primary goal", required: false }
+            ]
+          },
+          uiJson: null,
+          publishedAt: null,
+          createdAt: new Date("2026-05-14T00:00:00.000Z")
+        }
+      ]
+    });
+    mocks.prisma.lead.findFirst.mockResolvedValue(null);
+    mocks.prisma.lead.create.mockResolvedValue({ id: "lead_public_1" });
+    mocks.prisma.leadActivity.create.mockResolvedValue({});
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await postPublicForm(
+      new Request("http://test.local/api/v1/forms/respond/application-share", {
+        method: "POST",
+        body: JSON.stringify({
+          answers: {
+            "full-name": "Alex Applicant",
+            email: "Alex@Example.com",
+            goal: "Build muscle"
+          }
+        })
+      }),
+      { params: Promise.resolve({ shareSlug: "application-share" }) }
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(payload.data).toEqual({
+      status: "submitted",
+      leadId: "lead_public_1"
+    });
+    expect(mocks.prisma.lead.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          name: "Alex Applicant",
+          email: "alex@example.com",
+          source: "Public form: Coaching Application"
         })
       })
     );

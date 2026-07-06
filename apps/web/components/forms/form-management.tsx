@@ -328,9 +328,7 @@ function RecentPersistedFormRow({
         </div>
         <div className="min-w-0">
           <div className="text-sm font-medium">{form.name}</div>
-          <div className="text-xs text-gray-500">
-            {form.status.toUpperCase()} - LAST EDITED {formatRelativeDate(form.updatedAt)}
-          </div>
+          <div className="text-xs text-gray-500">LAST EDITED {formatRelativeDate(form.updatedAt)}</div>
         </div>
       </button>
 
