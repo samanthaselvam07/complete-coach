@@ -330,6 +330,14 @@ describe("forms API", () => {
 
     expect(response.status).toBe(201);
     expect(payload.data.versionNumber).toBe(2);
+    expect(mocks.prisma.formVersion.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          formId: "form_1",
+          organizationId: "org_1"
+        }
+      })
+    );
     expect(mocks.prisma.formVersion.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -337,6 +345,46 @@ describe("forms API", () => {
           formId: "form_1",
           versionNumber: 2,
           schemaJson: validDefinition
+        })
+      })
+    );
+  });
+
+  it("persists long form descriptions that are valid for form metadata", async () => {
+    const longDescription = "Tell us about your goals. ".repeat(40);
+    const longDescriptionDefinition = {
+      ...validDefinition,
+      description: longDescription
+    };
+
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.form.findFirst.mockResolvedValue(formRecord);
+    mocks.prisma.formVersion.aggregate.mockResolvedValue({ _max: { versionNumber: null } });
+    mocks.prisma.formVersion.create.mockResolvedValue({
+      id: "version_long_description",
+      formId: "form_1",
+      versionNumber: 1,
+      schemaJson: longDescriptionDefinition,
+      uiJson: null,
+      publishedAt: null,
+      createdAt: new Date("2026-05-14T00:00:00.000Z")
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await postFormVersion(
+      new Request("http://test.local/api/v1/forms/form_1/versions", {
+        method: "POST",
+        body: JSON.stringify({ schema: longDescriptionDefinition })
+      }),
+      { params: Promise.resolve({ formId: "form_1" }) }
+    );
+
+    expect(response.status).toBe(201);
+    expect(mocks.prisma.formVersion.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          schemaJson: longDescriptionDefinition
         })
       })
     );

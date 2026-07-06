@@ -219,8 +219,9 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
       setStatusMessage("Draft saved.");
 
       return { form: savedForm, version: savedVersion };
-    } catch {
-      setErrorMessage("Form could not be saved. Check the details and try again.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Form could not be saved.";
+      setErrorMessage(message);
       return null;
     } finally {
       setSaving(false);
@@ -250,13 +251,13 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
     });
 
     if (!response.ok) {
-      throw new Error("Form container save failed.");
+      throw new Error(`Form details could not be saved. ${await getApiErrorMessage(response)}`);
     }
 
     const payload = (await response.json()) as { data?: PersistedFormSummary };
 
     if (!payload.data) {
-      throw new Error("Form container response was empty.");
+      throw new Error("Form details could not be saved. The server returned an empty response.");
     }
 
     return payload.data;
@@ -289,13 +290,13 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
     });
 
     if (!response.ok) {
-      throw new Error("Form version save failed.");
+      throw new Error(`Form fields could not be saved. ${await getApiErrorMessage(response)}`);
     }
 
     const payload = (await response.json()) as { data?: PersistedFormVersion };
 
     if (!payload.data) {
-      throw new Error("Form version response was empty.");
+      throw new Error("Form fields could not be saved. The server returned an empty response.");
     }
 
     return payload.data;
@@ -484,6 +485,15 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
       ) : null}
     </div>
   );
+}
+
+async function getApiErrorMessage(response: Response) {
+  try {
+    const payload = (await response.json()) as { error?: { message?: string } };
+    return payload.error?.message ?? "Please try again.";
+  } catch {
+    return "Please try again.";
+  }
 }
 
 function getApiFormType(templateType: string | null): PersistedFormSummary["type"] {

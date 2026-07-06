@@ -766,14 +766,54 @@ describe("FormsPage", () => {
     vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ error: {} }), { status: 503 }));
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Database is temporarily unavailable." } }), { status: 503 })
+      );
 
     render(createElement(FormsPage));
 
     fireEvent.click(screen.getByRole("button", { name: /start from scratch/i }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Form could not be saved");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Form details could not be saved. Database is temporarily unavailable."
+    );
+  });
+
+  it("shows a specific save error when form fields cannot be persisted", async () => {
+    vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "form_created_1",
+              name: "Custom Intake",
+              description: "Custom description",
+              type: "intake",
+              status: "draft",
+              currentVersionId: null,
+              createdAt: "2026-05-14T00:00:00.000Z",
+              updatedAt: "2026-05-14T00:00:00.000Z"
+            }
+          }),
+          { status: 201 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Request validation failed." } }), { status: 422 })
+      );
+
+    render(createElement(FormsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: /start from scratch/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Form fields could not be saved. Request validation failed."
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Form Builder" })).toBeInTheDocument();
   });
 
 });
