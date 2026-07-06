@@ -857,7 +857,7 @@ function CreateNutritionPlanDialog({
             onClick={onFullPlan}
           >
             <span className="text-lg font-black text-slate-950">Full Meal Plan</span>
-            <span className="mt-2 block text-sm text-slate-600">Build days, meals, foods, notes, tags, and full nutrition targets.</span>
+            <span className="mt-2 block text-sm text-slate-600">Build days, meals, foods, notes, and full nutrition targets.</span>
           </button>
           <button
             type="button"
@@ -1751,12 +1751,6 @@ function FullMealPlanFields({
       <label className="grid gap-2">
         <span className="text-sm font-medium text-slate-700">Notes</span>
         <textarea className="min-h-52 rounded-xl border border-slate-200 px-4 py-3 text-sm" />
-      </label>
-
-      <label className="grid gap-2">
-        <span className="text-sm font-medium text-slate-700">Nutrition Plan Tags:</span>
-        <input className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm" placeholder="Enter nutrition plan tags" />
-        <span className="text-xs text-slate-400">Please enter nutrition plan tags. Max length for a tag is 80 chars.</span>
       </label>
 
       <MicronutrientBreakdown totals={nutrientTotals} dayName={activeDay?.name ?? "Current day"} />
