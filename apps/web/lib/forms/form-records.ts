@@ -3,7 +3,14 @@ import { z } from "zod";
 import { FormAssignmentStatus, FormStatus, FormType } from "@/app/generated/prisma/enums";
 import { FormDefinitionSchema } from "@/lib/forms/schema";
 
-export const formTypeValues = ["check-in", "intake", "application", "contact", "habit-tracker"] as const;
+export const formTypeValues = [
+  "check-in",
+  "intake",
+  "application",
+  "contact",
+  "habit-tracker",
+  "terms-and-conditions"
+] as const;
 export const formStatusValues = ["draft", "published", "archived"] as const;
 
 export type ApiFormType = (typeof formTypeValues)[number];
@@ -14,7 +21,8 @@ const typeToPrisma: Record<ApiFormType, FormType> = {
   intake: FormType.INTAKE,
   application: FormType.APPLICATION,
   contact: FormType.CONTACT,
-  "habit-tracker": FormType.HABIT_TRACKER
+  "habit-tracker": FormType.HABIT_TRACKER,
+  "terms-and-conditions": FormType.TERMS_AND_CONDITIONS
 };
 
 const typeFromPrisma: Record<FormType, ApiFormType> = {
@@ -22,7 +30,8 @@ const typeFromPrisma: Record<FormType, ApiFormType> = {
   [FormType.INTAKE]: "intake",
   [FormType.APPLICATION]: "application",
   [FormType.CONTACT]: "contact",
-  [FormType.HABIT_TRACKER]: "habit-tracker"
+  [FormType.HABIT_TRACKER]: "habit-tracker",
+  [FormType.TERMS_AND_CONDITIONS]: "terms-and-conditions"
 };
 
 const statusToPrisma: Record<ApiFormStatus, FormStatus> = {
@@ -88,6 +97,7 @@ interface FormRecord {
   description: string | null;
   type: FormType;
   status: FormStatus;
+  shareSlug?: string | null;
   currentVersionId: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -160,12 +170,16 @@ export function getFormUpdateData(input: UpdateFormInput) {
 }
 
 export function serializeForm(record: FormRecord) {
+  const shareSlug = record.shareSlug ?? record.id;
+
   return {
     id: record.id,
     name: record.name,
     description: record.description,
     type: typeFromPrisma[record.type],
     status: statusFromPrisma[record.status],
+    shareSlug,
+    shareUrlPath: `/forms/respond/${shareSlug}`,
     currentVersionId: record.currentVersionId,
     createdAt: toIsoString(record.createdAt),
     updatedAt: toIsoString(record.updatedAt)

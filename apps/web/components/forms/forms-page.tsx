@@ -3,15 +3,26 @@
 import { useEffect, useState } from "react";
 
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
+import type { FormField } from "@/lib/forms/form-config";
 import { FormBuilder } from "./form-builder";
 import { FormManagement } from "./form-management";
+
+export type PersistedFormType =
+  | "check-in"
+  | "intake"
+  | "application"
+  | "contact"
+  | "habit-tracker"
+  | "terms-and-conditions";
 
 export interface PersistedFormSummary {
   id: string;
   name: string;
   description: string | null;
-  type: "check-in" | "intake" | "application" | "contact" | "habit-tracker";
+  type: PersistedFormType;
   status: "draft" | "published" | "archived";
+  shareSlug?: string | null;
+  shareUrlPath?: string | null;
   currentVersionId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -20,6 +31,7 @@ export interface PersistedFormSummary {
 export function FormsPage() {
   const [currentView, setCurrentView] = useState<"management" | "builder">("management");
   const [selectedTemplateType, setSelectedTemplateType] = useState<string | null>(null);
+  const [selectedPresetFields, setSelectedPresetFields] = useState<FormField[] | null>(null);
   const [selectedForm, setSelectedForm] = useState<PersistedFormSummary | null>(null);
   const [forms, setForms] = useState<PersistedFormSummary[]>([]);
   const [loadingForms, setLoadingForms] = useState(true);
@@ -58,15 +70,17 @@ export function FormsPage() {
     };
   }, []);
 
-  const handleCreateForm = (templateType?: string) => {
+  const handleCreateForm = (templateType?: string, presetFields?: FormField[]) => {
     setSelectedForm(null);
     setSelectedTemplateType(templateType ?? null);
+    setSelectedPresetFields(presetFields ?? null);
     setCurrentView("builder");
   };
 
   const handleEditForm = (form: PersistedFormSummary) => {
     setSelectedForm(form);
     setSelectedTemplateType(form.type);
+    setSelectedPresetFields(null);
     setCurrentView("builder");
   };
 
@@ -103,6 +117,7 @@ export function FormsPage() {
     <FormBuilder
       form={selectedForm}
       templateType={selectedTemplateType}
+      presetFields={selectedPresetFields}
       onBack={() => setCurrentView("management")}
       onPersistedForm={upsertForm}
     />

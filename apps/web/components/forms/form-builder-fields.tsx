@@ -1,13 +1,13 @@
-import { Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 
 import type { FormField } from "@/lib/forms/form-config";
 
 export function fieldSupportsOptions(fieldType: string) {
-  return fieldType === "multiple-choice" || fieldType === "dropdown" || fieldType === "checkbox";
+  return fieldType === "multiple-choice" || fieldType === "radio-buttons" || fieldType === "dropdown" || fieldType === "checkbox";
 }
 
 function fieldSupportsPlaceholder(fieldType: string) {
-  return fieldType !== "multiple-choice" && fieldType !== "dropdown" && fieldType !== "checkbox" && fieldType !== "photo";
+  return !["content-block", "multiple-choice", "radio-buttons", "dropdown", "checkbox", "photo", "rating-10"].includes(fieldType);
 }
 
 export function getDefaultPlaceholder(fieldType: string) {
@@ -25,6 +25,10 @@ export function getDefaultPlaceholder(fieldType: string) {
 
   if (fieldType === "date") {
     return "Select a date";
+  }
+
+  if (fieldType === "time") {
+    return "Select a time";
   }
 
   return "Client response";
@@ -65,19 +69,19 @@ export function FormFieldEditor({
             type="button"
             aria-label={`Move ${field.label} up`}
             disabled={index === 0}
-            className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+            className="rounded p-1.5 text-gray-600 hover:bg-gray-100 disabled:opacity-40"
             onClick={() => onMove(field.id, "up")}
           >
-            Up
+            <ArrowUp className="size-4" aria-hidden="true" />
           </button>
           <button
             type="button"
             aria-label={`Move ${field.label} down`}
             disabled={index === fieldCount - 1}
-            className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+            className="rounded p-1.5 text-gray-600 hover:bg-gray-100 disabled:opacity-40"
             onClick={() => onMove(field.id, "down")}
           >
-            Down
+            <ArrowDown className="size-4" aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -118,6 +122,21 @@ export function FormFieldEditor({
           </div>
         ) : null}
 
+        {field.type === "content-block" ? (
+          <div>
+            <label htmlFor={`${field.id}-content`} className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Agreement content
+            </label>
+            <textarea
+              id={`${field.id}-content`}
+              value={field.content ?? ""}
+              rows={16}
+              className="w-full rounded-lg border border-gray-200 p-3 text-sm leading-relaxed text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={(event) => onChange(field.id, { content: event.target.value })}
+            />
+          </div>
+        ) : null}
+
         {fieldSupportsOptions(field.type) ? (
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
@@ -127,7 +146,7 @@ export function FormFieldEditor({
                 className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
                 onClick={() => onOptionAdd(field.id)}
               >
-                Add option for {field.label}
+                Add option
               </button>
             </div>
             {(field.options ?? ["Option 1"]).map((option, optionIndex) => (
@@ -241,7 +260,18 @@ function PreviewField({ field, primaryColor }: { field: FormField; primaryColor:
     );
   }
 
-  if (field.type === "multiple-choice") {
+  if (field.type === "content-block") {
+    return (
+      <section className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">{field.label}</h3>
+        <div className="max-h-96 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+          {field.content}
+        </div>
+      </section>
+    );
+  }
+
+  if (field.type === "multiple-choice" || field.type === "radio-buttons") {
     return (
       <fieldset className="space-y-2">
         <legend className="text-sm font-semibold text-gray-800">{label}</legend>
@@ -251,6 +281,25 @@ function PreviewField({ field, primaryColor }: { field: FormField; primaryColor:
             {option}
           </label>
         ))}
+      </fieldset>
+    );
+  }
+
+  if (field.type === "rating-10") {
+    return (
+      <fieldset>
+        <legend className="text-sm font-semibold text-gray-800">{label}</legend>
+        <div className="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-10">
+          {Array.from({ length: 10 }, (_, index) => index + 1).map((rating) => (
+            <label
+              key={rating}
+              className="flex aspect-square items-center justify-center rounded-lg border border-gray-200 text-sm font-semibold text-gray-700"
+            >
+              <input type="radio" name={field.id} value={rating} className="sr-only" />
+              {rating}
+            </label>
+          ))}
+        </div>
       </fieldset>
     );
   }
@@ -313,6 +362,14 @@ function getPreviewInputType(fieldType: string) {
 
   if (fieldType === "date") {
     return "date";
+  }
+
+  if (fieldType === "time") {
+    return "time";
+  }
+
+  if (fieldType === "number") {
+    return "number";
   }
 
   return "text";

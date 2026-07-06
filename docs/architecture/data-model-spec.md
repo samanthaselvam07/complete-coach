@@ -343,8 +343,9 @@ Fields:
 - `organization_id`
 - `name`
 - `description`
-- `type`
+- `type` enum: `check-in`, `intake`, `application`, `contact`, `habit-tracker`, `terms-and-conditions`
 - `status`
+- `share_slug`
 - `current_version_id`
 - `created_by_user_id`
 - `created_at`
@@ -354,6 +355,7 @@ Fields:
 Indexes:
 - `organization_id,status`.
 - `organization_id,type`.
+- Unique `organization_id,share_slug`.
 
 ### `form_versions`
 Purpose: immutable versioned schema.
@@ -416,6 +418,8 @@ Indexes:
 - `organization_id,client_id,submitted_at`.
 - `organization_id,status,submitted_at`.
 - `organization_id,form_id,submitted_at`.
+
+Application form submissions also create or update an organization-scoped CRM lead when a name or email can be extracted from the immutable form schema and submitted answers. Matching uses `organization_id,email` so application form submissions cannot attach to leads in another organization.
 
 ### `check_ins`
 Purpose: typed review queue item that may originate from a form submission.

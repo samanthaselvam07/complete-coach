@@ -80,11 +80,12 @@ enum LeadActivityType {
 }
 
 enum FormType {
-  CHECK_IN      @map("check-in")
-  INTAKE        @map("intake")
-  APPLICATION   @map("application")
-  CONTACT       @map("contact")
-  HABIT_TRACKER @map("habit-tracker")
+  CHECK_IN             @map("check-in")
+  INTAKE               @map("intake")
+  APPLICATION          @map("application")
+  CONTACT              @map("contact")
+  HABIT_TRACKER        @map("habit-tracker")
+  TERMS_AND_CONDITIONS @map("terms-and-conditions")
 
   @@map("form_type")
 }
@@ -1137,6 +1138,7 @@ model Form {
   description      String?          @db.Text
   type             FormType
   status           FormStatus       @default(DRAFT)
+  shareSlug        String           @default(cuid()) @map("share_slug")
   currentVersionId String?          @unique @map("current_version_id")
   createdByUserId  String?          @map("created_by_user_id")
   createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -1152,6 +1154,7 @@ model Form {
   @@index([organizationId, status])
   @@index([organizationId, type])
   @@index([createdByUserId])
+  @@unique([organizationId, shareSlug])
   @@map("forms")
 }
 

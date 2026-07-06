@@ -97,6 +97,7 @@ Client profile supports:
 ### CRM
 The CRM tracks lead acquisition:
 - Leads with contact details, source, status, location, notes, and stage.
+- Application form submissions create or update organization-scoped CRM leads from submitted contact details.
 - Pipeline stages: initial contact, consultation scheduled, proposal sent, negotiation, closed-won.
 - Drag-and-drop movement between stages.
 - Contact actions for email, phone, and scheduling.
@@ -106,9 +107,11 @@ MVP should persist lead records and stage transitions before introducing advance
 ### Forms And Check-Ins
 Forms include:
 - Form template selection.
-- Form builder with text, long text, multiple choice, phone, email, date, photo, dropdown, and checkbox fields.
-- Header image, primary color, success message customization.
+- Template-specific preset question checklists before customization.
+- Form builder with text, long text, agreement/content blocks, number, multiple choice, radio button, rating out of 10, phone, email, date, time, photo, dropdown, and checkbox fields.
+- Click or drag-and-drop field insertion into an independently scrollable builder canvas.
 - Draft and published states.
+- Organization-scoped share links that coaches can copy from the form library.
 - Form submission storage.
 - Check-in review queue.
 
@@ -231,4 +234,3 @@ User-facing AI features are deferred to a later phase:
 - Auth, roles, and organization boundaries are designed before protected workflows are implemented.
 - PostgreSQL schema, Prisma models, API contracts, external analysis APIs, and webhook contracts are documented before coding.
 - Every implementation ticket includes tests first, documentation updates, and quality gates.
-

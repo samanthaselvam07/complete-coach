@@ -4,7 +4,10 @@ import {
   CheckInStatus,
   FormAssignmentStatus,
   FormSubmissionStatus,
-  FormType
+  FormType,
+  LeadActivityType,
+  LeadStage,
+  LeadStatus
 } from "@/app/generated/prisma/enums";
 import { GET as getAssignments } from "@/app/api/v1/form-assignments/route";
 import { GET as getAssignment } from "@/app/api/v1/form-assignments/[assignmentId]/route";
@@ -47,6 +50,14 @@ const mocks = vi.hoisted(() => ({
       findMany: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn()
+    },
+    lead: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn()
+    },
+    leadActivity: {
+      create: vi.fn()
     },
     clientMeasurement: {
       findMany: vi.fn(),
@@ -195,6 +206,10 @@ describe("submissions, check-ins, and metrics APIs", () => {
     mocks.prisma.checkIn.findMany.mockReset();
     mocks.prisma.checkIn.findFirst.mockReset();
     mocks.prisma.checkIn.update.mockReset();
+    mocks.prisma.lead.create.mockReset();
+    mocks.prisma.lead.findFirst.mockReset();
+    mocks.prisma.lead.update.mockReset();
+    mocks.prisma.leadActivity.create.mockReset();
     mocks.prisma.clientMeasurement.findMany.mockReset();
     mocks.prisma.clientMeasurement.upsert.mockReset();
   });
@@ -358,6 +373,120 @@ describe("submissions, check-ins, and metrics APIs", () => {
 
     expect(response.status).toBe(422);
     expect(mocks.prisma.formSubmission.create).not.toHaveBeenCalled();
+  });
+
+  it("creates a CRM lead when an application form assignment is submitted", async () => {
+    const applicationDefinition = {
+      title: "Coaching Application",
+      fields: [
+        { id: "full-name", type: "short-text", label: "Full name", required: true, exportPolicy: "private" },
+        { id: "email", type: "email", label: "Email address", required: true, exportPolicy: "private" },
+        { id: "phone", type: "phone", label: "Phone number", required: false, exportPolicy: "private" },
+        { id: "location", type: "short-text", label: "Location and timezone", required: false, exportPolicy: "private" },
+        { id: "goal", type: "long-text", label: "What is your ideal outcome?", required: false, exportPolicy: "private" }
+      ]
+    };
+    const applicationAssignment = {
+      ...assignmentRecord,
+      formId: "application_form_1",
+      formVersionId: "application_version_1",
+      form: {
+        id: "application_form_1",
+        name: "Coaching Application",
+        type: FormType.APPLICATION
+      },
+      formVersion: {
+        ...assignmentRecord.formVersion,
+        id: "application_version_1",
+        formId: "application_form_1",
+        schemaJson: applicationDefinition
+      }
+    };
+    const applicationSubmission = {
+      ...submissionRecord,
+      id: "application_submission_1",
+      formId: "application_form_1",
+      formVersionId: "application_version_1",
+      answersJson: {
+        "full-name": "Sam Client",
+        email: "Sam.Client@Example.com",
+        phone: "+61 400 000 000",
+        location: "Melbourne",
+        goal: "Build muscle and improve consistency."
+      },
+      form: applicationAssignment.form,
+      formVersion: applicationAssignment.formVersion
+    };
+
+    mocks.prisma.formAssignment.findFirst.mockResolvedValue(applicationAssignment);
+    mocks.prisma.formSubmission.create.mockResolvedValue(applicationSubmission);
+    mocks.prisma.formAssignment.update.mockResolvedValue({
+      ...applicationAssignment,
+      status: FormAssignmentStatus.SUBMITTED
+    });
+    mocks.prisma.lead.findFirst.mockResolvedValue(null);
+    mocks.prisma.lead.create.mockResolvedValue({
+      id: "lead_from_application",
+      organizationId: "org_1",
+      name: "Sam Client",
+      email: "sam.client@example.com",
+      phone: "+61 400 000 000",
+      source: "Application form",
+      status: LeadStatus.WARM,
+      stage: LeadStage.INITIAL_CONTACT,
+      location: "Melbourne",
+      notes: "What is your ideal outcome?: Build muscle and improve consistency.",
+      lastContactAt: new Date("2026-05-14T06:00:00.000Z"),
+      daysInStage: 0
+    });
+    mocks.prisma.leadActivity.create.mockResolvedValue({});
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await submitAssignment(
+      new Request("http://test.local/api/v1/form-assignments/application_assignment/submit", {
+        method: "POST",
+        body: JSON.stringify({
+          answers: applicationSubmission.answersJson
+        })
+      }),
+      { params: Promise.resolve({ assignmentId: "application_assignment" }) }
+    );
+
+    expect(response.status).toBe(201);
+    expect(mocks.prisma.lead.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          name: "Sam Client",
+          email: "sam.client@example.com",
+          phone: "+61 400 000 000",
+          source: "Application form",
+          status: LeadStatus.WARM,
+          stage: LeadStage.INITIAL_CONTACT,
+          location: "Melbourne",
+          notes: expect.stringContaining("Build muscle and improve consistency")
+        })
+      })
+    );
+    expect(mocks.prisma.leadActivity.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          leadId: "lead_from_application",
+          type: LeadActivityType.NOTE,
+          body: expect.stringContaining("Application form submitted")
+        })
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "lead.created_from_application_form",
+          targetType: "lead",
+          targetId: "lead_from_application"
+        })
+      })
+    );
+    expect(mocks.prisma.checkIn.create).not.toHaveBeenCalled();
   });
 
   it("does not submit assignments outside the active organization", async () => {

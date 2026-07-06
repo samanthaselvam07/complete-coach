@@ -1,5 +1,5 @@
-import { ArrowLeft, Bell, Eye, Grip, Image, Search, Send, Settings } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, Eye, Grip, Image } from "lucide-react";
+import { useEffect, useState, type DragEvent } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
 import { formElements, getTemplateName, initialFormFields, type FormField } from "@/lib/forms/form-config";
@@ -15,6 +15,7 @@ import type { PersistedFormSummary } from "./forms-page";
 interface FormBuilderProps {
   form: PersistedFormSummary | null;
   templateType: string | null;
+  presetFields: FormField[] | null;
   onBack: () => void;
   onPersistedForm: (form: PersistedFormSummary) => void;
 }
@@ -40,20 +41,8 @@ interface PersistedFormDetail extends PersistedFormSummary {
   versions?: PersistedFormVersion[];
 }
 
-interface ClientOption {
-  id: string;
-  name: string;
-}
-
-const colorOptions = [
-  { value: "#6366f1", label: "Indigo" },
-  { value: "#f97316", label: "Orange" },
-  { value: "#10b981", label: "Green" },
-  { value: "#1f2937", label: "Dark" }
-];
-
-export function FormBuilder({ form, templateType, onBack, onPersistedForm }: FormBuilderProps) {
-  const [fields, setFields] = useState<FormField[]>(initialFormFields);
+export function FormBuilder({ form, templateType, presetFields, onBack, onPersistedForm }: FormBuilderProps) {
+  const [fields, setFields] = useState<FormField[]>(presetFields?.length ? presetFields : initialFormFields);
   const [persistedForm, setPersistedForm] = useState<PersistedFormSummary | null>(form);
   const [formTitle, setFormTitle] = useState(form?.name ?? getTemplateName(templateType));
   const [formDescription, setFormDescription] = useState(form?.description ?? "Please provide your details for coach review.");
@@ -61,45 +50,12 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
   const [successMessage, setSuccessMessage] = useState(
     "Thanks for applying! Our elite performance team will review your application within 24 hours."
   );
-  const [clients, setClients] = useState<ClientOption[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState("");
   const [saving, setSaving] = useState(false);
-  const [assigning, setAssigning] = useState(false);
   const [loadingVersion, setLoadingVersion] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const templateName = persistedForm?.name ?? getTemplateName(templateType);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadClients() {
-      try {
-        const response = await fetch("/api/v1/clients?limit=100");
-
-        if (!response.ok) {
-          return;
-        }
-
-        const payload = (await response.json()) as { data?: ClientOption[] };
-        const nextClients = payload.data ?? [];
-
-        if (active) {
-          setClients(nextClients);
-          setSelectedClientId((currentClientId) => currentClientId || nextClients[0]?.id || "");
-        }
-      } catch {
-        // Assignment remains disabled until the client API is available.
-      }
-    }
-
-    void loadClients();
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -165,6 +121,20 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
         options: fieldSupportsOptions(elementType) ? ["Option 1"] : undefined
       }
     ]);
+  };
+
+  const handleElementDragStart = (event: DragEvent<HTMLButtonElement>, elementType: string) => {
+    event.dataTransfer.setData("application/x-complete-coach-form-element", elementType);
+    event.dataTransfer.effectAllowed = "copy";
+  };
+
+  const handleElementDrop = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    const elementType = event.dataTransfer.getData("application/x-complete-coach-form-element");
+
+    if (elementType) {
+      addField(elementType);
+    }
   };
 
   const updateField = (fieldId: string, updates: Partial<FormField>) => {
@@ -257,84 +227,12 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
     }
   };
 
-  const publishForm = async () => {
-    setSaving(true);
-    setStatusMessage(null);
-    setErrorMessage(null);
+  const saveAndClose = async () => {
+    const draft = await saveDraft();
 
-    try {
-      const draft = await saveDraftForPublish();
-
-      if (!draft) {
-        throw new Error("Draft save failed.");
-      }
-
-      const response = await fetch(`/api/v1/forms/${draft.form.id}/publish`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ formVersionId: draft.version.id })
-      });
-
-      if (!response.ok) {
-        throw new Error("Publish failed.");
-      }
-
-      const payload = (await response.json()) as { data?: PersistedFormSummary };
-
-      if (!payload.data) {
-        throw new Error("Publish response was empty.");
-      }
-
-      setPersistedForm(payload.data);
-      onPersistedForm(payload.data);
-      setStatusMessage("Form published and ready for assignment.");
-    } catch {
-      setErrorMessage("Form could not be published. Save the draft and try again.");
-    } finally {
-      setSaving(false);
+    if (draft) {
+      onBack();
     }
-  };
-
-  const assignForm = async () => {
-    if (!persistedForm?.currentVersionId || !selectedClientId) {
-      setErrorMessage("Publish the form and select a client before assigning.");
-      return;
-    }
-
-    setAssigning(true);
-    setStatusMessage(null);
-    setErrorMessage(null);
-
-    try {
-      const response = await fetch(`/api/v1/forms/${persistedForm.id}/assignments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: selectedClientId,
-          formVersionId: persistedForm.currentVersionId
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Assignment failed.");
-      }
-
-      setStatusMessage("Form assigned to selected client.");
-    } catch {
-      setErrorMessage("Form could not be assigned. Check the client and try again.");
-    } finally {
-      setAssigning(false);
-    }
-  };
-
-  const saveDraftForPublish = async () => {
-    const savedForm = await ensureFormContainer();
-    const savedVersion = await createFormVersion(savedForm.id);
-
-    setPersistedForm(savedForm);
-    onPersistedForm(savedForm);
-
-    return { form: savedForm, version: savedVersion };
   };
 
   const ensureFormContainer = async () => {
@@ -378,6 +276,7 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
             label: field.label,
             required: field.required,
             ...(field.placeholder ? { placeholder: field.placeholder } : {}),
+            ...(field.content ? { content: field.content } : {}),
             ...(field.options ? { options: field.options } : {}),
             exportPolicy: "private"
           }))
@@ -403,8 +302,8 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+    <div className="flex h-screen overflow-hidden flex-col bg-gray-50">
+      <header className="shrink-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -424,34 +323,17 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
           </div>
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
-            <input
-              type="search"
-              aria-label="Search components"
-              placeholder="Search components..."
-              className="w-64 rounded-lg border border-gray-200 py-1.5 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <button type="button" aria-label="Builder notifications" className="rounded-lg p-2 transition-colors hover:bg-gray-100">
-            <Bell className="size-5 text-gray-600" aria-hidden="true" />
-          </button>
-          <button type="button" aria-label="Builder settings" className="rounded-lg p-2 transition-colors hover:bg-gray-100">
-            <Settings className="size-5 text-gray-600" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            disabled={saving}
-            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
-            onClick={saveDraft}
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="hidden rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 md:inline-flex"
+          onClick={() => setPreviewOpen(true)}
+        >
+          <Eye className="mr-2 size-4" aria-hidden="true" />
+          Preview Form
+        </button>
       </header>
 
-      <div className="grid flex-1 lg:grid-cols-[16rem_1fr_20rem]">
+      <div className="grid min-h-0 flex-1 overflow-hidden pb-28 lg:grid-cols-[16rem_1fr]">
         <aside className="border-r border-gray-200 bg-white p-4">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">Form Elements</h2>
           <div className="space-y-2">
@@ -463,7 +345,9 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
                   key={element.id}
                   type="button"
                   aria-label={`Add ${element.label} field`}
+                  draggable
                   className={cn("flex w-full items-center gap-3 rounded-lg p-3 transition-opacity hover:opacity-80", element.color)}
+                  onDragStart={(event) => handleElementDragStart(event, element.id)}
                   onClick={() => addField(element.id)}
                 >
                   <Icon className="size-4" aria-hidden="true" />
@@ -474,8 +358,12 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
           </div>
         </aside>
 
-        <main className="overflow-y-auto p-6 md:p-8">
-          <section className="mx-auto max-w-2xl" aria-label="Form preview">
+        <main
+          className="overflow-y-auto p-6 md:p-8"
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={handleElementDrop}
+        >
+          <section className="mx-auto max-w-3xl" aria-label="Form preview">
             <div className="overflow-hidden rounded-2xl bg-white shadow-lg">
               <div className="flex h-48 items-center justify-center bg-gradient-to-br from-slate-950 to-indigo-700 text-white">
                 <Image className="size-10 opacity-80" aria-hidden="true" />
@@ -542,94 +430,47 @@ export function FormBuilder({ form, templateType, onBack, onPersistedForm }: For
           </section>
         </main>
 
-        <aside className="border-l border-gray-200 bg-white p-5">
-          <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-500">Global Settings</h2>
+      </div>
 
-          <div className="mb-6">
-            <label className="mb-2 block text-sm font-medium text-gray-700">Primary Color</label>
-            <div className="flex gap-2">
-              {colorOptions.map((color) => (
-                <button
-                  key={color.value}
-                  type="button"
-                  aria-label={`Set primary color ${color.label}`}
-                  className={cn("size-10 rounded-lg border-2 transition-all", primaryColor === color.value ? "scale-110 border-gray-900" : "border-gray-200")}
-                  style={{ backgroundColor: color.value }}
-                  onClick={() => setPrimaryColor(color.value)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <label htmlFor="success-message" className="mb-2 block text-sm font-medium text-gray-700">
-              Success Message
-            </label>
-            <textarea
-              id="success-message"
-              value={successMessage}
-              rows={4}
-              className="w-full resize-none rounded-lg border border-gray-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              onChange={(event) => setSuccessMessage(event.target.value)}
-            />
-          </div>
-
-          <div className="space-y-3 border-t border-gray-200 pt-4">
+      <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 px-6 py-4 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur">
+        <div className="mx-auto flex max-w-5xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-h-10">
             {statusMessage ? <SavedToast message={statusMessage} /> : null}
             {errorMessage ? (
-              <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">
+              <div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
                 {errorMessage}
               </div>
             ) : null}
+          </div>
+
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
             <button
               type="button"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
               onClick={() => setPreviewOpen(true)}
             >
               <Eye className="size-4" aria-hidden="true" />
-              Preview Form
+              Preview
             </button>
             <button
               type="button"
               disabled={saving}
-              className="flex w-full items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: primaryColor }}
-              onClick={publishForm}
+              className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+              onClick={saveDraft}
             >
-              <Send className="size-4" aria-hidden="true" />
-              {saving ? "Publishing..." : "Publish Form"}
+              {saving ? "Saving..." : "Save"}
             </button>
-          </div>
-
-          <div className="mt-6 space-y-3 border-t border-gray-200 pt-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Assignment</h3>
-            <label htmlFor="assign-client" className="block text-sm font-medium text-gray-700">
-              Assign to client
-            </label>
-            <select
-              id="assign-client"
-              value={selectedClientId}
-              className="w-full rounded-lg border border-gray-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              onChange={(event) => setSelectedClientId(event.target.value)}
-            >
-              {clients.length === 0 ? <option value="">No API clients loaded</option> : null}
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
             <button
               type="button"
-              disabled={!persistedForm?.currentVersionId || !selectedClientId || assigning}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 py-3 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={assignForm}
+              disabled={saving}
+              className="rounded-lg bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+              onClick={saveAndClose}
             >
-              {assigning ? "Assigning..." : "Assign Form"}
+              {saving ? "Saving..." : "Save and close"}
             </button>
           </div>
-        </aside>
-      </div>
+        </div>
+      </footer>
 
       {previewOpen ? (
         <FormPreviewDialog
@@ -650,7 +491,8 @@ function getApiFormType(templateType: string | null): PersistedFormSummary["type
     templateType === "check-in" ||
     templateType === "application" ||
     templateType === "contact" ||
-    templateType === "habit-tracker"
+    templateType === "habit-tracker" ||
+    templateType === "terms-and-conditions"
   ) {
     return templateType;
   }

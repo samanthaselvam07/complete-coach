@@ -60,6 +60,7 @@ const formRecord = {
   type: FormType.CHECK_IN,
   status: FormStatus.DRAFT,
   currentVersionId: null,
+  shareSlug: "weekly-check-in-share",
   createdAt: new Date("2026-05-14T00:00:00.000Z"),
   updatedAt: new Date("2026-05-14T00:00:00.000Z")
 };
@@ -110,13 +111,15 @@ describe("forms API", () => {
     mocks.prisma.form.findMany.mockResolvedValue([formRecord]);
 
     const response = await getForms(new Request("http://test.local/api/v1/forms?type=check-in"));
-    const payload = (await response.json()) as { data: Array<{ id: string; type: string }> };
+    const payload = (await response.json()) as { data: Array<{ id: string; type: string; shareUrlPath: string }> };
 
     expect(response.status).toBe(200);
     expect(payload.data).toEqual([
       expect.objectContaining({
         id: "form_1",
-        type: "check-in"
+        type: "check-in",
+        shareSlug: "weekly-check-in-share",
+        shareUrlPath: "/forms/respond/weekly-check-in-share"
       })
     ]);
     expect(mocks.prisma.form.findMany).toHaveBeenCalledWith(
@@ -166,6 +169,41 @@ describe("forms API", () => {
     );
   });
 
+  it("creates terms and conditions forms", async () => {
+    const termsFormRecord = {
+      ...formRecord,
+      id: "form_terms_1",
+      name: "Client Terms and Conditions",
+      type: FormType.TERMS_AND_CONDITIONS
+    };
+
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.form.create.mockResolvedValue(termsFormRecord);
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await postForm(
+      new Request("http://test.local/api/v1/forms", {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Client Terms and Conditions",
+          description: "Agreement acceptance",
+          type: "terms-and-conditions"
+        })
+      })
+    );
+    const payload = (await response.json()) as { data: { type: string } };
+
+    expect(response.status).toBe(201);
+    expect(payload.data.type).toBe("terms-and-conditions");
+    expect(mocks.prisma.form.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: FormType.TERMS_AND_CONDITIONS
+        })
+      })
+    );
+  });
+
   it("returns a scoped form with versions", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.form.findFirst.mockResolvedValue({
@@ -186,12 +224,13 @@ describe("forms API", () => {
     const response = await getForm(new Request("http://test.local/api/v1/forms/form_1"), {
       params: Promise.resolve({ formId: "form_1" })
     });
-    const payload = (await response.json()) as { data: { id: string; versions: Array<{ id: string }> } };
+    const payload = (await response.json()) as { data: { id: string; shareUrlPath: string; versions: Array<{ id: string }> } };
 
     expect(response.status).toBe(200);
     expect(payload.data).toEqual(
       expect.objectContaining({
         id: "form_1",
+        shareUrlPath: "/forms/respond/weekly-check-in-share",
         versions: [expect.objectContaining({ id: "version_1" })]
       })
     );

@@ -119,14 +119,17 @@ Query filters:
 ### Forms
 - `GET /api/v1/forms`: returns active-organization forms. Query: `status`, `type`, `search`, `limit`.
 - `POST /api/v1/forms`: creates a form container. Body: `name`, `description`, `type`, optional `status`.
+- Form `type` values: `check-in`, `intake`, `application`, `contact`, `habit-tracker`, `terms-and-conditions`.
+- Form responses include `shareSlug` and `shareUrlPath`; share URLs are organization-scoped platform links intended for coaches to copy from the form library.
 - `GET /api/v1/forms/{form_id}`: returns one active-organization form plus immutable versions.
 - `PATCH /api/v1/forms/{form_id}`: updates mutable metadata only. Body: any explicit subset of `name`, `description`, `type`, `status`.
 - `POST /api/v1/forms/{form_id}/versions`: creates the next immutable version. Body: validated `schema`, optional `ui`.
+- Form version field `type` values include `short-text`, `long-text`, `content-block`, `number`, `scale`, `multiple-choice`, `radio-buttons`, `dropdown`, `rating-10`, `checkbox`, `date`, `time`, `email`, `phone`, and `photo`.
 - `POST /api/v1/forms/{form_id}/publish`: publishes a version and sets `current_version_id`. Body: `formVersionId`.
 - `POST /api/v1/forms/{form_id}/assignments`: assigns a published version to a scoped client. Body: `clientId`, optional `formVersionId`, optional `dueAt`.
 - `GET /api/v1/form-assignments`: returns active-organization form assignments. Query: `clientId`, `status`, `limit`.
 - `GET /api/v1/form-assignments/{assignment_id}`: returns one active-organization assignment with the immutable assigned form version.
-- `POST /api/v1/form-assignments/{assignment_id}/submit`: submits answers for the assigned immutable version, creates a submission, creates a check-in where appropriate, and extracts configured metrics. Body: `answers`.
+- `POST /api/v1/form-assignments/{assignment_id}/submit`: submits answers for the assigned immutable version, creates a submission, creates a check-in where appropriate, extracts configured metrics, and creates or updates a CRM lead when the submitted form type is `application`. Body: `answers`.
 - `GET /api/v1/form-submissions`: returns active-organization form submissions. Query: `clientId`, `formId`, `status`, `limit`.
 - `GET /api/v1/form-submissions/{submission_id}`: returns one active-organization submission with persisted answers and form metadata.
 
