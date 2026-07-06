@@ -54,7 +54,7 @@ export const FormFieldDefinitionSchema = z
 export const FormDefinitionSchema = z.object({
   title: z.string().min(1).max(160),
   description: z.string().max(2000).optional(),
-  fields: z.array(FormFieldDefinitionSchema).min(1).max(100)
+  fields: z.array(FormFieldDefinitionSchema).max(100)
 });
 
 export type FormDefinition = z.infer<typeof FormDefinitionSchema>;

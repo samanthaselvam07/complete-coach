@@ -82,14 +82,16 @@ describe("FormsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /start from scratch/i }));
 
     const preview = screen.getByRole("region", { name: "Form preview" });
-    expect(within(preview).getByText("Full Legal Name")).toBeInTheDocument();
+    expect(within(preview).queryByTestId("form-field")).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("button", { name: "Add Short Text field" }));
     fireEvent.click(screen.getByRole("button", { name: "Add Email field" }));
+    expect(within(preview).getByText("New short text field")).toBeInTheDocument();
     expect(within(preview).getByText("New email field")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Move New email field up" }));
     const fieldsAfterMove = within(preview).getAllByTestId("form-field");
-    expect(within(fieldsAfterMove[1]).getByText("New email field")).toBeInTheDocument();
+    expect(within(fieldsAfterMove[0]).getByText("New email field")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Remove New email field" }));
     expect(within(preview).queryByText("New email field")).not.toBeInTheDocument();
@@ -484,7 +486,7 @@ describe("FormsPage", () => {
       "/api/v1/forms/form_created_1/versions",
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining("Full Legal Name")
+        body: expect.stringContaining('"fields":[]')
       })
     );
   });

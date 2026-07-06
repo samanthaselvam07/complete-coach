@@ -390,6 +390,46 @@ describe("forms API", () => {
     );
   });
 
+  it("allows blank draft form versions with no fields", async () => {
+    const blankDefinition = {
+      title: "Blank Intake",
+      description: "Start from scratch",
+      fields: []
+    };
+
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.form.findFirst.mockResolvedValue(formRecord);
+    mocks.prisma.formVersion.aggregate.mockResolvedValue({ _max: { versionNumber: null } });
+    mocks.prisma.formVersion.create.mockResolvedValue({
+      id: "version_blank",
+      formId: "form_1",
+      versionNumber: 1,
+      schemaJson: blankDefinition,
+      uiJson: null,
+      publishedAt: null,
+      createdAt: new Date("2026-05-14T00:00:00.000Z")
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await postFormVersion(
+      new Request("http://test.local/api/v1/forms/form_1/versions", {
+        method: "POST",
+        body: JSON.stringify({ schema: blankDefinition })
+      }),
+      { params: Promise.resolve({ formId: "form_1" }) }
+    );
+
+    expect(response.status).toBe(201);
+    expect(mocks.prisma.formVersion.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          schemaJson: blankDefinition
+        })
+      })
+    );
+  });
+
   it("creates a first version and persists optional UI metadata", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.form.findFirst.mockResolvedValue(formRecord);

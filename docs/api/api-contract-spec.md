@@ -123,7 +123,7 @@ Query filters:
 - Form responses include `shareSlug` and `shareUrlPath`; share URLs are organization-scoped platform links intended for coaches to copy from the form library.
 - `GET /api/v1/forms/{form_id}`: returns one active-organization form plus immutable versions.
 - `PATCH /api/v1/forms/{form_id}`: updates mutable metadata only. Body: any explicit subset of `name`, `description`, `type`, `status`.
-- `POST /api/v1/forms/{form_id}/versions`: creates the next immutable version. Body: validated `schema`, optional `ui`.
+- `POST /api/v1/forms/{form_id}/versions`: creates the next immutable version. Body: validated `schema`, optional `ui`. Draft schemas may contain an empty `fields` array so coaches can save blank forms started from scratch.
 - Form version field `type` values include `short-text`, `long-text`, `content-block`, `number`, `scale`, `multiple-choice`, `radio-buttons`, `dropdown`, `rating-10`, `checkbox`, `date`, `time`, `email`, `phone`, and `photo`.
 - `POST /api/v1/forms/{form_id}/publish`: publishes a version and sets `current_version_id`. Body: `formVersionId`.
 - `POST /api/v1/forms/{form_id}/assignments`: assigns a published version to a scoped client. Body: `clientId`, optional `formVersionId`, optional `dueAt`.

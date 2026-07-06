@@ -2,7 +2,7 @@ import { ArrowLeft, Eye, Grip, Image } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
-import { formElements, getTemplateName, initialFormFields, type FormField } from "@/lib/forms/form-config";
+import { formElements, getTemplateName, type FormField } from "@/lib/forms/form-config";
 import { cn } from "@/lib/utils";
 import {
   fieldSupportsOptions,
@@ -42,7 +42,7 @@ interface PersistedFormDetail extends PersistedFormSummary {
 }
 
 export function FormBuilder({ form, templateType, presetFields, onBack, onPersistedForm }: FormBuilderProps) {
-  const [fields, setFields] = useState<FormField[]>(presetFields?.length ? presetFields : initialFormFields);
+  const [fields, setFields] = useState<FormField[]>(presetFields ?? []);
   const [persistedForm, setPersistedForm] = useState<PersistedFormSummary | null>(form);
   const [formTitle, setFormTitle] = useState(form?.name ?? getTemplateName(templateType));
   const [formDescription, setFormDescription] = useState(form?.description ?? "Please provide your details for coach review.");
