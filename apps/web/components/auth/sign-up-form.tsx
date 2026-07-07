@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useMemo, useState } from "react";
@@ -59,7 +60,7 @@ export function SignUpForm() {
           return;
         }
 
-        router.replace("/");
+        router.replace("/dashboard" as Route);
       }}
     >
       <div className="space-y-2">

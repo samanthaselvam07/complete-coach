@@ -16,7 +16,8 @@ interface DashboardShellProps {
   children: React.ReactNode;
 }
 
-const PUBLIC_PATHS = new Set(["/sign-in", "/sign-up"]);
+const AUTH_ENTRY_PATHS = new Set(["/sign-in", "/sign-up"]);
+const PUBLIC_PATHS = new Set(["/", "/sign-in", "/sign-up", "/waitlist"]);
 const PUBLIC_PATH_PREFIXES = ["/forms/respond/"];
 const LAYOUTLESS_AUTHENTICATED_PATHS = new Set(["/onboarding"]);
 const STANDALONE_PATH_PREFIXES = ["/admin"];
@@ -72,6 +73,7 @@ function DashboardShellContent({ children }: DashboardShellProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
   const publicPath = isPublicPath(pathname);
+  const authEntryPath = Boolean(pathname && AUTH_ENTRY_PATHS.has(pathname));
   const clientSession = session?.activeOrganization?.role === "client";
   const layoutlessAuthenticatedPath = isLayoutlessAuthenticatedPath(pathname);
   const standalonePath = isStandalonePath(pathname);
@@ -86,16 +88,16 @@ function DashboardShellContent({ children }: DashboardShellProps) {
       router.replace(standalonePath ? `/sign-in?callbackUrl=${encodeURIComponent(pathname ?? "/admin")}` : "/sign-in");
     }
 
-    if (status === "authenticated" && publicPath) {
-      router.replace("/");
+    if (status === "authenticated" && authEntryPath) {
+      router.replace("/dashboard" as Route);
     }
 
     if (status === "authenticated" && needsFounderOnboarding && !layoutlessAuthenticatedPath) {
       router.replace("/onboarding" as Route);
     }
-  }, [layoutlessAuthenticatedPath, needsFounderOnboarding, pathname, publicPath, router, standalonePath, status]);
+  }, [authEntryPath, layoutlessAuthenticatedPath, needsFounderOnboarding, pathname, publicPath, router, standalonePath, status]);
 
-  if (publicPath && status !== "authenticated") {
+  if (publicPath && (!authEntryPath || status !== "authenticated")) {
     return <>{children}</>;
   }
 

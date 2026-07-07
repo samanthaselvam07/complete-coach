@@ -5,16 +5,16 @@ import { metadata } from "@/app/layout";
 import HomePage from "@/app/page";
 
 describe("HomePage", () => {
-  it("renders the dashboard boot screen before data resolves", () => {
+  it("renders the waitlist as the public home page", () => {
     render(createElement(HomePage));
 
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "Preparing your dashboard"
+        name: "Your coaching platform should work as hard as you do."
       })
     ).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: "Preparing Complete Coach dashboard." })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /join the waitlist/i })).toHaveLength(2);
   });
 
   it("uses the landing page favicon asset", () => {

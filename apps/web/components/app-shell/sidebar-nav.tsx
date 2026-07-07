@@ -44,7 +44,7 @@ export function SidebarNav({ currentPath }: SidebarNavProps) {
   return (
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="border-b border-sidebar-border p-5">
-        <Link href="/" className="flex items-center gap-3" aria-label="Complete Coach dashboard">
+        <Link href={"/dashboard" as Route} className="flex items-center gap-3" aria-label="Complete Coach dashboard">
           <Image
             src="/brand/favicon.svg"
             alt="Complete Coach icon"

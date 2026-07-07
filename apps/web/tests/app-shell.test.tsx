@@ -52,7 +52,7 @@ describe("app shell navigation", () => {
     expect(brandIcon).toHaveClass("size-10", "shrink-0");
     expect(screen.getByText("Business OS for Fitness Professionals")).toBeInTheDocument();
     expect(screen.queryByText("Elite Performance")).not.toBeInTheDocument();
-    expect(within(nav).getByRole("link", { name: /^dashboard$/i })).toHaveAttribute("href", "/");
+    expect(within(nav).getByRole("link", { name: /^dashboard$/i })).toHaveAttribute("href", "/dashboard");
     expect(within(nav).queryByRole("link", { name: /^audit log$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^scheduling$/i })).not.toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: /^education$/i })).not.toBeInTheDocument();
@@ -118,7 +118,7 @@ describe("app shell navigation", () => {
   });
 
   it("collapses and expands nested menu groups", () => {
-    render(createElement(SidebarNav, { currentPath: "/" }));
+    render(createElement(SidebarNav, { currentPath: "/dashboard" }));
     const nav = screen.getByRole("navigation", { name: /primary navigation/i });
     const trainingToggle = within(nav).getByRole("button", {
       name: /expand training menu/i
@@ -143,7 +143,7 @@ describe("app shell navigation", () => {
   });
 
   it("expands a nested group title without navigating away", () => {
-    render(createElement(SidebarNav, { currentPath: "/" }));
+    render(createElement(SidebarNav, { currentPath: "/dashboard" }));
     const nav = screen.getByRole("navigation", { name: /primary navigation/i });
 
     expect(within(nav).getByRole("button", { name: /expand training menu/i })).toHaveAttribute(
@@ -220,7 +220,7 @@ describe("app shell navigation", () => {
   });
 
   it("keeps the sidebar focused on navigation without the new client action", () => {
-    render(createElement(SidebarNav, { currentPath: "/" }));
+    render(createElement(SidebarNav, { currentPath: "/dashboard" }));
     const nav = screen.getByRole("navigation", { name: /primary navigation/i });
 
     expect(within(nav).getByRole("link", { name: /^dashboard$/i })).toBeInTheDocument();
@@ -237,7 +237,7 @@ describe("app shell navigation", () => {
       status: "authenticated"
     });
 
-    render(createElement(SidebarNav, { currentPath: "/" }));
+    render(createElement(SidebarNav, { currentPath: "/dashboard" }));
     const nav = screen.getByRole("navigation", { name: /primary navigation/i });
 
     expect(within(nav).queryByRole("link", { name: /^coach profile$/i })).not.toBeInTheDocument();
@@ -279,8 +279,10 @@ describe("dashboard shell auth boundary", () => {
   });
 
   it.each([
+    ["/", "Join the Waitlist"],
     ["/sign-in", "Sign in"],
     ["/sign-up", "Sign up"],
+    ["/waitlist", "Join the Waitlist"],
     ["/forms/respond/application-share", "Coaching Application"]
   ])("renders public route %s without app navigation for signed-out users", (pathname, heading) => {
     navigationMocks.pathname = pathname;
@@ -294,7 +296,7 @@ describe("dashboard shell auth boundary", () => {
   });
 
   it("redirects signed-out users away from protected routes without app navigation", () => {
-    navigationMocks.pathname = "/";
+    navigationMocks.pathname = "/dashboard";
 
     render(createElement(DashboardShell, null, createElement("h1", null, "Dashboard")));
 
@@ -305,6 +307,7 @@ describe("dashboard shell auth boundary", () => {
   });
 
   it("renders full app navigation for authenticated users", () => {
+    navigationMocks.pathname = "/dashboard";
     useSessionMock.mockReturnValue({
       data: {
         user: { id: "user_1", name: "Demo Coach", email: "coach@example.com" },
@@ -334,6 +337,7 @@ describe("dashboard shell auth boundary", () => {
   });
 
   it("redirects authenticated coaches to onboarding when the active organization still needs it", () => {
+    navigationMocks.pathname = "/dashboard";
     useSessionMock.mockReturnValue({
       data: {
         user: { id: "user_1", name: "Demo Coach", email: "coach@example.com" },
@@ -381,7 +385,26 @@ describe("dashboard shell auth boundary", () => {
     expect(navigationMocks.replace).not.toHaveBeenCalled();
   });
 
+  it("renders the waitlist page without app navigation for authenticated users", () => {
+    navigationMocks.pathname = "/waitlist";
+    useSessionMock.mockReturnValue({
+      data: {
+        user: { id: "user_1", name: "Demo Coach", email: "coach@example.com" },
+        activeOrganization: { name: "Complete Coach Demo", role: "owner" }
+      },
+      status: "authenticated"
+    });
+
+    render(createElement(DashboardShell, null, createElement("h1", null, "Join the Waitlist")));
+
+    expect(screen.getByRole("heading", { name: "Join the Waitlist" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: /primary navigation/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("searchbox", { name: /search tasks/i })).not.toBeInTheDocument();
+    expect(navigationMocks.replace).not.toHaveBeenCalled();
+  });
+
   it("keeps the left navigation fixed while main page content scrolls", () => {
+    navigationMocks.pathname = "/dashboard";
     useSessionMock.mockReturnValue({
       data: {
         user: { id: "user_1", name: "Demo Coach", email: "coach@example.com" },

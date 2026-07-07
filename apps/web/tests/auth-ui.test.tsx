@@ -178,7 +178,7 @@ describe("auth UI", () => {
       password: "correct-password",
       redirect: false
     });
-    expect(navigationMocks.replace).toHaveBeenCalledWith("/");
+    expect(navigationMocks.replace).toHaveBeenCalledWith("/dashboard");
 
     fetchMock.mockRestore();
   });
