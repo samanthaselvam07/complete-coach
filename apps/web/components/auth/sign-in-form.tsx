@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
@@ -24,7 +25,7 @@ export function SignInForm() {
         });
 
         if (!result?.error) {
-          router.replace("/");
+          router.replace("/dashboard" as Route);
         }
       }}
     >

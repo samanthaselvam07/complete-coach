@@ -98,7 +98,7 @@ describe("auth UI", () => {
         redirect: false
       });
     });
-    expect(navigationMocks.replace).toHaveBeenCalledWith("/");
+    expect(navigationMocks.replace).toHaveBeenCalledWith("/dashboard");
   });
 
   it("keeps plain auth pages linked between sign in and sign up", () => {
@@ -161,7 +161,7 @@ describe("auth UI", () => {
       password: "correct-password",
       redirect: false
     });
-    expect(navigationMocks.replace).toHaveBeenCalledWith("/");
+    expect(navigationMocks.replace).toHaveBeenCalledWith("/dashboard");
 
     fetchMock.mockRestore();
   });

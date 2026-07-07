@@ -29,7 +29,7 @@ export interface NavigationItem {
 }
 
 export const navigationItems = [
-  { href: "/", label: "Dashboard", icon: LayoutGrid },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
   {
     href: "/training",
     label: "Training",
@@ -79,9 +79,5 @@ export const navigationItems = [
 ] satisfies ReadonlyArray<NavigationItem>;
 
 export function isActivePath(currentPath: string, href: string) {
-  if (href === "/") {
-    return currentPath === "/";
-  }
-
   return currentPath === href || currentPath.startsWith(`${href}/`);
 }

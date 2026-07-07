@@ -1,5 +1,5 @@
-import { DashboardPage } from "@/components/dashboard/dashboard-page";
+import { WaitlistPage } from "@/components/waitlist/waitlist-page";
 
 export default function HomePage() {
-  return <DashboardPage />;
+  return <WaitlistPage />;
 }

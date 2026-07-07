@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import type { Route } from "next";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -16,7 +17,8 @@ interface DashboardShellProps {
   children: React.ReactNode;
 }
 
-const PUBLIC_PATHS = new Set(["/sign-in", "/sign-up"]);
+const AUTH_ENTRY_PATHS = new Set(["/sign-in", "/sign-up"]);
+const PUBLIC_PATHS = new Set(["/", "/sign-in", "/sign-up", "/waitlist"]);
 const PUBLIC_PATH_PREFIXES = ["/forms/respond/"];
 
 function isPublicPath(pathname: string | null) {
@@ -62,18 +64,19 @@ function DashboardShellContent({ children }: DashboardShellProps) {
   const router = useRouter();
   const { status } = useSession();
   const publicPath = isPublicPath(pathname);
+  const authEntryPath = Boolean(pathname && AUTH_ENTRY_PATHS.has(pathname));
 
   useEffect(() => {
     if (status === "unauthenticated" && !publicPath) {
       router.replace("/sign-in");
     }
 
-    if (status === "authenticated" && publicPath) {
-      router.replace("/");
+    if (status === "authenticated" && authEntryPath) {
+      router.replace("/dashboard" as Route);
     }
-  }, [publicPath, router, status]);
+  }, [authEntryPath, publicPath, router, status]);
 
-  if (publicPath && status !== "authenticated") {
+  if (publicPath && (!authEntryPath || status !== "authenticated")) {
     return <>{children}</>;
   }
 
