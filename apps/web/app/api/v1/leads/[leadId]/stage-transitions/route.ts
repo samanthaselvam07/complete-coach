@@ -3,9 +3,10 @@ import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import {
+  getLeadStageData,
   leadStageTransitionSchema,
   serializeLead,
-  toPrismaLeadStage
+  shouldResolveCustomStage
 } from "@/lib/crm/lead-records";
 import { prisma } from "@/lib/db/prisma";
 
@@ -30,11 +31,12 @@ export async function POST(request: Request, context: LeadStageTransitionRouteCo
       return errorResponse("not_found", "Lead not found.", 404);
     }
 
+    const stageData = await resolveLeadStageData(actor.organizationId, input.stage);
     const lead = await prisma.$transaction(async (tx) => {
       const updatedLead = await tx.lead.update({
         where: { id: leadId, organizationId: actor.organizationId },
         data: {
-          stage: toPrismaLeadStage(input.stage),
+          ...stageData,
           daysInStage: 0,
           lastContactAt: new Date()
         }
@@ -71,4 +73,24 @@ export async function POST(request: Request, context: LeadStageTransitionRouteCo
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+async function resolveLeadStageData(organizationId: string, stage: string) {
+  if (!shouldResolveCustomStage(stage)) {
+    return getLeadStageData(stage);
+  }
+
+  const crmStage = await prisma.crmStage.findFirst({
+    where: {
+      organizationId,
+      slug: stage
+    },
+    select: { slug: true }
+  });
+
+  if (!crmStage) {
+    throw new Error("CRM stage does not exist for this organization.");
+  }
+
+  return getLeadStageData(crmStage.slug);
 }

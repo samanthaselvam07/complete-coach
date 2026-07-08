@@ -8,6 +8,7 @@ import {
   GET as getClientProfile,
   PATCH as patchClientProfile
 } from "@/app/api/v1/clients/[clientId]/profile/route";
+import { GET as getCrmStages, PUT as putCrmStages } from "@/app/api/v1/crm/stages/route";
 import { GET as getLeads, POST as postLead } from "@/app/api/v1/leads/route";
 import { GET as getLead, PATCH as patchLead } from "@/app/api/v1/leads/[leadId]/route";
 import {
@@ -37,6 +38,12 @@ const mocks = vi.hoisted(() => ({
     leadActivity: {
       findMany: vi.fn(),
       create: vi.fn()
+    },
+    crmStage: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      deleteMany: vi.fn(),
+      upsert: vi.fn()
     },
     $transaction: vi.fn(),
     auditLog: {
@@ -77,6 +84,10 @@ describe("client and CRM API tenancy", () => {
     mocks.prisma.clientProfile.upsert.mockReset();
     mocks.prisma.leadActivity.findMany.mockReset();
     mocks.prisma.leadActivity.create.mockReset();
+    mocks.prisma.crmStage.findMany.mockReset();
+    mocks.prisma.crmStage.findFirst.mockReset();
+    mocks.prisma.crmStage.deleteMany.mockReset();
+    mocks.prisma.crmStage.upsert.mockReset();
     mocks.prisma.$transaction.mockReset();
     mocks.prisma.auditLog.create.mockReset();
   });
@@ -419,6 +430,137 @@ describe("client and CRM API tenancy", () => {
         data: expect.objectContaining({
           action: "lead.created",
           organizationId: "org_1"
+        })
+      })
+    );
+  });
+
+  it("returns default CRM stages when an organization has not customized the pipeline", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.crmStage.findMany.mockResolvedValue([]);
+
+    const response = await getCrmStages();
+    const payload = (await response.json()) as { data: Array<{ id: string; title: string; color: string }> };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "initial-contact", title: "Initial Contact", color: "gray" }),
+        expect.objectContaining({ id: "closed-won", title: "Closed - Won", color: "green" })
+      ])
+    );
+    expect(mocks.prisma.crmStage.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizationId: "org_1" }
+      })
+    );
+  });
+
+  it("saves CRM stage additions, deletions, labels, and colors to the active organization", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    const savedStages = [
+      {
+        slug: "new-applications",
+        title: "New Applications",
+        color: "orange",
+        position: 0,
+        defaultStage: null
+      }
+    ];
+    mocks.prisma.$transaction.mockImplementation(async (callback) =>
+      callback({
+        crmStage: {
+          deleteMany: mocks.prisma.crmStage.deleteMany,
+          upsert: mocks.prisma.crmStage.upsert,
+          findMany: vi.fn().mockResolvedValue(savedStages)
+        }
+      })
+    );
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await putCrmStages(
+      new Request("http://test.local/api/v1/crm/stages", {
+        method: "PUT",
+        body: JSON.stringify({
+          stages: [{ id: "new-applications", title: "New Applications", color: "orange", position: 0 }]
+        })
+      })
+    );
+    const payload = (await response.json()) as { data: Array<{ id: string; color: string }> };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual([expect.objectContaining({ id: "new-applications", color: "orange" })]);
+    expect(mocks.prisma.crmStage.deleteMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        slug: { notIn: ["new-applications"] }
+      }
+    });
+    expect(mocks.prisma.crmStage.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          organizationId: "org_1",
+          slug: "new-applications",
+          color: "orange"
+        })
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "crm.stages.updated",
+          organizationId: "org_1"
+        })
+      })
+    );
+  });
+
+  it("creates manual leads against custom CRM stages owned by the active organization", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.crmStage.findFirst.mockResolvedValue({ slug: "nurture" });
+    mocks.prisma.lead.create.mockResolvedValue({
+      id: "lead_custom_stage",
+      name: "Nurture Lead",
+      email: "nurture@example.com",
+      phone: "+1 555",
+      source: "Manual",
+      status: LeadStatus.WARM,
+      stage: LeadStage.INITIAL_CONTACT,
+      crmStageSlug: "nurture",
+      location: "Melbourne, AU",
+      notes: "Manual lead",
+      lastContactAt: null,
+      daysInStage: 0
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await postLead(
+      new Request("http://test.local/api/v1/leads", {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Nurture Lead",
+          email: "nurture@example.com",
+          status: "warm",
+          stage: "nurture"
+        })
+      })
+    );
+    const payload = (await response.json()) as { data: { stage: string } };
+
+    expect(response.status).toBe(201);
+    expect(payload.data.stage).toBe("nurture");
+    expect(mocks.prisma.crmStage.findFirst).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        slug: "nurture"
+      },
+      select: { slug: true }
+    });
+    expect(mocks.prisma.lead.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          crmStageSlug: "nurture"
         })
       })
     );

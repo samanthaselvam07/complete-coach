@@ -1,7 +1,13 @@
 import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
-import { createLeadSchema, serializeLead, toPrismaLeadStage, toPrismaLeadStatus } from "@/lib/crm/lead-records";
+import {
+  createLeadSchema,
+  getLeadStageData,
+  serializeLead,
+  shouldResolveCustomStage,
+  toPrismaLeadStatus
+} from "@/lib/crm/lead-records";
 import { prisma } from "@/lib/db/prisma";
 
 interface LeadRouteContext {
@@ -47,6 +53,7 @@ export async function PATCH(request: Request, context: LeadRouteContext) {
       return errorResponse("not_found", "Lead not found.", 404);
     }
 
+    const stageData = input.stage ? await resolveLeadStageData(actor.organizationId, input.stage) : null;
     const lead = await prisma.lead.update({
       where: { id: leadId, organizationId: actor.organizationId },
       data: {
@@ -55,7 +62,7 @@ export async function PATCH(request: Request, context: LeadRouteContext) {
         ...(input.phone ? { phone: input.phone } : {}),
         ...(input.source ? { source: input.source } : {}),
         ...(input.status ? { status: toPrismaLeadStatus(input.status) } : {}),
-        ...(input.stage ? { stage: toPrismaLeadStage(input.stage), daysInStage: 0 } : {}),
+        ...(stageData ? { ...stageData, daysInStage: 0 } : {}),
         ...(input.location ? { location: input.location } : {}),
         ...(input.notes ? { notes: input.notes } : {})
       }
@@ -75,4 +82,24 @@ export async function PATCH(request: Request, context: LeadRouteContext) {
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+async function resolveLeadStageData(organizationId: string, stage: string) {
+  if (!shouldResolveCustomStage(stage)) {
+    return getLeadStageData(stage);
+  }
+
+  const crmStage = await prisma.crmStage.findFirst({
+    where: {
+      organizationId,
+      slug: stage
+    },
+    select: { slug: true }
+  });
+
+  if (!crmStage) {
+    throw new Error("CRM stage does not exist for this organization.");
+  }
+
+  return getLeadStageData(crmStage.slug);
 }

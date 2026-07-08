@@ -137,8 +137,30 @@ describe("lead persistence mappers", () => {
       name: "Jessica Martinez",
       status: "hot",
       stage: "initial-contact",
-      initials: "JM"
+      initials: "JM",
+      applicationResponses: [{ question: "Interested in premium package", answer: "" }]
     });
+  });
+
+  it("extracts application response table rows from public form notes", () => {
+    expect(
+      serializeLead({
+        id: "lead_application",
+        name: "Application Lead",
+        email: "lead@example.com",
+        phone: "+1 555",
+        source: "Public form: Coaching Application",
+        status: LeadStatus.WARM,
+        stage: LeadStage.INITIAL_CONTACT,
+        location: "Austin, TX",
+        notes: "Primary goal: Lose 8kg and build strength\nTraining history: Beginner returning after time away",
+        lastContactAt: null,
+        daysInStage: 0
+      }).applicationResponses
+    ).toEqual([
+      { question: "Primary goal", answer: "Lose 8kg and build strength" },
+      { question: "Training history", answer: "Beginner returning after time away" }
+    ]);
   });
 
   it("serializes lead relative contact states", () => {

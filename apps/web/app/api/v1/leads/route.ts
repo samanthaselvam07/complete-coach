@@ -5,8 +5,10 @@ import {
   buildLeadWhere,
   createLeadSchema,
   getLeadCreateData,
+  getLeadStageData,
   leadListQuerySchema,
-  serializeLead
+  serializeLead,
+  shouldResolveCustomStage
 } from "@/lib/crm/lead-records";
 import { prisma } from "@/lib/db/prisma";
 
@@ -30,8 +32,9 @@ export async function POST(request: Request) {
   try {
     const actor = requireActiveActor(await auth(), "clients:write");
     const input = createLeadSchema.parse(await request.json());
+    const stageData = await resolveLeadStageData(actor.organizationId, input.stage);
     const lead = await prisma.lead.create({
-      data: getLeadCreateData(actor.organizationId, input)
+      data: getLeadCreateData(actor.organizationId, input, stageData)
     });
 
     await prisma.auditLog.create({
@@ -52,4 +55,24 @@ export async function POST(request: Request) {
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+async function resolveLeadStageData(organizationId: string, stage: string) {
+  if (!shouldResolveCustomStage(stage)) {
+    return getLeadStageData(stage);
+  }
+
+  const crmStage = await prisma.crmStage.findFirst({
+    where: {
+      organizationId,
+      slug: stage
+    },
+    select: { slug: true }
+  });
+
+  if (!crmStage) {
+    throw new Error("CRM stage does not exist for this organization.");
+  }
+
+  return getLeadStageData(crmStage.slug);
 }

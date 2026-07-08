@@ -560,6 +560,7 @@ model Organization {
   clientProfiles               ClientProfile[]
   leads                        Lead[]
   leadActivities               LeadActivity[]
+  crmStages                    CrmStage[]
   forms                        Form[]
   formVersions                 FormVersion[]
   formAssignments              FormAssignment[]
@@ -1094,6 +1095,7 @@ model Lead {
   source         String?
   status         LeadStatus     @default(WARM)
   stage          LeadStage      @default(INITIAL_CONTACT)
+  crmStageSlug   String?        @map("crm_stage_slug")
   location       String?
   notes          String?        @db.Text
   lastContactAt  DateTime?      @map("last_contact_at") @db.Timestamptz(6)
@@ -1107,10 +1109,28 @@ model Lead {
   activities     LeadActivity[]
 
   @@index([organizationId, stage])
+  @@index([organizationId, crmStageSlug])
   @@index([organizationId, status])
   @@index([organizationId, assignedUserId])
   @@index([organizationId, email])
   @@map("leads")
+}
+
+model CrmStage {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  slug           String
+  title          String
+  color          String       @default("gray")
+  position       Int          @default(0)
+  defaultStage   LeadStage?   @map("default_stage")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, position])
+  @@map("crm_stages")
 }
 
 model LeadActivity {

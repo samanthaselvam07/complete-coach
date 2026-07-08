@@ -1,5 +1,5 @@
 export type LeadStatus = "hot" | "warm" | "cold";
-export type LeadStageId = "initial-contact" | "consultation" | "proposal" | "negotiation" | "closed-won";
+export type LeadStageId = string;
 
 export interface Lead {
   id: string;
@@ -14,6 +14,11 @@ export interface Lead {
   stage: LeadStageId;
   daysInStage: number;
   initials: string;
+  callLink?: string;
+  applicationResponses?: Array<{
+    question: string;
+    answer: string;
+  }>;
 }
 
 export interface LeadStage {
@@ -23,9 +28,9 @@ export interface LeadStage {
 }
 
 export const pipelineStages: LeadStage[] = [
-  { id: "initial-contact", title: "Initial Contact", color: "bg-gray-50" },
-  { id: "consultation", title: "Consultation Scheduled", color: "bg-blue-50" },
-  { id: "proposal", title: "Proposal Sent", color: "bg-purple-50" },
-  { id: "negotiation", title: "In Negotiation", color: "bg-yellow-50" },
-  { id: "closed-won", title: "Closed - Won", color: "bg-green-50" }
+  { id: "initial-contact", title: "Initial Contact", color: "gray" },
+  { id: "consultation", title: "Consultation Scheduled", color: "blue" },
+  { id: "proposal", title: "Proposal Sent", color: "purple" },
+  { id: "negotiation", title: "In Negotiation", color: "yellow" },
+  { id: "closed-won", title: "Closed - Won", color: "green" }
 ];

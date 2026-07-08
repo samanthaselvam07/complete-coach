@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { LeadStage, LeadStatus } from "@/app/generated/prisma/enums";
 import type { Lead } from "@/lib/crm/lead-models";
+import { isDefaultCrmStage } from "@/lib/crm/stage-records";
 
 export const leadStatusValues = ["hot", "warm", "cold"] as const;
 export const leadStageValues = [
@@ -45,7 +46,7 @@ const stageFromPrisma: Record<LeadStage, ApiLeadStage> = {
 
 export const leadListQuerySchema = z.object({
   status: z.enum(leadStatusValues).optional(),
-  stage: z.enum(leadStageValues).optional(),
+  stage: z.string().trim().min(1).max(80).optional(),
   search: z.string().trim().max(100).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(100)
 });
@@ -56,13 +57,13 @@ export const createLeadSchema = z.object({
   phone: z.string().trim().max(40).optional(),
   source: z.string().trim().max(80).optional(),
   status: z.enum(leadStatusValues).default("warm"),
-  stage: z.enum(leadStageValues).default("initial-contact"),
+  stage: z.string().trim().min(1).max(80).default("initial-contact"),
   location: z.string().trim().max(120).optional(),
   notes: z.string().trim().max(2000).optional()
 });
 
 export const leadStageTransitionSchema = z.object({
-  stage: z.enum(leadStageValues)
+  stage: z.string().trim().min(1).max(80)
 });
 
 export type LeadListQuery = z.infer<typeof leadListQuerySchema>;
@@ -76,6 +77,7 @@ interface LeadRecord {
   source: string | null;
   status: LeadStatus;
   stage: LeadStage;
+  crmStageSlug?: string | null;
   location: string | null;
   notes: string | null;
   lastContactAt: Date | string | null;
@@ -84,6 +86,10 @@ interface LeadRecord {
 
 export function toPrismaLeadStage(stage: ApiLeadStage) {
   return stageToPrisma[stage];
+}
+
+export function isApiLeadStage(stage: string): stage is ApiLeadStage {
+  return leadStageValues.includes(stage as ApiLeadStage);
 }
 
 export function toPrismaLeadStatus(status: ApiLeadStatus) {
@@ -95,7 +101,11 @@ export function buildLeadWhere(organizationId: string, query: LeadListQuery) {
     organizationId,
     deletedAt: null,
     ...(query.status ? { status: toPrismaLeadStatus(query.status) } : {}),
-    ...(query.stage ? { stage: toPrismaLeadStage(query.stage) } : {}),
+    ...(query.stage
+      ? isApiLeadStage(query.stage)
+        ? { stage: toPrismaLeadStage(query.stage), crmStageSlug: null }
+        : { crmStageSlug: query.stage }
+      : {}),
     ...(query.search
       ? {
           OR: [
@@ -119,13 +129,18 @@ export function serializeLead(record: LeadRecord): Lead {
     notes: record.notes || "",
     location: record.location || "Unknown",
     status: statusFromPrisma[record.status],
-    stage: stageFromPrisma[record.stage],
+    stage: record.crmStageSlug || stageFromPrisma[record.stage],
     daysInStage: record.daysInStage,
-    initials: getInitials(record.name)
+    initials: getInitials(record.name),
+    applicationResponses: parseApplicationResponses(record.notes)
   };
 }
 
-export function getLeadCreateData(organizationId: string, input: CreateLeadInput) {
+export function getLeadCreateData(
+  organizationId: string,
+  input: CreateLeadInput,
+  stageData = getLeadStageData(input.stage)
+) {
   return {
     organizationId,
     name: input.name,
@@ -133,12 +148,30 @@ export function getLeadCreateData(organizationId: string, input: CreateLeadInput
     phone: input.phone,
     source: input.source,
     status: toPrismaLeadStatus(input.status),
-    stage: toPrismaLeadStage(input.stage),
+    ...stageData,
     location: input.location,
     notes: input.notes,
     lastContactAt: new Date(),
     daysInStage: 0
   };
+}
+
+export function getLeadStageData(stage: string) {
+  if (isApiLeadStage(stage)) {
+    return {
+      stage: toPrismaLeadStage(stage),
+      crmStageSlug: null
+    };
+  }
+
+  return {
+    stage: LeadStage.INITIAL_CONTACT,
+    crmStageSlug: stage
+  };
+}
+
+export function shouldResolveCustomStage(stage: string) {
+  return !isApiLeadStage(stage) && !isDefaultCrmStage(stage);
 }
 
 function getInitials(name: string) {
@@ -168,4 +201,27 @@ function formatRelativeContact(value: Date | string | null) {
   }
 
   return `${diffDays} days ago`;
+}
+
+function parseApplicationResponses(notes: string | null) {
+  if (!notes?.trim()) {
+    return [];
+  }
+
+  return notes
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const separatorIndex = line.indexOf(":");
+
+      if (separatorIndex === -1) {
+        return { question: line, answer: "" };
+      }
+
+      return {
+        question: line.slice(0, separatorIndex).trim(),
+        answer: line.slice(separatorIndex + 1).trim()
+      };
+    });
 }
