@@ -344,33 +344,12 @@ describe("CRMPage", () => {
     );
   });
 
-  it("converts a lead into a new client from the lead profile", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+  it("opens the new client intake page with lead details when converting from CRM", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
       if (url === "/api/v1/crm/stages") {
         return Promise.resolve(new Response(JSON.stringify({ data: apiStages }), { status: 200 }));
-      }
-
-      if (url === "/api/v1/clients" && init?.method === "POST") {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: {
-                id: "client_1",
-                name: "API Lead",
-                packageName: "Unassigned",
-                compliance: 0,
-                checkInDay: "Unscheduled",
-                latestCheckIn: "Not recorded",
-                status: "new",
-                startDate: "Jul 8, 2026",
-                initials: "AL"
-              }
-            }),
-            { status: 201 }
-          )
-        );
       }
 
       return Promise.resolve(
@@ -390,7 +369,7 @@ describe("CRMPage", () => {
                 stage: "consultation",
                 daysInStage: 0,
                 initials: "AL",
-                applicationResponses: []
+                applicationResponses: [{ question: "Date of birth", answer: "1992-06-14" }]
               }
             ]
           }),
@@ -404,15 +383,13 @@ describe("CRMPage", () => {
     expect(await screen.findByText("API Lead")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /view API Lead/i }));
-    fireEvent.click(screen.getByRole("button", { name: "Convert to client" }));
 
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      "/api/v1/clients",
-      expect.objectContaining({
-        method: "POST",
-        body: expect.stringContaining("api@example.com")
-      })
+    const convertLink = screen.getByRole("link", { name: "Convert to client" });
+
+    expect(convertLink).toHaveAttribute(
+      "href",
+      "/clients/new?source=crm&leadId=lead_api_1&firstName=API&lastName=Lead&email=api%40example.com&phone=%2B1+555&dateOfBirth=1992-06-14"
     );
-    expect(await screen.findByText("Lead converted to client.")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/clients", expect.anything());
   });
 });

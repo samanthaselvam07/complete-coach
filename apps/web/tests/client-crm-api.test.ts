@@ -74,6 +74,12 @@ const ownerSession = {
   }
 };
 
+const orgScopedLeadWhere = {
+  id: "org_2_lead",
+  organizationId: "org_1",
+  deletedAt: null
+};
+
 describe("client and CRM API tenancy", () => {
   beforeEach(() => {
     mocks.auth.mockReset();
@@ -125,19 +131,18 @@ describe("client and CRM API tenancy", () => {
           email: "EMMA@example.com",
           organizationId: "org_2",
           status: "new",
+          packageId: "package_1",
           onboarding: {
             dateOfBirth: "1992-06-14",
             needsPayment: true,
-            weightMeasurement: "Body weight",
-            initialQuestionnaire: "Start-Up Questionnaire",
-            dailyHabitForm: "Daily Habits",
-            checkInForm: "Weekly Check-In",
+            paymentMode: "payment-link",
+            weightMeasurement: "kg",
+            initialQuestionnaire: "form_intake",
+            dailyHabitForm: "form_habits",
+            checkInForm: "form_checkin",
             checkInFrequency: "Weekly",
             checkInDays: ["Tuesday"],
-            allowGoalsCompetitions: true,
-            allowExerciseLibraryAccess: true,
-            allowApplePay: true,
-            defaultExerciseMetricUnit: "Kilograms"
+            defaultExerciseMetricUnit: "kg"
           }
         })
       })
@@ -148,7 +153,8 @@ describe("client and CRM API tenancy", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           organizationId: "org_1",
-          email: "emma@example.com"
+          email: "emma@example.com",
+          packageId: "package_1"
         })
       })
     );
@@ -167,6 +173,7 @@ describe("client and CRM API tenancy", () => {
           metadata: expect.objectContaining({
             onboarding: expect.objectContaining({
               needsPayment: true,
+              paymentMode: "payment-link",
               checkInDays: ["Tuesday"]
             })
           })
@@ -757,13 +764,7 @@ describe("client and CRM API tenancy", () => {
     expect(readResponse.status).toBe(404);
     expect(createResponse.status).toBe(404);
     expect(mocks.prisma.lead.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          id: "org_2_lead",
-          organizationId: "org_1",
-          deletedAt: null
-        }
-      })
+      expect.objectContaining({ where: orgScopedLeadWhere })
     );
     expect(mocks.prisma.leadActivity.findMany).not.toHaveBeenCalled();
     expect(mocks.prisma.leadActivity.create).not.toHaveBeenCalled();
@@ -784,13 +785,7 @@ describe("client and CRM API tenancy", () => {
 
     expect(response.status).toBe(404);
     expect(mocks.prisma.lead.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          id: "org_2_lead",
-          organizationId: "org_1",
-          deletedAt: null
-        }
-      })
+      expect.objectContaining({ where: orgScopedLeadWhere })
     );
     expect(mocks.prisma.$transaction).not.toHaveBeenCalled();
     expect(mocks.prisma.lead.update).not.toHaveBeenCalled();

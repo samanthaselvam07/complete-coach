@@ -1,6 +1,7 @@
 "use client";
 
 import { Clock, GripVertical, Link2, Mail, MapPin, Phone, Plus, Search, Settings2, Tag, Trash2, UserCheck, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
@@ -73,7 +74,6 @@ export function CRMPage() {
   const [leadForm, setLeadForm] = useState<LeadFormState>(emptyLeadForm);
   const [leadFormError, setLeadFormError] = useState<string | null>(null);
   const [savingLead, setSavingLead] = useState(false);
-  const [convertedLeadId, setConvertedLeadId] = useState<string | null>(null);
   const [loadingLeads, setLoadingLeads] = useState(true);
 
   const stageLabels = useMemo(
@@ -156,7 +156,6 @@ export function CRMPage() {
   const openLeadProfile = (lead: Lead) => {
     setEditingLead(lead);
     setLeadForm(getLeadFormState(lead));
-    setConvertedLeadId(null);
     setLeadFormError(null);
     setLeadFormOpen(true);
   };
@@ -166,7 +165,6 @@ export function CRMPage() {
     setEditingLead(null);
     setLeadForm(emptyLeadForm);
     setLeadFormError(null);
-    setConvertedLeadId(null);
   };
 
   const openStageSettings = () => {
@@ -269,41 +267,6 @@ export function CRMPage() {
     }
 
     setLeads(previousLeads);
-  };
-
-  const convertLeadToClient = async () => {
-    if (!editingLead) {
-      return;
-    }
-
-    setSavingLead(true);
-    setLeadFormError(null);
-
-    try {
-      const { firstName, lastName } = splitLeadName(leadForm.name || editingLead.name);
-      const response = await fetch("/api/v1/clients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          email: leadForm.email || undefined,
-          phone: leadForm.phone || undefined,
-          status: "new",
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Lead could not be converted.");
-      }
-
-      setConvertedLeadId(editingLead.id);
-    } catch {
-      setLeadFormError("Lead could not be converted to a client. Check the details and try again.");
-    } finally {
-      setSavingLead(false);
-    }
   };
 
   return (
@@ -432,7 +395,6 @@ export function CRMPage() {
       {leadFormOpen ? (
         editingLead ? (
           <LeadProfileDialog
-            converted={convertedLeadId === editingLead.id}
             lead={editingLead}
             form={leadForm}
             error={leadFormError}
@@ -441,7 +403,6 @@ export function CRMPage() {
             stages={crmStages}
             onChange={(field, value) => setLeadForm((currentForm) => ({ ...currentForm, [field]: value }))}
             onClose={closeLeadForm}
-            onConvert={() => void convertLeadToClient()}
             onSubmit={() => void saveLead()}
           />
         ) : (
@@ -651,7 +612,6 @@ function LeadFormDialog({
 }
 
 function LeadProfileDialog({
-  converted,
   lead,
   form,
   error,
@@ -660,10 +620,8 @@ function LeadProfileDialog({
   stages,
   onChange,
   onClose,
-  onConvert,
   onSubmit
 }: {
-  converted: boolean;
   lead: Lead;
   form: LeadFormState;
   error: string | null;
@@ -672,9 +630,10 @@ function LeadProfileDialog({
   stages: LeadStage[];
   onChange: (field: keyof LeadFormState, value: string) => void;
   onClose: () => void;
-  onConvert: () => void;
   onSubmit: () => void;
 }) {
+  const clientIntakeHref = buildClientIntakeHref(lead, form);
+
   return (
     <LeadDialogShell labelledBy="lead-profile-title" onClose={onClose}>
       <form
@@ -712,19 +671,16 @@ function LeadProfileDialog({
           )}
         </section>
 
-        {converted ? <p className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">Lead converted to client.</p> : null}
         {error ? <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
 
         <div className="mt-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <button
-            type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 disabled:opacity-60"
-            disabled={saving || converted}
-            onClick={onConvert}
+          <Link
+            href={clientIntakeHref as `/clients/new?${string}`}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700"
           >
             <UserCheck className="size-4" aria-hidden="true" />
             Convert to client
-          </button>
+          </Link>
           <div className="flex justify-end gap-3">
             <button type="button" className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700" onClick={onClose}>
               Close
@@ -1002,6 +958,41 @@ function splitLeadName(name: string) {
   const lastName = parts.join(" ") || "Client";
 
   return { firstName, lastName };
+}
+
+function buildClientIntakeHref(lead: Lead, form: LeadFormState) {
+  const { firstName, lastName } = splitLeadName(form.name || lead.name);
+  const params = new URLSearchParams({
+    source: "crm",
+    leadId: lead.id,
+    firstName,
+    lastName
+  });
+  const email = form.email || lead.email;
+  const phone = form.phone || lead.phone;
+  const dateOfBirth = extractLeadDateOfBirth(lead);
+
+  if (email) {
+    params.set("email", email);
+  }
+
+  if (phone) {
+    params.set("phone", phone);
+  }
+
+  if (dateOfBirth) {
+    params.set("dateOfBirth", dateOfBirth);
+  }
+
+  return `/clients/new?${params.toString()}`;
+}
+
+function extractLeadDateOfBirth(lead: Lead) {
+  const dateResponse = lead.applicationResponses?.find((response) =>
+    /date\s*of\s*birth|dob|birth\s*date/i.test(response.question)
+  );
+
+  return dateResponse?.answer.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? "";
 }
 
 function upsertLead(leads: Lead[], lead: Lead) {

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
-import { UploadCloud } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import {
   createClientMutationBody,
@@ -11,14 +10,85 @@ import {
 } from "@/components/clients/client-form-dialog";
 import { SavedToast } from "@/components/ui/saved-toast";
 
-export function NewClientIntakePage() {
-  const [form, setForm] = useState<ClientFormState>(emptyClientForm);
+interface IntakeInitialForm {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  dateOfBirth?: string;
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface LookupRecord {
+  id: string;
+  name: string;
+}
+
+export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeInitialForm }) {
+  const [form, setForm] = useState<ClientFormState>({ ...emptyClientForm, ...initialForm });
+  const [packageOptions, setPackageOptions] = useState<SelectOption[]>([]);
+  const [initialQuestionnaireOptions, setInitialQuestionnaireOptions] = useState<SelectOption[]>([]);
+  const [dailyHabitFormOptions, setDailyHabitFormOptions] = useState<SelectOption[]>([]);
+  const [checkInFormOptions, setCheckInFormOptions] = useState<SelectOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdClientId, setCreatedClientId] = useState<string | null>(null);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadLookups() {
+      const [packages, intakeForms, habitForms, checkInForms] = await Promise.all([
+        fetchLookupOptions("/api/v1/packages?status=active&limit=100"),
+        fetchLookupOptions("/api/v1/forms?type=intake&status=published&limit=100"),
+        fetchLookupOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
+        fetchLookupOptions("/api/v1/forms?type=check-in&status=published&limit=100")
+      ]);
+
+      if (!active) {
+        return;
+      }
+
+      setPackageOptions(packages);
+      setInitialQuestionnaireOptions(intakeForms);
+      setDailyHabitFormOptions(habitForms);
+      setCheckInFormOptions(checkInForms);
+    }
+
+    void loadLookups();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const packageNameById = useMemo(
+    () => new Map(packageOptions.map((option) => [option.value, option.label])),
+    [packageOptions]
+  );
+
   function updateField<TField extends keyof ClientFormState>(field: TField, value: ClientFormState[TField]) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
+  }
+
+  function updatePackage(packageId: string) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      packageId,
+      packageName: packageNameById.get(packageId) ?? ""
+    }));
+  }
+
+  function updatePaymentMode(needsPayment: boolean) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      needsPayment,
+      paymentMode: needsPayment ? "payment-link" : "offline"
+    }));
   }
 
   function toggleCheckInDay(day: string) {
@@ -114,9 +184,9 @@ export function NewClientIntakePage() {
           <ClientIntakeField label="Phone" value={form.phone} onChange={(value) => updateField("phone", value)} />
           <ClientSelectField
             label="Payment plan/package"
-            value={form.packageName}
-            options={["Men's Physique Mentorship 2024", "Elite Physique", "Standard Package", "Premium Package"]}
-            onChange={(value) => updateField("packageName", value)}
+            value={form.packageId}
+            options={packageOptions}
+            onChange={updatePackage}
           />
         </div>
 
@@ -125,8 +195,8 @@ export function NewClientIntakePage() {
             label="Does this client need to pay?"
             value={form.needsPayment}
             yesLabel="Yes, this client needs to pay"
-            noLabel="No, this client does not need to pay"
-            onChange={(value) => updateField("needsPayment", value)}
+            noLabel="No, set up offline payment"
+            onChange={updatePaymentMode}
           />
 
           <ClientIntakeField
@@ -140,31 +210,38 @@ export function NewClientIntakePage() {
             <ClientSelectField
               label="Weight Measurement"
               value={form.weightMeasurement}
-              options={["None", "Body weight", "Body measurements", "Body weight and measurements"]}
+              options={[
+                { value: "kg", label: "kg" },
+                { value: "lbs", label: "lbs" }
+              ]}
               onChange={(value) => updateField("weightMeasurement", value)}
             />
             <ClientSelectField
               label="Initial Q/A"
               value={form.initialQuestionnaire}
-              options={["Start-Up Questionnaire", "Lifestyle Questionnaire", "Nutrition Questionnaire", "None"]}
+              options={initialQuestionnaireOptions}
               onChange={(value) => updateField("initialQuestionnaire", value)}
             />
             <ClientSelectField
               label="Daily habit form"
               value={form.dailyHabitForm}
-              options={["None", "Daily Habits", "Training Day Habits", "Nutrition Habits"]}
+              options={dailyHabitFormOptions}
               onChange={(value) => updateField("dailyHabitForm", value)}
             />
             <ClientSelectField
               label="Check in form"
               value={form.checkInForm}
-              options={["Weekly Check-In", "Fortnightly Check-In", "Monthly Review", "None"]}
+              options={checkInFormOptions}
               onChange={(value) => updateField("checkInForm", value)}
             />
             <ClientSelectField
               label="Check-in Frequency"
               value={form.checkInFrequency}
-              options={["Weekly", "Fortnightly", "Monthly"]}
+              options={[
+                { value: "Weekly", label: "Weekly" },
+                { value: "Fortnightly", label: "Fortnightly" },
+                { value: "Monthly", label: "Monthly" }
+              ]}
               onChange={(value) => updateField("checkInFrequency", value)}
             />
           </div>
@@ -194,60 +271,13 @@ export function NewClientIntakePage() {
             </div>
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700" htmlFor="new-client-welcome-pack">
-              Upload a welcome pack.
-            </label>
-            <div className="rounded-xl border border-dashed border-indigo-300 bg-indigo-50/30 p-8 text-center">
-              <UploadCloud className="mx-auto mb-3 size-8 text-indigo-200" aria-hidden="true" />
-              <label className="cursor-pointer text-sm font-bold text-indigo-600" htmlFor="new-client-welcome-pack">
-                Drop your files here or click to upload.
-              </label>
-              <p className="mt-1 text-xs text-slate-400">Only .pdf files can be uploaded</p>
-              <input
-                id="new-client-welcome-pack"
-                className="sr-only"
-                type="file"
-                accept="application/pdf,.pdf"
-                onChange={(event) => updateField("welcomePackFileName", event.target.files?.[0]?.name ?? "")}
-              />
-              {form.welcomePackFileName ? (
-                <p className="mt-3 text-xs font-bold text-slate-600">{form.welcomePackFileName}</p>
-              ) : null}
-            </div>
-            <p className="mt-2 text-xs text-slate-400">
-              If you have a welcome PDF upload here for your new client
-            </p>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-3">
-            <SegmentedBooleanField
-              label="Do you want this client to add a goal/competition?"
-              value={form.allowGoalsCompetitions}
-              yesLabel="Allow goals or competitions"
-              noLabel="Do not allow goals or competitions"
-              onChange={(value) => updateField("allowGoalsCompetitions", value)}
-            />
-            <SegmentedBooleanField
-              label="Do you want your client to access all your exercise library videos?"
-              value={form.allowExerciseLibraryAccess}
-              yesLabel="Allow full exercise video library access"
-              noLabel="Do not allow full exercise video library access"
-              onChange={(value) => updateField("allowExerciseLibraryAccess", value)}
-            />
-            <SegmentedBooleanField
-              label="Can this client pay with apple pay"
-              value={form.allowApplePay}
-              yesLabel="Allow Apple Pay"
-              noLabel="Do not allow Apple Pay"
-              onChange={(value) => updateField("allowApplePay", value)}
-            />
-          </div>
-
           <ClientSelectField
             label="Set default exercise metric measurement unit"
             value={form.defaultExerciseMetricUnit}
-            options={["None", "Kilograms", "Pounds"]}
+            options={[
+              { value: "kg", label: "kg" },
+              { value: "lbs", label: "lbs" }
+            ]}
             onChange={(value) => updateField("defaultExerciseMetricUnit", value)}
           />
         </div>
@@ -277,6 +307,25 @@ export function NewClientIntakePage() {
       </form>
     </main>
   );
+}
+
+async function fetchLookupOptions(url: string): Promise<SelectOption[]> {
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = (await response.json()) as { data?: LookupRecord[] };
+
+    return (payload.data ?? []).map((record) => ({
+      value: record.id,
+      label: record.name
+    }));
+  } catch {
+    return [];
+  }
 }
 
 function ClientIntakeField({
@@ -319,7 +368,7 @@ function ClientSelectField({
 }: {
   label: string;
   value: string;
-  options: string[];
+  options: SelectOption[];
   onChange: (value: string) => void;
 }) {
   const id = `new-client-${label.toLowerCase().replaceAll(" ", "-").replaceAll("/", "")}`;
@@ -335,9 +384,10 @@ function ClientSelectField({
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
         onChange={(event) => onChange(event.target.value)}
       >
+        <option value="">Select</option>
         {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>

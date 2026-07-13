@@ -23,64 +23,53 @@ describe("Figma update pages", () => {
 
   it("creates a client from the new intake page", async () => {
     fetchMock.mockReset();
-    fetchMock.mockResolvedValueOnce(
-      new Response(JSON.stringify({ id: "client_created_1" }), { status: 201 }),
-    );
+    mockNewClientIntakeLookups(new Response(JSON.stringify({ id: "client_created_1" }), { status: 201 }));
 
     render(<NewClientIntakePage />);
+
+    expect(await screen.findByRole("option", { name: "Transformation Intake" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Ava" } });
     fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Stone" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "ava@example.com" } });
     fireEvent.change(screen.getByLabelText("Date of birth"), { target: { value: "1992-06-14" } });
-    fireEvent.change(screen.getByLabelText("Payment plan/package"), { target: { value: "Elite Physique" } });
+    fireEvent.change(screen.getByLabelText("Payment plan/package"), { target: { value: "package_elite" } });
     fireEvent.click(screen.getByRole("button", { name: "Yes, this client needs to pay" }));
     fireEvent.change(screen.getByLabelText("Plan start date"), { target: { value: "2026-07-08" } });
-    fireEvent.change(screen.getByLabelText("Weight Measurement"), { target: { value: "Body weight" } });
-    fireEvent.change(screen.getByLabelText("Initial Q/A"), { target: { value: "Start-Up Questionnaire" } });
-    fireEvent.change(screen.getByLabelText("Daily habit form"), { target: { value: "Daily Habits" } });
-    fireEvent.change(screen.getByLabelText("Check in form"), { target: { value: "Weekly Check-In" } });
+    fireEvent.change(screen.getByLabelText("Weight Measurement"), { target: { value: "kg" } });
+    fireEvent.change(screen.getByLabelText("Initial Q/A"), { target: { value: "form_intake" } });
+    fireEvent.change(screen.getByLabelText("Daily habit form"), { target: { value: "form_habits" } });
+    fireEvent.change(screen.getByLabelText("Check in form"), { target: { value: "form_checkin" } });
     fireEvent.change(screen.getByLabelText("Check-in Frequency"), { target: { value: "Weekly" } });
     fireEvent.click(screen.getByRole("button", { name: "Wednesday" }));
-    fireEvent.click(screen.getByRole("button", { name: "Allow goals or competitions" }));
-    fireEvent.click(screen.getByRole("button", { name: "Allow full exercise video library access" }));
-    fireEvent.click(screen.getByRole("button", { name: "Allow Apple Pay" }));
-    fireEvent.change(screen.getByLabelText("Set default exercise metric measurement unit"), { target: { value: "Kilograms" } });
     fireEvent.click(screen.getByRole("button", { name: "Create client" }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/v1/clients",
-        expect.objectContaining({
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firstName: "Ava",
-            lastName: "Stone",
-            email: "ava@example.com",
-            phone: undefined,
-            packageName: "Elite Physique",
-            checkInDay: "Wednesday",
-            status: "new",
-            startDate: "2026-07-08",
-            onboarding: {
-              dateOfBirth: "1992-06-14",
-              needsPayment: true,
-              weightMeasurement: "Body weight",
-              initialQuestionnaire: "Start-Up Questionnaire",
-              dailyHabitForm: "Daily Habits",
-              checkInForm: "Weekly Check-In",
-              checkInFrequency: "Weekly",
-              checkInDays: ["Wednesday"],
-              welcomePackFileName: undefined,
-              allowGoalsCompetitions: true,
-              allowExerciseLibraryAccess: true,
-              allowApplePay: true,
-              defaultExerciseMetricUnit: "Kilograms"
-            }
-          })
-        }),
-      );
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/clients", expect.objectContaining({ method: "POST" }));
+    });
+    const clientCreateCall = fetchMock.mock.calls.find(([url, init]) => url === "/api/v1/clients" && init?.method === "POST");
+    const createBody = JSON.parse(String(clientCreateCall?.[1]?.body));
+
+    expect(createBody).toEqual({
+      firstName: "Ava",
+      lastName: "Stone",
+      email: "ava@example.com",
+      packageId: "package_elite",
+      packageName: "Elite Physique",
+      checkInDay: "Wednesday",
+      status: "new",
+      startDate: "2026-07-08",
+      onboarding: {
+        dateOfBirth: "1992-06-14",
+        needsPayment: true,
+        paymentMode: "payment-link",
+        weightMeasurement: "kg",
+        initialQuestionnaire: "form_intake",
+        dailyHabitForm: "form_habits",
+        checkInForm: "form_checkin",
+        checkInFrequency: "Weekly",
+        checkInDays: ["Wednesday"]
+      }
     });
 
     expect(await screen.findByText("Client created.")).toBeInTheDocument();
@@ -91,9 +80,11 @@ describe("Figma update pages", () => {
     );
   });
 
-  it("renders the expanded new client onboarding controls", () => {
+  it("renders the new client onboarding controls without removed options", async () => {
+    mockNewClientIntakeLookups();
     render(<NewClientIntakePage />);
 
+    expect(await screen.findByRole("option", { name: "Transformation Intake" })).toBeInTheDocument();
     expect(screen.getByLabelText("Date of birth")).toBeInTheDocument();
     expect(screen.getByLabelText("Payment plan/package")).toBeInTheDocument();
     expect(screen.getByText("Does this client need to pay?")).toBeInTheDocument();
@@ -103,11 +94,59 @@ describe("Figma update pages", () => {
     expect(screen.getByLabelText("Daily habit form")).toBeInTheDocument();
     expect(screen.getByLabelText("Check in form")).toBeInTheDocument();
     expect(screen.getByLabelText("Check-in Frequency")).toBeInTheDocument();
-    expect(screen.getByText("Upload a welcome pack.")).toBeInTheDocument();
     expect(screen.getByLabelText("Set default exercise metric measurement unit")).toBeInTheDocument();
+    expect(screen.getAllByRole("option", { name: "Select" }).length).toBeGreaterThanOrEqual(5);
+    expect(screen.getAllByRole("option", { name: "kg" }).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByRole("option", { name: "lbs" }).length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("Upload a welcome pack.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Do you want this client to add a goal/competition?")).not.toBeInTheDocument();
+    expect(screen.queryByText("Do you want your client to access all your exercise library videos?")).not.toBeInTheDocument();
+    expect(screen.queryByText("Can this client pay with apple pay")).not.toBeInTheDocument();
+  });
+
+  it("prefills new client intake details from CRM conversion", () => {
+    render(
+      <NewClientIntakePage
+        initialForm={{
+          firstName: "Ava",
+          lastName: "Stone",
+          email: "ava@example.com",
+          phone: "+61 400",
+          dateOfBirth: "1992-06-14"
+        }}
+      />
+    );
+
+    expect(screen.getByLabelText("First name")).toHaveValue("Ava");
+    expect(screen.getByLabelText("Last name")).toHaveValue("Stone");
+    expect(screen.getByLabelText("Email")).toHaveValue("ava@example.com");
+    expect(screen.getByLabelText("Phone")).toHaveValue("+61 400");
+    expect(screen.getByLabelText("Date of birth")).toHaveValue("1992-06-14");
+  });
+
+  it("uses offline payment mode when the client does not need to pay", async () => {
+    fetchMock.mockReset();
+    mockNewClientIntakeLookups(new Response(JSON.stringify({ id: "client_created_2" }), { status: 201 }));
+
+    render(<NewClientIntakePage />);
+
+    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Ben" } });
+    fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Taylor" } });
+    fireEvent.click(screen.getByRole("button", { name: "No, set up offline payment" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create client" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/clients",
+        expect.objectContaining({
+          body: expect.stringContaining('"paymentMode":"offline"')
+        })
+      );
+    });
   });
 
   it("validates the new client intake form before submitting", () => {
+    mockNewClientIntakeLookups();
     render(<NewClientIntakePage />);
 
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: " " } });
@@ -115,7 +154,7 @@ describe("Figma update pages", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create client" }));
 
     expect(screen.getByText("Enter the client's first and last name.")).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/clients", expect.objectContaining({ method: "POST" }));
   });
 
   it("creates a package from the dedicated package builder page", async () => {
@@ -263,3 +302,44 @@ describe("Figma update pages", () => {
     );
   });
 });
+
+function mockNewClientIntakeLookups(clientCreateResponse = new Response(JSON.stringify({ id: "client_created" }), { status: 201 })) {
+  fetchMock.mockImplementation((input, init) => {
+    const url = String(input);
+
+    if (url === "/api/v1/packages?status=active&limit=100") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [{ id: "package_elite", name: "Elite Physique", status: "active" }]
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
+    if (url === "/api/v1/forms?type=intake&status=published&limit=100") {
+      return Promise.resolve(
+        new Response(JSON.stringify({ data: [{ id: "form_intake", name: "Transformation Intake" }] }), { status: 200 })
+      );
+    }
+
+    if (url === "/api/v1/forms?type=habit-tracker&status=published&limit=100") {
+      return Promise.resolve(
+        new Response(JSON.stringify({ data: [{ id: "form_habits", name: "Daily Basics" }] }), { status: 200 })
+      );
+    }
+
+    if (url === "/api/v1/forms?type=check-in&status=published&limit=100") {
+      return Promise.resolve(
+        new Response(JSON.stringify({ data: [{ id: "form_checkin", name: "Weekly Review" }] }), { status: 200 })
+      );
+    }
+
+    if (url === "/api/v1/clients" && init?.method === "POST") {
+      return Promise.resolve(clientCreateResponse.clone());
+    }
+
+    return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+  });
+}
