@@ -266,45 +266,12 @@ describe("app shell navigation", () => {
     expect(screen.queryByLabelText("Coach module links")).not.toBeInTheDocument();
   });
 
-  it("creates a new client from the top navigation quick action", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            id: "client_sidebar_1",
-            name: "Sidebar Client",
-            packageName: "Starter Coaching",
-            compliance: 0,
-            checkInDay: "Friday",
-            latestCheckIn: "Not recorded",
-            status: "new",
-            startDate: "May 14, 2026",
-            initials: "SC",
-            avatarColor: "bg-slate-900"
-          }
-        }),
-        { status: 201 }
-      )
-    );
-
+  it("opens the client onboarding page from the top navigation quick action", () => {
     render(createElement(NewClientButton));
 
     fireEvent.click(screen.getByRole("button", { name: "New Client" }));
-    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Sidebar" } });
-    fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Client" } });
-    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "sidebar@example.com" } });
-    fireEvent.change(screen.getByLabelText("Package"), { target: { value: "Starter Coaching" } });
-    fireEvent.change(screen.getByLabelText("Check-in day"), { target: { value: "Friday" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save client" }));
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/clients",
-      expect.objectContaining({
-        method: "POST",
-        body: expect.stringContaining("sidebar@example.com")
-      })
-    );
-    await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/clients/client_sidebar_1"));
+    expect(navigationMocks.push).toHaveBeenCalledWith("/clients/new");
   });
 });
 
