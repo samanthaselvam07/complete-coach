@@ -43,7 +43,10 @@ export async function POST(request: Request) {
         action: "client.created",
         targetType: "client",
         targetId: client.id,
-        metadata: { status: input.status }
+        metadata: {
+          status: input.status,
+          onboarding: input.onboarding
+        }
       }
     });
 

@@ -124,7 +124,21 @@ describe("client and CRM API tenancy", () => {
           lastName: "Thompson",
           email: "EMMA@example.com",
           organizationId: "org_2",
-          status: "new"
+          status: "new",
+          onboarding: {
+            dateOfBirth: "1992-06-14",
+            needsPayment: true,
+            weightMeasurement: "Body weight",
+            initialQuestionnaire: "Start-Up Questionnaire",
+            dailyHabitForm: "Daily Habits",
+            checkInForm: "Weekly Check-In",
+            checkInFrequency: "Weekly",
+            checkInDays: ["Tuesday"],
+            allowGoalsCompetitions: true,
+            allowExerciseLibraryAccess: true,
+            allowApplePay: true,
+            defaultExerciseMetricUnit: "Kilograms"
+          }
         })
       })
     );
@@ -149,7 +163,13 @@ describe("client and CRM API tenancy", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           action: "client.created",
-          organizationId: "org_1"
+          organizationId: "org_1",
+          metadata: expect.objectContaining({
+            onboarding: expect.objectContaining({
+              needsPayment: true,
+              checkInDays: ["Tuesday"]
+            })
+          })
         })
       })
     );

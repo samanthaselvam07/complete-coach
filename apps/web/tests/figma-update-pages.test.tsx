@@ -32,7 +32,20 @@ describe("Figma update pages", () => {
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Ava" } });
     fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Stone" } });
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "ava@example.com" } });
-    fireEvent.change(screen.getByLabelText("Package"), { target: { value: "Elite Physique" } });
+    fireEvent.change(screen.getByLabelText("Date of birth"), { target: { value: "1992-06-14" } });
+    fireEvent.change(screen.getByLabelText("Payment plan/package"), { target: { value: "Elite Physique" } });
+    fireEvent.click(screen.getByRole("button", { name: "Yes, this client needs to pay" }));
+    fireEvent.change(screen.getByLabelText("Plan start date"), { target: { value: "2026-07-08" } });
+    fireEvent.change(screen.getByLabelText("Weight Measurement"), { target: { value: "Body weight" } });
+    fireEvent.change(screen.getByLabelText("Initial Q/A"), { target: { value: "Start-Up Questionnaire" } });
+    fireEvent.change(screen.getByLabelText("Daily habit form"), { target: { value: "Daily Habits" } });
+    fireEvent.change(screen.getByLabelText("Check in form"), { target: { value: "Weekly Check-In" } });
+    fireEvent.change(screen.getByLabelText("Check-in Frequency"), { target: { value: "Weekly" } });
+    fireEvent.click(screen.getByRole("button", { name: "Wednesday" }));
+    fireEvent.click(screen.getByRole("button", { name: "Allow goals or competitions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Allow full exercise video library access" }));
+    fireEvent.click(screen.getByRole("button", { name: "Allow Apple Pay" }));
+    fireEvent.change(screen.getByLabelText("Set default exercise metric measurement unit"), { target: { value: "Kilograms" } });
     fireEvent.click(screen.getByRole("button", { name: "Create client" }));
 
     await waitFor(() => {
@@ -41,6 +54,31 @@ describe("Figma update pages", () => {
         expect.objectContaining({
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: "Ava",
+            lastName: "Stone",
+            email: "ava@example.com",
+            phone: undefined,
+            packageName: "Elite Physique",
+            checkInDay: "Wednesday",
+            status: "new",
+            startDate: "2026-07-08",
+            onboarding: {
+              dateOfBirth: "1992-06-14",
+              needsPayment: true,
+              weightMeasurement: "Body weight",
+              initialQuestionnaire: "Start-Up Questionnaire",
+              dailyHabitForm: "Daily Habits",
+              checkInForm: "Weekly Check-In",
+              checkInFrequency: "Weekly",
+              checkInDays: ["Wednesday"],
+              welcomePackFileName: undefined,
+              allowGoalsCompetitions: true,
+              allowExerciseLibraryAccess: true,
+              allowApplePay: true,
+              defaultExerciseMetricUnit: "Kilograms"
+            }
+          })
         }),
       );
     });
@@ -51,6 +89,22 @@ describe("Figma update pages", () => {
       "href",
       "/clients/client_created_1",
     );
+  });
+
+  it("renders the expanded new client onboarding controls", () => {
+    render(<NewClientIntakePage />);
+
+    expect(screen.getByLabelText("Date of birth")).toBeInTheDocument();
+    expect(screen.getByLabelText("Payment plan/package")).toBeInTheDocument();
+    expect(screen.getByText("Does this client need to pay?")).toBeInTheDocument();
+    expect(screen.getByLabelText("Plan start date")).toBeInTheDocument();
+    expect(screen.getByLabelText("Weight Measurement")).toBeInTheDocument();
+    expect(screen.getByLabelText("Initial Q/A")).toBeInTheDocument();
+    expect(screen.getByLabelText("Daily habit form")).toBeInTheDocument();
+    expect(screen.getByLabelText("Check in form")).toBeInTheDocument();
+    expect(screen.getByLabelText("Check-in Frequency")).toBeInTheDocument();
+    expect(screen.getByText("Upload a welcome pack.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Set default exercise metric measurement unit")).toBeInTheDocument();
   });
 
   it("validates the new client intake form before submitting", () => {

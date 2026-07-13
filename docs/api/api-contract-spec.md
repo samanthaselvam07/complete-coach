@@ -90,7 +90,7 @@ Default:
 
 ### Clients
 - `GET /api/v1/clients`
-- `POST /api/v1/clients`
+- `POST /api/v1/clients`: creates an organization-scoped client. Body: `firstName`, `lastName`, optional `email`, `phone`, `status`, `packageName`, `checkInDay`, `timezone`, `startDate`, and optional `onboarding` setup metadata for the new-client intake flow (`dateOfBirth`, payment/setup toggles, assigned form names, check-in frequency/days, welcome-pack file name, and default exercise unit).
 - `GET /api/v1/clients/{client_id}`
 - `PATCH /api/v1/clients/{client_id}`
 - `POST /api/v1/clients/{client_id}/archive`

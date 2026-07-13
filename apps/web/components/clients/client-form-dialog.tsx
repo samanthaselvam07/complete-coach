@@ -8,18 +8,46 @@ export interface ClientFormState {
   firstName: string;
   lastName: string;
   email: string;
+  dateOfBirth: string;
   phone: string;
   packageName: string;
   checkInDay: string;
+  needsPayment: boolean;
+  planStartDate: string;
+  weightMeasurement: string;
+  initialQuestionnaire: string;
+  dailyHabitForm: string;
+  checkInForm: string;
+  checkInFrequency: string;
+  checkInDays: string[];
+  welcomePackFileName: string;
+  allowGoalsCompetitions: boolean;
+  allowExerciseLibraryAccess: boolean;
+  allowApplePay: boolean;
+  defaultExerciseMetricUnit: string;
 }
 
 export const emptyClientForm: ClientFormState = {
   firstName: "",
   lastName: "",
   email: "",
+  dateOfBirth: "",
   phone: "",
   packageName: "",
-  checkInDay: ""
+  checkInDay: "",
+  needsPayment: false,
+  planStartDate: new Date().toISOString().slice(0, 10),
+  weightMeasurement: "None",
+  initialQuestionnaire: "Start-Up Questionnaire",
+  dailyHabitForm: "None",
+  checkInForm: "Weekly Check-In",
+  checkInFrequency: "Weekly",
+  checkInDays: [],
+  welcomePackFileName: "",
+  allowGoalsCompetitions: false,
+  allowExerciseLibraryAccess: false,
+  allowApplePay: false,
+  defaultExerciseMetricUnit: "None"
 };
 
 export function clientSummaryToForm(client: ClientSummary): ClientFormState {
@@ -29,14 +57,28 @@ export function clientSummaryToForm(client: ClientSummary): ClientFormState {
     firstName: firstName ?? "",
     lastName: lastNameParts.join(" "),
     email: "",
+    dateOfBirth: "",
     phone: "",
     packageName: client.packageName === "Unassigned" ? "" : client.packageName,
-    checkInDay: client.checkInDay === "Unscheduled" ? "" : client.checkInDay
+    checkInDay: client.checkInDay === "Unscheduled" ? "" : client.checkInDay,
+    needsPayment: false,
+    planStartDate: new Date().toISOString().slice(0, 10),
+    weightMeasurement: "None",
+    initialQuestionnaire: "Start-Up Questionnaire",
+    dailyHabitForm: "None",
+    checkInForm: "Weekly Check-In",
+    checkInFrequency: "Weekly",
+    checkInDays: client.checkInDay === "Unscheduled" ? [] : [client.checkInDay],
+    welcomePackFileName: "",
+    allowGoalsCompetitions: false,
+    allowExerciseLibraryAccess: false,
+    allowApplePay: false,
+    defaultExerciseMetricUnit: "None"
   };
 }
 
-export function createClientMutationBody(form: ClientFormState, status = "new") {
-  return {
+export function createClientMutationBody(form: ClientFormState, status = "new", includeOnboarding = false) {
+  const body = {
     firstName: form.firstName,
     lastName: form.lastName,
     email: form.email || undefined,
@@ -44,7 +86,30 @@ export function createClientMutationBody(form: ClientFormState, status = "new") 
     packageName: form.packageName || undefined,
     checkInDay: form.checkInDay || undefined,
     status,
-    startDate: new Date().toISOString().slice(0, 10)
+    startDate: form.planStartDate || new Date().toISOString().slice(0, 10)
+  };
+
+  if (!includeOnboarding) {
+    return body;
+  }
+
+  return {
+    ...body,
+    onboarding: {
+      dateOfBirth: form.dateOfBirth || undefined,
+      needsPayment: form.needsPayment,
+      weightMeasurement: form.weightMeasurement || undefined,
+      initialQuestionnaire: form.initialQuestionnaire || undefined,
+      dailyHabitForm: form.dailyHabitForm || undefined,
+      checkInForm: form.checkInForm || undefined,
+      checkInFrequency: form.checkInFrequency || undefined,
+      checkInDays: form.checkInDays,
+      welcomePackFileName: form.welcomePackFileName || undefined,
+      allowGoalsCompetitions: form.allowGoalsCompetitions,
+      allowExerciseLibraryAccess: form.allowExerciseLibraryAccess,
+      allowApplePay: form.allowApplePay,
+      defaultExerciseMetricUnit: form.defaultExerciseMetricUnit || undefined
+    }
   };
 }
 

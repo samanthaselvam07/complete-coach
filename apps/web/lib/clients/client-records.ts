@@ -36,7 +36,24 @@ export const createClientSchema = z.object({
   packageName: z.string().trim().max(120).optional(),
   checkInDay: z.string().trim().max(20).optional(),
   timezone: z.string().trim().max(80).default("UTC"),
-  startDate: z.string().date().optional()
+  startDate: z.string().date().optional(),
+  onboarding: z
+    .object({
+      dateOfBirth: z.string().date().optional(),
+      needsPayment: z.boolean().optional(),
+      weightMeasurement: z.string().trim().max(80).optional(),
+      initialQuestionnaire: z.string().trim().max(160).optional(),
+      dailyHabitForm: z.string().trim().max(160).optional(),
+      checkInForm: z.string().trim().max(160).optional(),
+      checkInFrequency: z.string().trim().max(40).optional(),
+      checkInDays: z.array(z.string().trim().max(20)).max(7).optional(),
+      welcomePackFileName: z.string().trim().max(255).optional(),
+      allowGoalsCompetitions: z.boolean().optional(),
+      allowExerciseLibraryAccess: z.boolean().optional(),
+      allowApplePay: z.boolean().optional(),
+      defaultExerciseMetricUnit: z.string().trim().max(40).optional()
+    })
+    .optional()
 });
 
 export type ClientListQuery = z.infer<typeof clientListQuerySchema>;
