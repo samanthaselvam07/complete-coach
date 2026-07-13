@@ -168,12 +168,12 @@ describe("client subscription APIs", () => {
     expect(payload.data.checkoutUrl).toBe("https://checkout.stripe.test/cs_1");
     expect(payload.data.subscription.stripeCheckoutSessionId).toBe("cs_1");
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][1].headers["Stripe-Account"]).toBe("acct_1");
+    expect(fetchMock.mock.calls[1][1].headers["Stripe-Account"]).toBe("acct_1");
     expect(String(fetchMock.mock.calls[0][1].body)).toContain("email=sarah%40example.com");
     expect(String(fetchMock.mock.calls[1][1].body)).toContain("mode=subscription");
     expect(String(fetchMock.mock.calls[1][1].body)).toContain("line_items%5B0%5D%5Bprice%5D=price_1");
-    expect(String(fetchMock.mock.calls[1][1].body)).toContain(
-      "subscription_data%5Btransfer_data%5D%5Bdestination%5D=acct_1"
-    );
+    expect(String(fetchMock.mock.calls[1][1].body)).not.toContain("transfer_data");
     expect(mocks.prisma.clientSubscription.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -212,6 +212,7 @@ describe("client subscription APIs", () => {
 
     expect(response.status).toBe(201);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1].headers["Stripe-Account"]).toBe("acct_1");
     expect(String(fetchMock.mock.calls[0][1].body)).toContain("customer=cus_existing");
   });
 

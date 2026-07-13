@@ -53,12 +53,6 @@ interface StripeCheckoutSession {
   url: string | null;
 }
 
-interface StripeLoginLink {
-  object: "login_link";
-  created: number;
-  url: string;
-}
-
 export const stripeAccountLinkSchema = z.object({
   returnUrl: z.string().trim().min(1).refine(isSafeRedirectUrl, "Must be an absolute URL or safe relative path.").optional(),
   refreshUrl: z.string().trim().min(1).refine(isSafeRedirectUrl, "Must be an absolute URL or safe relative path.").optional()
@@ -81,7 +75,7 @@ export function getStripeConfig(): StripeConfig {
 
 export async function createConnectedAccount(config: StripeConfig, input: { organizationId: string; email?: string }) {
   const account = await postStripeForm<StripeAccount>(config, "/v1/accounts", {
-    type: "express",
+    type: "standard",
     email: input.email,
     "capabilities[card_payments][requested]": "true",
     "capabilities[transfers][requested]": "true",
@@ -106,20 +100,25 @@ export async function createAccountLink(
   });
 }
 
-export async function createExpressDashboardLoginLink(config: StripeConfig, input: { accountId: string }) {
-  return postStripeForm<StripeLoginLink>(config, `/v1/accounts/${encodeURIComponent(input.accountId)}/login_links`, {});
+export async function retrieveConnectedAccount(config: StripeConfig, accountId: string) {
+  return getStripe<StripeAccount>(config, `/v1/accounts/${encodeURIComponent(accountId)}`);
 }
 
 export async function createStripeProduct(
   config: StripeConfig,
-  input: { organizationId: string; packageId: string; name: string; description?: string | null }
+  input: { organizationId: string; packageId: string; accountId: string; name: string; description?: string | null }
 ) {
-  return postStripeForm<StripeProduct>(config, "/v1/products", {
-    name: input.name,
-    description: input.description ?? undefined,
-    "metadata[organization_id]": input.organizationId,
-    "metadata[package_id]": input.packageId
-  });
+  return postStripeForm<StripeProduct>(
+    config,
+    "/v1/products",
+    {
+      name: input.name,
+      description: input.description ?? undefined,
+      "metadata[organization_id]": input.organizationId,
+      "metadata[package_id]": input.packageId
+    },
+    { accountId: input.accountId }
+  );
 }
 
 export async function createStripePrice(
@@ -127,32 +126,43 @@ export async function createStripePrice(
   input: {
     organizationId: string;
     packageId: string;
+    accountId: string;
     productId: string;
     unitAmount: number;
     currency: string;
     recurringInterval?: "month";
   }
 ) {
-  return postStripeForm<StripePrice>(config, "/v1/prices", {
-    product: input.productId,
-    unit_amount: String(input.unitAmount),
-    currency: input.currency,
-    ...(input.recurringInterval ? { "recurring[interval]": input.recurringInterval } : {}),
-    "metadata[organization_id]": input.organizationId,
-    "metadata[package_id]": input.packageId
-  });
+  return postStripeForm<StripePrice>(
+    config,
+    "/v1/prices",
+    {
+      product: input.productId,
+      unit_amount: String(input.unitAmount),
+      currency: input.currency,
+      ...(input.recurringInterval ? { "recurring[interval]": input.recurringInterval } : {}),
+      "metadata[organization_id]": input.organizationId,
+      "metadata[package_id]": input.packageId
+    },
+    { accountId: input.accountId }
+  );
 }
 
 export async function createStripeCustomer(
   config: StripeConfig,
-  input: { organizationId: string; clientId: string; email?: string | null; name: string }
+  input: { organizationId: string; clientId: string; accountId: string; email?: string | null; name: string }
 ) {
-  return postStripeForm<StripeCustomer>(config, "/v1/customers", {
-    email: input.email ?? undefined,
-    name: input.name,
-    "metadata[organization_id]": input.organizationId,
-    "metadata[client_id]": input.clientId
-  });
+  return postStripeForm<StripeCustomer>(
+    config,
+    "/v1/customers",
+    {
+      email: input.email ?? undefined,
+      name: input.name,
+      "metadata[organization_id]": input.organizationId,
+      "metadata[client_id]": input.clientId
+    },
+    { accountId: input.accountId }
+  );
 }
 
 export async function createStripeCheckoutSession(
@@ -169,24 +179,28 @@ export async function createStripeCheckoutSession(
     cancelUrl: string;
   }
 ) {
-  return postStripeForm<StripeCheckoutSession>(config, "/v1/checkout/sessions", {
-    mode: "subscription",
-    customer: input.customerId,
-    success_url: input.successUrl,
-    cancel_url: input.cancelUrl,
-    client_reference_id: input.clientId,
-    "line_items[0][price]": input.priceId,
-    "line_items[0][quantity]": "1",
-    "subscription_data[transfer_data][destination]": input.connectedAccountId,
-    "metadata[organization_id]": input.organizationId,
-    "metadata[client_id]": input.clientId,
-    "metadata[package_id]": input.packageId,
-    "metadata[subscription_id]": input.subscriptionId,
-    "subscription_data[metadata][organization_id]": input.organizationId,
-    "subscription_data[metadata][client_id]": input.clientId,
-    "subscription_data[metadata][package_id]": input.packageId,
-    "subscription_data[metadata][subscription_id]": input.subscriptionId
-  });
+  return postStripeForm<StripeCheckoutSession>(
+    config,
+    "/v1/checkout/sessions",
+    {
+      mode: "subscription",
+      customer: input.customerId,
+      success_url: input.successUrl,
+      cancel_url: input.cancelUrl,
+      client_reference_id: input.clientId,
+      "line_items[0][price]": input.priceId,
+      "line_items[0][quantity]": "1",
+      "metadata[organization_id]": input.organizationId,
+      "metadata[client_id]": input.clientId,
+      "metadata[package_id]": input.packageId,
+      "metadata[subscription_id]": input.subscriptionId,
+      "subscription_data[metadata][organization_id]": input.organizationId,
+      "subscription_data[metadata][client_id]": input.clientId,
+      "subscription_data[metadata][package_id]": input.packageId,
+      "subscription_data[metadata][subscription_id]": input.subscriptionId
+    },
+    { accountId: input.connectedAccountId }
+  );
 }
 
 export function deriveConnectStatus(account: StripeAccount) {
@@ -222,7 +236,12 @@ export function resolveConnectRedirectUrl(requestUrl: string, value: string | un
   return value;
 }
 
-async function postStripeForm<T>(config: StripeConfig, path: string, fields: Record<string, string | undefined>) {
+async function postStripeForm<T>(
+  config: StripeConfig,
+  path: string,
+  fields: Record<string, string | undefined>,
+  options?: { accountId?: string }
+) {
   const body = new URLSearchParams();
 
   Object.entries(fields).forEach(([key, value]) => {
@@ -235,9 +254,27 @@ async function postStripeForm<T>(config: StripeConfig, path: string, fields: Rec
     method: "POST",
     headers: {
       Authorization: `Basic ${Buffer.from(`${config.secretKey}:`).toString("base64")}`,
-      "Content-Type": "application/x-www-form-urlencoded"
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...(options?.accountId ? { "Stripe-Account": options.accountId } : {})
     },
     body
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new StripeApiError(getStripeErrorMessage(payload), response.status);
+  }
+
+  return payload as T;
+}
+
+async function getStripe<T>(config: StripeConfig, path: string) {
+  const response = await fetch(`${config.apiBaseUrl}${path}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${config.secretKey}:`).toString("base64")}`
+    }
   });
 
   const payload = await response.json().catch(() => ({}));

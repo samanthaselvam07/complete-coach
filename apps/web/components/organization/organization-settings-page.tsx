@@ -225,12 +225,6 @@ function SubscriptionBillingPanel() {
         >
           Billing portal coming soon
         </button>
-        <Link
-          href="/packages"
-          className="mt-3 block rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50"
-        >
-          Manage coaching packages
-        </Link>
       </aside>
     </div>
   );
@@ -249,13 +243,37 @@ function BillingMetric({ label, value, detail }: { label: string; value: string;
 function IntegrationsPanel() {
   const searchParams = useSearchParams();
   const stripeError = searchParams.get("stripe_error");
-  const [stripeStatus, setStripeStatus] = useState(() => stripeError ?? "Not connected");
+  const [stripeStatus, setStripeStatus] = useState(() => stripeError ?? "Checking connection...");
+  const [stripeStatusCode, setStripeStatusCode] = useState<string | null>(null);
+  const [isStripeConnected, setIsStripeConnected] = useState(false);
   const [isOpeningStripeDashboard, setIsOpeningStripeDashboard] = useState(false);
   const [connections, setConnections] = useState<SocialConnection[]>([]);
   const [socialStatusMessage, setSocialStatusMessage] = useState("Preparing social channels...");
 
   useEffect(() => {
     let mounted = true;
+
+    fetch("/api/v1/stripe/connect/status")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Stripe connection status unavailable.");
+        }
+
+        return response.json() as Promise<{ data: { connected: boolean; status: string } }>;
+      })
+      .then((payload) => {
+        if (mounted) {
+          setIsStripeConnected(payload.data.connected);
+          setStripeStatusCode(payload.data.status);
+          setStripeStatus(payload.data.connected ? formatStripeConnectStatus(payload.data.status) : stripeError ?? "Not connected");
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setStripeStatus(stripeError ?? "Connection status unavailable");
+          setStripeStatusCode(null);
+        }
+      });
 
     fetch("/api/v1/social/connections")
       .then((response) => {
@@ -280,7 +298,7 @@ function IntegrationsPanel() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [stripeError]);
 
   const openStripeDashboard = async () => {
     setIsOpeningStripeDashboard(true);
@@ -299,7 +317,8 @@ function IntegrationsPanel() {
         throw new Error(payload.error?.details?.message ?? payload.error?.message ?? "Could not create Stripe dashboard link.");
       }
 
-      setStripeStatus(payload.data.status);
+      setStripeStatusCode(payload.data.status);
+      setStripeStatus(formatStripeConnectStatus(payload.data.status));
       window.open(payload.data.dashboardUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       setStripeStatus(error instanceof Error ? error.message : "Could not create Stripe dashboard link.");
@@ -321,13 +340,28 @@ function IntegrationsPanel() {
           <div className="mt-5 rounded-xl bg-slate-50 p-4">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Connection status</p>
             <p className="mt-1 text-sm font-bold text-slate-800">{stripeStatus}</p>
+            {stripeStatusCode === "pending-review" ? (
+              <p className="mt-2 text-xs font-semibold text-amber-700">
+                Enable charges and payouts in Stripe to finish activating this account.
+              </p>
+            ) : null}
           </div>
-          <a
-            href="/api/v1/stripe/connect/onboarding/start?returnUrl=/organization-settings&refreshUrl=/organization-settings"
-            className="mt-5 inline-flex w-full justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700"
-          >
-            Connect Stripe account
-          </a>
+          {isStripeConnected ? (
+            <button
+              type="button"
+              disabled
+              className="mt-5 inline-flex w-full justify-center rounded-xl bg-slate-200 px-5 py-3 text-sm font-bold text-slate-500"
+            >
+              Stripe account connected
+            </button>
+          ) : (
+            <a
+              href="/api/v1/stripe/connect/onboarding/start?returnUrl=/organization-settings&refreshUrl=/organization-settings"
+              className="mt-5 inline-flex w-full justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700"
+            >
+              Connect Stripe account
+            </a>
+          )}
           <button
             type="button"
             disabled={isOpeningStripeDashboard}
@@ -361,6 +395,18 @@ function IntegrationsPanel() {
 
     </div>
   );
+}
+
+function formatStripeConnectStatus(status: string) {
+  const labels: Record<string, string> = {
+    active: "Active",
+    "not-connected": "Not connected",
+    "onboarding-required": "Onboarding required",
+    "pending-review": "Pending review",
+    unknown: "Connected"
+  };
+
+  return labels[status] ?? status;
 }
 
 const socialChannels: Array<{ provider: SocialConnection["provider"]; label: string; description: string }> = [

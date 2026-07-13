@@ -57,6 +57,7 @@ export async function POST(_request: Request, context: PackageStripeSyncRouteCon
       const product = await createStripeProduct(config, {
         organizationId: actor.organizationId,
         packageId: coachingPackage.id,
+        accountId: organization.stripeConnectAccountId,
         name: coachingPackage.name,
         description: coachingPackage.description
       });
@@ -67,6 +68,7 @@ export async function POST(_request: Request, context: PackageStripeSyncRouteCon
       const price = await createStripePrice(config, {
         organizationId: actor.organizationId,
         packageId: coachingPackage.id,
+        accountId: organization.stripeConnectAccountId,
         productId: stripeProductId,
         unitAmount: coachingPackage.priceAmount,
         currency: coachingPackage.currency,

@@ -28,14 +28,14 @@ Delivered:
 Completed on May 18, 2026.
 
 Delivered:
-- `POST /api/v1/stripe/connect/account-link` creates or reuses the active organization's Stripe connected account.
-- `GET /api/v1/stripe/connect/onboarding/start` creates or reuses the active organization's Stripe connected account and redirects directly to Stripe Express onboarding.
-- `POST /api/v1/stripe/connect/dashboard-link` creates an authenticated, on-demand Stripe Express Dashboard login link for an existing connected account.
+- `POST /api/v1/stripe/connect/account-link` creates or reuses the active organization's Standard Stripe connected account.
+- `GET /api/v1/stripe/connect/onboarding/start` creates or reuses the active organization's Standard Stripe connected account and redirects directly to Stripe onboarding.
+- `POST /api/v1/stripe/connect/dashboard-link` audits the authenticated request and returns the full Stripe Dashboard URL for an existing Standard connected account.
 - Stripe secret key is read from environment variables only and is never accepted from clients.
-- Connected account creation requests Express onboarding with card payment and transfer capabilities and stores organization metadata in Stripe.
+- Connected account creation requests a Standard account with card payment and transfer capabilities and stores organization metadata in Stripe.
 - Initial `stripe_connect_account_id` and `stripe_connect_status` are persisted from trusted Stripe account response flags.
-- Account-link and dashboard-login URLs are generated server-side for authenticated owners and audited without logging the URL or secret key.
-- API tests cover missing Stripe configuration, account creation, account reuse, relative redirect resolution, dashboard login links, Stripe API failure mapping, authorization, and status derivation.
+- Account-link URLs are generated server-side for authenticated owners and audited without logging the URL or secret key.
+- API tests cover missing Stripe configuration, account creation, account reuse, relative redirect resolution, dashboard opening, Stripe API failure mapping, authorization, and status derivation.
 
 ## Ticket 017C Outcome
 Completed on May 18, 2026.
@@ -117,7 +117,7 @@ Rules:
 - Package writes require `payments:manage`.
 - Stripe product and price ids are not accepted from browser/API clients.
 - Stripe Connect account links require `payments:manage` and server-side `STRIPE_SECRET_KEY`.
-- Stripe Express Dashboard login links require `payments:manage`, server-side `STRIPE_SECRET_KEY`, and existing local Stripe Connect setup. Links must be generated on demand and should not be emailed, persisted, or exposed outside authenticated app navigation.
+- Opening the full Stripe Dashboard requires `payments:manage` and existing local Stripe Connect setup. The app returns Stripe's Dashboard URL for Standard connected accounts and does not generate Express login links.
 - Package Stripe sync requires `payments:manage`, server-side `STRIPE_SECRET_KEY`, and local Stripe Connect account setup.
 - Client subscription creation requires `payments:manage`, server-side `STRIPE_SECRET_KEY`, local Stripe Connect setup, and a synced monthly package.
 - Stripe webhook events are the authoritative source for subscription/payment state.
@@ -129,6 +129,7 @@ Rules:
 - `POST /api/v1/packages`
 - `PATCH /api/v1/packages/{package_id}`
 - `POST /api/v1/packages/{package_id}/stripe-sync`
+- `GET /api/v1/stripe/connect/status`
 - `POST /api/v1/stripe/connect/account-link`
 - `GET /api/v1/stripe/connect/onboarding/start`
 - `POST /api/v1/stripe/connect/dashboard-link`

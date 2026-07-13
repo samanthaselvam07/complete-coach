@@ -283,7 +283,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
 
     expect(screen.getByText("Complete Coach Operating System")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Billing portal coming soon" })).toBeDisabled();
-    expect(screen.getByRole("link", { name: "Manage coaching packages" })).toHaveAttribute("href", "/packages");
+    expect(screen.queryByRole("link", { name: "Manage coaching packages" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Team Management" }));
 
@@ -317,21 +317,31 @@ describe("OrganizationSettingsPage integrations panel", () => {
   });
 
   it("shows connected social channels and OAuth links", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: [
-            {
-              id: "connection_1",
-              provider: "instagram",
-              accountName: "Complete Coach IG",
-              status: "active"
-            }
-          ]
-        }),
-        { status: 200 }
-      )
-    );
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/stripe/connect/status") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { connected: false, status: "not-connected" } }), { status: 200 })
+        );
+      }
+
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "connection_1",
+                provider: "instagram",
+                accountName: "Complete Coach IG",
+                status: "active"
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+      );
+    });
 
     render(<OrganizationSettingsPage />);
 
@@ -353,8 +363,20 @@ describe("OrganizationSettingsPage integrations panel", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
+      if (url === "/api/v1/stripe/connect/status") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { connected: true, status: "active" } }), { status: 200 })
+        );
+      }
+
       if (url === "/api/v1/social/connections") {
         return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/stripe/connect/status") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { connected: true, status: "active" } }), { status: 200 })
+        );
       }
 
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
@@ -408,6 +430,12 @@ describe("OrganizationSettingsPage integrations panel", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
+      if (url === "/api/v1/stripe/connect/status") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { connected: false, status: "not-connected" } }), { status: 200 })
+        );
+      }
+
       if (url === "/api/v1/social/connections") {
         return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
       }
@@ -423,6 +451,34 @@ describe("OrganizationSettingsPage integrations panel", () => {
       "/api/v1/stripe/connect/onboarding/start?returnUrl=/organization-settings&refreshUrl=/organization-settings"
     );
     expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/stripe/connect/account-link", expect.anything());
+  });
+
+  it("disables Stripe Connect onboarding when a connected account already exists", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/stripe/connect/status") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { connected: true, status: "pending-review" } }), { status: 200 })
+        );
+      }
+
+      if (url === "/api/v1/social/connections") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(<OrganizationSettingsPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Integrations" }));
+
+    expect(await screen.findByText("Pending review")).toBeInTheDocument();
+    expect(screen.getByText("Enable charges and payouts in Stripe to finish activating this account.")).toBeInTheDocument();
+    expect(screen.queryByText("Connected - pending review")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Connect Stripe account" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Stripe account connected" })).toBeDisabled();
   });
 
   it("creates an on-demand Stripe dashboard link from organization settings", async () => {
@@ -441,7 +497,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
               data: {
                 accountId: "acct_1",
                 status: "active",
-                dashboardUrl: "https://stripe.com/express/test-login"
+                dashboardUrl: "https://dashboard.stripe.com"
               }
             }),
             { status: 200 }
@@ -457,9 +513,10 @@ describe("OrganizationSettingsPage integrations panel", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Integrations" }));
     fireEvent.click(screen.getByRole("button", { name: "Open Stripe dashboard" }));
 
-    expect(await screen.findByText("active")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/stripe/connect/dashboard-link", { method: "POST" });
-    expect(openMock).toHaveBeenCalledWith("https://stripe.com/express/test-login", "_blank", "noopener,noreferrer");
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/stripe/connect/dashboard-link", { method: "POST" });
+      expect(openMock).toHaveBeenCalledWith("https://dashboard.stripe.com", "_blank", "noopener,noreferrer");
+    });
   });
 
   it("shows Stripe onboarding redirect errors returned in the URL", async () => {

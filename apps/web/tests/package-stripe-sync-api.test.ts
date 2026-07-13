@@ -104,6 +104,8 @@ describe("package Stripe sync API", () => {
       stripePriceId: "price_package_1"
     }));
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][1].headers["Stripe-Account"]).toBe("acct_1");
+    expect(fetchMock.mock.calls[1][1].headers["Stripe-Account"]).toBe("acct_1");
     expect(String(fetchMock.mock.calls[0][1].body)).toContain("name=Gold+Standard");
     expect(String(fetchMock.mock.calls[0][1].body)).toContain("metadata%5Bpackage_id%5D=package_1");
     expect(String(fetchMock.mock.calls[1][1].body)).toContain("product=prod_package_1");
@@ -158,6 +160,8 @@ describe("package Stripe sync API", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(fetchMock.mock.calls[0][1].headers["Stripe-Account"]).toBe("acct_1");
+    expect(fetchMock.mock.calls[1][1].headers["Stripe-Account"]).toBe("acct_1");
     expect(String(fetchMock.mock.calls[1][1].body)).not.toContain("recurring");
   });
 

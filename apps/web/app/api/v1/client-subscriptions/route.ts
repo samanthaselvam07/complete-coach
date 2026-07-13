@@ -127,6 +127,7 @@ export async function POST(request: Request) {
         await createStripeCustomer(config, {
           organizationId: actor.organizationId,
           clientId: client.id,
+          accountId: organization.stripeConnectAccountId,
           email: client.email,
           name: `${client.firstName} ${client.lastName}`
         })
