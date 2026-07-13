@@ -4,16 +4,22 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { OrganizationSettingsPage } from "@/components/organization/organization-settings-page";
 
 const navigationMocks = vi.hoisted(() => ({
-  searchParams: new URLSearchParams()
+  searchParams: new URLSearchParams(),
+  navigateToExternalUrl: vi.fn()
 }));
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => navigationMocks.searchParams
 }));
 
+vi.mock("@/lib/browser-navigation", () => ({
+  navigateToExternalUrl: navigationMocks.navigateToExternalUrl
+}));
+
 afterEach(() => {
   vi.restoreAllMocks();
   navigationMocks.searchParams = new URLSearchParams();
+  navigationMocks.navigateToExternalUrl.mockReset();
 });
 
 describe("OrganizationSettingsPage integrations panel", () => {
@@ -282,7 +288,9 @@ describe("OrganizationSettingsPage integrations panel", () => {
     render(<OrganizationSettingsPage />);
 
     expect(screen.getByText("Complete Coach Operating System")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Billing portal coming soon" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Start Core plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Scale plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Manage billing" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Manage coaching packages" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Team Management" }));
@@ -314,6 +322,111 @@ describe("OrganizationSettingsPage integrations panel", () => {
     const initialState = firstPermissionSwitch.getAttribute("aria-checked");
     fireEvent.click(firstPermissionSwitch);
     await waitFor(() => expect(firstPermissionSwitch).not.toHaveAttribute("aria-checked", initialState ?? ""));
+  });
+
+  it("opens the Stripe billing portal from the subscription and billing tab", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/platform-billing/status") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 40 },
+                status: "active",
+                access: {
+                  state: "active",
+                  canUsePlatform: true,
+                  reason: "subscription_active",
+                  message: "Platform access is active."
+                },
+                currentPeriodEnd: "2026-08-13T00:00:00.000Z",
+                usage: { coachSeats: 1, clients: 24 }
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/platform-billing/portal" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { portalUrl: "https://billing.stripe.test/session" } }), { status: 200 })
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(<OrganizationSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Manage billing" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/platform-billing/portal",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ returnUrl: "/organization-settings" })
+        })
+      )
+    );
+    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith("https://billing.stripe.test/session");
+  });
+
+  it("refreshes platform billing plan, status, coach seats, and clients dynamically", async () => {
+    const billingResponses = [
+      {
+        plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 40 },
+        status: "active",
+        access: {
+          state: "active",
+          canUsePlatform: true,
+          reason: "subscription_active",
+          message: "Platform access is active."
+        },
+        currentPeriodEnd: "2026-08-13T00:00:00.000Z",
+        usage: { coachSeats: 1, clients: 24 }
+      },
+      {
+        plan: { id: "scale", name: "Scale", coachSeatLimit: 3, clientLimit: 60 },
+        status: "past_due",
+        access: {
+          state: "blocked",
+          canUsePlatform: false,
+          reason: "payment_attention_required",
+          message: "Platform access is paused because the subscription payment is overdue."
+        },
+        currentPeriodEnd: "2026-09-13T00:00:00.000Z",
+        usage: { coachSeats: 2, clients: 42 }
+      }
+    ];
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      if (String(input) === "/api/v1/platform-billing/status") {
+        const data = billingResponses.shift() ?? billingResponses[0];
+
+        return Promise.resolve(new Response(JSON.stringify({ data }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(<OrganizationSettingsPage />);
+
+    expect(await screen.findByText("Core")).toBeInTheDocument();
+    expect(screen.getByText("Active")).toBeInTheDocument();
+    expect(screen.getByText("1/1")).toBeInTheDocument();
+    expect(screen.getByText("24/40")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Refresh billing status" }));
+
+    expect(await screen.findByText("Scale")).toBeInTheDocument();
+    expect(screen.getByText("Past due")).toBeInTheDocument();
+    expect(screen.getByText("2/3")).toBeInTheDocument();
+    expect(screen.getByText("42/60")).toBeInTheDocument();
+    expect(screen.getByText("Platform access is paused because the subscription payment is overdue.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/platform-billing/status");
   });
 
   it("shows connected social channels and OAuth links", async () => {

@@ -140,7 +140,10 @@ describe("OrganizationSettingsPage", () => {
     expect(screen.getByRole("tab", { name: "Subscription & Billing" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Complete Coach Operating System")).toBeInTheDocument();
     expect(screen.getByText(/This is your organisation subscription/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Manage coaching packages" })).toHaveAttribute("href", "/packages");
+    expect(screen.getByRole("button", { name: "Start Core plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Scale plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Manage billing" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Manage coaching packages" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Email DNS" }));
     expect(screen.getByRole("heading", { level: 3, name: "Add sender domain" })).toBeInTheDocument();
@@ -165,25 +168,31 @@ describe("OrganizationSettingsPage", () => {
   });
 
   it("keeps audit logs inside organization settings instead of the main navigation", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: [
-            {
-              id: "audit_settings_1",
-              action: "client.training_plan.updated",
-              actor: { id: "user_1", name: "Demo Coach" },
-              targetType: "client",
-              targetId: "client_1",
-              metadata: { plan: "Hypertrophy II" },
-              ipAddress: "127.0.0.1",
-              createdAt: "2026-06-07T10:00:00.000Z"
-            }
-          ]
-        }),
-        { status: 200 }
-      )
-    );
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      if (String(input).startsWith("/api/v1/audit-logs")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "audit_settings_1",
+                  action: "client.training_plan.updated",
+                  actor: { id: "user_1", name: "Demo Coach" },
+                  targetType: "client",
+                  targetId: "client_1",
+                  metadata: { plan: "Hypertrophy II" },
+                  ipAddress: "127.0.0.1",
+                  createdAt: "2026-06-07T10:00:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
 
     render(createElement(OrganizationSettingsPage));
 

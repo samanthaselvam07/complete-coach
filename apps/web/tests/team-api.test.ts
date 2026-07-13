@@ -15,6 +15,9 @@ const mocks = vi.hoisted(() => ({
   sendTransactionalEmail: vi.fn(),
   prisma: {
     auditLog: { create: vi.fn() },
+    organization: {
+      findUnique: vi.fn()
+    },
     organizationMembership: {
       count: vi.fn(),
       findFirst: vi.fn(),
@@ -22,6 +25,7 @@ const mocks = vi.hoisted(() => ({
       update: vi.fn()
     },
     teamInvitation: {
+      count: vi.fn(),
       create: vi.fn(),
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -87,6 +91,8 @@ describe("team management APIs", () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.randomBytes.mockReturnValue(Buffer.from("a".repeat(32)));
     mocks.sendTransactionalEmail.mockResolvedValue({ status: "sent" });
+    mocks.prisma.organization.findUnique.mockReset();
+    mocks.prisma.teamInvitation.count.mockReset();
     mocks.prisma.client.groupBy.mockReset();
   });
 
@@ -153,6 +159,9 @@ describe("team management APIs", () => {
 
   it("creates a secure pending invitation and audit event", async () => {
     mocks.prisma.teamInvitation.findFirst.mockResolvedValue(null);
+    mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "scale" });
+    mocks.prisma.organizationMembership.count.mockResolvedValue(1);
+    mocks.prisma.teamInvitation.count.mockResolvedValue(0);
     mocks.prisma.teamInvitation.create.mockImplementation(({ data }) => ({
       id: "invitation_1",
       ...data,
@@ -178,9 +187,12 @@ describe("team management APIs", () => {
         email: "new@example.com",
         role: MembershipRole.ASSISTANT,
         invitedByUserId: "user_1",
-        tokenHash: expect.not.stringContaining(payload.data.token)
+        tokenHash: expect.not.stringContaining(payload.data.token),
+        expiresAt: expect.any(Date)
       })
     });
+    const invitationData = mocks.prisma.teamInvitation.create.mock.calls[0][0].data;
+    expect(invitationData.expiresAt.getTime()).toBeGreaterThanOrEqual(Date.now() + 7 * 24 * 60 * 60 * 1_000 - 2_000);
     expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ action: "membership.invited" })
@@ -210,7 +222,28 @@ describe("team management APIs", () => {
     expect(mocks.prisma.teamInvitation.create).not.toHaveBeenCalled();
   });
 
+  it("blocks team invitations when active members and pending invites have reached the platform seat limit", async () => {
+    mocks.prisma.teamInvitation.findFirst.mockResolvedValue(null);
+    mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "core" });
+    mocks.prisma.organizationMembership.count.mockResolvedValue(1);
+    mocks.prisma.teamInvitation.count.mockResolvedValue(0);
+
+    const response = await createInvitation(
+      new Request("http://test.local/api/v1/team-members/invitations", {
+        method: "POST",
+        body: JSON.stringify({ email: "assistant-limit@example.com", role: "assistant" })
+      })
+    );
+    const payload = (await response.json()) as { error: { code: string } };
+
+    expect(response.status).toBe(409);
+    expect(payload.error.code).toBe("platform_coach_seat_limit_reached");
+    expect(mocks.prisma.teamInvitation.create).not.toHaveBeenCalled();
+  });
+
   it("accepts an invitation only for the authenticated matching email", async () => {
+    mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "scale" });
+    mocks.prisma.organizationMembership.count.mockResolvedValue(1);
     mocks.prisma.teamInvitation.findFirst.mockResolvedValue({
       id: "invitation_1",
       organizationId: "org_1",
@@ -246,6 +279,52 @@ describe("team management APIs", () => {
 
     expect(response.status).toBe(200);
     expect(mocks.prisma.$transaction).toHaveBeenCalledOnce();
+  });
+
+  it("rejects expired invitations after the seven-day validity window", async () => {
+    mocks.prisma.teamInvitation.findFirst.mockResolvedValue({
+      id: "invitation_1",
+      organizationId: "org_1",
+      email: "owner@example.com",
+      role: MembershipRole.COACH,
+      status: "PENDING",
+      expiresAt: new Date(Date.now() - 60_000)
+    });
+
+    const response = await acceptInvitation(
+      new Request("http://test.local/api/v1/team-invitations/accept", {
+        method: "POST",
+        body: JSON.stringify({ token: "invitation-token-that-is-long-enough-123" })
+      })
+    );
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("blocks invitation acceptance when the organization is full", async () => {
+    mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "core" });
+    mocks.prisma.organizationMembership.count.mockResolvedValue(1);
+    mocks.prisma.teamInvitation.findFirst.mockResolvedValue({
+      id: "invitation_1",
+      organizationId: "org_1",
+      email: "owner@example.com",
+      role: MembershipRole.COACH,
+      status: "PENDING",
+      expiresAt: new Date(Date.now() + 60_000)
+    });
+
+    const response = await acceptInvitation(
+      new Request("http://test.local/api/v1/team-invitations/accept", {
+        method: "POST",
+        body: JSON.stringify({ token: "invitation-token-that-is-long-enough-123" })
+      })
+    );
+    const payload = (await response.json()) as { error: { code: string } };
+
+    expect(response.status).toBe(409);
+    expect(payload.error.code).toBe("platform_coach_seat_limit_reached");
+    expect(mocks.prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it("rejects invitation acceptance for a different authenticated email", async () => {

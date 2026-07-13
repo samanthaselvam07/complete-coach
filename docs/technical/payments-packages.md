@@ -99,6 +99,22 @@ Delivered:
 - Targeted M8 tests covered packages, Stripe Connect, package Stripe sync, client subscriptions, Stripe webhooks, package records, subscription records, and package UI behavior.
 - Full `pnpm --dir apps/web check` passed, including lint, typecheck, 372 Vitest tests, coverage, production build, and 61 Playwright E2E tests.
 
+## Platform Billing Foundation
+Delivered:
+- Complete Coach platform subscriptions are stored on `organizations` separately from Stripe Connect fields.
+- Core maps to Stripe product `prod_UsL4rRweWAB2XU`, monthly price `price_1TsaNxI51UQp7jCTVYdYxNIC`, 1 coach seat, and 40 clients.
+- Scale maps to Stripe product `prod_UsL4hUCHyBkvkK`, monthly price `price_1TsaOPI51UQp7jCTB9TvXUIK`, 3 coach seats, and 60 clients.
+- `GET /api/v1/platform-billing/status` returns plan, subscription status, renewal date, and current coach/client usage.
+- Platform billing access rules allow `active` and `trialing`; `past_due`, `unpaid`, `canceled`, and incomplete/inactive states block platform access.
+- `POST /api/v1/platform-billing/checkout` creates Stripe Checkout subscription sessions on the Complete Coach Stripe account and never uses a connected account header.
+- `POST /api/v1/platform-billing/portal` opens Stripe Billing Portal for the platform customer.
+- `POST /api/v1/stripe/customer-portal` is an explicit Stripe Customer Portal alias for the same platform customer portal flow.
+- Stripe webhooks branch platform subscription events by `metadata.billing_type = platform_subscription` and update organization billing fields.
+- Org Settings Subscription & Billing reads `GET /api/v1/platform-billing/status` for current plan, subscription status, coach-seat usage, client usage, and billing actions; it refreshes on focus/visibility changes, every 30 seconds while mounted, and through a manual refresh action.
+- Client creation is blocked when the organization reaches its plan client limit.
+- Team invitations are blocked when active team members plus non-expired pending invitations reach the plan seat limit.
+- Active owner/admin/coach/assistant memberships count as team seats, so changing an existing member's role only changes permissions and does not change seat usage.
+
 ## Source Specs
 - `docs/architecture/data-model-spec.md`
 - `docs/api/api-contract-spec.md`
@@ -111,8 +127,12 @@ Delivered:
 - `packages`: organization-scoped package catalog records with price amount, currency, billing interval, local status, optional UI metadata, and trusted Stripe product/price ids.
 - `client_subscriptions`: organization/client/package subscription mirrors with Stripe customer/subscription ids and Stripe-derived status/period fields.
 - `payment_events`: organization-scoped Stripe webhook/event records keyed by Stripe event id for idempotent processing.
+- `organizations.platform_*`: organization-scoped Complete Coach platform subscription mirror with Stripe customer/subscription ids, plan, status, period dates, and cancel date.
 
 Rules:
+- Complete Coach platform billing uses Stripe Billing on the Complete Coach Stripe account.
+- Coach-client payments use Stripe Connect on the coaching organization's connected account.
+- Platform billing requests must not send the `Stripe-Account` header.
 - Package reads require `payments:read`.
 - Package writes require `payments:manage`.
 - Stripe product and price ids are not accepted from browser/API clients.
@@ -133,6 +153,10 @@ Rules:
 - `POST /api/v1/stripe/connect/account-link`
 - `GET /api/v1/stripe/connect/onboarding/start`
 - `POST /api/v1/stripe/connect/dashboard-link`
+- `GET /api/v1/platform-billing/status`
+- `POST /api/v1/platform-billing/checkout`
+- `POST /api/v1/platform-billing/portal`
+- `POST /api/v1/stripe/customer-portal`
 - `GET /api/v1/client-subscriptions`
 - `POST /api/v1/client-subscriptions`
 - `POST /api/webhooks/stripe`

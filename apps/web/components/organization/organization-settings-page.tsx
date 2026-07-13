@@ -23,11 +23,12 @@ import {
   UsersRound,
   WalletCards
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { AuditLogPage } from "@/components/audit/audit-log-page";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { ALL_CAPABILITIES, getCapabilitiesForRole, type Capability, type MembershipRole } from "@/lib/auth/permissions";
+import { navigateToExternalUrl } from "@/lib/browser-navigation";
 import { cn } from "@/lib/utils";
 
 type OrganizationSettingsTab = "billing" | "integrations" | "email" | "automations" | "team" | "permissions" | "audit";
@@ -75,6 +76,27 @@ interface TeamMember {
   activeClientCount?: number;
   capacityLimit?: number;
   capacityPercent?: number;
+}
+
+interface PlatformBillingStatus {
+  plan: {
+    id: "core" | "scale";
+    name: string;
+    coachSeatLimit: number;
+    clientLimit: number;
+  };
+  status: string;
+  access: {
+    state: "active" | "warning" | "blocked";
+    canUsePlatform: boolean;
+    reason: string;
+    message: string;
+  };
+  currentPeriodEnd: string | null;
+  usage: {
+    coachSeats: number;
+    clients: number;
+  };
 }
 
 const tabs: Array<{
@@ -190,6 +212,118 @@ export function OrganizationSettingsPage() {
 }
 
 function SubscriptionBillingPanel() {
+  const [billing, setBilling] = useState<PlatformBillingStatus | null>(null);
+  const [billingMessage, setBillingMessage] = useState("Loading platform billing...");
+  const [isOpeningBilling, setIsOpeningBilling] = useState(false);
+  const [isRefreshingBilling, setIsRefreshingBilling] = useState(false);
+
+  const refreshBilling = useCallback(async (options: { silent?: boolean } = {}) => {
+    if (!options.silent) {
+      setIsRefreshingBilling(true);
+      setBillingMessage("Refreshing platform billing...");
+    }
+
+    try {
+      const response = await fetch("/api/v1/platform-billing/status");
+
+      if (!response.ok) {
+        throw new Error("Platform billing status unavailable.");
+      }
+
+      const payload = (await response.json()) as { data: PlatformBillingStatus };
+
+      if (!isPlatformBillingStatus(payload.data)) {
+        throw new Error("Platform billing status unavailable.");
+      }
+
+      setBilling(payload.data);
+      setBillingMessage(options.silent ? "Platform billing updated." : "Platform billing loaded.");
+    } catch {
+      setBillingMessage("Platform billing status unavailable.");
+    } finally {
+      setIsRefreshingBilling(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const initialRefreshId = window.setTimeout(() => {
+      void refreshBilling();
+    }, 0);
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshBilling({ silent: true });
+      }
+    };
+    const refreshOnFocus = () => {
+      void refreshBilling({ silent: true });
+    };
+    const intervalId = window.setInterval(() => {
+      void refreshBilling({ silent: true });
+    }, 30_000);
+
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    window.addEventListener("focus", refreshOnFocus);
+
+    return () => {
+      window.clearTimeout(initialRefreshId);
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      window.removeEventListener("focus", refreshOnFocus);
+    };
+  }, [refreshBilling]);
+
+  const startCheckout = async (planId: "core" | "scale") => {
+    setIsOpeningBilling(true);
+    setBillingMessage(`Opening ${planId === "core" ? "Core" : "Scale"} checkout...`);
+
+    try {
+      const response = await fetch("/api/v1/platform-billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId })
+      });
+      const payload = (await response.json()) as { data?: { checkoutUrl?: string }; error?: { message?: string } };
+
+      if (!response.ok || !payload.data?.checkoutUrl) {
+        throw new Error(payload.error?.message ?? "Could not open checkout.");
+      }
+
+      navigateToExternalUrl(payload.data.checkoutUrl);
+    } catch (error) {
+      setBillingMessage(error instanceof Error ? error.message : "Could not open checkout.");
+      setIsOpeningBilling(false);
+    }
+  };
+
+  const openPortal = async () => {
+    setIsOpeningBilling(true);
+    setBillingMessage("Opening billing portal...");
+
+    try {
+      const response = await fetch("/api/v1/platform-billing/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ returnUrl: "/organization-settings" })
+      });
+      const payload = (await response.json()) as { data?: { portalUrl?: string }; error?: { message?: string } };
+
+      if (!response.ok || !payload.data?.portalUrl) {
+        throw new Error(payload.error?.message ?? "Could not open billing portal.");
+      }
+
+      navigateToExternalUrl(payload.data.portalUrl);
+    } catch (error) {
+      setBillingMessage(error instanceof Error ? error.message : "Could not open billing portal.");
+      setIsOpeningBilling(false);
+    }
+  };
+
+  const plan = billing?.plan;
+  const status = billing ? formatPlatformBillingStatus(billing.status) : "Loading";
+  const renewal = billing?.currentPeriodEnd ? formatDate(billing.currentPeriodEnd) : "Not scheduled";
+  const accessTone = getPlatformAccessTone(billing?.access.state);
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
       <article className="rounded-2xl border border-indigo-100 bg-indigo-50 p-6">
@@ -198,36 +332,129 @@ function SubscriptionBillingPanel() {
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">Current plan</p>
             <h3 className="text-2xl font-black text-slate-950">Complete Coach Operating System</h3>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              This is your organisation subscription for using Complete Coach. Coaching packages, client subscriptions,
-              and program pricing are managed separately in the package ecosystem.
+              This is your organisation subscription for using Complete Coach. Client payments and coaching packages are
+              managed separately through your connected Stripe account.
             </p>
           </div>
-          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">Active</span>
+          <span className={cn("rounded-full px-3 py-1 text-xs font-bold", accessTone.badge)}>{status}</span>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
-          <BillingMetric label="Monthly platform fee" value="$299" detail="Billed monthly" />
-          <BillingMetric label="Team seats" value="18" detail="14 active coaches" />
-          <BillingMetric label="Next renewal" value="Jul 07, 2026" detail="Card ending 4242" />
+          <BillingMetric label="Platform plan" value={plan?.name ?? "Not selected"} detail="Billed monthly in Stripe" />
+          <BillingMetric
+            label="Coach seats"
+            value={`${billing?.usage?.coachSeats ?? 0}/${plan?.coachSeatLimit ?? 0}`}
+            detail="Owner, admin, and coach seats"
+          />
+          <BillingMetric
+            label="Clients"
+            value={`${billing?.usage?.clients ?? 0}/${plan?.clientLimit ?? 0}`}
+            detail={`Next renewal: ${renewal}`}
+          />
         </div>
+        <p role="status" className="mt-4 text-sm font-semibold text-indigo-800">
+          {billingMessage}
+        </p>
+        {billing?.access ? (
+          <div className={cn("mt-4 rounded-xl border p-4 text-sm font-semibold", accessTone.panel)}>
+            {billing.access.message}
+          </div>
+        ) : null}
       </article>
 
       <aside className="rounded-2xl border border-slate-200 p-6">
         <CreditCard className="mb-4 h-6 w-6 text-indigo-600" aria-hidden="true" />
         <h3 className="text-lg font-black text-slate-950">Billing actions</h3>
         <p className="mt-2 text-sm text-slate-500">
-          A secure Stripe customer portal endpoint is required before payment methods or invoices can be managed here.
+          Start or change the organisation subscription through Complete Coach&apos;s Stripe billing account.
         </p>
         <button
           type="button"
-          disabled
-          className="mt-5 w-full rounded-xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-500"
+          disabled={isOpeningBilling}
+          onClick={() => startCheckout("core")}
+          className="mt-5 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-500"
         >
-          Billing portal coming soon
+          Start Core plan
+        </button>
+        <button
+          type="button"
+          disabled={isOpeningBilling}
+          onClick={() => startCheckout("scale")}
+          className="mt-3 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-500"
+        >
+          Start Scale plan
+        </button>
+        <button
+          type="button"
+          disabled={isOpeningBilling}
+          onClick={openPortal}
+          className="mt-3 w-full rounded-xl border border-indigo-200 px-4 py-3 text-sm font-bold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:border-slate-200 disabled:text-slate-400"
+        >
+          Manage billing
+        </button>
+        <button
+          type="button"
+          disabled={isOpeningBilling || isRefreshingBilling}
+          onClick={() => {
+            void refreshBilling();
+          }}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:text-slate-400"
+        >
+          <RefreshCw className={cn("h-4 w-4", isRefreshingBilling ? "animate-spin" : "")} aria-hidden="true" />
+          Refresh billing status
         </button>
       </aside>
     </div>
   );
+}
+
+function isPlatformBillingStatus(value: unknown): value is PlatformBillingStatus {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "plan" in value &&
+    "status" in value &&
+    "usage" in value
+  );
+}
+
+function formatPlatformBillingStatus(status: string) {
+  const labels: Record<string, string> = {
+    active: "Active",
+    trialing: "Trialing",
+    past_due: "Past due",
+    unpaid: "Unpaid",
+    canceled: "Canceled",
+    incomplete: "Incomplete",
+    not_started: "Not started"
+  };
+
+  return labels[status] ?? status;
+}
+
+function getPlatformAccessTone(state: PlatformBillingStatus["access"]["state"] | undefined) {
+  if (state === "blocked") {
+    return {
+      badge: "bg-red-100 text-red-700",
+      panel: "border-red-200 bg-red-50 text-red-800"
+    };
+  }
+
+  if (state === "warning") {
+    return {
+      badge: "bg-amber-100 text-amber-700",
+      panel: "border-amber-200 bg-amber-50 text-amber-800"
+    };
+  }
+
+  return {
+    badge: "bg-green-100 text-green-700",
+    panel: "border-green-200 bg-green-50 text-green-800"
+  };
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en", { month: "short", day: "2-digit", year: "numeric" }).format(new Date(value));
 }
 
 function BillingMetric({ label, value, detail }: { label: string; value: string; detail: string }) {

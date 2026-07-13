@@ -6,6 +6,7 @@ import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
 import { sendTransactionalEmail } from "@/lib/email/resend";
+import { assertPlatformCoachSeatCapacity, PlatformLimitError } from "@/lib/platform-billing/limits";
 import {
   createTeamInvitationSchema,
   getInvitationCreateData,
@@ -31,6 +32,8 @@ export async function POST(request: Request) {
     if (existingInvitation) {
       return errorResponse("invitation_exists", "A pending invitation already exists.", 409);
     }
+
+    await assertPlatformCoachSeatCapacity(actor.organizationId);
 
     const token = randomBytes(32).toString("base64url");
     const invitation = await prisma.teamInvitation.create({
@@ -82,6 +85,10 @@ export async function POST(request: Request) {
       }
     );
   } catch (error) {
+    if (error instanceof PlatformLimitError) {
+      return errorResponse(error.code, error.message, 409, { limit: error.limit });
+    }
+
     return handleApiError(error);
   }
 }

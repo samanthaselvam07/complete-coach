@@ -18,6 +18,7 @@ import {
   StripeWebhookSignatureError,
   verifyStripeWebhookSignature
 } from "@/lib/payments/stripe-webhooks";
+import { getPlatformPlanByPriceId } from "@/lib/platform-billing/plans";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -118,6 +119,20 @@ async function resolveOrganizationId(event: StripeEventPayload) {
   const customerId = getStripeString(object, "customer");
 
   if (subscriptionId || customerId) {
+    const organization = await prisma.organization.findFirst({
+      where: {
+        OR: [
+          ...(subscriptionId ? [{ platformStripeSubscriptionId: subscriptionId }] : []),
+          ...(customerId ? [{ platformStripeCustomerId: customerId }] : [])
+        ]
+      },
+      select: { id: true }
+    });
+
+    if (organization) {
+      return organization.id;
+    }
+
     const subscription = await prisma.clientSubscription.findFirst({
       where: {
         OR: [
@@ -154,6 +169,21 @@ async function processStripeEvent(event: StripeEventPayload, organizationId: str
 
 async function processCheckoutSessionCompleted(event: StripeEventPayload, organizationId: string) {
   const object = getStripeEventObject(event);
+
+  if (getStripeMetadataValue(object, "billing_type") === "platform_subscription") {
+    await prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        platformPlan: getStripeMetadataValue(object, "platform_plan"),
+        platformStripeCustomerId: getStripeString(object, "customer"),
+        platformStripeSubscriptionId: getStripeString(object, "subscription"),
+        platformSubscriptionStatus: "incomplete"
+      }
+    });
+
+    return;
+  }
+
   const subscriptionId = getStripeMetadataValue(object, "subscription_id");
 
   if (!subscriptionId) {
@@ -175,6 +205,12 @@ async function processCheckoutSessionCompleted(event: StripeEventPayload, organi
 
 async function processSubscriptionChanged(event: StripeEventPayload, organizationId: string) {
   const object = getStripeEventObject(event);
+
+  if (getStripeMetadataValue(object, "billing_type") === "platform_subscription") {
+    await processPlatformSubscriptionChanged(event, organizationId);
+    return;
+  }
+
   const localSubscriptionId = getStripeMetadataValue(object, "subscription_id");
   const stripeSubscriptionId = getStripeString(object, "id");
   const stripeCustomerId = getStripeString(object, "customer");
@@ -217,6 +253,26 @@ async function processSubscriptionChanged(event: StripeEventPayload, organizatio
   });
 }
 
+async function processPlatformSubscriptionChanged(event: StripeEventPayload, organizationId: string) {
+  const object = getStripeEventObject(event);
+  const stripePriceId = getStripePriceId(object);
+  const plan = getPlatformPlanByPriceId(stripePriceId);
+
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: {
+      ...(plan ? { platformPlan: plan.id } : {}),
+      platformStripeSubscriptionId: getStripeString(object, "id"),
+      platformStripeCustomerId: getStripeString(object, "customer"),
+      platformSubscriptionStatus:
+        event.type === "customer.subscription.deleted" ? "canceled" : getStripeString(object, "status") ?? "incomplete",
+      platformCurrentPeriodStart: getStripeTimestamp(object, "current_period_start"),
+      platformCurrentPeriodEnd: getStripeTimestamp(object, "current_period_end"),
+      platformCancelAt: getStripeTimestamp(object, "cancel_at")
+    }
+  });
+}
+
 async function processAccountUpdated(event: StripeEventPayload, organizationId: string) {
   const object = getStripeEventObject(event);
   const accountId = getStripeString(object, "id") ?? event.account ?? null;
@@ -238,4 +294,28 @@ function getStripeTimestamp(object: Record<string, unknown>, key: string) {
   const value = object[key];
 
   return typeof value === "number" && Number.isFinite(value) ? new Date(value * 1000) : null;
+}
+
+function getStripePriceId(object: Record<string, unknown>) {
+  const items = object.items;
+
+  if (typeof items !== "object" || items === null || !("data" in items) || !Array.isArray((items as { data: unknown }).data)) {
+    return null;
+  }
+
+  const [firstItem] = (items as { data: unknown[] }).data;
+
+  if (typeof firstItem !== "object" || firstItem === null || !("price" in firstItem)) {
+    return null;
+  }
+
+  const price = (firstItem as { price?: unknown }).price;
+
+  if (typeof price !== "object" || price === null || !("id" in price)) {
+    return null;
+  }
+
+  const id = (price as { id?: unknown }).id;
+
+  return typeof id === "string" ? id : null;
 }

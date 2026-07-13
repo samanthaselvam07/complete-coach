@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 import { handleApiError } from "@/lib/api/responses";
 import {
   ActiveOrganizationRequiredError,
-  AuthenticationRequiredError
+  AuthenticationRequiredError,
+  PlatformBillingAccessRequiredError
 } from "@/lib/auth/session-guards";
 import { ForbiddenError } from "@/lib/auth/permissions";
 
@@ -17,6 +18,11 @@ describe("API response helpers", () => {
       "active_organization_required"
     );
     await expectJson(handleApiError(new ForbiddenError("assistant", "clients:write")), 403, "forbidden");
+    await expectJson(
+      handleApiError(new PlatformBillingAccessRequiredError("Platform access is paused until billing is active.")),
+      402,
+      "platform_billing_required"
+    );
     await expectJson(
       handleApiError(z.object({ email: z.string().email() }).safeParse({ email: "bad" }).error),
       422,

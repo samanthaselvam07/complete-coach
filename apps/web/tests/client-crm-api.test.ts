@@ -22,9 +22,13 @@ const mocks = vi.hoisted(() => ({
   prisma: {
     client: {
       findMany: vi.fn(),
+      count: vi.fn(),
       create: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn()
+    },
+    organization: {
+      findUnique: vi.fn()
     },
     lead: {
       findMany: vi.fn(),
@@ -74,9 +78,11 @@ describe("client and CRM API tenancy", () => {
   beforeEach(() => {
     mocks.auth.mockReset();
     mocks.prisma.client.findMany.mockReset();
+    mocks.prisma.client.count.mockReset();
     mocks.prisma.client.create.mockReset();
     mocks.prisma.client.findFirst.mockReset();
     mocks.prisma.client.update.mockReset();
+    mocks.prisma.organization.findUnique.mockReset();
     mocks.prisma.lead.findMany.mockReset();
     mocks.prisma.lead.create.mockReset();
     mocks.prisma.lead.findFirst.mockReset();
@@ -94,6 +100,8 @@ describe("client and CRM API tenancy", () => {
 
   it("creates clients in the active organization and writes an audit log", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "core" });
+    mocks.prisma.client.count.mockResolvedValue(12);
     mocks.prisma.client.create.mockResolvedValue({
       id: "client_1",
       firstName: "Emma",
@@ -130,6 +138,13 @@ describe("client and CRM API tenancy", () => {
         })
       })
     );
+    expect(mocks.prisma.client.count).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        deletedAt: null,
+        status: { not: ClientStatus.ARCHIVED }
+      }
+    });
     expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -138,6 +153,29 @@ describe("client and CRM API tenancy", () => {
         })
       })
     );
+  });
+
+  it("blocks client creation when the organization has reached its platform client limit", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "core" });
+    mocks.prisma.client.count.mockResolvedValue(40);
+
+    const response = await postClient(
+      new Request("http://test.local/api/v1/clients", {
+        method: "POST",
+        body: JSON.stringify({
+          firstName: "Limit",
+          lastName: "Reached",
+          email: "limit@example.com",
+          status: "new"
+        })
+      })
+    );
+    const payload = (await response.json()) as { error: { code: string } };
+
+    expect(response.status).toBe(409);
+    expect(payload.error.code).toBe("platform_client_limit_reached");
+    expect(mocks.prisma.client.create).not.toHaveBeenCalled();
   });
 
   it("requires authentication for client lists", async () => {

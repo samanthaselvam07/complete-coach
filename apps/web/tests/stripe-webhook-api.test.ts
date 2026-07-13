@@ -239,6 +239,87 @@ describe("Stripe webhook API", () => {
     });
   });
 
+  it("updates organization platform billing state from Checkout completion events", async () => {
+    const event = {
+      id: "evt_platform_checkout",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_platform_1",
+          customer: "cus_platform_1",
+          subscription: "sub_platform_1",
+          metadata: {
+            billing_type: "platform_subscription",
+            organization_id: "org_1",
+            platform_plan: "scale"
+          }
+        }
+      }
+    };
+    mocks.prisma.organization.update.mockResolvedValue({});
+
+    const response = await processStripeWebhook(buildSignedRequest(event));
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.organization.update).toHaveBeenCalledWith({
+      where: { id: "org_1" },
+      data: {
+        platformPlan: "scale",
+        platformStripeCustomerId: "cus_platform_1",
+        platformStripeSubscriptionId: "sub_platform_1",
+        platformSubscriptionStatus: "incomplete"
+      }
+    });
+    expect(mocks.prisma.clientSubscription.update).not.toHaveBeenCalled();
+  });
+
+  it("updates organization platform billing state from subscription update events", async () => {
+    const event = {
+      id: "evt_platform_subscription",
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: "sub_platform_1",
+          customer: "cus_platform_1",
+          status: "active",
+          current_period_start: 1_779_033_600,
+          current_period_end: 1_781_625_600,
+          items: {
+            data: [
+              {
+                price: {
+                  id: "price_1TsaOPI51UQp7jCTB9TvXUIK"
+                }
+              }
+            ]
+          },
+          metadata: {
+            billing_type: "platform_subscription",
+            organization_id: "org_1"
+          }
+        }
+      }
+    };
+    mocks.prisma.organization.update.mockResolvedValue({});
+
+    const response = await processStripeWebhook(buildSignedRequest(event));
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.organization.update).toHaveBeenCalledWith({
+      where: { id: "org_1" },
+      data: {
+        platformPlan: "scale",
+        platformStripeCustomerId: "cus_platform_1",
+        platformStripeSubscriptionId: "sub_platform_1",
+        platformSubscriptionStatus: "active",
+        platformCurrentPeriodStart: new Date("2026-05-17T16:00:00.000Z"),
+        platformCurrentPeriodEnd: new Date("2026-06-16T16:00:00.000Z"),
+        platformCancelAt: null
+      }
+    });
+    expect(mocks.prisma.clientSubscription.update).not.toHaveBeenCalled();
+  });
+
   it("persists unhandled matched events as ignored", async () => {
     const event = {
       id: "evt_unhandled",

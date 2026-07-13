@@ -20,7 +20,13 @@ export const localDevelopmentSession = {
     id: "local-dev-organization",
     slug: "complete-coach-demo",
     name: "Complete Coach Demo",
-    role: "owner"
+    role: "owner",
+    platformAccess: {
+      state: "active",
+      canUsePlatform: true,
+      reason: "subscription_active",
+      message: "Platform access is active."
+    }
   },
   expires: "2099-01-01T00:00:00.000Z"
 } satisfies Session;

@@ -8,7 +8,8 @@ import {
   getClientCreateData,
   serializeClient
 } from "@/lib/clients/client-records";
-import { dataResponse, handleApiError } from "@/lib/api/responses";
+import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
+import { assertPlatformClientCapacity, PlatformLimitError } from "@/lib/platform-billing/limits";
 
 export async function GET(request: Request) {
   try {
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
   try {
     const actor = requireActiveActor(await auth(), "clients:write");
     const input = createClientSchema.parse(await request.json());
+    await assertPlatformClientCapacity(actor.organizationId);
     const client = await prisma.client.create({
       data: getClientCreateData(actor.organizationId, input)
     });
@@ -50,6 +52,10 @@ export async function POST(request: Request) {
       headers: { Location: `/api/v1/clients/${client.id}` }
     });
   } catch (error) {
+    if (error instanceof PlatformLimitError) {
+      return errorResponse(error.code, error.message, 409, { limit: error.limit });
+    }
+
     return handleApiError(error);
   }
 }

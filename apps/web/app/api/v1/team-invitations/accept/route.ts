@@ -8,6 +8,7 @@ import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireAuthenticatedSession } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
+import { assertPlatformTeamSeatAvailableForAcceptance, PlatformLimitError } from "@/lib/platform-billing/limits";
 import { hashInvitationToken } from "@/lib/team/team-records";
 
 const acceptInvitationSchema = z
@@ -38,6 +39,8 @@ export async function POST(request: Request) {
         403
       );
     }
+
+    await assertPlatformTeamSeatAvailableForAcceptance(invitation.organizationId);
 
     const membership = await prisma.$transaction(async (transaction) => {
       const acceptedMembership = await transaction.organizationMembership.upsert({
@@ -91,6 +94,10 @@ export async function POST(request: Request) {
       status: membership.status.toLowerCase()
     });
   } catch (error) {
+    if (error instanceof PlatformLimitError) {
+      return errorResponse(error.code, error.message, 409, { limit: error.limit });
+    }
+
     return handleApiError(error);
   }
 }

@@ -10,6 +10,7 @@ import { isLocalDevAuthBypassEnabled, localDevelopmentSession } from "@/lib/auth
 import type { MembershipRole } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db/prisma";
 import { getServerEnv } from "@/lib/env";
+import { evaluatePlatformBillingAccess } from "@/lib/platform-billing/rules";
 
 function isActiveOrganization(value: unknown): value is NonNullable<Session["activeOrganization"]> {
   if (!value || typeof value !== "object") {
@@ -85,7 +86,8 @@ const nextAuth = NextAuth(() => {
             id: membership.organizationId,
             slug: membership.organization.slug,
             name: membership.organization.name,
-            role: membership.role.toLowerCase() as MembershipRole
+            role: membership.role.toLowerCase() as MembershipRole,
+            platformAccess: evaluatePlatformBillingAccess(membership.organization.platformSubscriptionStatus)
           };
         }
 

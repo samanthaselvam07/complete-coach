@@ -4,7 +4,8 @@ import { ZodError } from "zod";
 
 import {
   ActiveOrganizationRequiredError,
-  AuthenticationRequiredError
+  AuthenticationRequiredError,
+  PlatformBillingAccessRequiredError
 } from "@/lib/auth/session-guards";
 import { ForbiddenError } from "@/lib/auth/permissions";
 import { logger, redactLogValue } from "@/lib/observability/logger";
@@ -37,6 +38,10 @@ export function handleApiError(error: unknown) {
 
   if (error instanceof ForbiddenError) {
     return errorResponse("forbidden", "You do not have permission to perform this action.", 403);
+  }
+
+  if (error instanceof PlatformBillingAccessRequiredError) {
+    return errorResponse("platform_billing_required", error.message, 402);
   }
 
   if (error instanceof ZodError) {

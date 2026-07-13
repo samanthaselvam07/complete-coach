@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  PlatformBillingAccessRequiredError,
   requireActiveActor,
   requireAuthenticatedSession,
   type AppSession
@@ -61,5 +62,23 @@ describe("session guards", () => {
         "payments:manage"
       )
     ).toThrow(/Forbidden/);
+  });
+
+  it("blocks non-payment access when platform billing is inactive", () => {
+    const blockedSession: AppSession = {
+      ...authenticatedSession,
+      activeOrganization: {
+        ...activeOrganization,
+        platformAccess: {
+          state: "blocked",
+          canUsePlatform: false,
+          reason: "subscription_inactive",
+          message: "Platform access is paused until billing is active."
+        }
+      }
+    };
+
+    expect(() => requireActiveActor(blockedSession, "clients:read")).toThrow(PlatformBillingAccessRequiredError);
+    expect(() => requireActiveActor(blockedSession, "payments:manage")).not.toThrow();
   });
 });

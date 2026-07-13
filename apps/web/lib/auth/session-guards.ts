@@ -19,6 +19,13 @@ export class ActiveOrganizationRequiredError extends Error {
   }
 }
 
+export class PlatformBillingAccessRequiredError extends Error {
+  constructor(readonly message: string) {
+    super(message);
+    this.name = "PlatformBillingAccessRequiredError";
+  }
+}
+
 export function requireAuthenticatedSession(session: AppSession | null) {
   if (!session?.user?.id) {
     throw new AuthenticationRequiredError();
@@ -40,6 +47,15 @@ export function requireActiveActor(
 
   if (requiredCapability) {
     assertCapability(organization.role, requiredCapability);
+  }
+
+  if (
+    organization.platformAccess &&
+    !organization.platformAccess.canUsePlatform &&
+    requiredCapability !== "payments:read" &&
+    requiredCapability !== "payments:manage"
+  ) {
+    throw new PlatformBillingAccessRequiredError(organization.platformAccess.message);
   }
 
   return {

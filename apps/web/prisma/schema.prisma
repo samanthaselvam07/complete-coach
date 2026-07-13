@@ -550,6 +550,13 @@ model Organization {
   timezone                     String                        @default("UTC")
   stripeConnectAccountId       String?                       @map("stripe_connect_account_id")
   stripeConnectStatus          String?                       @map("stripe_connect_status")
+  platformPlan                 String?                       @map("platform_plan")
+  platformStripeCustomerId      String?                       @map("platform_stripe_customer_id")
+  platformStripeSubscriptionId  String?                       @map("platform_stripe_subscription_id")
+  platformSubscriptionStatus    String?                       @map("platform_subscription_status")
+  platformCurrentPeriodStart    DateTime?                     @map("platform_current_period_start") @db.Timestamptz(6)
+  platformCurrentPeriodEnd      DateTime?                     @map("platform_current_period_end") @db.Timestamptz(6)
+  platformCancelAt             DateTime?                     @map("platform_cancel_at") @db.Timestamptz(6)
   createdAt                    DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                    DateTime                      @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                    DateTime?                     @map("deleted_at") @db.Timestamptz(6)
@@ -608,6 +615,10 @@ model Organization {
   aiOutputs                    AiOutput[]
 
   @@index([status])
+  @@index([platformPlan])
+  @@index([platformSubscriptionStatus])
+  @@unique([platformStripeCustomerId])
+  @@unique([platformStripeSubscriptionId])
   @@map("organizations")
 }
 
