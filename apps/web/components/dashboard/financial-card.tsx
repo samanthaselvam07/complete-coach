@@ -133,6 +133,27 @@ export function FinancialCard({
       ) : (
         <>
           <div className="mb-4 text-3xl font-bold">{metric.value}</div>
+          <dl className="mb-4 grid grid-cols-2 gap-2 text-xs">
+            <div className="rounded-lg bg-gray-50 p-2">
+              <dt className="text-gray-500">Gross</dt>
+              <dd className="mt-1 font-semibold text-gray-900">{metric.gross ?? "$0"}</dd>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-2">
+              <dt className="text-gray-500">Fees</dt>
+              <dd className="mt-1 font-semibold text-gray-900">{metric.fees ?? "$0"}</dd>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-2">
+              <dt className="text-gray-500">Available</dt>
+              <dd className="mt-1 font-semibold text-gray-900">{metric.available ?? "$0"}</dd>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-2">
+              <dt className="text-gray-500">Pending</dt>
+              <dd className="mt-1 font-semibold text-gray-900">{metric.pending ?? "$0"}</dd>
+            </div>
+          </dl>
+          <p className="mb-3 text-xs text-gray-500">
+            {metric.transactionCount ?? 0} {metric.transactionCount === 1 ? "Stripe transaction" : "Stripe transactions"} in this period
+          </p>
           <div className="flex h-16 items-end gap-1" aria-hidden="true">
             {metric.bars.map((height, index) => (
               <div

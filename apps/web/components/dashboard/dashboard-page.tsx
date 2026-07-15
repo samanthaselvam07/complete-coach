@@ -47,9 +47,14 @@ interface ApiClientSummary {
 interface ApiFinancialReport {
   label: string;
   amount: number;
+  grossAmount?: number;
+  feeAmount?: number;
   currency: string;
   change: string;
   bars: number[];
+  stripeTransactionCount?: number;
+  availableBalance?: number;
+  pendingBalance?: number;
 }
 
 interface ApiDashboardMetadata {
@@ -363,31 +368,31 @@ const emptyRevenueMetrics: Record<RevenuePeriod, RevenueMetric> = {
   weekly: {
     label: "Weekly Revenue",
     value: "$0",
-    change: "Awaiting database data",
+    change: "Awaiting Stripe data",
     bars: []
   },
   monthly: {
     label: "Monthly Revenue",
     value: "$0",
-    change: "Awaiting database data",
+    change: "Awaiting Stripe data",
     bars: []
   },
   quarterly: {
     label: "Quarterly Revenue",
     value: "$0",
-    change: "Awaiting database data",
+    change: "Awaiting Stripe data",
     bars: []
   },
   yearly: {
     label: "Yearly Revenue",
     value: "$0",
-    change: "Awaiting database data",
+    change: "Awaiting Stripe data",
     bars: []
   },
   custom: {
     label: "Custom Revenue",
     value: "$0",
-    change: "Awaiting database data",
+    change: "Awaiting Stripe data",
     bars: []
   }
 };
@@ -596,7 +601,12 @@ export function mapFinancialReport(report: ApiFinancialReport): RevenueMetric | 
     label: report.label,
     value: formatCents(report.amount, report.currency),
     change: report.change,
-    bars: report.bars
+    bars: report.bars,
+    gross: typeof report.grossAmount === "number" ? formatCents(report.grossAmount, report.currency) : undefined,
+    fees: typeof report.feeAmount === "number" ? formatCents(report.feeAmount, report.currency) : undefined,
+    available: typeof report.availableBalance === "number" ? formatCents(report.availableBalance, report.currency) : undefined,
+    pending: typeof report.pendingBalance === "number" ? formatCents(report.pendingBalance, report.currency) : undefined,
+    transactionCount: report.stripeTransactionCount
   };
 }
 

@@ -11,6 +11,11 @@ export interface RevenueMetric {
   value: string;
   change: string;
   bars: number[];
+  gross?: string;
+  fees?: string;
+  available?: string;
+  pending?: string;
+  transactionCount?: number;
 }
 
 export interface DashboardTask {

@@ -53,6 +53,27 @@ interface StripeCheckoutSession {
   url: string | null;
 }
 
+interface StripeList<T> {
+  data: T[];
+  has_more: boolean;
+}
+
+export interface StripeBalanceTransaction {
+  id: string;
+  amount: number;
+  fee: number;
+  net: number;
+  currency: string;
+  created: number;
+  type: string;
+  reporting_category?: string;
+}
+
+export interface StripeBalance {
+  available: Array<{ amount: number; currency: string }>;
+  pending: Array<{ amount: number; currency: string }>;
+}
+
 export const stripeAccountLinkSchema = z.object({
   returnUrl: z.string().trim().min(1).refine(isSafeRedirectUrl, "Must be an absolute URL or safe relative path.").optional(),
   refreshUrl: z.string().trim().min(1).refine(isSafeRedirectUrl, "Must be an absolute URL or safe relative path.").optional()
@@ -102,6 +123,41 @@ export async function createAccountLink(
 
 export async function retrieveConnectedAccount(config: StripeConfig, accountId: string) {
   return getStripe<StripeAccount>(config, `/v1/accounts/${encodeURIComponent(accountId)}`);
+}
+
+export async function retrieveConnectedBalance(config: StripeConfig, accountId: string) {
+  return getStripe<StripeBalance>(config, "/v1/balance", { accountId });
+}
+
+export async function listConnectedBalanceTransactions(
+  config: StripeConfig,
+  input: { accountId: string; createdGte: number; createdLte: number }
+) {
+  const transactions: StripeBalanceTransaction[] = [];
+  let startingAfter: string | undefined;
+
+  do {
+    const params = new URLSearchParams({
+      limit: "100",
+      "created[gte]": String(input.createdGte),
+      "created[lte]": String(input.createdLte)
+    });
+
+    if (startingAfter) {
+      params.set("starting_after", startingAfter);
+    }
+
+    const page = await getStripe<StripeList<StripeBalanceTransaction>>(
+      config,
+      `/v1/balance_transactions?${params.toString()}`,
+      { accountId: input.accountId }
+    );
+
+    transactions.push(...page.data);
+    startingAfter = page.has_more ? page.data.at(-1)?.id : undefined;
+  } while (startingAfter);
+
+  return transactions;
 }
 
 export async function createStripeProduct(
@@ -269,11 +325,12 @@ async function postStripeForm<T>(
   return payload as T;
 }
 
-async function getStripe<T>(config: StripeConfig, path: string) {
+async function getStripe<T>(config: StripeConfig, path: string, options?: { accountId?: string }) {
   const response = await fetch(`${config.apiBaseUrl}${path}`, {
     method: "GET",
     headers: {
-      Authorization: `Basic ${Buffer.from(`${config.secretKey}:`).toString("base64")}`
+      Authorization: `Basic ${Buffer.from(`${config.secretKey}:`).toString("base64")}`,
+      ...(options?.accountId ? { "Stripe-Account": options.accountId } : {})
     }
   });
 

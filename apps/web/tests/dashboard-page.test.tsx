@@ -35,11 +35,29 @@ describe("dashboard view model helpers", () => {
       "/api/v1/dashboard/financial-reporting?period=custom&startDate=2026-06-01&endDate=2026-06-30"
     );
     expect(buildFinancialReportingUrl("custom", "2026-06-01")).toBe("/api/v1/dashboard/financial-reporting?period=custom");
-    expect(mapFinancialReport({ label: "Revenue", amount: 12345, currency: "aud", change: "+5%", bars: [1, 2] })).toEqual({
+    expect(
+      mapFinancialReport({
+        label: "Revenue",
+        amount: 12345,
+        grossAmount: 15000,
+        feeAmount: 2655,
+        availableBalance: 9000,
+        pendingBalance: 3345,
+        stripeTransactionCount: 4,
+        currency: "aud",
+        change: "+5%",
+        bars: [1, 2]
+      })
+    ).toEqual({
       label: "Revenue",
       value: "A$123.45",
       change: "+5%",
-      bars: [1, 2]
+      bars: [1, 2],
+      gross: "A$150",
+      fees: "A$26.55",
+      available: "A$90",
+      pending: "A$33.45",
+      transactionCount: 4
     });
     expect(mapFinancialReport(null as never)).toBeNull();
     expect(mapFinancialReport({ label: "Bad", amount: "123", currency: "usd", change: "", bars: [] } as never)).toBeNull();
@@ -146,8 +164,8 @@ describe("DashboardPage", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Coach Operations Dashboard" })).toBeInTheDocument();
     expect(screen.getByText("Monthly Revenue")).toBeInTheDocument();
-    expect(await screen.findByText("$0")).toBeInTheDocument();
-    expect(screen.getByText("Awaiting database data")).toBeInTheDocument();
+    expect((await screen.findAllByText("$0")).length).toBeGreaterThan(0);
+    expect(screen.getByText("Awaiting Stripe data")).toBeInTheDocument();
     expect(screen.getByText("Client Capacity")).toBeInTheDocument();
     const capacityCard = screen.getByRole("link", { name: /client capacity/i });
     expect(capacityCard).toHaveAttribute("href", "/clients");
@@ -182,7 +200,12 @@ describe("DashboardPage", () => {
                 label: "Monthly Revenue",
                 amount: 0,
                 currency: "usd",
-                change: "Awaiting database data",
+                change: "Connect Stripe to view live revenue.",
+                grossAmount: 0,
+                feeAmount: 0,
+                availableBalance: 0,
+                pendingBalance: 0,
+                stripeTransactionCount: 0,
                 bars: []
               }
             }),
@@ -234,7 +257,7 @@ describe("DashboardPage", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Weekly" }));
 
     expect(screen.getByText("Weekly Revenue")).toBeInTheDocument();
-    expect(await screen.findByText("$0")).toBeInTheDocument();
+    expect((await screen.findAllByText("$0")).length).toBeGreaterThan(0);
     expect(screen.queryByText("Monthly Revenue")).not.toBeInTheDocument();
   });
 
@@ -249,11 +272,16 @@ describe("DashboardPage", () => {
               data: {
                 period: "monthly",
                 label: "Monthly Revenue",
-                amount: 319000,
-                currency: "usd",
-                change: "Stripe live",
-                bars: [30, 35, 40, 48, 52, 61, 72]
-              }
+        amount: 319000,
+        grossAmount: 340000,
+        feeAmount: 21000,
+        currency: "usd",
+        change: "Stripe live",
+        availableBalance: 240000,
+        pendingBalance: 79000,
+        stripeTransactionCount: 12,
+        bars: [30, 35, 40, 48, 52, 61, 72]
+      }
             }),
             { status: 200 }
           )
@@ -266,6 +294,11 @@ describe("DashboardPage", () => {
     render(createElement(DashboardPage));
 
     expect(await screen.findByText("$3,190")).toBeInTheDocument();
+    expect(screen.getByText("$3,400")).toBeInTheDocument();
+    expect(screen.getByText("$210")).toBeInTheDocument();
+    expect(screen.getByText("$2,400")).toBeInTheDocument();
+    expect(screen.getByText("$790")).toBeInTheDocument();
+    expect(screen.getByText("12 Stripe transactions in this period")).toBeInTheDocument();
     expect(screen.getByText("Stripe live")).toBeInTheDocument();
   });
 
@@ -284,8 +317,13 @@ describe("DashboardPage", () => {
                 period: "custom",
                 label: "Custom Revenue",
                 amount: 128500,
+                grossAmount: 140000,
+                feeAmount: 11500,
                 currency: "usd",
                 change: "Stripe custom range",
+                availableBalance: 98000,
+                pendingBalance: 30500,
+                stripeTransactionCount: 3,
                 bars: [35, 50, 65, 80]
               }
             }),
