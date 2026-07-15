@@ -37,11 +37,19 @@ describe("local development auth bypass", () => {
 
   it("can bind the local session to the persisted demo organization", () => {
     const session = createLocalDevelopmentSession({
-      id: "persisted-org-id",
-      slug: "complete-coach-demo",
-      name: "Complete Coach Demo"
+      organization: {
+        id: "persisted-org-id",
+        slug: "complete-coach-demo",
+        name: "Complete Coach Demo"
+      },
+      user: {
+        id: "persisted-user-id",
+        name: "Local Dev Coach",
+        email: "coach@example.com"
+      }
     });
 
+    expect(session.user?.id).toBe("persisted-user-id");
     expect(session.activeOrganization?.id).toBe("persisted-org-id");
     expect(session.activeOrganization?.role).toBe("owner");
     expect(session.activeOrganization?.platformAccess?.canUsePlatform).toBe(true);

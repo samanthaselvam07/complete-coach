@@ -7,6 +7,11 @@ const localDevelopmentOrganization = {
   slug: "complete-coach-demo",
   name: "Complete Coach Demo"
 };
+const localDevelopmentUser = {
+  id: "local-dev-user",
+  name: "Local Dev Coach",
+  email: "coach@example.com"
+};
 
 export function isLocalDevAuthBypassEnabled(env: NodeJS.ProcessEnv = process.env) {
   const environment = env.NODE_ENV ?? nodeEnvironment;
@@ -16,11 +21,7 @@ export function isLocalDevAuthBypassEnabled(env: NodeJS.ProcessEnv = process.env
 }
 
 export const localDevelopmentSession = {
-  user: {
-    id: "local-dev-user",
-    name: "Local Dev Coach",
-    email: "coach@example.com"
-  },
+  user: localDevelopmentUser,
   activeOrganization: {
     ...localDevelopmentOrganization,
     role: "owner",
@@ -34,9 +35,21 @@ export const localDevelopmentSession = {
   expires: "2099-01-01T00:00:00.000Z"
 } satisfies Session;
 
-export function createLocalDevelopmentSession(organization = localDevelopmentOrganization): Session {
+export function createLocalDevelopmentSession({
+  organization = localDevelopmentOrganization,
+  user = localDevelopmentUser
+}: {
+  organization?: typeof localDevelopmentOrganization;
+  user?: typeof localDevelopmentUser;
+} = {}): Session {
   return {
     ...localDevelopmentSession,
+    user: {
+      ...localDevelopmentSession.user,
+      id: user.id,
+      name: user.name,
+      email: user.email
+    },
     activeOrganization: {
       ...localDevelopmentSession.activeOrganization,
       id: organization.id,

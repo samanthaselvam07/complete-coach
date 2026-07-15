@@ -4,6 +4,10 @@ import NextAuth from "next-auth";
 import type { Session } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
+import {
+  MembershipRole as PrismaMembershipRole,
+  MembershipStatus
+} from "@/app/generated/prisma/enums";
 import { findActiveOrganizationMembershipForUser } from "@/lib/auth/active-organization";
 import { credentialsSchema } from "@/lib/auth/credentials";
 import { createLocalDevelopmentSession, isLocalDevAuthBypassEnabled, localDevelopmentSession } from "@/lib/auth/local-dev-session";
@@ -112,24 +116,75 @@ export const { handlers, signIn, signOut } = nextAuth;
 
 export async function auth() {
   if (isLocalDevAuthBypassEnabled()) {
-    const organization = await prisma.organization.upsert({
-      where: { slug: localDevelopmentSession.activeOrganization.slug },
-      update: {},
-      create: {
-        id: localDevelopmentSession.activeOrganization.id,
-        name: localDevelopmentSession.activeOrganization.name,
-        slug: localDevelopmentSession.activeOrganization.slug,
-        timezone: "Australia/Melbourne",
-        platformSubscriptionStatus: "active"
-      },
-      select: {
-        id: true,
-        slug: true,
-        name: true
-      }
+    const { organization, user } = await prisma.$transaction(async (tx) => {
+      const organization = await tx.organization.upsert({
+        where: { slug: localDevelopmentSession.activeOrganization.slug },
+        update: {},
+        create: {
+          id: localDevelopmentSession.activeOrganization.id,
+          name: localDevelopmentSession.activeOrganization.name,
+          slug: localDevelopmentSession.activeOrganization.slug,
+          timezone: "Australia/Melbourne",
+          platformSubscriptionStatus: "active"
+        },
+        select: {
+          id: true,
+          slug: true,
+          name: true
+        }
+      });
+
+      const user = await tx.user.upsert({
+        where: { email: localDevelopmentSession.user.email },
+        update: {
+          name: localDevelopmentSession.user.name
+        },
+        create: {
+          id: localDevelopmentSession.user.id,
+          email: localDevelopmentSession.user.email,
+          name: localDevelopmentSession.user.name,
+          authProvider: "local-dev",
+          authProviderAccountId: localDevelopmentSession.user.email
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true
+        }
+      });
+
+      await tx.organizationMembership.upsert({
+        where: {
+          organizationId_userId: {
+            organizationId: organization.id,
+            userId: user.id
+          }
+        },
+        update: {
+          role: PrismaMembershipRole.OWNER,
+          status: MembershipStatus.ACTIVE,
+          joinedAt: new Date()
+        },
+        create: {
+          organizationId: organization.id,
+          userId: user.id,
+          role: PrismaMembershipRole.OWNER,
+          status: MembershipStatus.ACTIVE,
+          joinedAt: new Date()
+        }
+      });
+
+      return { organization, user };
     });
 
-    return createLocalDevelopmentSession(organization);
+    return createLocalDevelopmentSession({
+      organization,
+      user: {
+        id: user.id,
+        name: user.name ?? localDevelopmentSession.user.name,
+        email: user.email ?? localDevelopmentSession.user.email
+      }
+    });
   }
 
   return nextAuth.auth();
