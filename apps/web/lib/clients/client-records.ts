@@ -125,6 +125,18 @@ export function getClientCreateData(organizationId: string, input: CreateClientI
   };
 }
 
+export function getClientProfileCreateData(organizationId: string, clientId: string, input: CreateClientInput) {
+  if (!input.onboarding?.dateOfBirth) {
+    return null;
+  }
+
+  return {
+    organizationId,
+    clientId,
+    dateOfBirth: new Date(`${input.onboarding.dateOfBirth}T00:00:00.000Z`)
+  };
+}
+
 function getInitials(firstName: string, lastName: string) {
   return `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase() || "CC";
 }

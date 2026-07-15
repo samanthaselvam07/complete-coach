@@ -99,7 +99,7 @@ export function createClientMutationBody(form: ClientFormState, status = "new", 
       dailyHabitForm: form.dailyHabitForm || undefined,
       checkInForm: form.checkInForm || undefined,
       checkInFrequency: form.checkInFrequency || undefined,
-      checkInDays: form.checkInDays,
+      checkInDays: form.checkInDays.length > 0 ? form.checkInDays : undefined,
       defaultExerciseMetricUnit: form.defaultExerciseMetricUnit || undefined
     }
   };

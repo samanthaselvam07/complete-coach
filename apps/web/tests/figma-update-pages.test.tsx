@@ -23,7 +23,7 @@ describe("Figma update pages", () => {
 
   it("creates a client from the new intake page", async () => {
     fetchMock.mockReset();
-    mockNewClientIntakeLookups(new Response(JSON.stringify({ id: "client_created_1" }), { status: 201 }));
+    mockNewClientIntakeLookups(new Response(JSON.stringify({ data: { id: "client_created_1" } }), { status: 201 }));
 
     render(<NewClientIntakePage />);
 
@@ -126,7 +126,7 @@ describe("Figma update pages", () => {
 
   it("uses offline payment mode when the client does not need to pay", async () => {
     fetchMock.mockReset();
-    mockNewClientIntakeLookups(new Response(JSON.stringify({ id: "client_created_2" }), { status: 201 }));
+    mockNewClientIntakeLookups(new Response(JSON.stringify({ data: { id: "client_created_2" } }), { status: 201 }));
 
     render(<NewClientIntakePage />);
 
@@ -143,6 +143,42 @@ describe("Figma update pages", () => {
         })
       );
     });
+  });
+
+  it("creates a client without optional setup forms or check-in scheduling", async () => {
+    fetchMock.mockReset();
+    mockNewClientIntakeLookups(new Response(JSON.stringify({ data: { id: "client_created_minimal" } }), { status: 201 }));
+
+    render(<NewClientIntakePage />);
+
+    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Mia" } });
+    fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Reed" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create client" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/clients", expect.objectContaining({ method: "POST" }));
+    });
+
+    const clientCreateCall = fetchMock.mock.calls.find(([url, init]) => url === "/api/v1/clients" && init?.method === "POST");
+    const createBody = JSON.parse(String(clientCreateCall?.[1]?.body));
+
+    expect(createBody).toEqual(
+      expect.objectContaining({
+        firstName: "Mia",
+        lastName: "Reed",
+        status: "new",
+        onboarding: expect.objectContaining({
+          needsPayment: false,
+          paymentMode: "offline"
+        })
+      })
+    );
+    expect(createBody).not.toHaveProperty("checkInDay");
+    expect(createBody.onboarding).not.toHaveProperty("initialQuestionnaire");
+    expect(createBody.onboarding).not.toHaveProperty("dailyHabitForm");
+    expect(createBody.onboarding).not.toHaveProperty("checkInForm");
+    expect(createBody.onboarding).not.toHaveProperty("checkInFrequency");
+    expect(createBody.onboarding).not.toHaveProperty("checkInDays");
   });
 
   it("validates the new client intake form before submitting", () => {
@@ -303,7 +339,7 @@ describe("Figma update pages", () => {
   });
 });
 
-function mockNewClientIntakeLookups(clientCreateResponse = new Response(JSON.stringify({ id: "client_created" }), { status: 201 })) {
+function mockNewClientIntakeLookups(clientCreateResponse = new Response(JSON.stringify({ data: { id: "client_created" } }), { status: 201 })) {
   fetchMock.mockImplementation((input, init) => {
     const url = String(input);
 

@@ -92,13 +92,6 @@ export function ClientsPage() {
     );
   };
 
-  const openCreateClient = () => {
-    setEditingClient(null);
-    setClientForm(emptyClientForm);
-    setClientFormError(null);
-    setClientFormOpen(true);
-  };
-
   const openEditClient = (client: ClientSummary) => {
     setEditingClient(client);
     setClientForm(clientSummaryToForm(client));
@@ -180,14 +173,13 @@ export function ClientsPage() {
           <h1 className="mb-2 text-3xl font-bold">Client Roster</h1>
           <p className="text-gray-600">Manage and monitor your client performance</p>
         </div>
-        <button
-          type="button"
+        <Link
+          href={"/clients/new" as Route}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
-          onClick={openCreateClient}
         >
           <Plus className="size-4" aria-hidden="true" />
           Add client
-        </button>
+        </Link>
       </div>
 
       <div className="mb-8 grid gap-6 md:grid-cols-3">

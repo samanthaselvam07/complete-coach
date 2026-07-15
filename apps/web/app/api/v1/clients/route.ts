@@ -6,6 +6,7 @@ import {
   clientListQuerySchema,
   createClientSchema,
   getClientCreateData,
+  getClientProfileCreateData,
   serializeClient
 } from "@/lib/clients/client-records";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
@@ -32,22 +33,36 @@ export async function POST(request: Request) {
     const actor = requireActiveActor(await auth(), "clients:write");
     const input = createClientSchema.parse(await request.json());
     await assertPlatformClientCapacity(actor.organizationId);
-    const client = await prisma.client.create({
-      data: getClientCreateData(actor.organizationId, input)
-    });
+    const client = await prisma.$transaction(async (tx) => {
+      const createdClient = await tx.client.create({
+        data: getClientCreateData(actor.organizationId, input)
+      });
 
-    await prisma.auditLog.create({
-      data: {
-        organizationId: actor.organizationId,
-        actorUserId: actor.userId,
-        action: "client.created",
-        targetType: "client",
-        targetId: client.id,
-        metadata: {
-          status: input.status,
-          onboarding: input.onboarding
-        }
+      const profileCreateData = getClientProfileCreateData(actor.organizationId, createdClient.id, input);
+
+      if (profileCreateData) {
+        await tx.clientProfile.upsert({
+          where: { clientId: createdClient.id },
+          create: profileCreateData,
+          update: { dateOfBirth: profileCreateData.dateOfBirth }
+        });
       }
+
+      await tx.auditLog.create({
+        data: {
+          organizationId: actor.organizationId,
+          actorUserId: actor.userId,
+          action: "client.created",
+          targetType: "client",
+          targetId: createdClient.id,
+          metadata: {
+            status: input.status,
+            onboarding: input.onboarding
+          }
+        }
+      });
+
+      return createdClient;
     });
 
     return dataResponse(serializeClient(client), {

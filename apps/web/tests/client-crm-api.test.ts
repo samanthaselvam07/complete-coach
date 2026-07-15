@@ -101,6 +101,7 @@ describe("client and CRM API tenancy", () => {
     mocks.prisma.crmStage.deleteMany.mockReset();
     mocks.prisma.crmStage.upsert.mockReset();
     mocks.prisma.$transaction.mockReset();
+    mocks.prisma.$transaction.mockImplementation(async (callback) => callback(mocks.prisma));
     mocks.prisma.auditLog.create.mockReset();
   });
 
@@ -120,6 +121,7 @@ describe("client and CRM API tenancy", () => {
       latestCheckInAt: null,
       compliance: 0
     });
+    mocks.prisma.clientProfile.upsert.mockResolvedValue({});
     mocks.prisma.auditLog.create.mockResolvedValue({});
 
     const response = await postClient(
@@ -149,6 +151,7 @@ describe("client and CRM API tenancy", () => {
     );
 
     expect(response.status).toBe(201);
+    expect(mocks.prisma.$transaction).toHaveBeenCalledOnce();
     expect(mocks.prisma.client.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -163,6 +166,17 @@ describe("client and CRM API tenancy", () => {
         organizationId: "org_1",
         deletedAt: null,
         status: { not: ClientStatus.ARCHIVED }
+      }
+    });
+    expect(mocks.prisma.clientProfile.upsert).toHaveBeenCalledWith({
+      where: { clientId: "client_1" },
+      create: expect.objectContaining({
+        organizationId: "org_1",
+        clientId: "client_1",
+        dateOfBirth: new Date("1992-06-14T00:00:00.000Z")
+      }),
+      update: {
+        dateOfBirth: new Date("1992-06-14T00:00:00.000Z")
       }
     });
     expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(

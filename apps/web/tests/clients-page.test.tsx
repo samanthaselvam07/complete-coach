@@ -181,48 +181,12 @@ describe("ClientsPage", () => {
     });
   });
 
-  it("creates a client through the persistence API", async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: {
-              id: "client_created_1",
-              name: "Created Client",
-              packageName: "Starter Coaching",
-              compliance: 0,
-              checkInDay: "Friday",
-              latestCheckIn: "Not recorded",
-              status: "new",
-              startDate: "May 14, 2026",
-              initials: "CC",
-              avatarColor: "bg-slate-900"
-            }
-          }),
-          { status: 201 }
-        )
-      );
+  it("routes roster client creation to the new client intake", () => {
+    mockClientsApi([]);
 
     render(createElement(ClientsPage));
 
-    fireEvent.click(screen.getByRole("button", { name: "Add client" }));
-    fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Created" } });
-    fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Client" } });
-    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "created@example.com" } });
-    fireEvent.change(screen.getByLabelText("Package"), { target: { value: "Starter Coaching" } });
-    fireEvent.change(screen.getByLabelText("Check-in day"), { target: { value: "Friday" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save client" }));
-
-    expect(await screen.findByRole("link", { name: /view Created Client profile/i })).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      "/api/v1/clients",
-      expect.objectContaining({
-        method: "POST",
-        body: expect.stringContaining("created@example.com")
-      })
-    );
+    expect(screen.getByRole("link", { name: "Add client" })).toHaveAttribute("href", "/clients/new");
   });
 
   it("edits and archives an API-backed client", async () => {
