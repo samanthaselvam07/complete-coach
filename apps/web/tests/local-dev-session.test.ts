@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { isLocalDevAuthBypassEnabled, localDevelopmentSession } from "@/lib/auth/local-dev-session";
+import {
+  createLocalDevelopmentSession,
+  isLocalDevAuthBypassEnabled,
+  localDevelopmentSession
+} from "@/lib/auth/local-dev-session";
 
 describe("local development auth bypass", () => {
   it("only enables the bypass in development when explicitly requested", () => {
@@ -29,5 +33,17 @@ describe("local development auth bypass", () => {
     expect(localDevelopmentSession.user.email).toBe("coach@example.com");
     expect(localDevelopmentSession.activeOrganization?.role).toBe("owner");
     expect(JSON.stringify(localDevelopmentSession)).not.toContain("password");
+  });
+
+  it("can bind the local session to the persisted demo organization", () => {
+    const session = createLocalDevelopmentSession({
+      id: "persisted-org-id",
+      slug: "complete-coach-demo",
+      name: "Complete Coach Demo"
+    });
+
+    expect(session.activeOrganization?.id).toBe("persisted-org-id");
+    expect(session.activeOrganization?.role).toBe("owner");
+    expect(session.activeOrganization?.platformAccess?.canUsePlatform).toBe(true);
   });
 });

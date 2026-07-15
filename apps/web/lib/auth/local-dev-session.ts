@@ -2,6 +2,11 @@ import type { Session } from "next-auth";
 
 const nodeEnvironment = process.env.NODE_ENV;
 const publicLocalDevAuthBypassFlag = process.env.NEXT_PUBLIC_LOCAL_DEV_AUTH_BYPASS;
+const localDevelopmentOrganization = {
+  id: "local-dev-organization",
+  slug: "complete-coach-demo",
+  name: "Complete Coach Demo"
+};
 
 export function isLocalDevAuthBypassEnabled(env: NodeJS.ProcessEnv = process.env) {
   const environment = env.NODE_ENV ?? nodeEnvironment;
@@ -17,9 +22,7 @@ export const localDevelopmentSession = {
     email: "coach@example.com"
   },
   activeOrganization: {
-    id: "local-dev-organization",
-    slug: "complete-coach-demo",
-    name: "Complete Coach Demo",
+    ...localDevelopmentOrganization,
     role: "owner",
     platformAccess: {
       state: "active",
@@ -30,3 +33,15 @@ export const localDevelopmentSession = {
   },
   expires: "2099-01-01T00:00:00.000Z"
 } satisfies Session;
+
+export function createLocalDevelopmentSession(organization = localDevelopmentOrganization): Session {
+  return {
+    ...localDevelopmentSession,
+    activeOrganization: {
+      ...localDevelopmentSession.activeOrganization,
+      id: organization.id,
+      slug: organization.slug,
+      name: organization.name
+    }
+  };
+}

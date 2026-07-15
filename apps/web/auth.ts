@@ -6,7 +6,7 @@ import Credentials from "next-auth/providers/credentials";
 
 import { findActiveOrganizationMembershipForUser } from "@/lib/auth/active-organization";
 import { credentialsSchema } from "@/lib/auth/credentials";
-import { isLocalDevAuthBypassEnabled, localDevelopmentSession } from "@/lib/auth/local-dev-session";
+import { createLocalDevelopmentSession, isLocalDevAuthBypassEnabled, localDevelopmentSession } from "@/lib/auth/local-dev-session";
 import type { MembershipRole } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db/prisma";
 import { getServerEnv } from "@/lib/env";
@@ -112,7 +112,24 @@ export const { handlers, signIn, signOut } = nextAuth;
 
 export async function auth() {
   if (isLocalDevAuthBypassEnabled()) {
-    return localDevelopmentSession;
+    const organization = await prisma.organization.upsert({
+      where: { slug: localDevelopmentSession.activeOrganization.slug },
+      update: {},
+      create: {
+        id: localDevelopmentSession.activeOrganization.id,
+        name: localDevelopmentSession.activeOrganization.name,
+        slug: localDevelopmentSession.activeOrganization.slug,
+        timezone: "Australia/Melbourne",
+        platformSubscriptionStatus: "active"
+      },
+      select: {
+        id: true,
+        slug: true,
+        name: true
+      }
+    });
+
+    return createLocalDevelopmentSession(organization);
   }
 
   return nextAuth.auth();
