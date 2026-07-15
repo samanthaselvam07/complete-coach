@@ -532,15 +532,10 @@ describe("client and CRM API tenancy", () => {
         defaultStage: null
       }
     ];
-    mocks.prisma.$transaction.mockImplementation(async (callback) =>
-      callback({
-        crmStage: {
-          deleteMany: mocks.prisma.crmStage.deleteMany,
-          upsert: mocks.prisma.crmStage.upsert,
-          findMany: vi.fn().mockResolvedValue(savedStages)
-        }
-      })
-    );
+    mocks.prisma.crmStage.deleteMany.mockResolvedValue({ count: 0 });
+    mocks.prisma.crmStage.upsert.mockResolvedValue(savedStages[0]);
+    mocks.prisma.crmStage.findMany.mockResolvedValue(savedStages);
+    mocks.prisma.$transaction.mockImplementation(async (operations) => Promise.all(operations));
     mocks.prisma.auditLog.create.mockResolvedValue({});
 
     const response = await putCrmStages(
@@ -568,6 +563,16 @@ describe("client and CRM API tenancy", () => {
           slug: "new-applications",
           color: "orange"
         })
+      })
+    );
+    expect(mocks.prisma.$transaction).toHaveBeenCalledWith([
+      expect.any(Promise),
+      expect.any(Promise)
+    ]);
+    expect(mocks.prisma.crmStage.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: { organizationId: "org_1" },
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }]
       })
     );
     expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
