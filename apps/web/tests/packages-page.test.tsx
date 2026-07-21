@@ -7,6 +7,7 @@ import { buildPackageStats, formatCents, formStateToPayload, packageToFormState,
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 const persistedPackages = [
@@ -18,6 +19,12 @@ const persistedPackages = [
     priceAmount: 59900,
     currency: "usd",
     billingInterval: "monthly",
+    customBillingIntervalCount: null,
+    customBillingIntervalUnit: null,
+    termWeeks: 16,
+    scheduledPriceAmount: 69900,
+    scheduledPriceCurrency: "usd",
+    scheduledPriceStartsAt: "2026-08-01T00:00:00.000Z",
     stripeProductId: "prod_123",
     stripePriceId: "price_123",
     status: "active",
@@ -36,6 +43,12 @@ const persistedPackages = [
     priceAmount: 149900,
     currency: "usd",
     billingInterval: "one-time",
+    customBillingIntervalCount: null,
+    customBillingIntervalUnit: null,
+    termWeeks: 12,
+    scheduledPriceAmount: null,
+    scheduledPriceCurrency: null,
+    scheduledPriceStartsAt: null,
     stripeProductId: null,
     stripePriceId: null,
     status: "active",
@@ -59,33 +72,96 @@ describe("PackagesPage", () => {
       name: "API Platinum",
       description: "",
       price: "599",
+      currency: "usd",
       billingInterval: "monthly",
-      features: "Custom training\nWeekly reviews",
-      color: "indigo"
+      customBillingIntervalCount: "",
+      customBillingIntervalUnit: "month",
+      termWeeks: "16",
+      scheduledPrice: "699",
+      scheduledPriceCurrency: "usd",
+      scheduledPriceStartsAt: "2026-08-01",
+      features: ["Custom training", "Weekly reviews"]
     });
     expect(
       formStateToPayload({
         name: "  Builder Package  ",
         description: "  ",
         price: "199.995",
-        billingInterval: "one-time",
-        features: " Coaching review \n\n Meal plan ",
-        color: ""
+        currency: "aud",
+        billingInterval: "custom",
+        customBillingIntervalCount: "2",
+        customBillingIntervalUnit: "week",
+        termWeeks: "12",
+        scheduledPrice: "249",
+        scheduledPriceCurrency: "aud",
+        scheduledPriceStartsAt: "2026-08-01",
+        features: [" Coaching review ", "", " Meal plan "]
       })
     ).toEqual({
       name: "Builder Package",
       description: undefined,
       priceAmount: 20000,
-      currency: "usd",
-      billingInterval: "one-time",
-      features: ["Coaching review", "Meal plan"],
-      color: undefined
+      currency: "aud",
+      billingInterval: "custom",
+      customBillingIntervalCount: 2,
+      customBillingIntervalUnit: "week",
+      termWeeks: 12,
+      scheduledPriceAmount: 24900,
+      scheduledPriceCurrency: "aud",
+      scheduledPriceStartsAt: "2026-08-01T00:00:00.000Z",
+      features: ["Coaching review", "Meal plan"]
     });
-    expect(formStateToPayload({ name: " ", description: "", price: "10", billingInterval: "monthly", features: "", color: "gray" })).toBeNull();
-    expect(formStateToPayload({ name: "Bad", description: "", price: "bad", billingInterval: "monthly", features: "", color: "gray" })).toBeNull();
-    expect(formStateToPayload({ name: "Bad", description: "", price: "-1", billingInterval: "monthly", features: "", color: "gray" })).toBeNull();
+    expect(
+      formStateToPayload({
+        name: " ",
+        description: "",
+        price: "10",
+        currency: "usd",
+        billingInterval: "monthly",
+        customBillingIntervalCount: "",
+        customBillingIntervalUnit: "month",
+        termWeeks: "",
+        scheduledPrice: "",
+        scheduledPriceCurrency: "usd",
+        scheduledPriceStartsAt: "",
+        features: [""]
+      })
+    ).toBeNull();
+    expect(
+      formStateToPayload({
+        name: "Bad",
+        description: "",
+        price: "bad",
+        currency: "usd",
+        billingInterval: "monthly",
+        customBillingIntervalCount: "",
+        customBillingIntervalUnit: "month",
+        termWeeks: "",
+        scheduledPrice: "",
+        scheduledPriceCurrency: "usd",
+        scheduledPriceStartsAt: "",
+        features: [""]
+      })
+    ).toBeNull();
+    expect(
+      formStateToPayload({
+        name: "Bad",
+        description: "",
+        price: "-1",
+        currency: "usd",
+        billingInterval: "monthly",
+        customBillingIntervalCount: "",
+        customBillingIntervalUnit: "month",
+        termWeeks: "",
+        scheduledPrice: "",
+        scheduledPriceCurrency: "usd",
+        scheduledPriceStartsAt: "",
+        features: [""]
+      })
+    ).toBeNull();
     expect(formatCents(12000)).toBe("$120");
     expect(formatCents(12345)).toBe("$123.45");
+    expect(formatCents(12000, "aud")).toBe("A$120");
   });
 
   it("loads packages and revenue stats from the persistence API", async () => {
@@ -145,7 +221,10 @@ describe("PackagesPage", () => {
     fireEvent.change(screen.getByLabelText("Package Name"), { target: { value: "Created Package" } });
     fireEvent.change(screen.getByLabelText("Description"), { target: { value: "New coaching offer" } });
     fireEvent.change(screen.getByLabelText("Price"), { target: { value: "249" } });
-    fireEvent.change(screen.getByLabelText("Features"), { target: { value: "Weekly reviews\nMessaging" } });
+    fireEvent.change(screen.getByLabelText("Package term"), { target: { value: "8" } });
+    fireEvent.change(screen.getByLabelText("Feature 1"), { target: { value: "Weekly reviews" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add feature" }));
+    fireEvent.change(screen.getByLabelText("Feature 2"), { target: { value: "Messaging" } });
     fireEvent.click(screen.getByRole("button", { name: "Save Package" }));
 
     await waitFor(() =>
@@ -159,8 +238,8 @@ describe("PackagesPage", () => {
             priceAmount: 24900,
             currency: "usd",
             billingInterval: "monthly",
-            features: ["Weekly reviews", "Messaging"],
-            color: "indigo"
+            termWeeks: 8,
+            features: ["Weekly reviews", "Messaging"]
           })
         })
       )
@@ -232,6 +311,8 @@ describe("PackagesPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit API Platinum" }));
     fireEvent.change(screen.getByLabelText("Package Name"), { target: { value: "Updated Platinum" } });
     fireEvent.change(screen.getByLabelText("Price"), { target: { value: "699" } });
+    fireEvent.change(screen.getByLabelText("Scheduled price"), { target: { value: "799" } });
+    fireEvent.change(screen.getByLabelText("Starts on"), { target: { value: "2026-09-01" } });
     fireEvent.click(screen.getByRole("button", { name: "Save Package" }));
 
     await waitFor(() =>
@@ -245,8 +326,11 @@ describe("PackagesPage", () => {
             priceAmount: 69900,
             currency: "usd",
             billingInterval: "monthly",
-            features: ["Custom training", "Weekly reviews"],
-            color: "indigo"
+            termWeeks: 16,
+            scheduledPriceAmount: 79900,
+            scheduledPriceCurrency: "usd",
+            scheduledPriceStartsAt: "2026-09-01T00:00:00.000Z",
+            features: ["Custom training", "Weekly reviews"]
           })
         })
       )
@@ -289,6 +373,38 @@ describe("PackagesPage", () => {
     );
     await waitFor(() => expect(screen.queryByRole("button", { name: "Sync Stripe" })).not.toBeInTheDocument());
     expect(screen.getAllByText("Synced")).toHaveLength(2);
+  });
+
+  it("opens the connected Stripe account from synced packages", async () => {
+    const openMock = vi.fn();
+    vi.stubGlobal("open", openMock);
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/packages?status=active&limit=100" && !init) {
+        return Promise.resolve(new Response(JSON.stringify({ data: [persistedPackages[0]] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/stripe/connect/dashboard-link" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { dashboardUrl: "https://connect.stripe.test/acct_1" } }), {
+            status: 200
+          })
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(PackagesPage));
+
+    expect(await screen.findAllByText("API Platinum")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Open Stripe account" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/stripe/connect/dashboard-link", { method: "POST" })
+    );
+    expect(openMock).toHaveBeenCalledWith("https://connect.stripe.test/acct_1", "_blank", "noopener,noreferrer");
   });
 
   it("creates a client Checkout payment link from a synced monthly package", async () => {

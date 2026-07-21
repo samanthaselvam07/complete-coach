@@ -165,6 +165,43 @@ describe("package Stripe sync API", () => {
     expect(String(fetchMock.mock.calls[1][1].body)).not.toContain("recurring");
   });
 
+  it("creates fortnightly prices with Stripe interval counts", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    process.env.STRIPE_API_BASE_URL = "https://stripe.test";
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ id: "prod_package_1" }))
+      .mockResolvedValueOnce(Response.json({ id: "price_package_1" }));
+    vi.stubGlobal("fetch", fetchMock);
+    mocks.prisma.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      stripeConnectAccountId: "acct_1"
+    });
+    mocks.prisma.coachingPackage.findFirst.mockResolvedValue({
+      ...packageRecord,
+      billingInterval: PackageBillingInterval.FORTNIGHTLY
+    });
+    mocks.prisma.coachingPackage.update.mockResolvedValue({
+      ...packageRecord,
+      billingInterval: PackageBillingInterval.FORTNIGHTLY,
+      stripeProductId: "prod_package_1",
+      stripePriceId: "price_package_1"
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await syncPackageToStripe(
+      new Request("http://test.local/api/v1/packages/package_1/stripe-sync", {
+        method: "POST"
+      }),
+      { params: Promise.resolve({ packageId: "package_1" }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetchMock.mock.calls[1][1].headers["Stripe-Account"]).toBe("acct_1");
+    expect(String(fetchMock.mock.calls[1][1].body)).toContain("recurring%5Binterval%5D=week");
+    expect(String(fetchMock.mock.calls[1][1].body)).toContain("recurring%5Binterval_count%5D=2");
+  });
+
   it("reuses existing Stripe ids without creating duplicate Stripe objects", async () => {
     process.env.STRIPE_SECRET_KEY = "test_secret_key";
     const fetchMock = vi.fn();

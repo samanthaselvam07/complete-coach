@@ -216,7 +216,7 @@ describe("client subscription APIs", () => {
     expect(String(fetchMock.mock.calls[0][1].body)).toContain("customer=cus_existing");
   });
 
-  it("requires Stripe Connect and synced monthly packages before creation", async () => {
+  it("requires Stripe Connect and synced recurring packages before creation", async () => {
     process.env.STRIPE_SECRET_KEY = "test_secret_key";
     mocks.prisma.organization.findUnique.mockResolvedValue({ id: "org_1", stripeConnectAccountId: null });
     mocks.prisma.client.findFirst.mockResolvedValue(clientRecord);
@@ -323,7 +323,7 @@ describe("client subscription APIs", () => {
     expect(mocks.prisma.clientSubscription.create).not.toHaveBeenCalled();
   });
 
-  it("requires a Stripe price before creating a monthly subscription", async () => {
+  it("requires a Stripe price before creating a recurring subscription", async () => {
     process.env.STRIPE_SECRET_KEY = "test_secret_key";
     mocks.prisma.organization.findUnique.mockResolvedValue({ id: "org_1", stripeConnectAccountId: "acct_1" });
     mocks.prisma.client.findFirst.mockResolvedValue(clientRecord);
@@ -371,7 +371,7 @@ describe("client subscription APIs", () => {
     expect(mocks.prisma.clientSubscription.create).not.toHaveBeenCalled();
   });
 
-  it("rejects synced monthly package creation when Stripe omits a checkout URL", async () => {
+  it("rejects synced recurring package creation when Stripe omits a checkout URL", async () => {
     process.env.STRIPE_SECRET_KEY = "test_secret_key";
     process.env.STRIPE_API_BASE_URL = "https://stripe.test";
     const fetchMock = vi

@@ -2,25 +2,35 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { Plus, Trash2 } from "lucide-react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
 
-type BillingInterval = "monthly" | "one-time";
+type BillingInterval = "weekly" | "fortnightly" | "monthly" | "annually" | "custom";
+type CustomBillingIntervalUnit = "day" | "week" | "month" | "year";
 
 interface PackageFormState {
   name: string;
   description: string;
   price: string;
+  currency: string;
   billingInterval: BillingInterval;
-  features: string;
+  customBillingIntervalCount: string;
+  customBillingIntervalUnit: CustomBillingIntervalUnit;
+  termWeeks: string;
+  features: string[];
 }
 
 const defaultForm: PackageFormState = {
   name: "",
   description: "",
   price: "",
+  currency: "usd",
   billingInterval: "monthly",
-  features: ""
+  customBillingIntervalCount: "",
+  customBillingIntervalUnit: "month",
+  termWeeks: "",
+  features: [""]
 };
 
 export function CreatePackagePage() {
@@ -31,6 +41,25 @@ export function CreatePackagePage() {
 
   function updateField(field: keyof PackageFormState, value: string) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
+  }
+
+  function updateFeature(index: number, value: string) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      features: currentForm.features.map((feature, currentIndex) => (currentIndex === index ? value : feature))
+    }));
+  }
+
+  function addFeature() {
+    setForm((currentForm) => ({ ...currentForm, features: [...currentForm.features, ""] }));
+  }
+
+  function removeFeature(index: number) {
+    setForm((currentForm) => {
+      const features = currentForm.features.filter((_, currentIndex) => currentIndex !== index);
+
+      return { ...currentForm, features: features.length > 0 ? features : [""] };
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -92,6 +121,24 @@ export function CreatePackagePage() {
             inputMode="decimal"
             onChange={(value) => updateField("price", value)}
           />
+          <div>
+            <label className="mb-1 block text-sm font-bold text-slate-700" htmlFor="package-currency">
+              Currency
+            </label>
+            <select
+              id="package-currency"
+              value={form.currency}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm uppercase outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              onChange={(event) => updateField("currency", event.target.value)}
+            >
+              <option value="usd">USD</option>
+              <option value="aud">AUD</option>
+              <option value="gbp">GBP</option>
+              <option value="eur">EUR</option>
+              <option value="cad">CAD</option>
+              <option value="nzd">NZD</option>
+            </select>
+          </div>
           <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-bold text-slate-700" htmlFor="package-description">
               Description
@@ -114,20 +161,77 @@ export function CreatePackagePage() {
               onChange={(event) => updateField("billingInterval", event.target.value)}
             >
               <option value="monthly">Monthly</option>
-              <option value="one-time">One-time</option>
+              <option value="weekly">Weekly</option>
+              <option value="fortnightly">Fortnightly</option>
+              <option value="annually">Annually</option>
+              <option value="custom">Custom</option>
             </select>
           </div>
+          <PackageField
+            label="Package term"
+            value={form.termWeeks}
+            inputMode="numeric"
+            placeholder="Weeks"
+            onChange={(value) => updateField("termWeeks", value)}
+          />
+          {form.billingInterval === "custom" ? (
+            <>
+              <PackageField
+                label="Custom interval count"
+                value={form.customBillingIntervalCount}
+                inputMode="numeric"
+                onChange={(value) => updateField("customBillingIntervalCount", value)}
+              />
+              <div>
+                <label className="mb-1 block text-sm font-bold text-slate-700" htmlFor="custom-interval-unit">
+                  Custom interval unit
+                </label>
+                <select
+                  id="custom-interval-unit"
+                  value={form.customBillingIntervalUnit}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                  onChange={(event) => updateField("customBillingIntervalUnit", event.target.value)}
+                >
+                  <option value="day">Day</option>
+                  <option value="week">Week</option>
+                  <option value="month">Month</option>
+                  <option value="year">Year</option>
+                </select>
+              </div>
+            </>
+          ) : null}
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-bold text-slate-700" htmlFor="package-features">
-              Features
-            </label>
-            <textarea
-              id="package-features"
-              value={form.features}
-              placeholder="One feature per line"
-              className="min-h-28 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              onChange={(event) => updateField("features", event.target.value)}
-            />
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-sm font-bold text-slate-700">Features</p>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700"
+                onClick={addFeature}
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                Add feature
+              </button>
+            </div>
+            <div className="space-y-2">
+              {form.features.map((feature, index) => (
+                <div key={index} className="flex gap-2">
+                  <input
+                    aria-label={`Feature ${index + 1}`}
+                    value={feature}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                    onChange={(event) => updateFeature(index, event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Remove feature ${index + 1}`}
+                    className="rounded-xl border border-slate-200 p-2.5 text-slate-500"
+                    onClick={() => removeFeature(index)}
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -163,13 +267,15 @@ function PackageField({
   value,
   onChange,
   required = false,
-  inputMode
+  inputMode,
+  placeholder
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
-  inputMode?: "decimal";
+  inputMode?: "decimal" | "numeric";
+  placeholder?: string;
 }) {
   const id = `package-${label.toLowerCase().replaceAll(" ", "-")}`;
 
@@ -183,6 +289,7 @@ function PackageField({
         value={value}
         required={required}
         inputMode={inputMode}
+        placeholder={placeholder}
         className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
         onChange={(event) => onChange(event.target.value)}
       />
@@ -192,8 +299,21 @@ function PackageField({
 
 function buildPackagePayload(form: PackageFormState) {
   const price = Number.parseFloat(form.price);
+  const termWeeks = form.termWeeks ? Number.parseInt(form.termWeeks, 10) : undefined;
+  const customBillingIntervalCount = form.customBillingIntervalCount
+    ? Number.parseInt(form.customBillingIntervalCount, 10)
+    : undefined;
 
-  if (!form.name.trim() || !Number.isFinite(price) || price < 0) {
+  if (
+    !form.name.trim() ||
+    !Number.isFinite(price) ||
+    price < 0 ||
+    (termWeeks !== undefined && (!Number.isFinite(termWeeks) || termWeeks < 1)) ||
+    (form.billingInterval === "custom" &&
+      (customBillingIntervalCount === undefined ||
+        !Number.isFinite(customBillingIntervalCount) ||
+        customBillingIntervalCount < 1))
+  ) {
     return null;
   }
 
@@ -201,12 +321,13 @@ function buildPackagePayload(form: PackageFormState) {
     name: form.name.trim(),
     description: form.description.trim() || undefined,
     priceAmount: Math.round(price * 100),
-    currency: "usd",
+    currency: form.currency,
     billingInterval: form.billingInterval,
+    customBillingIntervalCount: form.billingInterval === "custom" ? customBillingIntervalCount : undefined,
+    customBillingIntervalUnit: form.billingInterval === "custom" ? form.customBillingIntervalUnit : undefined,
+    termWeeks,
     features: form.features
-      .split(/\n|,/)
       .map((feature) => feature.trim())
-      .filter(Boolean),
-    color: "indigo"
+      .filter(Boolean)
   };
 }

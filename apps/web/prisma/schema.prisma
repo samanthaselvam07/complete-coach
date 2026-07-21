@@ -302,8 +302,12 @@ enum EmailDeliveryStatus {
 }
 
 enum PackageBillingInterval {
-  MONTHLY  @map("monthly")
-  ONE_TIME @map("one-time")
+  WEEKLY      @map("weekly")
+  FORTNIGHTLY @map("fortnightly")
+  MONTHLY     @map("monthly")
+  ANNUALLY    @map("annually")
+  CUSTOM      @map("custom")
+  ONE_TIME    @map("one-time")
 
   @@map("package_billing_interval")
 }
@@ -1852,25 +1856,31 @@ model EmailDelivery {
 }
 
 model CoachingPackage {
-  id              String                 @id @default(cuid())
-  organizationId  String                 @map("organization_id")
-  name            String
-  description     String?                @db.Text
-  priceAmount     Int                    @map("price_amount")
-  currency        String                 @default("usd")
-  billingInterval PackageBillingInterval @map("billing_interval")
-  stripeProductId String?                @map("stripe_product_id")
-  stripePriceId   String?                @map("stripe_price_id")
-  status          PackageStatus          @default(ACTIVE)
-  featuresJson    Json?                  @map("features_json")
-  color           String?
-  createdByUserId String?                @map("created_by_user_id")
-  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt       DateTime?              @map("deleted_at") @db.Timestamptz(6)
-  organization    Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  createdBy       User?                  @relation("PackageCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  subscriptions   ClientSubscription[]
+  id                         String                 @id @default(cuid())
+  organizationId             String                 @map("organization_id")
+  name                       String
+  description                String?                @db.Text
+  priceAmount                Int                    @map("price_amount")
+  currency                   String                 @default("usd")
+  billingInterval            PackageBillingInterval @map("billing_interval")
+  customBillingIntervalCount Int?                   @map("custom_billing_interval_count")
+  customBillingIntervalUnit  String?                @map("custom_billing_interval_unit")
+  termWeeks                  Int?                   @map("term_weeks")
+  scheduledPriceAmount       Int?                   @map("scheduled_price_amount")
+  scheduledPriceCurrency     String?                @map("scheduled_price_currency")
+  scheduledPriceStartsAt     DateTime?              @map("scheduled_price_starts_at") @db.Timestamptz(6)
+  stripeProductId            String?                @map("stripe_product_id")
+  stripePriceId              String?                @map("stripe_price_id")
+  status                     PackageStatus          @default(ACTIVE)
+  featuresJson               Json?                  @map("features_json")
+  color                      String?
+  createdByUserId            String?                @map("created_by_user_id")
+  createdAt                  DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                  DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt                  DateTime?              @map("deleted_at") @db.Timestamptz(6)
+  organization               Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy                  User?                  @relation("PackageCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  subscriptions              ClientSubscription[]
 
   @@unique([organizationId, stripeProductId])
   @@unique([organizationId, stripePriceId])

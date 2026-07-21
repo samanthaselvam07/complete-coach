@@ -6,6 +6,7 @@ import {
   createPackageSchema,
   getPackageCreateData,
   getPackageUpdateData,
+  getStripeRecurringForPackage,
   packageListQuerySchema,
   serializePackage,
   updatePackageSchema
@@ -21,6 +22,12 @@ const basePackageRecord = {
   priceAmount: 149900,
   currency: "usd",
   billingInterval: PackageBillingInterval.ONE_TIME,
+  customBillingIntervalCount: null,
+  customBillingIntervalUnit: null,
+  termWeeks: null,
+  scheduledPriceAmount: null,
+  scheduledPriceCurrency: null,
+  scheduledPriceStartsAt: null,
   stripeProductId: "prod_123",
   stripePriceId: "price_123",
   status: PackageStatus.ACTIVE,
@@ -58,9 +65,60 @@ describe("package record helpers", () => {
       priceAmount: 39900,
       currency: "usd",
       billingInterval: PackageBillingInterval.MONTHLY,
+      customBillingIntervalCount: undefined,
+      customBillingIntervalUnit: undefined,
+      termWeeks: undefined,
+      scheduledPriceAmount: undefined,
+      scheduledPriceCurrency: undefined,
+      scheduledPriceStartsAt: undefined,
       featuresJson: [],
       color: undefined
     });
+  });
+
+  it("maps custom billing, package terms, and scheduled pricing metadata", () => {
+    const input = createPackageSchema.parse({
+      name: "Season Build",
+      priceAmount: 49900,
+      currency: "aud",
+      billingInterval: "custom",
+      customBillingIntervalCount: 2,
+      customBillingIntervalUnit: "week",
+      termWeeks: 16,
+      scheduledPriceAmount: 59900,
+      scheduledPriceCurrency: "aud",
+      scheduledPriceStartsAt: "2026-08-01T00:00:00.000Z",
+      features: ["Weekly check-ins"]
+    });
+
+    expect(getPackageCreateData("org_1", "user_1", input)).toEqual(
+      expect.objectContaining({
+        currency: "aud",
+        billingInterval: PackageBillingInterval.CUSTOM,
+        customBillingIntervalCount: 2,
+        customBillingIntervalUnit: "week",
+        termWeeks: 16,
+        scheduledPriceAmount: 59900,
+        scheduledPriceCurrency: "aud",
+        scheduledPriceStartsAt: new Date("2026-08-01T00:00:00.000Z"),
+        featuresJson: ["Weekly check-ins"]
+      })
+    );
+  });
+
+  it("requires custom billing details and complete scheduled price changes", () => {
+    expect(() =>
+      createPackageSchema.parse({
+        name: "Custom",
+        priceAmount: 10000,
+        billingInterval: "custom"
+      })
+    ).toThrow(/Custom billing requires/);
+    expect(() =>
+      updatePackageSchema.parse({
+        scheduledPriceAmount: 20000
+      })
+    ).toThrow(/Scheduled price changes require/);
   });
 
   it("builds partial update data without adding omitted defaults", () => {
@@ -77,7 +135,8 @@ describe("package record helpers", () => {
       billingInterval: PackageBillingInterval.ONE_TIME,
       featuresJson: ["Video review"],
       color: "indigo",
-      status: PackageStatus.ARCHIVED
+      status: PackageStatus.ARCHIVED,
+      stripePriceId: null
     });
   });
 
@@ -106,6 +165,12 @@ describe("package record helpers", () => {
     ).toEqual(
       expect.objectContaining({
         billingInterval: "monthly",
+        customBillingIntervalCount: null,
+        customBillingIntervalUnit: null,
+        termWeeks: null,
+        scheduledPriceAmount: null,
+        scheduledPriceCurrency: null,
+        scheduledPriceStartsAt: null,
         features: ["Check-ins", "Messaging"],
         activeSubscriptions: 2,
         projectedMonthlyRevenue: 299800,
@@ -113,5 +178,27 @@ describe("package record helpers", () => {
         updatedAt: "2026-05-18T02:00:00.000Z"
       })
     );
+  });
+
+  it("maps recurring Stripe intervals for supported billing cadences", () => {
+    expect(getStripeRecurringForPackage({ billingInterval: PackageBillingInterval.WEEKLY })).toEqual({
+      interval: "week",
+      intervalCount: 1
+    });
+    expect(getStripeRecurringForPackage({ billingInterval: PackageBillingInterval.FORTNIGHTLY })).toEqual({
+      interval: "week",
+      intervalCount: 2
+    });
+    expect(getStripeRecurringForPackage({ billingInterval: PackageBillingInterval.ANNUALLY })).toEqual({
+      interval: "year",
+      intervalCount: 1
+    });
+    expect(
+      getStripeRecurringForPackage({
+        billingInterval: PackageBillingInterval.CUSTOM,
+        customBillingIntervalCount: 3,
+        customBillingIntervalUnit: "month"
+      })
+    ).toEqual({ interval: "month", intervalCount: 3 });
   });
 });

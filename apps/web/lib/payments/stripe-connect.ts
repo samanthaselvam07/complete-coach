@@ -186,7 +186,8 @@ export async function createStripePrice(
     productId: string;
     unitAmount: number;
     currency: string;
-    recurringInterval?: "month";
+    recurringInterval?: "day" | "week" | "month" | "year";
+    recurringIntervalCount?: number;
   }
 ) {
   return postStripeForm<StripePrice>(
@@ -197,6 +198,9 @@ export async function createStripePrice(
       unit_amount: String(input.unitAmount),
       currency: input.currency,
       ...(input.recurringInterval ? { "recurring[interval]": input.recurringInterval } : {}),
+      ...(input.recurringInterval && input.recurringIntervalCount && input.recurringIntervalCount > 1
+        ? { "recurring[interval_count]": String(input.recurringIntervalCount) }
+        : {}),
       "metadata[organization_id]": input.organizationId,
       "metadata[package_id]": input.packageId
     },

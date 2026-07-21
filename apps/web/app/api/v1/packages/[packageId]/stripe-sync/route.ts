@@ -1,9 +1,8 @@
-import { PackageBillingInterval } from "@/app/generated/prisma/enums";
 import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
-import { serializePackage } from "@/lib/payments/package-records";
+import { getStripeRecurringForPackage, serializePackage } from "@/lib/payments/package-records";
 import {
   createStripePrice,
   createStripeProduct,
@@ -65,6 +64,7 @@ export async function POST(_request: Request, context: PackageStripeSyncRouteCon
     }
 
     if (!stripePriceId) {
+      const recurring = getStripeRecurringForPackage(coachingPackage);
       const price = await createStripePrice(config, {
         organizationId: actor.organizationId,
         packageId: coachingPackage.id,
@@ -72,8 +72,8 @@ export async function POST(_request: Request, context: PackageStripeSyncRouteCon
         productId: stripeProductId,
         unitAmount: coachingPackage.priceAmount,
         currency: coachingPackage.currency,
-        recurringInterval:
-          coachingPackage.billingInterval === PackageBillingInterval.MONTHLY ? "month" : undefined
+        recurringInterval: recurring?.interval,
+        recurringIntervalCount: recurring?.intervalCount
       });
       stripePriceId = price.id;
     }

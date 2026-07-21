@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { ClientSubscriptionStatus, PackageBillingInterval, PackageStatus } from "@/app/generated/prisma/enums";
+import { ClientSubscriptionStatus, PackageStatus } from "@/app/generated/prisma/enums";
 import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
@@ -11,6 +11,7 @@ import {
   createClientSubscriptionSchema,
   serializeClientSubscription
 } from "@/lib/payments/subscription-records";
+import { isRecurringPackage } from "@/lib/payments/package-records";
 import {
   buildDefaultConnectReturnUrls,
   createStripeCheckoutSession,
@@ -112,8 +113,8 @@ export async function POST(request: Request) {
       return errorResponse("not_found", "Package not found.", 404);
     }
 
-    if (coachingPackage.billingInterval !== PackageBillingInterval.MONTHLY) {
-      return errorResponse("invalid_package", "Only monthly packages can create client subscriptions.", 422);
+    if (!isRecurringPackage(coachingPackage)) {
+      return errorResponse("invalid_package", "Only recurring packages can create client subscriptions.", 422);
     }
 
     if (!coachingPackage.stripePriceId) {

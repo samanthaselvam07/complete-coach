@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, DollarSign, Edit, ExternalLink, Package, Search, Star, Trash2, TrendingUp, Users } from "lucide-react";
+import { Copy, DollarSign, Edit, ExternalLink, Package, Plus, Search, Star, Trash2, TrendingUp, Users } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import {
@@ -14,7 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-type BillingInterval = "monthly" | "one-time";
+type BillingInterval = "weekly" | "fortnightly" | "monthly" | "annually" | "custom" | "one-time";
+type CustomBillingIntervalUnit = "day" | "week" | "month" | "year";
 
 interface ApiPackage {
   id: string;
@@ -23,6 +24,12 @@ interface ApiPackage {
   priceAmount: number;
   currency: string;
   billingInterval: BillingInterval;
+  customBillingIntervalCount: number | null;
+  customBillingIntervalUnit: CustomBillingIntervalUnit | null;
+  termWeeks: number | null;
+  scheduledPriceAmount: number | null;
+  scheduledPriceCurrency: string | null;
+  scheduledPriceStartsAt: string | null;
   stripeProductId: string | null;
   stripePriceId: string | null;
   status: "active" | "archived";
@@ -36,9 +43,15 @@ interface PackageFormState {
   name: string;
   description: string;
   price: string;
+  currency: string;
   billingInterval: BillingInterval;
-  features: string;
-  color: string;
+  customBillingIntervalCount: string;
+  customBillingIntervalUnit: CustomBillingIntervalUnit;
+  termWeeks: string;
+  scheduledPrice: string;
+  scheduledPriceCurrency: string;
+  scheduledPriceStartsAt: string;
+  features: string[];
 }
 
 interface AssignableClient {
@@ -48,28 +61,29 @@ interface AssignableClient {
   status: string;
 }
 
-const defaultFormState: PackageFormState = {
-  name: "",
-  description: "",
-  price: "",
-  billingInterval: "monthly",
-  features: "",
-  color: "indigo"
-};
-
-const colorClasses = {
-  indigo: "border-indigo-200 bg-indigo-50 text-indigo-700",
-  yellow: "border-yellow-200 bg-yellow-50 text-yellow-700",
-  gray: "border-slate-200 bg-slate-50 text-slate-700",
-  purple: "border-purple-200 bg-purple-50 text-purple-700"
-};
+function createDefaultFormState(): PackageFormState {
+  return {
+    name: "",
+    description: "",
+    price: "",
+    currency: "usd",
+    billingInterval: "monthly",
+    customBillingIntervalCount: "",
+    customBillingIntervalUnit: "month",
+    termWeeks: "",
+    scheduledPrice: "",
+    scheduledPriceCurrency: "usd",
+    scheduledPriceStartsAt: "",
+    features: [""]
+  };
+}
 
 export function PackagesPage() {
   const [packages, setPackages] = useState<ApiPackage[]>([]);
   const [source, setSource] = useState<"api" | "unavailable">("unavailable");
   const [formOpen, setFormOpen] = useState(false);
   const [editingPackageId, setEditingPackageId] = useState<string | null>(null);
-  const [formState, setFormState] = useState<PackageFormState>(defaultFormState);
+  const [formState, setFormState] = useState<PackageFormState>(createDefaultFormState);
   const [formError, setFormError] = useState<string | null>(null);
   const [assigningPackage, setAssigningPackage] = useState<ApiPackage | null>(null);
   const [clients, setClients] = useState<AssignableClient[]>([]);
@@ -119,7 +133,7 @@ export function PackagesPage() {
 
   function openCreateForm() {
     setEditingPackageId(null);
-    setFormState(defaultFormState);
+    setFormState(createDefaultFormState());
     setFormError(null);
     setFormOpen(true);
   }
@@ -223,6 +237,24 @@ export function PackagesPage() {
       );
     } catch {
       setFormError("Stripe sync could not be started. Check Connect setup and try again.");
+    }
+  }
+
+  async function handleOpenStripeAccount() {
+    try {
+      const response = await fetch("/api/v1/stripe/connect/dashboard-link", { method: "POST" });
+      const payload = (await response.json()) as {
+        data?: { dashboardUrl: string };
+        error?: { message?: string; details?: { message?: string } };
+      };
+
+      if (!response.ok || !payload.data?.dashboardUrl) {
+        throw new Error(payload.error?.details?.message ?? payload.error?.message ?? "Stripe account could not be opened.");
+      }
+
+      window.open(payload.data.dashboardUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Stripe account could not be opened.");
     }
   }
 
@@ -386,6 +418,7 @@ export function PackagesPage() {
               onDuplicate={openDuplicateForm}
               onEdit={openEditForm}
               onAssign={openAssignForm}
+              onOpenStripeAccount={handleOpenStripeAccount}
               onStripeSync={handleStripeSync}
             />
           ))}
@@ -432,6 +465,7 @@ function PackageCard({
   onAssign,
   onDuplicate,
   onEdit,
+  onOpenStripeAccount,
   onStripeSync
 }: {
   coachingPackage: ApiPackage;
@@ -439,14 +473,18 @@ function PackageCard({
   onAssign: (coachingPackage: ApiPackage) => void;
   onDuplicate: (coachingPackage: ApiPackage) => void;
   onEdit: (coachingPackage: ApiPackage) => void;
+  onOpenStripeAccount: () => void;
   onStripeSync: (coachingPackage: ApiPackage) => void;
 }) {
-  const colorClass = colorClasses[(coachingPackage.color ?? "gray") as keyof typeof colorClasses] ?? colorClasses.gray;
   const isStripeSynced = Boolean(coachingPackage.stripeProductId && coachingPackage.stripePriceId);
-  const canAssignPaymentLink = isStripeSynced && coachingPackage.billingInterval === "monthly";
+  const canAssignPaymentLink = isStripeSynced && coachingPackage.billingInterval !== "one-time";
+  const scheduledPrice =
+    coachingPackage.scheduledPriceAmount !== null && coachingPackage.scheduledPriceStartsAt
+      ? `${formatCents(coachingPackage.scheduledPriceAmount, coachingPackage.scheduledPriceCurrency ?? coachingPackage.currency)} from ${formatDate(coachingPackage.scheduledPriceStartsAt)}`
+      : null;
 
   return (
-    <article className={cn("rounded-2xl border-2 p-6 shadow-sm", colorClass)}>
+    <article className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-sm">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -461,7 +499,7 @@ function PackageCard({
           <button
             type="button"
             aria-label={`Edit ${coachingPackage.name}`}
-            className="rounded-lg p-2 transition hover:bg-white/50"
+            className="rounded-lg p-2 transition hover:bg-slate-100"
             onClick={() => onEdit(coachingPackage)}
           >
             <Edit className="h-4 w-4" />
@@ -469,7 +507,7 @@ function PackageCard({
           <button
             type="button"
             aria-label={`Duplicate ${coachingPackage.name}`}
-            className="rounded-lg p-2 transition hover:bg-white/50"
+            className="rounded-lg p-2 transition hover:bg-slate-100"
             onClick={() => onDuplicate(coachingPackage)}
           >
             <Copy className="h-4 w-4" />
@@ -477,7 +515,7 @@ function PackageCard({
           <button
             type="button"
             aria-label={`Archive ${coachingPackage.name}`}
-            className="rounded-lg p-2 transition hover:bg-white/50"
+            className="rounded-lg p-2 transition hover:bg-slate-100"
             onClick={() => onArchive(coachingPackage)}
           >
             <Trash2 className="h-4 w-4" />
@@ -485,10 +523,26 @@ function PackageCard({
         </div>
       </div>
       <div className="mb-4 text-4xl font-black">
-        {formatCents(coachingPackage.priceAmount)}
+        {formatCents(coachingPackage.priceAmount, coachingPackage.currency)}
         <span className="text-lg font-normal opacity-70">
-          /{coachingPackage.billingInterval === "monthly" ? "mo" : "once"}
+          /{formatBillingInterval(coachingPackage)}
         </span>
+      </div>
+      <div className="mb-4 grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
+        <div className="flex justify-between gap-3">
+          <span className="text-slate-500">Term</span>
+          <span className="font-bold">{coachingPackage.termWeeks ? `${coachingPackage.termWeeks} weeks` : "Ongoing"}</span>
+        </div>
+        <div className="flex justify-between gap-3">
+          <span className="text-slate-500">Currency</span>
+          <span className="font-bold uppercase">{coachingPackage.currency}</span>
+        </div>
+        {scheduledPrice ? (
+          <div className="flex justify-between gap-3">
+            <span className="text-slate-500">Scheduled change</span>
+            <span className="text-right font-bold">{scheduledPrice}</span>
+          </div>
+        ) : null}
       </div>
       <div className="mb-4">
         <h4 className="mb-2 text-xs font-black uppercase tracking-wide opacity-70">Features</h4>
@@ -501,32 +555,41 @@ function PackageCard({
           ))}
         </ul>
       </div>
-      <div className="grid grid-cols-2 gap-4 border-t border-current/20 pt-4">
+      <div className="grid grid-cols-2 gap-4 border-t border-slate-200 pt-4">
         <div>
           <div className="text-xs opacity-70">Active Clients</div>
           <div className="text-2xl font-black">{coachingPackage.activeSubscriptions}</div>
         </div>
         <div>
           <div className="text-xs opacity-70">Revenue</div>
-          <div className="text-2xl font-black">{formatCents(coachingPackage.projectedMonthlyRevenue)}</div>
+          <div className="text-2xl font-black">{formatCents(coachingPackage.projectedMonthlyRevenue, coachingPackage.currency)}</div>
         </div>
       </div>
       {!isStripeSynced ? (
         <button
           type="button"
-          className="mt-5 rounded-lg border border-current/30 px-3 py-2 text-sm font-bold transition hover:bg-white/50"
+          className="mt-5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold transition hover:bg-slate-50"
           onClick={() => onStripeSync(coachingPackage)}
         >
           Sync Stripe
         </button>
-      ) : null}
+      ) : (
+        <button
+          type="button"
+          className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+          onClick={onOpenStripeAccount}
+        >
+          Open Stripe account
+          <ExternalLink className="h-4 w-4" aria-hidden="true" />
+        </button>
+      )}
       <button
         type="button"
         disabled={!canAssignPaymentLink}
         className="mt-3 w-full rounded-lg bg-slate-950 px-3 py-2 text-sm font-bold text-white transition hover:bg-slate-800 disabled:bg-slate-300"
         onClick={() => onAssign(coachingPackage)}
       >
-        {canAssignPaymentLink ? "Assign to Client" : "Sync monthly package to assign"}
+        {canAssignPaymentLink ? "Assign to Client" : "Sync recurring package to assign"}
       </button>
     </article>
   );
@@ -578,7 +641,9 @@ function PackageAssignmentDialog({
             <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">Selected package</p>
             <p className="mt-1 text-lg font-black text-slate-950">{targetPackage?.name}</p>
             <p className="mt-1 text-sm text-slate-600">
-              {targetPackage ? `${formatCents(targetPackage.priceAmount)} / month` : "No package selected"}
+              {targetPackage
+                ? `${formatCents(targetPackage.priceAmount, targetPackage.currency)} / ${formatBillingInterval(targetPackage)}`
+                : "No package selected"}
             </p>
           </div>
 
@@ -685,6 +750,19 @@ function PackageDialog({
   onUpdateForm: (formState: PackageFormState) => void;
 }) {
   const title = mode === "create" ? "Create Package" : "Edit Package";
+  const updateFeature = (index: number, value: string) => {
+    onUpdateForm({
+      ...formState,
+      features: formState.features.map((feature, currentIndex) => (currentIndex === index ? value : feature))
+    });
+  };
+  const addFeature = () => {
+    onUpdateForm({ ...formState, features: [...formState.features, ""] });
+  };
+  const removeFeature = (index: number) => {
+    const nextFeatures = formState.features.filter((_, currentIndex) => currentIndex !== index);
+    onUpdateForm({ ...formState, features: nextFeatures.length > 0 ? nextFeatures : [""] });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -723,6 +801,24 @@ function PackageDialog({
               />
             </label>
             <label className="block text-sm font-bold text-slate-700">
+              Currency
+              <select
+                value={formState.currency}
+                className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm uppercase"
+                onChange={(event) => {
+                  const currency = event.target.value;
+                  onUpdateForm({ ...formState, currency, scheduledPriceCurrency: currency });
+                }}
+              >
+                <option value="usd">USD</option>
+                <option value="aud">AUD</option>
+                <option value="gbp">GBP</option>
+                <option value="eur">EUR</option>
+                <option value="cad">CAD</option>
+                <option value="nzd">NZD</option>
+              </select>
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
               Billing
               <select
                 value={formState.billingInterval}
@@ -731,32 +827,130 @@ function PackageDialog({
                   onUpdateForm({ ...formState, billingInterval: event.target.value as BillingInterval })
                 }
               >
+                <option value="weekly">Weekly</option>
+                <option value="fortnightly">Fortnightly</option>
                 <option value="monthly">Monthly</option>
-                <option value="one-time">One-time</option>
+                <option value="annually">Annually</option>
+                <option value="custom">Custom</option>
               </select>
             </label>
+            <label className="block text-sm font-bold text-slate-700">
+              Package term
+              <Input
+                type="number"
+                min="1"
+                step="1"
+                value={formState.termWeeks}
+                className="mt-1"
+                placeholder="Weeks"
+                onChange={(event) => onUpdateForm({ ...formState, termWeeks: event.target.value })}
+              />
+            </label>
           </div>
-          <label className="block text-sm font-bold text-slate-700">
-            Features
-            <textarea
-              value={formState.features}
-              className="mt-1 min-h-24 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              onChange={(event) => onUpdateForm({ ...formState, features: event.target.value })}
-            />
-          </label>
-          <label className="block text-sm font-bold text-slate-700">
-            Color
-            <select
-              value={formState.color}
-              className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
-              onChange={(event) => onUpdateForm({ ...formState, color: event.target.value })}
-            >
-              <option value="indigo">Indigo</option>
-              <option value="yellow">Yellow</option>
-              <option value="gray">Gray</option>
-              <option value="purple">Purple</option>
-            </select>
-          </label>
+          {formState.billingInterval === "custom" ? (
+            <div className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2">
+              <label className="block text-sm font-bold text-slate-700">
+                Custom interval count
+                <Input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={formState.customBillingIntervalCount}
+                  className="mt-1"
+                  onChange={(event) =>
+                    onUpdateForm({ ...formState, customBillingIntervalCount: event.target.value })
+                  }
+                />
+              </label>
+              <label className="block text-sm font-bold text-slate-700">
+                Custom interval unit
+                <select
+                  value={formState.customBillingIntervalUnit}
+                  className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                  onChange={(event) =>
+                    onUpdateForm({
+                      ...formState,
+                      customBillingIntervalUnit: event.target.value as CustomBillingIntervalUnit
+                    })
+                  }
+                >
+                  <option value="day">Day</option>
+                  <option value="week">Week</option>
+                  <option value="month">Month</option>
+                  <option value="year">Year</option>
+                </select>
+              </label>
+            </div>
+          ) : null}
+          <div className="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-3">
+            <label className="block text-sm font-bold text-slate-700">
+              Scheduled price
+              <Input
+                type="number"
+                min="0"
+                step="1"
+                value={formState.scheduledPrice}
+                className="mt-1"
+                onChange={(event) => onUpdateForm({ ...formState, scheduledPrice: event.target.value })}
+              />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              Scheduled currency
+              <select
+                value={formState.scheduledPriceCurrency}
+                className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm uppercase"
+                onChange={(event) => onUpdateForm({ ...formState, scheduledPriceCurrency: event.target.value })}
+              >
+                <option value="usd">USD</option>
+                <option value="aud">AUD</option>
+                <option value="gbp">GBP</option>
+                <option value="eur">EUR</option>
+                <option value="cad">CAD</option>
+                <option value="nzd">NZD</option>
+              </select>
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              Starts on
+              <Input
+                type="date"
+                value={formState.scheduledPriceStartsAt}
+                className="mt-1"
+                onChange={(event) => onUpdateForm({ ...formState, scheduledPriceStartsAt: event.target.value })}
+              />
+            </label>
+          </div>
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-sm font-bold text-slate-700">Features</p>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700"
+                onClick={addFeature}
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                Add feature
+              </button>
+            </div>
+            <div className="space-y-2">
+              {formState.features.map((feature, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    aria-label={`Feature ${index + 1}`}
+                    value={feature}
+                    onChange={(event) => updateFeature(index, event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Remove feature ${index + 1}`}
+                    className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50"
+                    onClick={() => removeFeature(index)}
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
           {error ? <p className="text-sm font-semibold text-red-600">{error}</p> : null}
           <DialogFooter>
             <button
@@ -815,17 +1009,43 @@ export function packageToFormState(coachingPackage: ApiPackage): PackageFormStat
     name: coachingPackage.name,
     description: coachingPackage.description ?? "",
     price: String(coachingPackage.priceAmount / 100),
+    currency: coachingPackage.currency,
     billingInterval: coachingPackage.billingInterval,
-    features: coachingPackage.features.join("\n"),
-    color: coachingPackage.color ?? "indigo"
+    customBillingIntervalCount: coachingPackage.customBillingIntervalCount
+      ? String(coachingPackage.customBillingIntervalCount)
+      : "",
+    customBillingIntervalUnit: coachingPackage.customBillingIntervalUnit ?? "month",
+    termWeeks: coachingPackage.termWeeks ? String(coachingPackage.termWeeks) : "",
+    scheduledPrice: coachingPackage.scheduledPriceAmount ? String(coachingPackage.scheduledPriceAmount / 100) : "",
+    scheduledPriceCurrency: coachingPackage.scheduledPriceCurrency ?? coachingPackage.currency,
+    scheduledPriceStartsAt: coachingPackage.scheduledPriceStartsAt
+      ? coachingPackage.scheduledPriceStartsAt.slice(0, 10)
+      : "",
+    features: coachingPackage.features.length > 0 ? coachingPackage.features : [""]
   };
 }
 
 export function formStateToPayload(formState: PackageFormState) {
   const price = Number(formState.price);
+  const termWeeks = formState.termWeeks ? Number(formState.termWeeks) : undefined;
+  const customBillingIntervalCount = formState.customBillingIntervalCount
+    ? Number(formState.customBillingIntervalCount)
+    : undefined;
+  const scheduledPrice = formState.scheduledPrice ? Number(formState.scheduledPrice) : undefined;
   const name = formState.name.trim();
+  const hasScheduledPrice = formState.scheduledPrice.trim() || formState.scheduledPriceStartsAt.trim();
 
-  if (!name || !Number.isFinite(price) || price < 0) {
+  if (
+    !name ||
+    !Number.isFinite(price) ||
+    price < 0 ||
+    (termWeeks !== undefined && (!Number.isFinite(termWeeks) || termWeeks < 1)) ||
+    (customBillingIntervalCount !== undefined &&
+      (!Number.isFinite(customBillingIntervalCount) || customBillingIntervalCount < 1)) ||
+    (formState.billingInterval === "custom" && customBillingIntervalCount === undefined) ||
+    (scheduledPrice !== undefined && (!Number.isFinite(scheduledPrice) || scheduledPrice < 0)) ||
+    (Boolean(hasScheduledPrice) && (scheduledPrice === undefined || !formState.scheduledPriceStartsAt))
+  ) {
     return null;
   }
 
@@ -833,20 +1053,63 @@ export function formStateToPayload(formState: PackageFormState) {
     name,
     description: formState.description.trim() || undefined,
     priceAmount: Math.round(price * 100),
-    currency: "usd",
+    currency: formState.currency,
     billingInterval: formState.billingInterval,
+    customBillingIntervalCount:
+      formState.billingInterval === "custom" ? Math.round(customBillingIntervalCount ?? 0) : undefined,
+    customBillingIntervalUnit:
+      formState.billingInterval === "custom" ? formState.customBillingIntervalUnit : undefined,
+    termWeeks: termWeeks !== undefined ? Math.round(termWeeks) : undefined,
+    scheduledPriceAmount: scheduledPrice !== undefined ? Math.round(scheduledPrice * 100) : undefined,
+    scheduledPriceCurrency: scheduledPrice !== undefined ? formState.scheduledPriceCurrency : undefined,
+    scheduledPriceStartsAt: formState.scheduledPriceStartsAt
+      ? new Date(`${formState.scheduledPriceStartsAt}T00:00:00.000Z`).toISOString()
+      : undefined,
     features: formState.features
-      .split("\n")
       .map((feature) => feature.trim())
-      .filter(Boolean),
-    color: formState.color || undefined
+      .filter(Boolean)
   };
 }
 
-export function formatCents(amount: number) {
+export function formatCents(amount: number, currency = "usd") {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: currency.toUpperCase(),
     maximumFractionDigits: amount % 100 === 0 ? 0 : 2
   }).format(amount / 100);
+}
+
+function formatBillingInterval(coachingPackage: ApiPackage) {
+  if (coachingPackage.billingInterval === "weekly") {
+    return "week";
+  }
+
+  if (coachingPackage.billingInterval === "fortnightly") {
+    return "fortnight";
+  }
+
+  if (coachingPackage.billingInterval === "monthly") {
+    return "month";
+  }
+
+  if (coachingPackage.billingInterval === "annually") {
+    return "year";
+  }
+
+  if (coachingPackage.billingInterval === "custom") {
+    return `${coachingPackage.customBillingIntervalCount ?? 1} ${coachingPackage.customBillingIntervalUnit ?? "month"}${
+      (coachingPackage.customBillingIntervalCount ?? 1) === 1 ? "" : "s"
+    }`;
+  }
+
+  return "once";
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC"
+  }).format(new Date(value));
 }

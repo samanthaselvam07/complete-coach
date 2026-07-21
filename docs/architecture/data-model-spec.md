@@ -799,11 +799,17 @@ Fields:
 - `price_amount`
 - `currency`
 - `billing_interval`
+- `custom_billing_interval_count`
+- `custom_billing_interval_unit`
+- `term_weeks`
+- `scheduled_price_amount`
+- `scheduled_price_currency`
+- `scheduled_price_starts_at`
 - `stripe_product_id`
 - `stripe_price_id`
 - `status`
 - `features_json`
-- `color`
+- `color` (legacy UI metadata)
 - `created_by_user_id`
 - `deleted_at`
 - `created_at`

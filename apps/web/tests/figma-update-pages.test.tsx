@@ -203,9 +203,10 @@ describe("Figma update pages", () => {
 
     fireEvent.change(screen.getByLabelText("Package name"), { target: { value: "Elite Physique" } });
     fireEvent.change(screen.getByLabelText("Price"), { target: { value: "599" } });
-    fireEvent.change(screen.getByLabelText("Features"), {
-      target: { value: "Weekly check-ins\nTraining reviews" },
-    });
+    fireEvent.change(screen.getByLabelText("Package term"), { target: { value: "12" } });
+    fireEvent.change(screen.getByLabelText("Feature 1"), { target: { value: "Weekly check-ins" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add feature" }));
+    fireEvent.change(screen.getByLabelText("Feature 2"), { target: { value: "Training reviews" } });
     fireEvent.click(screen.getByRole("button", { name: "Create package" }));
 
     await waitFor(() => {
@@ -218,8 +219,8 @@ describe("Figma update pages", () => {
             priceAmount: 59900,
             currency: "usd",
             billingInterval: "monthly",
+            termWeeks: 12,
             features: ["Weekly check-ins", "Training reviews"],
-            color: "indigo",
           }),
           headers: { "Content-Type": "application/json" },
           method: "POST",

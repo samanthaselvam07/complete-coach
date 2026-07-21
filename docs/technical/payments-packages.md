@@ -8,9 +8,10 @@ Ticket 017 / M8 connects coaching packages, Stripe Connect, Stripe Billing subsc
 - Package create/update inputs intentionally reject client-supplied Stripe product and price ids. Stripe identifiers must be set by trusted server-side Stripe sync in a later M8 slice.
 - Stripe Connect account-link API can create or reuse an active organization's connected account and return a server-generated onboarding URL.
 - Package Stripe sync can create trusted Stripe product and price ids for active-organization packages after local Stripe Connect setup exists.
-- Client subscription APIs can list local subscription mirrors and create Stripe Checkout subscription sessions for synced monthly packages.
+- Client subscription APIs can list local subscription mirrors and create Stripe Checkout subscription sessions for synced recurring packages.
 - Stripe webhook processing verifies signatures, persists payment events idempotently, updates subscription mirrors, and refreshes Stripe Connect status from trusted Stripe events.
 - Packages UI loads active organization packages from `GET /api/v1/packages`, supports create/edit/archive actions, can start trusted Stripe sync, and renders empty/error states when the package API is unavailable.
+- Packages UI supports editable pricing, currency, package term weeks, row-based feature lists, recurring billing cadences, scheduled price metadata, and a connected Stripe account dashboard link for synced packages.
 - Dashboard monthly revenue is derived from persisted package `projectedMonthlyRevenue` values when the package API is available, with fixture revenue retained as fallback.
 - Demo seed data creates package records from the UI stub fixtures.
 
@@ -42,10 +43,10 @@ Completed on May 18, 2026.
 
 Delivered:
 - `POST /api/v1/packages/{package_id}/stripe-sync` creates Stripe products and prices from trusted server-side package records.
-- Monthly packages create recurring monthly Stripe prices; one-time packages create non-recurring prices.
+- Recurring packages create Stripe recurring prices for weekly, fortnightly, monthly, annually, or custom intervals; one-time packages create non-recurring legacy prices.
 - Existing Stripe product/price ids are reused to avoid duplicate Stripe catalog objects.
 - Package sync requires local Stripe Connect account setup before syncing package catalog records.
-- API tests cover monthly sync, one-time sync, existing id reuse, missing Connect setup, and tenant scoping.
+- API tests cover monthly sync, fortnightly interval counts, one-time sync, existing id reuse, missing Connect setup, and tenant scoping.
 
 ## Ticket 017D Outcome
 Completed on May 18, 2026.
@@ -53,7 +54,7 @@ Completed on May 18, 2026.
 Delivered:
 - `GET /api/v1/client-subscriptions` lists active-organization subscription mirrors with client and package summaries.
 - `POST /api/v1/client-subscriptions` creates Stripe Checkout subscription sessions from trusted local client/package records.
-- Subscription creation requires local Stripe Connect setup, a synced monthly package price, and organization-scoped client/package records.
+- Subscription creation requires local Stripe Connect setup, a synced recurring package price, and organization-scoped client/package records.
 - Existing Stripe customer ids are reused when available; otherwise a Stripe customer is created from tenant-scoped client data.
 - Local subscription mirrors start as `incomplete` with the Checkout session id; final status transitions remain webhook-driven.
 - API tests cover listing, Checkout session creation, customer reuse, Connect guard, and one-time package rejection.
@@ -124,7 +125,7 @@ Delivered:
 - `docs/adr/ADR-003-data-storage-and-integrations.md`
 
 ## Data Model
-- `packages`: organization-scoped package catalog records with price amount, currency, billing interval, local status, optional UI metadata, and trusted Stripe product/price ids.
+- `packages`: organization-scoped package catalog records with price amount, currency, billing interval/custom cadence metadata, term weeks, optional scheduled price metadata, local status, optional legacy UI metadata, row-based features, and trusted Stripe product/price ids.
 - `client_subscriptions`: organization/client/package subscription mirrors with Stripe customer/subscription ids and Stripe-derived status/period fields.
 - `payment_events`: organization-scoped Stripe webhook/event records keyed by Stripe event id for idempotent processing.
 - `organizations.platform_*`: organization-scoped Complete Coach platform subscription mirror with Stripe customer/subscription ids, plan, status, period dates, and cancel date.
@@ -139,7 +140,7 @@ Rules:
 - Stripe Connect account links require `payments:manage` and server-side `STRIPE_SECRET_KEY`.
 - Opening the full Stripe Dashboard requires `payments:manage` and existing local Stripe Connect setup. The app returns Stripe's Dashboard URL for Standard connected accounts and does not generate Express login links.
 - Package Stripe sync requires `payments:manage`, server-side `STRIPE_SECRET_KEY`, and local Stripe Connect account setup.
-- Client subscription creation requires `payments:manage`, server-side `STRIPE_SECRET_KEY`, local Stripe Connect setup, and a synced monthly package.
+- Client subscription creation requires `payments:manage`, server-side `STRIPE_SECRET_KEY`, local Stripe Connect setup, and a synced recurring package.
 - Stripe webhook events are the authoritative source for subscription/payment state.
 - Payment event payloads must redact secrets, card details, billing details, and payment method details before persistence.
 - Audit logs must not expose secrets, card details, or raw payment credentials.
