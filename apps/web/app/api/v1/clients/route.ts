@@ -32,9 +32,7 @@ export async function POST(request: Request) {
   try {
     const actor = requireActiveActor(await auth(), "clients:write");
     const input = createClientSchema.parse(await request.json());
-    if (input.status === "active") {
-      await assertPlatformClientCapacity(actor.organizationId);
-    }
+    await assertPlatformClientCapacity(actor.organizationId);
     const client = await prisma.$transaction(async (tx) => {
       const createdClient = await tx.client.create({
         data: getClientCreateData(actor.organizationId, input)

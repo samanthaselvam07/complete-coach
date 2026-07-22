@@ -205,8 +205,7 @@ describe("platform billing APIs", () => {
     expect(mocks.prisma.client.count).toHaveBeenCalledWith({
       where: {
         organizationId: "org_1",
-        deletedAt: null,
-        status: "ACTIVE"
+        deletedAt: null
       }
     });
   });

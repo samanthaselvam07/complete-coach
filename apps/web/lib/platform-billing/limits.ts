@@ -1,4 +1,4 @@
-import { ClientStatus, MembershipRole, MembershipStatus, TeamInvitationStatus } from "@/app/generated/prisma/enums";
+import { MembershipRole, MembershipStatus, TeamInvitationStatus } from "@/app/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
 import { getDefaultPlatformPlan, getPlatformPlanById, type PlatformPlan } from "@/lib/platform-billing/plans";
 
@@ -36,8 +36,7 @@ export async function getPlatformUsage(organizationId: string) {
     prisma.client.count({
       where: {
         organizationId,
-        deletedAt: null,
-        status: ClientStatus.ACTIVE
+        deletedAt: null
       }
     })
   ]);
@@ -50,8 +49,7 @@ export async function assertPlatformClientCapacity(organizationId: string) {
   const clientCount = await prisma.client.count({
     where: {
       organizationId,
-      deletedAt: null,
-      status: ClientStatus.ACTIVE
+      deletedAt: null
     }
   });
 

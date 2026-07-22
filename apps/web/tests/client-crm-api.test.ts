@@ -161,7 +161,12 @@ describe("client and CRM API tenancy", () => {
         })
       })
     );
-    expect(mocks.prisma.client.count).not.toHaveBeenCalled();
+    expect(mocks.prisma.client.count).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        deletedAt: null
+      }
+    });
     expect(mocks.prisma.clientProfile.upsert).toHaveBeenCalledWith({
       where: { clientId: "client_1" },
       create: expect.objectContaining({
@@ -202,7 +207,7 @@ describe("client and CRM API tenancy", () => {
           firstName: "Limit",
           lastName: "Reached",
           email: "limit@example.com",
-          status: "active"
+          status: "new"
         })
       })
     );
@@ -213,8 +218,7 @@ describe("client and CRM API tenancy", () => {
     expect(mocks.prisma.client.count).toHaveBeenCalledWith({
       where: {
         organizationId: "org_1",
-        deletedAt: null,
-        status: ClientStatus.ACTIVE
+        deletedAt: null
       }
     });
     expect(mocks.prisma.client.create).not.toHaveBeenCalled();

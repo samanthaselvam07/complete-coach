@@ -330,7 +330,7 @@ function SubscriptionBillingPanel() {
             detail="Owner, admin, and coach seats"
           />
           <BillingMetric
-            label="Active clients"
+            label="Clients"
             value={`${billing?.usage?.clients ?? 0}/${plan?.clientLimit ?? 0}`}
             detail={`Next renewal: ${renewal}`}
           />
