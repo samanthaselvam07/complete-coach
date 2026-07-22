@@ -1,9 +1,13 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { createElement } from "react";
-import { afterEach, vi } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
 
 process.env.DATABASE_URL ??= "postgresql://test:test@localhost:5432/complete_coach_test";
+
+beforeEach(() => {
+  vi.stubGlobal("confirm", vi.fn(() => true));
+});
 
 vi.mock("@rive-app/react-canvas", () => ({
   Alignment: {

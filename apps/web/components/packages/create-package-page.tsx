@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 
 type BillingInterval = "weekly" | "fortnightly" | "monthly" | "annually" | "custom";
 type CustomBillingIntervalUnit = "day" | "week" | "month" | "year";
@@ -55,6 +56,16 @@ export function CreatePackagePage() {
   }
 
   function removeFeature(index: number) {
+    if (
+      !confirmDestructiveAction({
+        action: "remove",
+        itemName: form.features[index] || `feature ${index + 1}`,
+        itemType: "feature"
+      })
+    ) {
+      return;
+    }
+
     setForm((currentForm) => {
       const features = currentForm.features.filter((_, currentIndex) => currentIndex !== index);
 

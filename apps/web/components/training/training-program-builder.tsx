@@ -4,6 +4,7 @@ import { ArrowLeft, Copy, GripVertical, MessageSquareText, PlayCircle, Plus, Sav
 import { useEffect, useState } from "react";
 
 import { muscleGroups, type Exercise } from "@/lib/training/training-models";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
 
 import { AnatomicalFilterMultiSelect } from "./anatomical-filter-multi-select";
@@ -312,6 +313,15 @@ export function TrainingProgramBuilder({
       return;
     }
 
+    if (
+      !confirmDestructiveAction({
+        itemName: activeDay.name,
+        itemType: "training day"
+      })
+    ) {
+      return;
+    }
+
     const activeDayIndex = draft.days.findIndex((day) => day.id === activeDay.id);
     const remainingDays = draft.days.filter((day) => day.id !== activeDay.id);
     const nextActiveDay = remainingDays[Math.max(0, activeDayIndex - 1)] ?? remainingDays[0];
@@ -411,6 +421,17 @@ export function TrainingProgramBuilder({
   }
 
   function deleteExercise(exerciseId: string) {
+    const targetExercise = activeDay.exercises.find((exercise) => exercise.id === exerciseId);
+
+    if (
+      !confirmDestructiveAction({
+        itemName: targetExercise?.exerciseName,
+        itemType: "exercise"
+      })
+    ) {
+      return;
+    }
+
     updateActiveDay({
       exercises: activeDay.exercises.filter((exercise) => exercise.id !== exerciseId)
     });

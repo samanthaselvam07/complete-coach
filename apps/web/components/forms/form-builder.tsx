@@ -3,6 +3,7 @@ import { useEffect, useState, type DragEvent } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
 import { formElements, getTemplateName, type FormField } from "@/lib/forms/form-config";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
 import {
   fieldSupportsOptions,
@@ -171,6 +172,18 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
   };
 
   const removeFieldOption = (fieldId: string, optionIndex: number) => {
+    const field = fields.find((currentField) => currentField.id === fieldId);
+
+    if (
+      !confirmDestructiveAction({
+        action: "remove",
+        itemName: field ? `option ${optionIndex + 1} from ${field.label}` : null,
+        itemType: "field option"
+      })
+    ) {
+      return;
+    }
+
     setFields((currentFields) =>
       currentFields.map((field) => {
         if (field.id !== fieldId) {
@@ -185,6 +198,18 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
   };
 
   const removeField = (fieldId: string) => {
+    const field = fields.find((currentField) => currentField.id === fieldId);
+
+    if (
+      !confirmDestructiveAction({
+        action: "remove",
+        itemName: field?.label,
+        itemType: "field"
+      })
+    ) {
+      return;
+    }
+
     setFields((currentFields) => currentFields.filter((field) => field.id !== fieldId));
   };
 

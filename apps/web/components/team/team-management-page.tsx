@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { Input } from "@/components/ui/input";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 
 type TeamRole = "owner" | "admin" | "coach" | "assistant";
 type TeamStatus = "invited" | "active" | "suspended" | "removed";
@@ -148,6 +149,16 @@ export function TeamManagementPage() {
 
   async function removeMember(member: TeamMember) {
     setFeedback(null);
+
+    if (
+      !confirmDestructiveAction({
+        action: "remove",
+        itemName: member.name ?? member.email,
+        itemType: "team member"
+      })
+    ) {
+      return;
+    }
 
     try {
       const response = await fetch(`/api/v1/team-members/${member.id}`, {

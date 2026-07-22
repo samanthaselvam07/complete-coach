@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ClientSummary } from "@/lib/clients/client-models";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { SavedToast } from "@/components/ui/saved-toast";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
 
 import {
@@ -320,6 +321,15 @@ export function TrainingProgramsPage() {
   async function deleteTrainingProgram(target: AssignableProgramTarget) {
     setStatusMessage(null);
     setErrorMessage(null);
+
+    if (
+      !confirmDestructiveAction({
+        itemName: target.name,
+        itemType: "training program"
+      })
+    ) {
+      return;
+    }
 
     if (target.templateId && !target.templateId.startsWith("local-")) {
       try {

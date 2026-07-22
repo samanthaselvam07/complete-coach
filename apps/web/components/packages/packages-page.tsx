@@ -12,6 +12,7 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
 
 type BillingInterval = "weekly" | "fortnightly" | "monthly" | "annually" | "custom" | "one-time";
@@ -222,6 +223,16 @@ export function PackagesPage() {
       return;
     }
 
+    if (
+      !confirmDestructiveAction({
+        action: "archive",
+        itemName: coachingPackage.name,
+        itemType: "package"
+      })
+    ) {
+      return;
+    }
+
     try {
       const response = await fetch(`/api/v1/packages/${coachingPackage.id}`, {
         method: "PATCH",
@@ -372,60 +383,9 @@ export function PackagesPage() {
         </div>
       </section>
 
-      <section className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-2">
-        <div className="relative min-h-72 bg-gradient-to-br from-slate-300 via-slate-200 to-slate-500">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_20%,rgba(255,255,255,0.5),transparent_25%),linear-gradient(120deg,rgba(15,23,42,0.05),rgba(15,23,42,0.65))]" />
-          <div className="absolute bottom-7 left-7 text-white">
-            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-indigo-200">Elite Prep - 38 enrolled</p>
-            <h2 className="text-3xl font-black">Elite Hypertrophy</h2>
-          </div>
-        </div>
-        <div className="p-7">
-          <p className="mb-6 text-sm leading-6 text-slate-700">
-            Our flagship 16-week muscle-building protocol featuring daily check-ins and advanced biomarker analysis.
-          </p>
-          <div className="mb-6 flex flex-wrap items-center gap-4">
-            <span className="text-4xl font-black">$499<span className="text-base font-medium text-slate-500">/mo</span></span>
-            <span className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white">16 Weeks</span>
-            <span className="text-sm text-slate-600">+35 clients enrolled</span>
-          </div>
-          <div className="mb-4 rounded-2xl border border-slate-200 bg-gray-50 p-5">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Contest Prep</p>
-            <div className="mt-2 grid gap-1 text-sm font-bold text-slate-800">
-              <span>Price $1,200</span>
-              <span>Term 24 Weeks</span>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              className="flex-1 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white"
-              onClick={() => {
-                const firstMonthlySyncedPackage = packages.find(
-                  (coachingPackage) =>
-                    coachingPackage.billingInterval === "monthly" &&
-                    Boolean(coachingPackage.stripeProductId && coachingPackage.stripePriceId)
-                );
-
-                if (firstMonthlySyncedPackage) {
-                  void openAssignForm(firstMonthlySyncedPackage);
-                } else {
-                  setFormError("Create a Stripe-connected monthly package before assigning a payment link.");
-                }
-              }}
-            >
-              Assign to Client
-            </button>
-            <button type="button" className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700">
-              Edit Details
-            </button>
-          </div>
-        </div>
-      </section>
-
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-black">Active Inventory</h2>
+          <h2 className="text-xl font-black">Active Packages</h2>
           <p className="text-sm font-bold uppercase tracking-wide text-slate-600">Sort by Newest First</p>
         </div>
         <div className="grid gap-6 xl:grid-cols-2">
@@ -534,6 +494,9 @@ function PackageCard({
             </span>
           </div>
           <p className="text-sm opacity-80">{coachingPackage.description}</p>
+          <p className="mt-2 text-sm font-bold text-slate-700">
+            {formatAssignedClients(coachingPackage.activeSubscriptions)}
+          </p>
         </div>
         <div className="flex gap-2">
           <button
@@ -597,7 +560,7 @@ function PackageCard({
       </div>
       <div className="grid grid-cols-2 gap-4 border-t border-slate-200 pt-4">
         <div>
-          <div className="text-xs opacity-70">Active Clients</div>
+          <div className="text-xs opacity-70">Assigned Clients</div>
           <div className="text-2xl font-black">{coachingPackage.activeSubscriptions}</div>
         </div>
         <div>
@@ -792,6 +755,16 @@ function PackageDialog({
     onUpdateForm({ ...formState, features: [...formState.features, ""] });
   };
   const removeFeature = (index: number) => {
+    if (
+      !confirmDestructiveAction({
+        action: "remove",
+        itemName: formState.features[index] || `feature ${index + 1}`,
+        itemType: "feature"
+      })
+    ) {
+      return;
+    }
+
     const nextFeatures = formState.features.filter((_, currentIndex) => currentIndex !== index);
     onUpdateForm({ ...formState, features: nextFeatures.length > 0 ? nextFeatures : [""] });
   };
@@ -1166,6 +1139,10 @@ function formatBillingInterval(coachingPackage: ApiPackage) {
   }
 
   return "once";
+}
+
+function formatAssignedClients(count: number) {
+  return `${count} ${count === 1 ? "client" : "clients"} assigned`;
 }
 
 function formatDate(value: string) {

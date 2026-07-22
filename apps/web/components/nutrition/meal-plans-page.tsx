@@ -9,6 +9,7 @@ import type { Food } from "@/lib/nutrition/nutrition-models";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { usePersistedCardListView } from "@/components/ui/use-persisted-card-list-view";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
 
 type MealPlanTab = "Meal Plans" | "Meal Templates";
@@ -500,6 +501,15 @@ export function MealPlansPage() {
   }
 
   async function deleteMealPlan(assignment: MealAssignmentRow) {
+    if (
+      !confirmDestructiveAction({
+        itemName: assignment.planName,
+        itemType: "meal plan"
+      })
+    ) {
+      return;
+    }
+
     if (assignment.apiTemplate?.id) {
       setSaving(true);
       setStatusMessage(null);
@@ -566,6 +576,15 @@ export function MealPlansPage() {
   }
 
   async function deleteMealTemplate(template: MealTemplateCard) {
+    if (
+      !confirmDestructiveAction({
+        itemName: template.name,
+        itemType: "meal template"
+      })
+    ) {
+      return;
+    }
+
     if (!template.apiTemplate?.id) {
       setCreatedTemplates((currentTemplates) => currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.id));
       setSelectedMealTemplate(null);
@@ -1215,6 +1234,16 @@ function FullMealPlanFields({
       return;
     }
 
+    if (
+      !confirmDestructiveAction({
+        itemName: activeDay.name,
+        itemType: "day"
+      })
+    ) {
+      setDayMenuOpen(false);
+      return;
+    }
+
     const activeIndex = days.findIndex((day) => day.id === activeDay.id);
     const nextActiveDay = days[activeIndex - 1] ?? days[activeIndex + 1] ?? days[0];
     setDays((currentDays) => currentDays.filter((day) => day.id !== activeDay.id));
@@ -1223,6 +1252,18 @@ function FullMealPlanFields({
   };
 
   const deleteMeal = (dayId: string, mealId: string) => {
+    const targetMeal = days.find((day) => day.id === dayId)?.meals.find((meal) => meal.id === mealId);
+
+    if (
+      !confirmDestructiveAction({
+        itemName: targetMeal?.name,
+        itemType: "meal"
+      })
+    ) {
+      setOpenMealMenu(null);
+      return;
+    }
+
     setDays((currentDays) =>
       currentDays.map((day) => (day.id === dayId ? { ...day, meals: day.meals.filter((meal) => meal.id !== mealId) } : day))
     );
@@ -1434,6 +1475,20 @@ function FullMealPlanFields({
   };
 
   const deleteFoodFromMeal = (dayId: string, mealId: string, foodId: string) => {
+    const targetFood = days
+      .find((day) => day.id === dayId)
+      ?.meals.find((meal) => meal.id === mealId)
+      ?.foods.find((food) => food.id === foodId);
+
+    if (
+      !confirmDestructiveAction({
+        itemName: targetFood?.name,
+        itemType: "food"
+      })
+    ) {
+      return;
+    }
+
     setDays((currentDays) =>
       currentDays.map((day) =>
         day.id === dayId

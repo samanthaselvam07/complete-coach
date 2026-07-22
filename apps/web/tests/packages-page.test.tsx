@@ -236,8 +236,14 @@ describe("PackagesPage", () => {
     render(createElement(PackagesPage));
 
     expect(screen.getByRole("heading", { level: 1, name: "Package Ecosystem" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Active Packages" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Active Inventory" })).not.toBeInTheDocument();
     expect(await screen.findAllByText("API Platinum")).toHaveLength(2);
+    expect(screen.queryByText("Elite Hypertrophy")).not.toBeInTheDocument();
     expect(screen.queryByText("Platinum Elite")).not.toBeInTheDocument();
+    expect(screen.getByText("3 clients assigned")).toBeInTheDocument();
+    expect(screen.getByText("1 client assigned")).toBeInTheDocument();
+    expect(screen.getAllByText("Assigned Clients")).toHaveLength(2);
     expect(screen.getByText("Synced")).toBeInTheDocument();
     expect(screen.getByText("Needs sync")).toBeInTheDocument();
 
@@ -378,6 +384,28 @@ describe("PackagesPage", () => {
       )
     );
     await waitFor(() => expect(screen.queryByText("API Platinum")).not.toBeInTheDocument());
+  });
+
+  it("keeps a package visible when archive confirmation is cancelled", async () => {
+    vi.stubGlobal("confirm", vi.fn(() => false));
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      if (String(input) === "/api/v1/packages?status=active&limit=100" && !init) {
+        return Promise.resolve(new Response(JSON.stringify({ data: persistedPackages }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(PackagesPage));
+
+    expect(await screen.findAllByText("API Platinum")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Archive API Platinum" }));
+
+    expect(screen.getAllByText("API Platinum")).toHaveLength(2);
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/v1/packages/package_api_1",
+      expect.objectContaining({ method: "PATCH" })
+    );
   });
 
   it("updates packages through the persistence API", async () => {

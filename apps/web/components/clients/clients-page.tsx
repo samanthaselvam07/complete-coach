@@ -7,6 +7,7 @@ import type { Route } from "next";
 
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import type { ClientSummary, ClientStatus } from "@/lib/clients/client-models";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
 import {
   ClientFormDialog,
@@ -141,6 +142,16 @@ export function ClientsPage() {
   };
 
   const archiveClient = async (client: ClientSummary) => {
+    if (
+      !confirmDestructiveAction({
+        action: "archive",
+        itemName: client.name,
+        itemType: "client"
+      })
+    ) {
+      return;
+    }
+
     try {
       const response = await fetch(`/api/v1/clients/${client.id}/archive`, { method: "POST" });
 

@@ -8,6 +8,7 @@ import { SavedToast } from "@/components/ui/saved-toast";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { usePersistedCardListView } from "@/components/ui/use-persisted-card-list-view";
 import type { Food } from "@/lib/nutrition/nutrition-models";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
 
 interface ApiFood {
@@ -213,6 +214,15 @@ export function FoodDatabasePage() {
 
   async function deleteFood(food: ApiFood | Food) {
     if (!isDeletableFood(food)) {
+      return;
+    }
+
+    if (
+      !confirmDestructiveAction({
+        itemName: food.name,
+        itemType: "food"
+      })
+    ) {
       return;
     }
 

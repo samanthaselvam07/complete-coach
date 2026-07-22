@@ -11,6 +11,7 @@ import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loadi
 import { SavedToast } from "@/components/ui/saved-toast";
 import { usePersistedCardListView } from "@/components/ui/use-persisted-card-list-view";
 import type { ActiveSupplementProtocol, ProtocolTemplate } from "@/lib/supplements/protocol-display";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 
 type TabId = "active" | "library";
 type ProtocolTemplateDraft = {
@@ -337,6 +338,15 @@ export function SupplementPlansPage() {
   }
 
   async function deleteTemplate(template: ProtocolTemplate) {
+    if (
+      !confirmDestructiveAction({
+        itemName: template.name,
+        itemType: "supplement template"
+      })
+    ) {
+      return;
+    }
+
     try {
       const response = await fetch(`/api/v1/supplement-plan-templates/${template.id}`, { method: "DELETE" });
 
@@ -352,6 +362,15 @@ export function SupplementPlansPage() {
   }
 
   async function deleteAssignment(protocol: ActiveSupplementProtocol) {
+    if (
+      !confirmDestructiveAction({
+        itemName: protocol.protocol,
+        itemType: "supplement protocol"
+      })
+    ) {
+      return;
+    }
+
     try {
       const response = await fetch(`/api/v1/supplement-plan-assignments/${protocol.id}`, { method: "DELETE" });
 
