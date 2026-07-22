@@ -284,6 +284,7 @@ describe("Stripe webhook API", () => {
           id: "cs_payment_link_1",
           customer: "cus_payment_link_1",
           subscription: "sub_payment_link_1",
+          payment_status: "paid",
           client_reference_id: "org_1",
           metadata: {}
         }
@@ -304,7 +305,7 @@ describe("Stripe webhook API", () => {
       data: {
         platformStripeCustomerId: "cus_payment_link_1",
         platformStripeSubscriptionId: "sub_payment_link_1",
-        platformSubscriptionStatus: "incomplete"
+        platformSubscriptionStatus: "active"
       }
     });
     expect(mocks.prisma.clientSubscription.update).not.toHaveBeenCalled();

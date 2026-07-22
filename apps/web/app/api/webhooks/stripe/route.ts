@@ -192,7 +192,7 @@ async function processCheckoutSessionCompleted(event: StripeEventPayload, organi
         ...(platformPlan ? { platformPlan } : {}),
         platformStripeCustomerId: getStripeString(object, "customer"),
         platformStripeSubscriptionId: getStripeString(object, "subscription"),
-        platformSubscriptionStatus: "incomplete"
+        platformSubscriptionStatus: getPlatformCheckoutSessionStatus(object)
       }
     });
 
@@ -279,6 +279,16 @@ function isPlatformCheckoutSession(object: Record<string, unknown>, organization
     Boolean(getStripeString(object, "customer")) &&
     Boolean(getStripeString(object, "subscription"))
   );
+}
+
+function getPlatformCheckoutSessionStatus(object: Record<string, unknown>) {
+  const paymentStatus = getStripeString(object, "payment_status");
+
+  if (paymentStatus === "paid" || paymentStatus === "no_payment_required") {
+    return "active";
+  }
+
+  return "incomplete";
 }
 
 async function processPlatformSubscriptionChanged(event: StripeEventPayload, organizationId: string) {
