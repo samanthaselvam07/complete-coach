@@ -32,6 +32,37 @@ const persistedPackages = [
     color: "indigo",
     activeSubscriptions: 3,
     projectedMonthlyRevenue: 179700,
+    customerLtv: 119800,
+    ltvCustomerCount: 3,
+    customerMetrics: {
+      monthly: {
+        arpu: 59900,
+        grossMarginPercent: 100,
+        churnRate: 1 / 3,
+        lostCustomers: 1,
+        customersAtStart: 3,
+        revenue: 179700,
+        customerLtv: 179700
+      },
+      quarterly: {
+        arpu: 179700,
+        grossMarginPercent: 100,
+        churnRate: 1 / 3,
+        lostCustomers: 1,
+        customersAtStart: 3,
+        revenue: 539100,
+        customerLtv: 539100
+      },
+      annually: {
+        arpu: 718800,
+        grossMarginPercent: 100,
+        churnRate: 1 / 3,
+        lostCustomers: 1,
+        customersAtStart: 3,
+        revenue: 2156400,
+        customerLtv: 2156400
+      }
+    },
     createdAt: "2026-05-18T00:00:00.000Z",
     updatedAt: "2026-05-18T00:00:00.000Z"
   },
@@ -56,6 +87,37 @@ const persistedPackages = [
     color: "purple",
     activeSubscriptions: 1,
     projectedMonthlyRevenue: 0,
+    customerLtv: 149900,
+    ltvCustomerCount: 1,
+    customerMetrics: {
+      monthly: {
+        arpu: 149900,
+        grossMarginPercent: 100,
+        churnRate: 0,
+        lostCustomers: 0,
+        customersAtStart: 1,
+        revenue: 149900,
+        customerLtv: 0
+      },
+      quarterly: {
+        arpu: 149900,
+        grossMarginPercent: 100,
+        churnRate: 0,
+        lostCustomers: 0,
+        customersAtStart: 1,
+        revenue: 149900,
+        customerLtv: 0
+      },
+      annually: {
+        arpu: 149900,
+        grossMarginPercent: 100,
+        churnRate: 0,
+        lostCustomers: 0,
+        customersAtStart: 1,
+        revenue: 149900,
+        customerLtv: 0
+      }
+    },
     createdAt: "2026-05-18T00:00:00.000Z",
     updatedAt: "2026-05-18T00:00:00.000Z"
   }
@@ -65,9 +127,11 @@ describe("PackagesPage", () => {
   it("normalizes package stats, forms, payloads, and currency helpers", () => {
     const emptyStats = buildPackageStats([]);
     const packageStats = buildPackageStats(persistedPackages as never);
+    const quarterlyStats = buildPackageStats(persistedPackages as never, "quarterly");
 
-    expect(emptyStats.map((stat) => stat.value)).toEqual([0, "$0", "No packages", "94%"]);
-    expect(packageStats.map((stat) => stat.value)).toEqual([4, "$1,797", "API Platinum", "94%"]);
+    expect(emptyStats.map((stat) => stat.value)).toEqual([0, "No packages", "94%", "0%", "$0"]);
+    expect(packageStats.map((stat) => stat.value)).toEqual([4, "API Platinum", "94%", "25%", "$3,296"]);
+    expect(quarterlyStats.map((stat) => stat.value)).toEqual([4, "API Platinum", "94%", "25%", "$6,890"]);
     expect(packageToFormState({ ...persistedPackages[0], description: null, color: null } as never)).toEqual({
       name: "API Platinum",
       description: "",
@@ -180,11 +244,17 @@ describe("PackagesPage", () => {
     const stats = screen.getByLabelText("Package revenue summary");
     expect(within(stats).getByText("Active Subscriptions")).toBeInTheDocument();
     expect(within(stats).getByText("4")).toBeInTheDocument();
-    expect(within(stats).getByText("Portfolio Value")).toBeInTheDocument();
-    expect(within(stats).getByText("$1,797")).toBeInTheDocument();
+    expect(within(stats).queryByText("Portfolio Value")).not.toBeInTheDocument();
     expect(within(stats).getByText("Top Performer")).toBeInTheDocument();
     expect(within(stats).getByText("API Platinum")).toBeInTheDocument();
     expect(within(stats).getByText("Retention Rate")).toBeInTheDocument();
+    expect(within(stats).getByText("Churn")).toBeInTheDocument();
+    expect(within(stats).getByText("25%")).toBeInTheDocument();
+    expect(within(stats).getByText("Customer LTV")).toBeInTheDocument();
+    expect(within(stats).getByText("$3,296")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Quarterly" }));
+    expect(within(stats).getByText("$6,890")).toBeInTheDocument();
   });
 
   it("creates packages through the persistence API", async () => {
@@ -202,11 +272,37 @@ describe("PackagesPage", () => {
                 id: "package_created",
                 name: "Created Package",
                 priceAmount: 24900,
+                stripeProductId: null,
+                stripePriceId: null,
                 projectedMonthlyRevenue: 0,
-                activeSubscriptions: 0
+                activeSubscriptions: 0,
+                customerLtv: 0,
+                ltvCustomerCount: 0
               }
             }),
             { status: 201 }
+          )
+        );
+      }
+
+      if (String(input) === "/api/v1/packages/package_created/stripe-sync" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                ...persistedPackages[0],
+                id: "package_created",
+                name: "Created Package",
+                priceAmount: 24900,
+                stripeProductId: "prod_created",
+                stripePriceId: "price_created",
+                projectedMonthlyRevenue: 0,
+                activeSubscriptions: 0,
+                customerLtv: 0,
+                ltvCustomerCount: 0
+              }
+            }),
+            { status: 200 }
           )
         );
       }
@@ -244,7 +340,11 @@ describe("PackagesPage", () => {
         })
       )
     );
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/packages/package_created/stripe-sync", { method: "POST" })
+    );
     expect(await screen.findAllByText("Created Package")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Open Stripe account" })).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "Create Package" })).not.toBeInTheDocument();
   });
 
@@ -294,6 +394,25 @@ describe("PackagesPage", () => {
                 ...persistedPackages[0],
                 name: "Updated Platinum",
                 priceAmount: 69900,
+                stripePriceId: null,
+                projectedMonthlyRevenue: 209700
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (String(input) === "/api/v1/packages/package_api_1/stripe-sync" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                ...persistedPackages[0],
+                name: "Updated Platinum",
+                priceAmount: 69900,
+                stripeProductId: "prod_123",
+                stripePriceId: "price_updated",
                 projectedMonthlyRevenue: 209700
               }
             }),
@@ -335,29 +454,18 @@ describe("PackagesPage", () => {
         })
       )
     );
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/packages/package_api_1/stripe-sync", { method: "POST" })
+    );
     expect(await screen.findAllByText("Updated Platinum")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Open Stripe account" })).toBeInTheDocument();
     expect(screen.queryByText("API Platinum")).not.toBeInTheDocument();
   });
 
-  it("starts Stripe sync for unsynced persisted packages", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+  it("shows unsynced packages without a manual Stripe sync button", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       if (String(input) === "/api/v1/packages?status=active&limit=100" && !init) {
         return Promise.resolve(new Response(JSON.stringify({ data: persistedPackages }), { status: 200 }));
-      }
-
-      if (String(input) === "/api/v1/packages/package_api_2/stripe-sync" && init?.method === "POST") {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: {
-                ...persistedPackages[1],
-                stripeProductId: "prod_synced",
-                stripePriceId: "price_synced"
-              }
-            }),
-            { status: 200 }
-          )
-        );
       }
 
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
@@ -366,13 +474,8 @@ describe("PackagesPage", () => {
     render(createElement(PackagesPage));
 
     expect(await screen.findByText("API Launch")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Sync Stripe" }));
-
-    await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith("/api/v1/packages/package_api_2/stripe-sync", { method: "POST" })
-    );
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Sync Stripe" })).not.toBeInTheDocument());
-    expect(screen.getAllByText("Synced")).toHaveLength(2);
+    expect(screen.getByText("Needs sync")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sync Stripe" })).not.toBeInTheDocument();
   });
 
   it("opens the connected Stripe account from synced packages", async () => {
@@ -517,11 +620,8 @@ describe("PackagesPage", () => {
     expect(screen.queryByText("Failed Package")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    fireEvent.click(screen.getByRole("button", { name: "Sync Stripe" }));
-    await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith("/api/v1/packages/package_api_2/stripe-sync", { method: "POST" })
-    );
-    expect(screen.getByRole("button", { name: "Sync Stripe" })).toBeInTheDocument();
+    expect(screen.getByText("Needs sync")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sync Stripe" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Archive API Launch" }));
     await waitFor(() =>

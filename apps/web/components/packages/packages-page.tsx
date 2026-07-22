@@ -16,6 +16,23 @@ import { cn } from "@/lib/utils";
 
 type BillingInterval = "weekly" | "fortnightly" | "monthly" | "annually" | "custom" | "one-time";
 type CustomBillingIntervalUnit = "day" | "week" | "month" | "year";
+type MetricsPeriod = "monthly" | "quarterly" | "annually";
+
+const metricsPeriodOptions: Array<{ label: string; value: MetricsPeriod }> = [
+  { label: "Monthly", value: "monthly" },
+  { label: "Quarterly", value: "quarterly" },
+  { label: "Annually", value: "annually" }
+];
+
+interface CustomerPeriodMetrics {
+  arpu: number;
+  grossMarginPercent: number;
+  churnRate: number;
+  lostCustomers: number;
+  customersAtStart: number;
+  revenue: number;
+  customerLtv: number;
+}
 
 interface ApiPackage {
   id: string;
@@ -37,6 +54,9 @@ interface ApiPackage {
   color: string | null;
   activeSubscriptions: number;
   projectedMonthlyRevenue: number;
+  customerLtv: number;
+  ltvCustomerCount: number;
+  customerMetrics?: Record<MetricsPeriod, CustomerPeriodMetrics>;
 }
 
 interface PackageFormState {
@@ -93,6 +113,7 @@ export function PackagesPage() {
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [isLoadingClients, setIsLoadingClients] = useState(false);
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
+  const [metricsPeriod, setMetricsPeriod] = useState<MetricsPeriod>("monthly");
 
   useEffect(() => {
     let isActive = true;
@@ -120,7 +141,7 @@ export function PackagesPage() {
     };
   }, []);
 
-  const stats = useMemo(() => buildPackageStats(packages), [packages]);
+  const stats = useMemo(() => buildPackageStats(packages, metricsPeriod), [packages, metricsPeriod]);
   const filteredClients = useMemo(() => {
     const normalizedSearch = clientSearch.trim().toLowerCase();
 
@@ -181,12 +202,13 @@ export function PackagesPage() {
       }
 
       const responsePayload = (await response.json()) as { data: ApiPackage };
+      const savedPackage = await syncPackageToStripe(responsePayload.data);
       setPackages((currentPackages) =>
         editingPackageId
           ? currentPackages.map((coachingPackage) =>
-              coachingPackage.id === responsePayload.data.id ? responsePayload.data : coachingPackage
+              coachingPackage.id === savedPackage.id ? savedPackage : coachingPackage
             )
-          : [...currentPackages, responsePayload.data]
+          : [...currentPackages, savedPackage]
       );
       setFormOpen(false);
     } catch {
@@ -214,29 +236,6 @@ export function PackagesPage() {
       setPackages((currentPackages) => currentPackages.filter((currentPackage) => currentPackage.id !== coachingPackage.id));
     } catch {
       setFormError("Package could not be archived. Try again.");
-    }
-  }
-
-  async function handleStripeSync(coachingPackage: ApiPackage) {
-    if (source !== "api") {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/v1/packages/${coachingPackage.id}/stripe-sync`, { method: "POST" });
-
-      if (!response.ok) {
-        throw new Error("Stripe sync API unavailable.");
-      }
-
-      const responsePayload = (await response.json()) as { data: ApiPackage };
-      setPackages((currentPackages) =>
-        currentPackages.map((currentPackage) =>
-          currentPackage.id === responsePayload.data.id ? responsePayload.data : currentPackage
-        )
-      );
-    } catch {
-      setFormError("Stripe sync could not be started. Check Connect setup and try again.");
     }
   }
 
@@ -338,19 +337,39 @@ export function PackagesPage() {
         </button>
       </header>
 
-      <section aria-label="Package revenue summary" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <article key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-wide text-slate-500">
-                <span>{stat.label}</span>
-                <Icon className="h-4 w-4" />
-              </div>
-              <div className="text-3xl font-black">{stat.value}</div>
-            </article>
-          );
-        })}
+      <section aria-label="Package revenue summary" className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-bold uppercase tracking-wide text-slate-600">Customer metrics</p>
+          <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm" aria-label="Metrics period">
+            {metricsPeriodOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={cn(
+                  "rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wide transition",
+                  metricsPeriod === option.value ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"
+                )}
+                onClick={() => setMetricsPeriod(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-5">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <article key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-wide text-slate-500">
+                  <span>{stat.label}</span>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="text-3xl font-black">{stat.value}</div>
+              </article>
+            );
+          })}
+        </div>
       </section>
 
       <section className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-2">
@@ -391,7 +410,7 @@ export function PackagesPage() {
                 if (firstMonthlySyncedPackage) {
                   void openAssignForm(firstMonthlySyncedPackage);
                 } else {
-                  setFormError("Sync a monthly package to Stripe before assigning a payment link.");
+                  setFormError("Create a Stripe-connected monthly package before assigning a payment link.");
                 }
               }}
             >
@@ -419,7 +438,6 @@ export function PackagesPage() {
               onEdit={openEditForm}
               onAssign={openAssignForm}
               onOpenStripeAccount={handleOpenStripeAccount}
-              onStripeSync={handleStripeSync}
             />
           ))}
         </div>
@@ -459,14 +477,37 @@ export function PackagesPage() {
   );
 }
 
+async function syncPackageToStripe(coachingPackage: ApiPackage, options?: { throwOnError?: boolean }) {
+  try {
+    const response = await fetch(`/api/v1/packages/${coachingPackage.id}/stripe-sync`, { method: "POST" });
+
+    if (!response.ok) {
+      throw new Error("Stripe sync API unavailable.");
+    }
+
+    const responsePayload = (await response.json()) as { data?: ApiPackage };
+
+    if (!responsePayload.data) {
+      throw new Error("Stripe sync API unavailable.");
+    }
+
+    return responsePayload.data;
+  } catch (error) {
+    if (options?.throwOnError) {
+      throw error;
+    }
+
+    return coachingPackage;
+  }
+}
+
 function PackageCard({
   coachingPackage,
   onArchive,
   onAssign,
   onDuplicate,
   onEdit,
-  onOpenStripeAccount,
-  onStripeSync
+  onOpenStripeAccount
 }: {
   coachingPackage: ApiPackage;
   onArchive: (coachingPackage: ApiPackage) => void;
@@ -474,7 +515,6 @@ function PackageCard({
   onDuplicate: (coachingPackage: ApiPackage) => void;
   onEdit: (coachingPackage: ApiPackage) => void;
   onOpenStripeAccount: () => void;
-  onStripeSync: (coachingPackage: ApiPackage) => void;
 }) {
   const isStripeSynced = Boolean(coachingPackage.stripeProductId && coachingPackage.stripePriceId);
   const canAssignPaymentLink = isStripeSynced && coachingPackage.billingInterval !== "one-time";
@@ -565,15 +605,7 @@ function PackageCard({
           <div className="text-2xl font-black">{formatCents(coachingPackage.projectedMonthlyRevenue, coachingPackage.currency)}</div>
         </div>
       </div>
-      {!isStripeSynced ? (
-        <button
-          type="button"
-          className="mt-5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold transition hover:bg-slate-50"
-          onClick={() => onStripeSync(coachingPackage)}
-        >
-          Sync Stripe
-        </button>
-      ) : (
+      {isStripeSynced ? (
         <button
           type="button"
           className="mt-5 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
@@ -582,14 +614,14 @@ function PackageCard({
           Open Stripe account
           <ExternalLink className="h-4 w-4" aria-hidden="true" />
         </button>
-      )}
+      ) : null}
       <button
         type="button"
         disabled={!canAssignPaymentLink}
         className="mt-3 w-full rounded-lg bg-slate-950 px-3 py-2 text-sm font-bold text-white transition hover:bg-slate-800 disabled:bg-slate-300"
         onClick={() => onAssign(coachingPackage)}
       >
-        {canAssignPaymentLink ? "Assign to Client" : "Sync recurring package to assign"}
+        {canAssignPaymentLink ? "Assign to Client" : "Stripe connection required"}
       </button>
     </article>
   );
@@ -985,9 +1017,19 @@ async function fetchPackages() {
   }
 }
 
-export function buildPackageStats(packages: ApiPackage[]) {
-  const totalRevenue = packages.reduce((sum, coachingPackage) => sum + coachingPackage.projectedMonthlyRevenue, 0);
+export function buildPackageStats(packages: ApiPackage[], period: MetricsPeriod = "monthly") {
   const totalClients = packages.reduce((sum, coachingPackage) => sum + coachingPackage.activeSubscriptions, 0);
+  const periodMetrics = packages.map((coachingPackage) => getPackageCustomerMetrics(coachingPackage, period));
+  const customersAtStart = periodMetrics.reduce((sum, metrics) => sum + metrics.customersAtStart, 0);
+  const lostCustomers = periodMetrics.reduce((sum, metrics) => sum + metrics.lostCustomers, 0);
+  const revenue = periodMetrics.reduce((sum, metrics) => sum + metrics.revenue, 0);
+  const grossMarginRate =
+    periodMetrics.length > 0
+      ? periodMetrics.reduce((sum, metrics) => sum + metrics.grossMarginPercent, 0) / periodMetrics.length / 100
+      : 1;
+  const churnRate = customersAtStart > 0 ? lostCustomers / customersAtStart : 0;
+  const arpu = customersAtStart > 0 ? Math.round(revenue / customersAtStart) : 0;
+  const customerLtv = churnRate > 0 ? Math.round((arpu * grossMarginRate) / churnRate) : 0;
   const topPackage = packages.reduce<ApiPackage | null>(
     (currentTop, coachingPackage) =>
       !currentTop || coachingPackage.projectedMonthlyRevenue > currentTop.projectedMonthlyRevenue
@@ -998,10 +1040,31 @@ export function buildPackageStats(packages: ApiPackage[]) {
 
   return [
     { label: "Active Subscriptions", value: totalClients, icon: Package },
-    { label: "Portfolio Value", value: formatCents(totalRevenue), icon: DollarSign },
     { label: "Top Performer", value: topPackage?.name ?? "No packages", icon: Users },
-    { label: "Retention Rate", value: "94%", icon: TrendingUp }
+    { label: "Retention Rate", value: "94%", icon: TrendingUp },
+    { label: "Churn", value: formatPercent(churnRate), icon: TrendingUp },
+    { label: "Customer LTV", value: formatCents(customerLtv), icon: DollarSign }
   ];
+}
+
+function getPackageCustomerMetrics(coachingPackage: ApiPackage, period: MetricsPeriod): CustomerPeriodMetrics {
+  return (
+    coachingPackage.customerMetrics?.[period] ?? {
+      arpu: coachingPackage.ltvCustomerCount > 0 ? Math.round(coachingPackage.customerLtv / coachingPackage.ltvCustomerCount) : 0,
+      grossMarginPercent: 100,
+      churnRate: 0,
+      lostCustomers: 0,
+      customersAtStart: coachingPackage.ltvCustomerCount,
+      revenue: coachingPackage.customerLtv * coachingPackage.ltvCustomerCount,
+      customerLtv: coachingPackage.customerLtv
+    }
+  );
+}
+
+function formatPercent(value: number) {
+  return `${(value * 100).toLocaleString("en-US", {
+    maximumFractionDigits: 1
+  })}%`;
 }
 
 export function packageToFormState(coachingPackage: ApiPackage): PackageFormState {

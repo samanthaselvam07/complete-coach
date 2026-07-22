@@ -10,8 +10,8 @@ Ticket 017 / M8 connects coaching packages, Stripe Connect, Stripe Billing subsc
 - Package Stripe sync can create trusted Stripe product and price ids for active-organization packages after local Stripe Connect setup exists.
 - Client subscription APIs can list local subscription mirrors and create Stripe Checkout subscription sessions for synced recurring packages.
 - Stripe webhook processing verifies signatures, persists payment events idempotently, updates subscription mirrors, and refreshes Stripe Connect status from trusted Stripe events.
-- Packages UI loads active organization packages from `GET /api/v1/packages`, supports create/edit/archive actions, can start trusted Stripe sync, and renders empty/error states when the package API is unavailable.
-- Packages UI supports editable pricing, currency, package term weeks, row-based feature lists, recurring billing cadences, scheduled price metadata, and a connected Stripe account dashboard link for synced packages.
+- Packages UI loads active organization packages from `GET /api/v1/packages`, supports create/edit/archive actions, automatically attempts trusted Stripe sync after saves, and renders empty/error states when the package API is unavailable.
+- Packages UI supports editable pricing, currency, package term weeks, row-based feature lists, recurring billing cadences, scheduled price metadata, a connected Stripe account dashboard link for synced packages, and periodized churn and Customer LTV summaries.
 - Dashboard monthly revenue is derived from persisted package `projectedMonthlyRevenue` values when the package API is available, with fixture revenue retained as fallback.
 - Demo seed data creates package records from the UI stub fixtures.
 
@@ -21,7 +21,7 @@ Completed on May 18, 2026.
 Delivered:
 - Forward-only Prisma migration for package, client subscription, and payment event persistence.
 - Tenant-scoped `GET /api/v1/packages`, `POST /api/v1/packages`, and `PATCH /api/v1/packages/{package_id}` APIs.
-- Package serialization includes active subscription count and projected monthly revenue derived from local subscription records.
+- Package serialization includes active subscription count, projected monthly revenue, periodized churn, and Customer LTV derived from local subscription records, package billing cadence, and archived client dates. Customer LTV uses ARPU x gross margin percentage / churn rate; gross margin currently defaults to 100% until package-level costs are tracked.
 - Package mutation audit logs avoid secrets, card data, and client-provided Stripe identifiers.
 - API tests cover package list/create/update, tenant scoping, payment management authorization, and rejection of client-supplied Stripe identifiers.
 
@@ -78,7 +78,8 @@ Delivered:
 - `/packages` now prefers `GET /api/v1/packages?status=active&limit=100` for package cards and summary metrics.
 - Package create and edit actions submit validated UI payloads to `POST /api/v1/packages` and `PATCH /api/v1/packages/{package_id}`.
 - Package archive uses `PATCH /api/v1/packages/{package_id}` with `status: archived` and removes archived records from the active package list.
-- Package cards show Stripe sync state and can trigger `POST /api/v1/packages/{package_id}/stripe-sync` for unsynced persisted packages.
+- Package cards show Stripe sync state, do not expose a manual sync button, and open the connected Stripe account for synced packages.
+- Package summary metrics show active subscriptions, top performer, retention rate, churn, and Customer LTV across monthly, quarterly, and annual views; the former portfolio value card is not shown.
 - Dashboard monthly revenue reads package `projectedMonthlyRevenue` from persisted package data and keeps fixture revenue fallback if the API is unavailable.
 - Component tests cover API-backed package loading, create, archive, and dashboard revenue persistence.
 

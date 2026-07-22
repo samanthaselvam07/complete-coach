@@ -1,6 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { PackageBillingInterval, PackageStatus } from "@/app/generated/prisma/enums";
+import {
+  ClientStatus,
+  ClientSubscriptionStatus,
+  PackageBillingInterval,
+  PackageStatus
+} from "@/app/generated/prisma/enums";
 import { GET as listPackages, POST as createPackage } from "@/app/api/v1/packages/route";
 import { PATCH as updatePackage } from "@/app/api/v1/packages/[packageId]/route";
 
@@ -64,7 +69,21 @@ const packageRecord = {
   deletedAt: null,
   _count: {
     subscriptions: 3
-  }
+  },
+  subscriptions: [
+    {
+      status: ClientSubscriptionStatus.CANCELED,
+      currentPeriodStart: new Date("2026-07-18T00:00:00.000Z"),
+      currentPeriodEnd: new Date("2026-08-18T00:00:00.000Z"),
+      cancelAt: null,
+      createdAt: new Date("2026-05-18T00:00:00.000Z"),
+      updatedAt: new Date("2026-07-18T00:00:00.000Z"),
+      client: {
+        status: ClientStatus.ARCHIVED,
+        archivedAt: new Date("2026-07-18T00:00:00.000Z")
+      }
+    }
+  ]
 };
 
 describe("payments and packages APIs", () => {
@@ -78,12 +97,25 @@ describe("payments and packages APIs", () => {
     mocks.prisma.coachingPackage.update.mockReset();
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("lists active organization packages with derived active subscription counts", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-22T00:00:00.000Z"));
+
     mocks.prisma.coachingPackage.findMany.mockResolvedValue([packageRecord]);
 
     const response = await listPackages(new Request("http://test.local/api/v1/packages?status=active&limit=10"));
     const payload = (await response.json()) as {
-      data: Array<{ id: string; activeSubscriptions: number; projectedMonthlyRevenue: number }>;
+      data: Array<{
+        id: string;
+        activeSubscriptions: number;
+        projectedMonthlyRevenue: number;
+        customerLtv: number;
+        ltvCustomerCount: number;
+      }>;
     };
 
     expect(response.status).toBe(200);
@@ -91,7 +123,17 @@ describe("payments and packages APIs", () => {
       expect.objectContaining({
         id: "package_1",
         activeSubscriptions: 3,
-        projectedMonthlyRevenue: 119700
+        projectedMonthlyRevenue: 119700,
+        customerLtv: 39900,
+        ltvCustomerCount: 1,
+        customerMetrics: expect.objectContaining({
+          monthly: expect.objectContaining({
+            churnRate: 1,
+            lostCustomers: 1,
+            customersAtStart: 1,
+            customerLtv: 39900
+          })
+        })
       })
     ]);
     expect(mocks.prisma.coachingPackage.findMany).toHaveBeenCalledWith(

@@ -1,7 +1,7 @@
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { z } from "zod";
 
-import { PackageBillingInterval, PackageStatus } from "@/app/generated/prisma/enums";
+import { ClientStatus, ClientSubscriptionStatus, PackageBillingInterval, PackageStatus } from "@/app/generated/prisma/enums";
 
 export const packageBillingIntervalValues = ["weekly", "fortnightly", "monthly", "annually", "custom", "one-time"] as const;
 export const customBillingIntervalUnitValues = ["day", "week", "month", "year"] as const;
@@ -10,6 +10,15 @@ export const packageStatusValues = ["active", "archived"] as const;
 type ApiPackageBillingInterval = (typeof packageBillingIntervalValues)[number];
 type ApiCustomBillingIntervalUnit = (typeof customBillingIntervalUnitValues)[number];
 type ApiPackageStatus = (typeof packageStatusValues)[number];
+type CustomerMetricsPeriod = "monthly" | "quarterly" | "annually";
+
+const customerMetricsPeriods: Record<CustomerMetricsPeriod, number> = {
+  monthly: 1,
+  quarterly: 3,
+  annually: 12
+};
+
+const defaultGrossMarginPercent = 100;
 
 const packageBillingIntervalToPrisma: Record<ApiPackageBillingInterval, PackageBillingInterval> = {
   weekly: PackageBillingInterval.WEEKLY,
@@ -114,7 +123,30 @@ interface PackageRecord {
   _count?: {
     subscriptions?: number;
   };
+  subscriptions?: PackageSubscriptionRecord[];
 }
+
+interface PackageSubscriptionRecord {
+  status: ClientSubscriptionStatus;
+  currentPeriodStart?: Date | string | null;
+  currentPeriodEnd?: Date | string | null;
+  cancelAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  client?: {
+    status: ClientStatus;
+    archivedAt?: Date | string | null;
+  } | null;
+}
+
+const customerLtvSubscriptionStatuses = new Set<ClientSubscriptionStatus>([
+  ClientSubscriptionStatus.TRIALING,
+  ClientSubscriptionStatus.ACTIVE,
+  ClientSubscriptionStatus.PAST_DUE,
+  ClientSubscriptionStatus.CANCELED,
+  ClientSubscriptionStatus.UNPAID,
+  ClientSubscriptionStatus.PAUSED
+]);
 
 export function buildPackageWhere(organizationId: string, query: PackageListQuery) {
   return {
@@ -179,6 +211,8 @@ export function getPackageUpdateData(input: UpdatePackageInput) {
 }
 
 export function serializePackage(record: PackageRecord) {
+  const customerMetrics = calculateCustomerMetrics(record);
+
   return {
     id: record.id,
     organizationId: record.organizationId,
@@ -203,6 +237,9 @@ export function serializePackage(record: PackageRecord) {
       record.billingInterval === PackageBillingInterval.MONTHLY
         ? record.priceAmount * (record._count?.subscriptions ?? 0)
         : 0,
+    customerLtv: customerMetrics.monthly.customerLtv,
+    ltvCustomerCount: customerMetrics.monthly.customersAtStart,
+    customerMetrics,
     createdAt: toIsoString(record.createdAt),
     updatedAt: toIsoString(record.updatedAt)
   };
@@ -259,6 +296,167 @@ function normalizeCustomBillingIntervalUnit(value: string | null | undefined): A
   }
 
   return null;
+}
+
+function calculateCustomerMetrics(record: PackageRecord) {
+  const subscriptions = (record.subscriptions ?? []).filter((subscription) =>
+    customerLtvSubscriptionStatuses.has(subscription.status)
+  );
+
+  return Object.fromEntries(
+    Object.entries(customerMetricsPeriods).map(([period, monthCount]) => [
+      period,
+      calculateCustomerMetricsForPeriod(record, subscriptions, monthCount)
+    ])
+  ) as Record<CustomerMetricsPeriod, ReturnType<typeof calculateCustomerMetricsForPeriod>>;
+}
+
+function calculateCustomerMetricsForPeriod(
+  record: PackageRecord,
+  subscriptions: PackageSubscriptionRecord[],
+  monthCount: number
+) {
+  const periodEnd = new Date();
+  const periodStart = subtractUtcMonths(periodEnd, monthCount);
+  const customersAtStart = subscriptions.filter((subscription) => wasSubscriptionActiveAt(subscription, periodStart)).length;
+  const lostCustomers = subscriptions.filter((subscription) => wasClientArchivedDuringPeriod(subscription, periodStart, periodEnd)).length;
+  const revenue = subscriptions.reduce(
+    (sum, subscription) => sum + calculateSubscriptionRevenueForPeriod(record, subscription, periodStart, periodEnd),
+    0
+  );
+  const arpu = customersAtStart > 0 ? Math.round(revenue / customersAtStart) : 0;
+  const churnRate = customersAtStart > 0 ? lostCustomers / customersAtStart : 0;
+  const grossMarginRate = defaultGrossMarginPercent / 100;
+  const customerLtv = churnRate > 0 ? Math.round((arpu * grossMarginRate) / churnRate) : 0;
+
+  return {
+    arpu,
+    grossMarginPercent: defaultGrossMarginPercent,
+    churnRate,
+    lostCustomers,
+    customersAtStart,
+    revenue,
+    customerLtv
+  };
+}
+
+function wasSubscriptionActiveAt(subscription: PackageSubscriptionRecord, date: Date) {
+  const startedAt = toDate(subscription.createdAt);
+  const endedAt = getSubscriptionLtvEndDate(subscription);
+
+  return startedAt.getTime() <= date.getTime() && endedAt.getTime() >= date.getTime();
+}
+
+function wasClientArchivedDuringPeriod(subscription: PackageSubscriptionRecord, periodStart: Date, periodEnd: Date) {
+  if (subscription.client?.status !== ClientStatus.ARCHIVED || !subscription.client.archivedAt) {
+    return false;
+  }
+
+  const archivedAt = toDate(subscription.client.archivedAt);
+
+  return archivedAt.getTime() >= periodStart.getTime() && archivedAt.getTime() <= periodEnd.getTime();
+}
+
+function calculateSubscriptionRevenueForPeriod(
+  record: PackageRecord,
+  subscription: PackageSubscriptionRecord,
+  periodStart: Date,
+  periodEnd: Date
+) {
+  if (record.billingInterval === PackageBillingInterval.ONE_TIME) {
+    const startedAt = toDate(subscription.createdAt);
+    return startedAt.getTime() >= periodStart.getTime() && startedAt.getTime() <= periodEnd.getTime()
+      ? record.priceAmount
+      : 0;
+  }
+
+  const intervalDays = getBillingIntervalDays(record);
+  const startedAt = toDate(subscription.createdAt);
+  const endedAt = getSubscriptionLtvEndDate(subscription);
+  const cappedEnd = capDateToPackageTerm(startedAt, endedAt, record.termWeeks);
+  const revenueStart = startedAt.getTime() > periodStart.getTime() ? startedAt : periodStart;
+  const revenueEnd = cappedEnd.getTime() < periodEnd.getTime() ? cappedEnd : periodEnd;
+  const durationMs = Math.max(revenueEnd.getTime() - revenueStart.getTime(), 0);
+  const intervalMs = intervalDays * 24 * 60 * 60 * 1000;
+  const billedIntervals = Math.ceil(durationMs / intervalMs);
+
+  return record.priceAmount * billedIntervals;
+}
+
+function getBillingIntervalDays(record: PackageRecord) {
+  if (record.billingInterval === PackageBillingInterval.WEEKLY) {
+    return 7;
+  }
+
+  if (record.billingInterval === PackageBillingInterval.FORTNIGHTLY) {
+    return 14;
+  }
+
+  if (record.billingInterval === PackageBillingInterval.ANNUALLY) {
+    return 365.25;
+  }
+
+  if (record.billingInterval === PackageBillingInterval.CUSTOM) {
+    const count = record.customBillingIntervalCount ?? 1;
+    const unit = normalizeCustomBillingIntervalUnit(record.customBillingIntervalUnit) ?? "month";
+
+    if (unit === "day") {
+      return count;
+    }
+
+    if (unit === "week") {
+      return count * 7;
+    }
+
+    if (unit === "year") {
+      return count * 365.25;
+    }
+
+    return count * 30.4375;
+  }
+
+  return 30.4375;
+}
+
+function getSubscriptionLtvEndDate(subscription: PackageSubscriptionRecord) {
+  if (subscription.client?.status === ClientStatus.ARCHIVED && subscription.client.archivedAt) {
+    return toDate(subscription.client.archivedAt);
+  }
+
+  if (subscription.cancelAt) {
+    return toDate(subscription.cancelAt);
+  }
+
+  if (
+    subscription.status === ClientSubscriptionStatus.CANCELED ||
+    subscription.status === ClientSubscriptionStatus.UNPAID ||
+    subscription.status === ClientSubscriptionStatus.PAUSED
+  ) {
+    return toDate(subscription.currentPeriodEnd ?? subscription.updatedAt);
+  }
+
+  return new Date();
+}
+
+function capDateToPackageTerm(startedAt: Date, endedAt: Date, termWeeks: number | null | undefined) {
+  if (!termWeeks) {
+    return endedAt;
+  }
+
+  const termEnd = new Date(startedAt.getTime() + termWeeks * 7 * 24 * 60 * 60 * 1000);
+
+  return endedAt.getTime() > termEnd.getTime() ? termEnd : endedAt;
+}
+
+function toDate(value: Date | string) {
+  return value instanceof Date ? value : new Date(value);
+}
+
+function subtractUtcMonths(date: Date, monthCount: number) {
+  const periodStart = new Date(date);
+  periodStart.setUTCMonth(periodStart.getUTCMonth() - monthCount);
+
+  return periodStart;
 }
 
 function validatePackageBillingDetails(

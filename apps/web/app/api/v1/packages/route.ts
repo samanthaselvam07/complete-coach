@@ -26,6 +26,22 @@ export async function GET(request: Request) {
               where: { status: ClientSubscriptionStatus.ACTIVE }
             }
           }
+        },
+        subscriptions: {
+          select: {
+            status: true,
+            currentPeriodStart: true,
+            currentPeriodEnd: true,
+            cancelAt: true,
+            createdAt: true,
+            updatedAt: true,
+            client: {
+              select: {
+                status: true,
+                archivedAt: true
+              }
+            }
+          }
         }
       }
     });
