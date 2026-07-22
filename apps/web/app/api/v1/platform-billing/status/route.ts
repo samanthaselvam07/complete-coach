@@ -25,6 +25,7 @@ export async function GET() {
     const currentPeriodEnd = organization?.platformCurrentPeriodEnd ?? null;
 
     return dataResponse({
+      organizationId: actor.organizationId,
       plan,
       status,
       access: evaluatePlatformBillingAccess(status),

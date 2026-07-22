@@ -104,6 +104,19 @@ async function resolveOrganizationId(event: StripeEventPayload) {
     return metadataOrganizationId;
   }
 
+  const clientReferenceId = event.type === "checkout.session.completed" ? getStripeString(object, "client_reference_id") : null;
+
+  if (clientReferenceId) {
+    const organization = await prisma.organization.findUnique({
+      where: { id: clientReferenceId },
+      select: { id: true }
+    });
+
+    if (organization) {
+      return organization.id;
+    }
+  }
+
   const accountId = getStripeString(object, "id") ?? event.account ?? null;
 
   if (event.type === "account.updated" && accountId) {
@@ -170,11 +183,13 @@ async function processStripeEvent(event: StripeEventPayload, organizationId: str
 async function processCheckoutSessionCompleted(event: StripeEventPayload, organizationId: string) {
   const object = getStripeEventObject(event);
 
-  if (getStripeMetadataValue(object, "billing_type") === "platform_subscription") {
+  if (isPlatformCheckoutSession(object, organizationId)) {
+    const platformPlan = getStripeMetadataValue(object, "platform_plan");
+
     await prisma.organization.update({
       where: { id: organizationId },
       data: {
-        platformPlan: getStripeMetadataValue(object, "platform_plan"),
+        ...(platformPlan ? { platformPlan } : {}),
         platformStripeCustomerId: getStripeString(object, "customer"),
         platformStripeSubscriptionId: getStripeString(object, "subscription"),
         platformSubscriptionStatus: "incomplete"
@@ -205,8 +220,9 @@ async function processCheckoutSessionCompleted(event: StripeEventPayload, organi
 
 async function processSubscriptionChanged(event: StripeEventPayload, organizationId: string) {
   const object = getStripeEventObject(event);
+  const platformPlan = getPlatformPlanByPriceId(getStripePriceId(object));
 
-  if (getStripeMetadataValue(object, "billing_type") === "platform_subscription") {
+  if (getStripeMetadataValue(object, "billing_type") === "platform_subscription" || platformPlan) {
     await processPlatformSubscriptionChanged(event, organizationId);
     return;
   }
@@ -251,6 +267,18 @@ async function processSubscriptionChanged(event: StripeEventPayload, organizatio
       cancelAt: getStripeTimestamp(object, "cancel_at")
     }
   });
+}
+
+function isPlatformCheckoutSession(object: Record<string, unknown>, organizationId: string) {
+  if (getStripeMetadataValue(object, "billing_type") === "platform_subscription") {
+    return true;
+  }
+
+  return (
+    getStripeString(object, "client_reference_id") === organizationId &&
+    Boolean(getStripeString(object, "customer")) &&
+    Boolean(getStripeString(object, "subscription"))
+  );
 }
 
 async function processPlatformSubscriptionChanged(event: StripeEventPayload, organizationId: string) {

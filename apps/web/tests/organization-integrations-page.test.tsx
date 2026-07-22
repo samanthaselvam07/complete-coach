@@ -338,6 +338,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
           new Response(
             JSON.stringify({
               data: {
+                organizationId: "org_1",
                 plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 40 },
                 status: "active",
                 access: {
@@ -377,6 +378,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
           new Response(
             JSON.stringify({
               data: {
+                organizationId: "org_1",
                 plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 40 },
                 status: "not_started",
                 access: {
@@ -402,7 +404,9 @@ describe("OrganizationSettingsPage integrations panel", () => {
     expect(await screen.findByText("Choose a Complete Coach plan to activate platform access.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Start Core plan" }));
 
-    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith("https://buy.stripe.com/cNi00jgYkbxHeLW2VT0ZW02");
+    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith(
+      "https://buy.stripe.com/cNi00jgYkbxHeLW2VT0ZW02?client_reference_id=org_1"
+    );
     expect(screen.queryByText("Choose a Complete Coach plan to activate platform access.")).not.toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/platform-billing/checkout", expect.anything());
 
@@ -412,9 +416,12 @@ describe("OrganizationSettingsPage integrations panel", () => {
 
     view = render(<OrganizationSettingsPage />);
 
+    expect(await screen.findByText("Choose a Complete Coach plan to activate platform access.")).toBeInTheDocument();
     fireEvent.click(await screen.findByRole("button", { name: "Start Design Partners plan" }));
 
-    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith("https://buy.stripe.com/6oU4gzgYk1X71ZagMJ0ZW04");
+    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith(
+      "https://buy.stripe.com/6oU4gzgYk1X71ZagMJ0ZW04?client_reference_id=org_1"
+    );
 
     view.unmount();
     navigationMocks.navigateToExternalUrl.mockReset();
@@ -422,9 +429,12 @@ describe("OrganizationSettingsPage integrations panel", () => {
 
     view = render(<OrganizationSettingsPage />);
 
+    expect(await screen.findByText("Choose a Complete Coach plan to activate platform access.")).toBeInTheDocument();
     fireEvent.click(await screen.findByRole("button", { name: "Start Pro plan" }));
 
-    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith("https://buy.stripe.com/cNi7sLdM8fNX0V6gMJ0ZW00");
+    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith(
+      "https://buy.stripe.com/cNi7sLdM8fNX0V6gMJ0ZW00?client_reference_id=org_1"
+    );
 
     view.unmount();
     navigationMocks.navigateToExternalUrl.mockReset();
@@ -432,14 +442,18 @@ describe("OrganizationSettingsPage integrations panel", () => {
 
     render(<OrganizationSettingsPage />);
 
+    expect(await screen.findByText("Choose a Complete Coach plan to activate platform access.")).toBeInTheDocument();
     fireEvent.click(await screen.findByRole("button", { name: "Start Scale plan" }));
 
-    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith("https://buy.stripe.com/aFafZh6jG6dnbzK9kh0ZW03");
+    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith(
+      "https://buy.stripe.com/aFafZh6jG6dnbzK9kh0ZW03?client_reference_id=org_1"
+    );
   });
 
   it("refreshes platform billing plan, status, coach seats, and clients dynamically", async () => {
     const billingResponses = [
       {
+        organizationId: "org_1",
         plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 40 },
         status: "active",
         access: {
@@ -452,6 +466,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
         usage: { coachSeats: 1, clients: 24 }
       },
       {
+        organizationId: "org_1",
         plan: { id: "pro", name: "Pro", coachSeatLimit: 3, clientLimit: 60 },
         status: "past_due",
         access: {

@@ -82,6 +82,7 @@ interface TeamMember {
 }
 
 interface PlatformBillingStatus {
+  organizationId: string;
   plan: {
     id: PlatformPlanId;
     name: string;
@@ -282,12 +283,17 @@ function SubscriptionBillingPanel() {
   }, [refreshBilling]);
 
   const startCheckout = (planId: PlatformPlanId) => {
+    if (!billing?.organizationId) {
+      setBillingMessage("Platform billing status is still loading. Try again in a moment.");
+      return;
+    }
+
     isOpeningBillingRef.current = true;
     setIsOpeningBilling(true);
     const plan = PLATFORM_PLANS[planId];
     const planName = plan.name;
     setBillingMessage(`Opening ${planName} checkout...`);
-    navigateToExternalUrl(plan.stripePaymentLinkUrl);
+    navigateToExternalUrl(getStripePaymentLinkUrl(plan.stripePaymentLinkUrl, billing.organizationId));
   };
 
   const plan = billing?.plan;
@@ -399,10 +405,17 @@ function isPlatformBillingStatus(value: unknown): value is PlatformBillingStatus
   return (
     typeof value === "object" &&
     value !== null &&
+    "organizationId" in value &&
     "plan" in value &&
     "status" in value &&
     "usage" in value
   );
+}
+
+function getStripePaymentLinkUrl(paymentLinkUrl: string, organizationId: string) {
+  const url = new URL(paymentLinkUrl);
+  url.searchParams.set("client_reference_id", organizationId);
+  return url.toString();
 }
 
 function formatPlatformBillingStatus(status: string) {

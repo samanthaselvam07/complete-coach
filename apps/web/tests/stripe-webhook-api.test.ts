@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
       update: vi.fn()
     },
     organization: {
+      findUnique: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn()
     },
@@ -51,6 +52,7 @@ describe("Stripe webhook API", () => {
     vi.setSystemTime(new Date(nowSeconds * 1000));
     mocks.prisma.clientSubscription.findFirst.mockReset();
     mocks.prisma.clientSubscription.update.mockReset();
+    mocks.prisma.organization.findUnique.mockReset();
     mocks.prisma.organization.findFirst.mockReset();
     mocks.prisma.organization.update.mockReset();
     mocks.prisma.paymentEvent.create.mockReset();
@@ -273,6 +275,41 @@ describe("Stripe webhook API", () => {
     expect(mocks.prisma.clientSubscription.update).not.toHaveBeenCalled();
   });
 
+  it("matches Payment Link checkout completion by client reference id", async () => {
+    const event = {
+      id: "evt_payment_link_checkout",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_payment_link_1",
+          customer: "cus_payment_link_1",
+          subscription: "sub_payment_link_1",
+          client_reference_id: "org_1",
+          metadata: {}
+        }
+      }
+    };
+    mocks.prisma.organization.findUnique.mockResolvedValue({ id: "org_1" });
+    mocks.prisma.organization.update.mockResolvedValue({});
+
+    const response = await processStripeWebhook(buildSignedRequest(event));
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.organization.findUnique).toHaveBeenCalledWith({
+      where: { id: "org_1" },
+      select: { id: true }
+    });
+    expect(mocks.prisma.organization.update).toHaveBeenCalledWith({
+      where: { id: "org_1" },
+      data: {
+        platformStripeCustomerId: "cus_payment_link_1",
+        platformStripeSubscriptionId: "sub_payment_link_1",
+        platformSubscriptionStatus: "incomplete"
+      }
+    });
+    expect(mocks.prisma.clientSubscription.update).not.toHaveBeenCalled();
+  });
+
   it("updates organization platform billing state from subscription update events", async () => {
     const event = {
       id: "evt_platform_subscription",
@@ -317,6 +354,58 @@ describe("Stripe webhook API", () => {
         platformCancelAt: null
       }
     });
+    expect(mocks.prisma.clientSubscription.update).not.toHaveBeenCalled();
+  });
+
+  it("treats metadata-free subscription updates with platform prices as platform billing", async () => {
+    const event = {
+      id: "evt_payment_link_subscription",
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: "sub_payment_link_1",
+          customer: "cus_payment_link_1",
+          status: "active",
+          current_period_start: 1_779_033_600,
+          current_period_end: 1_781_625_600,
+          items: {
+            data: [
+              {
+                price: {
+                  id: "price_1Tvoc2I51UQp7jCTLDt3lc9w"
+                }
+              }
+            ]
+          },
+          metadata: {}
+        }
+      }
+    };
+    mocks.prisma.organization.findFirst.mockResolvedValue({ id: "org_1" });
+    mocks.prisma.organization.update.mockResolvedValue({});
+
+    const response = await processStripeWebhook(buildSignedRequest(event));
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.organization.findFirst).toHaveBeenCalledWith({
+      where: {
+        OR: [{ platformStripeSubscriptionId: "sub_payment_link_1" }, { platformStripeCustomerId: "cus_payment_link_1" }]
+      },
+      select: { id: true }
+    });
+    expect(mocks.prisma.organization.update).toHaveBeenCalledWith({
+      where: { id: "org_1" },
+      data: {
+        platformPlan: "core",
+        platformStripeCustomerId: "cus_payment_link_1",
+        platformStripeSubscriptionId: "sub_payment_link_1",
+        platformSubscriptionStatus: "active",
+        platformCurrentPeriodStart: new Date("2026-05-17T16:00:00.000Z"),
+        platformCurrentPeriodEnd: new Date("2026-06-16T16:00:00.000Z"),
+        platformCancelAt: null
+      }
+    });
+    expect(mocks.prisma.clientSubscription.findFirst).not.toHaveBeenCalled();
     expect(mocks.prisma.clientSubscription.update).not.toHaveBeenCalled();
   });
 

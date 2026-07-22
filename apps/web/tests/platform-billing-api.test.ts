@@ -173,6 +173,7 @@ describe("platform billing APIs", () => {
     const response = await getPlatformBillingStatus();
     const payload = (await response.json()) as {
       data: {
+        organizationId: string;
         plan: { id: string; coachSeatLimit: number; clientLimit: number };
         status: string;
         access: { state: string; canUsePlatform: boolean; reason: string };
@@ -183,6 +184,7 @@ describe("platform billing APIs", () => {
     expect(response.status).toBe(200);
     expect(payload.data).toEqual(
       expect.objectContaining({
+        organizationId: "org_1",
         status: "active",
         access: expect.objectContaining({
           state: "active",
