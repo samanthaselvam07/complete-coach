@@ -251,7 +251,7 @@ describe("Stripe webhook API", () => {
           metadata: {
             billing_type: "platform_subscription",
             organization_id: "org_1",
-            platform_plan: "scale"
+            platform_plan: "pro"
           }
         }
       }
@@ -264,7 +264,7 @@ describe("Stripe webhook API", () => {
     expect(mocks.prisma.organization.update).toHaveBeenCalledWith({
       where: { id: "org_1" },
       data: {
-        platformPlan: "scale",
+        platformPlan: "pro",
         platformStripeCustomerId: "cus_platform_1",
         platformStripeSubscriptionId: "sub_platform_1",
         platformSubscriptionStatus: "incomplete"
@@ -308,7 +308,7 @@ describe("Stripe webhook API", () => {
     expect(mocks.prisma.organization.update).toHaveBeenCalledWith({
       where: { id: "org_1" },
       data: {
-        platformPlan: "scale",
+        platformPlan: "pro",
         platformStripeCustomerId: "cus_platform_1",
         platformStripeSubscriptionId: "sub_platform_1",
         platformSubscriptionStatus: "active",
@@ -318,6 +318,98 @@ describe("Stripe webhook API", () => {
       }
     });
     expect(mocks.prisma.clientSubscription.update).not.toHaveBeenCalled();
+  });
+
+  it("maps the new Scale price when platform subscriptions update", async () => {
+    const event = {
+      id: "evt_platform_subscription_scale",
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: "sub_platform_2",
+          customer: "cus_platform_2",
+          status: "active",
+          current_period_start: 1_779_033_600,
+          current_period_end: 1_781_625_600,
+          items: {
+            data: [
+              {
+                price: {
+                  id: "price_1TvoddI51UQp7jCTIwk4C6rI"
+                }
+              }
+            ]
+          },
+          metadata: {
+            billing_type: "platform_subscription",
+            organization_id: "org_1"
+          }
+        }
+      }
+    };
+    mocks.prisma.organization.update.mockResolvedValue({});
+
+    const response = await processStripeWebhook(buildSignedRequest(event));
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.organization.update).toHaveBeenCalledWith({
+      where: { id: "org_1" },
+      data: {
+        platformPlan: "scale",
+        platformStripeCustomerId: "cus_platform_2",
+        platformStripeSubscriptionId: "sub_platform_2",
+        platformSubscriptionStatus: "active",
+        platformCurrentPeriodStart: new Date("2026-05-17T16:00:00.000Z"),
+        platformCurrentPeriodEnd: new Date("2026-06-16T16:00:00.000Z"),
+        platformCancelAt: null
+      }
+    });
+  });
+
+  it("maps the Design Partners price when platform subscriptions update", async () => {
+    const event = {
+      id: "evt_platform_subscription_design_partner",
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: "sub_platform_design_partner",
+          customer: "cus_platform_design_partner",
+          status: "active",
+          current_period_start: 1_779_033_600,
+          current_period_end: 1_781_625_600,
+          items: {
+            data: [
+              {
+                price: {
+                  id: "price_1TsaFuI51UQp7jCTfRTLC7UH"
+                }
+              }
+            ]
+          },
+          metadata: {
+            billing_type: "platform_subscription",
+            organization_id: "org_1"
+          }
+        }
+      }
+    };
+    mocks.prisma.organization.update.mockResolvedValue({});
+
+    const response = await processStripeWebhook(buildSignedRequest(event));
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.organization.update).toHaveBeenCalledWith({
+      where: { id: "org_1" },
+      data: {
+        platformPlan: "design_partner",
+        platformStripeCustomerId: "cus_platform_design_partner",
+        platformStripeSubscriptionId: "sub_platform_design_partner",
+        platformSubscriptionStatus: "active",
+        platformCurrentPeriodStart: new Date("2026-05-17T16:00:00.000Z"),
+        platformCurrentPeriodEnd: new Date("2026-06-16T16:00:00.000Z"),
+        platformCancelAt: null
+      }
+    });
   });
 
   it("persists unhandled matched events as ignored", async () => {

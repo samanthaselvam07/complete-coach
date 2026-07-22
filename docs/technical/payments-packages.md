@@ -104,15 +104,17 @@ Delivered:
 ## Platform Billing Foundation
 Delivered:
 - Complete Coach platform subscriptions are stored on `organizations` separately from Stripe Connect fields.
-- Core maps to Stripe product `prod_UsL4rRweWAB2XU`, monthly price `price_1TsaNxI51UQp7jCTVYdYxNIC`, 1 coach seat, and 40 clients.
-- Scale maps to Stripe product `prod_UsL4hUCHyBkvkK`, monthly price `price_1TsaOPI51UQp7jCTB9TvXUIK`, 3 coach seats, and 60 clients.
+- Design Partners maps to Stripe product `prod_UsKvRz38e79sjQ`, monthly price `price_1TsaFuI51UQp7jCTfRTLC7UH`, payment link `https://buy.stripe.com/6oU4gzgYk1X71ZagMJ0ZW04`, 10 coach seats, and 200 clients.
+- Core maps to Stripe product `prod_UsL4rRweWAB2XU`, monthly price `price_1Tvoc2I51UQp7jCTLDt3lc9w`, payment link `https://buy.stripe.com/cNi00jgYkbxHeLW2VT0ZW02`, 1 coach seat, and 40 clients.
+- Pro maps to Stripe product `prod_UsL4hUCHyBkvkK`, monthly price `price_1TsaOPI51UQp7jCTB9TvXUIK`, payment link `https://buy.stripe.com/cNi7sLdM8fNX0V6gMJ0ZW00`, 3 coach seats, and 60 clients.
+- Scale maps to Stripe product `prod_UvfzpLEEOi5N4H`, monthly price `price_1TvoddI51UQp7jCTIwk4C6rI`, payment link `https://buy.stripe.com/aFafZh6jG6dnbzK9kh0ZW03`, 10 coach seats, and 200 clients.
 - `GET /api/v1/platform-billing/status` returns plan, subscription status, renewal date, and current coach/client usage.
 - Platform billing access rules allow `active` and `trialing`; `past_due`, `unpaid`, `canceled`, and incomplete/inactive states block platform access.
 - `POST /api/v1/platform-billing/checkout` creates Stripe Checkout subscription sessions on the Complete Coach Stripe account and never uses a connected account header.
 - `POST /api/v1/platform-billing/portal` opens Stripe Billing Portal for the platform customer.
 - `POST /api/v1/stripe/customer-portal` is an explicit Stripe Customer Portal alias for the same platform customer portal flow.
 - Stripe webhooks branch platform subscription events by `metadata.billing_type = platform_subscription` and update organization billing fields.
-- Org Settings Subscription & Billing reads `GET /api/v1/platform-billing/status` for current plan, subscription status, coach-seat usage, client usage, and billing actions; it refreshes on focus/visibility changes, every 30 seconds while mounted, and through a manual refresh action.
+- Org Settings Subscription & Billing reads `GET /api/v1/platform-billing/status` for current plan, subscription status, coach-seat usage, and client usage; plan start buttons open the configured hosted Stripe Payment Links directly, and status refreshes on focus/visibility changes, every 30 seconds while mounted, and through a manual refresh action.
 - Client creation is blocked when the organization reaches its plan client limit.
 - Team invitations are blocked when active team members plus non-expired pending invitations reach the plan seat limit.
 - Active owner/admin/coach/assistant memberships count as team seats, so changing an existing member's role only changes permissions and does not change seat usage.

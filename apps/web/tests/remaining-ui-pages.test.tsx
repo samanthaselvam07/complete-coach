@@ -141,8 +141,10 @@ describe("OrganizationSettingsPage", () => {
     expect(screen.getByText("Complete Coach Operating System")).toBeInTheDocument();
     expect(screen.getByText(/This is your organisation subscription/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Core plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Design Partners plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Pro plan" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Scale plan" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Manage billing" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Manage billing" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Manage coaching packages" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Email DNS" }));

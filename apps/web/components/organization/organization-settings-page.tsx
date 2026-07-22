@@ -23,15 +23,18 @@ import {
   UsersRound,
   WalletCards
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AuditLogPage } from "@/components/audit/audit-log-page";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { ALL_CAPABILITIES, getCapabilitiesForRole, type Capability, type MembershipRole } from "@/lib/auth/permissions";
 import { navigateToExternalUrl } from "@/lib/browser-navigation";
+import { PLATFORM_PLANS, type PlatformPlanId } from "@/lib/platform-billing/plans";
 import { cn } from "@/lib/utils";
 
 type OrganizationSettingsTab = "billing" | "integrations" | "email" | "automations" | "team" | "permissions" | "audit";
+
+const STRIPE_BILLING_PORTAL_URL = "https://billing.stripe.com/p/login/cNi7sLdM8fNX0V6gMJ0ZW00";
 
 interface SenderDomainDnsRecord {
   record: string;
@@ -80,7 +83,7 @@ interface TeamMember {
 
 interface PlatformBillingStatus {
   plan: {
-    id: "core" | "scale";
+    id: PlatformPlanId;
     name: string;
     coachSeatLimit: number;
     clientLimit: number;
@@ -216,6 +219,7 @@ function SubscriptionBillingPanel() {
   const [billingMessage, setBillingMessage] = useState("Loading platform billing...");
   const [isOpeningBilling, setIsOpeningBilling] = useState(false);
   const [isRefreshingBilling, setIsRefreshingBilling] = useState(false);
+  const isOpeningBillingRef = useRef(false);
 
   const refreshBilling = useCallback(async (options: { silent?: boolean } = {}) => {
     if (!options.silent) {
@@ -237,9 +241,13 @@ function SubscriptionBillingPanel() {
       }
 
       setBilling(payload.data);
-      setBillingMessage(options.silent ? "Platform billing updated." : "Platform billing loaded.");
+      if (!isOpeningBillingRef.current) {
+        setBillingMessage(options.silent ? "Platform billing updated." : "Platform billing loaded.");
+      }
     } catch {
-      setBillingMessage("Platform billing status unavailable.");
+      if (!isOpeningBillingRef.current) {
+        setBillingMessage("Platform billing status unavailable.");
+      }
     } finally {
       setIsRefreshingBilling(false);
     }
@@ -273,50 +281,13 @@ function SubscriptionBillingPanel() {
     };
   }, [refreshBilling]);
 
-  const startCheckout = async (planId: "core" | "scale") => {
+  const startCheckout = (planId: PlatformPlanId) => {
+    isOpeningBillingRef.current = true;
     setIsOpeningBilling(true);
-    setBillingMessage(`Opening ${planId === "core" ? "Core" : "Scale"} checkout...`);
-
-    try {
-      const response = await fetch("/api/v1/platform-billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId })
-      });
-      const payload = (await response.json()) as { data?: { checkoutUrl?: string }; error?: { message?: string } };
-
-      if (!response.ok || !payload.data?.checkoutUrl) {
-        throw new Error(payload.error?.message ?? "Could not open checkout.");
-      }
-
-      navigateToExternalUrl(payload.data.checkoutUrl);
-    } catch (error) {
-      setBillingMessage(error instanceof Error ? error.message : "Could not open checkout.");
-      setIsOpeningBilling(false);
-    }
-  };
-
-  const openPortal = async () => {
-    setIsOpeningBilling(true);
-    setBillingMessage("Opening billing portal...");
-
-    try {
-      const response = await fetch("/api/v1/platform-billing/portal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ returnUrl: "/organization-settings" })
-      });
-      const payload = (await response.json()) as { data?: { portalUrl?: string }; error?: { message?: string } };
-
-      if (!response.ok || !payload.data?.portalUrl) {
-        throw new Error(payload.error?.message ?? "Could not open billing portal.");
-      }
-
-      navigateToExternalUrl(payload.data.portalUrl);
-    } catch (error) {
-      setBillingMessage(error instanceof Error ? error.message : "Could not open billing portal.");
-      setIsOpeningBilling(false);
-    }
+    const plan = PLATFORM_PLANS[planId];
+    const planName = plan.name;
+    setBillingMessage(`Opening ${planName} checkout...`);
+    navigateToExternalUrl(plan.stripePaymentLinkUrl);
   };
 
   const plan = billing?.plan;
@@ -355,7 +326,7 @@ function SubscriptionBillingPanel() {
         <p role="status" className="mt-4 text-sm font-semibold text-indigo-800">
           {billingMessage}
         </p>
-        {billing?.access ? (
+        {billing?.access && !isOpeningBilling ? (
           <div className={cn("mt-4 rounded-xl border p-4 text-sm font-semibold", accessTone.panel)}>
             {billing.access.message}
           </div>
@@ -379,19 +350,35 @@ function SubscriptionBillingPanel() {
         <button
           type="button"
           disabled={isOpeningBilling}
-          onClick={() => startCheckout("scale")}
-          className="mt-3 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-500"
+          onClick={() => startCheckout("design_partner")}
+          className="mt-3 w-full rounded-xl bg-indigo-950 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-indigo-900 disabled:bg-slate-200 disabled:text-slate-500"
         >
-          Start Scale plan
+          Start Design Partners plan
         </button>
         <button
           type="button"
           disabled={isOpeningBilling}
-          onClick={openPortal}
-          className="mt-3 w-full rounded-xl border border-indigo-200 px-4 py-3 text-sm font-bold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:border-slate-200 disabled:text-slate-400"
+          onClick={() => startCheckout("pro")}
+          className="mt-3 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-500"
+        >
+          Start Pro plan
+        </button>
+        <button
+          type="button"
+          disabled={isOpeningBilling}
+          onClick={() => startCheckout("scale")}
+          className="mt-3 w-full rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-700 disabled:bg-slate-200 disabled:text-slate-500"
+        >
+          Start Scale plan
+        </button>
+        <a
+          href={STRIPE_BILLING_PORTAL_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 block w-full rounded-xl border border-indigo-200 px-4 py-3 text-center text-sm font-bold text-indigo-700 transition-colors hover:bg-indigo-50"
         >
           Manage billing
-        </button>
+        </a>
         <button
           type="button"
           disabled={isOpeningBilling || isRefreshingBilling}

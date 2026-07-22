@@ -61,27 +61,49 @@ const organizationRecord = {
 };
 
 describe("platform billing plan config", () => {
-  it("maps Core and Scale Stripe products and monthly prices to platform limits", () => {
+  it("maps Design Partners, Core, Pro, and Scale Stripe products and monthly prices to platform limits", () => {
     expect(PLATFORM_PLANS).toEqual({
+      design_partner: expect.objectContaining({
+        id: "design_partner",
+        name: "Design Partners",
+        stripeProductId: "prod_UsKvRz38e79sjQ",
+        stripePriceId: "price_1TsaFuI51UQp7jCTfRTLC7UH",
+        stripePaymentLinkUrl: "https://buy.stripe.com/6oU4gzgYk1X71ZagMJ0ZW04",
+        coachSeatLimit: 10,
+        clientLimit: 200
+      }),
       core: expect.objectContaining({
         id: "core",
         name: "Core",
         stripeProductId: "prod_UsL4rRweWAB2XU",
-        stripePriceId: "price_1TsaNxI51UQp7jCTVYdYxNIC",
+        stripePriceId: "price_1Tvoc2I51UQp7jCTLDt3lc9w",
+        stripePaymentLinkUrl: "https://buy.stripe.com/cNi00jgYkbxHeLW2VT0ZW02",
         coachSeatLimit: 1,
         clientLimit: 40
+      }),
+      pro: expect.objectContaining({
+        id: "pro",
+        name: "Pro",
+        stripeProductId: "prod_UsL4hUCHyBkvkK",
+        stripePriceId: "price_1TsaOPI51UQp7jCTB9TvXUIK",
+        stripePaymentLinkUrl: "https://buy.stripe.com/cNi7sLdM8fNX0V6gMJ0ZW00",
+        coachSeatLimit: 3,
+        clientLimit: 60
       }),
       scale: expect.objectContaining({
         id: "scale",
         name: "Scale",
-        stripeProductId: "prod_UsL4hUCHyBkvkK",
-        stripePriceId: "price_1TsaOPI51UQp7jCTB9TvXUIK",
-        coachSeatLimit: 3,
-        clientLimit: 60
+        stripeProductId: "prod_UvfzpLEEOi5N4H",
+        stripePriceId: "price_1TvoddI51UQp7jCTIwk4C6rI",
+        stripePaymentLinkUrl: "https://buy.stripe.com/aFafZh6jG6dnbzK9kh0ZW03",
+        coachSeatLimit: 10,
+        clientLimit: 200
       })
     });
     expect(getPlatformPlanById("core")?.clientLimit).toBe(40);
-    expect(getPlatformPlanByPriceId("price_1TsaOPI51UQp7jCTB9TvXUIK")?.id).toBe("scale");
+    expect(getPlatformPlanByPriceId("price_1TsaFuI51UQp7jCTfRTLC7UH")?.id).toBe("design_partner");
+    expect(getPlatformPlanByPriceId("price_1TsaOPI51UQp7jCTB9TvXUIK")?.id).toBe("pro");
+    expect(getPlatformPlanByPriceId("price_1TvoddI51UQp7jCTIwk4C6rI")?.id).toBe("scale");
     expect(getPlatformPlanByPriceId("price_unknown")).toBeNull();
   });
 });
@@ -195,7 +217,7 @@ describe("platform billing APIs", () => {
     const response = await createPlatformBillingCheckout(
       new Request("https://app.example.com/api/v1/platform-billing/checkout", {
         method: "POST",
-        body: JSON.stringify({ planId: "scale", successUrl: "/organization-settings?billing=success" })
+        body: JSON.stringify({ planId: "pro", successUrl: "/organization-settings?billing=success" })
       })
     );
     const payload = (await response.json()) as { data: { checkoutUrl: string } };

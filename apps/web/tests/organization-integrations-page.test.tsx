@@ -289,8 +289,13 @@ describe("OrganizationSettingsPage integrations panel", () => {
 
     expect(screen.getByText("Complete Coach Operating System")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Core plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Design Partners plan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Pro plan" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Scale plan" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Manage billing" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Manage billing" })).toHaveAttribute(
+      "href",
+      "https://billing.stripe.com/p/login/cNi7sLdM8fNX0V6gMJ0ZW00"
+    );
     expect(screen.queryByRole("link", { name: "Manage coaching packages" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Team Management" }));
@@ -324,8 +329,8 @@ describe("OrganizationSettingsPage integrations panel", () => {
     await waitFor(() => expect(firstPermissionSwitch).not.toHaveAttribute("aria-checked", initialState ?? ""));
   });
 
-  it("opens the Stripe billing portal from the subscription and billing tab", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+  it("links to the Stripe billing portal from the subscription and billing tab", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
       if (url === "/api/v1/platform-billing/status") {
@@ -350,29 +355,86 @@ describe("OrganizationSettingsPage integrations panel", () => {
         );
       }
 
-      if (url === "/api/v1/platform-billing/portal" && init?.method === "POST") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(<OrganizationSettingsPage />);
+
+    expect(await screen.findByRole("link", { name: "Manage billing" })).toHaveAttribute(
+      "href",
+      "https://billing.stripe.com/p/login/cNi7sLdM8fNX0V6gMJ0ZW00"
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/platform-billing/portal", expect.anything());
+    expect(navigationMocks.navigateToExternalUrl).not.toHaveBeenCalled();
+  });
+
+  it("opens hosted payment links for Design Partners, Core, Pro, and Scale from the subscription and billing tab", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/platform-billing/status") {
         return Promise.resolve(
-          new Response(JSON.stringify({ data: { portalUrl: "https://billing.stripe.test/session" } }), { status: 200 })
+          new Response(
+            JSON.stringify({
+              data: {
+                plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 40 },
+                status: "not_started",
+                access: {
+                  state: "blocked",
+                  canUsePlatform: false,
+                  reason: "subscription_required",
+                  message: "Choose a Complete Coach plan to activate platform access."
+                },
+                currentPeriodEnd: null,
+                usage: { coachSeats: 1, clients: 12 }
+              }
+            }),
+            { status: 200 }
+          )
         );
       }
 
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     });
 
+    let view = render(<OrganizationSettingsPage />);
+
+    expect(await screen.findByText("Choose a Complete Coach plan to activate platform access.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Start Core plan" }));
+
+    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith("https://buy.stripe.com/cNi00jgYkbxHeLW2VT0ZW02");
+    expect(screen.queryByText("Choose a Complete Coach plan to activate platform access.")).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/platform-billing/checkout", expect.anything());
+
+    view.unmount();
+    navigationMocks.navigateToExternalUrl.mockReset();
+    fetchMock.mockClear();
+
+    view = render(<OrganizationSettingsPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Start Design Partners plan" }));
+
+    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith("https://buy.stripe.com/6oU4gzgYk1X71ZagMJ0ZW04");
+
+    view.unmount();
+    navigationMocks.navigateToExternalUrl.mockReset();
+    fetchMock.mockClear();
+
+    view = render(<OrganizationSettingsPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Start Pro plan" }));
+
+    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith("https://buy.stripe.com/cNi7sLdM8fNX0V6gMJ0ZW00");
+
+    view.unmount();
+    navigationMocks.navigateToExternalUrl.mockReset();
+    fetchMock.mockClear();
+
     render(<OrganizationSettingsPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Manage billing" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Start Scale plan" }));
 
-    await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/v1/platform-billing/portal",
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({ returnUrl: "/organization-settings" })
-        })
-      )
-    );
-    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith("https://billing.stripe.test/session");
+    expect(navigationMocks.navigateToExternalUrl).toHaveBeenCalledWith("https://buy.stripe.com/aFafZh6jG6dnbzK9kh0ZW03");
   });
 
   it("refreshes platform billing plan, status, coach seats, and clients dynamically", async () => {
@@ -390,7 +452,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
         usage: { coachSeats: 1, clients: 24 }
       },
       {
-        plan: { id: "scale", name: "Scale", coachSeatLimit: 3, clientLimit: 60 },
+        plan: { id: "pro", name: "Pro", coachSeatLimit: 3, clientLimit: 60 },
         status: "past_due",
         access: {
           state: "blocked",
@@ -421,7 +483,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Refresh billing status" }));
 
-    expect(await screen.findByText("Scale")).toBeInTheDocument();
+    expect(await screen.findByText("Pro")).toBeInTheDocument();
     expect(screen.getByText("Past due")).toBeInTheDocument();
     expect(screen.getByText("2/3")).toBeInTheDocument();
     expect(screen.getByText("42/60")).toBeInTheDocument();

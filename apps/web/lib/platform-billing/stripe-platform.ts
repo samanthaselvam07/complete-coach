@@ -23,7 +23,7 @@ interface StripePortalSession {
 }
 
 export const platformCheckoutSchema = z.object({
-  planId: z.enum(["core", "scale"]),
+  planId: z.enum(["design_partner", "core", "pro", "scale"]),
   successUrl: z.string().trim().min(1).refine(isSafeRedirectUrl, "Must be an absolute URL or safe relative path.").optional(),
   cancelUrl: z.string().trim().min(1).refine(isSafeRedirectUrl, "Must be an absolute URL or safe relative path.").optional()
 });
