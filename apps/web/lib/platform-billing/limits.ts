@@ -37,7 +37,7 @@ export async function getPlatformUsage(organizationId: string) {
       where: {
         organizationId,
         deletedAt: null,
-        status: { not: ClientStatus.ARCHIVED }
+        status: ClientStatus.ACTIVE
       }
     })
   ]);
@@ -51,7 +51,7 @@ export async function assertPlatformClientCapacity(organizationId: string) {
     where: {
       organizationId,
       deletedAt: null,
-      status: { not: ClientStatus.ARCHIVED }
+      status: ClientStatus.ACTIVE
     }
   });
 

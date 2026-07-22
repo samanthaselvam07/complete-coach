@@ -477,6 +477,19 @@ describe("OrganizationSettingsPage integrations panel", () => {
         },
         currentPeriodEnd: "2026-09-13T00:00:00.000Z",
         usage: { coachSeats: 2, clients: 42 }
+      },
+      {
+        organizationId: "org_1",
+        plan: { id: "scale", name: "Scale", coachSeatLimit: 10, clientLimit: 200 },
+        status: "active",
+        access: {
+          state: "active",
+          canUsePlatform: true,
+          reason: "subscription_active",
+          message: "Platform access is active."
+        },
+        currentPeriodEnd: "2026-10-13T00:00:00.000Z",
+        usage: { coachSeats: 4, clients: 55 }
       }
     ];
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
@@ -504,6 +517,12 @@ describe("OrganizationSettingsPage integrations panel", () => {
     expect(screen.getByText("42/60")).toBeInTheDocument();
     expect(screen.getByText("Platform access is paused because the subscription payment is overdue.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/platform-billing/status");
+
+    window.dispatchEvent(new Event("complete-coach:platform-billing-usage-changed"));
+
+    expect(await screen.findByText("Scale")).toBeInTheDocument();
+    expect(screen.getByText("4/10")).toBeInTheDocument();
+    expect(screen.getByText("55/200")).toBeInTheDocument();
   });
 
   it("shows connected social channels and OAuth links", async () => {

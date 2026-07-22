@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 type OrganizationSettingsTab = "billing" | "integrations" | "email" | "automations" | "team" | "permissions" | "audit";
 
 const STRIPE_BILLING_PORTAL_URL = "https://billing.stripe.com/p/login/cNi7sLdM8fNX0V6gMJ0ZW00";
+const PLATFORM_BILLING_USAGE_CHANGED_EVENT = "complete-coach:platform-billing-usage-changed";
 
 interface SenderDomainDnsRecord {
   record: string;
@@ -267,18 +268,23 @@ function SubscriptionBillingPanel() {
     const refreshOnFocus = () => {
       void refreshBilling({ silent: true });
     };
+    const refreshOnUsageChange = () => {
+      void refreshBilling({ silent: true });
+    };
     const intervalId = window.setInterval(() => {
       void refreshBilling({ silent: true });
-    }, 30_000);
+    }, 10_000);
 
     document.addEventListener("visibilitychange", refreshWhenVisible);
     window.addEventListener("focus", refreshOnFocus);
+    window.addEventListener(PLATFORM_BILLING_USAGE_CHANGED_EVENT, refreshOnUsageChange);
 
     return () => {
       window.clearTimeout(initialRefreshId);
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
       window.removeEventListener("focus", refreshOnFocus);
+      window.removeEventListener(PLATFORM_BILLING_USAGE_CHANGED_EVENT, refreshOnUsageChange);
     };
   }, [refreshBilling]);
 
@@ -324,7 +330,7 @@ function SubscriptionBillingPanel() {
             detail="Owner, admin, and coach seats"
           />
           <BillingMetric
-            label="Clients"
+            label="Active clients"
             value={`${billing?.usage?.clients ?? 0}/${plan?.clientLimit ?? 0}`}
             detail={`Next renewal: ${renewal}`}
           />
@@ -1403,6 +1409,7 @@ function TeamManagementPanel() {
         currentMembers.map((candidate) => (candidate.id === member.id ? payload.data : candidate))
       );
       setEditingMember((currentMember) => (currentMember?.id === member.id ? payload.data : currentMember));
+      window.dispatchEvent(new Event(PLATFORM_BILLING_USAGE_CHANGED_EVENT));
       setFeedback(`${payload.data.name ?? payload.data.email ?? "Team member"} updated.`);
     } catch {
       setFeedback("Team member could not be updated. The last owner cannot be changed.");

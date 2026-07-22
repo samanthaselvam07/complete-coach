@@ -161,13 +161,7 @@ describe("client and CRM API tenancy", () => {
         })
       })
     );
-    expect(mocks.prisma.client.count).toHaveBeenCalledWith({
-      where: {
-        organizationId: "org_1",
-        deletedAt: null,
-        status: { not: ClientStatus.ARCHIVED }
-      }
-    });
+    expect(mocks.prisma.client.count).not.toHaveBeenCalled();
     expect(mocks.prisma.clientProfile.upsert).toHaveBeenCalledWith({
       where: { clientId: "client_1" },
       create: expect.objectContaining({
@@ -208,7 +202,7 @@ describe("client and CRM API tenancy", () => {
           firstName: "Limit",
           lastName: "Reached",
           email: "limit@example.com",
-          status: "new"
+          status: "active"
         })
       })
     );
@@ -216,6 +210,13 @@ describe("client and CRM API tenancy", () => {
 
     expect(response.status).toBe(409);
     expect(payload.error.code).toBe("platform_client_limit_reached");
+    expect(mocks.prisma.client.count).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        deletedAt: null,
+        status: ClientStatus.ACTIVE
+      }
+    });
     expect(mocks.prisma.client.create).not.toHaveBeenCalled();
   });
 

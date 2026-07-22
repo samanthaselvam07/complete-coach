@@ -195,6 +195,20 @@ describe("platform billing APIs", () => {
         usage: { coachSeats: 1, clients: 24 }
       })
     );
+    expect(mocks.prisma.organizationMembership.count).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        status: "ACTIVE",
+        role: { in: ["OWNER", "ADMIN", "COACH", "ASSISTANT"] }
+      }
+    });
+    expect(mocks.prisma.client.count).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        deletedAt: null,
+        status: "ACTIVE"
+      }
+    });
   });
 
   it("creates a Checkout subscription for the selected platform plan without a connected-account header", async () => {

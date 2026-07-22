@@ -24,16 +24,23 @@ export async function GET() {
     const status = organization?.platformSubscriptionStatus ?? "not_started";
     const currentPeriodEnd = organization?.platformCurrentPeriodEnd ?? null;
 
-    return dataResponse({
-      organizationId: actor.organizationId,
-      plan,
-      status,
-      access: evaluatePlatformBillingAccess(status),
-      stripeCustomerId: organization?.platformStripeCustomerId ?? null,
-      stripeSubscriptionId: organization?.platformStripeSubscriptionId ?? null,
-      currentPeriodEnd: currentPeriodEnd?.toISOString() ?? null,
-      usage
-    });
+    return dataResponse(
+      {
+        organizationId: actor.organizationId,
+        plan,
+        status,
+        access: evaluatePlatformBillingAccess(status),
+        stripeCustomerId: organization?.platformStripeCustomerId ?? null,
+        stripeSubscriptionId: organization?.platformStripeSubscriptionId ?? null,
+        currentPeriodEnd: currentPeriodEnd?.toISOString() ?? null,
+        usage
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store"
+        }
+      }
+    );
   } catch (error) {
     return handleApiError(error);
   }
