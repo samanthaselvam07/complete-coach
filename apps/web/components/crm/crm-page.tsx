@@ -59,6 +59,8 @@ const emptyLeadForm: LeadFormState = {
   callLink: ""
 };
 
+const leadSaveFallbackError = "Lead could not be saved. Check the details and try again.";
+
 export function CRMPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
@@ -229,7 +231,7 @@ export function CRMPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Lead could not be saved.");
+        throw new Error(await readLeadSaveError(response));
       }
 
       const payload = (await response.json()) as { data?: Lead };
@@ -246,8 +248,8 @@ export function CRMPage() {
       }
 
       closeLeadForm();
-    } catch {
-      setLeadFormError("Lead could not be saved. Check the details and try again.");
+    } catch (saveError) {
+      setLeadFormError(saveError instanceof Error ? saveError.message : leadSaveFallbackError);
     } finally {
       setSavingLead(false);
     }
@@ -458,6 +460,20 @@ async function persistLeadStage(leadId: string, stageId: LeadStageId) {
     return payload.data ?? null;
   } catch {
     return null;
+  }
+}
+
+async function readLeadSaveError(response: Response) {
+  try {
+    const payload = (await response.json()) as {
+      error?: {
+        message?: string;
+      };
+    };
+
+    return payload.error?.message ?? leadSaveFallbackError;
+  } catch {
+    return leadSaveFallbackError;
   }
 }
 

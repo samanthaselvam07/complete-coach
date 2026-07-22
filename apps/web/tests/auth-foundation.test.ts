@@ -19,9 +19,24 @@ import { getLocalEnvFileCandidates } from "@/lib/env-loader";
 
 describe("server environment validation", () => {
   it("looks for the repository root env file before app-local overrides", () => {
-    expect(getLocalEnvFileCandidates("/repo/apps/web")).toEqual([
-      "/repo/.env",
-      "/repo/apps/web/.env"
+    expect(getLocalEnvFileCandidates("/Users/sam/projects/complete-coach/apps/web")).toEqual([
+      "/Users/sam/projects/complete-coach/.env",
+      "/Users/sam/projects/complete-coach/apps/web/.env",
+      "/Users/sam/projects/complete-coach/.env.local",
+      "/Users/sam/projects/complete-coach/apps/web/.env.local"
+    ]);
+  });
+
+  it("falls back to the canonical checkout env files from sibling worktrees", () => {
+    expect(getLocalEnvFileCandidates("/Users/sam/projects/complete-coach-Clients/apps/web")).toEqual([
+      "/Users/sam/projects/complete-coach-Clients/.env",
+      "/Users/sam/projects/complete-coach-Clients/apps/web/.env",
+      "/Users/sam/projects/complete-coach-Clients/.env.local",
+      "/Users/sam/projects/complete-coach-Clients/apps/web/.env.local",
+      "/Users/sam/projects/complete-coach/.env",
+      "/Users/sam/projects/complete-coach/apps/web/.env",
+      "/Users/sam/projects/complete-coach/.env.local",
+      "/Users/sam/projects/complete-coach/apps/web/.env.local"
     ]);
   });
 

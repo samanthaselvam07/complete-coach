@@ -1,12 +1,25 @@
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { config } from "dotenv";
 
 export function getLocalEnvFileCandidates(cwd = process.cwd()) {
-  return [
-    resolve(/* turbopackIgnore: true */ cwd, "../../.env"),
-    resolve(/* turbopackIgnore: true */ cwd, ".env")
-  ];
+  const repositoryRoot = resolve(/* turbopackIgnore: true */ cwd, "../..");
+  const candidateRoots = [repositoryRoot];
+
+  if (basename(repositoryRoot) !== "complete-coach") {
+    candidateRoots.push(resolve(/* turbopackIgnore: true */ repositoryRoot, "../complete-coach"));
+  }
+
+  return Array.from(
+    new Set(
+      candidateRoots.flatMap((root) => [
+        resolve(/* turbopackIgnore: true */ root, ".env"),
+        resolve(/* turbopackIgnore: true */ root, "apps/web/.env"),
+        resolve(/* turbopackIgnore: true */ root, ".env.local"),
+        resolve(/* turbopackIgnore: true */ root, "apps/web/.env.local")
+      ])
+    )
+  );
 }
 
 export function loadLocalEnvFiles(cwd = process.cwd()) {

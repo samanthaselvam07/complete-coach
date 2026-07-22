@@ -28,6 +28,8 @@ interface LookupRecord {
   name: string;
 }
 
+const clientCreateFallbackError = "Client could not be created. Check the details and try again.";
+
 export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeInitialForm }) {
   const [form, setForm] = useState<ClientFormState>({ ...emptyClientForm, ...initialForm });
   const [packageOptions, setPackageOptions] = useState<SelectOption[]>([]);
@@ -126,20 +128,20 @@ export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeIniti
       });
 
       if (!response.ok) {
-        throw new Error("Unable to create client");
+        throw new Error(await readClientCreateError(response));
       }
 
       const payload = (await response.json()) as { id?: string; data?: { id?: string } };
       const nextClientId = payload.data?.id ?? payload.id;
 
       if (!nextClientId) {
-        throw new Error("Client response did not include an id");
+        throw new Error(clientCreateFallbackError);
       }
 
       setCreatedClientId(nextClientId);
       setForm(emptyClientForm);
-    } catch {
-      setError("Client could not be created. Check the details and try again.");
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : clientCreateFallbackError);
     } finally {
       setSaving(false);
     }
@@ -325,6 +327,20 @@ async function fetchLookupOptions(url: string): Promise<SelectOption[]> {
     }));
   } catch {
     return [];
+  }
+}
+
+async function readClientCreateError(response: Response) {
+  try {
+    const payload = (await response.json()) as {
+      error?: {
+        message?: string;
+      };
+    };
+
+    return payload.error?.message ?? clientCreateFallbackError;
+  } catch {
+    return clientCreateFallbackError;
   }
 }
 

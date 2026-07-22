@@ -248,6 +248,41 @@ describe("CRMPage", () => {
     );
   });
 
+  it("shows the API error when manual lead creation is rejected", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/crm/stages") {
+        return Promise.resolve(new Response(JSON.stringify({ data: apiStages }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/leads" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              error: {
+                code: "validation_failed",
+                message: "Request validation failed."
+              }
+            }),
+            { status: 422 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(CRMPage));
+
+    await screen.findByRole("region", { name: "Initial Contact" });
+    fireEvent.click(screen.getByRole("button", { name: "Add New Lead" }));
+    fireEvent.change(screen.getByLabelText("Lead name"), { target: { value: "Created Lead" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save lead" }));
+
+    expect(await screen.findByText("Request validation failed.")).toBeInTheDocument();
+  });
+
   it("views lead details, application responses, editable contact details, call link, and stage", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
