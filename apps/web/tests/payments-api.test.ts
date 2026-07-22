@@ -129,6 +129,9 @@ describe("payments and packages APIs", () => {
         customerMetrics: expect.objectContaining({
           monthly: expect.objectContaining({
             churnRate: 1,
+            retentionRate: 0,
+            newCustomers: 0,
+            endingCustomers: 0,
             lostCustomers: 1,
             customersAtStart: 1,
             customerLtv: 39900

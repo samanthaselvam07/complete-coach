@@ -21,7 +21,7 @@ Completed on May 18, 2026.
 Delivered:
 - Forward-only Prisma migration for package, client subscription, and payment event persistence.
 - Tenant-scoped `GET /api/v1/packages`, `POST /api/v1/packages`, and `PATCH /api/v1/packages/{package_id}` APIs.
-- Package serialization includes active subscription count, projected monthly revenue, periodized churn, and Customer LTV derived from local subscription records, package billing cadence, and archived client dates. Customer LTV uses ARPU x gross margin percentage / churn rate; gross margin currently defaults to 100% until package-level costs are tracked.
+- Package serialization includes active subscription count, projected monthly revenue, periodized retention, churn, and Customer LTV derived from local subscription records, package billing cadence, and archived client dates. Retention uses `(ending customers - new customers) / beginning customers`; Customer LTV uses ARPU x gross margin percentage / churn rate; gross margin currently defaults to 100% until package-level costs are tracked.
 - Package mutation audit logs avoid secrets, card data, and client-provided Stripe identifiers.
 - API tests cover package list/create/update, tenant scoping, payment management authorization, and rejection of client-supplied Stripe identifiers.
 
@@ -79,7 +79,7 @@ Delivered:
 - Package create and edit actions submit validated UI payloads to `POST /api/v1/packages` and `PATCH /api/v1/packages/{package_id}`.
 - Package archive uses `PATCH /api/v1/packages/{package_id}` with `status: archived` and removes archived records from the active package list.
 - Package cards show Stripe sync state, do not expose a manual sync button, and open the connected Stripe account for synced packages.
-- Package summary metrics show active subscriptions, top performer, retention rate, churn, and Customer LTV across monthly, quarterly, and annual views; the former portfolio value card is not shown.
+- Package summary metrics show active subscriptions, top performer, calculated retention rate, churn, and Customer LTV across monthly, quarterly, and annual views; the former portfolio value card is not shown.
 - Dashboard monthly revenue reads package `projectedMonthlyRevenue` from persisted package data and keeps fixture revenue fallback if the API is unavailable.
 - Component tests cover API-backed package loading, create, archive, and dashboard revenue persistence.
 

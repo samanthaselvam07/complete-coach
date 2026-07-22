@@ -39,6 +39,9 @@ const persistedPackages = [
         arpu: 59900,
         grossMarginPercent: 100,
         churnRate: 1 / 3,
+        retentionRate: 2 / 3,
+        newCustomers: 0,
+        endingCustomers: 2,
         lostCustomers: 1,
         customersAtStart: 3,
         revenue: 179700,
@@ -48,6 +51,9 @@ const persistedPackages = [
         arpu: 179700,
         grossMarginPercent: 100,
         churnRate: 1 / 3,
+        retentionRate: 2 / 3,
+        newCustomers: 0,
+        endingCustomers: 2,
         lostCustomers: 1,
         customersAtStart: 3,
         revenue: 539100,
@@ -57,6 +63,9 @@ const persistedPackages = [
         arpu: 718800,
         grossMarginPercent: 100,
         churnRate: 1 / 3,
+        retentionRate: 2 / 3,
+        newCustomers: 0,
+        endingCustomers: 2,
         lostCustomers: 1,
         customersAtStart: 3,
         revenue: 2156400,
@@ -94,6 +103,9 @@ const persistedPackages = [
         arpu: 149900,
         grossMarginPercent: 100,
         churnRate: 0,
+        retentionRate: 1,
+        newCustomers: 0,
+        endingCustomers: 1,
         lostCustomers: 0,
         customersAtStart: 1,
         revenue: 149900,
@@ -103,6 +115,9 @@ const persistedPackages = [
         arpu: 149900,
         grossMarginPercent: 100,
         churnRate: 0,
+        retentionRate: 1,
+        newCustomers: 0,
+        endingCustomers: 1,
         lostCustomers: 0,
         customersAtStart: 1,
         revenue: 149900,
@@ -112,6 +127,9 @@ const persistedPackages = [
         arpu: 149900,
         grossMarginPercent: 100,
         churnRate: 0,
+        retentionRate: 1,
+        newCustomers: 0,
+        endingCustomers: 1,
         lostCustomers: 0,
         customersAtStart: 1,
         revenue: 149900,
@@ -129,9 +147,9 @@ describe("PackagesPage", () => {
     const packageStats = buildPackageStats(persistedPackages as never);
     const quarterlyStats = buildPackageStats(persistedPackages as never, "quarterly");
 
-    expect(emptyStats.map((stat) => stat.value)).toEqual([0, "No packages", "94%", "0%", "$0"]);
-    expect(packageStats.map((stat) => stat.value)).toEqual([4, "API Platinum", "94%", "25%", "$3,296"]);
-    expect(quarterlyStats.map((stat) => stat.value)).toEqual([4, "API Platinum", "94%", "25%", "$6,890"]);
+    expect(emptyStats.map((stat) => stat.value)).toEqual([0, "No packages", "0%", "0%", "$0"]);
+    expect(packageStats.map((stat) => stat.value)).toEqual([4, "API Platinum", "75%", "25%", "$3,296"]);
+    expect(quarterlyStats.map((stat) => stat.value)).toEqual([4, "API Platinum", "75%", "25%", "$6,890"]);
     expect(packageToFormState({ ...persistedPackages[0], description: null, color: null } as never)).toEqual({
       name: "API Platinum",
       description: "",
@@ -254,6 +272,7 @@ describe("PackagesPage", () => {
     expect(within(stats).getByText("Top Performer")).toBeInTheDocument();
     expect(within(stats).getByText("API Platinum")).toBeInTheDocument();
     expect(within(stats).getByText("Retention Rate")).toBeInTheDocument();
+    expect(within(stats).getByText("75%")).toBeInTheDocument();
     expect(within(stats).getByText("Churn")).toBeInTheDocument();
     expect(within(stats).getByText("25%")).toBeInTheDocument();
     expect(within(stats).getByText("Customer LTV")).toBeInTheDocument();

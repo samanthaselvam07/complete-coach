@@ -244,6 +244,9 @@ describe("package record helpers", () => {
           monthly: expect.objectContaining({
             arpu: 5000,
             churnRate: 0.5,
+            retentionRate: 0.5,
+            newCustomers: 0,
+            endingCustomers: 1,
             lostCustomers: 1,
             customersAtStart: 2,
             revenue: 10000,

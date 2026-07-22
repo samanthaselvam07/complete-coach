@@ -319,6 +319,8 @@ function calculateCustomerMetricsForPeriod(
   const periodEnd = new Date();
   const periodStart = subtractUtcMonths(periodEnd, monthCount);
   const customersAtStart = subscriptions.filter((subscription) => wasSubscriptionActiveAt(subscription, periodStart)).length;
+  const endingCustomers = subscriptions.filter((subscription) => wasSubscriptionActiveAt(subscription, periodEnd)).length;
+  const newCustomers = subscriptions.filter((subscription) => wasSubscriptionCreatedDuringPeriod(subscription, periodStart, periodEnd)).length;
   const lostCustomers = subscriptions.filter((subscription) => wasClientArchivedDuringPeriod(subscription, periodStart, periodEnd)).length;
   const revenue = subscriptions.reduce(
     (sum, subscription) => sum + calculateSubscriptionRevenueForPeriod(record, subscription, periodStart, periodEnd),
@@ -326,6 +328,7 @@ function calculateCustomerMetricsForPeriod(
   );
   const arpu = customersAtStart > 0 ? Math.round(revenue / customersAtStart) : 0;
   const churnRate = customersAtStart > 0 ? lostCustomers / customersAtStart : 0;
+  const retentionRate = customersAtStart > 0 ? Math.max((endingCustomers - newCustomers) / customersAtStart, 0) : 0;
   const grossMarginRate = defaultGrossMarginPercent / 100;
   const customerLtv = churnRate > 0 ? Math.round((arpu * grossMarginRate) / churnRate) : 0;
 
@@ -333,6 +336,9 @@ function calculateCustomerMetricsForPeriod(
     arpu,
     grossMarginPercent: defaultGrossMarginPercent,
     churnRate,
+    retentionRate,
+    newCustomers,
+    endingCustomers,
     lostCustomers,
     customersAtStart,
     revenue,
@@ -345,6 +351,12 @@ function wasSubscriptionActiveAt(subscription: PackageSubscriptionRecord, date: 
   const endedAt = getSubscriptionLtvEndDate(subscription);
 
   return startedAt.getTime() <= date.getTime() && endedAt.getTime() >= date.getTime();
+}
+
+function wasSubscriptionCreatedDuringPeriod(subscription: PackageSubscriptionRecord, periodStart: Date, periodEnd: Date) {
+  const startedAt = toDate(subscription.createdAt);
+
+  return startedAt.getTime() > periodStart.getTime() && startedAt.getTime() <= periodEnd.getTime();
 }
 
 function wasClientArchivedDuringPeriod(subscription: PackageSubscriptionRecord, periodStart: Date, periodEnd: Date) {

@@ -29,6 +29,9 @@ interface CustomerPeriodMetrics {
   arpu: number;
   grossMarginPercent: number;
   churnRate: number;
+  retentionRate: number;
+  newCustomers: number;
+  endingCustomers: number;
   lostCustomers: number;
   customersAtStart: number;
   revenue: number;
@@ -994,6 +997,8 @@ export function buildPackageStats(packages: ApiPackage[], period: MetricsPeriod 
   const totalClients = packages.reduce((sum, coachingPackage) => sum + coachingPackage.activeSubscriptions, 0);
   const periodMetrics = packages.map((coachingPackage) => getPackageCustomerMetrics(coachingPackage, period));
   const customersAtStart = periodMetrics.reduce((sum, metrics) => sum + metrics.customersAtStart, 0);
+  const endingCustomers = periodMetrics.reduce((sum, metrics) => sum + metrics.endingCustomers, 0);
+  const newCustomers = periodMetrics.reduce((sum, metrics) => sum + metrics.newCustomers, 0);
   const lostCustomers = periodMetrics.reduce((sum, metrics) => sum + metrics.lostCustomers, 0);
   const revenue = periodMetrics.reduce((sum, metrics) => sum + metrics.revenue, 0);
   const grossMarginRate =
@@ -1001,6 +1006,7 @@ export function buildPackageStats(packages: ApiPackage[], period: MetricsPeriod 
       ? periodMetrics.reduce((sum, metrics) => sum + metrics.grossMarginPercent, 0) / periodMetrics.length / 100
       : 1;
   const churnRate = customersAtStart > 0 ? lostCustomers / customersAtStart : 0;
+  const retentionRate = customersAtStart > 0 ? Math.max((endingCustomers - newCustomers) / customersAtStart, 0) : 0;
   const arpu = customersAtStart > 0 ? Math.round(revenue / customersAtStart) : 0;
   const customerLtv = churnRate > 0 ? Math.round((arpu * grossMarginRate) / churnRate) : 0;
   const topPackage = packages.reduce<ApiPackage | null>(
@@ -1014,7 +1020,7 @@ export function buildPackageStats(packages: ApiPackage[], period: MetricsPeriod 
   return [
     { label: "Active Subscriptions", value: totalClients, icon: Package },
     { label: "Top Performer", value: topPackage?.name ?? "No packages", icon: Users },
-    { label: "Retention Rate", value: "94%", icon: TrendingUp },
+    { label: "Retention Rate", value: formatPercent(retentionRate), icon: TrendingUp },
     { label: "Churn", value: formatPercent(churnRate), icon: TrendingUp },
     { label: "Customer LTV", value: formatCents(customerLtv), icon: DollarSign }
   ];
@@ -1026,6 +1032,9 @@ function getPackageCustomerMetrics(coachingPackage: ApiPackage, period: MetricsP
       arpu: coachingPackage.ltvCustomerCount > 0 ? Math.round(coachingPackage.customerLtv / coachingPackage.ltvCustomerCount) : 0,
       grossMarginPercent: 100,
       churnRate: 0,
+      retentionRate: coachingPackage.ltvCustomerCount > 0 ? 1 : 0,
+      newCustomers: 0,
+      endingCustomers: coachingPackage.ltvCustomerCount,
       lostCustomers: 0,
       customersAtStart: coachingPackage.ltvCustomerCount,
       revenue: coachingPackage.customerLtv * coachingPackage.ltvCustomerCount,
