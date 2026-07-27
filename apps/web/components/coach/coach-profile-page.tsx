@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, Phone, Plus, Upload } from "lucide-react";
+import { Mail, Pencil, Phone, Plus, Trash2, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Credential {
@@ -45,6 +45,7 @@ export function CoachProfilePage() {
   const [specialityInput, setSpecialityInput] = useState("");
   const [specialities, setSpecialities] = useState(defaultSpecialities);
   const [credentials, setCredentials] = useState<Credential[]>(initialCredentials);
+  const [editingCredentialIds, setEditingCredentialIds] = useState<Set<string>>(new Set());
   const [saveStatus, setSaveStatus] = useState("Profile changes are ready to save.");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -69,6 +70,7 @@ export function CoachProfilePage() {
         setPhilosophy(payload.data.philosophy || defaultPhilosophy);
         setSpecialities(payload.data.specialities.length > 0 ? payload.data.specialities : defaultSpecialities);
         setCredentials(payload.data.credentials.length > 0 ? payload.data.credentials : initialCredentials);
+        setEditingCredentialIds(new Set());
         setSaveStatus("Profile loaded.");
       } catch {
         setSaveStatus("Profile could not be loaded. You can still edit and try saving.");
@@ -98,11 +100,12 @@ export function CoachProfilePage() {
 
   function addCredential() {
     const credentialNumber = credentials.length + 1;
+    const credentialId = `credential-${Date.now()}`;
 
     setCredentials([
       ...credentials,
       {
-        id: `credential-${Date.now()}`,
+        id: credentialId,
         title: `Credential ${credentialNumber}`,
         institution: "",
         completedAt: "",
@@ -110,6 +113,21 @@ export function CoachProfilePage() {
         fileName: ""
       }
     ]);
+    setEditingCredentialIds((currentIds) => new Set([...currentIds, credentialId]));
+  }
+
+  function editCredential(credentialId: string) {
+    setEditingCredentialIds((currentIds) => new Set([...currentIds, credentialId]));
+  }
+
+  function deleteCredential(credentialId: string) {
+    setCredentials((currentCredentials) => currentCredentials.filter((credential) => credential.id !== credentialId));
+    setEditingCredentialIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+      nextIds.delete(credentialId);
+
+      return nextIds;
+    });
   }
 
   async function saveCoachProfile() {
@@ -131,12 +149,13 @@ export function CoachProfilePage() {
       });
 
       if (!response.ok) {
-        throw new Error("Coach profile could not be saved.");
+        throw new Error(await getApiErrorMessage(response, "Coach profile could not be saved."));
       }
 
+      setEditingCredentialIds(new Set());
       setSaveStatus("Coach profile saved.");
-    } catch {
-      setSaveStatus("Coach profile could not be saved. Please try again.");
+    } catch (error) {
+      setSaveStatus(error instanceof Error ? error.message : "Coach profile could not be saved. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -267,33 +286,83 @@ export function CoachProfilePage() {
             </div>
 
             <div className="mt-5 space-y-4">
-              {credentials.map((credential) => (
-                <section key={credential.id} aria-label={`${credential.title} credential`} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <EditableField label="Credential title" value={credential.title} onChange={(title) => updateCredential(credential.id, { title })} />
-                    <EditableField label="Institution" value={credential.institution} onChange={(institution) => updateCredential(credential.id, { institution })} />
-                    <EditableField
-                      label="Date completed"
-                      type="date"
-                      value={credential.completedAt}
-                      onChange={(completedAt) => updateCredential(credential.id, { completedAt })}
-                    />
-                    <EditableField label="Credential ID" value={credential.credentialId} onChange={(credentialId) => updateCredential(credential.id, { credentialId })} />
-                  </div>
-                  <label className="mt-4 flex cursor-pointer flex-col gap-2 rounded-xl border border-dashed border-indigo-200 bg-white p-4 text-sm font-bold text-indigo-700 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="inline-flex items-center gap-2">
-                      <Upload className="h-4 w-4" aria-hidden="true" />
-                      Upload certificate
-                    </span>
-                    <span className="truncate text-xs font-semibold text-slate-500">{credential.fileName || "No file uploaded"}</span>
-                    <input
-                      type="file"
-                      className="sr-only"
-                      onChange={(event) => updateCredential(credential.id, { fileName: event.target.files?.[0]?.name ?? "" })}
-                    />
-                  </label>
-                </section>
-              ))}
+              {credentials.map((credential) => {
+                const credentialTitle = credential.title.trim() || "Untitled credential";
+                const credentialInstitution = credential.institution.trim() || "Institution not set";
+                const isEditingCredential = editingCredentialIds.has(credential.id);
+
+                return (
+                  <section key={credential.id} aria-label={`${credentialTitle} credential`} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                    {isEditingCredential ? (
+                      <>
+                        <div className="mb-4 flex justify-end">
+                          <button
+                            type="button"
+                            aria-label={`Delete ${credentialTitle} credential`}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100"
+                            onClick={() => deleteCredential(credential.id)}
+                          >
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                            Delete
+                          </button>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <EditableField label="Credential title" value={credential.title} onChange={(title) => updateCredential(credential.id, { title })} />
+                          <EditableField label="Institution" value={credential.institution} onChange={(institution) => updateCredential(credential.id, { institution })} />
+                          <EditableField
+                            label="Date completed"
+                            type="date"
+                            value={credential.completedAt}
+                            onChange={(completedAt) => updateCredential(credential.id, { completedAt })}
+                          />
+                          <EditableField label="Credential ID" value={credential.credentialId} onChange={(credentialId) => updateCredential(credential.id, { credentialId })} />
+                        </div>
+                        <label className="mt-4 flex cursor-pointer flex-col gap-2 rounded-xl border border-dashed border-indigo-200 bg-white p-4 text-sm font-bold text-indigo-700 sm:flex-row sm:items-center sm:justify-between">
+                          <span className="inline-flex items-center gap-2">
+                            <Upload className="h-4 w-4" aria-hidden="true" />
+                            Upload certificate
+                          </span>
+                          <span className="truncate text-xs font-semibold text-slate-500">{credential.fileName || "No file uploaded"}</span>
+                          <input
+                            type="file"
+                            className="sr-only"
+                            onChange={(event) => updateCredential(credential.id, { fileName: event.target.files?.[0]?.name ?? "" })}
+                          />
+                        </label>
+                      </>
+                    ) : (
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-wrap gap-2">
+                          <span className="rounded-full bg-indigo-50 px-4 py-2 text-xs font-black uppercase tracking-widest text-indigo-700">
+                            {credentialTitle}
+                          </span>
+                          <span className="rounded-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-slate-600 ring-1 ring-slate-200">
+                            {credentialInstitution}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            aria-label={`Edit ${credentialTitle} credential`}
+                            className="inline-flex items-center justify-center rounded-xl bg-white p-2 text-slate-500 ring-1 ring-slate-200 hover:text-indigo-600"
+                            onClick={() => editCredential(credential.id)}
+                          >
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Delete ${credentialTitle} credential`}
+                            className="inline-flex items-center justify-center rounded-xl bg-rose-50 p-2 text-rose-500 ring-1 ring-rose-100 hover:bg-rose-100"
+                            onClick={() => deleteCredential(credential.id)}
+                          >
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+                );
+              })}
             </div>
           </article>
         </section>
@@ -333,6 +402,12 @@ function isCoachProfilePayload(value: unknown): value is CoachProfilePayload {
     "credentials" in value &&
     Array.isArray((value as { credentials?: unknown }).credentials)
   );
+}
+
+async function getApiErrorMessage(response: Response, fallbackMessage: string) {
+  const payload = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
+
+  return payload?.error?.message ?? fallbackMessage;
 }
 
 function EditableField({

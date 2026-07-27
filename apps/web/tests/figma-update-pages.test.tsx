@@ -362,7 +362,10 @@ describe("Figma update pages", () => {
     expect((screen.getByLabelText("Coaching Philosophy") as HTMLTextAreaElement).value).toContain("measurable");
     expect(screen.getByPlaceholderText("Add a speciality")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add credential" })).toBeInTheDocument();
-    expect(screen.getAllByText("Upload certificate")).toHaveLength(2);
+    expect(screen.getByText("CSCS")).toBeInTheDocument();
+    expect(screen.getByText("NSCA")).toBeInTheDocument();
+    expect(screen.queryByText("Upload certificate")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete CSCS credential" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save coach profile" })).toBeInTheDocument();
     expect(screen.queryByText("Retention Rate")).not.toBeInTheDocument();
     expect(screen.queryByText("Clients Coached")).not.toBeInTheDocument();
@@ -381,12 +384,12 @@ describe("Figma update pages", () => {
     expect(screen.getByLabelText("Professional Title")).toHaveValue("Head Performance Coach");
     expect(screen.getByLabelText("Email Address")).toHaveValue("marcus.coach@kineticcurator.com");
     expect(screen.getByLabelText("Phone Number")).toHaveValue("+1 (055) 234-8890");
-    expect(screen.getByLabelText("Password")).toHaveAttribute("type", "password");
+    expect(screen.getByLabelText("New password")).toHaveAttribute("type", "password");
     fireEvent.click(screen.getByRole("button", { name: "Show password" }));
-    expect(screen.getByLabelText("Password")).toHaveAttribute("type", "text");
+    expect(screen.getByLabelText("New password")).toHaveAttribute("type", "text");
     expect(screen.getByText("Upload photo")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save account profile" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Update password" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change password" })).toBeInTheDocument();
     expect(screen.queryByText("Two-Factor Authentication")).not.toBeInTheDocument();
     expect(screen.queryByText("Active Sessions")).not.toBeInTheDocument();
     expect(screen.queryByText("Platform Customization")).not.toBeInTheDocument();
@@ -420,12 +423,68 @@ describe("Figma update pages", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Coach profile saved.");
   });
 
+  it("expands new credentials, collapses them after save, and lets coaches delete credentials", async () => {
+    render(<CoachProfilePage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add credential" }));
+    expect(screen.getByText("Upload certificate")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Credential title"), { target: { value: "First Aid" } });
+    fireEvent.change(screen.getByLabelText("Institution"), { target: { value: "Australian Institute" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save coach profile" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Coach profile saved.");
+    });
+
+    expect(screen.queryByText("Upload certificate")).not.toBeInTheDocument();
+    expect(screen.getByText("First Aid")).toBeInTheDocument();
+    expect(screen.getByText("Australian Institute")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete First Aid credential" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save coach profile" }));
+
+    await waitFor(() => {
+      const profileSaveCalls = fetchMock.mock.calls.filter(([url, init]) => url === "/api/v1/coach-profile" && init?.method === "PATCH");
+
+      expect(profileSaveCalls).toHaveLength(2);
+    });
+
+    const finalProfileSaveCall = fetchMock.mock.calls.filter(([url, init]) => url === "/api/v1/coach-profile" && init?.method === "PATCH").at(-1);
+    const finalSaveBody = JSON.parse(String(finalProfileSaveCall?.[1]?.body));
+
+    expect(finalSaveBody.credentials).not.toEqual(expect.arrayContaining([expect.objectContaining({ title: "First Aid" })]));
+    expect(screen.queryByText("First Aid")).not.toBeInTheDocument();
+  });
+
+  it("shows the coach profile API error message when saving fails", async () => {
+    fetchMock.mockReset();
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            error: {
+              code: "database_schema_unavailable",
+              message: "Database schema is not ready. Run migrations before using this endpoint."
+            }
+          }),
+          { status: 503 }
+        )
+      );
+
+    render(<CoachProfilePage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save coach profile" }));
+
+    expect(await screen.findByText("Database schema is not ready. Run migrations before using this endpoint.")).toBeInTheDocument();
+  });
+
   it("saves account settings through the org-scoped profile endpoint", async () => {
     render(<SettingsPage />);
 
     fireEvent.change(screen.getByLabelText("Full Name"), { target: { value: "Samantha Coach" } });
     fireEvent.change(screen.getByLabelText("Professional Title"), { target: { value: "Owner Coach" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "strong-password" } });
+    fireEvent.change(screen.getByLabelText("New password"), { target: { value: "strong-password" } });
     fireEvent.change(screen.getByLabelText("Upload photo"), {
       target: { files: [new File(["profile"], "samantha-profile.png", { type: "image/png" })] }
     });
@@ -445,11 +504,38 @@ describe("Figma update pages", () => {
       professionalTitle: "Owner Coach",
       email: "marcus.coach@kineticcurator.com",
       phone: "+1 (055) 234-8890",
-      photoFileName: "samantha-profile.png",
-      password: "strong-password"
+      photoFileName: "samantha-profile.png"
     });
-    expect(screen.getByLabelText("Password")).toHaveValue("");
+    expect(screen.getByLabelText("New password")).toHaveValue("strong-password");
     expect(screen.getByRole("status")).toHaveTextContent("Account profile saved.");
+  });
+
+  it("changes the account password from the security card", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.change(screen.getByLabelText("New password"), { target: { value: "replacement-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Change password" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/coach-profile", expect.objectContaining({ method: "PATCH" }));
+    });
+
+    const passwordSaveCall = fetchMock.mock.calls.find(([url, init]) => url === "/api/v1/coach-profile" && init?.method === "PATCH");
+    const saveBody = JSON.parse(String(passwordSaveCall?.[1]?.body));
+
+    expect(saveBody).toEqual({ password: "replacement-password" });
+    expect(screen.getByLabelText("New password")).toHaveValue("");
+    expect(screen.getByRole("status")).toHaveTextContent("Password changed.");
+  });
+
+  it("requires a minimum password length before changing the account password", () => {
+    render(<SettingsPage />);
+
+    fireEvent.change(screen.getByLabelText("New password"), { target: { value: "short" } });
+    fireEvent.click(screen.getByRole("button", { name: "Change password" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Enter a new password with at least 8 characters.");
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/coach-profile", expect.objectContaining({ method: "PATCH" }));
   });
 });
 

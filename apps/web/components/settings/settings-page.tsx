@@ -19,6 +19,7 @@ export function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [saveStatus, setSaveStatus] = useState("Account changes are ready to save.");
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -81,21 +82,48 @@ export function SettingsPage() {
           professionalTitle,
           email,
           phone,
-          photoFileName,
-          ...(password ? { password } : {})
+          photoFileName
         })
       });
 
       if (!response.ok) {
-        throw new Error("Account profile could not be saved.");
+        throw new Error(await getApiErrorMessage(response, "Account profile could not be saved."));
+      }
+
+      setSaveStatus("Account profile saved.");
+    } catch (error) {
+      setSaveStatus(error instanceof Error ? error.message : "Account profile could not be saved. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function changePassword() {
+    if (password.length < 8) {
+      setSaveStatus("Enter a new password with at least 8 characters.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setSaveStatus("Changing password...");
+
+    try {
+      const response = await fetch("/api/v1/coach-profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+      });
+
+      if (!response.ok) {
+        throw new Error(await getApiErrorMessage(response, "Password could not be changed."));
       }
 
       setPassword("");
-      setSaveStatus("Account profile saved.");
-    } catch {
-      setSaveStatus("Account profile could not be saved. Please try again.");
+      setSaveStatus("Password changed.");
+    } catch (error) {
+      setSaveStatus(error instanceof Error ? error.message : "Password could not be changed. Please try again.");
     } finally {
-      setIsSaving(false);
+      setIsChangingPassword(false);
     }
   }
 
@@ -142,7 +170,7 @@ export function SettingsPage() {
             Security & Access
           </h2>
           <label className="block text-xs font-bold uppercase tracking-widest text-slate-500">
-            Password
+            New password
             <span className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
               <input
                 type={showPassword ? "text" : "password"}
@@ -160,6 +188,14 @@ export function SettingsPage() {
               </button>
             </span>
           </label>
+          <button
+            type="button"
+            className="mt-4 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isChangingPassword}
+            onClick={() => void changePassword()}
+          >
+            {isChangingPassword ? "Changing..." : "Change password"}
+          </button>
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -204,6 +240,12 @@ interface AccountProfilePayload {
 
 function isAccountProfilePayload(value: unknown): value is AccountProfilePayload {
   return typeof value === "object" && value !== null && "email" in value;
+}
+
+async function getApiErrorMessage(response: Response, fallbackMessage: string) {
+  const payload = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
+
+  return payload?.error?.message ?? fallbackMessage;
 }
 
 function ProfileInput({

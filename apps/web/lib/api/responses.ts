@@ -86,7 +86,7 @@ function getKnownDatabaseError(error: unknown) {
     return null;
   }
 
-  if (error.code === "P2021" || error.code === "P2022") {
+  if (error.code === "P2021" || error.code === "P2022" || isRawMissingSchemaError(error)) {
     return {
       code: "database_schema_unavailable",
       message: "Database schema is not ready. Run migrations before using this endpoint.",
@@ -112,4 +112,14 @@ function isErrorWithCode(error: unknown): error is { code: string } {
     "code" in error &&
     typeof (error as { code: unknown }).code === "string"
   );
+}
+
+function isRawMissingSchemaError(error: { code: string }) {
+  if (error.code !== "P2010" || !("meta" in error)) {
+    return false;
+  }
+
+  const meta = (error as { meta?: { code?: unknown } }).meta;
+
+  return meta?.code === "42P01" || meta?.code === "42703";
 }

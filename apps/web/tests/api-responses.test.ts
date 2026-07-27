@@ -37,6 +37,7 @@ describe("API response helpers", () => {
   it("maps known database setup and connectivity errors without stack traces", async () => {
     await expectJson(handleApiError({ code: "P2021" }), 503, "database_schema_unavailable");
     await expectJson(handleApiError({ code: "P2022" }), 503, "database_schema_unavailable");
+    await expectJson(handleApiError({ code: "P2010", meta: { code: "42P01" } }), 503, "database_schema_unavailable");
     await expectJson(handleApiError({ code: "ETIMEDOUT" }), 503, "database_unavailable");
   });
 });
