@@ -147,27 +147,12 @@ describe("OrganizationSettingsPage", () => {
     expect(screen.getByRole("button", { name: "Start Scale plan" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Manage billing" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Manage coaching packages" })).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("tab", { name: "Email DNS" }));
-    expect(screen.getByRole("heading", { level: 3, name: "Add sender domain" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Create DNS records" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Email DNS" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Team Management" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Role Permissions" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Automations" }));
     expect(screen.getByRole("table", { name: "Automation triggers" })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("tab", { name: "Team Management" }));
-    expect(screen.getByRole("link", { name: "Open team management" })).toHaveAttribute("href", "/team-management");
-
-    fireEvent.click(screen.getByRole("tab", { name: "Role Permissions" }));
-    expect(screen.getByRole("table", { name: "Role permissions matrix" })).toBeInTheDocument();
-    expect(screen.getByRole("table", { name: "Team member feature permissions" })).toBeInTheDocument();
-    expect(screen.getAllByText("payments:manage")).toHaveLength(2);
-    expect(screen.getAllByText("api_keys:manage")).toHaveLength(2);
-    expect(await screen.findByLabelText("Toggle payments:manage for Marcus Chen")).toHaveAttribute("aria-checked", "false");
-
-    fireEvent.click(screen.getByLabelText("Toggle payments:manage for Marcus Chen"));
-
-    expect(screen.getByLabelText("Toggle payments:manage for Marcus Chen")).toHaveAttribute("aria-checked", "true");
   });
 
   it("keeps audit logs inside organization settings instead of the main navigation", async () => {
@@ -206,163 +191,18 @@ describe("OrganizationSettingsPage", () => {
     expect(screen.getByText("client.training_plan.updated")).toBeInTheDocument();
   });
 
-  it("manages team member account status and profiles inside organization settings", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
-      const url = String(input);
-
-      if (url === "/api/v1/team-members" && !init?.method) {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: {
-                members: [
-                  {
-                    id: "membership_alex",
-                    userId: "user_alex",
-                    name: "Alex Coach",
-                    email: "alex@example.com",
-                    image: null,
-                    role: "coach",
-                    status: "active",
-                    activeClientCount: 12,
-                    capacityLimit: 40,
-                    capacityPercent: 30
-                  }
-                ],
-                invitations: []
-              }
-            }),
-            { status: 200 }
-          )
-        );
-      }
-
-      if (url === "/api/v1/team-members/membership_alex" && init?.method === "PATCH") {
-        const body = JSON.parse(String(init.body)) as { role?: string; status?: string };
-
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: {
-                id: "membership_alex",
-                userId: "user_alex",
-                name: "Alex Coach",
-                email: "alex@example.com",
-                image: null,
-                role: body.role ?? "coach",
-                status: body.status ?? "suspended",
-                activeClientCount: 12,
-                capacityLimit: 40,
-                capacityPercent: 30
-              }
-            }),
-            { status: 200 }
-          )
-        );
-      }
-
-      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-    });
-
+  it("temporarily hides team management inside organization settings", () => {
     render(createElement(OrganizationSettingsPage));
 
-    fireEvent.click(screen.getByRole("tab", { name: "Team Management" }));
-
-    const memberRow = (await screen.findByText("Alex Coach")).closest("tr");
-    expect(memberRow).not.toBeNull();
-    expect(screen.getByRole("table", { name: "Organisation team members" })).toBeInTheDocument();
-    expect(within(memberRow as HTMLTableRowElement).getByText("12/40 clients")).toBeInTheDocument();
-
-    fireEvent.click(within(memberRow as HTMLTableRowElement).getByRole("button", { name: "Deactivate" }));
-
-    await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/v1/team-members/membership_alex",
-        expect.objectContaining({
-          method: "PATCH",
-          body: JSON.stringify({ status: "suspended" })
-        })
-      )
-    );
-    expect(await screen.findByText("Deactivated")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Edit profile" }));
-    fireEvent.change(screen.getByLabelText("Role"), { target: { value: "admin" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
-
-    await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/v1/team-members/membership_alex",
-        expect.objectContaining({
-          method: "PATCH",
-          body: JSON.stringify({ role: "admin" })
-        })
-      )
-    );
+    expect(screen.queryByRole("tab", { name: "Team Management" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open team management" })).not.toBeInTheDocument();
   });
 
-  it("creates sender DNS records inside organization settings", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
-      const url = String(input);
-
-      if (url === "/api/v1/organizations/current/email-domains" && !init) {
-        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-      }
-
-      if (url === "/api/v1/organizations/current/email-domains" && init?.method === "POST") {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: {
-                id: "sender_domain_1",
-                domain: "mail.example.com",
-                provider: "resend",
-                status: "not_started",
-                fromEmail: "coach@mail.example.com",
-                fromLocalPart: "coach",
-                senderName: "Example Coaching",
-                dnsRecords: [
-                  {
-                    record: "SPF",
-                    name: "send",
-                    type: "TXT",
-                    value: "\"v=spf1 include:amazonses.com ~all\"",
-                    ttl: "Auto",
-                    status: "not_started"
-                  }
-                ],
-                verifiedAt: null
-              }
-            }),
-            { status: 201 }
-          )
-        );
-      }
-
-      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-    });
-
+  it("temporarily hides sender DNS records inside organization settings", () => {
     render(createElement(OrganizationSettingsPage));
 
-    fireEvent.click(screen.getByRole("tab", { name: "Email DNS" }));
-    fireEvent.change(screen.getByPlaceholderText("mail.yourdomain.com"), {
-      target: { value: "mail.example.com" }
-    });
-    fireEvent.change(screen.getByLabelText("Sender email username"), {
-      target: { value: "coach" }
-    });
-    fireEvent.change(screen.getByPlaceholderText("Your Coaching Team"), {
-      target: { value: "Example Coaching" }
-    });
-    await waitFor(() => expect(screen.getByPlaceholderText("mail.yourdomain.com")).toHaveValue("mail.example.com"));
-    fireEvent.click(screen.getByRole("button", { name: "Create DNS records" }));
-
-    expect(await screen.findByText("mail.example.com")).toBeInTheDocument();
-    expect(screen.getByRole("table", { name: "DNS records for mail.example.com" })).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/organizations/current/email-domains",
-      expect.objectContaining({ method: "POST" })
-    );
+    expect(screen.queryByRole("tab", { name: "Email DNS" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Create DNS records" })).not.toBeInTheDocument();
   });
 });
 
@@ -850,7 +690,7 @@ describe("AuditLogPage", () => {
 
     render(createElement(AuditLogPage));
 
-    expect(screen.getByRole("status", { name: "Preparing audit log." })).toHaveTextContent("Preparing audit log");
+    expect(screen.getByRole("status")).toHaveTextContent("Preparing audit events...");
     expect(await screen.findByText("Owner Coach")).toBeInTheDocument();
     expect(screen.getByText("client / client_1")).toBeInTheDocument();
     expect(screen.getByText(JSON.stringify({ field: "status" }))).toBeInTheDocument();

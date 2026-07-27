@@ -146,6 +146,9 @@ const tabs: Array<{
   }
 ];
 
+const temporarilyHiddenTabs = new Set<OrganizationSettingsTab>(["email", "team", "permissions"]);
+const visibleTabs = tabs.filter((tab) => !temporarilyHiddenTabs.has(tab.id));
+
 const visibleRoles: MembershipRole[] = ["owner", "admin", "coach", "assistant"];
 
 function buildInitialMemberPermissions(members: TeamMember[]) {
@@ -164,7 +167,7 @@ function buildInitialMemberPermissions(members: TeamMember[]) {
 
 export function OrganizationSettingsPage() {
   const [activeTab, setActiveTab] = useState<OrganizationSettingsTab>("billing");
-  const activeTabConfig = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
+  const activeTabConfig = visibleTabs.find((tab) => tab.id === activeTab) ?? visibleTabs[0];
 
   return (
     <main className="min-h-screen space-y-8 bg-gray-50 p-6 lg:p-8">
@@ -172,13 +175,13 @@ export function OrganizationSettingsPage() {
         <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">Administration</p>
         <h1 className="text-3xl font-black tracking-tight text-slate-950">Organisation Settings</h1>
         <p className="mt-2 max-w-3xl text-base text-slate-600">
-          Manage the Complete Coach operating system subscription, team access, and role permissions for your workspace.
+          Manage the Complete Coach operating system subscription, integrations, automations, and audit history for your workspace.
         </p>
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="Organisation settings sections">
-          {tabs.map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
