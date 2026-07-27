@@ -349,7 +349,7 @@ export function MealPlansPage() {
   const [mealPlanOverrides] = useState<Record<string, Partial<MealAssignmentRow>>>({});
   const [source, setSource] = useState<MealPlanSource>("api");
   const [loading, setLoading] = useState(true);
-  const [mealTemplateView, setMealTemplateView] = usePersistedCardListView("complete-coach:meal-template-library-view");
+  const [mealTemplateView, setMealTemplateView] = usePersistedCardListView("complete-coach:meal-template-library-view", "cards");
   const [librarySearchQuery, setLibrarySearchQuery] = useState("");
   const [templatePlanTarget, setTemplatePlanTarget] = useState<MealTemplateCard | null>(null);
   const [builderMode, setBuilderMode] = useState<NutritionPlanBuilderMode | null>(null);

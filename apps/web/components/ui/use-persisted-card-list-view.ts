@@ -4,8 +4,8 @@ import { useState } from "react";
 
 import type { CardListViewMode } from "@/components/ui/card-list-view-toggle";
 
-export function usePersistedCardListView(storageKey: string) {
-  const [viewMode, setViewMode] = useState<CardListViewMode>(() => getStoredViewMode(storageKey) ?? "list");
+export function usePersistedCardListView(storageKey: string, defaultViewMode: CardListViewMode = "list") {
+  const [viewMode, setViewMode] = useState<CardListViewMode>(() => getStoredViewMode(storageKey) ?? defaultViewMode);
 
   function updateViewMode(nextViewMode: CardListViewMode) {
     setViewMode(nextViewMode);

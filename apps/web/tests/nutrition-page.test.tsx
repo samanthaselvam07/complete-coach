@@ -302,7 +302,11 @@ describe("MealPlansPage", () => {
 
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
 
+    expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("region", { name: "Meal template cards" })).toBeInTheDocument();
     expect(screen.getByText("High-Protein Breakfast Bowl")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
     expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
     const templateTable = screen.getByRole("table", { name: "Meal template list" });
     const templateRow = within(templateTable).getByRole("row", {
@@ -319,10 +323,6 @@ describe("MealPlansPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Card view" }));
     expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("region", { name: "Meal template cards" })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "List view" }));
-    expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("table", { name: "Meal template list" })).toBeInTheDocument();
   });
 
   it("opens the meal plan quick action menu and closes it from the page overlay", async () => {
@@ -349,6 +349,7 @@ describe("MealPlansPage", () => {
     render(createElement(MealPlansPage));
 
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
     fireEvent.click(screen.getByRole("button", { name: "More actions for High-Protein Breakfast Bowl" }));
 
     const menu = screen.getByRole("menu", { name: /meal plan actions for high-protein breakfast bowl/i });
@@ -806,7 +807,7 @@ describe("MealPlansPage", () => {
     render(createElement(MealPlansPage));
 
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Edit Persisted Breakfast Template" }));
+    fireEvent.click(await screen.findByRole("button", { name: "View Persisted Breakfast Template" }));
 
     expect(screen.getByText("Recipe builder")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Persisted Breakfast Template")).toBeInTheDocument();
@@ -1386,6 +1387,7 @@ describe("MealPlansPage", () => {
     render(createElement(MealPlansPage));
 
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(screen.getByRole("button", { name: "List view" }));
     fireEvent.click(screen.getByRole("button", { name: "More actions for High-Protein Breakfast Bowl" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Assign to existing meal plan" }));
     expect(screen.getByRole("dialog", { name: "Add Meal Template to Meal Plan" })).toBeInTheDocument();
