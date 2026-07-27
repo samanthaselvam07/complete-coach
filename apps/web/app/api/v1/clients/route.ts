@@ -56,16 +56,6 @@ export async function POST(request: Request) {
         data: getClientCreateData(actor.organizationId, input)
       });
 
-      const profileCreateData = getClientProfileCreateData(actor.organizationId, createdClient.id, input);
-
-      if (profileCreateData) {
-        await tx.clientProfile.upsert({
-          where: { clientId: createdClient.id },
-          create: profileCreateData,
-          update: { dateOfBirth: profileCreateData.dateOfBirth }
-        });
-      }
-
       await tx.auditLog.create({
         data: {
           organizationId: actor.organizationId,
@@ -82,6 +72,19 @@ export async function POST(request: Request) {
 
       return createdClient;
     });
+    const profileCreateData = getClientProfileCreateData(actor.organizationId, client.id, input);
+
+    if (profileCreateData) {
+      try {
+        await prisma.clientProfile.upsert({
+          where: { clientId: client.id },
+          create: profileCreateData,
+          update: { dateOfBirth: profileCreateData.dateOfBirth }
+        });
+      } catch {
+        // Onboarding profile fields are optional; never roll back the roster record because profile metadata failed.
+      }
+    }
 
     return dataResponse(serializeClient(client), {
       status: 201,
@@ -92,6 +95,25 @@ export async function POST(request: Request) {
       return errorResponse(error.code, error.message, 409, { limit: error.limit });
     }
 
+    if (isUniqueClientEmailError(error)) {
+      return errorResponse("client_email_exists", "A client with this email already exists.", 409);
+    }
+
     return handleApiError(error);
   }
+}
+
+function isUniqueClientEmailError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "P2002" &&
+    "meta" in error &&
+    Array.isArray((error as { meta?: { target?: unknown } }).meta?.target) &&
+    ((error as { meta: { target: unknown[] } }).meta.target.includes("organization_id") ||
+      (error as { meta: { target: unknown[] } }).meta.target.includes("organizationId")) &&
+    ((error as { meta: { target: unknown[] } }).meta.target.includes("email") ||
+      (error as { meta: { target: unknown[] } }).meta.target.includes("clients_organization_id_email_active_key"))
+  );
 }

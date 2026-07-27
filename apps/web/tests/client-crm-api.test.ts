@@ -215,6 +215,76 @@ describe("client and CRM API tenancy", () => {
     );
   });
 
+  it("keeps client creation successful when optional onboarding profile metadata cannot be saved", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "core" });
+    mocks.prisma.client.count.mockResolvedValue(12);
+    mocks.prisma.client.create.mockResolvedValue({
+      id: "client_profile_skip",
+      firstName: "Profile",
+      lastName: "Skipped",
+      email: "profile-skipped@example.com",
+      status: ClientStatus.NEW,
+      packageName: null,
+      checkInDay: null,
+      startDate: null,
+      latestCheckInAt: null,
+      compliance: 0
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+    mocks.prisma.clientProfile.upsert.mockRejectedValue(new Error("Profile table unavailable."));
+
+    const response = await postClient(
+      new Request("http://test.local/api/v1/clients", {
+        method: "POST",
+        body: JSON.stringify({
+          firstName: "Profile",
+          lastName: "Skipped",
+          email: "profile-skipped@example.com",
+          status: "new",
+          onboarding: {
+            dateOfBirth: "1990-01-01"
+          }
+        })
+      })
+    );
+    const payload = (await response.json()) as { data: { id: string } };
+
+    expect(response.status).toBe(201);
+    expect(payload.data.id).toBe("client_profile_skip");
+    expect(mocks.prisma.client.create).toHaveBeenCalled();
+    expect(mocks.prisma.clientProfile.upsert).toHaveBeenCalled();
+  });
+
+  it("returns a clear conflict when a client email already exists", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "core" });
+    mocks.prisma.client.count.mockResolvedValue(12);
+    mocks.prisma.client.create.mockRejectedValue({
+      code: "P2002",
+      meta: { target: ["organization_id", "email"] }
+    });
+
+    const response = await postClient(
+      new Request("http://test.local/api/v1/clients", {
+        method: "POST",
+        body: JSON.stringify({
+          firstName: "Duplicate",
+          lastName: "Email",
+          email: "duplicate@example.com",
+          status: "new"
+        })
+      })
+    );
+    const payload = (await response.json()) as { error: { code: string; message: string } };
+
+    expect(response.status).toBe(409);
+    expect(payload.error).toEqual({
+      code: "client_email_exists",
+      message: "A client with this email already exists."
+    });
+  });
+
   it("blocks client creation when the organization has reached its platform client limit", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "core" });
