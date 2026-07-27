@@ -329,7 +329,7 @@ export interface MealAssignmentRow {
   apiTemplate: ApiMealPlanTemplate | null;
 }
 
-interface MealPlanTemplateSaveInput {
+export interface MealPlanTemplateSaveInput {
   name: string;
   phase: string;
   targetCalories: number;
