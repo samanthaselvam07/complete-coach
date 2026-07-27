@@ -803,9 +803,12 @@ function WeeklyVolumeChart({ volumeRows }: { volumeRows: MuscleVolumeRow[] }) {
       </div>
 
       {activeRows.length > 0 ? (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {activeRows.map((row) => (
-            <div key={row.muscleGroup} className="grid gap-2 sm:grid-cols-[8rem_minmax(0,1fr)_4rem] sm:items-center">
+            <div
+              key={row.muscleGroup}
+              className="grid gap-2 rounded-xl border border-slate-100 bg-slate-50/60 p-3 sm:grid-cols-[7rem_minmax(0,1fr)_4rem] sm:items-center"
+            >
               <div className="text-sm font-bold text-slate-800">{row.muscleGroup}</div>
               <div className="h-3 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
                 <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.max(row.intensity * 100, 8)}%` }} />
