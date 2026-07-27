@@ -752,6 +752,13 @@ describe("MealPlansPage", () => {
                   fatGrams: 7.6,
                   status: "published",
                   template: {
+                    recipe: {
+                      prepTimeMinutes: 10,
+                      cookTimeMinutes: 20,
+                      servings: 2,
+                      servingSize: "1 bowl",
+                      instructions: "Cook chicken and rice, then portion into bowls."
+                    },
                     days: [
                       {
                         name: "Template Day",
@@ -801,24 +808,41 @@ describe("MealPlansPage", () => {
     fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
     fireEvent.click(await screen.findByRole("button", { name: "Edit Persisted Breakfast Template" }));
 
-    expect(screen.getByRole("dialog", { name: "Persisted Breakfast Template" })).toBeInTheDocument();
-    expect(screen.getByText("Prep oats with cinnamon.")).toBeInTheDocument();
+    expect(screen.getByText("Recipe builder")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Persisted Breakfast Template")).toBeInTheDocument();
+    expect(screen.getByLabelText("Prep time (min)")).toHaveValue(10);
+    expect(screen.getByLabelText("Cook time (min)")).toHaveValue(20);
+    expect(screen.getByLabelText("Servings")).toHaveValue(2);
+    expect(screen.getByLabelText("Serving size")).toHaveValue("1 bowl");
+    expect(screen.getByRole("heading", { name: "Nutrient breakdown" })).toBeInTheDocument();
     expect(screen.getByRole("row", { name: /Chicken Breast\s*200 g\s*330 kcal\s*62g\s*C 0g · F 7.2g/i })).toBeInTheDocument();
     expect(screen.getByRole("row", { name: /Basmati Rice\s*100 g\s*121 kcal\s*3g\s*C 25g · F 0.4g/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit Template" }));
     fireEvent.change(screen.getByLabelText("Meal template name"), { target: { value: "Edited Breakfast Template" } });
+    fireEvent.change(screen.getByLabelText("Prep time (min)"), { target: { value: "12" } });
+    fireEvent.change(screen.getByLabelText("Cook time (min)"), { target: { value: "25" } });
+    fireEvent.change(screen.getByLabelText("Servings"), { target: { value: "3" } });
+    fireEvent.change(screen.getByLabelText("Serving size"), { target: { value: "1 meal prep bowl" } });
+    fireEvent.click(screen.getByRole("tab", { name: /instructions/i }));
+    expect(screen.getByDisplayValue("Cook chicken and rice, then portion into bowls.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Recipe instructions"), { target: { value: "Cook fresh rice and chicken. Portion evenly." } });
     fireEvent.change(screen.getByLabelText("Notes for Breakfast"), { target: { value: "Use pre-workout on heavy leg days." } });
     fireEvent.click(screen.getByRole("button", { name: "Save Template" }));
 
     expect(await screen.findByText("Edited Breakfast Template saved to Meal Templates.")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/meal-plan-templates/meal_template_api",
-      expect.objectContaining({
-        method: "PATCH",
-        body: expect.stringContaining("Use pre-workout on heavy leg days.")
-      })
+    const patchCall = fetchMock.mock.calls.find(
+      ([url, init]) => url === "/api/v1/meal-plan-templates/meal_template_api" && (init as RequestInit | undefined)?.method === "PATCH"
     );
+    expect(patchCall).toBeDefined();
+    const patchBody = JSON.parse(String((patchCall?.[1] as RequestInit).body));
+    expect(patchBody.template.recipe).toEqual({
+      prepTimeMinutes: 12,
+      cookTimeMinutes: 25,
+      servings: 3,
+      servingSize: "1 meal prep bowl",
+      instructions: "Cook fresh rice and chicken. Portion evenly."
+    });
+    expect(patchBody.template.days[0].meals[0].notes).toBe("Use pre-workout on heavy leg days.");
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/v1/meal-plan-templates",
       expect.objectContaining({ method: "POST" })
@@ -2037,7 +2061,7 @@ describe("meal plan view model helpers", () => {
       template: { days: [] }
     };
 
-    expect(templateTotals).toEqual({ calories: 340, protein: 32, carbs: 40, fats: 5 });
+    expect(templateTotals).toEqual({ calories: 340, protein: 32, carbs: 40, fats: 5, fibre: 0 });
     expect(createBuilderMealsFromMealTemplate(templateCard)[0]).toMatchObject({ name: "Breakfast Template", notes: "import notes" });
     expect(createBuilderMealsFromMealTemplate(fallbackTemplateCard)[0]).toMatchObject({
       name: "Breakfast Template",

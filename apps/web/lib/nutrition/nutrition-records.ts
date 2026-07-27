@@ -99,6 +99,15 @@ export const mealPlanItemSchema = z.object({
 });
 
 export const mealPlanTemplateSchema = z.object({
+  recipe: z
+    .object({
+      prepTimeMinutes: z.number().int().min(0).max(2_000).optional(),
+      cookTimeMinutes: z.number().int().min(0).max(2_000).optional(),
+      servings: z.number().min(0).max(1_000).optional(),
+      servingSize: z.string().trim().max(120).optional(),
+      instructions: z.string().trim().max(10_000).optional()
+    })
+    .optional(),
   days: z
     .array(
       z.object({

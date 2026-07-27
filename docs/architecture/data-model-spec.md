@@ -551,7 +551,7 @@ Fields:
 - `updated_at`
 - `deleted_at`
 
-`template_json` stores structured days, meals, and food rows. Meal rows may carry optional coach `notes`. Food rows preserve database linkage and builder state with `foodId`, `foodName`, `servingSize`, calories/macros, optional `fiberGrams`, optional `quantity`, optional `measurementUnit`, and optional `micronutrients` so edited plans and imported meal templates can hydrate individual ingredients instead of summary rows.
+`template_json` stores optional recipe metadata plus structured days, meals, and food rows. Recipe metadata may include prep time, cook time, servings, serving size, and instructions for meal-template recipe-builder views. Meal rows may carry optional coach `notes`. Food rows preserve database linkage and builder state with `foodId`, `foodName`, `servingSize`, calories/macros, optional `fiberGrams`, optional `quantity`, optional `measurementUnit`, and optional `micronutrients` so edited plans and imported meal templates can hydrate individual ingredients instead of summary rows.
 
 ### `meal_plan_assignments`
 Fields:

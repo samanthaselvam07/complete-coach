@@ -30,7 +30,7 @@ Completed on May 18, 2026.
 
 Delivered:
 - Forward-only Prisma migration for meal plan template and assignment status enums, `meal_plan_templates`, and `meal_plan_assignments`.
-- Meal templates persist macro targets, phase, status, and structured `template_json`.
+- Meal templates persist macro targets, phase, status, recipe metadata, and structured `template_json`.
 - Meal assignments copy macro targets from the selected template and store an immutable `snapshot_json` with template/food details.
 - Demo seed data creates a published meal template and an active meal plan assignment for the demo client.
 - Meal plan APIs enforce active organization scope and verify client/template ownership before assignment.
@@ -75,7 +75,7 @@ Delivered:
 
 ## Data Model
 - `food_library_items`: global/private library records with serving sizes, calories, macro grams, optional fiber, optional metadata, and soft-delete support.
-- `meal_plan_templates`: organization-owned template records with phase, target calories, macro grams, status, structured `template_json`, creator, timestamps, and soft-delete support.
+- `meal_plan_templates`: organization-owned template records with phase, target calories, macro grams, status, structured `template_json`, creator, timestamps, and soft-delete support. Meal template `template_json.recipe` may store prep time, cook time, servings, serving size, and instructions for recipe-builder views.
 - `meal_plan_assignments`: organization/client-scoped assignment records with copied template targets, status, start/end dates, immutable `snapshot_json`, creator, and timestamps.
 - Food import processors can write source-tracked global foods into `food_library_items` while preserving source IDs, source food IDs, source versions, barcodes, regions, and full nutrient rows inside `metadata`.
 
