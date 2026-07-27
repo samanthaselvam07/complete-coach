@@ -25,6 +25,32 @@ export async function GET(request: Request, context: ClientMetricsRouteContext) 
       return errorResponse("not_found", "Client not found.", 404);
     }
 
+    if (query.summary === "weight") {
+      const [startingWeight, currentWeight] = await Promise.all([
+        prisma.clientMeasurement.findFirst({
+          where: {
+            organizationId: actor.organizationId,
+            clientId,
+            metricKey: "body_weight"
+          },
+          orderBy: [{ measuredAt: "asc" }, { createdAt: "asc" }]
+        }),
+        prisma.clientMeasurement.findFirst({
+          where: {
+            organizationId: actor.organizationId,
+            clientId,
+            metricKey: "body_weight"
+          },
+          orderBy: [{ measuredAt: "desc" }, { createdAt: "desc" }]
+        })
+      ]);
+
+      return dataResponse({
+        startingWeight: startingWeight ? serializeMetric(startingWeight) : null,
+        currentWeight: currentWeight ? serializeMetric(currentWeight) : null
+      });
+    }
+
     const metrics = await prisma.clientMeasurement.findMany({
       where: {
         organizationId: actor.organizationId,

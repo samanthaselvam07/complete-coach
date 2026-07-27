@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, Check, ChevronDown, Download, Eye, Filter, Pencil, Plus, Search, Upload } from "lucide-react";
+import { Archive, Check, ChevronDown, Eye, Filter, Pencil, Plus, Search, Upload } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import type { Route } from "next";
 
@@ -11,12 +12,22 @@ import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
 import {
   ClientFormDialog,
+  type ClientFormOption,
   clientSummaryToForm,
   createClientMutationBody,
   emptyClientForm,
   type ClientFormState,
   upsertClient
 } from "./client-form-dialog";
+import {
+  assignSelectedClientPlans,
+  type ClientProfileResponse,
+  fetchClientFormOptions,
+  fetchAssignedClientPlanIds,
+  scheduleAssignedPackagePaymentChange,
+  toDateInputValue,
+  updateClientProfile
+} from "./client-form-actions";
 
 const statusOptions: Array<{ value: ClientStatus | "all"; label: string }> = [
   { value: "all", label: "All" },
@@ -28,6 +39,7 @@ const statusOptions: Array<{ value: ClientStatus | "all"; label: string }> = [
 const checkInDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
 
 export function ClientsPage() {
+  const { data: session } = useSession();
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [filterStatus, setFilterStatus] = useState<ClientStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,6 +52,13 @@ export function ClientsPage() {
   const [clientFormError, setClientFormError] = useState<string | null>(null);
   const [savingClient, setSavingClient] = useState(false);
   const [loadingClients, setLoadingClients] = useState(true);
+  const [packageOptions, setPackageOptions] = useState<ClientFormOption[]>([]);
+  const [initialQuestionnaireOptions, setInitialQuestionnaireOptions] = useState<ClientFormOption[]>([]);
+  const [dailyHabitFormOptions, setDailyHabitFormOptions] = useState<ClientFormOption[]>([]);
+  const [checkInFormOptions, setCheckInFormOptions] = useState<ClientFormOption[]>([]);
+  const [trainingPlanOptions, setTrainingPlanOptions] = useState<ClientFormOption[]>([]);
+  const [nutritionPlanOptions, setNutritionPlanOptions] = useState<ClientFormOption[]>([]);
+  const [supplementationPlanOptions, setSupplementationPlanOptions] = useState<ClientFormOption[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -75,6 +94,48 @@ export function ClientsPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadClientFormOptions() {
+      const [
+        packages,
+        intakeForms,
+        habitForms,
+        checkInForms,
+        trainingPlans,
+        nutritionPlans,
+        supplementationPlans
+      ] = await Promise.all([
+        fetchClientFormOptions("/api/v1/packages?status=active&limit=100"),
+        fetchClientFormOptions("/api/v1/forms?type=intake&status=published&limit=100"),
+        fetchClientFormOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
+        fetchClientFormOptions("/api/v1/forms?type=check-in&status=published&limit=100"),
+        fetchClientFormOptions("/api/v1/training-program-templates?limit=100"),
+        fetchClientFormOptions("/api/v1/meal-plan-templates?limit=100"),
+        fetchClientFormOptions("/api/v1/supplement-plan-templates?limit=100")
+      ]);
+
+      if (!active) {
+        return;
+      }
+
+      setPackageOptions(packages);
+      setInitialQuestionnaireOptions(intakeForms);
+      setDailyHabitFormOptions(habitForms);
+      setCheckInFormOptions(checkInForms);
+      setTrainingPlanOptions(trainingPlans);
+      setNutritionPlanOptions(nutritionPlans);
+      setSupplementationPlanOptions(supplementationPlans);
+    }
+
+    void loadClientFormOptions();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const filteredClients = [...clients.filter((client) => {
       const matchesSearch = client.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = filterStatus === "all" || client.status === filterStatus;
@@ -86,6 +147,7 @@ export function ClientsPage() {
   const activeClients = clients.filter((client) => client.status === "active").length;
   const newClientsThisWeek = clients.filter((client) => client.status === "new").length;
   const checkInsDue = clients.filter((client) => client.checkInDay && client.status === "active").length;
+  const canViewAssignedCoach = session?.activeOrganization?.role === "owner" || session?.activeOrganization?.role === "admin";
 
   const toggleCheckInDay = (day: string) => {
     setSelectedCheckInDays((currentDays) =>
@@ -98,6 +160,7 @@ export function ClientsPage() {
     setClientForm(clientSummaryToForm(client));
     setClientFormError(null);
     setClientFormOpen(true);
+    void loadClientProfile(client.id);
   };
 
   const closeClientForm = () => {
@@ -108,22 +171,28 @@ export function ClientsPage() {
   };
 
   const saveClient = async () => {
+    if (!editingClient) {
+      return;
+    }
+
     setSavingClient(true);
     setClientFormError(null);
 
     try {
-      const response = await fetch(
-        editingClient ? `/api/v1/clients/${editingClient.id}` : "/api/v1/clients",
-        {
-          method: editingClient ? "PATCH" : "POST",
+      const response = await fetch(`/api/v1/clients/${editingClient.id}`, {
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(createClientMutationBody(clientForm, editingClient?.status ?? "new"))
+          body: JSON.stringify(createClientMutationBody(clientForm, editingClient.status, true))
         }
       );
 
       if (!response.ok) {
         throw new Error("Client could not be saved.");
       }
+
+      await updateClientProfile(editingClient.id, clientForm);
+      await assignSelectedClientPlans(editingClient.id, clientForm);
+      await scheduleAssignedPackagePaymentChange(clientForm);
 
       const payload = (await response.json()) as { data?: ClientSummary };
 
@@ -138,6 +207,33 @@ export function ClientsPage() {
       setClientFormError("Client could not be saved. Check the details and try again.");
     } finally {
       setSavingClient(false);
+    }
+  };
+
+  const loadClientProfile = async (clientId: string) => {
+    try {
+      const [response, assignedPlanIds] = await Promise.all([
+        fetch(`/api/v1/clients/${clientId}/profile`),
+        fetchAssignedClientPlanIds(clientId)
+      ]);
+
+      setClientForm((currentForm) => ({
+        ...currentForm,
+        trainingPlanIds: assignedPlanIds.trainingPlanIds,
+        nutritionPlanIds: assignedPlanIds.nutritionPlanIds,
+        supplementationPlanIds: assignedPlanIds.supplementationPlanIds
+      }));
+
+      if (response.ok) {
+        const payload = (await response.json()) as { data?: ClientProfileResponse | null };
+        const dateOfBirth = toDateInputValue(payload.data?.dateOfBirth);
+
+        if (dateOfBirth) {
+          setClientForm((currentForm) => ({ ...currentForm, dateOfBirth }));
+        }
+      }
+    } catch {
+      // Profile details are optional for roster editing.
     }
   };
 
@@ -281,12 +377,11 @@ export function ClientsPage() {
 
             <button
               type="button"
-              aria-label="Export or import clients"
+              aria-label="Import clients CSV"
               className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
             >
               <Upload className="size-4" aria-hidden="true" />
-              <Download className="size-4" aria-hidden="true" />
-              CSV
+              Import CSV
             </button>
           </div>
         </div>
@@ -294,12 +389,14 @@ export function ClientsPage() {
 
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white" aria-label="Client roster table">
         <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-sm font-medium text-gray-700">
-          <div className="col-span-4 md:col-span-3">Client</div>
-          <div className="col-span-3 hidden md:block">Package</div>
-          <div className="col-span-3 md:col-span-2">Compliance Score</div>
-          <div className="col-span-2 hidden lg:block">Check-in Day</div>
-          <div className="col-span-2 hidden xl:block">Latest Check-in</div>
-          <div className="col-span-5 md:col-span-2 xl:col-span-1">Actions</div>
+          <div className={cn("col-span-4 md:col-span-3", canViewAssignedCoach ? "xl:col-span-2" : "xl:col-span-3")}>Client</div>
+          <div className="col-span-3 hidden md:block xl:col-span-2">Package</div>
+          {canViewAssignedCoach ? <div className="col-span-2 hidden xl:block">Coach</div> : null}
+          <div className="col-span-3 md:col-span-2">Compliance</div>
+          <div className="col-span-2 hidden lg:block xl:col-span-1">Check-in Day</div>
+          <div className="col-span-1 hidden xl:block">Latest Check-in</div>
+          <div className="col-span-3 md:col-span-2 xl:col-span-1">Actions</div>
+          <div className="col-span-2 md:col-span-2 xl:col-span-1">Status</div>
         </div>
 
         <div className="divide-y divide-gray-200">
@@ -309,7 +406,7 @@ export function ClientsPage() {
               data-testid="client-row"
               className="grid grid-cols-12 items-center gap-4 px-6 py-4 transition-colors hover:bg-gray-50"
             >
-              <div className="col-span-4 flex items-center gap-3 md:col-span-3">
+              <div className={cn("col-span-4 flex items-center gap-3 md:col-span-3", canViewAssignedCoach ? "xl:col-span-2" : "xl:col-span-3")}>
                 <div className={cn("flex size-12 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white", client.avatarColor)}>
                   {client.initials}
                 </div>
@@ -324,7 +421,13 @@ export function ClientsPage() {
                 </div>
               </div>
 
-              <div className="col-span-3 hidden text-sm text-gray-900 md:block">{client.packageName}</div>
+              <div className="col-span-3 hidden text-sm text-gray-900 md:block xl:col-span-2">{client.packageName}</div>
+
+              {canViewAssignedCoach ? (
+                <div className="col-span-2 hidden truncate text-sm text-gray-700 xl:block">
+                  {client.assignedCoachName || "Unassigned"}
+                </div>
+              ) : null}
 
               <div className="col-span-3 md:col-span-2">
                 <div className="flex items-center gap-2">
@@ -341,10 +444,10 @@ export function ClientsPage() {
                 </div>
               </div>
 
-              <div className="col-span-2 hidden text-sm text-gray-700 lg:block">{client.checkInDay}</div>
-              <div className="col-span-2 hidden text-sm text-gray-700 xl:block">{client.latestCheckIn}</div>
+              <div className="col-span-2 hidden text-sm text-gray-700 lg:block xl:col-span-1">{client.checkInDay}</div>
+              <div className="col-span-1 hidden truncate text-sm text-gray-700 xl:block">{client.latestCheckIn}</div>
 
-              <div className="col-span-5 flex items-center gap-2 md:col-span-2 xl:col-span-1">
+              <div className="col-span-3 flex items-center gap-2 md:col-span-2 xl:col-span-1">
                 <Link
                   href={`/clients/${client.id}` as Route}
                   aria-label={`View ${client.name} profile`}
@@ -369,6 +472,10 @@ export function ClientsPage() {
                   <Archive className="size-4 text-gray-600" aria-hidden="true" />
                 </button>
               </div>
+
+              <div className="col-span-2 flex md:col-span-2 xl:col-span-1">
+                <StatusBadge status={client.status} />
+              </div>
             </div>
           ))}
         </div>
@@ -386,6 +493,13 @@ export function ClientsPage() {
           form={clientForm}
           error={clientFormError}
           saving={savingClient}
+          packageOptions={packageOptions}
+          initialQuestionnaireOptions={initialQuestionnaireOptions}
+          dailyHabitFormOptions={dailyHabitFormOptions}
+          checkInFormOptions={checkInFormOptions}
+          trainingPlanOptions={trainingPlanOptions}
+          nutritionPlanOptions={nutritionPlanOptions}
+          supplementationPlanOptions={supplementationPlanOptions}
           onChange={(field, value) => setClientForm((currentForm) => ({ ...currentForm, [field]: value }))}
           onClose={closeClientForm}
           onSubmit={() => void saveClient()}
@@ -405,6 +519,30 @@ function MetricCard({ label, value, detail, tone }: { label: string; value: stri
   );
 }
 
+function StatusBadge({ status }: { status: ClientStatus }) {
+  const statusStyles: Record<ClientStatus, string> = {
+    active: "border-green-200 bg-green-50 text-green-700",
+    archived: "border-slate-200 bg-slate-100 text-slate-700",
+    new: "border-blue-200 bg-blue-50 text-blue-700",
+    deactivated: "border-orange-200 bg-orange-50 text-orange-700"
+  };
+
+  return (
+    <span
+      aria-label={`Client status ${formatClientStatus(status)}`}
+      className={cn(
+        "inline-flex min-w-24 justify-center rounded-full border px-3 py-1 text-xs font-semibold",
+        statusStyles[status]
+      )}
+    >
+      {formatClientStatus(status)}
+    </span>
+  );
+}
+
+function formatClientStatus(status: ClientStatus) {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
 
 function FilterCheckbox({ label, checked, onClick }: { label: string; checked: boolean; onClick: () => void }) {
   return (

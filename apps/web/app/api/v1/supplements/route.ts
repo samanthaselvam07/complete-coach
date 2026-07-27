@@ -16,6 +16,13 @@ export async function GET(request: Request) {
     const query = supplementListQuerySchema.parse(Object.fromEntries(new URL(request.url).searchParams));
     const supplements = await prisma.supplementLibraryItem.findMany({
       where: buildSupplementWhere(actor.organizationId, query),
+      include: {
+        coachDetails: {
+          where: { organizationId: actor.organizationId },
+          select: { affiliateLink: true },
+          take: 1
+        }
+      },
       orderBy: [{ scope: "asc" }, { name: "asc" }],
       take: query.limit
     });

@@ -16,8 +16,22 @@ export async function GET(request: Request) {
   try {
     const actor = requireActiveActor(await auth(), "clients:read");
     const query = clientListQuerySchema.parse(Object.fromEntries(new URL(request.url).searchParams));
+    const where = buildClientWhere(actor.organizationId, query);
     const clients = await prisma.client.findMany({
-      where: buildClientWhere(actor.organizationId, query),
+      where: canViewAllClients(actor.role)
+        ? where
+        : {
+            ...where,
+            primaryCoachUserId: actor.userId
+          },
+      include: {
+        primaryCoach: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
+      },
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
       take: query.limit
     });
@@ -26,6 +40,10 @@ export async function GET(request: Request) {
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+function canViewAllClients(role: string) {
+  return role === "owner" || role === "admin";
 }
 
 export async function POST(request: Request) {

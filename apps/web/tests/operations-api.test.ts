@@ -143,6 +143,7 @@ describe("operations persistence APIs", () => {
 
   it("creates tenant-scoped conversations for accessible clients", async () => {
     mocks.prisma.client.findFirst.mockResolvedValue(clientRecord);
+    mocks.prisma.conversation.findFirst.mockResolvedValue(null);
     mocks.prisma.conversation.create.mockResolvedValue(conversationRecord);
 
     const response = await createConversation(
@@ -168,6 +169,29 @@ describe("operations persistence APIs", () => {
     expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ action: "conversation.created" }) })
     );
+  });
+
+  it("reuses an existing tenant-scoped conversation for the client", async () => {
+    mocks.prisma.client.findFirst.mockResolvedValue(clientRecord);
+    mocks.prisma.conversation.findFirst.mockResolvedValue(conversationRecord);
+
+    const response = await createConversation(
+      new Request("http://test.local/api/v1/conversations", {
+        method: "POST",
+        body: JSON.stringify({ clientId: "client_1", title: "Sarah Johnson" })
+      })
+    );
+    const payload = (await response.json()) as { data: { id: string; clientName: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual(expect.objectContaining({ id: "conversation_1", clientName: "Sarah Johnson" }));
+    expect(mocks.prisma.conversation.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ organizationId: "org_1", clientId: "client_1" })
+      })
+    );
+    expect(mocks.prisma.conversation.create).not.toHaveBeenCalled();
+    expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
   });
 
   it("rejects conversation creation for inaccessible clients", async () => {

@@ -184,11 +184,13 @@ describe("supplement record mappers", () => {
         tags: ["sleep"],
         imageObjectId: null,
         createdAt: "2026-06-01",
-        updatedAt: new Date("2026-06-02T00:00:00.000Z")
+        updatedAt: new Date("2026-06-02T00:00:00.000Z"),
+        coachDetails: [{ affiliateLink: "https://completecoach.fit/magnesium" }]
       })
     ).toMatchObject({
       scope: "global",
       tags: ["sleep"],
+      affiliateLink: "https://completecoach.fit/magnesium",
       createdAt: "2026-06-01T00:00:00.000Z",
       updatedAt: "2026-06-02T00:00:00.000Z"
     });

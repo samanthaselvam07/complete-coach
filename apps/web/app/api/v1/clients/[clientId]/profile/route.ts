@@ -12,6 +12,8 @@ const profileSchema = z.object({
   injuries: z.array(z.string().trim().max(200)).optional(),
   medicalNotes: z.string().trim().max(5000).optional(),
   bio: z.string().trim().max(5000).optional(),
+  waterTargetLitres: z.number().min(0).max(20).nullable().optional(),
+  stepTarget: z.number().int().min(0).max(100000).nullable().optional(),
   emergencyContact: z
     .object({
       name: z.string().trim().max(160),
@@ -83,6 +85,8 @@ export async function PATCH(request: Request, context: ClientProfileRouteContext
         injuries: input.injuries,
         medicalNotes: input.medicalNotes,
         bio: input.bio,
+        waterTargetLitres: input.waterTargetLitres,
+        stepTarget: input.stepTarget,
         emergencyContact: input.emergencyContact
       },
       create: {
@@ -94,6 +98,8 @@ export async function PATCH(request: Request, context: ClientProfileRouteContext
         injuries: input.injuries,
         medicalNotes: input.medicalNotes,
         bio: input.bio,
+        waterTargetLitres: input.waterTargetLitres,
+        stepTarget: input.stepTarget,
         emergencyContact: input.emergencyContact
       }
     });

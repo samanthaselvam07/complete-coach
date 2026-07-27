@@ -50,6 +50,28 @@ export async function POST(request: Request) {
       return errorResponse("not_found", "Client not found.", 404);
     }
 
+    const existingConversation = await prisma.conversation.findFirst({
+      where: {
+        organizationId: actor.organizationId,
+        clientId: client.id
+      },
+      include: {
+        client: { select: { firstName: true, lastName: true } },
+        messages: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: "desc" },
+          take: 1
+        }
+      },
+      orderBy: { updatedAt: "desc" }
+    });
+
+    if (existingConversation) {
+      return dataResponse(serializeConversation(existingConversation), {
+        headers: { Location: `/api/v1/conversations/${existingConversation.id}/messages` }
+      });
+    }
+
     const conversation = await prisma.conversation.create({
       data: getConversationCreateData(actor.organizationId, input),
       include: {

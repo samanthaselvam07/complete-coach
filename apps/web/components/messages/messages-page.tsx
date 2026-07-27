@@ -52,7 +52,11 @@ export function MessagesPage() {
 
         const payload = (await response.json()) as { data: ApiConversation[] };
         const apiConversations = payload.data.map(mapApiConversation);
-        const firstConversationId = apiConversations[0]?.id ?? "";
+        const requestedConversationId = getRequestedConversationId();
+        const firstConversationId =
+          apiConversations.find((conversation) => conversation.id === requestedConversationId)?.id ??
+          apiConversations[0]?.id ??
+          "";
         let firstMessages: ChatMessage[] = [];
 
         if (firstConversationId) {
@@ -358,6 +362,14 @@ function updateConversationPreview(conversationsToUpdate: UiConversation[], conv
   return conversationsToUpdate.map((conversation) =>
     conversation.id === conversationId ? { ...conversation, lastMessage: text, time: "Now" } : conversation
   );
+}
+
+function getRequestedConversationId() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return new URLSearchParams(window.location.search).get("conversation") ?? "";
 }
 
 function getInitials(name: string) {

@@ -60,6 +60,7 @@ const mocks = vi.hoisted(() => ({
       create: vi.fn()
     },
     clientMeasurement: {
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       upsert: vi.fn()
     }
@@ -210,6 +211,7 @@ describe("submissions, check-ins, and metrics APIs", () => {
     mocks.prisma.lead.findFirst.mockReset();
     mocks.prisma.lead.update.mockReset();
     mocks.prisma.leadActivity.create.mockReset();
+    mocks.prisma.clientMeasurement.findFirst.mockReset();
     mocks.prisma.clientMeasurement.findMany.mockReset();
     mocks.prisma.clientMeasurement.upsert.mockReset();
   });
@@ -794,6 +796,75 @@ describe("submissions, check-ins, and metrics APIs", () => {
         })
       })
     );
+  });
+
+  it("returns starting and current body weight summaries from client measurements", async () => {
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1" });
+    mocks.prisma.clientMeasurement.findFirst
+      .mockResolvedValueOnce({
+        id: "metric_start",
+        clientId: "client_1",
+        sourceType: "form_submission",
+        sourceId: "submission_start",
+        measuredAt: new Date("2026-05-01T00:00:00.000Z"),
+        metricKey: "body_weight",
+        metricValue: 84.2,
+        unit: "kg",
+        metadata: { fieldId: "body-weight", label: "Body weight" },
+        createdAt: new Date("2026-05-01T00:00:00.000Z")
+      })
+      .mockResolvedValueOnce({
+        id: "metric_current",
+        clientId: "client_1",
+        sourceType: "form_submission",
+        sourceId: "submission_current",
+        measuredAt: new Date("2026-07-22T00:00:00.000Z"),
+        metricKey: "body_weight",
+        metricValue: 81.7,
+        unit: "kg",
+        metadata: { fieldId: "body-weight", label: "Body weight" },
+        createdAt: new Date("2026-07-22T00:00:00.000Z")
+      });
+
+    const response = await getClientMetrics(
+      new Request("http://test.local/api/v1/clients/client_1/metrics?summary=weight"),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as {
+      data: {
+        startingWeight: { metricValue: number; measuredAt: string } | null;
+        currentWeight: { metricValue: number; measuredAt: string } | null;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.startingWeight).toMatchObject({
+      metricValue: 84.2,
+      measuredAt: "2026-05-01T00:00:00.000Z"
+    });
+    expect(payload.data.currentWeight).toMatchObject({
+      metricValue: 81.7,
+      measuredAt: "2026-07-22T00:00:00.000Z"
+    });
+    expect(mocks.prisma.clientMeasurement.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          clientId: "client_1",
+          metricKey: "body_weight"
+        }),
+        orderBy: [{ measuredAt: "asc" }, { createdAt: "asc" }]
+      })
+    );
+    expect(mocks.prisma.clientMeasurement.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          clientId: "client_1",
+          metricKey: "body_weight"
+        }),
+        orderBy: [{ measuredAt: "desc" }, { createdAt: "desc" }]
+      })
+    );
+    expect(mocks.prisma.clientMeasurement.findMany).not.toHaveBeenCalled();
   });
 
   it("serializes sparse records with stable fallback values", () => {

@@ -8,7 +8,9 @@ export interface ClientSummary {
   checkInDay: string;
   latestCheckIn: string;
   status: ClientStatus;
+  assignedCoachName?: string | null;
   startDate: string;
+  timezone?: string | null;
   initials: string;
   avatarColor: string;
 }
@@ -22,6 +24,8 @@ export interface ClientMetric {
 
 export interface ClientProfile extends ClientSummary {
   age: number;
+  waterTargetLitres?: number | null;
+  stepTarget?: number | null;
   weeksWithCoach: number;
   protocol: string;
   bio: string;

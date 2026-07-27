@@ -142,6 +142,7 @@ interface SupplementRecord {
   imageObjectId: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+  coachDetails?: Array<{ affiliateLink: string | null }>;
 }
 
 interface SupplementTemplateRecord {
@@ -308,6 +309,7 @@ export function serializeSupplement(record: SupplementRecord) {
     clinicalDescription: record.clinicalDescription,
     tags: Array.isArray(record.tags) ? record.tags : [],
     imageObjectId: record.imageObjectId,
+    affiliateLink: record.coachDetails?.[0]?.affiliateLink ?? "",
     createdAt: toIsoDate(record.createdAt),
     updatedAt: toIsoDate(record.updatedAt)
   };

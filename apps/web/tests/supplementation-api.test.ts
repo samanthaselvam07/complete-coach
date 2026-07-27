@@ -187,21 +187,31 @@ describe("supplementation persistence APIs", () => {
   });
 
   it("lists global and private supplements for the active organization", async () => {
-    mocks.prisma.supplementLibraryItem.findMany.mockResolvedValue([globalSupplement, privateSupplement]);
+    mocks.prisma.supplementLibraryItem.findMany.mockResolvedValue([
+      { ...globalSupplement, coachDetails: [supplementCoachDetail] },
+      { ...privateSupplement, coachDetails: [] }
+    ]);
 
     const response = await getSupplements(new Request("http://test.local/api/v1/supplements?search=creatine"));
-    const payload = (await response.json()) as { data: Array<{ id: string; scope: string }> };
+    const payload = (await response.json()) as { data: Array<{ id: string; scope: string; affiliateLink: string }> };
 
     expect(response.status).toBe(200);
     expect(payload.data).toEqual([
-      expect.objectContaining({ id: "supplement_global", scope: "global" }),
-      expect.objectContaining({ id: "supplement_private", scope: "private" })
+      expect.objectContaining({ id: "supplement_global", scope: "global", affiliateLink: "https://completecoach.fit/recommended" }),
+      expect.objectContaining({ id: "supplement_private", scope: "private", affiliateLink: "" })
     ]);
     expect(mocks.prisma.supplementLibraryItem.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           OR: [{ scope: LibraryScope.GLOBAL }, { organizationId: "org_1" }]
-        })
+        }),
+        include: {
+          coachDetails: {
+            where: { organizationId: "org_1" },
+            select: { affiliateLink: true },
+            take: 1
+          }
+        }
       })
     );
   });

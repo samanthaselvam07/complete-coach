@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import {
@@ -8,7 +9,6 @@ import {
   emptyClientForm,
   type ClientFormState
 } from "@/components/clients/client-form-dialog";
-import { SavedToast } from "@/components/ui/saved-toast";
 
 interface IntakeInitialForm {
   firstName?: string;
@@ -31,6 +31,7 @@ interface LookupRecord {
 const clientCreateFallbackError = "Client could not be created. Check the details and try again.";
 
 export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeInitialForm }) {
+  const router = useRouter();
   const [form, setForm] = useState<ClientFormState>({ ...emptyClientForm, ...initialForm });
   const [packageOptions, setPackageOptions] = useState<SelectOption[]>([]);
   const [initialQuestionnaireOptions, setInitialQuestionnaireOptions] = useState<SelectOption[]>([]);
@@ -38,7 +39,6 @@ export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeIniti
   const [checkInFormOptions, setCheckInFormOptions] = useState<SelectOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [createdClientId, setCreatedClientId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -111,7 +111,6 @@ export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeIniti
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setCreatedClientId(null);
 
     if (!form.firstName.trim() || !form.lastName.trim()) {
       setError("Enter the client's first and last name.");
@@ -131,15 +130,7 @@ export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeIniti
         throw new Error(await readClientCreateError(response));
       }
 
-      const payload = (await response.json()) as { id?: string; data?: { id?: string } };
-      const nextClientId = payload.data?.id ?? payload.id;
-
-      if (!nextClientId) {
-        throw new Error(clientCreateFallbackError);
-      }
-
-      setCreatedClientId(nextClientId);
-      setForm(emptyClientForm);
+      router.push("/clients");
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : clientCreateFallbackError);
     } finally {
@@ -285,14 +276,6 @@ export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeIniti
         </div>
 
         {error ? <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">{error}</p> : null}
-        {createdClientId ? (
-          <>
-            <SavedToast message="Client created." />
-            <Link className="mt-1 inline-flex text-indigo-700 underline" href={`/clients/${createdClientId}`}>
-              Open client profile
-            </Link>
-          </>
-        ) : null}
 
         <div className="mt-6 flex flex-wrap gap-3">
           <button
@@ -441,7 +424,7 @@ function SegmentedBooleanField({
           type="button"
           aria-label={noLabel}
           aria-pressed={!value}
-          className={`px-4 py-2 text-sm font-bold ${!value ? "bg-white text-slate-700" : "text-slate-700"}`}
+          className={`px-4 py-2 text-sm font-bold ${!value ? "bg-orange-500 text-white" : "text-slate-700"}`}
           onClick={() => onChange(false)}
         >
           No

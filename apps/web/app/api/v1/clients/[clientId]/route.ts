@@ -55,6 +55,7 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
         ...(input.email ? { email: input.email.toLowerCase() } : {}),
         ...(input.phone ? { phone: input.phone } : {}),
         ...(input.status ? { status: toPrismaClientStatus(input.status) } : {}),
+        ...(input.packageId ? { packageId: input.packageId } : {}),
         ...(input.packageName ? { packageName: input.packageName } : {}),
         ...(input.checkInDay ? { checkInDay: input.checkInDay } : {}),
         ...(input.timezone ? { timezone: input.timezone } : {}),

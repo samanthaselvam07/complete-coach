@@ -42,6 +42,7 @@ export const clientMetricsQuerySchema = z.object({
   metricKey: z.string().min(1).max(80).optional(),
   dateFrom: z.string().datetime().optional(),
   dateTo: z.string().datetime().optional(),
+  summary: z.enum(["weight"]).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100)
 });
 

@@ -18,6 +18,7 @@ interface ApiSupplement {
   dosage?: string | null;
   bioavailabilityNotes?: string | null;
   clinicalDescription?: string | null;
+  affiliateLink?: string;
   scope?: string;
 }
 
@@ -57,7 +58,17 @@ interface ProtocolSupplement {
 
 const timingPresets: TimingPreset[] = ["Morning", "Afternoon", "Evening"];
 
-export function SupplementProtocolBuilderPage({ templateId }: { templateId?: string }) {
+export function SupplementProtocolBuilderPage({
+  templateId,
+  embedded = false,
+  onBack,
+  onSaved
+}: {
+  templateId?: string;
+  embedded?: boolean;
+  onBack?: () => void;
+  onSaved?: () => void;
+}) {
   const router = useRouter();
   const [persistedTemplateId, setPersistedTemplateId] = useState(templateId ?? "");
   const [protocolName, setProtocolName] = useState("");
@@ -176,7 +187,7 @@ export function SupplementProtocolBuilderPage({ templateId }: { templateId?: str
           specificTime: "",
           dosage: "",
           instructions: "",
-          productUrl: "",
+          productUrl: supplement.affiliateLink ?? "",
           clinicalNotes: formatClinicalNotes(supplement)
         }
       ];
@@ -271,7 +282,9 @@ export function SupplementProtocolBuilderPage({ templateId }: { templateId?: str
 
       setStatusMessage(`${protocolName.trim()} saved.`);
 
-      if (closeAfterSave) {
+      if (closeAfterSave && embedded) {
+        onSaved?.();
+      } else if (closeAfterSave) {
         router.replace("/supplementation/plans");
         router.refresh();
       }
@@ -287,10 +300,17 @@ export function SupplementProtocolBuilderPage({ templateId }: { templateId?: str
       {statusMessage ? <SavedToast message={statusMessage} /> : null}
       <header>
         <div>
-          <Link href="/supplementation/plans" className="mb-4 inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600">
-            <ArrowLeft className="size-4" aria-hidden="true" />
-            Back to supplement protocols
-          </Link>
+          {embedded ? (
+            <button type="button" className="mb-4 inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600" onClick={onBack}>
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              Back to supplementation
+            </button>
+          ) : (
+            <Link href="/supplementation/plans" className="mb-4 inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600">
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              Back to supplement protocols
+            </Link>
+          )}
           <h1 className="text-3xl font-black text-slate-950">{persistedTemplateId ? "Edit Supplement Protocol" : "Create Supplement Protocol"}</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
             Build a reusable protocol from your supplement database, then configure dosage, timing, and client-facing instructions.

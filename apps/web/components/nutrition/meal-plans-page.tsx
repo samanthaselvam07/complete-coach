@@ -13,7 +13,7 @@ import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
 
 type MealPlanTab = "Meal Plans" | "Meal Templates";
-type NutritionPlanBuilderMode = "full" | "macro-day" | "macro-meal";
+export type NutritionPlanBuilderMode = "full" | "macro-day" | "macro-meal";
 export type MealPlanSource = "api" | "fixtures";
 
 type FoodDatabaseSource = "AUS/NZ" | "EFSA" | "USDA";
@@ -319,7 +319,7 @@ export interface MealAssignmentRow {
   apiTemplate: ApiMealPlanTemplate | null;
 }
 
-interface MealPlanTemplateSaveInput {
+export interface MealPlanTemplateSaveInput {
   name: string;
   phase: string;
   targetCalories: number;
@@ -932,7 +932,7 @@ function MacroPlanChoiceDialog({
   );
 }
 
-function NutritionPlanBuilder({
+export function NutritionPlanBuilder({
   mode,
   initialPlan,
   initialTemplate,

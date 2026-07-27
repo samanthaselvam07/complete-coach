@@ -10,9 +10,19 @@ import { SettingsPage } from "@/components/settings/settings-page";
 import { CreatePostPage } from "@/components/social/create-post-page";
 
 const fetchMock = vi.fn();
+const navigationMocks = vi.hoisted(() => ({
+  push: vi.fn()
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: navigationMocks.push
+  })
+}));
 
 beforeEach(() => {
   fetchMock.mockReset();
+  navigationMocks.push.mockReset();
   global.fetch = fetchMock;
 });
 
@@ -72,12 +82,7 @@ describe("Figma update pages", () => {
       }
     });
 
-    expect(await screen.findByText("Client created.")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Saved");
-    expect(screen.getByRole("link", { name: "Open client profile" })).toHaveAttribute(
-      "href",
-      "/clients/client_created_1",
-    );
+    await waitFor(() => expect(navigationMocks.push).toHaveBeenCalledWith("/clients"));
   });
 
   it("renders the new client onboarding controls without removed options", async () => {
@@ -133,6 +138,7 @@ describe("Figma update pages", () => {
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Ben" } });
     fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Taylor" } });
     fireEvent.click(screen.getByRole("button", { name: "No, set up offline payment" }));
+    expect(screen.getByRole("button", { name: "No, set up offline payment" })).toHaveClass("bg-orange-500");
     fireEvent.click(screen.getByRole("button", { name: "Create client" }));
 
     await waitFor(() => {

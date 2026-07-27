@@ -140,7 +140,6 @@ describe("platform billing access rules", () => {
   });
 
   it("blocks incomplete, unpaid, expired, and ended subscriptions", () => {
-    expect(evaluatePlatformBillingAccess("not_started").canUsePlatform).toBe(false);
     expect(evaluatePlatformBillingAccess("incomplete").canUsePlatform).toBe(false);
     expect(evaluatePlatformBillingAccess("unpaid").canUsePlatform).toBe(false);
     expect(evaluatePlatformBillingAccess("incomplete_expired").canUsePlatform).toBe(false);
@@ -151,6 +150,16 @@ describe("platform billing access rules", () => {
         state: "blocked",
         canUsePlatform: false,
         reason: "subscription_inactive"
+      })
+    );
+  });
+
+  it("allows setup access before the first platform subscription is started", () => {
+    expect(evaluatePlatformBillingAccess("not_started")).toEqual(
+      expect.objectContaining({
+        state: "warning",
+        canUsePlatform: true,
+        reason: "subscription_required"
       })
     );
   });

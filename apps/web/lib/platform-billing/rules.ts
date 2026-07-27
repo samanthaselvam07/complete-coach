@@ -26,10 +26,10 @@ export function evaluatePlatformBillingAccess(status: string | null | undefined)
 
   if (normalizedStatus === "not_started") {
     return {
-      state: "blocked",
-      canUsePlatform: false,
+      state: "warning",
+      canUsePlatform: true,
       reason: "subscription_required",
-      message: "Choose a Complete Coach plan to activate platform access."
+      message: "Choose a Complete Coach plan to keep platform access active."
     };
   }
 

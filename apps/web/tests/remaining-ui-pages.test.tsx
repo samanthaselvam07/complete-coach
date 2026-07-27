@@ -41,6 +41,7 @@ afterEach(() => {
   navigationMocks.push.mockReset();
   navigationMocks.refresh.mockReset();
   navigationMocks.replace.mockReset();
+  window.history.replaceState(null, "", "/");
   window.localStorage?.clear();
 });
 
@@ -366,6 +367,69 @@ describe("OrganizationSettingsPage", () => {
 });
 
 describe("MessagesPage", () => {
+  it("opens the conversation from the conversation query parameter", async () => {
+    window.history.pushState(null, "", "/messages?conversation=conversation_marcus");
+    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/v1/conversations?")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "conversation_sarah",
+                  clientName: "Sarah Johnson",
+                  title: null,
+                  latestMessage: null,
+                  updatedAt: "2026-05-18T09:15:00.000Z"
+                },
+                {
+                  id: "conversation_marcus",
+                  clientName: "Marcus Chen",
+                  title: null,
+                  latestMessage: {
+                    id: "message_marcus_latest",
+                    senderType: "client",
+                    body: "Can we reschedule tomorrow's session?",
+                    createdAt: "2026-05-18T10:15:00.000Z"
+                  },
+                  updatedAt: "2026-05-18T10:15:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/conversations/conversation_marcus/messages?limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "message_marcus_1",
+                  senderType: "client",
+                  body: "Can we reschedule tomorrow's session?",
+                  createdAt: "2026-05-18T10:15:00.000Z"
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(createElement(MessagesPage));
+
+    expect(await screen.findByRole("heading", { level: 2, name: "Marcus Chen" })).toBeInTheDocument();
+    expect(screen.getByRole("log", { name: "Conversation with Marcus Chen" })).toBeInTheDocument();
+  });
+
   it("selects persisted conversations and sends a message through the API", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);

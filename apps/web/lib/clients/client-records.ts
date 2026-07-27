@@ -65,9 +65,14 @@ interface ClientRecord {
   status: ClientStatus;
   packageName: string | null;
   checkInDay: string | null;
+  timezone?: string | null;
   startDate: Date | string | null;
   latestCheckInAt: Date | string | null;
   compliance: number;
+  primaryCoach?: {
+    name: string | null;
+    email: string | null;
+  } | null;
 }
 
 export function toPrismaClientStatus(status: ApiClientStatus) {
@@ -103,7 +108,9 @@ export function serializeClient(record: ClientRecord): ClientSummary {
     checkInDay: record.checkInDay || "Unscheduled",
     latestCheckIn: formatDisplayDate(record.latestCheckInAt),
     status: statusFromPrisma[record.status],
+    assignedCoachName: record.primaryCoach?.name || record.primaryCoach?.email || null,
     startDate: formatDisplayDate(record.startDate),
+    timezone: record.timezone || "UTC",
     initials: getInitials(record.firstName, record.lastName),
     avatarColor: "bg-slate-900"
   };

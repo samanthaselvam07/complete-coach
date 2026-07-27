@@ -1,17 +1,54 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, MessageSquare, Pencil, Video } from "lucide-react";
+import { ChevronLeft, Droplets, Footprints, LineChart, MessageSquare, NotebookPen, Pencil, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import { CheckInDetailPage } from "@/components/check-ins/check-in-detail-page";
 import { CheckInHistoryPanel, DailyCheckInsPanel } from "@/components/clients/client-check-in-panels";
-import { ClientProfileDashboard } from "@/components/clients/client-profile-dashboard";
+import {
+  assignSelectedClientPlans,
+  type ClientProfileResponse,
+  fetchClientFormOptions,
+  fetchAssignedClientPlanIds,
+  scheduleAssignedPackagePaymentChange,
+  toDateInputValue,
+  updateClientProfile
+} from "@/components/clients/client-form-actions";
+import {
+  ClientFormDialog,
+  type ClientFormOption,
+  clientSummaryToForm,
+  createClientMutationBody,
+  emptyClientForm,
+  type ClientFormState
+} from "@/components/clients/client-form-dialog";
+import { ClientCalendarPanel, ClientProfileDashboard, ClientRoadmapPeriodisationPanel, ProgressAnalyticsCard } from "@/components/clients/client-profile-dashboard";
+import {
+  type ApiMealPlanTemplate,
+  type MealTemplateCard,
+  type MealAssignmentRow,
+  type MealPlanTemplateSaveInput,
+  NutritionPlanBuilder
+} from "@/components/nutrition/meal-plans-page";
+import { SupplementProtocolBuilderPage } from "@/components/supplementation/supplement-protocol-builder-page";
+import {
+  createTrainingProgramDraftFromTemplate,
+  getProgramSectionLabel,
+  getTrainingProgramTemplatePayload,
+  TrainingProgramBuilder,
+  type TrainingProgramDraft,
+  type TrainingProgramSection,
+  type TrainingProgramTemplateDraftSource
+} from "@/components/training/training-program-builder";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import type { ClientProfile, ClientSummary } from "@/lib/clients/client-models";
+import type { ClientNoteSummary } from "@/lib/clients/client-notes";
 import { cn } from "@/lib/utils";
 
-type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "Supplementation" | "Check-Ins";
+type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "Supplementation" | "Roadmap" | "Calendar" | "Check-Ins";
 
 interface ClientProfilePageProps {
   clientId: string;
@@ -24,42 +61,70 @@ interface ApiClientProfile {
   bio?: string | null;
   goals?: string[];
   dateOfBirth?: string | null;
+  waterTargetLitres?: number | string | null;
+  stepTarget?: number | null;
+}
+
+interface ApiMetric {
+  measuredAt: string;
+  metricValue: number;
+  unit: string | null;
+}
+
+interface ApiWeightSummary {
+  startingWeight: ApiMetric | null;
+  currentWeight: ApiMetric | null;
 }
 
 interface ApiTrainingAssignment {
   id: string;
-  name: string;
+  templateId?: string | null;
+  name?: string;
   status: "active" | "paused" | "completed" | "cancelled";
-  startsOn: string;
-  endsOn: string | null;
-  snapshot: {
+  startsOn?: string;
+  endsOn?: string | null;
+  snapshot?: {
+    templateId?: string;
     templateName?: string;
+    goal?: string | null;
     durationWeeks?: number;
     template?: {
       days?: Array<{
         name: string;
         exercises?: Array<{
+          exerciseId?: string;
           exerciseName: string;
           sets: number;
           reps: string;
+          restSeconds?: number;
+          rpe?: string;
+          rir?: string;
+          section?: TrainingProgramSection;
+          videoObjectKey?: string;
+          imageObjectKey?: string;
+          notes?: string;
+          primaryMuscles?: string[];
         }>;
       }>;
+      instructions?: string;
     };
   };
 }
 
 interface ApiMealPlanAssignment {
   id: string;
-  name: string;
+  templateId?: string | null;
+  name?: string;
   phase: string | null;
   status: "active" | "paused" | "completed" | "cancelled";
   targetCalories: number;
   proteinGrams: number;
   carbsGrams: number;
   fatGrams: number;
-  startsOn: string;
-  endsOn: string | null;
-  snapshot: {
+  startsOn?: string;
+  endsOn?: string | null;
+  snapshot?: {
+    templateId?: string;
     templateName?: string;
     phase?: string | null;
     targetCalories?: number;
@@ -85,18 +150,48 @@ interface ApiMealPlanAssignment {
   };
 }
 
+interface ApiSupplementPlanAssignment {
+  id: string;
+  templateId?: string | null;
+  name?: string;
+  status: "active" | "paused" | "completed" | "cancelled";
+  startsOn?: string;
+  endsOn?: string | null;
+  snapshot?: {
+    templateId?: string;
+    templateName?: string;
+    description?: string | null;
+    template?: {
+      phases?: Array<{
+        name: string;
+        supplements?: Array<{
+          supplementId?: string;
+          supplementName: string;
+          dosage: string;
+          timing: string;
+          notes?: string;
+        }>;
+      }>;
+    };
+  };
+}
+
 interface ClientTrainingProgram {
   id: string;
+  templateId: string | null;
   name: string;
   status: ApiTrainingAssignment["status"];
   startsOn: string;
   endsOn: string | null;
   durationWeeks: number;
   sessions: ClientProfile["trainingSchedule"];
+  template: TrainingProgramTemplateDraftSource["template"];
+  draftSource: TrainingProgramTemplateDraftSource;
 }
 
 interface ClientNutritionPlan {
   id: string;
+  templateId: string | null;
   name: string;
   phase: string;
   status: ApiMealPlanAssignment["status"];
@@ -106,11 +201,45 @@ interface ClientNutritionPlan {
   protein: number;
   carbs: number;
   fats: number;
+  days: Array<{
+    name: string;
+    meals: Array<{
+      meal: string;
+      foods: Array<{
+        foodName: string;
+        servingSize: string;
+        calories: number;
+        proteinGrams: number;
+        carbsGrams: number;
+        fatGrams: number;
+      }>;
+    }>;
+  }>;
   meals: Array<{
     day: string;
     meal: string;
     foods: string;
     calories: number;
+  }>;
+  apiTemplate: ApiMealPlanTemplate | null;
+}
+
+interface ClientSupplementProtocol {
+  id: string;
+  templateId: string | null;
+  name: string;
+  status: ApiSupplementPlanAssignment["status"];
+  startsOn: string;
+  endsOn: string | null;
+  phases: Array<{
+    name: string;
+    supplements: Array<{
+      supplementId?: string;
+      supplementName: string;
+      dosage: string;
+      timing: string;
+      notes?: string;
+    }>;
   }>;
 }
 
@@ -119,9 +248,11 @@ interface ClientProfileView extends ClientProfile {
   trainingSource: "api";
   nutritionPlans: ClientNutritionPlan[];
   nutritionSource: "api";
+  supplementProtocols: ClientSupplementProtocol[];
 }
 
-const tabs: ProfileTab[] = ["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Check-Ins"];
+const tabs: ProfileTab[] = ["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Roadmap", "Calendar", "Check-Ins"];
+const todayDate = () => new Date().toISOString().slice(0, 10);
 
 export function ClientProfilePage({
   clientId,
@@ -130,8 +261,23 @@ export function ClientProfilePage({
   initialTab = "Dashboard"
 }: ClientProfilePageProps) {
   const [client, setClient] = useState<ClientProfileView | null>(null);
+  const [recentNotes, setRecentNotes] = useState<ClientNoteSummary[]>([]);
   const [loadingClient, setLoadingClient] = useState(true);
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
+  const [editingClient, setEditingClient] = useState<ClientProfileView | null>(null);
+  const [clientForm, setClientForm] = useState<ClientFormState>(emptyClientForm);
+  const [clientFormOpen, setClientFormOpen] = useState(false);
+  const [clientFormError, setClientFormError] = useState<string | null>(null);
+  const [savingClient, setSavingClient] = useState(false);
+  const [messageError, setMessageError] = useState<string | null>(null);
+  const router = useRouter();
+  const [packageOptions, setPackageOptions] = useState<ClientFormOption[]>([]);
+  const [initialQuestionnaireOptions, setInitialQuestionnaireOptions] = useState<ClientFormOption[]>([]);
+  const [dailyHabitFormOptions, setDailyHabitFormOptions] = useState<ClientFormOption[]>([]);
+  const [checkInFormOptions, setCheckInFormOptions] = useState<ClientFormOption[]>([]);
+  const [trainingPlanOptions, setTrainingPlanOptions] = useState<ClientFormOption[]>([]);
+  const [nutritionPlanOptions, setNutritionPlanOptions] = useState<ClientFormOption[]>([]);
+  const [supplementationPlanOptions, setSupplementationPlanOptions] = useState<ClientFormOption[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -147,17 +293,22 @@ export function ClientProfilePage({
         const payload = (await response.json()) as { data?: ClientSummary };
 
         if (active && payload.data) {
-          const [profile, trainingAssignments, mealPlanAssignments] = await Promise.all([
+          const [profile, trainingAssignments, mealPlanAssignments, notes, weightSummary] = await Promise.all([
             loadPersistedProfile(clientId),
             loadPersistedTraining(clientId),
-            loadPersistedMealPlans(clientId)
+            loadPersistedMealPlans(clientId),
+            loadPersistedNotes(clientId, 3),
+            loadPersistedWeightSummary(clientId)
           ]);
+          const supplementAssignments = await loadPersistedSupplementPlans(clientId).catch(() => []);
 
-          setClient(createProfileFromSummary(payload.data, profile, trainingAssignments, mealPlanAssignments));
+          setClient(createProfileFromSummary(payload.data, profile, trainingAssignments, mealPlanAssignments, supplementAssignments, weightSummary));
+          setRecentNotes(notes);
         }
       } catch {
         if (active) {
           setClient(null);
+          setRecentNotes([]);
         }
       } finally {
         if (active) {
@@ -173,6 +324,144 @@ export function ClientProfilePage({
     };
   }, [clientId]);
 
+  const openEditClient = (clientToEdit: ClientProfileView) => {
+    setEditingClient(clientToEdit);
+    setClientForm(clientSummaryToForm(clientToEdit));
+    setClientFormError(null);
+    setClientFormOpen(true);
+    void loadClientFormOptions();
+    void loadClientFormProfile(clientToEdit.id);
+  };
+
+  const closeClientForm = () => {
+    setClientFormOpen(false);
+    setEditingClient(null);
+    setClientForm(emptyClientForm);
+    setClientFormError(null);
+  };
+
+  const saveClient = async () => {
+    if (!editingClient) {
+      return;
+    }
+
+    setSavingClient(true);
+    setClientFormError(null);
+
+    try {
+      const response = await fetch(`/api/v1/clients/${editingClient.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createClientMutationBody(clientForm, editingClient.status, true))
+      });
+
+      if (!response.ok) {
+        throw new Error("Client could not be saved.");
+      }
+
+      await updateClientProfile(editingClient.id, clientForm);
+      await assignSelectedClientPlans(editingClient.id, clientForm);
+      await scheduleAssignedPackagePaymentChange(clientForm);
+
+      const payload = (await response.json()) as { data?: ClientSummary };
+
+      if (payload.data) {
+        setClient((currentClient) => (currentClient ? { ...currentClient, ...payload.data } : currentClient));
+      }
+
+      closeClientForm();
+    } catch {
+      setClientFormError("Client could not be saved. Check the details and try again.");
+    } finally {
+      setSavingClient(false);
+    }
+  };
+
+  const loadClientFormProfile = async (profileClientId: string) => {
+    try {
+      const [response, assignedPlanIds] = await Promise.all([
+        fetch(`/api/v1/clients/${profileClientId}/profile`),
+        fetchAssignedClientPlanIds(profileClientId)
+      ]);
+
+      setClientForm((currentForm) => ({
+        ...currentForm,
+        trainingPlanIds: assignedPlanIds.trainingPlanIds,
+        nutritionPlanIds: assignedPlanIds.nutritionPlanIds,
+        supplementationPlanIds: assignedPlanIds.supplementationPlanIds
+      }));
+
+      if (response.ok) {
+        const payload = (await response.json()) as { data?: ClientProfileResponse | null };
+        const dateOfBirth = toDateInputValue(payload.data?.dateOfBirth);
+
+        if (dateOfBirth) {
+          setClientForm((currentForm) => ({ ...currentForm, dateOfBirth }));
+        }
+      }
+    } catch {
+      // Profile details are optional for profile editing.
+    }
+  };
+
+  const loadClientFormOptions = async () => {
+    const [
+      packages,
+      intakeForms,
+      habitForms,
+      checkInForms,
+      trainingPlans,
+      nutritionPlans,
+      supplementationPlans
+    ] = await Promise.all([
+      fetchClientFormOptions("/api/v1/packages?status=active&limit=100"),
+      fetchClientFormOptions("/api/v1/forms?type=intake&status=published&limit=100"),
+      fetchClientFormOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
+      fetchClientFormOptions("/api/v1/forms?type=check-in&status=published&limit=100"),
+      fetchClientFormOptions("/api/v1/training-program-templates?limit=100"),
+      fetchClientFormOptions("/api/v1/meal-plan-templates?limit=100"),
+      fetchClientFormOptions("/api/v1/supplement-plan-templates?limit=100")
+    ]);
+
+    setPackageOptions(packages);
+    setInitialQuestionnaireOptions(intakeForms);
+    setDailyHabitFormOptions(habitForms);
+    setCheckInFormOptions(checkInForms);
+    setTrainingPlanOptions(trainingPlans);
+    setNutritionPlanOptions(nutritionPlans);
+    setSupplementationPlanOptions(supplementationPlans);
+  };
+
+  const openClientMessages = async () => {
+    if (!client) {
+      return;
+    }
+
+    setMessageError(null);
+
+    try {
+      const response = await fetch("/api/v1/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId: client.id, title: client.name })
+      });
+
+      if (!response.ok) {
+        throw new Error("Conversation could not be opened.");
+      }
+
+      const payload = (await response.json()) as { data?: { id: string } };
+      const conversationId = payload.data?.id;
+
+      if (!conversationId) {
+        throw new Error("Conversation could not be opened.");
+      }
+
+      router.push(`/messages?conversation=${encodeURIComponent(conversationId)}`);
+    } catch {
+      setMessageError("Client messages could not be opened. Please try again.");
+    }
+  };
   if (!client && loadingClient) {
     return (
       <CompleteCoachLoadingScreen
@@ -207,10 +496,17 @@ export function ClientProfilePage({
         <span className="font-semibold text-slate-900">{client.name}</span>
       </nav>
 
-      <ClientProfileHeader client={client} />
+      <ClientProfileHeader
+        client={client}
+        onNoteCreated={(note) => setRecentNotes((currentNotes) => [note, ...currentNotes].slice(0, 3))}
+        onEditClient={() => openEditClient(client)}
+        onOpenMessages={() => void openClientMessages()}
+      />
 
-      <div className="mb-6 max-w-5xl rounded-xl border border-gray-200 bg-white p-1">
-        <div role="tablist" aria-label="Client profile sections" className="grid grid-cols-2 gap-1 md:grid-cols-6">
+      {messageError ? <p role="alert" className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{messageError}</p> : null}
+
+      <div className="mb-6 w-full rounded-xl border border-gray-200 bg-white p-1">
+        <div role="tablist" aria-label="Client profile sections" className="grid grid-cols-2 gap-1 md:grid-cols-4 lg:grid-cols-8">
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -232,10 +528,30 @@ export function ClientProfilePage({
 
       <ClientProfileTabPanel
         client={client}
+        recentNotes={recentNotes}
         activeTab={activeTab}
         highlightedCheckInCompare={highlightedCheckInCompare}
         highlightedCheckInId={highlightedCheckInId}
       />
+
+      {clientFormOpen ? (
+        <ClientFormDialog
+          editingClient={editingClient}
+          form={clientForm}
+          error={clientFormError}
+          saving={savingClient}
+          packageOptions={packageOptions}
+          initialQuestionnaireOptions={initialQuestionnaireOptions}
+          dailyHabitFormOptions={dailyHabitFormOptions}
+          checkInFormOptions={checkInFormOptions}
+          trainingPlanOptions={trainingPlanOptions}
+          nutritionPlanOptions={nutritionPlanOptions}
+          supplementationPlanOptions={supplementationPlanOptions}
+          onChange={(field, value) => setClientForm((currentForm) => ({ ...currentForm, [field]: value }))}
+          onClose={closeClientForm}
+          onSubmit={() => void saveClient()}
+        />
+      ) : null}
     </div>
   );
 }
@@ -276,23 +592,76 @@ async function loadPersistedMealPlans(clientId: string) {
   return Array.isArray(payload.data) ? payload.data : [];
 }
 
+async function loadPersistedSupplementPlans(clientId: string) {
+  const response = await fetch(`/api/v1/supplement-plan-assignments?clientId=${clientId}&limit=100`);
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const payload = (await response.json()) as { data?: ApiSupplementPlanAssignment[] };
+
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
+async function loadPersistedNotes(clientId: string, limit: number) {
+  const response = await fetch(`/api/v1/clients/${clientId}/notes?limit=${limit}`);
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const payload = (await response.json()) as { data?: ClientNoteSummary[] };
+
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
+async function loadPersistedWeightSummary(clientId: string): Promise<ApiWeightSummary | null> {
+  const response = await fetch(`/api/v1/clients/${clientId}/metrics?summary=weight`);
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as { data?: ApiWeightSummary | null };
+
+  return payload.data ?? null;
+}
+
 function createProfileFromSummary(
   summary: ClientSummary,
   profile?: ApiClientProfile | null,
   trainingAssignments: ApiTrainingAssignment[] = [],
-  mealPlanAssignments: ApiMealPlanAssignment[] = []
+  mealPlanAssignments: ApiMealPlanAssignment[] = [],
+  supplementAssignments: ApiSupplementPlanAssignment[] = [],
+  weightSummary?: ApiWeightSummary | null
 ): ClientProfileView {
   const trainingPrograms = createTrainingProgramsFromAssignments(trainingAssignments);
   const nutritionPlans = createNutritionPlansFromAssignments(mealPlanAssignments);
+  const supplementProtocols = createSupplementProtocolsFromAssignments(supplementAssignments);
   const activeNutritionPlan = nutritionPlans[0];
 
   return {
     ...summary,
     age: getAge(profile?.dateOfBirth),
+    waterTargetLitres: normalizeNullableNumber(profile?.waterTargetLitres),
+    stepTarget: profile?.stepTarget ?? null,
     weeksWithCoach: 0,
     protocol: profile?.goals?.[0] ?? "Unassigned",
     bio: profile?.bio ?? "Profile details are ready for persistence-backed coaching notes.",
     metrics: [
+      {
+        label: "Starting Weight",
+        value: formatWeightMetricValue(weightSummary?.startingWeight),
+        detail: formatWeightMetricDetail(weightSummary?.startingWeight, "first body-weight entry"),
+        tone: "text-indigo-600"
+      },
+      {
+        label: "Current Weight",
+        value: formatWeightMetricValue(weightSummary?.currentWeight),
+        detail: formatWeightMetricDetail(weightSummary?.currentWeight, "latest daily habit entry"),
+        tone: "text-orange-600"
+      },
       {
         label: "Compliance",
         value: `${summary.compliance}%`,
@@ -340,55 +709,138 @@ function createProfileFromSummary(
         },
     nutritionPlans,
     nutritionSource: "api",
-    supplements: []
+    supplementProtocols,
+    supplements: supplementProtocols.flatMap((protocol) =>
+      protocol.phases.flatMap((phase) => phase.supplements.map((supplement) => supplement.supplementName))
+    )
   };
+}
+
+function normalizeNullableNumber(value: number | string | null | undefined) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatWeightMetricValue(metric?: ApiMetric | null) {
+  if (!metric) {
+    return "0";
+  }
+
+  return Number.isInteger(metric.metricValue) ? String(metric.metricValue) : metric.metricValue.toFixed(1);
+}
+
+function formatWeightMetricDetail(metric: ApiMetric | null | undefined, fallback: string) {
+  if (!metric) {
+    return fallback;
+  }
+
+  return formatTrainingDate(metric.measuredAt);
 }
 
 export function createTrainingProgramsFromAssignments(
   assignments: ApiTrainingAssignment[]
 ): ClientTrainingProgram[] {
-  return assignments.map((assignment) => ({
-    id: assignment.id,
-    name: assignment.name || assignment.snapshot.templateName || "Assigned training program",
-    status: assignment.status,
-    startsOn: assignment.startsOn,
-    endsOn: assignment.endsOn,
-    durationWeeks: assignment.snapshot.durationWeeks ?? 1,
-    sessions:
-      assignment.snapshot.template?.days?.map((day) => {
+  return assignments.map((assignment) => {
+    const snapshot = assignment.snapshot ?? {};
+    const template = {
+      instructions: snapshot.template?.instructions,
+      days:
+        snapshot.template?.days?.map((day) => ({
+          name: day.name,
+          exercises: day.exercises ?? []
+        })) ?? []
+    };
+    const name = assignment.name || snapshot.templateName || "Assigned training program";
+    const durationWeeks = snapshot.durationWeeks ?? 1;
+    const templateId = assignment.templateId ?? snapshot.templateId ?? null;
+    const draftSource: TrainingProgramTemplateDraftSource = {
+      id: templateId,
+      name,
+      description: `${durationWeeks} week assigned program`,
+      goal: snapshot.goal ?? null,
+      durationWeeks,
+      template
+    };
+
+    return {
+      id: assignment.id,
+      templateId,
+      name,
+      status: assignment.status,
+      startsOn: assignment.startsOn ?? todayDate(),
+      endsOn: assignment.endsOn ?? null,
+      durationWeeks,
+      template,
+      draftSource,
+      sessions:
+        template.days?.map((day) => {
         const exercises = day.exercises ?? [];
 
         return {
           day: day.name,
-          name: assignment.name,
+          name,
           focus: exercises.length > 0 ? exercises.map((exercise) => exercise.exerciseName).join(", ") : "Assigned workout",
           duration: `${exercises.length} exercises`
         };
-      }) ?? []
-  }));
+        }) ?? []
+    };
+  });
 }
 
 export function createNutritionPlansFromAssignments(
   assignments: ApiMealPlanAssignment[]
 ): ClientNutritionPlan[] {
   return assignments.map((assignment) => {
-    const snapshot = assignment.snapshot;
+    const snapshot = assignment.snapshot ?? {};
     const name = assignment.name || snapshot.templateName || "Assigned meal plan";
     const phase = assignment.phase || snapshot.phase || "Nutrition";
+    const templateId = assignment.templateId ?? snapshot.templateId ?? null;
+    const templateDays =
+      snapshot.template?.days?.map((day) => ({
+        name: day.name,
+        meals: (day.meals ?? []).map((meal) => ({
+          meal: meal.meal,
+          foods: meal.foods ?? []
+        }))
+      })) ?? [];
+    const apiTemplate: ApiMealPlanTemplate | null = templateId
+      ? {
+          id: templateId,
+          name,
+          phase,
+          targetCalories: snapshot.targetCalories ?? assignment.targetCalories,
+          proteinGrams: snapshot.proteinGrams ?? assignment.proteinGrams,
+          carbsGrams: snapshot.carbsGrams ?? assignment.carbsGrams,
+          fatGrams: snapshot.fatGrams ?? assignment.fatGrams,
+          status: "published",
+          template: { days: templateDays },
+          updatedAt: assignment.startsOn ?? todayDate()
+        }
+      : null;
 
     return {
       id: assignment.id,
+      templateId,
       name,
       phase,
       status: assignment.status,
-      startsOn: assignment.startsOn,
-      endsOn: assignment.endsOn,
+      startsOn: assignment.startsOn ?? todayDate(),
+      endsOn: assignment.endsOn ?? null,
       calories: snapshot.targetCalories ?? assignment.targetCalories,
       protein: snapshot.proteinGrams ?? assignment.proteinGrams,
       carbs: snapshot.carbsGrams ?? assignment.carbsGrams,
       fats: snapshot.fatGrams ?? assignment.fatGrams,
+      days: templateDays.map((day) => ({
+        name: day.name,
+        meals: day.meals ?? []
+      })),
       meals:
-        snapshot.template?.days?.flatMap((day) =>
+        templateDays.flatMap((day) =>
           (day.meals ?? []).map((meal) => ({
             day: day.name,
             meal: meal.meal,
@@ -398,7 +850,29 @@ export function createNutritionPlansFromAssignments(
                 : "No foods recorded",
             calories: meal.foods?.reduce((total, food) => total + food.calories, 0) ?? 0
           }))
-        ) ?? []
+        ) ?? [],
+      apiTemplate
+    };
+  });
+}
+
+function createSupplementProtocolsFromAssignments(assignments: ApiSupplementPlanAssignment[]): ClientSupplementProtocol[] {
+  return assignments.map((assignment) => {
+    const snapshot = assignment.snapshot ?? {};
+    const phases =
+      snapshot.template?.phases?.map((phase) => ({
+        name: phase.name,
+        supplements: phase.supplements ?? []
+      })) ?? [];
+
+    return {
+      id: assignment.id,
+      templateId: assignment.templateId ?? snapshot.templateId ?? null,
+      name: assignment.name || snapshot.templateName || "Assigned supplement protocol",
+      status: assignment.status,
+      startsOn: assignment.startsOn ?? todayDate(),
+      endsOn: assignment.endsOn ?? null,
+      phases
     };
   });
 }
@@ -427,11 +901,27 @@ function getAge(dateOfBirth?: string | null) {
   return age;
 }
 
-function ClientProfileHeader({ client }: { client: ClientProfile }) {
-  const weight = findMetric(client, "Current Weight")?.value ?? "0";
-  const bodyFat = findMetric(client, "Body Fat")?.value ?? "0%";
+function ClientProfileHeader({
+  client,
+  onNoteCreated,
+  onEditClient,
+  onOpenMessages
+}: {
+  client: ClientProfile;
+  onNoteCreated: (note: ClientNoteSummary) => void;
+  onEditClient: () => void;
+  onOpenMessages: () => void;
+}) {
+  const startingWeight = findMetric(client, "Starting Weight")?.value ?? "0";
+  const startingWeightDetail = findMetric(client, "Starting Weight")?.detail ?? "first body-weight entry";
+  const currentWeight = findMetric(client, "Current Weight")?.value ?? "0";
+  const currentWeightDetail = findMetric(client, "Current Weight")?.detail ?? "latest daily habit entry";
   const habitStreak = findMetric(client, "Habit Streak")?.value ?? "0";
-  const recoveryScore = findMetric(client, "Recovery Score")?.value ?? "0";
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+  const [progressDialogOpen, setProgressDialogOpen] = useState(false);
+  const [targetDialog, setTargetDialog] = useState<"water" | "steps" | null>(null);
+  const [waterTargetLitres, setWaterTargetLitres] = useState(client.waterTargetLitres ?? null);
+  const [stepTarget, setStepTarget] = useState(client.stepTarget ?? null);
 
   return (
     <section className="mb-6 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
@@ -443,7 +933,7 @@ function ClientProfileHeader({ client }: { client: ClientProfile }) {
           <div>
             <div className="mb-3 flex flex-wrap gap-2">
               <span className="rounded-lg bg-indigo-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-indigo-700">
-                Active Protocol: {client.protocol}
+                Active Phase: {client.protocol}
               </span>
               <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700">
                 Assigned Check-In: Every {client.checkInDay}
@@ -457,30 +947,322 @@ function ClientProfileHeader({ client }: { client: ClientProfile }) {
         </div>
 
         <div className="flex flex-wrap items-start gap-3">
-          <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+          <button
+            type="button"
+            aria-label="Open client messages"
+            title="Open client messages"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50"
+            onClick={onOpenMessages}
+          >
             <MessageSquare className="size-4" aria-hidden="true" />
-            Message
           </button>
-          <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-violet-300 bg-white px-5 py-3 text-sm font-semibold text-violet-700 transition hover:bg-violet-50">
-            <Video className="size-4" aria-hidden="true" />
-            Open Trellis
+          <button
+            type="button"
+            aria-label="Open progress analytics"
+            title="Open progress analytics"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-indigo-300 bg-white text-indigo-700 transition hover:bg-indigo-50"
+            onClick={() => setProgressDialogOpen(true)}
+          >
+            <LineChart className="size-4" aria-hidden="true" />
           </button>
-          <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-700">
+          <button
+            type="button"
+            aria-label="Add client note"
+            title="Add client note"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50"
+            onClick={() => setNoteDialogOpen(true)}
+          >
+            <NotebookPen className="size-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label="Set water target"
+            title={waterTargetLitres ? `Water target: ${waterTargetLitres}L` : "Set water target"}
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-sky-300 bg-white text-sky-700 transition hover:bg-sky-50"
+            onClick={() => setTargetDialog("water")}
+          >
+            <Droplets className="size-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label="Set step target"
+            title={stepTarget ? `Step target: ${stepTarget.toLocaleString()} steps` : "Set step target"}
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-emerald-300 bg-white text-emerald-700 transition hover:bg-emerald-50"
+            onClick={() => setTargetDialog("steps")}
+          >
+            <Footprints className="size-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label="Edit client"
+            title="Edit client"
+            className="inline-flex size-11 items-center justify-center rounded-lg bg-indigo-600 text-white transition hover:bg-indigo-700"
+            onClick={onEditClient}
+          >
             <Pencil className="size-4" aria-hidden="true" />
-            Edit Protocol
           </button>
         </div>
       </div>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-6">
-        <ProfileMetric accent="border-indigo-500" label="Current Weight" value={weight} suffix="kg" detail="Down 0.4kg" />
-        <ProfileMetric accent="border-orange-500" label="Body Fat %" value={bodyFat} detail="Down 0.2%" />
+        <ProfileMetric accent="border-indigo-500" label="Starting Weight" value={startingWeight} suffix="kg" detail={startingWeightDetail} />
+        <ProfileMetric accent="border-orange-500" label="Current Weight" value={currentWeight} suffix="kg" detail={currentWeightDetail} />
         <ProfileMetric accent="border-green-500" label="Daily Habit Streak" value={habitStreak} suffix="days" detail="Consistent" />
-        <ProfileMetric accent="border-violet-500" label="Recovery Score" value={recoveryScore} suffix="/100" detail="Ready" />
         <ProfileMetric accent="border-blue-500" label="Time With Coach" value={`${client.weeksWithCoach}`} suffix="wks" detail="6mo" />
         <ProfileMetric accent="border-pink-500" label="Age" value={`${client.age}`} suffix="yrs" detail="Born 1994" />
       </div>
+
+      {noteDialogOpen ? (
+        <ClientNoteDialog
+          client={client}
+          onClose={() => setNoteDialogOpen(false)}
+          onSaved={(note) => {
+            onNoteCreated(note);
+            setNoteDialogOpen(false);
+          }}
+        />
+      ) : null}
+
+      {progressDialogOpen ? (
+        <ClientProgressDialog client={client} onClose={() => setProgressDialogOpen(false)} />
+      ) : null}
+
+      {targetDialog ? (
+        <ClientTargetDialog
+          client={client}
+          targetType={targetDialog}
+          initialValue={targetDialog === "water" ? waterTargetLitres : stepTarget}
+          onClose={() => setTargetDialog(null)}
+          onSaved={(value) => {
+            if (targetDialog === "water") {
+              setWaterTargetLitres(value);
+            } else {
+              setStepTarget(value);
+            }
+
+            setTargetDialog(null);
+          }}
+        />
+      ) : null}
     </section>
+  );
+}
+
+function ClientProgressDialog({ client, onClose }: { client: ClientProfile; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="presentation">
+      <div role="dialog" aria-modal="true" aria-labelledby="client-progress-title" className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl md:p-6">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h2 id="client-progress-title" className="text-2xl font-black text-slate-950">
+              Progress Analytics
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">{client.name}</p>
+          </div>
+          <button type="button" className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700" onClick={onClose}>
+            Close
+          </button>
+        </div>
+        <ProgressAnalyticsCard client={client} />
+      </div>
+    </div>
+  );
+}
+
+function ClientTargetDialog({
+  client,
+  targetType,
+  initialValue,
+  onClose,
+  onSaved
+}: {
+  client: ClientProfile;
+  targetType: "water" | "steps";
+  initialValue: number | null;
+  onClose: () => void;
+  onSaved: (value: number | null) => void;
+}) {
+  const [value, setValue] = useState(initialValue === null ? "" : String(initialValue));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isWater = targetType === "water";
+  const title = isWater ? "Set Water Target" : "Set Step Target";
+  const label = isWater ? "Water target in litres" : "Step target";
+  const parsedValue = value.trim() ? Number(value) : null;
+
+  async function saveTarget() {
+    setSaving(true);
+    setError(null);
+
+    try {
+      if (
+        parsedValue !== null &&
+        (!Number.isFinite(parsedValue) || parsedValue < 0 || (!isWater && !Number.isInteger(parsedValue)))
+      ) {
+        throw new Error("Invalid target.");
+      }
+
+      const response = await fetch(`/api/v1/clients/${client.id}/profile`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(isWater ? { waterTargetLitres: parsedValue } : { stepTarget: parsedValue })
+      });
+
+      if (!response.ok) {
+        throw new Error("Target could not be saved.");
+      }
+
+      onSaved(parsedValue);
+    } catch {
+      setError("Target could not be saved. Check the value and try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="presentation">
+      <div role="dialog" aria-modal="true" aria-labelledby="client-target-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h2 id="client-target-title" className="text-2xl font-black text-slate-950">
+              {title}
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">{client.name}</p>
+          </div>
+          <button type="button" className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700" onClick={onClose}>
+            Close
+          </button>
+        </div>
+
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold text-slate-700">{label}</span>
+          <input
+            type="number"
+            min="0"
+            step={isWater ? "0.1" : "1"}
+            value={value}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            onChange={(event) => setValue(event.target.value)}
+          />
+        </label>
+
+        {error ? <p role="alert" className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p> : null}
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button type="button" className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            disabled={saving}
+            onClick={() => void saveTarget()}
+          >
+            {saving ? "Saving..." : "Save target"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClientNoteDialog({
+  client,
+  onClose,
+  onSaved
+}: {
+  client: ClientProfile;
+  onClose: () => void;
+  onSaved: (note: ClientNoteSummary) => void;
+}) {
+  const [noteDate, setNoteDate] = useState(todayDate());
+  const [body, setBody] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function saveNote() {
+    setSaving(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/v1/clients/${client.id}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ noteDate, body })
+      });
+
+      if (!response.ok) {
+        throw new Error("Note could not be saved.");
+      }
+
+      const payload = (await response.json()) as { data?: ClientNoteSummary };
+
+      if (payload.data) {
+        onSaved(payload.data);
+      }
+    } catch {
+      setError("Note could not be saved. Check the date and note details, then try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="presentation">
+      <div role="dialog" aria-modal="true" aria-labelledby="client-note-title" className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h2 id="client-note-title" className="text-2xl font-black text-slate-950">
+              Add Note
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">{client.name}</p>
+          </div>
+          <button type="button" className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700" onClick={onClose}>
+            Close
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">Note date</span>
+            <input
+              type="date"
+              value={noteDate}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={(event) => setNoteDate(event.target.value)}
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">Note</span>
+            <textarea
+              value={body}
+              rows={8}
+              className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Add a coaching note..."
+              onChange={(event) => setBody(event.target.value)}
+            />
+          </label>
+
+          {error ? <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p> : null}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button type="button" className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            disabled={saving || !noteDate || !body.trim()}
+            onClick={() => void saveNote()}
+          >
+            {saving ? "Saving..." : "Save note"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -515,11 +1297,13 @@ function ProfileMetric({
 
 function ClientProfileTabPanel({
   client,
+  recentNotes,
   activeTab,
   highlightedCheckInCompare,
   highlightedCheckInId
 }: {
   client: ClientProfileView;
+  recentNotes: ClientNoteSummary[];
   activeTab: ProfileTab;
   highlightedCheckInCompare?: string;
   highlightedCheckInId?: string;
@@ -527,7 +1311,23 @@ function ClientProfileTabPanel({
   if (activeTab === "Dashboard") {
     return (
       <section id="client-tab-Dashboard" role="tabpanel" aria-label="Dashboard">
-        <DashboardPanel client={client} />
+        <DashboardPanel client={client} recentNotes={recentNotes} />
+      </section>
+    );
+  }
+
+  if (activeTab === "Calendar") {
+    return (
+      <section id="client-tab-Calendar" role="tabpanel" aria-label="Calendar">
+        <ClientCalendarPanel client={client} />
+      </section>
+    );
+  }
+
+  if (activeTab === "Roadmap") {
+    return (
+      <section id="client-tab-Roadmap" role="tabpanel" aria-label="Roadmap">
+        <ClientRoadmapPeriodisationPanel client={client} />
       </section>
     );
   }
@@ -555,51 +1355,93 @@ function ClientProfileTabPanel({
   );
 }
 
-function DashboardPanel({ client }: { client: ClientProfile }) {
-  return <ClientProfileDashboard client={client} />;
+function DashboardPanel({ client, recentNotes }: { client: ClientProfile; recentNotes: ClientNoteSummary[] }) {
+  return <ClientProfileDashboard client={client} recentNotes={recentNotes} />;
 }
 
 function TrainingPanel({ client }: { client: ClientProfileView }) {
-  return (
-    <div>
-      <h2 className="mb-4 text-xl font-bold">Assigned Training Programs</h2>
-      <div className="mb-6 grid gap-4 md:grid-cols-2">
-        {client.trainingPrograms.length > 0 ? (
-          client.trainingPrograms.map((program) => (
-            <article key={program.id} className="rounded-xl border border-gray-200 p-4">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <h3 className="font-semibold text-gray-900">{program.name}</h3>
-                <span className="rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium capitalize text-indigo-700">
-                  {program.status}
-                </span>
-              </div>
-              <p className="text-sm text-gray-600">{program.durationWeeks} week program</p>
-              <p className="mt-2 text-xs text-gray-500">
-                Started {formatTrainingDate(program.startsOn)}
-                {program.endsOn ? ` - Ends ${formatTrainingDate(program.endsOn)}` : ""}
-              </p>
-            </article>
-          ))
-        ) : (
-          <p className="text-sm text-gray-500">No persisted training programs have been assigned yet.</p>
-        )}
-      </div>
+  const defaultProgram = getCurrentAssignment(client.trainingPrograms);
+  const [selectedProgramId, setSelectedProgramId] = useState(defaultProgram?.id ?? "");
+  const program = client.trainingPrograms.find((assignment) => assignment.id === selectedProgramId) ?? defaultProgram;
+  const [activeDayName, setActiveDayName] = useState(program?.template.days?.[0]?.name ?? "");
+  const [programDraft, setProgramDraft] = useState<TrainingProgramDraft | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const activeDay = program?.template.days?.find((day) => day.name === activeDayName) ?? program?.template.days?.[0] ?? null;
+  const trainingSections = getTrainingExerciseSections(activeDay?.exercises ?? []);
+  const volumeChips = getTrainingVolumeChips(activeDay?.exercises ?? []);
+  const programSwitchOptions = client.trainingPrograms.map((assignment) => ({
+    id: assignment.id,
+    label: assignment.name,
+    meta: `${assignment.durationWeeks} weeks - ${assignment.status}`
+  }));
 
-      <h2 className="mb-4 text-xl font-bold">Weekly Training Schedule</h2>
-      <div className="grid gap-3 md:grid-cols-2">
-        {client.trainingSchedule.length > 0 ? (
-          client.trainingSchedule.map((session) => (
-            <article key={`${session.day}-${session.name}`} className="rounded-xl border border-gray-200 p-4">
-              <div className="mb-1 text-xs uppercase text-gray-500">{session.day}</div>
-              <h3 className="font-semibold">{session.name}</h3>
-              <p className="mt-1 text-sm text-gray-600">{session.focus}</p>
-              <p className="mt-2 text-xs text-indigo-600">{session.duration}</p>
-            </article>
-          ))
-        ) : (
-          <p className="text-sm text-gray-500">No scheduled sessions were found in persisted training assignments.</p>
-        )}
-      </div>
+  const handleProgramSwitch = (programId: string) => {
+    const nextProgram = client.trainingPrograms.find((assignment) => assignment.id === programId);
+    setSelectedProgramId(programId);
+    setActiveDayName(nextProgram?.template.days?.[0]?.name ?? "");
+  };
+
+  if (programDraft) {
+    return (
+      <TrainingProgramBuilder
+        draft={programDraft}
+        saving={saving}
+        onDraftChange={setProgramDraft}
+        onCancel={() => setProgramDraft(null)}
+        onSave={() => void saveTrainingProgramDraft(programDraft, setSaving, setStatusMessage, () => setProgramDraft(null))}
+        onSaveAsTemplate={() => saveTrainingProgramDraft(programDraft, setSaving, setStatusMessage, () => setProgramDraft(null))}
+        onSaveDayAsTemplate={() => Promise.resolve()}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {statusMessage ? <p className="rounded-lg bg-green-50 p-3 text-sm font-bold text-green-700">{statusMessage}</p> : null}
+      {program ? (
+        <>
+          <PlanViewerHeader
+            title={program.name}
+            subtitle={`${program.durationWeeks} week program - ${program.status}`}
+            overview={program.draftSource.template.instructions || program.draftSource.description || ""}
+            editLabel="Edit training program"
+            onEdit={() => setProgramDraft(createTrainingProgramDraftFromTemplate(program.draftSource, { copy: false }))}
+            disabled={!program.templateId}
+            switchLabel="Switch training program"
+            switchOptions={programSwitchOptions}
+            selectedSwitchId={program.id}
+            onSwitch={handleProgramSwitch}
+          />
+          <DaySelector
+            label="Training days"
+            days={program.template.days?.map((day) => day.name) ?? []}
+            activeDay={activeDay?.name ?? ""}
+            onChange={setActiveDayName}
+          />
+          {volumeChips.length > 0 ? (
+            <div>
+              <h3 className="mb-3 text-sm font-black text-slate-950">Total Volume Sets</h3>
+              <div className="flex flex-wrap gap-2">
+                {volumeChips.map((chip) => (
+                  <span key={chip.label} className="rounded-lg bg-green-50 px-3 py-1.5 text-sm font-bold text-green-500">
+                    {chip.label} {formatTrainingNumber(chip.sets)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          <table className="w-full border-separate border-spacing-y-2 text-sm" aria-label={`${program.name} exercises`}>
+            <tbody>
+              {trainingSections.map((section) => (
+                <TrainingExerciseSection key={section.section} section={section.section} exercises={section.exercises} />
+              ))}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <p className="text-sm text-gray-500">No persisted training program has been assigned yet.</p>
+      )}
     </div>
   );
 }
@@ -613,74 +1455,693 @@ function formatTrainingDate(value: string) {
 }
 
 function NutritionPanel({ client }: { client: ClientProfileView }) {
-  const activePlan = client.nutritionPlans[0];
+  const defaultPlan = getCurrentAssignment(client.nutritionPlans);
+  const [selectedPlanId, setSelectedPlanId] = useState(defaultPlan?.id ?? "");
+  const activePlan = client.nutritionPlans.find((assignment) => assignment.id === selectedPlanId) ?? defaultPlan;
+  const [activeDayName, setActiveDayName] = useState(activePlan?.days[0]?.name ?? "");
+  const [editingPlan, setEditingPlan] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const activeDay = activePlan?.days.find((day) => day.name === activeDayName) ?? activePlan?.days[0] ?? null;
+  const dayTotals = calculateNutritionDayTotals(activeDay);
+  const planSwitchOptions = client.nutritionPlans.map((assignment) => ({
+    id: assignment.id,
+    label: assignment.name,
+    meta: `${assignment.phase} - ${assignment.status}`
+  }));
+
+  const handlePlanSwitch = (planId: string) => {
+    const nextPlan = client.nutritionPlans.find((assignment) => assignment.id === planId);
+    setSelectedPlanId(planId);
+    setActiveDayName(nextPlan?.days[0]?.name ?? "");
+  };
+
+  if (editingPlan && activePlan) {
+    return (
+      <NutritionPlanBuilder
+        mode="full"
+        initialPlan={createMealAssignmentRow(activePlan)}
+        initialTemplate={activePlan.apiTemplate}
+        saving={saving}
+        availableTemplates={[]}
+        onBack={() => setEditingPlan(false)}
+        onSave={(input, options) => saveNutritionPlanInput(activePlan, input, options, setSaving, setStatusMessage, () => setEditingPlan(false))}
+        onCreateMealTemplate={(template) => void createMealTemplateFromClientProfile(template, setSaving, setStatusMessage)}
+      />
+    );
+  }
 
   return (
-    <div>
-      <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-start">
-        <div>
-          <h2 className="text-xl font-bold">{client.nutritionPlan.name}</h2>
-          <p className="mt-1 text-sm text-gray-600">
-            {client.nutritionPlan.phase}
-            {activePlan ? ` - ${activePlan.status}` : ""}
-          </p>
-        </div>
-        {activePlan ? (
-          <p className="text-xs text-gray-500">
-            Started {formatTrainingDate(activePlan.startsOn)}
-            {activePlan.endsOn ? ` - Ends ${formatTrainingDate(activePlan.endsOn)}` : ""}
-          </p>
+    <div className="space-y-8">
+      {statusMessage ? <p className="rounded-lg bg-green-50 p-3 text-sm font-bold text-green-700">{statusMessage}</p> : null}
+      {activePlan ? (
+        <>
+          <PlanViewerHeader
+            title={activePlan.name}
+            subtitle={`${activePlan.phase} - ${activePlan.status}`}
+            editLabel="Edit nutrition plan"
+            onEdit={() => setEditingPlan(true)}
+            disabled={!activePlan.templateId}
+            switchLabel="Switch nutrition plan"
+            switchOptions={planSwitchOptions}
+            selectedSwitchId={activePlan.id}
+            onSwitch={handlePlanSwitch}
+          >
+            <NutritionOverview activePlan={activePlan} dayTotals={dayTotals} />
+          </PlanViewerHeader>
+          <DaySelector
+            label="Nutrition days"
+            days={activePlan.days.map((day) => day.name)}
+            activeDay={activeDay?.name ?? ""}
+            onChange={setActiveDayName}
+          />
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="text-xs font-black uppercase text-slate-950">Day Total</span>
+            <MacroTargetPill current={dayTotals.calories} target={activePlan.calories} label="Kcal" />
+            <MacroTargetPill current={dayTotals.protein} target={activePlan.protein} label="g Protein" />
+            <MacroTargetPill current={dayTotals.carbs} target={activePlan.carbs} label="g Carbs" />
+            <MacroTargetPill current={dayTotals.fats} target={activePlan.fats} label="g Fat" />
+          </div>
+          <table className="w-full border-collapse text-sm" aria-label={`${activePlan.name} meals`}>
+            <tbody>
+              {activeDay?.meals.map((meal, index) => (
+                <NutritionMealSection key={`${meal.meal}-${index}`} meal={meal} />
+              ))}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <p className="text-sm text-gray-500">No persisted meal schedule has been assigned yet.</p>
+      )}
+    </div>
+  );
+}
+
+function PlanViewerHeader({
+  title,
+  subtitle,
+  overview,
+  editLabel,
+  onEdit,
+  disabled,
+  switchLabel,
+  switchOptions = [],
+  selectedSwitchId,
+  onSwitch,
+  children
+}: {
+  title: string;
+  subtitle: string;
+  overview?: string;
+  editLabel: string;
+  onEdit: () => void;
+  disabled?: boolean;
+  switchLabel?: string;
+  switchOptions?: Array<{ id: string; label: string; meta: string }>;
+  selectedSwitchId?: string;
+  onSwitch?: (id: string) => void;
+  children?: ReactNode;
+}) {
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const canSwitch = switchOptions.length > 1 && onSwitch;
+
+  return (
+    <div className="flex flex-col justify-between gap-5 rounded-xl border border-slate-200 bg-slate-50 p-5 shadow-sm md:flex-row md:items-start">
+      <div>
+        <h2 className="text-xl font-black text-slate-950">{title}</h2>
+        <p className="mt-2 text-sm font-semibold text-indigo-700">{subtitle}</p>
+        {overview ? (
+          <div className="mt-6">
+            <h3 className="mb-2 text-sm font-black text-slate-950">Program Overview</h3>
+            <p className="max-w-3xl whitespace-pre-line text-sm leading-6 text-slate-700">{overview}</p>
+          </div>
         ) : null}
+        {children}
       </div>
-      <div className="grid gap-3 md:grid-cols-4">
-        <MacroTile label="Calories" value={`${client.nutritionPlan.calories}`} />
-        <MacroTile label="Protein" value={`${client.nutritionPlan.protein}g`} />
-        <MacroTile label="Carbs" value={`${client.nutritionPlan.carbs}g`} />
-        <MacroTile label="Fats" value={`${client.nutritionPlan.fats}g`} />
-      </div>
-      <h3 className="mt-6 mb-3 text-lg font-semibold">Meal Schedule</h3>
-      <div className="grid gap-3 md:grid-cols-2">
-        {activePlan?.meals.length ? (
-          activePlan.meals.map((meal) => (
-            <article key={`${meal.day}-${meal.meal}`} className="rounded-xl border border-gray-200 p-4">
-              <div className="mb-1 text-xs uppercase text-gray-500">{meal.day}</div>
-              <h4 className="font-semibold text-gray-900">{meal.meal}</h4>
-              <p className="mt-1 text-sm text-gray-600">{meal.foods}</p>
-              <p className="mt-2 text-xs text-green-700">{meal.calories} calories</p>
-            </article>
-          ))
-        ) : (
-          <p className="text-sm text-gray-500">No persisted meal schedule has been assigned yet.</p>
-        )}
+      <div className="flex items-center justify-end gap-2">
+        {canSwitch ? (
+          <div className="relative">
+            <IconActionButton label={switchLabel ?? "Switch assigned plan"} onClick={() => setSwitcherOpen((open) => !open)}>
+              <RefreshCw className="size-4" aria-hidden="true" />
+            </IconActionButton>
+            {switcherOpen ? (
+              <div className="absolute right-0 z-20 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-xl" role="menu" aria-label={switchLabel ?? "Assigned plans"}>
+                {switchOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={option.id === selectedSwitchId}
+                    className={cn(
+                      "flex w-full flex-col rounded-lg px-3 py-2 text-left text-sm transition",
+                      option.id === selectedSwitchId ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-50"
+                    )}
+                    onClick={() => {
+                      onSwitch(option.id);
+                      setSwitcherOpen(false);
+                    }}
+                  >
+                    <span className="font-black">{option.label}</span>
+                    <span className="text-xs font-semibold text-slate-500">{option.meta}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        <IconActionButton label={editLabel} onClick={onEdit} disabled={disabled}>
+          <Pencil className="size-4" aria-hidden="true" />
+        </IconActionButton>
       </div>
     </div>
   );
 }
 
-function MacroTile({ label, value }: { label: string; value: string }) {
+function IconActionButton({
+  label,
+  children,
+  onClick,
+  disabled
+}: {
+  label: string;
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+}) {
   return (
-    <div className="rounded-xl bg-gray-50 p-4 text-center">
-      <div className="mb-1 text-xs uppercase text-gray-500">{label}</div>
-      <div className="text-xl font-bold">{value}</div>
-    </div>
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className={cn(
+        "inline-flex size-11 items-center justify-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50",
+        "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+      )}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </button>
   );
 }
 
-function SupplementationPanel({ client }: { client: ClientProfile }) {
+function TrainingExerciseSection({
+  section,
+  exercises
+}: {
+  section: TrainingProgramSection;
+  exercises: NonNullable<ClientTrainingProgram["template"]["days"]>[number]["exercises"];
+}) {
+  if (exercises.length === 0) {
+    return null;
+  }
+
   return (
-    <div>
-      <h2 className="mb-4 text-xl font-bold">Active Supplementation</h2>
-      <div className="space-y-2">
-        {client.supplements.length > 0 ? (
-          client.supplements.map((supplement) => (
-            <div key={supplement} className="rounded-lg border border-gray-200 p-3 text-sm">
-              {supplement}
+    <>
+      <tr>
+        <th colSpan={5} className="px-0 pb-2 pt-5 text-left text-sm font-black text-slate-950">
+          {getProgramSectionLabel(section)}
+        </th>
+      </tr>
+      {exercises.map((exercise, index) => (
+        <tr key={`${section}-${exercise.exerciseName}-${index}`}>
+          <td className="w-10 rounded-l-xl border-y border-l border-slate-200 bg-white px-4 py-4 text-slate-300">
+            <span className="block h-4 w-5 border-y-2 border-slate-200" aria-hidden="true" />
+          </td>
+          <td className="w-10 border-y border-slate-200 bg-white px-2 py-4 text-sm font-black text-slate-950">
+            {String.fromCharCode(65 + index)}
+          </td>
+          <td className="border-y border-slate-200 bg-white px-4 py-4">
+            <p className="font-black text-slate-950">{exercise.exerciseName}</p>
+          </td>
+          <td className="border-y border-slate-200 bg-white px-4 py-4 text-slate-700">
+            <div className="grid gap-1 md:grid-cols-3">
+              {exercise.sets ? <span>Sets: {exercise.sets}</span> : null}
+              {exercise.reps ? <span>Reps: {exercise.reps}</span> : null}
+              {exercise.restSeconds ? <span>REST: {formatRestSeconds(exercise.restSeconds)}</span> : null}
             </div>
-          ))
-        ) : (
-          <p className="text-sm text-gray-500">No persisted supplement protocol has been assigned yet.</p>
-        )}
+          </td>
+          <td className="rounded-r-xl border-y border-r border-slate-200 bg-white px-4 py-4 text-slate-700">
+            {exercise.notes ? <span><strong>Notes:</strong> {exercise.notes}</span> : null}
+          </td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
+function NutritionMealSection({ meal }: { meal: ClientNutritionPlan["days"][number]["meals"][number] }) {
+  const totals = calculateNutritionMealTotals(meal);
+
+  return (
+    <>
+      <tr>
+        <th colSpan={6} className="border-b border-slate-200 px-3 pb-3 pt-8 text-left text-sm font-semibold text-indigo-600">
+          {meal.meal}
+        </th>
+      </tr>
+      {meal.foods.map((food, index) => (
+        <tr key={`${meal.meal}-${food.foodName}-${index}`} className="border-b border-slate-100">
+          <td className="px-3 py-6 font-semibold text-slate-950">{food.foodName}</td>
+          <td className="px-3 py-6 text-slate-700">
+            <span className="rounded-md bg-slate-100 px-4 py-2 text-slate-600">{food.servingSize}</span>
+          </td>
+          <td className="px-3 py-6 text-right font-semibold text-slate-700">{formatTrainingNumber(food.calories)}Kcal</td>
+          <td className="px-3 py-6 text-right font-semibold text-slate-700">{formatTrainingNumber(food.proteinGrams)}g Protein</td>
+          <td className="px-3 py-6 text-right font-semibold text-slate-700">{formatTrainingNumber(food.carbsGrams)}g Carbs</td>
+          <td className="px-3 py-6 text-right font-semibold text-slate-700">{formatTrainingNumber(food.fatGrams)}g Fat</td>
+        </tr>
+      ))}
+      <tr>
+        <td colSpan={6} className="px-3 py-5">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="text-xs font-black uppercase text-slate-950">Meal Total</span>
+            <MacroPill value={`${formatTrainingNumber(totals.calories)} Kcal`} />
+            <MacroPill value={`${formatTrainingNumber(totals.protein)} g Protein`} />
+            <MacroPill value={`${formatTrainingNumber(totals.carbs)} g Carbs`} />
+            <MacroPill value={`${formatTrainingNumber(totals.fats)} g Fat`} />
+          </div>
+        </td>
+      </tr>
+    </>
+  );
+}
+
+function NutritionOverview({
+  activePlan,
+  dayTotals
+}: {
+  activePlan: ClientNutritionPlan;
+  dayTotals: { calories: number; protein: number; carbs: number; fats: number };
+}) {
+  return (
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Nutrition plan nutrient breakdown">
+      <NutrientOverviewTile label="Calories" current={dayTotals.calories} target={activePlan.calories} unit="Kcal" tone="slate" />
+      <NutrientOverviewTile label="Protein" current={dayTotals.protein} target={activePlan.protein} unit="g" tone="indigo" />
+      <NutrientOverviewTile label="Carbs" current={dayTotals.carbs} target={activePlan.carbs} unit="g" tone="orange" />
+      <NutrientOverviewTile label="Fat" current={dayTotals.fats} target={activePlan.fats} unit="g" tone="slate" />
+    </div>
+  );
+}
+
+function NutrientOverviewTile({
+  label,
+  current,
+  target,
+  unit,
+  tone
+}: {
+  label: string;
+  current: number;
+  target: number;
+  unit: string;
+  tone: "slate" | "indigo" | "orange";
+}) {
+  return (
+    <div className={cn("rounded-lg border bg-white p-3", getNutrientToneClasses(tone).tile)}>
+      <div className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="mt-2 text-lg font-black text-slate-950">
+        {formatTrainingNumber(current)} / {formatTrainingNumber(target)}
+        <span className="ml-1 text-xs font-bold text-slate-500">{unit}</span>
       </div>
     </div>
   );
+}
+
+function MacroPill({ value }: { value: string }) {
+  return <span className="rounded-md bg-slate-800 px-3 py-2 text-xs font-black text-white">{value}</span>;
+}
+
+function MacroTargetPill({
+  current,
+  target,
+  label
+}: {
+  current: number;
+  target: number;
+  label: string;
+}) {
+  return (
+    <span
+      className="rounded-md bg-slate-800 px-3 py-2 text-xs font-black text-white"
+      aria-label={`${formatTrainingNumber(current)} / ${formatTrainingNumber(target)} ${label}`}
+    >
+      <span aria-hidden="true">{formatTrainingNumber(current)}</span>
+      <span className="mx-1 text-white/70">/</span>
+      <span>{formatTrainingNumber(target)}</span>
+      <span className="ml-1 text-white/80">{label}</span>
+    </span>
+  );
+}
+
+function getNutrientToneClasses(tone: "slate" | "indigo" | "orange") {
+  const tones = {
+    slate: {
+      tile: "border-slate-200",
+      pill: "bg-slate-800 text-white"
+    },
+    indigo: {
+      tile: "border-indigo-100",
+      pill: "bg-indigo-600 text-white"
+    },
+    orange: {
+      tile: "border-orange-100",
+      pill: "bg-orange-500 text-white"
+    }
+  };
+
+  return tones[tone];
+}
+
+function getTrainingExerciseSections(exercises: NonNullable<ClientTrainingProgram["template"]["days"]>[number]["exercises"]) {
+  const sections: TrainingProgramSection[] = ["warmUp", "workout", "coolDown"];
+
+  return sections
+    .map((section) => ({
+      section,
+      exercises: exercises.filter((exercise) => (exercise.section ?? "workout") === section)
+    }))
+    .filter((section) => section.exercises.length > 0);
+}
+
+function getTrainingVolumeChips(exercises: NonNullable<ClientTrainingProgram["template"]["days"]>[number]["exercises"]) {
+  const totals = new Map<string, number>();
+
+  exercises.forEach((exercise) => {
+    const sets = Number(exercise.sets);
+
+    if (!Number.isFinite(sets)) {
+      return;
+    }
+
+    (exercise.primaryMuscles ?? []).forEach((muscle) => {
+      totals.set(muscle, (totals.get(muscle) ?? 0) + sets);
+    });
+  });
+
+  return Array.from(totals, ([label, sets]) => ({ label, sets }));
+}
+
+function calculateNutritionDayTotals(day?: ClientNutritionPlan["days"][number] | null) {
+  return (day?.meals ?? []).reduce(
+    (totals, meal) => addNutritionTotals(totals, calculateNutritionMealTotals(meal)),
+    { calories: 0, protein: 0, carbs: 0, fats: 0 }
+  );
+}
+
+function calculateNutritionMealTotals(meal: ClientNutritionPlan["days"][number]["meals"][number]) {
+  return meal.foods.reduce(
+    (totals, food) =>
+      addNutritionTotals(totals, {
+        calories: food.calories,
+        protein: food.proteinGrams,
+        carbs: food.carbsGrams,
+        fats: food.fatGrams
+      }),
+    { calories: 0, protein: 0, carbs: 0, fats: 0 }
+  );
+}
+
+function addNutritionTotals(
+  totals: { calories: number; protein: number; carbs: number; fats: number },
+  next: { calories: number; protein: number; carbs: number; fats: number }
+) {
+  return {
+    calories: totals.calories + next.calories,
+    protein: totals.protein + next.protein,
+    carbs: totals.carbs + next.carbs,
+    fats: totals.fats + next.fats
+  };
+}
+
+function formatTrainingNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function formatRestSeconds(value: number | string) {
+  const seconds = Number(value);
+
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return "";
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  return `${minutes} min ${remainingSeconds} sec`;
+}
+
+function DaySelector({
+  label,
+  days,
+  activeDay,
+  onChange
+}: {
+  label: string;
+  days: string[];
+  activeDay: string;
+  onChange: (day: string) => void;
+}) {
+  if (days.length <= 1) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-lg bg-indigo-50">
+      <div className="sr-only">{label}</div>
+      <div className="flex min-h-11 flex-wrap items-end gap-1 px-1">
+        {days.map((day) => (
+          <button
+            key={day}
+            type="button"
+            className={cn(
+              "border-b-2 px-3 py-3 text-sm font-semibold transition",
+              activeDay === day ? "border-indigo-600 text-indigo-700" : "border-transparent text-slate-500 hover:text-indigo-700"
+            )}
+            onClick={() => onChange(day)}
+          >
+            {day}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function getCurrentAssignment<T extends { status: string; startsOn: string }>(assignments: T[]) {
+  return assignments.find((assignment) => assignment.status === "active") ?? assignments[0] ?? null;
+}
+
+async function saveTrainingProgramDraft(
+  draft: TrainingProgramDraft,
+  setSaving: (saving: boolean) => void,
+  setStatusMessage: (message: string | null) => void,
+  onSaved: () => void
+) {
+  if (!draft.sourceTemplateId) {
+    setStatusMessage("Training program cannot be edited because it is not linked to a saved program template.");
+    return;
+  }
+
+  setSaving(true);
+  setStatusMessage(null);
+
+  try {
+    const response = await fetch(`/api/v1/training-program-templates/${draft.sourceTemplateId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(getTrainingProgramTemplatePayload(draft, 1, { status: "published" }))
+    });
+    const payload = await response.json();
+
+    if (!response.ok || !payload.data) {
+      throw new Error(payload.error?.message ?? "Training program could not be saved.");
+    }
+
+    setStatusMessage("Training program saved.");
+    onSaved();
+  } catch (error) {
+    setStatusMessage(error instanceof Error ? error.message : "Training program could not be saved.");
+  } finally {
+    setSaving(false);
+  }
+}
+
+async function saveNutritionPlanInput(
+  plan: ClientNutritionPlan,
+  input: MealPlanTemplateSaveInput,
+  options: { close: boolean },
+  setSaving: (saving: boolean) => void,
+  setStatusMessage: (message: string | null) => void,
+  onSaved: () => void
+) {
+  if (!plan.templateId) {
+    setStatusMessage("Nutrition plan cannot be edited because it is not linked to a saved meal plan template.");
+    return;
+  }
+
+  setSaving(true);
+  setStatusMessage(null);
+
+  try {
+    const response = await fetch(`/api/v1/meal-plan-templates/${plan.templateId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input)
+    });
+    const payload = await response.json();
+
+    if (!response.ok || !payload.data) {
+      throw new Error(payload.error?.message ?? "Nutrition plan could not be saved.");
+    }
+
+    setStatusMessage("Nutrition plan saved.");
+
+    if (options.close) {
+      onSaved();
+    }
+  } catch (error) {
+    setStatusMessage(error instanceof Error ? error.message : "Nutrition plan could not be saved.");
+  } finally {
+    setSaving(false);
+  }
+}
+
+async function createMealTemplateFromClientProfile(
+  template: MealTemplateCard,
+  setSaving: (saving: boolean) => void,
+  setStatusMessage: (message: string | null) => void
+) {
+  setSaving(true);
+  setStatusMessage(null);
+
+  try {
+    const response = await fetch("/api/v1/meal-plan-templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: template.name,
+        phase: "Meal template",
+        targetCalories: 0,
+        proteinGrams: 0,
+        carbsGrams: 0,
+        fatGrams: 0,
+        status: "draft",
+        template: template.template ?? { days: [] }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Meal template could not be saved.");
+    }
+
+    setStatusMessage(`${template.name} saved to Meal Templates.`);
+  } catch (error) {
+    setStatusMessage(error instanceof Error ? error.message : "Meal template could not be saved.");
+  } finally {
+    setSaving(false);
+  }
+}
+
+function createMealAssignmentRow(plan: ClientNutritionPlan): MealAssignmentRow {
+  return {
+    id: plan.id,
+    templateId: plan.templateId,
+    planName: plan.name,
+    activeClientCount: 1,
+    calories: plan.calories,
+    protein: plan.protein,
+    carbs: plan.carbs,
+    fats: plan.fats,
+    lastEdited: plan.startsOn,
+    status: plan.status,
+    apiTemplate: plan.apiTemplate
+  };
+}
+
+function SupplementationPanel({ client }: { client: ClientProfileView }) {
+  const protocol = getCurrentAssignment(client.supplementProtocols);
+  const [activePhaseName, setActivePhaseName] = useState(protocol?.phases[0]?.name ?? "");
+  const [editingProtocol, setEditingProtocol] = useState(false);
+  const activePhase = protocol?.phases.find((phase) => phase.name === activePhaseName) ?? protocol?.phases[0] ?? null;
+
+  if (editingProtocol && protocol?.templateId) {
+    return (
+      <SupplementProtocolBuilderPage
+        templateId={protocol.templateId}
+        embedded
+        onBack={() => setEditingProtocol(false)}
+        onSaved={() => setEditingProtocol(false)}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {protocol ? (
+        <>
+          <PlanViewerHeader
+            title={protocol.name}
+            subtitle={`Supplement protocol - ${protocol.status}`}
+            editLabel="Edit supplement protocol"
+            onEdit={() => setEditingProtocol(true)}
+            disabled={!protocol.templateId}
+          />
+          <DaySelector
+            label="Protocol phases"
+            days={protocol.phases.map((phase) => phase.name)}
+            activeDay={activePhase?.name ?? ""}
+            onChange={setActivePhaseName}
+          />
+          <div className="overflow-hidden rounded-xl border border-gray-200">
+            <table className="w-full border-collapse text-sm" aria-label={`${protocol.name} supplements`}>
+              <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
+                <tr>
+                  <th className="px-4 py-3">Supplement</th>
+                  <th className="px-4 py-3">Dosage</th>
+                  <th className="px-4 py-3">Timing</th>
+                  <th className="px-4 py-3">Notes</th>
+                  <th className="px-4 py-3">Buy Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activePhase?.supplements.map((supplement, index) => {
+                  const { instructions, productUrl } = parseSupplementDisplayNotes(supplement.notes ?? "");
+
+                  return (
+                    <tr key={`${supplement.supplementName}-${index}`} className="border-t border-gray-100">
+                      <td className="px-4 py-3 font-semibold text-gray-900">{supplement.supplementName}</td>
+                      <td className="px-4 py-3 text-gray-600">{supplement.dosage}</td>
+                      <td className="px-4 py-3 text-gray-600">{supplement.timing}</td>
+                      <td className="px-4 py-3 text-gray-600">{instructions || "No notes"}</td>
+                      <td className="px-4 py-3">
+                        {productUrl ? (
+                          <a href={productUrl} target="_blank" rel="noreferrer" className="font-bold text-indigo-600 underline-offset-4 hover:underline">
+                            Buy supplement
+                          </a>
+                        ) : null}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-gray-500">No persisted supplement protocol has been assigned yet.</p>
+      )}
+    </div>
+  );
+}
+
+function parseSupplementDisplayNotes(notes: string) {
+  const linkPrefix = "Supplement link:";
+  const lines = notes.split("\n");
+  const productUrlLine = lines.find((line) => line.trim().startsWith(linkPrefix));
+
+  return {
+    instructions: lines.filter((line) => !line.trim().startsWith(linkPrefix)).join("\n").trim(),
+    productUrl: productUrlLine?.replace(linkPrefix, "").trim() ?? ""
+  };
 }

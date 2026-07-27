@@ -494,6 +494,7 @@ model User {
   auditLogs                    AuditLog[]
   clients                      Client[]                      @relation("ClientPortalUser")
   coachedClients               Client[]                      @relation("ClientPrimaryCoach")
+  clientNotes                  ClientNote[]                  @relation("ClientNoteAuthor")
   assignedLeads                Lead[]                        @relation("LeadAssignee")
   leadActivities               LeadActivity[]
   createdForms                 Form[]                        @relation("FormCreator")
@@ -617,6 +618,9 @@ model Organization {
   aiMethodologyProfiles        AiMethodologyProfile[]
   aiGenerations                AiGeneration[]
   aiOutputs                    AiOutput[]
+  clientNotes                  ClientNote[]
+  clientRoadmapPhases          ClientRoadmapPhase[]
+  clientRoadmapItems           ClientRoadmapItem[]
 
   @@index([status])
   @@index([platformPlan])
@@ -1072,6 +1076,9 @@ model Client {
   subscriptions                ClientSubscription[]
   aiGenerations                AiGeneration[]
   aiOutputs                    AiOutput[]
+  notes                        ClientNote[]
+  roadmapPhases                ClientRoadmapPhase[]
+  roadmapItems                 ClientRoadmapItem[]
 
   @@unique([organizationId, externalClientId])
   @@index([organizationId, status])
@@ -1092,6 +1099,8 @@ model ClientProfile {
   medicalNotes     String?      @map("medical_notes") @db.Text
   bio              String?      @db.Text
   emergencyContact Json?        @map("emergency_contact")
+  waterTargetLitres Decimal?    @map("water_target_litres") @db.Decimal(6, 2)
+  stepTarget       Int?         @map("step_target")
   createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -1099,6 +1108,64 @@ model ClientProfile {
 
   @@index([organizationId, clientId])
   @@map("client_profiles")
+}
+
+model ClientNote {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  clientId       String       @map("client_id")
+  authorUserId   String       @map("author_user_id")
+  noteDate       DateTime     @map("note_date") @db.Date
+  body           String       @db.Text
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client         Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  author         User         @relation("ClientNoteAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, clientId, noteDate])
+  @@index([organizationId, clientId, createdAt])
+  @@index([authorUserId])
+  @@map("client_notes")
+}
+
+model ClientRoadmapPhase {
+  id             String              @id @default(cuid())
+  organizationId String              @map("organization_id")
+  clientId       String              @map("client_id")
+  name           String
+  startDate      DateTime            @map("start_date") @db.Date
+  endDate        DateTime            @map("end_date") @db.Date
+  status         String              @default("planned")
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client         Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  items          ClientRoadmapItem[]
+
+  @@index([organizationId, clientId, startDate])
+  @@index([organizationId, clientId, status])
+  @@map("client_roadmap_phases")
+}
+
+model ClientRoadmapItem {
+  id             String             @id @default(cuid())
+  organizationId String             @map("organization_id")
+  clientId       String             @map("client_id")
+  phaseId        String             @map("phase_id")
+  title          String
+  type           String
+  eventDate      DateTime           @map("event_date") @db.Date
+  notes          String?            @db.Text
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client         Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  phase          ClientRoadmapPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, clientId, eventDate])
+  @@index([organizationId, phaseId])
+  @@map("client_roadmap_items")
 }
 
 model Lead {
