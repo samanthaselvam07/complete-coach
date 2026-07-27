@@ -748,6 +748,30 @@ describe("MealPlansPage", () => {
         );
       }
 
+      if (url.startsWith("/api/v1/foods")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [
+                {
+                  id: "blueberries",
+                  name: "Blueberries",
+                  category: "Fruit",
+                  servingSize: "100 g",
+                  calories: 57,
+                  proteinGrams: 0.7,
+                  carbsGrams: 14.5,
+                  fatGrams: 0.3,
+                  fiberGrams: 2.4,
+                  metadata: { source: "AUS/NZ" }
+                }
+              ]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
       if (url.startsWith("/api/v1/meal-plan-templates")) {
         return Promise.resolve(
           new Response(
@@ -855,6 +879,17 @@ describe("MealPlansPage", () => {
     fireEvent.change(screen.getByLabelText("Ingredient 1 name"), { target: { value: "Grilled Chicken Breast" } });
     fireEvent.change(screen.getByLabelText("Grilled Chicken Breast serving"), { target: { value: "100 g cooked" } });
     fireEvent.change(screen.getByLabelText("Grilled Chicken Breast calories"), { target: { value: "180" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add food" }));
+    const foodDrawer = screen.getByRole("dialog", { name: "Add food from database" });
+    fireEvent.change(within(foodDrawer).getByRole("searchbox", { name: "Search food database" }), { target: { value: "blue" } });
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith("/api/v1/foods"))).toBe(true)
+    );
+    fireEvent.click(await within(foodDrawer).findByRole("checkbox", { name: "Select Blueberries" }));
+    fireEvent.change(within(foodDrawer).getByLabelText("Quantity for Blueberries"), { target: { value: "150" } });
+    fireEvent.click(within(foodDrawer).getByRole("button", { name: "Add selected foods" }));
+    expect(screen.getByLabelText("Ingredient 3 name")).toHaveValue("Blueberries");
+    expect(screen.getByLabelText("Blueberries quantity")).toHaveValue(150);
     fireEvent.click(screen.getByRole("tab", { name: /instructions/i }));
     expect(screen.getByLabelText("Recipe step 1")).toHaveValue("Cook chicken and rice.");
     expect(screen.getByLabelText("Recipe step 2")).toHaveValue("Portion into bowls.");
@@ -887,6 +922,17 @@ describe("MealPlansPage", () => {
       proteinGrams: 31,
       carbsGrams: 0,
       fatGrams: 3.6
+    });
+    expect(patchBody.template.days[0].meals[0].foods[2]).toMatchObject({
+      foodId: "blueberries",
+      foodName: "Blueberries",
+      servingSize: "150 g",
+      quantity: 150,
+      calories: 85.5,
+      proteinGrams: 1,
+      carbsGrams: 21.8,
+      fatGrams: 0.5,
+      fiberGrams: 3.6
     });
     expect(patchBody.template.days[0].meals[0].notes).toBe("Use pre-workout on heavy leg days.");
     expect(fetchMock).not.toHaveBeenCalledWith(

@@ -4692,11 +4692,80 @@ function MealTemplateRecipeBuilder({
   const [servingSize, setServingSize] = useState(recipe.servingSize ?? "");
   const [photoUrl, setPhotoUrl] = useState(recipe.photoUrl ?? "");
   const [instructionSteps, setInstructionSteps] = useState<string[]>(() => getRecipeInstructionSteps(templatePayload));
-  const [days, setDays] = useState<NonNullable<ApiMealPlanTemplate["template"]["days"]>>(() => templatePayload.days ?? []);
+  const [days, setDays] = useState<NonNullable<ApiMealPlanTemplate["template"]["days"]>>(() =>
+    templatePayload.days && templatePayload.days.length > 0
+      ? templatePayload.days
+      : [
+          {
+            name: "Recipe",
+            meals: [{ meal: template.name.trim() || "Ingredients", foods: [] }]
+          }
+        ]
+  );
+  const [activeFoodTarget, setActiveFoodTarget] = useState<{ dayIndex: number; mealIndex: number } | null>(null);
+  const [foodSource, setFoodSource] = useState<FoodDatabaseSource>("AUS/NZ");
+  const [foodSearchQuery, setFoodSearchQuery] = useState("");
+  const [apiFoods, setApiFoods] = useState<Food[]>([]);
+  const [foodCache, setFoodCache] = useState<Record<string, Food>>({});
+  const [quickAddFoodOpen, setQuickAddFoodOpen] = useState(false);
+  const [quickAddFoodForm, setQuickAddFoodForm] = useState<NewFoodFormState>(initialNewFoodForm);
+  const [quickAddFoodSaving, setQuickAddFoodSaving] = useState(false);
+  const [quickAddFoodError, setQuickAddFoodError] = useState<string | null>(null);
   const totals = calculateTemplateTotals({ days });
   const nutrientTotals = calculateTemplateNutrientTotals({ days });
   const displayName = name.trim() || template.name;
   const normalizedInstructionSteps = instructionSteps.map((step) => step.trim()).filter(Boolean);
+  const foodOptions = useMemo(() => mergeFoodOptions(Object.values(foodCache), []), [foodCache]);
+  const filteredFoods = apiFoods;
+
+  useEffect(() => {
+    if (!activeFoodTarget) {
+      return;
+    }
+
+    let cancelled = false;
+    const search = foodSearchQuery.trim();
+    const params = new URLSearchParams({
+      limit: search ? "50" : String(FOOD_SELECTOR_RECENT_LIMIT),
+      source: foodSource,
+      sort: "recent"
+    });
+
+    if (search) {
+      params.set("search", search);
+    }
+
+    async function loadFoodOptions() {
+      try {
+        const response = await fetch(`/api/v1/foods?${params.toString()}`);
+
+        if (!response.ok) {
+          throw new Error("Food API unavailable.");
+        }
+
+        const payload = (await response.json()) as { data?: ApiFoodLibraryItem[] };
+        const mappedFoods = Array.isArray(payload.data) ? payload.data.map(mapApiFoodToBuilderFood) : [];
+
+        if (!cancelled) {
+          setApiFoods(mappedFoods);
+          setFoodCache((currentCache) => ({
+            ...currentCache,
+            ...Object.fromEntries(mappedFoods.map((food) => [food.id, food]))
+          }));
+        }
+      } catch {
+        if (!cancelled) {
+          setApiFoods([]);
+        }
+      }
+    }
+
+    void loadFoodOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeFoodTarget, foodSearchQuery, foodSource]);
 
   function updateMealNotes(dayIndex: number, mealIndex: number, notes: string) {
     setDays((currentDays) =>
@@ -4790,6 +4859,93 @@ function MealTemplateRecipeBuilder({
     });
   }
 
+  function addFoodsToRecipeMeal(selections: Array<{ foodId: string; quantity: number; unit: FoodMeasurementUnit }>) {
+    if (!activeFoodTarget || selections.length === 0) {
+      return;
+    }
+
+    const selectedFoods = selections
+      .map((selection) => {
+        const food = foodOptions.find((item) => item.id === selection.foodId);
+
+        return food ? createTemplateFoodFromSelection(food, selection.quantity, selection.unit) : null;
+      })
+      .filter((food): food is ApiMealPlanTemplateFood => Boolean(food));
+
+    if (selectedFoods.length === 0) {
+      return;
+    }
+
+    setDays((currentDays) =>
+      currentDays.map((day, currentDayIndex) =>
+        currentDayIndex === activeFoodTarget.dayIndex
+          ? {
+              ...day,
+              meals: day.meals.map((meal, currentMealIndex) =>
+                currentMealIndex === activeFoodTarget.mealIndex ? { ...meal, foods: [...meal.foods, ...selectedFoods] } : meal
+              )
+            }
+          : day
+      )
+    );
+    setActiveFoodTarget(null);
+  }
+
+  function updateQuickAddFoodForm(key: keyof NewFoodFormState, value: string) {
+    setQuickAddFoodForm((currentForm) => ({ ...currentForm, [key]: value }));
+  }
+
+  async function createQuickAddFood() {
+    setQuickAddFoodSaving(true);
+    setQuickAddFoodError(null);
+
+    try {
+      const response = await fetch("/api/v1/foods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: quickAddFoodForm.name.trim() || "Coach Food",
+          category: "Custom",
+          servingSize: formatMealBuilderServingSize(quickAddFoodForm),
+          calories: parseMealBuilderNumberInput(quickAddFoodForm.calories),
+          proteinGrams: parseMealBuilderNumberInput(quickAddFoodForm.protein),
+          carbsGrams: parseMealBuilderNumberInput(quickAddFoodForm.carbs),
+          fatGrams: parseMealBuilderNumberInput(quickAddFoodForm.fat),
+          fiberGrams: parseMealBuilderNumberInput(quickAddFoodForm.fiber),
+          metadata: {
+            source: foodSource,
+            sugarGrams: parseMealBuilderNumberInput(quickAddFoodForm.sugar),
+            polyolsGrams: parseMealBuilderNumberInput(quickAddFoodForm.polyols),
+            saturatedGrams: parseMealBuilderNumberInput(quickAddFoodForm.saturated),
+            polyunsaturatedGrams: parseMealBuilderNumberInput(quickAddFoodForm.polyunsaturated),
+            monounsaturatedGrams: parseMealBuilderNumberInput(quickAddFoodForm.monounsaturated),
+            saltGrams: parseMealBuilderNumberInput(quickAddFoodForm.salt),
+            servingDescription: quickAddFoodForm.servingDescription
+          }
+        })
+      });
+      const payload = (await response.json()) as { data?: ApiFoodLibraryItem; error?: { message?: string } };
+
+      if (!response.ok || !payload.data) {
+        throw new Error(payload.error?.message ?? "Food could not be saved.");
+      }
+
+      const createdFood = mapApiFoodToBuilderFood(payload.data);
+
+      setApiFoods((currentFoods) => [createdFood, ...currentFoods.filter((food) => food.id !== createdFood.id)]);
+      setFoodCache((currentCache) => ({ ...currentCache, [createdFood.id]: createdFood }));
+      setFoodSource(createdFood.source);
+      setFoodSearchQuery("");
+      setQuickAddFoodForm(initialNewFoodForm);
+      setQuickAddFoodOpen(false);
+      setQuickAddFoodError(null);
+    } catch (error) {
+      setQuickAddFoodError(error instanceof Error ? error.message : "Food could not be saved.");
+    } finally {
+      setQuickAddFoodSaving(false);
+    }
+  }
+
   function handleSave() {
     onSave({
       name: displayName,
@@ -4816,8 +4972,8 @@ function MealTemplateRecipeBuilder({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 md:p-8">
-      <div className="mx-auto max-w-7xl">
+    <div className="min-h-screen w-full bg-gray-50 p-6 md:p-8">
+      <div className="w-full max-w-none">
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <button type="button" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800" onClick={onBack}>
@@ -4970,7 +5126,21 @@ function MealTemplateRecipeBuilder({
                           <article key={`${meal.meal}-${mealIndex}`} className="rounded-xl bg-slate-50 p-4">
                             <div className="flex flex-wrap items-center justify-between gap-3">
                               <h4 className="font-bold text-slate-900">{meal.meal}</h4>
-                              <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{meal.foods.length} ingredients</span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{meal.foods.length} ingredients</span>
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-bold text-white hover:bg-indigo-700"
+                                  onClick={() => {
+                                    setQuickAddFoodError(null);
+                                    setFoodSearchQuery("");
+                                    setActiveFoodTarget({ dayIndex, mealIndex });
+                                  }}
+                                >
+                                  <Plus className="size-4" aria-hidden="true" />
+                                  Add food
+                                </button>
+                              </div>
                             </div>
                             <div role="table" aria-label={`${meal.meal} template ingredients`} className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white">
                               <div role="row" className="grid min-w-[980px] grid-cols-[1.4fr_0.7fr_1fr_0.75fr_0.75fr_0.75fr_0.75fr] gap-2 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500">
@@ -5134,6 +5304,34 @@ function MealTemplateRecipeBuilder({
           <MicronutrientBreakdown totals={nutrientTotals} dayName={displayName} />
         </div>
       </div>
+
+      {activeFoodTarget ? (
+        <FoodDatabaseDrawer
+          source={foodSource}
+          searchQuery={foodSearchQuery}
+          foods={foodOptions}
+          filteredFoods={filteredFoods}
+          onSourceChange={setFoodSource}
+          onSearchChange={setFoodSearchQuery}
+          onQuickAdd={() => {
+            setQuickAddFoodError(null);
+            setQuickAddFoodOpen(true);
+          }}
+          onAddFoods={addFoodsToRecipeMeal}
+          onClose={() => setActiveFoodTarget(null)}
+        />
+      ) : null}
+
+      {quickAddFoodOpen ? (
+        <QuickAddFoodModal
+          form={quickAddFoodForm}
+          saving={quickAddFoodSaving}
+          error={quickAddFoodError}
+          onChange={updateQuickAddFoodForm}
+          onClose={() => setQuickAddFoodOpen(false)}
+          onSubmit={createQuickAddFood}
+        />
+      ) : null}
     </div>
   );
 }
@@ -5159,6 +5357,28 @@ function parseOptionalNumberInput(value: string) {
 
 function roundTemplateFoodNumber(value: number) {
   return Math.round(value * 10) / 10;
+}
+
+function createTemplateFoodFromSelection(food: Food, quantity: number, unit: FoodMeasurementUnit): ApiMealPlanTemplateFood {
+  const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+  const quantityMultiplier = getFoodQuantityMultiplier(food, safeQuantity, unit);
+  const scaledMicronutrients = Object.fromEntries(
+    Object.entries(food.micronutrients ?? {}).map(([key, value]) => [key, roundTemplateFoodNumber(value * quantityMultiplier)])
+  );
+
+  return {
+    foodId: food.id,
+    foodName: food.name,
+    servingSize: `${formatMacroValue(safeQuantity)} ${unit}`,
+    calories: roundTemplateFoodNumber(food.calories * quantityMultiplier),
+    proteinGrams: roundTemplateFoodNumber(food.protein * quantityMultiplier),
+    carbsGrams: roundTemplateFoodNumber(food.carbs * quantityMultiplier),
+    fatGrams: roundTemplateFoodNumber(food.fats * quantityMultiplier),
+    fiberGrams: roundTemplateFoodNumber(food.fibre * quantityMultiplier),
+    quantity: safeQuantity,
+    measurementUnit: unit,
+    micronutrients: scaledMicronutrients
+  };
 }
 
 function scaleNutrientMap(nutrients: Record<string, number>, scaleFactor: number) {
