@@ -1,16 +1,103 @@
 "use client";
 
 import { Bell, Camera, Eye, EyeOff, Shield } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const defaultFullName = "Marcus Chen";
+const defaultProfessionalTitle = "Head Performance Coach";
+const defaultEmail = "marcus.coach@kineticcurator.com";
+const defaultPhone = "+1 (055) 234-8890";
 
 export function SettingsPage() {
-  const [fullName, setFullName] = useState("Marcus Chen");
-  const [professionalTitle, setProfessionalTitle] = useState("Head Performance Coach");
-  const [email, setEmail] = useState("marcus.coach@kineticcurator.com");
-  const [phone, setPhone] = useState("+1 (055) 234-8890");
+  const [fullName, setFullName] = useState(defaultFullName);
+  const [professionalTitle, setProfessionalTitle] = useState(defaultProfessionalTitle);
+  const [email, setEmail] = useState(defaultEmail);
+  const [phone, setPhone] = useState(defaultPhone);
   const [photoFileName, setPhotoFileName] = useState("");
-  const [password, setPassword] = useState("CurrentPassword123");
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("Account changes are ready to save.");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const response = await fetch("/api/v1/coach-profile");
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as { data?: Partial<AccountProfilePayload> };
+
+        if (!isAccountProfilePayload(payload.data)) {
+          return;
+        }
+
+        setFullName(payload.data.name || defaultFullName);
+        setProfessionalTitle(payload.data.professionalTitle || defaultProfessionalTitle);
+        setEmail(payload.data.email || defaultEmail);
+        setPhone(payload.data.phone || defaultPhone);
+        setPhotoFileName(payload.data.photoFileName || "");
+        setSaveStatus("Account profile loaded.");
+      } catch {
+        setSaveStatus("Account profile could not be loaded. You can still edit and try saving.");
+      }
+    }
+
+    void loadProfile();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) {
+        URL.revokeObjectURL(photoPreviewUrl);
+      }
+    };
+  }, [photoPreviewUrl]);
+
+  function handlePhotoUpload(file: File | undefined) {
+    setPhotoFileName(file?.name ?? "");
+    setPhotoPreviewUrl((currentPreviewUrl) => {
+      if (currentPreviewUrl) {
+        URL.revokeObjectURL(currentPreviewUrl);
+      }
+
+      return file ? URL.createObjectURL(file) : "";
+    });
+  }
+
+  async function saveAccountProfile() {
+    setIsSaving(true);
+    setSaveStatus("Saving account profile...");
+
+    try {
+      const response = await fetch("/api/v1/coach-profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fullName,
+          professionalTitle,
+          email,
+          phone,
+          photoFileName,
+          ...(password ? { password } : {})
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Account profile could not be saved.");
+      }
+
+      setPassword("");
+      setSaveStatus("Account profile saved.");
+    } catch {
+      setSaveStatus("Account profile could not be saved. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 p-6 lg:p-8">
@@ -20,7 +107,11 @@ export function SettingsPage() {
         <div className="grid gap-6 md:grid-cols-[8rem_1fr]">
           <div>
             <div className="relative h-28 w-28 overflow-hidden rounded-2xl bg-gradient-to-br from-amber-200 to-slate-500" aria-label="Profile photo preview">
-              <span className="absolute inset-0 flex items-center justify-center text-3xl font-black text-white">MC</span>
+              {photoPreviewUrl ? (
+                <img src={photoPreviewUrl} alt="Profile photo preview" className="h-full w-full object-cover" />
+              ) : (
+                <span className="absolute inset-0 flex items-center justify-center text-3xl font-black text-white">MC</span>
+              )}
             </div>
             <label className="mt-3 inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700">
               <Camera className="h-4 w-4" aria-hidden="true" />
@@ -29,7 +120,7 @@ export function SettingsPage() {
                 type="file"
                 accept="image/*"
                 className="sr-only"
-                onChange={(event) => setPhotoFileName(event.target.files?.[0]?.name ?? "")}
+                onChange={(event) => handlePhotoUpload(event.target.files?.[0])}
               />
             </label>
             {photoFileName ? <p className="mt-2 truncate text-xs font-semibold text-slate-500">{photoFileName}</p> : null}
@@ -69,9 +160,6 @@ export function SettingsPage() {
               </button>
             </span>
           </label>
-          <button type="button" className="mt-4 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white">
-            Update password
-          </button>
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -92,12 +180,30 @@ export function SettingsPage() {
         <button type="button" className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold">
           Discard Changes
         </button>
-        <button type="button" className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white">
-          Save Preferences
+        <button
+          type="button"
+          className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isSaving}
+          onClick={() => void saveAccountProfile()}
+        >
+          {isSaving ? "Saving..." : "Save account profile"}
         </button>
       </div>
+      <p role="status" className="mt-3 max-w-5xl text-right text-sm font-semibold text-slate-500">{saveStatus}</p>
     </main>
   );
+}
+
+interface AccountProfilePayload {
+  name: string;
+  professionalTitle: string;
+  email: string;
+  phone: string;
+  photoFileName: string;
+}
+
+function isAccountProfilePayload(value: unknown): value is AccountProfilePayload {
+  return typeof value === "object" && value !== null && "email" in value;
 }
 
 function ProfileInput({

@@ -67,6 +67,31 @@ Indexes:
 - `organization_id,role`.
 - `user_id,status`.
 
+### `coach_profiles`
+Purpose: organization-scoped editable coach profile and account display metadata.
+
+Fields:
+- `id`
+- `organization_id`
+- `user_id`
+- `professional_title`
+- `phone`
+- `photo_file_name`
+- `bio`
+- `philosophy`
+- `specialities_json`
+- `credentials_json`
+- `created_at`
+- `updated_at`
+
+Indexes:
+- Unique `organization_id,user_id`.
+- `user_id`.
+
+Security:
+- Passwords stay on `users.password_hash` and are never returned by profile endpoints.
+- Profile writes are scoped to the authenticated user's active organization.
+
 ### `team_invitations`
 Purpose: one-time organization invitation lifecycle before membership activation.
 

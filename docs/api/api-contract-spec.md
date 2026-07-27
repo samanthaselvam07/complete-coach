@@ -286,6 +286,10 @@ Calendar connection scopes:
 - `organization`
 - `coach`
 
+### Coach Profile And Account Settings
+- `GET /api/v1/coach-profile`: returns the signed-in coach's account/profile details for the active organization. Response includes name, email, professional title, phone, stored photo filename, bio, philosophy, speciality tags, and credential metadata. Password hashes are never returned.
+- `PATCH /api/v1/coach-profile`: updates the signed-in coach's account/profile details for the active organization and writes `coach.profile_updated` audit metadata. Body accepts any explicit subset of `name`, `email`, `professionalTitle`, `phone`, `photoFileName`, `bio`, `philosophy`, `specialities`, `credentials`, and write-only `password`. Omitted profile fields preserve existing database values.
+
 ### Files
 - `POST /api/v1/files/upload-url`: create signed R2 upload URL.
 - `POST /api/v1/files/{object_id}/download-url`: create signed R2 download URL.

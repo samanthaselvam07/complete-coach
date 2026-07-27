@@ -533,6 +533,7 @@ model User {
   requestedAiGenerations       AiGeneration[]                @relation("AiGenerationRequester")
   approvedAiOutputs            AiOutput[]                    @relation("AiOutputApprover")
   rejectedAiOutputs            AiOutput[]                    @relation("AiOutputRejecter")
+  coachProfiles                CoachProfile[]
 
   @@unique([authProvider, authProviderAccountId])
   @@map("users")
@@ -621,6 +622,7 @@ model Organization {
   clientNotes                  ClientNote[]
   clientRoadmapPhases          ClientRoadmapPhase[]
   clientRoadmapItems           ClientRoadmapItem[]
+  coachProfiles                CoachProfile[]
 
   @@index([status])
   @@index([platformPlan])
@@ -652,6 +654,27 @@ model OrganizationSenderDomain {
   @@index([providerDomainId])
   @@index([createdByUserId])
   @@map("organization_sender_domains")
+}
+
+model CoachProfile {
+  id                String       @id @default(cuid())
+  organizationId    String       @map("organization_id")
+  userId            String       @map("user_id")
+  professionalTitle String?      @map("professional_title")
+  phone             String?
+  photoFileName     String?      @map("photo_file_name")
+  bio               String?      @db.Text
+  philosophy        String?      @db.Text
+  specialitiesJson  Json?        @map("specialities_json")
+  credentialsJson   Json?        @map("credentials_json")
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("coach_profiles")
 }
 
 model OrganizationMembership {

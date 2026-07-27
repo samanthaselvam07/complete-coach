@@ -1,7 +1,7 @@
 "use client";
 
 import { Mail, Phone, Plus, Upload } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Credential {
   id: string;
@@ -30,19 +30,53 @@ const initialCredentials: Credential[] = [
     fileName: ""
   }
 ];
+const defaultEmail = "m.chen@mcpcoaching.com";
+const defaultPhone = "+1 (555) 012-9988";
+const defaultBio =
+  "With over 12 years of experience in high-performance sports and specialised metabolic conditioning, Marcus has carved a unique space in the coaching world. He brings world-class methodologies to ambitious professionals who want strong, measurable progress.";
+const defaultPhilosophy = "We do not chase fatigue, we create performance. If it is not measurable, it is not manageable.";
+const defaultSpecialities = ["Metabolic Analytics", "Strength Development", "Behavioral Coaching"];
 
 export function CoachProfilePage() {
-  const [email, setEmail] = useState("m.chen@mcpcoaching.com");
-  const [phone, setPhone] = useState("+1 (555) 012-9988");
-  const [bio, setBio] = useState(
-    "With over 12 years of experience in high-performance sports and specialised metabolic conditioning, Marcus has carved a unique space in the coaching world. He brings world-class methodologies to ambitious professionals who want strong, measurable progress."
-  );
-  const [philosophy, setPhilosophy] = useState(
-    "We do not chase fatigue, we create performance. If it is not measurable, it is not manageable."
-  );
+  const [email, setEmail] = useState(defaultEmail);
+  const [phone, setPhone] = useState(defaultPhone);
+  const [bio, setBio] = useState(defaultBio);
+  const [philosophy, setPhilosophy] = useState(defaultPhilosophy);
   const [specialityInput, setSpecialityInput] = useState("");
-  const [specialities, setSpecialities] = useState(["Metabolic Analytics", "Strength Development", "Behavioral Coaching"]);
+  const [specialities, setSpecialities] = useState(defaultSpecialities);
   const [credentials, setCredentials] = useState<Credential[]>(initialCredentials);
+  const [saveStatus, setSaveStatus] = useState("Profile changes are ready to save.");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const response = await fetch("/api/v1/coach-profile");
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as { data?: Partial<CoachProfilePayload> };
+
+        if (!isCoachProfilePayload(payload.data)) {
+          return;
+        }
+
+        setEmail(payload.data.email || defaultEmail);
+        setPhone(payload.data.phone || defaultPhone);
+        setBio(payload.data.bio || defaultBio);
+        setPhilosophy(payload.data.philosophy || defaultPhilosophy);
+        setSpecialities(payload.data.specialities.length > 0 ? payload.data.specialities : defaultSpecialities);
+        setCredentials(payload.data.credentials.length > 0 ? payload.data.credentials : initialCredentials);
+        setSaveStatus("Profile loaded.");
+      } catch {
+        setSaveStatus("Profile could not be loaded. You can still edit and try saving.");
+      }
+    }
+
+    void loadProfile();
+  }, []);
 
   function addSpeciality() {
     const nextSpeciality = specialityInput.trim();
@@ -76,6 +110,36 @@ export function CoachProfilePage() {
         fileName: ""
       }
     ]);
+  }
+
+  async function saveCoachProfile() {
+    setIsSaving(true);
+    setSaveStatus("Saving coach profile...");
+
+    try {
+      const response = await fetch("/api/v1/coach-profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          phone,
+          bio,
+          philosophy,
+          specialities,
+          credentials
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Coach profile could not be saved.");
+      }
+
+      setSaveStatus("Coach profile saved.");
+    } catch {
+      setSaveStatus("Coach profile could not be saved. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -234,7 +298,40 @@ export function CoachProfilePage() {
           </article>
         </section>
       </div>
+      <div className="flex flex-col gap-3 px-6 pb-8 lg:px-8">
+        <p role="status" className="text-sm font-semibold text-slate-500">{saveStatus}</p>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isSaving}
+            onClick={() => void saveCoachProfile()}
+          >
+            {isSaving ? "Saving..." : "Save coach profile"}
+          </button>
+        </div>
+      </div>
     </main>
+  );
+}
+
+interface CoachProfilePayload {
+  email: string;
+  phone: string;
+  bio: string;
+  philosophy: string;
+  specialities: string[];
+  credentials: Credential[];
+}
+
+function isCoachProfilePayload(value: unknown): value is CoachProfilePayload {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "specialities" in value &&
+    Array.isArray((value as { specialities?: unknown }).specialities) &&
+    "credentials" in value &&
+    Array.isArray((value as { credentials?: unknown }).credentials)
   );
 }
 

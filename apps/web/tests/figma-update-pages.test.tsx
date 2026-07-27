@@ -10,6 +10,8 @@ import { SettingsPage } from "@/components/settings/settings-page";
 import { CreatePostPage } from "@/components/social/create-post-page";
 
 const fetchMock = vi.fn();
+const createObjectURLMock = vi.fn(() => "blob:profile-photo-preview");
+const revokeObjectURLMock = vi.fn();
 const navigationMocks = vi.hoisted(() => ({
   push: vi.fn()
 }));
@@ -22,6 +24,10 @@ vi.mock("next/navigation", () => ({
 
 beforeEach(() => {
   fetchMock.mockReset();
+  createObjectURLMock.mockClear();
+  revokeObjectURLMock.mockClear();
+  Object.defineProperty(URL, "createObjectURL", { configurable: true, value: createObjectURLMock });
+  Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: revokeObjectURLMock });
   navigationMocks.push.mockReset();
   global.fetch = fetchMock;
 });
@@ -357,6 +363,7 @@ describe("Figma update pages", () => {
     expect(screen.getByPlaceholderText("Add a speciality")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add credential" })).toBeInTheDocument();
     expect(screen.getAllByText("Upload certificate")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Save coach profile" })).toBeInTheDocument();
     expect(screen.queryByText("Retention Rate")).not.toBeInTheDocument();
     expect(screen.queryByText("Clients Coached")).not.toBeInTheDocument();
     expect(screen.queryByText("Goal Achievement")).not.toBeInTheDocument();
@@ -378,10 +385,71 @@ describe("Figma update pages", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show password" }));
     expect(screen.getByLabelText("Password")).toHaveAttribute("type", "text");
     expect(screen.getByText("Upload photo")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save account profile" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Update password" })).not.toBeInTheDocument();
     expect(screen.queryByText("Two-Factor Authentication")).not.toBeInTheDocument();
     expect(screen.queryByText("Active Sessions")).not.toBeInTheDocument();
     expect(screen.queryByText("Platform Customization")).not.toBeInTheDocument();
     expect(screen.queryByText("Coach Calendar Connections")).not.toBeInTheDocument();
+  });
+
+  it("saves coach profile edits through the org-scoped profile endpoint", async () => {
+    render(<CoachProfilePage />);
+
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "profile@example.com" } });
+    fireEvent.change(screen.getByLabelText("Professional Bio"), { target: { value: "Updated bio for the coach profile." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save coach profile" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/coach-profile", expect.objectContaining({ method: "PATCH" }));
+    });
+
+    const profileSaveCall = fetchMock.mock.calls.find(([url, init]) => url === "/api/v1/coach-profile" && init?.method === "PATCH");
+    const saveBody = JSON.parse(String(profileSaveCall?.[1]?.body));
+
+    expect(saveBody).toEqual(
+      expect.objectContaining({
+        email: "profile@example.com",
+        phone: "+1 (555) 012-9988",
+        bio: "Updated bio for the coach profile.",
+        philosophy: expect.stringContaining("measurable"),
+        specialities: expect.arrayContaining(["Metabolic Analytics"]),
+        credentials: expect.arrayContaining([expect.objectContaining({ title: "CSCS" })])
+      })
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Coach profile saved.");
+  });
+
+  it("saves account settings through the org-scoped profile endpoint", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.change(screen.getByLabelText("Full Name"), { target: { value: "Samantha Coach" } });
+    fireEvent.change(screen.getByLabelText("Professional Title"), { target: { value: "Owner Coach" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "strong-password" } });
+    fireEvent.change(screen.getByLabelText("Upload photo"), {
+      target: { files: [new File(["profile"], "samantha-profile.png", { type: "image/png" })] }
+    });
+
+    expect(screen.getByRole("img", { name: "Profile photo preview" })).toHaveAttribute("src", "blob:profile-photo-preview");
+    fireEvent.click(screen.getByRole("button", { name: "Save account profile" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/coach-profile", expect.objectContaining({ method: "PATCH" }));
+    });
+
+    const accountSaveCall = fetchMock.mock.calls.find(([url, init]) => url === "/api/v1/coach-profile" && init?.method === "PATCH");
+    const saveBody = JSON.parse(String(accountSaveCall?.[1]?.body));
+
+    expect(saveBody).toEqual({
+      name: "Samantha Coach",
+      professionalTitle: "Owner Coach",
+      email: "marcus.coach@kineticcurator.com",
+      phone: "+1 (055) 234-8890",
+      photoFileName: "samantha-profile.png",
+      password: "strong-password"
+    });
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+    expect(screen.getByRole("status")).toHaveTextContent("Account profile saved.");
   });
 });
 
