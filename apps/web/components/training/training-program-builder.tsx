@@ -1,8 +1,9 @@
 "use client";
 
 import { ArrowLeft, Copy, GripVertical, MessageSquareText, PlayCircle, Plus, Save, Search, Trash2, Upload, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { calculateTrainingProgramWeeklyMuscleVolume, type MuscleVolumeRow } from "@/lib/training/muscle-volume";
 import { muscleGroups, type Exercise } from "@/lib/training/training-models";
 import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
@@ -269,6 +270,7 @@ export function TrainingProgramBuilder({
   onSaveDayAsTemplate: (draft: TrainingProgramDraft) => Promise<void>;
 }) {
   const activeDay = draft.days.find((day) => day.id === draft.activeDayId) ?? draft.days[0];
+  const weeklyVolumeRows = useMemo(() => calculateTrainingProgramWeeklyMuscleVolume(draft), [draft]);
   const [exercisePanelSection, setExercisePanelSection] = useState<TrainingProgramSection | null>(null);
   const [customExerciseSection, setCustomExerciseSection] = useState<TrainingProgramSection | null>(null);
   const [dayTemplateMessage, setDayTemplateMessage] = useState<string | null>(null);
@@ -657,6 +659,8 @@ export function TrainingProgramBuilder({
             />
           </label>
 
+          <WeeklyVolumeChart volumeRows={weeklyVolumeRows} />
+
           <div className="mt-6 flex flex-col justify-end gap-3 sm:flex-row">
             <button
               type="button"
@@ -782,6 +786,41 @@ export function createTrainingProgramDraftForDayTemplate(
     activeDayId: day.id,
     days: [day]
   };
+}
+
+function WeeklyVolumeChart({ volumeRows }: { volumeRows: MuscleVolumeRow[] }) {
+  const activeRows = volumeRows.filter((row) => row.sets > 0).sort((firstRow, secondRow) => secondRow.sets - firstRow.sets);
+  const totalSets = activeRows.reduce((total, row) => total + row.sets, 0);
+
+  return (
+    <section aria-label="Weekly muscle volume chart" className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Weekly Volume</p>
+          <h2 className="mt-1 text-lg font-black text-slate-950">Muscle group set totals</h2>
+        </div>
+        <p className="text-sm font-bold text-slate-500">{totalSets} total weekly sets</p>
+      </div>
+
+      {activeRows.length > 0 ? (
+        <div className="mt-4 space-y-3">
+          {activeRows.map((row) => (
+            <div key={row.muscleGroup} className="grid gap-2 sm:grid-cols-[8rem_minmax(0,1fr)_4rem] sm:items-center">
+              <div className="text-sm font-bold text-slate-800">{row.muscleGroup}</div>
+              <div className="h-3 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
+                <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.max(row.intensity * 100, 8)}%` }} />
+              </div>
+              <div className="text-left text-sm font-black text-slate-950 sm:text-right">{row.sets} sets</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm font-semibold text-slate-500">
+          Add exercises with set counts and muscle tags to build the weekly volume chart.
+        </p>
+      )}
+    </section>
+  );
 }
 
 export function getTrainingProgramTemplatePayload(

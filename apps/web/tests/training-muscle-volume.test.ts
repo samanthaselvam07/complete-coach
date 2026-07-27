@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   calculateTrainingDayMuscleVolume,
+  calculateTrainingProgramWeeklyMuscleVolume,
   getActiveRiveMuscleProperties,
   normalizeMuscleGroup,
   parseExerciseSetVolume,
@@ -24,6 +25,31 @@ describe("training muscle volume model", () => {
     expect(volumeRows.find((row) => row.muscleGroup === "Glutes")).toMatchObject({ sets: 4, intensity: 1 });
     expect(volumeRows.find((row) => row.muscleGroup === "Hamstrings")).toMatchObject({ sets: 3, intensity: 0.75 });
     expect(volumeRows.find((row) => row.muscleGroup === "Back")).toMatchObject({ sets: 2, intensity: 0.5 });
+    expect(volumeRows.find((row) => row.muscleGroup === "Chest")).toMatchObject({ sets: 0, intensity: 0 });
+  });
+
+  it("totals set volume by muscle group across a full training week", () => {
+    const volumeRows = calculateTrainingProgramWeeklyMuscleVolume({
+      days: [
+        {
+          exercises: [
+            { sets: "4", primaryMuscles: ["Quads", "Glutes"] },
+            { sets: "3", primaryMuscles: ["Hamstrings"] }
+          ]
+        },
+        {
+          exercises: [
+            { sets: "3", primaryMuscles: ["Quads"] },
+            { sets: "2", bodyPart: "Lats" }
+          ]
+        }
+      ]
+    });
+
+    expect(volumeRows.find((row) => row.muscleGroup === "Quads")).toMatchObject({ sets: 7, intensity: 1 });
+    expect(volumeRows.find((row) => row.muscleGroup === "Glutes")).toMatchObject({ sets: 4, intensity: 4 / 7 });
+    expect(volumeRows.find((row) => row.muscleGroup === "Hamstrings")).toMatchObject({ sets: 3, intensity: 3 / 7 });
+    expect(volumeRows.find((row) => row.muscleGroup === "Back")).toMatchObject({ sets: 2, intensity: 2 / 7 });
     expect(volumeRows.find((row) => row.muscleGroup === "Chest")).toMatchObject({ sets: 0, intensity: 0 });
   });
 

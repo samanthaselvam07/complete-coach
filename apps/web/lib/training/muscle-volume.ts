@@ -33,6 +33,10 @@ export interface MuscleVolumeDay {
   exercises: MuscleVolumeExercise[];
 }
 
+export interface MuscleVolumeProgram {
+  days: MuscleVolumeDay[];
+}
+
 export const fitnessVisualsRiveMuscleProperties = [
   "flexorCarpiUlnaris",
   "posteriorDeltoid",
@@ -168,6 +172,35 @@ export function calculateTrainingDayMuscleVolume(day: MuscleVolumeDay): MuscleVo
       const groupProperties = rivePropertiesByGroup.get(muscleGroup);
 
       riveProperties.forEach((riveProperty) => groupProperties?.add(riveProperty));
+    });
+  });
+
+  const maxSets = Math.max(...Array.from(setTotals.values()), 0);
+
+  return anatomyMuscleGroups.map((muscleGroup) => {
+    const sets = setTotals.get(muscleGroup) ?? 0;
+
+    return {
+      muscleGroup,
+      sets,
+      intensity: maxSets > 0 ? sets / maxSets : 0,
+      riveProperties: Array.from(rivePropertiesByGroup.get(muscleGroup) ?? [])
+    };
+  });
+}
+
+export function calculateTrainingProgramWeeklyMuscleVolume(program: MuscleVolumeProgram): MuscleVolumeRow[] {
+  const setTotals = new Map<AnatomyMuscleGroup, number>(anatomyMuscleGroups.map((muscleGroup) => [muscleGroup, 0]));
+  const rivePropertiesByGroup = new Map<AnatomyMuscleGroup, Set<FitnessVisualsRiveMuscleProperty>>(
+    anatomyMuscleGroups.map((muscleGroup) => [muscleGroup, new Set<FitnessVisualsRiveMuscleProperty>()])
+  );
+
+  program.days.forEach((day) => {
+    calculateTrainingDayMuscleVolume(day).forEach((row) => {
+      setTotals.set(row.muscleGroup, (setTotals.get(row.muscleGroup) ?? 0) + row.sets);
+
+      const groupProperties = rivePropertiesByGroup.get(row.muscleGroup);
+      row.riveProperties.forEach((riveProperty) => groupProperties?.add(riveProperty));
     });
   });
 
