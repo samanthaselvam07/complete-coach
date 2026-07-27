@@ -772,6 +772,36 @@ describe("MealPlansPage", () => {
         );
       }
 
+      if (url === "/api/v1/meal-plan-templates/photo-upload-url" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                objectKey: "organizations/org_1/nutrition/recipes/photos/11111111-1111-4111-8111-111111111111.jpg",
+                photoUrl: "r2://organizations/org_1/nutrition/recipes/photos/11111111-1111-4111-8111-111111111111.jpg",
+                uploadUrl: "https://uploads.example.test/recipe-photo.jpg",
+                method: "PUT",
+                requiredHeaders: { "Content-Type": "image/jpeg" },
+                maxBytes: 10 * 1024 * 1024
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "https://uploads.example.test/recipe-photo.jpg" && init?.method === "PUT") {
+        return Promise.resolve(new Response(null, { status: 200 }));
+      }
+
+      if (url.startsWith("/api/v1/meal-plan-templates/photo-url")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { url: "https://uploads.example.test/signed-recipe-photo.jpg" } }), {
+            status: 200
+          })
+        );
+      }
+
       if (url.startsWith("/api/v1/meal-plan-templates")) {
         return Promise.resolve(
           new Response(
@@ -875,6 +905,13 @@ describe("MealPlansPage", () => {
     fireEvent.change(screen.getByLabelText("Servings"), { target: { value: "3" } });
     fireEvent.change(screen.getByLabelText("Serving size"), { target: { value: "1 meal prep bowl" } });
     fireEvent.change(screen.getByLabelText("Recipe photo URL"), { target: { value: "https://example.com/updated-bowl.jpg" } });
+    fireEvent.change(screen.getByLabelText("Upload recipe photo"), {
+      target: { files: [new File(["recipe photo"], "recipe-photo.jpg", { type: "image/jpeg" })] }
+    });
+    expect(await screen.findByText("recipe-photo.jpg uploaded.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Recipe photo URL")).toHaveValue(
+      "r2://organizations/org_1/nutrition/recipes/photos/11111111-1111-4111-8111-111111111111.jpg"
+    );
     fireEvent.change(screen.getByLabelText("Chicken Breast quantity"), { target: { value: "100" } });
     fireEvent.change(screen.getByLabelText("Ingredient 1 name"), { target: { value: "Grilled Chicken Breast" } });
     fireEvent.change(screen.getByLabelText("Grilled Chicken Breast serving"), { target: { value: "100 g cooked" } });
@@ -910,7 +947,7 @@ describe("MealPlansPage", () => {
       cookTimeMinutes: 25,
       servings: 3,
       servingSize: "1 meal prep bowl",
-      photoUrl: "https://example.com/updated-bowl.jpg",
+      photoUrl: "r2://organizations/org_1/nutrition/recipes/photos/11111111-1111-4111-8111-111111111111.jpg",
       instructions: "Cook fresh rice and chicken.\n\nPortion into bowls.\n\nGarnish before serving.",
       instructionSteps: ["Cook fresh rice and chicken.", "Portion into bowls.", "Garnish before serving."]
     });

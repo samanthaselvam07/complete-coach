@@ -1,6 +1,6 @@
 "use client";
 
-import { Calculator, Calendar, CheckCircle2, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2, UserPlus, X } from "lucide-react";
+import { Calculator, Calendar, CheckCircle2, ClipboardCopy, Edit, Info, MoreVertical, Plus, Search, Trash2, Upload, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { CardListViewToggle, type CardListViewMode } from "@/components/ui/card-list-view-toggle";
@@ -28,6 +28,7 @@ type TdeeGrowthMode = "kcal" | "percent";
 type TdeeMacroMode = "percent" | "g_per_kg";
 const VERIFIED_FOOD_SOURCES = new Set(["USDA", "AUS/NZ"]);
 const FOOD_SELECTOR_RECENT_LIMIT = 8;
+const RECIPE_PHOTO_OBJECT_URL_PREFIX = "r2://";
 const servingDescriptionOptions = ["Grams", "Ounces", "Qty", "Cups", "Oz", "Tbsp", "Tsp", "Ml"];
 
 const TDEE_FORMULAS: Array<{
@@ -4425,8 +4426,8 @@ function MasterTemplatesPanel({
               >
                 <div className="relative h-36 overflow-hidden bg-gradient-to-br from-green-700 to-emerald-500">
                   {recipe?.photoUrl ? (
-                    <img
-                      src={recipe.photoUrl}
+                    <RecipePhotoImage
+                      photoUrl={recipe.photoUrl}
                       alt={`${template.name} photo`}
                       className="h-full w-full object-cover"
                     />
@@ -4667,6 +4668,56 @@ function Macro({ label, value, tone }: { label: string; value: string; tone: str
   );
 }
 
+function RecipePhotoImage({ photoUrl, alt, className }: { photoUrl: string; alt: string; className: string }) {
+  const [resolvedPhotoUrl, setResolvedPhotoUrl] = useState<{ photoUrl: string; url: string } | null>(null);
+  const isUploadedPhoto = isUploadedRecipePhotoUrl(photoUrl);
+
+  useEffect(() => {
+    if (!isUploadedPhoto) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function resolveUploadedRecipePhoto() {
+      try {
+        const response = await fetch(`/api/v1/meal-plan-templates/photo-url?photoUrl=${encodeURIComponent(photoUrl)}`);
+        const payload = (await response.json()) as { data?: { url?: string } };
+
+        if (!response.ok || !payload.data?.url) {
+          throw new Error("Recipe photo could not be loaded.");
+        }
+
+        if (!cancelled) {
+          setResolvedPhotoUrl({ photoUrl, url: payload.data.url });
+        }
+      } catch {
+        if (!cancelled) {
+          setResolvedPhotoUrl(null);
+        }
+      }
+    }
+
+    void resolveUploadedRecipePhoto();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isUploadedPhoto, photoUrl]);
+
+  const imageSrc = isUploadedPhoto ? (resolvedPhotoUrl?.photoUrl === photoUrl ? resolvedPhotoUrl.url : null) : photoUrl;
+
+  if (!imageSrc) {
+    return null;
+  }
+
+  return <img src={imageSrc} alt={alt} className={className} />;
+}
+
+function isUploadedRecipePhotoUrl(photoUrl: string) {
+  return photoUrl.startsWith(RECIPE_PHOTO_OBJECT_URL_PREFIX);
+}
+
 function formatRecipeTime(value?: number) {
   return typeof value === "number" && Number.isFinite(value) ? `${value} min` : "-";
 }
@@ -4691,6 +4742,9 @@ function MealTemplateRecipeBuilder({
   const [servings, setServings] = useState(recipe.servings !== undefined ? String(recipe.servings) : "1");
   const [servingSize, setServingSize] = useState(recipe.servingSize ?? "");
   const [photoUrl, setPhotoUrl] = useState(recipe.photoUrl ?? "");
+  const [photoUploadFilename, setPhotoUploadFilename] = useState("");
+  const [photoUploadSaving, setPhotoUploadSaving] = useState(false);
+  const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
   const [instructionSteps, setInstructionSteps] = useState<string[]>(() => getRecipeInstructionSteps(templatePayload));
   const [days, setDays] = useState<NonNullable<ApiMealPlanTemplate["template"]["days"]>>(() =>
     templatePayload.days && templatePayload.days.length > 0
@@ -4946,6 +5000,48 @@ function MealTemplateRecipeBuilder({
     }
   }
 
+  async function uploadRecipePhoto(file: File) {
+    setPhotoUploadFilename(file.name);
+    setPhotoUploadSaving(true);
+    setPhotoUploadError(null);
+
+    try {
+      const signedUrlResponse = await fetch("/api/v1/meal-plan-templates/photo-upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          byteSize: file.size
+        })
+      });
+      const signedUrlPayload = (await signedUrlResponse.json()) as {
+        data?: { uploadUrl: string; photoUrl: string; requiredHeaders: Record<string, string> };
+        error?: { message?: string };
+      };
+
+      if (!signedUrlResponse.ok || !signedUrlPayload.data) {
+        throw new Error(signedUrlPayload.error?.message ?? "Recipe photo upload could not be authorized.");
+      }
+
+      const uploadResponse = await fetch(signedUrlPayload.data.uploadUrl, {
+        method: "PUT",
+        headers: signedUrlPayload.data.requiredHeaders,
+        body: file
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Recipe photo upload failed.");
+      }
+
+      setPhotoUrl(signedUrlPayload.data.photoUrl);
+    } catch (error) {
+      setPhotoUploadError(error instanceof Error ? error.message : "Recipe photo upload failed.");
+    } finally {
+      setPhotoUploadSaving(false);
+    }
+  }
+
   function handleSave() {
     onSave({
       name: displayName,
@@ -5058,12 +5154,44 @@ function MealTemplateRecipeBuilder({
                     onChange={(event) => setPhotoUrl(event.target.value)}
                   />
                 </label>
+                <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-center">
+                  <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+                    <Upload className="size-5" aria-hidden="true" />
+                  </div>
+                  <label className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100">
+                    <span>{photoUploadSaving ? "Uploading..." : "Upload photo"}</span>
+                    <input
+                      type="file"
+                      aria-label="Upload recipe photo"
+                      accept="image/*"
+                      className="sr-only"
+                      disabled={photoUploadSaving}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+
+                        if (file) {
+                          void uploadRecipePhoto(file);
+                        }
+                      }}
+                    />
+                  </label>
+                  {photoUploadFilename ? (
+                    <p className="mt-3 text-xs font-semibold text-slate-500">
+                      {photoUploadSaving
+                        ? `${photoUploadFilename} uploading...`
+                        : photoUploadError
+                          ? `${photoUploadFilename} could not be uploaded.`
+                          : `${photoUploadFilename} uploaded.`}
+                    </p>
+                  ) : null}
+                  {photoUploadError ? <p className="mt-2 text-xs font-semibold text-red-600">{photoUploadError}</p> : null}
+                </div>
               </div>
             </section>
 
             {photoUrl.trim() ? (
               <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <img src={photoUrl.trim()} alt={`${displayName} preview`} className="aspect-[4/3] w-full object-cover" />
+                <RecipePhotoImage photoUrl={photoUrl.trim()} alt={`${displayName} preview`} className="aspect-[4/3] w-full object-cover" />
               </section>
             ) : null}
 

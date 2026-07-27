@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   LibraryScope,
@@ -11,6 +11,8 @@ import {
   GET as getMealPlanTemplates,
   POST as createMealPlanTemplate
 } from "@/app/api/v1/meal-plan-templates/route";
+import { GET as getMealPlanTemplatePhotoUrl } from "@/app/api/v1/meal-plan-templates/photo-url/route";
+import { POST as createMealPlanTemplatePhotoUploadUrl } from "@/app/api/v1/meal-plan-templates/photo-upload-url/route";
 import {
   DELETE as deleteMealPlanTemplate,
   PATCH as updateMealPlanTemplate
@@ -20,6 +22,12 @@ import {
   POST as createMealPlanAssignment
 } from "@/app/api/v1/meal-plan-assignments/route";
 import { GET as getClientMealPlans } from "@/app/api/v1/clients/[clientId]/meal-plans/route";
+import {
+  buildRecipePhotoObjectKey,
+  createRecipePhotoObjectUrl,
+  recipePhotoUploadSchema,
+  validateRecipePhotoObjectKey
+} from "@/lib/nutrition/recipe-photo-uploads";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -176,6 +184,10 @@ describe("nutrition persistence APIs", () => {
     mocks.prisma.mealPlanTemplate.findFirst.mockReset();
     mocks.prisma.mealPlanAssignment.create.mockReset();
     mocks.prisma.mealPlanAssignment.findMany.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("lists global and tenant private foods for the active organization", async () => {
@@ -622,6 +634,92 @@ describe("nutrition persistence APIs", () => {
         })
       })
     );
+  });
+
+  it("creates and resolves R2-backed recipe photo upload URLs", async () => {
+    vi.stubEnv("R2_ACCOUNT_ID", "account_1");
+    vi.stubEnv("R2_ACCESS_KEY_ID", "access_key_1");
+    vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret_key_1");
+    vi.stubEnv("R2_BUCKET_NAME", "complete-coach-test");
+
+    const uploadResponse = await createMealPlanTemplatePhotoUploadUrl(
+      new Request("http://test.local/api/v1/meal-plan-templates/photo-upload-url", {
+        method: "POST",
+        body: JSON.stringify({
+          filename: "breakfast-bowl.jpg",
+          contentType: "image/jpeg",
+          byteSize: 1024,
+          checksumSha256: "a".repeat(64)
+        })
+      })
+    );
+    const uploadPayload = (await uploadResponse.json()) as {
+      data: { objectKey: string; photoUrl: string; uploadUrl: string; method: string; maxBytes: number };
+    };
+
+    expect(uploadResponse.status).toBe(200);
+    expect(uploadPayload.data).toEqual(
+      expect.objectContaining({
+        method: "PUT",
+        maxBytes: 10 * 1024 * 1024
+      })
+    );
+    expect(uploadPayload.data.objectKey).toMatch(
+      /^organizations\/org_1\/nutrition\/recipes\/photos\/[0-9a-fA-F-]{36}\.jpg$/
+    );
+    expect(uploadPayload.data.photoUrl).toBe(`r2://${uploadPayload.data.objectKey}`);
+    expect(uploadPayload.data.uploadUrl).toContain("account_1.r2.cloudflarestorage.com");
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "recipe_photo.upload_url_created",
+          targetType: "recipe_photo",
+          targetId: uploadPayload.data.objectKey,
+          metadata: {
+            contentType: "image/jpeg",
+            byteSize: 1024,
+            checksumSha256: "a".repeat(64)
+          }
+        })
+      })
+    );
+
+    const signedUrlResponse = await getMealPlanTemplatePhotoUrl(
+      new Request(
+        `http://test.local/api/v1/meal-plan-templates/photo-url?photoUrl=${encodeURIComponent(uploadPayload.data.photoUrl)}`
+      )
+    );
+    const signedUrlPayload = (await signedUrlResponse.json()) as { data: { url: string } };
+
+    expect(signedUrlResponse.status).toBe(200);
+    expect(signedUrlPayload.data.url).toContain("X-Amz-Signature=");
+    expect(signedUrlPayload.data.url).toContain("complete-coach-test");
+  });
+
+  it("validates recipe photo uploads and organization-scoped object keys", async () => {
+    expect(() =>
+      recipePhotoUploadSchema.parse({
+        filename: "breakfast-bowl.txt",
+        contentType: "text/plain",
+        byteSize: 1024
+      })
+    ).toThrow();
+
+    const objectKey = buildRecipePhotoObjectKey("org_1", {
+      filename: "breakfast-bowl.webp",
+      contentType: "image/webp",
+      byteSize: 1024
+    });
+
+    expect(createRecipePhotoObjectUrl(objectKey)).toBe(`r2://${objectKey}`);
+    expect(() => validateRecipePhotoObjectKey("org_1", objectKey)).not.toThrow();
+    expect(() => validateRecipePhotoObjectKey("org_2", objectKey)).toThrow("Invalid recipe photo object key");
+
+    const response = await getMealPlanTemplatePhotoUrl(
+      new Request("http://test.local/api/v1/meal-plan-templates/photo-url?photoUrl=https%3A%2F%2Fexample.test%2Fphoto.jpg")
+    );
+
+    expect(response.status).toBe(422);
   });
 
   it("creates immutable meal assignment snapshots from templates", async () => {
