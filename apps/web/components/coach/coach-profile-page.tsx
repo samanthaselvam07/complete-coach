@@ -1,13 +1,83 @@
-import { Mail, Phone, Plus, Users } from "lucide-react";
+"use client";
 
-const credentials = [
-  ["CSCS", "Certified Strength & Conditioning Specialist"],
-  ["PN Level 2", "Precision Nutrition Certified Coach"],
-  ["ISSN Sport Nutrition", "Sports Nutrition Specialist"],
-  ["FMS Level 2", "Functional Movement Screening"]
+import { Mail, Phone, Plus, Upload } from "lucide-react";
+import { useState } from "react";
+
+interface Credential {
+  id: string;
+  title: string;
+  institution: string;
+  completedAt: string;
+  credentialId: string;
+  fileName: string;
+}
+
+const initialCredentials: Credential[] = [
+  {
+    id: "credential-cscs",
+    title: "CSCS",
+    institution: "NSCA",
+    completedAt: "2018-05-14",
+    credentialId: "CSCS-88421",
+    fileName: ""
+  },
+  {
+    id: "credential-pn2",
+    title: "PN Level 2",
+    institution: "Precision Nutrition",
+    completedAt: "2020-09-02",
+    credentialId: "PN2-19388",
+    fileName: ""
+  }
 ];
 
 export function CoachProfilePage() {
+  const [email, setEmail] = useState("m.chen@mcpcoaching.com");
+  const [phone, setPhone] = useState("+1 (555) 012-9988");
+  const [bio, setBio] = useState(
+    "With over 12 years of experience in high-performance sports and specialised metabolic conditioning, Marcus has carved a unique space in the coaching world. He brings world-class methodologies to ambitious professionals who want strong, measurable progress."
+  );
+  const [philosophy, setPhilosophy] = useState(
+    "We do not chase fatigue, we create performance. If it is not measurable, it is not manageable."
+  );
+  const [specialityInput, setSpecialityInput] = useState("");
+  const [specialities, setSpecialities] = useState(["Metabolic Analytics", "Strength Development", "Behavioral Coaching"]);
+  const [credentials, setCredentials] = useState<Credential[]>(initialCredentials);
+
+  function addSpeciality() {
+    const nextSpeciality = specialityInput.trim();
+
+    if (!nextSpeciality || specialities.includes(nextSpeciality)) {
+      setSpecialityInput("");
+      return;
+    }
+
+    setSpecialities([...specialities, nextSpeciality]);
+    setSpecialityInput("");
+  }
+
+  function updateCredential(credentialId: string, updates: Partial<Credential>) {
+    setCredentials((currentCredentials) =>
+      currentCredentials.map((credential) => (credential.id === credentialId ? { ...credential, ...updates } : credential))
+    );
+  }
+
+  function addCredential() {
+    const credentialNumber = credentials.length + 1;
+
+    setCredentials([
+      ...credentials,
+      {
+        id: `credential-${Date.now()}`,
+        title: `Credential ${credentialNumber}`,
+        institution: "",
+        completedAt: "",
+        credentialId: "",
+        fileName: ""
+      }
+    ]);
+  }
+
   return (
     <main className="min-h-screen bg-gray-50">
       <header className="relative min-h-64 overflow-hidden bg-slate-950 p-8 text-white">
@@ -22,93 +92,143 @@ export function CoachProfilePage() {
       <div className="grid gap-6 p-6 lg:grid-cols-[0.48fr_1fr] lg:p-8">
         <aside className="space-y-5">
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="grid grid-cols-2 gap-6 border-b border-slate-100 pb-5 text-center">
-              <Metric value="140+" label="Clients Coached" />
-              <Metric value="94%" label="Goal Achievement" />
-            </div>
-            <div className="pt-5">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Retention Rate</p>
-              <p className="mt-2 text-3xl font-black">98.2%</p>
-            </div>
+            <h2 className="mb-4 text-xl font-black">Contact Information</h2>
+            <label className="mb-4 block text-sm font-bold text-slate-700">
+              Email address
+              <span className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <Mail className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                <input
+                  type="email"
+                  value={email}
+                  className="min-w-0 flex-1 border-0 bg-transparent text-sm font-semibold text-slate-700 outline-none"
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </span>
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              Phone number
+              <span className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <Phone className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                <input
+                  type="tel"
+                  value={phone}
+                  className="min-w-0 flex-1 border-0 bg-transparent text-sm font-semibold text-slate-700 outline-none"
+                  onChange={(event) => setPhone(event.target.value)}
+                />
+              </span>
+            </label>
           </section>
-
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-xl font-black">+ Contact Information</h2>
-            <p className="mb-3 flex items-center gap-3 text-sm text-slate-600">
-              <Mail className="h-4 w-4" aria-hidden="true" />
-              m.chen@mcpcoaching.com
-            </p>
-            <p className="flex items-center gap-3 text-sm text-slate-600">
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              +1 (555) 012-9988
-            </p>
-          </section>
-
-          <button type="button" className="flex w-full items-center justify-center gap-3 rounded-2xl bg-indigo-600 px-5 py-4 text-base font-bold text-white shadow-sm">
-            <Plus className="h-5 w-5" aria-hidden="true" />
-            New Program
-          </button>
 
           <section className="rounded-2xl bg-slate-950 p-6 text-white">
-            <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-400">Coaching Philosophy</h2>
-            <p className="text-sm font-semibold italic leading-6">
-              We do not chase fatigue, we create performance. If it is not measurable, it is not manageable.
-            </p>
+            <label className="block text-xs font-bold uppercase tracking-widest text-slate-400">
+              Coaching Philosophy
+              <textarea
+                value={philosophy}
+                rows={5}
+                className="mt-4 w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold normal-case leading-6 text-white outline-none placeholder:text-slate-400 focus:border-indigo-300"
+                onChange={(event) => setPhilosophy(event.target.value)}
+              />
+            </label>
           </section>
         </aside>
 
         <section className="space-y-5">
           <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-xl font-black">Professional Bio</h2>
-            <div className="space-y-3 text-sm leading-7 text-slate-700">
-              <p>
-                With over 12 years of experience in high-performance sports and specialised metabolic conditioning,
-                Marcus has carved a unique space in the coaching world. His philosophy, The Kinetic Curator, focuses
-                on meticulous movement selection that maximises output while minimising systemic fatigue.
-              </p>
-              <p>
-                Formerly a strength coach for elite European cycling teams, he transitioned to private coaching to
-                bring world-class methodologies to ambitious professionals.
-              </p>
-            </div>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {["AI-First Sport Science", "Metabolic Analytics", "Behavioral Coaching"].map((tag) => (
-                <span key={tag} className="rounded-full bg-indigo-50 px-4 py-1 text-xs font-bold uppercase tracking-widest text-indigo-600">
-                  {tag}
+            <label className="block text-xl font-black text-slate-950">
+              Professional Bio
+              <textarea
+                value={bio}
+                rows={7}
+                className="mt-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal leading-7 text-slate-700 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                onChange={(event) => setBio(event.target.value)}
+              />
+            </label>
+
+            <div className="mt-5">
+              <label className="block text-sm font-bold text-slate-800">
+                Speciality tags
+                <span className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    value={specialityInput}
+                    placeholder="Add a speciality"
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal text-slate-950 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                    onChange={(event) => setSpecialityInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        addSpeciality();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white"
+                    onClick={addSpeciality}
+                  >
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Add tag
+                  </button>
                 </span>
-              ))}
+              </label>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {specialities.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    aria-label={`Remove ${tag}`}
+                    className="rounded-full bg-indigo-50 px-4 py-1 text-xs font-bold uppercase tracking-widest text-indigo-600 hover:bg-indigo-100"
+                    onClick={() => setSpecialities(specialities.filter((speciality) => speciality !== tag))}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
             </div>
           </article>
 
           <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="mb-4 text-xl font-black">Next Training Session</h2>
-                <div className="flex items-center gap-4">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-                    <Users className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <div>
-                    <p className="font-bold">Team Power Alpha</p>
-                    <p className="text-sm text-slate-500">Today, 2:00 PM - 75 min</p>
-                    <p className="text-sm font-semibold text-indigo-600">Upper Hypertrophy Block</p>
-                  </div>
-                </div>
+                <h2 className="text-xl font-black">Certifications & Credentials</h2>
+                <p className="mt-1 text-sm text-slate-500">Upload records and capture the institution, completion date, and credential details.</p>
               </div>
-              <button type="button" className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white">
-                View Session
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white"
+                onClick={addCredential}
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Add credential
               </button>
             </div>
-          </article>
 
-          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-5 text-xl font-black">Certifications & Credentials</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {credentials.map(([title, detail]) => (
-                <div key={title} className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
-                  <p className="font-bold text-indigo-700">{title}</p>
-                  <p className="text-sm text-slate-500">{detail}</p>
-                </div>
+            <div className="mt-5 space-y-4">
+              {credentials.map((credential) => (
+                <section key={credential.id} aria-label={`${credential.title} credential`} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <EditableField label="Credential title" value={credential.title} onChange={(title) => updateCredential(credential.id, { title })} />
+                    <EditableField label="Institution" value={credential.institution} onChange={(institution) => updateCredential(credential.id, { institution })} />
+                    <EditableField
+                      label="Date completed"
+                      type="date"
+                      value={credential.completedAt}
+                      onChange={(completedAt) => updateCredential(credential.id, { completedAt })}
+                    />
+                    <EditableField label="Credential ID" value={credential.credentialId} onChange={(credentialId) => updateCredential(credential.id, { credentialId })} />
+                  </div>
+                  <label className="mt-4 flex cursor-pointer flex-col gap-2 rounded-xl border border-dashed border-indigo-200 bg-white p-4 text-sm font-bold text-indigo-700 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="inline-flex items-center gap-2">
+                      <Upload className="h-4 w-4" aria-hidden="true" />
+                      Upload certificate
+                    </span>
+                    <span className="truncate text-xs font-semibold text-slate-500">{credential.fileName || "No file uploaded"}</span>
+                    <input
+                      type="file"
+                      className="sr-only"
+                      onChange={(event) => updateCredential(credential.id, { fileName: event.target.files?.[0]?.name ?? "" })}
+                    />
+                  </label>
+                </section>
               ))}
             </div>
           </article>
@@ -118,11 +238,26 @@ export function CoachProfilePage() {
   );
 }
 
-function Metric({ value, label }: { value: string; label: string }) {
+function EditableField({
+  label,
+  value,
+  onChange,
+  type = "text"
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: "date" | "text";
+}) {
   return (
-    <div>
-      <p className="text-3xl font-black text-slate-950">{value}</p>
-      <p className="mt-2 text-xs font-bold uppercase tracking-widest text-slate-500">{label}</p>
-    </div>
+    <label className="block text-sm font-bold text-slate-700">
+      {label}
+      <input
+        type={type}
+        value={value}
+        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal text-slate-950 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
   );
 }

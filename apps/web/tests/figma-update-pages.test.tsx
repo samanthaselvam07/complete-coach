@@ -351,6 +351,17 @@ describe("Figma update pages", () => {
     expect(screen.getByRole("heading", { name: "Marcus Chen-Patterson" })).toBeInTheDocument();
     expect(screen.getByText("Professional Bio")).toBeInTheDocument();
     expect(screen.getByText("Coaching Philosophy")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email address")).toHaveValue("m.chen@mcpcoaching.com");
+    expect((screen.getByLabelText("Professional Bio") as HTMLTextAreaElement).value).toContain("12 years");
+    expect((screen.getByLabelText("Coaching Philosophy") as HTMLTextAreaElement).value).toContain("measurable");
+    expect(screen.getByPlaceholderText("Add a speciality")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add credential" })).toBeInTheDocument();
+    expect(screen.getAllByText("Upload certificate")).toHaveLength(2);
+    expect(screen.queryByText("Retention Rate")).not.toBeInTheDocument();
+    expect(screen.queryByText("Clients Coached")).not.toBeInTheDocument();
+    expect(screen.queryByText("Goal Achievement")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "New Program" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Next Training Session")).not.toBeInTheDocument();
 
     rerender(<SchedulingPage />);
     expect(screen.getByRole("heading", { name: "Scheduling & Events" })).toBeInTheDocument();
@@ -359,13 +370,18 @@ describe("Figma update pages", () => {
 
     rerender(<SettingsPage />);
     expect(screen.getByRole("heading", { name: "Account Profile" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Full Name")).toBeInTheDocument();
-    expect(screen.getByText("Platform Customization")).toBeInTheDocument();
-    expect(screen.getByText("Coach Calendar Connections")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Connect Google Calendar" })).toHaveAttribute(
-      "href",
-      "/api/v1/calendar/connections/oauth/start?provider=google&scope=coach&redirectTo=/settings"
-    );
+    expect(screen.getByLabelText("Full Name")).toHaveValue("Marcus Chen");
+    expect(screen.getByLabelText("Professional Title")).toHaveValue("Head Performance Coach");
+    expect(screen.getByLabelText("Email Address")).toHaveValue("marcus.coach@kineticcurator.com");
+    expect(screen.getByLabelText("Phone Number")).toHaveValue("+1 (055) 234-8890");
+    expect(screen.getByLabelText("Password")).toHaveAttribute("type", "password");
+    fireEvent.click(screen.getByRole("button", { name: "Show password" }));
+    expect(screen.getByLabelText("Password")).toHaveAttribute("type", "text");
+    expect(screen.getByText("Upload photo")).toBeInTheDocument();
+    expect(screen.queryByText("Two-Factor Authentication")).not.toBeInTheDocument();
+    expect(screen.queryByText("Active Sessions")).not.toBeInTheDocument();
+    expect(screen.queryByText("Platform Customization")).not.toBeInTheDocument();
+    expect(screen.queryByText("Coach Calendar Connections")).not.toBeInTheDocument();
   });
 });
 
