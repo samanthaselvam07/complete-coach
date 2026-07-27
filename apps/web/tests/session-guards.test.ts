@@ -81,4 +81,24 @@ describe("session guards", () => {
     expect(() => requireActiveActor(blockedSession, "clients:read")).toThrow(PlatformBillingAccessRequiredError);
     expect(() => requireActiveActor(blockedSession, "payments:manage")).not.toThrow();
   });
+
+  it("allows setup-warning platform access while a plan is being selected", () => {
+    const setupSession: AppSession = {
+      ...authenticatedSession,
+      activeOrganization: {
+        ...activeOrganization,
+        platformAccess: {
+          state: "blocked",
+          canUsePlatform: false,
+          reason: "subscription_required",
+          message: "Choose a Complete Coach plan to activate platform access."
+        }
+      }
+    };
+
+    expect(requireActiveActor(setupSession, "clients:write")).toMatchObject({
+      userId: "user_1",
+      organizationId: "org_1"
+    });
+  });
 });

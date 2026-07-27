@@ -13,6 +13,7 @@ import {
   scopeTenantWhere,
   type MembershipSummary
 } from "@/lib/auth/tenant";
+import { createActiveOrganizationSession } from "@/lib/auth/session-organization";
 import { buildAuditEvent } from "@/lib/audit/audit-log";
 import { parseServerEnv } from "@/lib/env";
 import { getLocalEnvFileCandidates } from "@/lib/env-loader";
@@ -136,6 +137,49 @@ describe("tenant organization resolution", () => {
 
     expect(scopeTenantWhere("org_alpha", { organizationId: "org_beta" })).toEqual({
       organizationId: "org_alpha"
+    });
+  });
+});
+
+describe("active organization session mapping", () => {
+  it("maps current platform billing status into session access", () => {
+    expect(
+      createActiveOrganizationSession({
+        organizationId: "org_1",
+        role: "OWNER",
+        organization: {
+          slug: "complete-coach-demo",
+          name: "Complete Coach Demo",
+          platformSubscriptionStatus: "active"
+        }
+      })
+    ).toEqual({
+      id: "org_1",
+      slug: "complete-coach-demo",
+      name: "Complete Coach Demo",
+      role: "owner",
+      platformAccess: {
+        state: "active",
+        canUsePlatform: true,
+        reason: "subscription_active",
+        message: "Platform access is active."
+      }
+    });
+
+    expect(
+      createActiveOrganizationSession({
+        organizationId: "org_1",
+        role: "OWNER",
+        organization: {
+          slug: "complete-coach-demo",
+          name: "Complete Coach Demo",
+          platformSubscriptionStatus: "incomplete"
+        }
+      }).platformAccess
+    ).toMatchObject({
+      state: "blocked",
+      canUsePlatform: false,
+      reason: "subscription_inactive"
     });
   });
 });

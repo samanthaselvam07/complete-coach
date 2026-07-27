@@ -8,13 +8,11 @@ import {
   MembershipRole as PrismaMembershipRole,
   MembershipStatus
 } from "@/app/generated/prisma/enums";
-import { findActiveOrganizationMembershipForUser } from "@/lib/auth/active-organization";
 import { credentialsSchema } from "@/lib/auth/credentials";
 import { createLocalDevelopmentSession, isLocalDevAuthBypassEnabled, localDevelopmentSession } from "@/lib/auth/local-dev-session";
-import type { MembershipRole } from "@/lib/auth/permissions";
+import { resolveActiveOrganizationSessionForUser } from "@/lib/auth/session-organization";
 import { prisma } from "@/lib/db/prisma";
 import { getServerEnv } from "@/lib/env";
-import { evaluatePlatformBillingAccess } from "@/lib/platform-billing/rules";
 
 function isActiveOrganization(value: unknown): value is NonNullable<Session["activeOrganization"]> {
   if (!value || typeof value !== "object") {
@@ -79,20 +77,18 @@ const nextAuth = NextAuth(() => {
     ],
     callbacks: {
       async jwt({ token, user }) {
-        if (!user?.id) {
+        const userId = user?.id ?? token.sub;
+
+        if (!userId) {
           return token;
         }
 
-        const membership = await findActiveOrganizationMembershipForUser(user.id);
+        const activeOrganization = await resolveActiveOrganizationSessionForUser(userId);
 
-        if (membership) {
-          token.activeOrganization = {
-            id: membership.organizationId,
-            slug: membership.organization.slug,
-            name: membership.organization.name,
-            role: membership.role.toLowerCase() as MembershipRole,
-            platformAccess: evaluatePlatformBillingAccess(membership.organization.platformSubscriptionStatus)
-          };
+        if (activeOrganization) {
+          token.activeOrganization = activeOrganization;
+        } else {
+          delete token.activeOrganization;
         }
 
         return token;

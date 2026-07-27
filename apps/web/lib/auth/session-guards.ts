@@ -52,6 +52,7 @@ export function requireActiveActor(
   if (
     organization.platformAccess &&
     !organization.platformAccess.canUsePlatform &&
+    organization.platformAccess.reason !== "subscription_required" &&
     requiredCapability !== "payments:read" &&
     requiredCapability !== "payments:manage"
   ) {
