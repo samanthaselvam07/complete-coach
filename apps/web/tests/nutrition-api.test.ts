@@ -12,6 +12,7 @@ import {
   POST as createMealPlanTemplate
 } from "@/app/api/v1/meal-plan-templates/route";
 import { GET as getMealPlanTemplatePhotoUrl } from "@/app/api/v1/meal-plan-templates/photo-url/route";
+import { POST as uploadMealPlanTemplatePhoto } from "@/app/api/v1/meal-plan-templates/photo-upload/route";
 import { POST as createMealPlanTemplatePhotoUploadUrl } from "@/app/api/v1/meal-plan-templates/photo-upload-url/route";
 import {
   DELETE as deleteMealPlanTemplate,
@@ -187,6 +188,7 @@ describe("nutrition persistence APIs", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllEnvs();
   });
 
@@ -696,6 +698,54 @@ describe("nutrition persistence APIs", () => {
     expect(signedUrlPayload.data.url).toContain("complete-coach-test");
   });
 
+  it("uploads recipe photo files through the API to avoid browser storage CORS", async () => {
+    vi.stubEnv("R2_ACCOUNT_ID", "account_1");
+    vi.stubEnv("R2_ACCESS_KEY_ID", "access_key_1");
+    vi.stubEnv("R2_SECRET_ACCESS_KEY", "secret_key_1");
+    vi.stubEnv("R2_BUCKET_NAME", "complete-coach-test");
+    const uploadFetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
+
+    const response = await uploadMealPlanTemplatePhoto(
+      new Request("http://test.local/api/v1/meal-plan-templates/photo-upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "image/jpeg",
+          "X-Filename": encodeURIComponent("recipe-photo.jpg")
+        },
+        body: "recipe photo"
+      })
+    );
+    const payload = (await response.json()) as { data: { objectKey: string; photoUrl: string; maxBytes: number } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.objectKey).toMatch(
+      /^organizations\/org_1\/nutrition\/recipes\/photos\/[0-9a-fA-F-]{36}\.jpg$/
+    );
+    expect(payload.data.photoUrl).toBe(`r2://${payload.data.objectKey}`);
+    expect(payload.data.maxBytes).toBe(10 * 1024 * 1024);
+    expect(uploadFetch).toHaveBeenCalledWith(
+      expect.stringContaining("account_1.r2.cloudflarestorage.com"),
+      expect.objectContaining({
+        method: "PUT",
+        headers: { "Content-Type": "image/jpeg" },
+        body: expect.any(Uint8Array)
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "recipe_photo.uploaded",
+          targetType: "recipe_photo",
+          targetId: payload.data.objectKey,
+          metadata: {
+            contentType: "image/jpeg",
+            byteSize: 12
+          }
+        })
+      })
+    );
+  });
+
   it("validates recipe photo uploads and organization-scoped object keys", async () => {
     expect(() =>
       recipePhotoUploadSchema.parse({
@@ -710,9 +760,16 @@ describe("nutrition persistence APIs", () => {
       contentType: "image/webp",
       byteSize: 1024
     });
+    const heicObjectKey = buildRecipePhotoObjectKey("org_1", {
+      filename: "breakfast-bowl.heic",
+      contentType: "image/heic",
+      byteSize: 1024
+    });
 
     expect(createRecipePhotoObjectUrl(objectKey)).toBe(`r2://${objectKey}`);
+    expect(heicObjectKey).toMatch(/\.heic$/);
     expect(() => validateRecipePhotoObjectKey("org_1", objectKey)).not.toThrow();
+    expect(() => validateRecipePhotoObjectKey("org_1", heicObjectKey)).not.toThrow();
     expect(() => validateRecipePhotoObjectKey("org_2", objectKey)).toThrow("Invalid recipe photo object key");
 
     const response = await getMealPlanTemplatePhotoUrl(

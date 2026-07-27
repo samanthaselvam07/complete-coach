@@ -5006,35 +5006,24 @@ function MealTemplateRecipeBuilder({
     setPhotoUploadError(null);
 
     try {
-      const signedUrlResponse = await fetch("/api/v1/meal-plan-templates/photo-upload-url", {
+      const uploadResponse = await fetch("/api/v1/meal-plan-templates/photo-upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-          byteSize: file.size
-        })
+        headers: {
+          "Content-Type": file.type,
+          "X-Filename": encodeURIComponent(file.name)
+        },
+        body: file
       });
-      const signedUrlPayload = (await signedUrlResponse.json()) as {
-        data?: { uploadUrl: string; photoUrl: string; requiredHeaders: Record<string, string> };
+      const uploadPayload = (await uploadResponse.json()) as {
+        data?: { photoUrl: string };
         error?: { message?: string };
       };
 
-      if (!signedUrlResponse.ok || !signedUrlPayload.data) {
-        throw new Error(signedUrlPayload.error?.message ?? "Recipe photo upload could not be authorized.");
+      if (!uploadResponse.ok || !uploadPayload.data) {
+        throw new Error(uploadPayload.error?.message ?? "Recipe photo upload failed.");
       }
 
-      const uploadResponse = await fetch(signedUrlPayload.data.uploadUrl, {
-        method: "PUT",
-        headers: signedUrlPayload.data.requiredHeaders,
-        body: file
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Recipe photo upload failed.");
-      }
-
-      setPhotoUrl(signedUrlPayload.data.photoUrl);
+      setPhotoUrl(uploadPayload.data.photoUrl);
     } catch (error) {
       setPhotoUploadError(error instanceof Error ? error.message : "Recipe photo upload failed.");
     } finally {

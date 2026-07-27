@@ -772,26 +772,19 @@ describe("MealPlansPage", () => {
         );
       }
 
-      if (url === "/api/v1/meal-plan-templates/photo-upload-url" && init?.method === "POST") {
+      if (url === "/api/v1/meal-plan-templates/photo-upload" && init?.method === "POST") {
         return Promise.resolve(
           new Response(
             JSON.stringify({
               data: {
                 objectKey: "organizations/org_1/nutrition/recipes/photos/11111111-1111-4111-8111-111111111111.jpg",
                 photoUrl: "r2://organizations/org_1/nutrition/recipes/photos/11111111-1111-4111-8111-111111111111.jpg",
-                uploadUrl: "https://uploads.example.test/recipe-photo.jpg",
-                method: "PUT",
-                requiredHeaders: { "Content-Type": "image/jpeg" },
                 maxBytes: 10 * 1024 * 1024
               }
             }),
             { status: 200 }
           )
         );
-      }
-
-      if (url === "https://uploads.example.test/recipe-photo.jpg" && init?.method === "PUT") {
-        return Promise.resolve(new Response(null, { status: 200 }));
       }
 
       if (url.startsWith("/api/v1/meal-plan-templates/photo-url")) {
@@ -912,6 +905,7 @@ describe("MealPlansPage", () => {
     expect(screen.getByLabelText("Recipe photo URL")).toHaveValue(
       "r2://organizations/org_1/nutrition/recipes/photos/11111111-1111-4111-8111-111111111111.jpg"
     );
+    expect(fetchMock).not.toHaveBeenCalledWith("https://uploads.example.test/recipe-photo.jpg", expect.anything());
     fireEvent.change(screen.getByLabelText("Chicken Breast quantity"), { target: { value: "100" } });
     fireEvent.change(screen.getByLabelText("Ingredient 1 name"), { target: { value: "Grilled Chicken Breast" } });
     fireEvent.change(screen.getByLabelText("Grilled Chicken Breast serving"), { target: { value: "100 g cooked" } });
