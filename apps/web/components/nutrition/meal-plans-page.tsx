@@ -951,7 +951,7 @@ function MacroPlanChoiceDialog({
   );
 }
 
-function NutritionPlanBuilder({
+export function NutritionPlanBuilder({
   mode,
   initialPlan,
   initialTemplate,
