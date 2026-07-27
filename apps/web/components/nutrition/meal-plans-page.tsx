@@ -9,11 +9,11 @@ import type { Food } from "@/lib/nutrition/nutrition-models";
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import { SavedToast } from "@/components/ui/saved-toast";
 import { usePersistedCardListView } from "@/components/ui/use-persisted-card-list-view";
-import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
+import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 
-type MealPlanTab = "Meal Plans" | "Meal Templates";
-export type NutritionPlanBuilderMode = "full" | "macro-day" | "macro-meal";
+type MealPlanTab = "Meal Plans" | "Recipes";
+type NutritionPlanBuilderMode = "full" | "macro-day" | "macro-meal";
 export type MealPlanSource = "api" | "fixtures";
 type MealTemplateBuilderTab = "ingredients" | "instructions";
 
@@ -247,7 +247,9 @@ export interface ApiMealPlanTemplate {
       cookTimeMinutes?: number;
       servings?: number;
       servingSize?: string;
+      photoUrl?: string;
       instructions?: string;
+      instructionSteps?: string[];
     };
     days?: Array<{
       name: string;
@@ -327,7 +329,7 @@ export interface MealAssignmentRow {
   apiTemplate: ApiMealPlanTemplate | null;
 }
 
-export interface MealPlanTemplateSaveInput {
+interface MealPlanTemplateSaveInput {
   name: string;
   phase: string;
   targetCalories: number;
@@ -492,8 +494,8 @@ export function MealPlansPage() {
 
       setTemplates((currentTemplates) => [payload.data, ...currentTemplates]);
       setSource("api");
-      setActiveTab("Meal Templates");
-      setStatusMessage(`${template.name} saved to Meal Templates.`);
+      setActiveTab("Recipes");
+      setStatusMessage(`${template.name} saved to Recipes.`);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Meal template could not be saved.");
     } finally {
@@ -574,8 +576,8 @@ export function MealPlansPage() {
       setCreatedTemplates((currentTemplates) => currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.id));
       setSelectedMealTemplate(null);
       setSource("api");
-      setActiveTab("Meal Templates");
-      setStatusMessage(`${input.name} saved to Meal Templates.`);
+      setActiveTab("Recipes");
+      setStatusMessage(`${input.name} saved to Recipes.`);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Meal template could not be saved.");
     } finally {
@@ -596,7 +598,7 @@ export function MealPlansPage() {
     if (!template.apiTemplate?.id) {
       setCreatedTemplates((currentTemplates) => currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.id));
       setSelectedMealTemplate(null);
-      setStatusMessage(`${template.name} deleted from Meal Templates.`);
+      setStatusMessage(`${template.name} deleted from Recipes.`);
       return;
     }
 
@@ -614,7 +616,7 @@ export function MealPlansPage() {
 
       setTemplates((currentTemplates) => currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.apiTemplate?.id));
       setSelectedMealTemplate(null);
-      setStatusMessage(`${template.name} deleted from Meal Templates.`);
+      setStatusMessage(`${template.name} deleted from Recipes.`);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Meal template could not be deleted.");
     } finally {
@@ -707,7 +709,7 @@ export function MealPlansPage() {
           saving={saving}
           onBack={() => {
             setSelectedMealTemplate(null);
-            setActiveTab("Meal Templates");
+            setActiveTab("Recipes");
           }}
           onSave={(input) => saveMealTemplate(selectedMealTemplate, input)}
         />
@@ -748,7 +750,7 @@ export function MealPlansPage() {
 
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div role="tablist" aria-label="Meal plan sections" className="flex items-center gap-8 border-b border-gray-200">
-          {(["Meal Plans", "Meal Templates"] as MealPlanTab[]).map((tab) => (
+          {(["Meal Plans", "Recipes"] as MealPlanTab[]).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -775,7 +777,7 @@ export function MealPlansPage() {
         <input
           type="search"
           value={librarySearchQuery}
-          placeholder={activeTab === "Meal Plans" ? "Search meal plans..." : "Search meal templates..."}
+          placeholder={activeTab === "Meal Plans" ? "Search meal plans..." : "Search recipes..."}
           className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm shadow-sm outline-none focus:border-indigo-500 focus:bg-slate-50 focus:ring-2 focus:ring-indigo-500/20"
           onChange={(event) => setLibrarySearchQuery(event.target.value)}
         />
@@ -949,7 +951,7 @@ function MacroPlanChoiceDialog({
   );
 }
 
-export function NutritionPlanBuilder({
+function NutritionPlanBuilder({
   mode,
   initialPlan,
   initialTemplate,
@@ -1540,7 +1542,7 @@ function FullMealPlanFields({
       <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 p-5 text-white shadow-sm">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-100">Complete Coach nutrition builder</p>
         <p className="mt-2 max-w-2xl text-sm text-indigo-50">
-          Build day-by-day meal plans, pull foods from verified databases, and import proven meal templates without leaving the plan.
+          Build day-by-day meal plans, pull foods from verified databases, and import proven recipes without leaving the plan.
         </p>
       </div>
 
@@ -1685,7 +1687,7 @@ function FullMealPlanFields({
                             className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-600"
                             onClick={() => createTemplateFromMeal(meal)}
                           >
-                            Create meal template
+                            Create recipe
                           </button>
                           <button
                             type="button"
@@ -3674,13 +3676,13 @@ function MealTemplateImportDialog({
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Meal templates</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Recipes</p>
             <h3 id="import-meal-template-title" className="mt-1 text-2xl font-black text-slate-950">
-              Import meal from template
+              Import meal from recipe
             </h3>
-            <p className="mt-2 text-sm text-slate-500">Select a saved meal template to add it into the current nutrition plan day.</p>
+            <p className="mt-2 text-sm text-slate-500">Select a saved recipe to add it into the current nutrition plan day.</p>
           </div>
-          <button type="button" aria-label="Close meal template import" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
+          <button type="button" aria-label="Close recipe import" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={onClose}>
             <X className="size-5" aria-hidden="true" />
           </button>
         </div>
@@ -4216,7 +4218,7 @@ function MealTemplateInlineActions({
     <div className="relative inline-flex items-center justify-end gap-2">
       <button
         type="button"
-        aria-label={`Edit ${template.name}`}
+        aria-label={`Edit recipe for ${template.name}`}
         className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
         onClick={() => onEdit(template)}
       >
@@ -4236,7 +4238,7 @@ function MealTemplateInlineActions({
         <MealPlanActionMenu
           id={`meal-template-actions-${template.id}`}
           planName={template.name}
-          assignLabel="Assign to existing meal plan"
+          assignLabel="Use recipe in existing meal plan"
           assignDisabled={!canAssign}
           onEdit={() => {
             onMenuClose();
@@ -4388,88 +4390,115 @@ function MasterTemplatesPanel({
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
   return (
-    <section role="tabpanel" aria-label="Meal Templates" className="relative overflow-visible">
+    <section role="tabpanel" aria-label="Recipes" className="relative overflow-visible">
       {openActionMenuId ? (
         <button
           type="button"
-          aria-label="Close meal template actions"
+          aria-label="Close recipe actions"
           className="fixed inset-0 z-20 cursor-default bg-transparent"
           onClick={() => setOpenActionMenuId(null)}
         />
       ) : null}
       <div className="mb-4 flex justify-end">
-        <CardListViewToggle label="Meal template view options" value={view} onChange={onViewChange} />
+        <CardListViewToggle label="Recipe view options" value={view} onChange={onViewChange} />
       </div>
 
       {view === "cards" ? (
-        <div role="region" aria-label="Meal template cards" className="grid gap-6 md:grid-cols-3">
-          {templates.map((template) => (
-            <article
-              key={template.id}
-              role="button"
-              tabIndex={0}
-              aria-label={`View ${template.name}`}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white text-left transition-all hover:border-indigo-300 hover:shadow-lg"
-              onClick={() => onOpenTemplate(template)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onOpenTemplate(template);
-                }
-              }}
-            >
-              <div className="relative h-48 bg-gradient-to-br from-green-700 to-emerald-500">
-                <div className="absolute right-3 top-3 rounded bg-white/20 px-2 py-1 text-xs font-medium uppercase text-white backdrop-blur-sm">
-                  {template.badge}
-                </div>
-              </div>
-              <div className="p-5">
-                <h2 className="mb-1 font-bold text-gray-900">{template.name}</h2>
-                <p className="mb-4 text-sm text-gray-500">{template.description}</p>
-                <div className="mb-4 flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-1 text-gray-600">
-                    <Calendar className="size-4 text-gray-400" aria-hidden="true" />
-                    {template.calories} cal
+        <div role="region" aria-label="Recipe cards" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
+          {templates.map((template) => {
+            const recipe = template.template?.recipe;
+
+            return (
+              <article
+                key={template.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`View ${template.name}`}
+                className="overflow-hidden rounded-xl border border-gray-200 bg-white text-left transition-all hover:border-indigo-300 hover:shadow-lg"
+                onClick={() => onOpenTemplate(template)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onOpenTemplate(template);
+                  }
+                }}
+              >
+                <div className="relative h-36 overflow-hidden bg-gradient-to-br from-green-700 to-emerald-500">
+                  {recipe?.photoUrl ? (
+                    <img
+                      src={recipe.photoUrl}
+                      alt={`${template.name} photo`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null}
+                  <div className="absolute right-3 top-3 rounded bg-white/20 px-2 py-1 text-xs font-medium uppercase text-white backdrop-blur-sm">
+                    {template.badge}
                   </div>
                 </div>
-                <div className="mb-4 flex items-center gap-4 text-xs">
-                  <Macro label="PRO" value={`${template.protein}g`} tone="text-blue-600" />
-                  <Macro label="CARB" value={`${template.carbs}g`} tone="text-green-600" />
-                  <Macro label="FAT" value={`${template.fats}g`} tone="text-orange-600" />
+                <div className="p-4">
+                  <h2 className="mb-1 line-clamp-2 min-h-10 font-bold leading-5 text-gray-900">{template.name}</h2>
+                  <p className="mb-3 line-clamp-2 min-h-10 text-sm text-gray-500">{template.description}</p>
+                  <div className="mb-3 grid grid-cols-3 gap-2 rounded-lg bg-slate-50 p-2 text-xs font-semibold text-slate-700">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="size-3.5 text-gray-400" aria-hidden="true" />
+                      {template.calories} cal
+                    </span>
+                    <span>Prep {formatRecipeTime(recipe?.prepTimeMinutes)}</span>
+                    <span>Cook {formatRecipeTime(recipe?.cookTimeMinutes)}</span>
+                  </div>
+                  <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                    <Macro label="PRO" value={`${template.protein}g`} tone="text-blue-600" />
+                    <Macro label="CARB" value={`${template.carbs}g`} tone="text-green-600" />
+                    <Macro label="FAT" value={`${template.fats}g`} tone="text-orange-600" />
+                  </div>
+                  <div className="grid gap-2">
+                    <button
+                      type="button"
+                      aria-label={`Edit recipe for ${template.name}`}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onOpenTemplate(template);
+                      }}
+                    >
+                      <Edit className="size-4" aria-hidden="true" />
+                      Edit Recipe
+                    </button>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300"
+                      disabled={!canAssign}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onUseTemplate(template);
+                      }}
+                    >
+                      <Plus className="size-4" aria-hidden="true" />
+                      Use Recipe
+                    </button>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-100 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onDeleteTemplate(template);
+                      }}
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                      Delete Recipe
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-gray-300"
-                  disabled={!canAssign}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onUseTemplate(template);
-                  }}
-                >
-                  <Plus className="size-4" aria-hidden="true" />
-                  Use Template
-                </button>
-                <button
-                  type="button"
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-red-100 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onDeleteTemplate(template);
-                  }}
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                  Delete Template
-                </button>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       ) : (
         <div className="overflow-visible rounded-xl border border-gray-200 bg-white">
-          <table role="table" aria-label="Meal template list" className="w-full border-collapse">
+          <table role="table" aria-label="Recipe list" className="w-full border-collapse">
             <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-600">
               <tr>
-                <th className="px-6 py-4 text-left">Template</th>
+                <th className="px-6 py-4 text-left">Recipe</th>
                 <th className="px-6 py-4 text-left">Calories / Macros</th>
                 <th className="w-0 px-4 py-4 text-right">Actions</th>
               </tr>
@@ -4514,7 +4543,7 @@ function MasterTemplatesPanel({
       )}
       {templates.length === 0 ? (
         <p className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-600">
-          No meal plan templates exist yet. Create a new template to start the library.
+          No recipes exist yet. Create a recipe to start the library.
         </p>
       ) : null}
     </section>
@@ -4608,7 +4637,7 @@ function TemplatePlanTargetDialog({
 
         {persistedMealPlans.length === 0 ? (
           <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-            Create and save a meal plan before adding individual meal templates into it.
+            Create and save a meal plan before adding individual recipes into it.
           </p>
         ) : null}
 
@@ -4638,6 +4667,10 @@ function Macro({ label, value, tone }: { label: string; value: string; tone: str
   );
 }
 
+function formatRecipeTime(value?: number) {
+  return typeof value === "number" && Number.isFinite(value) ? `${value} min` : "-";
+}
+
 function MealTemplateRecipeBuilder({
   template,
   saving,
@@ -4657,11 +4690,13 @@ function MealTemplateRecipeBuilder({
   const [cookTime, setCookTime] = useState(recipe.cookTimeMinutes !== undefined ? String(recipe.cookTimeMinutes) : "");
   const [servings, setServings] = useState(recipe.servings !== undefined ? String(recipe.servings) : "1");
   const [servingSize, setServingSize] = useState(recipe.servingSize ?? "");
-  const [instructions, setInstructions] = useState(recipe.instructions ?? getTemplateInstructionFallback(templatePayload));
+  const [photoUrl, setPhotoUrl] = useState(recipe.photoUrl ?? "");
+  const [instructionSteps, setInstructionSteps] = useState<string[]>(() => getRecipeInstructionSteps(templatePayload));
   const [days, setDays] = useState<NonNullable<ApiMealPlanTemplate["template"]["days"]>>(() => templatePayload.days ?? []);
   const totals = calculateTemplateTotals({ days });
   const nutrientTotals = calculateTemplateNutrientTotals({ days });
   const displayName = name.trim() || template.name;
+  const normalizedInstructionSteps = instructionSteps.map((step) => step.trim()).filter(Boolean);
 
   function updateMealNotes(dayIndex: number, mealIndex: number, notes: string) {
     setDays((currentDays) =>
@@ -4674,6 +4709,85 @@ function MealTemplateRecipeBuilder({
           : day
       )
     );
+  }
+
+  function updateTemplateFood(
+    dayIndex: number,
+    mealIndex: number,
+    foodIndex: number,
+    updateFood: (food: ApiMealPlanTemplateFood) => ApiMealPlanTemplateFood
+  ) {
+    setDays((currentDays) =>
+      currentDays.map((day, currentDayIndex) =>
+        currentDayIndex === dayIndex
+          ? {
+              ...day,
+              meals: day.meals.map((meal, currentMealIndex) =>
+                currentMealIndex === mealIndex
+                  ? {
+                      ...meal,
+                      foods: meal.foods.map((food, currentFoodIndex) => (currentFoodIndex === foodIndex ? updateFood(food) : food))
+                    }
+                  : meal
+              )
+            }
+          : day
+      )
+    );
+  }
+
+  function updateFoodNumberField(
+    dayIndex: number,
+    mealIndex: number,
+    foodIndex: number,
+    field: "calories" | "proteinGrams" | "carbsGrams" | "fatGrams" | "fiberGrams",
+    value: string
+  ) {
+    const parsedValue = Number(value);
+    const nextValue = Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : 0;
+
+    updateTemplateFood(dayIndex, mealIndex, foodIndex, (food) => ({ ...food, [field]: nextValue }));
+  }
+
+  function updateFoodQuantity(dayIndex: number, mealIndex: number, foodIndex: number, value: string) {
+    const parsedValue = Number(value);
+    const nextQuantity = Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : 0;
+
+    updateTemplateFood(dayIndex, mealIndex, foodIndex, (food) => {
+      const currentQuantity = food.quantity;
+
+      if (!currentQuantity || currentQuantity <= 0) {
+        return { ...food, quantity: nextQuantity };
+      }
+
+      const scaleFactor = nextQuantity / currentQuantity;
+
+      return {
+        ...food,
+        quantity: nextQuantity,
+        calories: roundTemplateFoodNumber(food.calories * scaleFactor),
+        proteinGrams: roundTemplateFoodNumber(food.proteinGrams * scaleFactor),
+        carbsGrams: roundTemplateFoodNumber(food.carbsGrams * scaleFactor),
+        fatGrams: roundTemplateFoodNumber(food.fatGrams * scaleFactor),
+        fiberGrams: food.fiberGrams !== undefined ? roundTemplateFoodNumber(food.fiberGrams * scaleFactor) : food.fiberGrams,
+        micronutrients: food.micronutrients ? scaleNutrientMap(food.micronutrients, scaleFactor) : food.micronutrients
+      };
+    });
+  }
+
+  function updateInstructionStep(stepIndex: number, value: string) {
+    setInstructionSteps((currentSteps) => currentSteps.map((step, currentIndex) => (currentIndex === stepIndex ? value : step)));
+  }
+
+  function addInstructionStep() {
+    setInstructionSteps((currentSteps) => [...currentSteps, ""]);
+  }
+
+  function removeInstructionStep(stepIndex: number) {
+    setInstructionSteps((currentSteps) => {
+      const nextSteps = currentSteps.filter((_, currentIndex) => currentIndex !== stepIndex);
+      return nextSteps.length > 0 ? nextSteps : [""];
+    });
   }
 
   function handleSave() {
@@ -4692,7 +4806,9 @@ function MealTemplateRecipeBuilder({
           cookTimeMinutes: parseOptionalIntegerInput(cookTime),
           servings: parseOptionalNumberInput(servings),
           servingSize: servingSize.trim() || undefined,
-          instructions: instructions.trim() || undefined
+          photoUrl: photoUrl.trim() || undefined,
+          instructions: normalizedInstructionSteps.join("\n\n") || undefined,
+          instructionSteps: normalizedInstructionSteps.length > 0 ? normalizedInstructionSteps : undefined
         },
         days
       }
@@ -4705,20 +4821,20 @@ function MealTemplateRecipeBuilder({
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <button type="button" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800" onClick={onBack}>
-              Back to meal templates
+              Back to recipes
             </button>
             <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-indigo-600">Recipe builder</p>
             <label htmlFor="meal-template-builder-name" className="sr-only">
-              Meal template name
+              Recipe name
             </label>
             <input
               id="meal-template-builder-name"
-              aria-label="Meal template name"
+              aria-label="Recipe name"
               value={name}
               className="mt-2 w-full max-w-3xl rounded-xl border border-slate-200 bg-white px-4 py-3 text-3xl font-black text-slate-950 outline-none focus:ring-2 focus:ring-indigo-500"
               onChange={(event) => setName(event.target.value)}
             />
-            <p className="mt-2 text-sm text-slate-500">Build the recipe view, serving detail, nutrition totals, and instructions for this template.</p>
+            <p className="mt-2 text-sm text-slate-500">Build the recipe view, serving detail, nutrition totals, and instructions.</p>
           </div>
           <button
             type="button"
@@ -4777,8 +4893,23 @@ function MealTemplateRecipeBuilder({
                     onChange={(event) => setServingSize(event.target.value)}
                   />
                 </label>
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">Recipe photo URL</span>
+                  <input
+                    value={photoUrl}
+                    placeholder="https://..."
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    onChange={(event) => setPhotoUrl(event.target.value)}
+                  />
+                </label>
               </div>
             </section>
+
+            {photoUrl.trim() ? (
+              <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <img src={photoUrl.trim()} alt={`${displayName} preview`} className="aspect-[4/3] w-full object-cover" />
+              </section>
+            ) : null}
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h2 className="text-lg font-black text-slate-950">Recipe totals</h2>
@@ -4841,28 +4972,96 @@ function MealTemplateRecipeBuilder({
                               <h4 className="font-bold text-slate-900">{meal.meal}</h4>
                               <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{meal.foods.length} ingredients</span>
                             </div>
-                            <div role="table" aria-label={`${meal.meal} template ingredients`} className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
-                              <div role="row" className="grid grid-cols-5 gap-2 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500">
+                            <div role="table" aria-label={`${meal.meal} template ingredients`} className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                              <div role="row" className="grid min-w-[980px] grid-cols-[1.4fr_0.7fr_1fr_0.75fr_0.75fr_0.75fr_0.75fr] gap-2 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-slate-500">
                                 <span role="columnheader">Ingredient</span>
+                                <span role="columnheader">Quantity</span>
                                 <span role="columnheader">Serving</span>
                                 <span role="columnheader">Calories</span>
                                 <span role="columnheader">Protein</span>
-                                <span role="columnheader">Macros</span>
+                                <span role="columnheader">Carbs</span>
+                                <span role="columnheader">Fats</span>
                               </div>
-                              {meal.foods.map((food) => (
+                              {meal.foods.map((food, foodIndex) => (
                                 <div
                                   key={`${food.foodId ?? food.foodName}-${food.servingSize}`}
                                   role="row"
-                                  className="grid grid-cols-5 gap-2 border-t border-slate-100 px-3 py-2 text-sm text-slate-700"
+                                  className="grid min-w-[980px] grid-cols-[1.4fr_0.7fr_1fr_0.75fr_0.75fr_0.75fr_0.75fr] gap-2 border-t border-slate-100 px-3 py-2 text-sm text-slate-700"
                                 >
-                                  <span role="cell" className="font-semibold text-slate-900">
-                                    {food.foodName}
-                                  </span>
-                                  <span role="cell">{food.servingSize}</span>
-                                  <span role="cell">{formatMacroValue(food.calories)} kcal</span>
-                                  <span role="cell">{formatMacroValue(food.proteinGrams)}g</span>
                                   <span role="cell">
-                                    C {formatMacroValue(food.carbsGrams)}g · F {formatMacroValue(food.fatGrams)}g
+                                    <input
+                                      aria-label={`Ingredient ${foodIndex + 1} name`}
+                                      value={food.foodName}
+                                      className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
+                                      onChange={(event) =>
+                                        updateTemplateFood(dayIndex, mealIndex, foodIndex, (currentFood) => ({ ...currentFood, foodName: event.target.value }))
+                                      }
+                                    />
+                                  </span>
+                                  <span role="cell">
+                                    <input
+                                      aria-label={`${food.foodName} quantity`}
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      value={food.quantity ?? ""}
+                                      className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                      onChange={(event) => updateFoodQuantity(dayIndex, mealIndex, foodIndex, event.target.value)}
+                                    />
+                                  </span>
+                                  <span role="cell">
+                                    <input
+                                      aria-label={`${food.foodName} serving`}
+                                      value={food.servingSize}
+                                      className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                      onChange={(event) =>
+                                        updateTemplateFood(dayIndex, mealIndex, foodIndex, (currentFood) => ({ ...currentFood, servingSize: event.target.value }))
+                                      }
+                                    />
+                                  </span>
+                                  <span role="cell">
+                                    <input
+                                      aria-label={`${food.foodName} calories`}
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      value={food.calories}
+                                      className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                      onChange={(event) => updateFoodNumberField(dayIndex, mealIndex, foodIndex, "calories", event.target.value)}
+                                    />
+                                  </span>
+                                  <span role="cell">
+                                    <input
+                                      aria-label={`${food.foodName} protein`}
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      value={food.proteinGrams}
+                                      className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                      onChange={(event) => updateFoodNumberField(dayIndex, mealIndex, foodIndex, "proteinGrams", event.target.value)}
+                                    />
+                                  </span>
+                                  <span role="cell">
+                                    <input
+                                      aria-label={`${food.foodName} carbs`}
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      value={food.carbsGrams}
+                                      className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                      onChange={(event) => updateFoodNumberField(dayIndex, mealIndex, foodIndex, "carbsGrams", event.target.value)}
+                                    />
+                                  </span>
+                                  <span role="cell">
+                                    <input
+                                      aria-label={`${food.foodName} fats`}
+                                      type="number"
+                                      min="0"
+                                      step="any"
+                                      value={food.fatGrams}
+                                      className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                      onChange={(event) => updateFoodNumberField(dayIndex, mealIndex, foodIndex, "fatGrams", event.target.value)}
+                                    />
                                   </span>
                                 </div>
                               ))}
@@ -4875,15 +5074,38 @@ function MealTemplateRecipeBuilder({
                 </div>
               ) : (
                 <div role="tabpanel" aria-label="Instructions" className="space-y-5 p-5">
-                  <label className="block">
-                    <span className="text-sm font-semibold text-slate-700">Instructions</span>
-                    <textarea
-                      aria-label="Recipe instructions"
-                      value={instructions}
-                      className="mt-2 min-h-56 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                      onChange={(event) => setInstructions(event.target.value)}
-                    />
-                  </label>
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h3 className="font-black text-slate-950">Recipe steps</h3>
+                      <button type="button" className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white" onClick={addInstructionStep}>
+                        Add step
+                      </button>
+                    </div>
+                    {instructionSteps.map((step, stepIndex) => (
+                      <div key={`recipe-step-${stepIndex}`} className="rounded-2xl border border-slate-200 p-4">
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <label htmlFor={`recipe-step-${stepIndex}`} className="text-sm font-semibold text-slate-700">
+                            Step {stepIndex + 1}
+                          </label>
+                          <button
+                            type="button"
+                            className="text-sm font-semibold text-red-600 disabled:text-slate-300"
+                            disabled={instructionSteps.length === 1}
+                            onClick={() => removeInstructionStep(stepIndex)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <textarea
+                          id={`recipe-step-${stepIndex}`}
+                          aria-label={`Recipe step ${stepIndex + 1}`}
+                          value={step}
+                          className="min-h-28 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                          onChange={(event) => updateInstructionStep(stepIndex, event.target.value)}
+                        />
+                      </div>
+                    ))}
+                  </div>
                   {days.map((day, dayIndex) => (
                     <div key={`${day.name}-notes-${dayIndex}`} className="rounded-2xl border border-slate-200 p-4">
                       <h3 className="font-black text-slate-950">{day.name} meal notes</h3>
@@ -4905,9 +5127,11 @@ function MealTemplateRecipeBuilder({
                 </div>
               )}
             </section>
-
-            <MicronutrientBreakdown totals={nutrientTotals} dayName={displayName} />
           </main>
+        </div>
+
+        <div className="mt-6">
+          <MicronutrientBreakdown totals={nutrientTotals} dayName={displayName} />
         </div>
       </div>
     </div>
@@ -4933,6 +5157,34 @@ function parseOptionalNumberInput(value: string) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
+function roundTemplateFoodNumber(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
+function scaleNutrientMap(nutrients: Record<string, number>, scaleFactor: number) {
+  return Object.fromEntries(
+    Object.entries(nutrients).map(([key, value]) => [key, roundTemplateFoodNumber(value * scaleFactor)])
+  );
+}
+
+function getRecipeInstructionSteps(template: ApiMealPlanTemplate["template"]) {
+  const recipeSteps = template.recipe?.instructionSteps?.filter((step) => step.trim().length > 0);
+
+  if (recipeSteps && recipeSteps.length > 0) {
+    return recipeSteps;
+  }
+
+  if (template.recipe?.instructions?.trim()) {
+    return template.recipe.instructions
+      .split(/\n{2,}/)
+      .map((step) => step.trim())
+      .filter(Boolean);
+  }
+
+  const fallbackInstructions = getTemplateInstructionFallback(template);
+  return fallbackInstructions ? [fallbackInstructions] : [""];
+}
+
 function getTemplateInstructionFallback(template: ApiMealPlanTemplate["template"]) {
   return (template.days ?? [])
     .flatMap((day) => day.meals.map((meal) => meal.notes?.trim()).filter(Boolean))
@@ -4944,18 +5196,22 @@ export function getMealTemplateCards(source: MealPlanSource, templates: ApiMealP
     return [];
   }
 
-  return templates.filter((template) => template.status !== "draft").map((template) => ({
-    id: template.id,
-    name: template.name,
-    description: template.phase ? `${template.phase} protocol` : "Nutrition protocol",
-    calories: template.targetCalories,
-    protein: template.proteinGrams,
-    carbs: template.carbsGrams,
-    fats: template.fatGrams,
-    badge: template.status,
-    apiTemplate: template,
-    template: template.template
-  }));
+  return templates.filter((template) => template.status !== "draft").map((template) => {
+    const phaseLabel = template.phase?.toLowerCase() === "meal template" ? "Recipe" : template.phase;
+
+    return {
+      id: template.id,
+      name: template.name,
+      description: phaseLabel ? `${phaseLabel} protocol` : "Nutrition protocol",
+      calories: template.targetCalories,
+      protein: template.proteinGrams,
+      carbs: template.carbsGrams,
+      fats: template.fatGrams,
+      badge: template.status,
+      apiTemplate: template,
+      template: template.template
+    };
+  });
 }
 
 export function getMealAssignmentRows(

@@ -343,9 +343,8 @@ Fields:
 - `organization_id`
 - `name`
 - `description`
-- `type` enum: `check-in`, `intake`, `application`, `contact`, `habit-tracker`, `terms-and-conditions`
+- `type`
 - `status`
-- `share_slug`
 - `current_version_id`
 - `created_by_user_id`
 - `created_at`
@@ -355,9 +354,6 @@ Fields:
 Indexes:
 - `organization_id,status`.
 - `organization_id,type`.
-- Unique `organization_id,share_slug`.
-
-Public form response URLs use `share_slug` to load the latest saved form version without requiring coach authentication. Public responses that include extractable name or email answers create or update organization-scoped CRM leads rather than writing to client-scoped `form_submissions`.
 
 ### `form_versions`
 Purpose: immutable versioned schema.
@@ -420,8 +416,6 @@ Indexes:
 - `organization_id,client_id,submitted_at`.
 - `organization_id,status,submitted_at`.
 - `organization_id,form_id,submitted_at`.
-
-Assigned application form submissions also create or update an organization-scoped CRM lead when a name or email can be extracted from the immutable form schema and submitted answers. Matching uses `organization_id,email` so application form submissions cannot attach to leads in another organization.
 
 ### `check_ins`
 Purpose: typed review queue item that may originate from a form submission.
@@ -551,7 +545,7 @@ Fields:
 - `updated_at`
 - `deleted_at`
 
-`template_json` stores optional recipe metadata plus structured days, meals, and food rows. Recipe metadata may include prep time, cook time, servings, serving size, and instructions for meal-template recipe-builder views. Meal rows may carry optional coach `notes`. Food rows preserve database linkage and builder state with `foodId`, `foodName`, `servingSize`, calories/macros, optional `fiberGrams`, optional `quantity`, optional `measurementUnit`, and optional `micronutrients` so edited plans and imported meal templates can hydrate individual ingredients instead of summary rows.
+`template_json` stores optional recipe metadata plus structured days, meals, and food rows. Recipe metadata may include prep time, cook time, servings, serving size, photo URL, joined instructions, and ordered free-text instruction steps for meal-template recipe-builder views. Meal rows may carry optional coach `notes`. Food rows preserve database linkage and builder state with `foodId`, `foodName`, `servingSize`, calories/macros, optional `fiberGrams`, optional `quantity`, optional `measurementUnit`, and optional `micronutrients` so edited plans and imported meal templates can hydrate individual ingredients instead of summary rows.
 
 ### `meal_plan_assignments`
 Fields:

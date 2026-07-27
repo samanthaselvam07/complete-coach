@@ -75,7 +75,7 @@ Delivered:
 
 ## Data Model
 - `food_library_items`: global/private library records with serving sizes, calories, macro grams, optional fiber, optional metadata, and soft-delete support.
-- `meal_plan_templates`: organization-owned template records with phase, target calories, macro grams, status, structured `template_json`, creator, timestamps, and soft-delete support. Meal template `template_json.recipe` may store prep time, cook time, servings, serving size, and instructions for recipe-builder views.
+- `meal_plan_templates`: organization-owned template records with phase, target calories, macro grams, status, structured `template_json`, creator, timestamps, and soft-delete support. Meal template `template_json.recipe` may store prep time, cook time, servings, serving size, photo URL, free-text instruction steps, and joined instructions for recipe-builder views.
 - `meal_plan_assignments`: organization/client-scoped assignment records with copied template targets, status, start/end dates, immutable `snapshot_json`, creator, and timestamps.
 - Food import processors can write source-tracked global foods into `food_library_items` while preserving source IDs, source food IDs, source versions, barcodes, regions, and full nutrient rows inside `metadata`.
 

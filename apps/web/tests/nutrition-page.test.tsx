@@ -85,7 +85,13 @@ const apiMealPlanTemplates = [
     carbsGrams: 55,
     fatGrams: 12,
     status: "published",
-    template: { days: [] },
+    template: {
+      recipe: {
+        prepTimeMinutes: 10,
+        cookTimeMinutes: 15
+      },
+      days: []
+    },
     updatedAt: "2026-05-19T00:00:00.000Z"
   }
 ];
@@ -242,7 +248,7 @@ describe("NutritionPage", () => {
 });
 
 describe("MealPlansPage", () => {
-  it("switches between persisted meal plans and meal templates", async () => {
+  it("switches between persisted meal plans and recipes", async () => {
     mockMealPlanLibrary();
     render(createElement(MealPlansPage));
 
@@ -258,19 +264,19 @@ describe("MealPlansPage", () => {
     fireEvent.change(mealPlanSearch, { target: { value: "hypertrophy" } });
     expect(screen.getByText("Hypertrophy Phase II")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Recipes" }));
 
-    const templateSearch = screen.getByRole("searchbox", { name: "Search meal templates" });
+    const templateSearch = screen.getByRole("searchbox", { name: "Search recipes" });
     expect(templateSearch).toHaveValue("");
-    expect(templateSearch).toHaveAttribute("placeholder", "Search meal templates...");
+    expect(templateSearch).toHaveAttribute("placeholder", "Search recipes...");
 
-    expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent(
+    expect(screen.getByRole("tabpanel", { name: "Recipes" })).toHaveTextContent(
       "High-Protein Breakfast Bowl"
     );
     expect(screen.queryByText("Hypertrophy Phase II")).not.toBeInTheDocument();
 
     fireEvent.change(templateSearch, { target: { value: "breakfast" } });
-    expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent(
+    expect(screen.getByRole("tabpanel", { name: "Recipes" })).toHaveTextContent(
       "High-Protein Breakfast Bowl"
     );
   });
@@ -296,25 +302,29 @@ describe("MealPlansPage", () => {
     expect(screen.queryByRole("button", { name: "List view" })).not.toBeInTheDocument();
   });
 
-  it("toggles meal templates between card and list views", async () => {
+  it("toggles recipes between card and list views", async () => {
     mockMealPlanLibrary();
     render(createElement(MealPlansPage));
 
-    fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Recipes" }));
 
     expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("region", { name: "Meal template cards" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Recipe cards" })).toBeInTheDocument();
     expect(screen.getByText("High-Protein Breakfast Bowl")).toBeInTheDocument();
+    expect(screen.getByText("Prep 10 min")).toBeInTheDocument();
+    expect(screen.getByText("Cook 15 min")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit recipe for High-Protein Breakfast Bowl" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use Recipe" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "List view" }));
     expect(screen.getByRole("button", { name: "List view" })).toHaveAttribute("aria-pressed", "true");
-    const templateTable = screen.getByRole("table", { name: "Meal template list" });
+    const templateTable = screen.getByRole("table", { name: "Recipe list" });
     const templateRow = within(templateTable).getByRole("row", {
-      name: /High-Protein Breakfast Bowl Meal template protocol/i
+      name: /High-Protein Breakfast Bowl Recipe protocol/i
     });
 
     expect(templateTable).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Meal template cards" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Recipe cards" })).not.toBeInTheDocument();
     expect(templateRow).toHaveTextContent("520 cal");
     expect(templateRow).toHaveTextContent("P 45g");
     expect(templateRow).toHaveTextContent("C 55g");
@@ -322,7 +332,7 @@ describe("MealPlansPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Card view" }));
     expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("region", { name: "Meal template cards" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Recipe cards" })).toBeInTheDocument();
   });
 
   it("opens the meal plan quick action menu and closes it from the page overlay", async () => {
@@ -344,28 +354,28 @@ describe("MealPlansPage", () => {
     expect(screen.queryByRole("menu", { name: /meal plan actions/i })).not.toBeInTheDocument();
   });
 
-  it("opens meal template list quick actions and closes them from the page overlay", async () => {
+  it("opens recipe list quick actions and closes them from the page overlay", async () => {
     mockMealPlanLibrary();
     render(createElement(MealPlansPage));
 
-    fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Recipes" }));
     fireEvent.click(screen.getByRole("button", { name: "List view" }));
     fireEvent.click(screen.getByRole("button", { name: "More actions for High-Protein Breakfast Bowl" }));
 
     const menu = screen.getByRole("menu", { name: /meal plan actions for high-protein breakfast bowl/i });
-    const templateTable = screen.getByRole("table", { name: "Meal template list" });
+    const templateTable = screen.getByRole("table", { name: "Recipe list" });
     const templateRow = within(templateTable).getByRole("row", {
-      name: /High-Protein Breakfast Bowl Meal template protocol/i
+      name: /High-Protein Breakfast Bowl Recipe protocol/i
     });
 
     expect(menu).toHaveClass("z-[60]");
     expect(templateRow).toHaveClass("z-40");
     expect(within(menu).getByRole("menuitem", { name: "Edit" })).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
-    expect(within(menu).getByRole("menuitem", { name: "Assign to existing meal plan" })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Use recipe in existing meal plan" })).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Copy" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Close meal template actions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close recipe actions" }));
 
     expect(screen.queryByRole("menu", { name: /meal plan actions for high-protein breakfast bowl/i })).not.toBeInTheDocument();
   });
@@ -550,7 +560,7 @@ describe("MealPlansPage", () => {
     );
   });
 
-  it("loads persisted meal templates and assignments when the API is available", async () => {
+  it("loads persisted recipes and assignments when the API is available", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
@@ -612,10 +622,10 @@ describe("MealPlansPage", () => {
     expect(screen.getAllByText("P 215g").length).toBeGreaterThan(0);
     expect(screen.queryByText("Persisted Nutrition Client")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Recipes" }));
 
-    expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent(
-      "Meal template protocol"
+    expect(screen.getByRole("tabpanel", { name: "Recipes" })).toHaveTextContent(
+      "Recipe protocol"
     );
     expect(screen.getByText("High-Protein Breakfast Bowl")).toBeInTheDocument();
   });
@@ -680,7 +690,7 @@ describe("MealPlansPage", () => {
     expect(screen.queryByText("Draft Cut Plan")).not.toBeInTheDocument();
   });
 
-  it("opens meal template details and saves edits to the selected template", async () => {
+  it("opens recipe details and saves edits to the selected recipe", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
@@ -758,7 +768,9 @@ describe("MealPlansPage", () => {
                       cookTimeMinutes: 20,
                       servings: 2,
                       servingSize: "1 bowl",
-                      instructions: "Cook chicken and rice, then portion into bowls."
+                      photoUrl: "https://example.com/breakfast-bowl.jpg",
+                      instructions: "Cook chicken and rice, then portion into bowls.",
+                      instructionSteps: ["Cook chicken and rice.", "Portion into bowls."]
                     },
                     days: [
                       {
@@ -775,7 +787,10 @@ describe("MealPlansPage", () => {
                                 calories: 330,
                                 proteinGrams: 62,
                                 carbsGrams: 0,
-                                fatGrams: 7.2
+                                fatGrams: 7.2,
+                                fiberGrams: 0,
+                                quantity: 200,
+                                measurementUnit: "g"
                               },
                               {
                                 foodId: "basmati-rice",
@@ -784,7 +799,10 @@ describe("MealPlansPage", () => {
                                 calories: 121,
                                 proteinGrams: 3,
                                 carbsGrams: 25,
-                                fatGrams: 0.4
+                                fatGrams: 0.4,
+                                fiberGrams: 1,
+                                quantity: 100,
+                                measurementUnit: "g"
                               }
                             ]
                           }
@@ -806,8 +824,14 @@ describe("MealPlansPage", () => {
 
     render(createElement(MealPlansPage));
 
-    fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
-    fireEvent.click(await screen.findByRole("button", { name: "View Persisted Breakfast Template" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Recipes" }));
+    expect(await screen.findByRole("img", { name: "Persisted Breakfast Template photo" })).toHaveAttribute(
+      "src",
+      "https://example.com/breakfast-bowl.jpg"
+    );
+    expect(screen.getByText("Prep 10 min")).toBeInTheDocument();
+    expect(screen.getByText("Cook 20 min")).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit recipe for Persisted Breakfast Template" }));
 
     expect(screen.getByText("Recipe builder")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Persisted Breakfast Template")).toBeInTheDocument();
@@ -815,22 +839,32 @@ describe("MealPlansPage", () => {
     expect(screen.getByLabelText("Cook time (min)")).toHaveValue(20);
     expect(screen.getByLabelText("Servings")).toHaveValue(2);
     expect(screen.getByLabelText("Serving size")).toHaveValue("1 bowl");
+    expect(screen.getByLabelText("Recipe photo URL")).toHaveValue("https://example.com/breakfast-bowl.jpg");
     expect(screen.getByRole("heading", { name: "Nutrient breakdown" })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /Chicken Breast\s*200 g\s*330 kcal\s*62g\s*C 0g · F 7.2g/i })).toBeInTheDocument();
-    expect(screen.getByRole("row", { name: /Basmati Rice\s*100 g\s*121 kcal\s*3g\s*C 25g · F 0.4g/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("Ingredient 1 name")).toHaveValue("Chicken Breast");
+    expect(screen.getByLabelText("Chicken Breast quantity")).toHaveValue(200);
+    expect(screen.getByLabelText("Basmati Rice serving")).toHaveValue("100 g");
 
-    fireEvent.change(screen.getByLabelText("Meal template name"), { target: { value: "Edited Breakfast Template" } });
+    fireEvent.change(screen.getByLabelText("Recipe name"), { target: { value: "Edited Breakfast Template" } });
     fireEvent.change(screen.getByLabelText("Prep time (min)"), { target: { value: "12" } });
     fireEvent.change(screen.getByLabelText("Cook time (min)"), { target: { value: "25" } });
     fireEvent.change(screen.getByLabelText("Servings"), { target: { value: "3" } });
     fireEvent.change(screen.getByLabelText("Serving size"), { target: { value: "1 meal prep bowl" } });
+    fireEvent.change(screen.getByLabelText("Recipe photo URL"), { target: { value: "https://example.com/updated-bowl.jpg" } });
+    fireEvent.change(screen.getByLabelText("Chicken Breast quantity"), { target: { value: "100" } });
+    fireEvent.change(screen.getByLabelText("Ingredient 1 name"), { target: { value: "Grilled Chicken Breast" } });
+    fireEvent.change(screen.getByLabelText("Grilled Chicken Breast serving"), { target: { value: "100 g cooked" } });
+    fireEvent.change(screen.getByLabelText("Grilled Chicken Breast calories"), { target: { value: "180" } });
     fireEvent.click(screen.getByRole("tab", { name: /instructions/i }));
-    expect(screen.getByDisplayValue("Cook chicken and rice, then portion into bowls.")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Recipe instructions"), { target: { value: "Cook fresh rice and chicken. Portion evenly." } });
+    expect(screen.getByLabelText("Recipe step 1")).toHaveValue("Cook chicken and rice.");
+    expect(screen.getByLabelText("Recipe step 2")).toHaveValue("Portion into bowls.");
+    fireEvent.change(screen.getByLabelText("Recipe step 1"), { target: { value: "Cook fresh rice and chicken." } });
+    fireEvent.click(screen.getByRole("button", { name: "Add step" }));
+    fireEvent.change(screen.getByLabelText("Recipe step 3"), { target: { value: "Garnish before serving." } });
     fireEvent.change(screen.getByLabelText("Notes for Breakfast"), { target: { value: "Use pre-workout on heavy leg days." } });
     fireEvent.click(screen.getByRole("button", { name: "Save Template" }));
 
-    expect(await screen.findByText("Edited Breakfast Template saved to Meal Templates.")).toBeInTheDocument();
+    expect(await screen.findByText("Edited Breakfast Template saved to Recipes.")).toBeInTheDocument();
     const patchCall = fetchMock.mock.calls.find(
       ([url, init]) => url === "/api/v1/meal-plan-templates/meal_template_api" && (init as RequestInit | undefined)?.method === "PATCH"
     );
@@ -841,7 +875,18 @@ describe("MealPlansPage", () => {
       cookTimeMinutes: 25,
       servings: 3,
       servingSize: "1 meal prep bowl",
-      instructions: "Cook fresh rice and chicken. Portion evenly."
+      photoUrl: "https://example.com/updated-bowl.jpg",
+      instructions: "Cook fresh rice and chicken.\n\nPortion into bowls.\n\nGarnish before serving.",
+      instructionSteps: ["Cook fresh rice and chicken.", "Portion into bowls.", "Garnish before serving."]
+    });
+    expect(patchBody.template.days[0].meals[0].foods[0]).toMatchObject({
+      foodName: "Grilled Chicken Breast",
+      servingSize: "100 g cooked",
+      quantity: 100,
+      calories: 180,
+      proteinGrams: 31,
+      carbsGrams: 0,
+      fatGrams: 3.6
     });
     expect(patchBody.template.days[0].meals[0].notes).toBe("Use pre-workout on heavy leg days.");
     expect(fetchMock).not.toHaveBeenCalledWith(
@@ -1054,7 +1099,7 @@ describe("MealPlansPage", () => {
     expect(screen.getByText("0/73 g Fat")).toBeInTheDocument();
   });
 
-  it("builds full meal plans with editable day tabs, meal actions, food search, and meal template import", async () => {
+  it("builds full meal plans with editable day tabs, meal actions, food search, and recipe import", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
@@ -1142,8 +1187,8 @@ describe("MealPlansPage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Day 1" }));
     expect(screen.getByLabelText("Meal name for Day 1 meal 1")).toHaveValue("Breakfast");
     fireEvent.click(screen.getAllByRole("button", { name: "Meal actions" })[0]);
-    fireEvent.click(screen.getByRole("menuitem", { name: "Create meal template" }));
-    expect(await screen.findByText("Breakfast saved to Meal Templates.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Create recipe" }));
+    expect(await screen.findByText("Breakfast saved to Recipes.")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "Meal actions" })[0]);
     fireEvent.click(screen.getByRole("menuitem", { name: "Copy to another day" }));
@@ -1231,8 +1276,8 @@ describe("MealPlansPage", () => {
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 
     fireEvent.click(screen.getAllByRole("button", { name: "Meal actions" })[0]);
-    fireEvent.click(screen.getByRole("menuitem", { name: "Create meal template" }));
-    expect(await screen.findByText("Main Meal saved to Meal Templates.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Create recipe" }));
+    expect(await screen.findByText("Main Meal saved to Recipes.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
     fireEvent.click(screen.getByRole("button", { name: "Import Main Meal" }));
     expect(screen.queryByRole("row", { name: /Main Meal 1 serving/i })).not.toBeInTheDocument();
@@ -1240,7 +1285,7 @@ describe("MealPlansPage", () => {
     expect(screen.getAllByRole("row", { name: /Basmati Rice/i })).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", { name: "Add meal from template" }));
-    const templateDialog = screen.getByRole("dialog", { name: "Import meal from template" });
+    const templateDialog = screen.getByRole("dialog", { name: "Import meal from recipe" });
     expect(within(templateDialog).getByText("Breakfast")).toBeInTheDocument();
     fireEvent.click(within(templateDialog).getByRole("button", { name: "Import Breakfast" }));
 
@@ -1259,8 +1304,8 @@ describe("MealPlansPage", () => {
     expect(screen.queryByLabelText("Meal name for High Carb Day meal 1")).not.toHaveValue("Breakfast");
 
     fireEvent.click(screen.getByRole("button", { name: "Back to meal plans" }));
-    fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
-    expect(screen.getByRole("tabpanel", { name: "Meal Templates" })).toHaveTextContent("Breakfast");
+    fireEvent.click(screen.getByRole("tab", { name: "Recipes" }));
+    expect(screen.getByRole("tabpanel", { name: "Recipes" })).toHaveTextContent("Breakfast");
   });
 
   it("builds macro-only plans from daily totals or meal-level macros", async () => {
@@ -1323,7 +1368,7 @@ describe("MealPlansPage", () => {
     expect(screen.getByLabelText("Protein for Meal 1")).toHaveValue(25);
   });
 
-  it("adds a persisted meal template to an existing meal plan", async () => {
+  it("adds a persisted recipe to an existing meal plan", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
@@ -1386,10 +1431,10 @@ describe("MealPlansPage", () => {
 
     render(createElement(MealPlansPage));
 
-    fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Recipes" }));
     fireEvent.click(screen.getByRole("button", { name: "List view" }));
     fireEvent.click(screen.getByRole("button", { name: "More actions for High-Protein Breakfast Bowl" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Assign to existing meal plan" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Use recipe in existing meal plan" }));
     expect(screen.getByRole("dialog", { name: "Add Meal Template to Meal Plan" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Client")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("radio", { name: "Select Hypertrophy Phase II" }));
@@ -1424,12 +1469,12 @@ describe("MealPlansPage", () => {
 
     expect(await screen.findByText("No active meal plans have been assigned yet.")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Recipes" }));
 
-    expect(screen.getByText("No meal plan templates exist yet. Create a new template to start the library.")).toBeInTheDocument();
+    expect(screen.getByText("No recipes exist yet. Create a recipe to start the library.")).toBeInTheDocument();
   });
 
-  it("shows API errors when adding a meal template to an existing meal plan fails", async () => {
+  it("shows API errors when adding a recipe to an existing meal plan fails", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
@@ -1524,9 +1569,9 @@ describe("MealPlansPage", () => {
 
     render(createElement(MealPlansPage));
 
-    fireEvent.click(await screen.findByRole("tab", { name: "Meal Templates" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Recipes" }));
     fireEvent.click(screen.getByRole("button", { name: "Card view" }));
-    fireEvent.click(screen.getByRole("button", { name: "Use Template" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Recipe" }));
     fireEvent.click(screen.getByRole("radio", { name: "Select Persisted Hypertrophy Fuel" }));
     fireEvent.click(screen.getByRole("button", { name: "Add to Meal Plan" }));
 
