@@ -43,6 +43,7 @@ Review verification:
 - Prisma queries always include `organizationId` for tenant-owned records.
 - Request bodies and filters are validated with Zod schemas before database access.
 - Error responses use stable envelopes and do not expose raw exceptions.
+- Client account setup links use one-time SHA-256 hashed tokens in `verification_tokens`, expire after seven days, and are consumed after password setup. Online-payment clients cannot set a password until the Stripe-backed client subscription is `active` or `trialing`.
 
 ## Operational Notes
 Apply the migration and seed after deployment environment variables are configured:

@@ -90,7 +90,7 @@ Default:
 
 ### Clients
 - `GET /api/v1/clients`
-- `POST /api/v1/clients`: creates an organization-scoped client. Body: `firstName`, `lastName`, optional `email`, `phone`, `status`, `packageId`, `packageName`, `checkInDay`, `timezone`, `startDate`, and optional `onboarding` setup metadata for the new-client intake flow (`dateOfBirth`, `paymentMode` as `offline` or `payment-link`, selected form ids, check-in frequency/days, weight unit, and default exercise unit).
+- `POST /api/v1/clients`: creates an organization-scoped client. Body: `firstName`, `lastName`, optional `email`, `phone`, `status`, `packageId`, `packageName`, `checkInDay`, `timezone`, `startDate`, and optional `onboarding` setup metadata for the new-client intake flow (`dateOfBirth`, `paymentMode` as `offline` or `payment-link`, selected form ids, check-in frequency/days, weight unit, and default exercise unit). When `email` is present, the API creates a seven-day one-time client setup token and queues an onboarding email. When `onboarding.needsPayment=true` and `paymentMode=payment-link`, `email` and `packageId` are required, a connected-account Stripe Checkout subscription session is created for the selected synced recurring package, and the email links to Stripe before account setup.
 - `GET /api/v1/clients/{client_id}`
 - `PATCH /api/v1/clients/{client_id}`
 - `POST /api/v1/clients/{client_id}/archive`
@@ -98,6 +98,8 @@ Default:
 - `PATCH /api/v1/clients/{client_id}/profile`
 - `GET /api/v1/clients/{client_id}/metrics`
 - `GET /api/v1/clients/{client_id}/timeline`
+- `GET /api/v1/client-onboarding/{token}`: public setup-link endpoint. Returns invited client, organization, package, payment status, and whether password setup is currently allowed. Tokens are stored as SHA-256 hashes in `verification_tokens` and expire after seven days.
+- `PATCH /api/v1/client-onboarding/{token}`: public setup-link completion endpoint. Body: `password`. Creates or updates the client login user, links it to the client profile, consumes the one-time token, and audits completion. If a client subscription exists and is not `active` or `trialing`, returns `402 payment_required`; Stripe webhooks remain the source of truth for payment status.
 
 Query filters:
 - `status`

@@ -32,6 +32,10 @@ const mocks = vi.hoisted(() => ({
     organization: {
       findUnique: vi.fn()
     },
+    verificationToken: {
+      deleteMany: vi.fn(),
+      create: vi.fn()
+    },
     lead: {
       findMany: vi.fn(),
       create: vi.fn(),
@@ -67,7 +71,9 @@ const mocks = vi.hoisted(() => ({
     auditLog: {
       create: vi.fn()
     }
-  }
+  },
+  sendTransactionalEmail: vi.fn(),
+  createClientSubscriptionCheckout: vi.fn()
 }));
 
 vi.mock("@/auth", () => ({
@@ -76,6 +82,14 @@ vi.mock("@/auth", () => ({
 
 vi.mock("@/lib/db/prisma", () => ({
   prisma: mocks.prisma
+}));
+
+vi.mock("@/lib/email/resend", () => ({
+  sendTransactionalEmail: mocks.sendTransactionalEmail
+}));
+
+vi.mock("@/lib/payments/client-subscription-checkout", () => ({
+  createClientSubscriptionCheckout: mocks.createClientSubscriptionCheckout
 }));
 
 const ownerSession = {
@@ -103,6 +117,8 @@ describe("client and CRM API tenancy", () => {
     mocks.prisma.client.findFirst.mockReset();
     mocks.prisma.client.update.mockReset();
     mocks.prisma.organization.findUnique.mockReset();
+    mocks.prisma.verificationToken.deleteMany.mockReset();
+    mocks.prisma.verificationToken.create.mockReset();
     mocks.prisma.lead.findMany.mockReset();
     mocks.prisma.lead.create.mockReset();
     mocks.prisma.lead.findFirst.mockReset();
@@ -123,6 +139,20 @@ describe("client and CRM API tenancy", () => {
     mocks.prisma.$transaction.mockReset();
     mocks.prisma.$transaction.mockImplementation(async (callback) => callback(mocks.prisma));
     mocks.prisma.auditLog.create.mockReset();
+    mocks.sendTransactionalEmail.mockReset();
+    mocks.sendTransactionalEmail.mockResolvedValue({ status: "sent" });
+    mocks.createClientSubscriptionCheckout.mockReset();
+    mocks.createClientSubscriptionCheckout.mockResolvedValue({
+      subscription: { id: "sub_1" },
+      serializedSubscription: { id: "sub_1", status: "incomplete" },
+      checkoutUrl: "https://checkout.stripe.com/c/session_1"
+    });
+    mocks.prisma.verificationToken.deleteMany.mockResolvedValue({ count: 0 });
+    mocks.prisma.verificationToken.create.mockResolvedValue({
+      identifier: "client-onboarding:client_1",
+      token: "hashed-token",
+      expires: new Date("2026-08-01T00:00:00.000Z")
+    });
   });
 
   it("creates clients in the active organization and writes an audit log", async () => {
@@ -210,6 +240,24 @@ describe("client and CRM API tenancy", () => {
               checkInDays: ["Tuesday"]
             })
           })
+        })
+      })
+    );
+    expect(mocks.createClientSubscriptionCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: "org_1",
+        actorUserId: "user_1",
+        clientId: "client_1",
+        packageId: "package_1",
+        successUrl: expect.stringContaining("/client-onboarding/")
+      })
+    );
+    expect(mocks.sendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: "org_1",
+        toEmail: "emma@example.com",
+        metadata: expect.objectContaining({
+          requiresPayment: true
         })
       })
     );

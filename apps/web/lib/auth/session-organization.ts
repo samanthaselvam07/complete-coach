@@ -1,5 +1,5 @@
 import type { ActiveOrganizationSession } from "@/types/next-auth";
-import { findActiveOrganizationMembershipForUser } from "@/lib/auth/active-organization";
+import { findActiveOrganizationClientForUser, findActiveOrganizationMembershipForUser } from "@/lib/auth/active-organization";
 import type { MembershipRole } from "@/lib/auth/permissions";
 import { evaluatePlatformBillingAccess } from "@/lib/platform-billing/rules";
 
@@ -11,6 +11,11 @@ interface ActiveOrganizationMembership {
     name: string;
     platformSubscriptionStatus?: string | null;
   };
+}
+
+interface ActiveOrganizationClient {
+  organizationId: string;
+  organization: ActiveOrganizationMembership["organization"];
 }
 
 export function createActiveOrganizationSession(membership: ActiveOrganizationMembership): ActiveOrganizationSession {
@@ -26,5 +31,21 @@ export function createActiveOrganizationSession(membership: ActiveOrganizationMe
 export async function resolveActiveOrganizationSessionForUser(userId: string) {
   const membership = await findActiveOrganizationMembershipForUser(userId);
 
-  return membership ? createActiveOrganizationSession(membership) : undefined;
+  if (membership) {
+    return createActiveOrganizationSession(membership);
+  }
+
+  const client = await findActiveOrganizationClientForUser(userId);
+
+  return client ? createClientOrganizationSession(client) : undefined;
+}
+
+function createClientOrganizationSession(client: ActiveOrganizationClient): ActiveOrganizationSession {
+  return {
+    id: client.organizationId,
+    slug: client.organization.slug,
+    name: client.organization.name,
+    role: "client",
+    platformAccess: evaluatePlatformBillingAccess(client.organization.platformSubscriptionStatus)
+  };
 }

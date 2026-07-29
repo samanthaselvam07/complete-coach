@@ -2,6 +2,14 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import {
+  buildClientOnboardingUrl,
+  generateClientOnboardingToken,
+  getClientOnboardingExpiry,
+  getClientOnboardingIdentifier,
+  hashClientOnboardingToken,
+  sendClientOnboardingEmail
+} from "@/lib/clients/client-onboarding";
+import {
   buildClientWhere,
   clientListQuerySchema,
   createClientSchema,
@@ -10,7 +18,9 @@ import {
   serializeClient
 } from "@/lib/clients/client-records";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
+import { createClientSubscriptionCheckout } from "@/lib/payments/client-subscription-checkout";
 import { assertPlatformClientCapacity, PlatformLimitError } from "@/lib/platform-billing/limits";
+import { StripeApiError, StripeConfigurationError } from "@/lib/payments/stripe-connect";
 
 export async function GET(request: Request) {
   try {
@@ -50,6 +60,16 @@ export async function POST(request: Request) {
   try {
     const actor = requireActiveActor(await auth(), "clients:write");
     const input = createClientSchema.parse(await request.json());
+    const requiresOnlinePayment = input.onboarding?.needsPayment === true && input.onboarding.paymentMode === "payment-link";
+
+    if (requiresOnlinePayment && !input.email) {
+      return errorResponse("client_email_required", "Client email is required to send an online payment setup link.", 422);
+    }
+
+    if (requiresOnlinePayment && !input.packageId) {
+      return errorResponse("client_package_required", "Select a package before sending an online payment setup link.", 422);
+    }
+
     await assertPlatformClientCapacity(actor.organizationId);
     const client = await prisma.$transaction(async (tx) => {
       const createdClient = await tx.client.create({
@@ -86,10 +106,30 @@ export async function POST(request: Request) {
       }
     }
 
-    return dataResponse(serializeClient(client), {
+    const onboarding = client.email
+      ? await createAndSendClientOnboarding({
+          actor,
+          client,
+          requestUrl: request.url,
+          packageId: requiresOnlinePayment ? input.packageId : undefined,
+          packageName: input.packageName
+        })
+      : null;
+
+    if (onboarding && "response" in onboarding) {
+      return onboarding.response;
+    }
+
+    return dataResponse(
+      {
+        ...serializeClient(client),
+        onboarding
+      },
+      {
       status: 201,
       headers: { Location: `/api/v1/clients/${client.id}` }
-    });
+      }
+    );
   } catch (error) {
     if (error instanceof PlatformLimitError) {
       return errorResponse(error.code, error.message, 409, { limit: error.limit });
@@ -99,8 +139,108 @@ export async function POST(request: Request) {
       return errorResponse("client_email_exists", "A client with this email already exists.", 409);
     }
 
+    if (error instanceof StripeConfigurationError) {
+      return errorResponse("stripe_unconfigured", "Stripe is not configured.", 503);
+    }
+
+    if (error instanceof StripeApiError) {
+      return errorResponse("stripe_request_failed", "Stripe request failed.", 502, {
+        status: error.status,
+        message: error.message
+      });
+    }
+
     return handleApiError(error);
   }
+}
+
+type ClientOnboardingResult =
+  | {
+      response: Response;
+    }
+  | {
+      emailSent: true;
+      requiresPayment: boolean;
+      checkoutUrl: string | null;
+      subscriptionId: string | null;
+    }
+  | null;
+
+async function createAndSendClientOnboarding(input: {
+  actor: { organizationId: string; userId: string };
+  client: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string | null;
+  };
+  requestUrl: string;
+  packageId?: string;
+  packageName?: string | null;
+}): Promise<ClientOnboardingResult> {
+  if (!input.client.email) {
+    return null;
+  }
+
+  const token = generateClientOnboardingToken();
+  const tokenHash = hashClientOnboardingToken(token);
+  const identifier = getClientOnboardingIdentifier(input.client.id);
+  const setupUrl = buildClientOnboardingUrl(input.requestUrl, token);
+  let checkoutUrl: string | undefined;
+  let subscriptionId: string | undefined;
+
+  await prisma.verificationToken.deleteMany({
+    where: { identifier }
+  });
+
+  if (input.packageId) {
+    const checkout = await createClientSubscriptionCheckout({
+      organizationId: input.actor.organizationId,
+      actorUserId: input.actor.userId,
+      clientId: input.client.id,
+      packageId: input.packageId,
+      requestUrl: input.requestUrl,
+      successUrl: `${setupUrl}?payment=success`,
+      cancelUrl: `${setupUrl}?payment=cancelled`
+    });
+
+    if ("response" in checkout) {
+      return { response: checkout.response };
+    }
+
+    checkoutUrl = checkout.checkoutUrl;
+    subscriptionId = checkout.subscription.id;
+  }
+
+  await prisma.verificationToken.create({
+    data: {
+      identifier,
+      token: tokenHash,
+      expires: getClientOnboardingExpiry()
+    }
+  });
+
+  const organization = await prisma.organization.findUnique({
+    where: { id: input.actor.organizationId },
+    select: { name: true }
+  });
+
+  await sendClientOnboardingEmail({
+    organizationId: input.actor.organizationId,
+    organizationName: organization?.name ?? "Complete Coach",
+    clientEmail: input.client.email,
+    clientName: `${input.client.firstName} ${input.client.lastName}`.trim(),
+    setupUrl,
+    checkoutUrl,
+    packageName: input.packageName
+  });
+
+  return {
+    emailSent: true,
+    requiresPayment: Boolean(checkoutUrl),
+    checkoutUrl: checkoutUrl ?? null,
+    subscriptionId: subscriptionId ?? null
+  };
 }
 
 function isUniqueClientEmailError(error: unknown) {

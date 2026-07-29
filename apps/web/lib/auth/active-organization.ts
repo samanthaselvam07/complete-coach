@@ -19,3 +19,22 @@ export function findActiveOrganizationMembershipForUser(userId: string) {
     }
   });
 }
+
+export function findActiveOrganizationClientForUser(userId: string) {
+  return prisma.client.findFirst({
+    where: {
+      clientUserId: userId,
+      deletedAt: null,
+      organization: {
+        status: OrganizationStatus.ACTIVE,
+        deletedAt: null
+      }
+    },
+    include: {
+      organization: true
+    },
+    orderBy: {
+      createdAt: "asc"
+    }
+  });
+}
