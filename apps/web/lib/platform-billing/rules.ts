@@ -24,7 +24,7 @@ export function evaluatePlatformBillingAccess(status: string | null | undefined)
     };
   }
 
-  if (normalizedStatus === "not_started") {
+  if (normalizedStatus === "not_started" || normalizedStatus === "incomplete") {
     return {
       state: "warning",
       canUsePlatform: true,
