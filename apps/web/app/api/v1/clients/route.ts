@@ -104,16 +104,20 @@ export async function POST(request: Request) {
 }
 
 function isUniqueClientEmailError(error: unknown) {
+  if (typeof error !== "object" || error === null || !("code" in error) || (error as { code?: unknown }).code !== "P2002") {
+    return false;
+  }
+
+  const target = "meta" in error ? (error as { meta?: { target?: unknown } }).meta?.target : undefined;
+  const targetFields = Array.isArray(target) ? target.map(String) : typeof target === "string" ? [target] : [];
+
   return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === "P2002" &&
-    "meta" in error &&
-    Array.isArray((error as { meta?: { target?: unknown } }).meta?.target) &&
-    ((error as { meta: { target: unknown[] } }).meta.target.includes("organization_id") ||
-      (error as { meta: { target: unknown[] } }).meta.target.includes("organizationId")) &&
-    ((error as { meta: { target: unknown[] } }).meta.target.includes("email") ||
-      (error as { meta: { target: unknown[] } }).meta.target.includes("clients_organization_id_email_active_key"))
+    targetFields.includes("clients_organization_id_email_active_key") ||
+    (hasTargetField(targetFields, "email") &&
+      (hasTargetField(targetFields, "organization_id") || hasTargetField(targetFields, "organizationId")))
   );
+}
+
+function hasTargetField(targetFields: string[], field: string) {
+  return targetFields.some((targetField) => targetField === field || targetField.includes(field));
 }

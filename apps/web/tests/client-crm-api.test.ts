@@ -285,6 +285,35 @@ describe("client and CRM API tenancy", () => {
     });
   });
 
+  it("returns a clear conflict when Prisma reports the client email constraint by name", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "core" });
+    mocks.prisma.client.count.mockResolvedValue(12);
+    mocks.prisma.client.create.mockRejectedValue({
+      code: "P2002",
+      meta: { target: "clients_organization_id_email_active_key" }
+    });
+
+    const response = await postClient(
+      new Request("http://test.local/api/v1/clients", {
+        method: "POST",
+        body: JSON.stringify({
+          firstName: "Duplicate",
+          lastName: "Constraint",
+          email: "duplicate@example.com",
+          status: "new"
+        })
+      })
+    );
+    const payload = (await response.json()) as { error: { code: string; message: string } };
+
+    expect(response.status).toBe(409);
+    expect(payload.error).toEqual({
+      code: "client_email_exists",
+      message: "A client with this email already exists."
+    });
+  });
+
   it("blocks client creation when the organization has reached its platform client limit", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "core" });
