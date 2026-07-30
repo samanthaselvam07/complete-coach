@@ -25,7 +25,7 @@ export function ClientProfileDashboard({
       <aside className="space-y-6">
         <CheckInHistoryCard client={client} />
         <GoalsCountdownsCard client={client} recentNotes={recentNotes} />
-        <ActivityLogCard />
+        <ActivityLogCard client={client} />
       </aside>
     </div>
   );
@@ -121,6 +121,24 @@ interface RoadmapEvent {
   type: "event" | "milestone" | "task";
   date: string;
   notes: string;
+}
+
+interface ClientGoal {
+  id: string;
+  title: string;
+  targetDate: string;
+  notes: string;
+  roadmapPhaseId: string | null;
+  roadmapPhaseName: string | null;
+  daysRemaining: number;
+}
+
+interface AccountActivity {
+  id: string;
+  type: string;
+  title: string;
+  occurredAt: string;
+  actorName: string | null;
 }
 
 interface RoadmapPhaseDraft {
@@ -1542,6 +1560,48 @@ function GoalsCountdownsCard({
   client: ClientProfile;
   recentNotes: ClientNoteSummary[];
 }) {
+  const [goals, setGoals] = useState<ClientGoal[]>([]);
+  const [roadmapPhases, setRoadmapPhases] = useState<RoadmapPhase[]>([]);
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [loadingGoals, setLoadingGoals] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadGoals() {
+      setLoadingGoals(true);
+
+      try {
+        const [goalsResponse, roadmapResponse] = await Promise.all([
+          fetch(`/api/v1/clients/${client.id}/goals?limit=20`),
+          fetch(`/api/v1/clients/${client.id}/roadmap`)
+        ]);
+        const goalsPayload = goalsResponse.ok ? ((await goalsResponse.json()) as { data?: ClientGoal[] }) : {};
+        const roadmapPayload = roadmapResponse.ok ? ((await roadmapResponse.json()) as { data?: RoadmapPhase[] }) : {};
+
+        if (active) {
+          setGoals(goalsPayload.data ?? []);
+          setRoadmapPhases(roadmapPayload.data ?? []);
+        }
+      } catch {
+        if (active) {
+          setGoals([]);
+          setRoadmapPhases([]);
+        }
+      } finally {
+        if (active) {
+          setLoadingGoals(false);
+        }
+      }
+    }
+
+    void loadGoals();
+
+    return () => {
+      active = false;
+    };
+  }, [client.id]);
+
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center justify-between">
@@ -1549,13 +1609,47 @@ function GoalsCountdownsCard({
           <Target className="size-5 text-indigo-600" aria-hidden="true" />
           Goals & Countdowns
         </h2>
-        <button type="button" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white">
+        <button type="button" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white" onClick={() => setGoalDialogOpen(true)}>
           + Add Goal
         </button>
       </div>
-      <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-        No persisted goals or countdowns are available for this client yet.
-      </p>
+      {goals.length > 0 ? (
+        <div className="space-y-3">
+          {goals.slice(0, 4).map((goal) => (
+            <div key={goal.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-black text-slate-950">{goal.title}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {formatNoteDate(goal.targetDate)}
+                    {goal.roadmapPhaseName ? ` - ${goal.roadmapPhaseName}` : ""}
+                  </p>
+                </div>
+                <span className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-black text-white">
+                  {goal.daysRemaining < 0 ? "Past due" : `${goal.daysRemaining}d`}
+                </span>
+              </div>
+              {goal.notes ? <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">{goal.notes}</p> : null}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+          {loadingGoals ? "Loading goals..." : "No persisted goals or countdowns are available for this client yet."}
+        </p>
+      )}
+
+      {goalDialogOpen ? (
+        <ClientGoalDialog
+          client={client}
+          roadmapPhases={roadmapPhases}
+          onClose={() => setGoalDialogOpen(false)}
+          onSaved={(goal) => {
+            setGoals((currentGoals) => [...currentGoals, goal].sort((first, second) => first.targetDate.localeCompare(second.targetDate)));
+            setGoalDialogOpen(false);
+          }}
+        />
+      ) : null}
 
       <div className="mt-6 border-t border-slate-100 pt-5">
         <div className="mb-4 flex items-center justify-between gap-3">
@@ -1589,6 +1683,110 @@ function GoalsCountdownsCard({
   );
 }
 
+function ClientGoalDialog({
+  client,
+  roadmapPhases,
+  onClose,
+  onSaved
+}: {
+  client: ClientProfile;
+  roadmapPhases: RoadmapPhase[];
+  onClose: () => void;
+  onSaved: (goal: ClientGoal) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [targetDate, setTargetDate] = useState(new Date().toISOString().slice(0, 10));
+  const [notes, setNotes] = useState("");
+  const [roadmapPhaseId, setRoadmapPhaseId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function saveGoal() {
+    setSaving(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/v1/clients/${client.id}/goals`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          targetDate,
+          notes,
+          roadmapPhaseId: roadmapPhaseId || null
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Goal could not be saved.");
+      }
+
+      const payload = (await response.json()) as { data?: ClientGoal };
+
+      if (payload.data) {
+        onSaved(payload.data);
+      }
+    } catch {
+      setError("Goal could not be saved. Check the details and try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="presentation">
+      <div role="dialog" aria-modal="true" aria-labelledby="client-goal-title" className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h2 id="client-goal-title" className="text-2xl font-black text-slate-950">
+              Add Goal
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">{client.name}</p>
+          </div>
+          <button type="button" className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700" onClick={onClose}>
+            Close
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">Goal</span>
+            <input value={title} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" onChange={(event) => setTitle(event.target.value)} />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">Target date</span>
+            <input type="date" value={targetDate} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" onChange={(event) => setTargetDate(event.target.value)} />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">Roadmap phase</span>
+            <select value={roadmapPhaseId} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" onChange={(event) => setRoadmapPhaseId(event.target.value)}>
+              <option value="">No phase linked</option>
+              {roadmapPhases.map((phase) => (
+                <option key={phase.id} value={phase.id}>{phase.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">Notes</span>
+            <textarea value={notes} rows={5} className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm leading-6 focus:outline-none focus:ring-2 focus:ring-indigo-500" onChange={(event) => setNotes(event.target.value)} />
+          </label>
+
+          {error ? <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p> : null}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button type="button" className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="button" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300" disabled={saving || !title.trim() || !targetDate} onClick={() => void saveGoal()}>
+            {saving ? "Saving..." : "Save goal"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function formatNoteDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
@@ -1598,7 +1796,41 @@ function formatNoteDate(value: string) {
   }).format(new Date(`${value}T00:00:00.000Z`));
 }
 
-function ActivityLogCard() {
+function ActivityLogCard({ client }: { client: ClientProfile }) {
+  const [activity, setActivity] = useState<AccountActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadActivity() {
+      setLoading(true);
+
+      try {
+        const response = await fetch(`/api/v1/clients/${client.id}/activity?limit=6`);
+        const payload = response.ok ? ((await response.json()) as { data?: AccountActivity[] }) : {};
+
+        if (active) {
+          setActivity(payload.data ?? []);
+        }
+      } catch {
+        if (active) {
+          setActivity([]);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadActivity();
+
+    return () => {
+      active = false;
+    };
+  }, [client.id]);
+
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center justify-between">
@@ -1611,10 +1843,32 @@ function ActivityLogCard() {
         </button>
       </div>
       <div className="space-y-3">
-        <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-          No persisted activity events are available for this client yet.
-        </p>
+        {activity.length > 0 ? (
+          activity.map((item) => (
+            <div key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="font-black text-slate-950">{item.title}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                {formatActivityDate(item.occurredAt)}
+                {item.actorName ? ` - ${item.actorName}` : ""}
+              </p>
+            </div>
+          ))
+        ) : (
+          <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+            {loading ? "Loading account activity..." : "No persisted activity events are available for this client yet."}
+          </p>
+        )}
       </div>
     </section>
   );
+}
+
+function formatActivityDate(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(new Date(value));
 }

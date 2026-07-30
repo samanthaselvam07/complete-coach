@@ -97,8 +97,15 @@ Default:
 - `GET /api/v1/clients/{client_id}`
 - `PATCH /api/v1/clients/{client_id}`
 - `POST /api/v1/clients/{client_id}/archive`
+- `DELETE /api/v1/clients/{client_id}`: removes the client from roster views by setting `deletedAt`, archives the client status, deletes the attached `client_profiles` row, and writes an audit event. Requires `clients:write`.
 - `GET /api/v1/clients/{client_id}/profile`
 - `PATCH /api/v1/clients/{client_id}/profile`
+- `GET /api/v1/clients/{client_id}/logs`: returns organization-scoped completed/missed logs for training, nutrition, and supplementation. Query: `days` (1-90, default 7) or `dateFrom` and `dateTo`. Response includes `logs` and `summary`.
+- `POST /api/v1/clients/{client_id}/logs`: upserts one organization-scoped activity log by `domain`, `logDate`, and client. Body: `domain` (`training`, `nutrition`, `supplementation`), `logDate`, `status` (`completed`, `missed`), optional `notes`. The route recalculates the current 7-day compliance score and stores it on the client record.
+- `GET /api/v1/clients/{client_id}/goals`: returns organization-scoped client goals as countdown records. Query: `limit`.
+- `POST /api/v1/clients/{client_id}/goals`: creates a client goal with `title`, `targetDate`, optional `notes`, and optional `roadmapPhaseId`. The route validates that the roadmap phase belongs to the same active-organization client, writes an account activity event, and returns countdown metadata.
+- `GET /api/v1/clients/{client_id}/activity`: returns organization-scoped account activity events for the client. Query: `limit`.
+- `POST /api/v1/clients/{client_id}/activity`: creates a client account activity event for profile-embedded plan edits. Body: `type`, `title`, optional `metadata`.
 - `GET /api/v1/clients/{client_id}/metrics`
 - `GET /api/v1/clients/{client_id}/timeline`
 - `GET /api/v1/client-onboarding/{token}`: public setup-link endpoint. Returns invited client, organization, package, payment status, and whether password setup is currently allowed. Tokens are stored as SHA-256 hashes in `verification_tokens` and expire after seven days.
@@ -111,6 +118,8 @@ Query filters:
 - `search`
 - `cursor`
 - `limit`
+
+Roster status display treats `new` clients as new for three days from creation; after that window, non-archived/non-deactivated `new` rows are returned/displayed as `active`.
 
 ### CRM
 - `GET /api/v1/leads`
@@ -134,7 +143,7 @@ Query filters:
 - Form version field `type` values include `short-text`, `long-text`, `content-block`, `number`, `scale`, `multiple-choice`, `radio-buttons`, `dropdown`, `rating-10`, `checkbox`, `date`, `time`, `email`, `phone`, and `photo`.
 - `POST /api/v1/forms/{form_id}/publish`: publishes a version and sets `current_version_id`. Body: `formVersionId`.
 - `POST /api/v1/forms/{form_id}/assignments`: assigns a published version to a scoped client. Body: `clientId`, optional `formVersionId`, optional `dueAt`.
-- `GET /api/v1/form-assignments`: returns active-organization form assignments. Query: `clientId`, `status`, `limit`.
+- `GET /api/v1/form-assignments`: returns active-organization form assignments including `formId`, `formName`, and `formType` for client editor reloads. Query: `clientId`, `status`, `limit`.
 - `GET /api/v1/form-assignments/{assignment_id}`: returns one active-organization assignment with the immutable assigned form version.
 - `POST /api/v1/form-assignments/{assignment_id}/submit`: submits answers for the assigned immutable version, creates a submission, creates a check-in where appropriate, extracts configured metrics, and creates or updates a CRM lead when the submitted form type is `application`. Body: `answers`.
 - `GET /api/v1/form-submissions`: returns active-organization form submissions. Query: `clientId`, `formId`, `status`, `limit`.
@@ -175,6 +184,13 @@ AI output statuses:
 
 ### Client Metrics
 - `GET /api/v1/clients/{client_id}/metrics`: returns active-organization client measurements. Query: `metricKey`, `dateFrom`, `dateTo`, `limit`.
+
+### Client Compliance Logs
+- `client_activity_logs` stores one durable log per organization, client, domain, and date.
+- Compliance score is calculated from completed logs divided by possible logs for the selected period. For the default seven-day view, `7 days * 3 domains = 21 possible logs`; `21/21` completed logs returns `100%`.
+- Missed logs remain stored for visibility but do not count toward completed compliance.
+- `client_account_activity_logs` stores client account history for plan changes and billing lifecycle events. Billing events are written from Stripe webhooks for started, paused, failed, and cancelled subscription status changes.
+- `client_goals` stores countdown goals and optional links to `client_roadmap_phases`.
 
 ### Training
 - `GET /api/v1/exercises`: returns global library exercises and active-organization private exercises. Query: `scope`, `category`, `search`, `limit`.

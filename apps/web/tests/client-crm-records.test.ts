@@ -25,8 +25,20 @@ describe("client persistence mappers", () => {
     ).toMatchObject({
       organizationId: "org_1",
       deletedAt: null,
-      status: ClientStatus.ACTIVE,
-      checkInDay: "Monday"
+      checkInDay: "Monday",
+      AND: expect.arrayContaining([
+        expect.objectContaining({
+          OR: expect.arrayContaining([
+            { status: ClientStatus.ACTIVE },
+            expect.objectContaining({ status: ClientStatus.NEW })
+          ])
+        }),
+        expect.objectContaining({
+          OR: expect.arrayContaining([
+            expect.objectContaining({ firstName: expect.objectContaining({ contains: "marcus" }) })
+          ])
+        })
+      ])
     });
   });
 
@@ -75,6 +87,40 @@ describe("client persistence mappers", () => {
       latestCheckIn: "Not recorded",
       initials: "CC"
     });
+  });
+
+  it("ages new clients into active status after three days", () => {
+    expect(
+      serializeClient({
+        id: "client_recent",
+        firstName: "Recent",
+        lastName: "Client",
+        email: null,
+        status: ClientStatus.NEW,
+        packageName: null,
+        checkInDay: null,
+        startDate: null,
+        latestCheckInAt: null,
+        compliance: 0,
+        createdAt: new Date()
+      }).status
+    ).toBe("new");
+
+    expect(
+      serializeClient({
+        id: "client_aged",
+        firstName: "Aged",
+        lastName: "Client",
+        email: null,
+        status: ClientStatus.NEW,
+        packageName: null,
+        checkInDay: null,
+        startDate: null,
+        latestCheckInAt: null,
+        compliance: 0,
+        createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)
+      }).status
+    ).toBe("active");
   });
 
   it("normalizes client create data without trusting client-provided organization ids", () => {

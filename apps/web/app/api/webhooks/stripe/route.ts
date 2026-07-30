@@ -1,6 +1,6 @@
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 
-import { PaymentEventProcessingStatus } from "@/app/generated/prisma/enums";
+import { ClientAccountActivityType, ClientSubscriptionStatus, PaymentEventProcessingStatus } from "@/app/generated/prisma/enums";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { prisma } from "@/lib/db/prisma";
 import {
@@ -236,7 +236,7 @@ async function processSubscriptionChanged(event: StripeEventPayload, organizatio
           id: localSubscriptionId,
           organizationId
         },
-        select: { id: true }
+        select: { id: true, clientId: true, status: true }
       })
     : await prisma.clientSubscription.findFirst({
         where: {
@@ -246,27 +246,89 @@ async function processSubscriptionChanged(event: StripeEventPayload, organizatio
             ...(stripeCustomerId ? [{ stripeCustomerId }] : [])
           ]
         },
-        select: { id: true }
+        select: { id: true, clientId: true, status: true }
       });
 
   if (!subscription) {
     throw new Error("Subscription webhook cannot be matched to a local subscription.");
   }
 
+  const nextStatus =
+    event.type === "customer.subscription.deleted"
+      ? mapStripeSubscriptionStatus(getStripeString(object, "status") ?? "canceled")
+      : mapStripeSubscriptionStatus(getStripeString(object, "status"));
+
   await prisma.clientSubscription.update({
     where: { id: subscription.id },
     data: {
       stripeSubscriptionId,
       stripeCustomerId,
-      status:
-        event.type === "customer.subscription.deleted"
-          ? mapStripeSubscriptionStatus(getStripeString(object, "status") ?? "canceled")
-          : mapStripeSubscriptionStatus(getStripeString(object, "status")),
+      status: nextStatus,
       currentPeriodStart: getStripeTimestamp(object, "current_period_start"),
       currentPeriodEnd: getStripeTimestamp(object, "current_period_end"),
       cancelAt: getStripeTimestamp(object, "cancel_at")
     }
   });
+
+  const activityType = getBillingActivityType(nextStatus, subscription.status, event.type);
+
+  if (activityType) {
+    await prisma.clientAccountActivityLog.create({
+      data: {
+        organizationId,
+        clientId: subscription.clientId,
+        type: activityType,
+        title: getBillingActivityTitle(activityType),
+        metadata: {
+          stripeSubscriptionId,
+          stripeCustomerId,
+          previousStatus: subscription.status,
+          nextStatus
+        }
+      }
+    });
+  }
+}
+
+function getBillingActivityType(
+  nextStatus: ClientSubscriptionStatus,
+  previousStatus: ClientSubscriptionStatus,
+  eventType: string
+) {
+  if (nextStatus === previousStatus && eventType !== "customer.subscription.deleted") {
+    return null;
+  }
+
+  switch (nextStatus) {
+    case ClientSubscriptionStatus.ACTIVE:
+    case ClientSubscriptionStatus.TRIALING:
+      return ClientAccountActivityType.BILLING_STARTED;
+    case ClientSubscriptionStatus.PAUSED:
+      return ClientAccountActivityType.BILLING_PAUSED;
+    case ClientSubscriptionStatus.PAST_DUE:
+    case ClientSubscriptionStatus.UNPAID:
+    case ClientSubscriptionStatus.INCOMPLETE_EXPIRED:
+      return ClientAccountActivityType.BILLING_FAILED;
+    case ClientSubscriptionStatus.CANCELED:
+      return ClientAccountActivityType.BILLING_CANCELLED;
+    default:
+      return null;
+  }
+}
+
+function getBillingActivityTitle(type: ClientAccountActivityType) {
+  switch (type) {
+    case ClientAccountActivityType.BILLING_STARTED:
+      return "Billing started";
+    case ClientAccountActivityType.BILLING_PAUSED:
+      return "Billing paused";
+    case ClientAccountActivityType.BILLING_FAILED:
+      return "Billing failed";
+    case ClientAccountActivityType.BILLING_CANCELLED:
+      return "Billing cancelled";
+    default:
+      return "Billing updated";
+  }
 }
 
 function isPlatformCheckoutSession(object: Record<string, unknown>, organizationId: string) {

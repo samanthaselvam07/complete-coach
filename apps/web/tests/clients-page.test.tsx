@@ -389,6 +389,10 @@ describe("ClientsPage", () => {
         );
       }
 
+      if (url === "/api/v1/clients/client_api_1" && init?.method === "DELETE") {
+        return Promise.resolve(new Response(JSON.stringify({ data: { id: "client_api_1", deleted: true } }), { status: 200 }));
+      }
+
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     });
 
@@ -464,6 +468,16 @@ describe("ClientsPage", () => {
     expect(fetchMock).toHaveBeenLastCalledWith(
       "/api/v1/clients/client_api_1/archive",
       expect.objectContaining({ method: "POST" })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /delete Updated Client/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("link", { name: /view Updated Client profile/i })).not.toBeInTheDocument();
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "/api/v1/clients/client_api_1",
+      expect.objectContaining({ method: "DELETE" })
     );
   });
 

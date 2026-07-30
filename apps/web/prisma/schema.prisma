@@ -332,6 +332,35 @@ enum ClientSubscriptionStatus {
   @@map("client_subscription_status")
 }
 
+enum ClientActivityLogDomain {
+  TRAINING        @map("training")
+  NUTRITION       @map("nutrition")
+  SUPPLEMENTATION @map("supplementation")
+
+  @@map("client_activity_log_domain")
+}
+
+enum ClientActivityLogStatus {
+  COMPLETED @map("completed")
+  MISSED    @map("missed")
+
+  @@map("client_activity_log_status")
+}
+
+enum ClientAccountActivityType {
+  TRAINING_PLAN_UPDATED         @map("training_plan_updated")
+  NUTRITION_PLAN_UPDATED        @map("nutrition_plan_updated")
+  SUPPLEMENT_PLAN_UPDATED       @map("supplement_plan_updated")
+  BILLING_STARTED               @map("billing_started")
+  BILLING_PAUSED                @map("billing_paused")
+  BILLING_FAILED                @map("billing_failed")
+  BILLING_CANCELLED             @map("billing_cancelled")
+  CLIENT_GOAL_CREATED           @map("client_goal_created")
+  CLIENT_PROFILE_TARGET_UPDATED @map("client_profile_target_updated")
+
+  @@map("client_account_activity_type")
+}
+
 enum PaymentEventProcessingStatus {
   RECEIVED  @map("received")
   PROCESSED @map("processed")
@@ -495,6 +524,7 @@ model User {
   clients                      Client[]                      @relation("ClientPortalUser")
   coachedClients               Client[]                      @relation("ClientPrimaryCoach")
   clientNotes                  ClientNote[]                  @relation("ClientNoteAuthor")
+  clientAccountActivityLogs    ClientAccountActivityLog[]    @relation("ClientAccountActivityActor")
   assignedLeads                Lead[]                        @relation("LeadAssignee")
   leadActivities               LeadActivity[]
   createdForms                 Form[]                        @relation("FormCreator")
@@ -580,6 +610,9 @@ model Organization {
   formSubmissions              FormSubmission[]
   checkIns                     CheckIn[]
   clientMeasurements           ClientMeasurement[]
+  clientActivityLogs           ClientActivityLog[]
+  clientAccountActivityLogs    ClientAccountActivityLog[]
+  clientGoals                  ClientGoal[]
   externalApiKeys              ExternalApiKey[]
   externalExportJobs           ExternalExportJob[]
   externalWebhookEndpoints     ExternalWebhookEndpoint[]
@@ -1102,6 +1135,9 @@ model Client {
   notes                        ClientNote[]
   roadmapPhases                ClientRoadmapPhase[]
   roadmapItems                 ClientRoadmapItem[]
+  activityLogs                 ClientActivityLog[]
+  accountActivityLogs          ClientAccountActivityLog[]
+  goals                        ClientGoal[]
 
   @@unique([organizationId, externalClientId])
   @@index([organizationId, status])
@@ -1152,6 +1188,45 @@ model ClientNote {
   @@map("client_notes")
 }
 
+model ClientGoal {
+  id             String              @id @default(cuid())
+  organizationId String              @map("organization_id")
+  clientId       String              @map("client_id")
+  roadmapPhaseId String?             @map("roadmap_phase_id")
+  title          String
+  targetDate     DateTime            @map("target_date") @db.Date
+  notes          String?             @db.Text
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client         Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  roadmapPhase   ClientRoadmapPhase? @relation(fields: [roadmapPhaseId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, clientId, targetDate])
+  @@index([organizationId, roadmapPhaseId])
+  @@map("client_goals")
+}
+
+model ClientAccountActivityLog {
+  id             String                    @id @default(cuid())
+  organizationId String                    @map("organization_id")
+  clientId       String                    @map("client_id")
+  actorUserId    String?                   @map("actor_user_id")
+  type           ClientAccountActivityType
+  title          String
+  occurredAt     DateTime                  @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  metadata       Json?
+  createdAt      DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client         Client                    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  actor          User?                     @relation("ClientAccountActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, clientId, occurredAt])
+  @@index([organizationId, type, occurredAt])
+  @@index([actorUserId])
+  @@map("client_account_activity_logs")
+}
+
 model ClientRoadmapPhase {
   id             String              @id @default(cuid())
   organizationId String              @map("organization_id")
@@ -1165,6 +1240,7 @@ model ClientRoadmapPhase {
   organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   client         Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
   items          ClientRoadmapItem[]
+  goals          ClientGoal[]
 
   @@index([organizationId, clientId, startDate])
   @@index([organizationId, clientId, status])
@@ -1411,6 +1487,27 @@ model ClientMeasurement {
   @@index([organizationId, clientId, metricKey, measuredAt])
   @@index([organizationId, sourceType, sourceId])
   @@map("client_measurements")
+}
+
+model ClientActivityLog {
+  id             String                  @id @default(cuid())
+  organizationId String                  @map("organization_id")
+  clientId       String                  @map("client_id")
+  domain         ClientActivityLogDomain
+  logDate        DateTime                @map("log_date") @db.Date
+  status         ClientActivityLogStatus @default(COMPLETED)
+  sourceType     String?                 @map("source_type")
+  sourceId       String?                 @map("source_id")
+  notes          String?                 @db.Text
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client         Client                  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, clientId, domain, logDate])
+  @@index([organizationId, clientId, logDate])
+  @@index([organizationId, domain, logDate])
+  @@map("client_activity_logs")
 }
 
 model ExternalApiKey {

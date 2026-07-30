@@ -1,3 +1,4 @@
+import { ClientStatus } from "@/app/generated/prisma/enums";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
 import { requireActiveActor } from "@/lib/auth/session-guards";
@@ -74,6 +75,55 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
     });
 
     return dataResponse(serializeClient(client));
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+export async function DELETE(_request: Request, context: ClientRouteContext) {
+  try {
+    const actor = requireActiveActor(await auth(), "clients:write");
+    const { clientId } = await context.params;
+    const existingClient = await prisma.client.findFirst({
+      where: {
+        id: clientId,
+        organizationId: actor.organizationId,
+        deletedAt: null
+      },
+      select: { id: true }
+    });
+
+    if (!existingClient) {
+      return errorResponse("not_found", "Client not found.", 404);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.clientProfile.deleteMany({
+        where: {
+          clientId,
+          organizationId: actor.organizationId
+        }
+      });
+      await tx.client.update({
+        where: { id: clientId, organizationId: actor.organizationId },
+        data: {
+          status: ClientStatus.ARCHIVED,
+          archivedAt: new Date(),
+          deletedAt: new Date()
+        }
+      });
+      await tx.auditLog.create({
+        data: {
+          organizationId: actor.organizationId,
+          actorUserId: actor.userId,
+          action: "client.deleted",
+          targetType: "client",
+          targetId: clientId
+        }
+      });
+    });
+
+    return dataResponse({ id: clientId, deleted: true });
   } catch (error) {
     return handleApiError(error);
   }

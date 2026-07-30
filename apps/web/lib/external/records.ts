@@ -56,6 +56,10 @@ interface ClientRecord {
   compliance?: number | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+  profile?: {
+    waterTargetLitres?: number | string | { toString: () => string } | null;
+    stepTarget?: number | null;
+  } | null;
 }
 
 interface MetricRecord {
@@ -181,6 +185,10 @@ export function serializeExternalClient(record: ClientRecord, includePii = false
     startDate: record.startDate ? toDateOnly(record.startDate) : null,
     latestCheckInAt: record.latestCheckInAt ? toIsoString(record.latestCheckInAt) : null,
     compliance: record.compliance,
+    waterTargetLitres: record.profile?.waterTargetLitres === null || record.profile?.waterTargetLitres === undefined
+      ? null
+      : Number(record.profile.waterTargetLitres),
+    stepTarget: record.profile?.stepTarget ?? null,
     createdAt: toIsoString(record.createdAt),
     updatedAt: toIsoString(record.updatedAt),
     ...(includePii

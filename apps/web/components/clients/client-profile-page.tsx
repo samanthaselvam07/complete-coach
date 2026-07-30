@@ -1,18 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, Droplets, Footprints, LineChart, MessageSquare, NotebookPen, Pencil, RefreshCw } from "lucide-react";
+import { Check, ChevronLeft, Droplets, Footprints, LineChart, MessageSquare, NotebookPen, Pencil, RefreshCw, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { CheckInDetailPage } from "@/components/check-ins/check-in-detail-page";
 import { CheckInHistoryPanel, DailyCheckInsPanel } from "@/components/clients/client-check-in-panels";
 import {
+  assignSelectedClientForms,
   assignSelectedClientPlans,
   type ClientProfileResponse,
-  fetchClientFormOptions,
+  fetchAssignedClientFormIds,
   fetchAssignedClientPlanIds,
+  fetchClientFormOptions,
+  fetchClientFormOptionsFromUrls,
   scheduleAssignedPackagePaymentChange,
   toDateInputValue,
   updateClientProfile
@@ -48,7 +51,7 @@ import type { ClientProfile, ClientSummary } from "@/lib/clients/client-models";
 import type { ClientNoteSummary } from "@/lib/clients/client-notes";
 import { cn } from "@/lib/utils";
 
-type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "Supplementation" | "Roadmap" | "Calendar" | "Check-Ins";
+type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "Supplementation" | "Logs" | "Roadmap" | "Calendar" | "Check-Ins";
 
 interface ClientProfilePageProps {
   clientId: string;
@@ -243,6 +246,34 @@ interface ClientSupplementProtocol {
   }>;
 }
 
+type ClientLogDomain = "training" | "nutrition" | "supplementation";
+type ClientLogStatus = "completed" | "missed";
+
+interface ClientActivityLog {
+  id: string;
+  domain: ClientLogDomain;
+  logDate: string;
+  status: ClientLogStatus;
+  notes: string | null;
+}
+
+interface ClientActivityLogDomainSummary {
+  domain: ClientLogDomain;
+  completedLogs: number;
+  possibleLogs: number;
+  complianceScore: number;
+}
+
+interface ClientActivityLogSummary {
+  dateFrom: string;
+  dateTo: string;
+  days: number;
+  completedLogs: number;
+  possibleLogs: number;
+  complianceScore: number;
+  byDomain: ClientActivityLogDomainSummary[];
+}
+
 interface ClientProfileView extends ClientProfile {
   trainingPrograms: ClientTrainingProgram[];
   trainingSource: "api";
@@ -251,7 +282,12 @@ interface ClientProfileView extends ClientProfile {
   supplementProtocols: ClientSupplementProtocol[];
 }
 
-const tabs: ProfileTab[] = ["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Roadmap", "Calendar", "Check-Ins"];
+const tabs: ProfileTab[] = ["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Logs", "Roadmap", "Calendar", "Check-Ins"];
+const logDomains: Array<{ id: ClientLogDomain; label: string }> = [
+  { id: "training", label: "Training" },
+  { id: "nutrition", label: "Nutrition" },
+  { id: "supplementation", label: "Supplementation" }
+];
 const todayDate = () => new Date().toISOString().slice(0, 10);
 
 export function ClientProfilePage({
@@ -278,6 +314,9 @@ export function ClientProfilePage({
   const [trainingPlanOptions, setTrainingPlanOptions] = useState<ClientFormOption[]>([]);
   const [nutritionPlanOptions, setNutritionPlanOptions] = useState<ClientFormOption[]>([]);
   const [supplementationPlanOptions, setSupplementationPlanOptions] = useState<ClientFormOption[]>([]);
+  const updateClientComplianceScore = useCallback((compliance: number) => {
+    setClient((currentClient) => (currentClient ? { ...currentClient, compliance } : currentClient));
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -360,8 +399,10 @@ export function ClientProfilePage({
       }
 
       await updateClientProfile(editingClient.id, clientForm);
-      await assignSelectedClientPlans(editingClient.id, clientForm);
+      await assignSelectedClientForms(editingClient.id, clientForm);
+      const assignedPlanChanges = await assignSelectedClientPlans(editingClient.id, clientForm);
       await scheduleAssignedPackagePaymentChange(clientForm);
+      await logAssignedPlanChanges(editingClient.id, assignedPlanChanges);
 
       const payload = (await response.json()) as { data?: ClientSummary };
 
@@ -379,13 +420,17 @@ export function ClientProfilePage({
 
   const loadClientFormProfile = async (profileClientId: string) => {
     try {
-      const [response, assignedPlanIds] = await Promise.all([
+      const [response, assignedPlanIds, assignedFormIds] = await Promise.all([
         fetch(`/api/v1/clients/${profileClientId}/profile`),
-        fetchAssignedClientPlanIds(profileClientId)
+        fetchAssignedClientPlanIds(profileClientId),
+        fetchAssignedClientFormIds(profileClientId)
       ]);
 
       setClientForm((currentForm) => ({
         ...currentForm,
+        initialQuestionnaire: assignedFormIds.initialQuestionnaire,
+        dailyHabitForm: assignedFormIds.dailyHabitForm,
+        checkInForm: assignedFormIds.checkInForm,
         trainingPlanIds: assignedPlanIds.trainingPlanIds,
         nutritionPlanIds: assignedPlanIds.nutritionPlanIds,
         supplementationPlanIds: assignedPlanIds.supplementationPlanIds
@@ -415,7 +460,12 @@ export function ClientProfilePage({
       supplementationPlans
     ] = await Promise.all([
       fetchClientFormOptions("/api/v1/packages?status=active&limit=100"),
-      fetchClientFormOptions("/api/v1/forms?type=intake&status=published&limit=100"),
+      fetchClientFormOptionsFromUrls([
+        "/api/v1/forms?type=intake&status=published&limit=100",
+        "/api/v1/forms?type=application&status=published&limit=100",
+        "/api/v1/forms?type=contact&status=published&limit=100",
+        "/api/v1/forms?type=terms-and-conditions&status=published&limit=100"
+      ]),
       fetchClientFormOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
       fetchClientFormOptions("/api/v1/forms?type=check-in&status=published&limit=100"),
       fetchClientFormOptions("/api/v1/training-program-templates?limit=100"),
@@ -501,12 +551,13 @@ export function ClientProfilePage({
         onNoteCreated={(note) => setRecentNotes((currentNotes) => [note, ...currentNotes].slice(0, 3))}
         onEditClient={() => openEditClient(client)}
         onOpenMessages={() => void openClientMessages()}
+        onProfileTargetSaved={(target) => setClient((currentClient) => (currentClient ? { ...currentClient, ...target } : currentClient))}
       />
 
       {messageError ? <p role="alert" className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{messageError}</p> : null}
 
       <div className="mb-6 w-full rounded-xl border border-gray-200 bg-white p-1">
-        <div role="tablist" aria-label="Client profile sections" className="grid grid-cols-2 gap-1 md:grid-cols-4 lg:grid-cols-8">
+        <div role="tablist" aria-label="Client profile sections" className="grid grid-cols-2 gap-1 md:grid-cols-5 lg:grid-cols-9">
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -532,6 +583,7 @@ export function ClientProfilePage({
         activeTab={activeTab}
         highlightedCheckInCompare={highlightedCheckInCompare}
         highlightedCheckInId={highlightedCheckInId}
+        onComplianceScoreChange={updateClientComplianceScore}
       />
 
       {clientFormOpen ? (
@@ -921,12 +973,14 @@ function ClientProfileHeader({
   client,
   onNoteCreated,
   onEditClient,
-  onOpenMessages
+  onOpenMessages,
+  onProfileTargetSaved
 }: {
   client: ClientProfile;
   onNoteCreated: (note: ClientNoteSummary) => void;
   onEditClient: () => void;
   onOpenMessages: () => void;
+  onProfileTargetSaved: (target: Pick<ClientProfile, "waterTargetLitres"> | Pick<ClientProfile, "stepTarget">) => void;
 }) {
   const startingWeight = findMetric(client, "Starting Weight")?.value ?? "0";
   const startingWeightDetail = findMetric(client, "Starting Weight")?.detail ?? "first body-weight entry";
@@ -1052,8 +1106,10 @@ function ClientProfileHeader({
           onSaved={(value) => {
             if (targetDialog === "water") {
               setWaterTargetLitres(value);
+              onProfileTargetSaved({ waterTargetLitres: value });
             } else {
               setStepTarget(value);
+              onProfileTargetSaved({ stepTarget: value });
             }
 
             setTargetDialog(null);
@@ -1127,6 +1183,15 @@ function ClientTargetDialog({
       if (!response.ok) {
         throw new Error("Target could not be saved.");
       }
+
+      await logClientAccountActivity(client.id, {
+        type: "client-profile-target-updated",
+        title: isWater ? "Water target updated" : "Step target updated",
+        metadata: {
+          target: targetType,
+          value: parsedValue
+        }
+      });
 
       onSaved(parsedValue);
     } catch {
@@ -1316,13 +1381,15 @@ function ClientProfileTabPanel({
   recentNotes,
   activeTab,
   highlightedCheckInCompare,
-  highlightedCheckInId
+  highlightedCheckInId,
+  onComplianceScoreChange
 }: {
   client: ClientProfileView;
   recentNotes: ClientNoteSummary[];
   activeTab: ProfileTab;
   highlightedCheckInCompare?: string;
   highlightedCheckInId?: string;
+  onComplianceScoreChange: (compliance: number) => void;
 }) {
   if (activeTab === "Dashboard") {
     return (
@@ -1363,6 +1430,7 @@ function ClientProfileTabPanel({
       {activeTab === "Training" ? <TrainingPanel client={client} /> : null}
       {activeTab === "Nutrition" ? <NutritionPanel client={client} /> : null}
       {activeTab === "Supplementation" ? <SupplementationPanel client={client} /> : null}
+      {activeTab === "Logs" ? <LogsPanel client={client} onComplianceScoreChange={onComplianceScoreChange} /> : null}
       {activeTab === "Check-Ins" && highlightedCheckInId ? (
         <CheckInDetailPage clientId={client.id} checkInId={highlightedCheckInId} compare={highlightedCheckInCompare} embedded />
       ) : null}
@@ -1373,6 +1441,205 @@ function ClientProfileTabPanel({
 
 function DashboardPanel({ client, recentNotes }: { client: ClientProfile; recentNotes: ClientNoteSummary[] }) {
   return <ClientProfileDashboard client={client} recentNotes={recentNotes} />;
+}
+
+function LogsPanel({
+  client,
+  onComplianceScoreChange
+}: {
+  client: ClientProfileView;
+  onComplianceScoreChange: (compliance: number) => void;
+}) {
+  const [logs, setLogs] = useState<ClientActivityLog[]>([]);
+  const [summary, setSummary] = useState<ClientActivityLogSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadLogs() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`/api/v1/clients/${client.id}/logs?days=7`);
+
+        if (!response.ok) {
+          throw new Error("Logs could not be loaded.");
+        }
+
+        const payload = (await response.json()) as { data?: { logs: ClientActivityLog[]; summary: ClientActivityLogSummary } };
+
+        if (active && payload.data) {
+          setLogs(payload.data.logs);
+          setSummary(payload.data.summary);
+          setNoteDrafts(createLogNoteDrafts(payload.data.logs));
+          onComplianceScoreChange(payload.data.summary.complianceScore);
+        }
+      } catch {
+        if (active) {
+          setError("Client logs could not be loaded.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadLogs();
+
+    return () => {
+      active = false;
+    };
+  }, [client.id, onComplianceScoreChange]);
+
+  const dates = summary ? getDateRangeLabels(summary.dateFrom, summary.dateTo) : getDateRangeLabelsFromToday(7);
+
+  const saveLog = async (domain: ClientLogDomain, logDate: string, status: ClientLogStatus) => {
+    const key = getLogKey(domain, logDate);
+    setSavingKey(key);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/v1/clients/${client.id}/logs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          domain,
+          logDate,
+          status,
+          notes: noteDrafts[key]?.trim() || undefined
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Log could not be saved.");
+      }
+
+      const payload = (await response.json()) as { data?: { log: ClientActivityLog; summary: ClientActivityLogSummary } };
+
+      if (payload.data) {
+        setLogs((currentLogs) => upsertActivityLog(currentLogs, payload.data!.log));
+        setSummary(payload.data.summary);
+        onComplianceScoreChange(payload.data.summary.complianceScore);
+      }
+    } catch {
+      setError("Client log could not be saved.");
+    } finally {
+      setSavingKey(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {error ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p> : null}
+      <div className="grid gap-4 md:grid-cols-4">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+          <p className="text-xs font-black uppercase text-slate-500">7-day compliance</p>
+          <p className="mt-3 text-3xl font-black text-slate-950">{summary?.complianceScore ?? client.compliance}%</p>
+          <p className="mt-1 text-sm font-semibold text-slate-600">
+            {summary ? `${summary.completedLogs}/${summary.possibleLogs} logs completed` : "Loading logs"}
+          </p>
+        </div>
+        {logDomains.map((domain) => {
+          const domainSummary = summary?.byDomain.find((item) => item.domain === domain.id);
+
+          return (
+            <div key={domain.id} className="rounded-xl border border-slate-200 bg-white p-5">
+              <p className="text-xs font-black uppercase text-slate-500">{domain.label}</p>
+              <p className="mt-3 text-2xl font-black text-slate-950">{domainSummary?.complianceScore ?? 0}%</p>
+              <p className="mt-1 text-sm font-semibold text-slate-600">
+                {domainSummary ? `${domainSummary.completedLogs}/${domainSummary.possibleLogs} completed` : "0/7 completed"}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+        <table className="min-w-[900px] w-full border-collapse text-sm" aria-label="Client completed logs">
+          <thead className="bg-slate-50 text-left text-xs font-black uppercase text-slate-500">
+            <tr>
+              <th className="w-44 px-4 py-3">Area</th>
+              {dates.map((date) => (
+                <th key={date.value} className="px-3 py-3 text-center">
+                  <span className="block text-slate-950">{date.day}</span>
+                  <span>{date.label}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {logDomains.map((domain) => (
+              <tr key={domain.id} className="border-t border-slate-100">
+                <th className="px-4 py-4 text-left font-black text-slate-950">{domain.label}</th>
+                {dates.map((date) => {
+                  const key = getLogKey(domain.id, date.value);
+                  const log = logs.find((item) => item.domain === domain.id && item.logDate === date.value);
+                  const status = log?.status;
+
+                  return (
+                    <td key={key} className="px-3 py-4 align-top">
+                      <div className="mx-auto flex max-w-28 flex-col gap-2">
+                        <div className="grid grid-cols-2 gap-1">
+                          <button
+                            type="button"
+                            aria-label={`Mark ${domain.label} completed on ${date.value}`}
+                            title="Completed"
+                            className={cn(
+                              "inline-flex h-9 items-center justify-center rounded-lg border text-sm font-black transition disabled:opacity-60",
+                              status === "completed"
+                                ? "border-green-600 bg-green-600 text-white"
+                                : "border-slate-200 bg-white text-slate-500 hover:bg-green-50 hover:text-green-700"
+                            )}
+                            disabled={savingKey === key || loading}
+                            onClick={() => void saveLog(domain.id, date.value, "completed")}
+                          >
+                            <Check className="size-4" aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Mark ${domain.label} missed on ${date.value}`}
+                            title="Missed"
+                            className={cn(
+                              "inline-flex h-9 items-center justify-center rounded-lg border text-sm font-black transition disabled:opacity-60",
+                              status === "missed"
+                                ? "border-slate-900 bg-slate-900 text-white"
+                                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-100"
+                            )}
+                            disabled={savingKey === key || loading}
+                            onClick={() => void saveLog(domain.id, date.value, "missed")}
+                          >
+                            <X className="size-4" aria-hidden="true" />
+                          </button>
+                        </div>
+                        <input
+                          value={noteDrafts[key] ?? ""}
+                          onChange={(event) => setNoteDrafts((currentDrafts) => ({ ...currentDrafts, [key]: event.target.value }))}
+                          onBlur={() => {
+                            if (status) {
+                              void saveLog(domain.id, date.value, status);
+                            }
+                          }}
+                          className="h-8 rounded-lg border border-slate-200 px-2 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                          placeholder="Note"
+                          aria-label={`${domain.label} note for ${date.value}`}
+                        />
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 function TrainingPanel({ client }: { client: ClientProfileView }) {
@@ -1433,8 +1700,8 @@ function TrainingPanel({ client }: { client: ClientProfileView }) {
         saving={saving}
         onDraftChange={setProgramDraft}
         onCancel={() => setProgramDraft(null)}
-        onSave={() => void saveTrainingProgramDraft(programDraft, setSaving, setStatusMessage, () => setProgramDraft(null))}
-        onSaveAsTemplate={() => saveTrainingProgramDraft(programDraft, setSaving, setStatusMessage, () => setProgramDraft(null))}
+        onSave={() => void saveTrainingProgramDraft(client.id, programDraft, setSaving, setStatusMessage, () => setProgramDraft(null))}
+        onSaveAsTemplate={() => saveTrainingProgramDraft(client.id, programDraft, setSaving, setStatusMessage, () => setProgramDraft(null))}
         onSaveDayAsTemplate={() => Promise.resolve()}
       />
     );
@@ -1605,7 +1872,7 @@ function NutritionPanel({ client }: { client: ClientProfileView }) {
         saving={saving}
         availableTemplates={[]}
         onBack={() => setEditingPlan(false)}
-        onSave={(input, options) => saveNutritionPlanInput(activePlan, input, options, setSaving, setStatusMessage, () => setEditingPlan(false))}
+        onSave={(input, options) => saveNutritionPlanInput(client.id, activePlan, input, options, setSaving, setStatusMessage, () => setEditingPlan(false))}
         onCreateMealTemplate={(template) => void createMealTemplateFromClientProfile(template, setSaving, setStatusMessage)}
       />
     );
@@ -2053,6 +2320,7 @@ function getCurrentAssignment<T extends { status: string; startsOn: string }>(as
 }
 
 async function saveTrainingProgramDraft(
+  clientId: string,
   draft: TrainingProgramDraft,
   setSaving: (saving: boolean) => void,
   setStatusMessage: (message: string | null) => void,
@@ -2079,6 +2347,11 @@ async function saveTrainingProgramDraft(
     }
 
     setStatusMessage("Training program saved.");
+    await logClientAccountActivity(clientId, {
+      type: "training-plan-updated",
+      title: "Training plan updated",
+      metadata: { templateId: draft.sourceTemplateId, programName: draft.title }
+    });
     onSaved();
   } catch (error) {
     setStatusMessage(error instanceof Error ? error.message : "Training program could not be saved.");
@@ -2088,6 +2361,7 @@ async function saveTrainingProgramDraft(
 }
 
 async function saveNutritionPlanInput(
+  clientId: string,
   plan: ClientNutritionPlan,
   input: MealPlanTemplateSaveInput,
   options: { close: boolean },
@@ -2116,6 +2390,11 @@ async function saveNutritionPlanInput(
     }
 
     setStatusMessage("Nutrition plan saved.");
+    await logClientAccountActivity(clientId, {
+      type: "nutrition-plan-updated",
+      title: "Nutrition plan updated",
+      metadata: { templateId: plan.templateId, planName: plan.name }
+    });
 
     if (options.close) {
       onSaved();
@@ -2191,7 +2470,14 @@ function SupplementationPanel({ client }: { client: ClientProfileView }) {
         templateId={protocol.templateId}
         embedded
         onBack={() => setEditingProtocol(false)}
-        onSaved={() => setEditingProtocol(false)}
+        onSaved={() => {
+          void logClientAccountActivity(client.id, {
+            type: "supplement-plan-updated",
+            title: "Supplement plan updated",
+            metadata: { templateId: protocol.templateId, protocolName: protocol.name }
+          });
+          setEditingProtocol(false);
+        }}
       />
     );
   }
@@ -2264,4 +2550,106 @@ function parseSupplementDisplayNotes(notes: string) {
     instructions: lines.filter((line) => !line.trim().startsWith(linkPrefix)).join("\n").trim(),
     productUrl: productUrlLine?.replace(linkPrefix, "").trim() ?? ""
   };
+}
+
+function createLogNoteDrafts(logs: ClientActivityLog[]) {
+  return logs.reduce<Record<string, string>>((drafts, log) => {
+    drafts[getLogKey(log.domain, log.logDate)] = log.notes ?? "";
+    return drafts;
+  }, {});
+}
+
+function upsertActivityLog(logs: ClientActivityLog[], nextLog: ClientActivityLog) {
+  const nextKey = getLogKey(nextLog.domain, nextLog.logDate);
+  const replaced = logs.map((log) => (getLogKey(log.domain, log.logDate) === nextKey ? nextLog : log));
+
+  if (replaced.some((log) => getLogKey(log.domain, log.logDate) === nextKey)) {
+    return replaced;
+  }
+
+  return [...logs, nextLog];
+}
+
+function getLogKey(domain: ClientLogDomain, logDate: string) {
+  return `${domain}:${logDate}`;
+}
+
+function getDateRangeLabelsFromToday(days: number) {
+  const dateTo = new Date(`${todayDate()}T00:00:00.000Z`);
+  const dateFrom = new Date(dateTo);
+  dateFrom.setUTCDate(dateFrom.getUTCDate() - (days - 1));
+
+  return getDateRangeLabels(dateFrom.toISOString().slice(0, 10), dateTo.toISOString().slice(0, 10));
+}
+
+function getDateRangeLabels(dateFrom: string, dateTo: string) {
+  const labels: Array<{ value: string; day: string; label: string }> = [];
+  const cursor = new Date(`${dateFrom}T00:00:00.000Z`);
+  const end = new Date(`${dateTo}T00:00:00.000Z`);
+
+  while (cursor.getTime() <= end.getTime()) {
+    const value = cursor.toISOString().slice(0, 10);
+    labels.push({
+      value,
+      day: new Intl.DateTimeFormat("en", { weekday: "short" }).format(cursor),
+      label: new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(cursor)
+    });
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return labels;
+}
+
+async function logAssignedPlanChanges(
+  clientId: string,
+  changes: { trainingPlanIds: string[]; nutritionPlanIds: string[]; supplementationPlanIds: string[] }
+) {
+  const activityRequests = [
+    ...changes.trainingPlanIds.map((templateId) =>
+      logClientAccountActivity(clientId, {
+        type: "training-plan-updated",
+        title: "Training plan assigned",
+        metadata: { templateId }
+      })
+    ),
+    ...changes.nutritionPlanIds.map((templateId) =>
+      logClientAccountActivity(clientId, {
+        type: "nutrition-plan-updated",
+        title: "Nutrition plan assigned",
+        metadata: { templateId }
+      })
+    ),
+    ...changes.supplementationPlanIds.map((templateId) =>
+      logClientAccountActivity(clientId, {
+        type: "supplement-plan-updated",
+        title: "Supplement plan assigned",
+        metadata: { templateId }
+      })
+    )
+  ];
+
+  await Promise.all(activityRequests);
+}
+
+async function logClientAccountActivity(
+  clientId: string,
+  input: {
+    type:
+      | "training-plan-updated"
+      | "nutrition-plan-updated"
+      | "supplement-plan-updated"
+      | "client-profile-target-updated";
+    title: string;
+    metadata?: Record<string, unknown>;
+  }
+) {
+  const response = await fetch(`/api/v1/clients/${clientId}/activity`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input)
+  });
+
+  if (!response.ok) {
+    throw new Error("Client account activity could not be saved.");
+  }
 }

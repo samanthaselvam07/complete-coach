@@ -329,8 +329,35 @@ const marcusSupplementAssignments = [
   }
 ];
 
+const marcusRoadmapPhases = [
+  {
+    id: "phase_completed",
+    name: "Foundation",
+    startDate: "2026-01-01",
+    endDate: "2026-02-28",
+    status: "completed",
+    items: []
+  },
+  {
+    id: "phase_active",
+    name: "Hypertrophy II",
+    startDate: "2026-07-01",
+    endDate: "2026-08-31",
+    status: "active",
+    items: []
+  },
+  {
+    id: "phase_planned",
+    name: "Performance",
+    startDate: "2026-09-01",
+    endDate: "2026-10-31",
+    status: "planned",
+    items: []
+  }
+];
+
 function mockMarcusProfile() {
-  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+  return vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
 
     if (url === "/api/v1/clients/1") {
@@ -372,6 +399,95 @@ function mockMarcusProfile() {
 
     if (url === "/api/v1/clients/1/metrics?limit=200") {
       return Promise.resolve(new Response(JSON.stringify({ data: marcusProgressMetrics }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/clients/1/logs?days=7") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              logs: [],
+              summary: {
+                dateFrom: "2026-07-24",
+                dateTo: "2026-07-30",
+                days: 7,
+                completedLogs: 0,
+                possibleLogs: 21,
+                complianceScore: 0,
+                byDomain: [
+                  { domain: "training", completedLogs: 0, possibleLogs: 7, complianceScore: 0 },
+                  { domain: "nutrition", completedLogs: 0, possibleLogs: 7, complianceScore: 0 },
+                  { domain: "supplementation", completedLogs: 0, possibleLogs: 7, complianceScore: 0 }
+                ]
+              }
+            }
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
+    if (url === "/api/v1/clients/1/logs" && init?.method === "POST") {
+      const body = JSON.parse(String(init.body)) as { domain: string; logDate: string; status: string; notes?: string };
+
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              log: {
+                id: "log_saved",
+                domain: body.domain,
+                logDate: body.logDate,
+                status: body.status,
+                notes: body.notes ?? null
+              },
+              summary: {
+                dateFrom: "2026-07-24",
+                dateTo: "2026-07-30",
+                days: 7,
+                completedLogs: 1,
+                possibleLogs: 21,
+                complianceScore: 5,
+                byDomain: [
+                  { domain: "training", completedLogs: 1, possibleLogs: 7, complianceScore: 14 },
+                  { domain: "nutrition", completedLogs: 0, possibleLogs: 7, complianceScore: 0 },
+                  { domain: "supplementation", completedLogs: 0, possibleLogs: 7, complianceScore: 0 }
+                ]
+              }
+            }
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
+    if (url === "/api/v1/clients/1/goals" && init?.method === "POST") {
+      const body = JSON.parse(String(init.body)) as { title: string; targetDate: string; notes: string; roadmapPhaseId: string | null };
+
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "goal_created",
+              title: body.title,
+              targetDate: body.targetDate,
+              notes: body.notes,
+              roadmapPhaseId: body.roadmapPhaseId,
+              roadmapPhaseName: "Hypertrophy II",
+              daysRemaining: 14
+            }
+          }),
+          { status: 201 }
+        )
+      );
+    }
+
+    if (url === "/api/v1/clients/1/goals?limit=20") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/clients/1/activity?limit=6") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     }
 
     if (url === "/api/v1/clients/1/training-programs") {
@@ -457,7 +573,7 @@ function mockMarcusProfile() {
     }
 
     if (url === "/api/v1/clients/1/roadmap") {
-      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      return Promise.resolve(new Response(JSON.stringify({ data: marcusRoadmapPhases }), { status: 200 }));
     }
 
     if (url === "/api/v1/clients/1/notes") {
@@ -540,6 +656,34 @@ describe("ClientProfilePage", () => {
     expect(screen.getByRole("button", { name: "Custom" })).toBeInTheDocument();
     expect(screen.getByText("No persisted goals or countdowns are available for this client yet.")).toBeInTheDocument();
     expect(screen.getByText("No persisted activity events are available for this client yet.")).toBeInTheDocument();
+  });
+
+  it("adds a client goal and renders it as a countdown", async () => {
+    const fetchMock = mockMarcusProfile();
+    render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Goal" }));
+    fireEvent.change(await screen.findByLabelText("Goal"), { target: { value: "Stage photos" } });
+    fireEvent.change(screen.getByLabelText("Target date"), { target: { value: "2026-08-14" } });
+    fireEvent.change(screen.getByLabelText("Roadmap phase"), { target: { value: "phase_active" } });
+    fireEvent.change(screen.getByLabelText("Notes"), { target: { value: "Final check before shoot." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save goal" }));
+
+    expect(await screen.findByText("Stage photos")).toBeInTheDocument();
+    expect(screen.getByText("14d")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/clients/1/goals",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          title: "Stage photos",
+          targetDate: "2026-08-14",
+          notes: "Final check before shoot.",
+          roadmapPhaseId: "phase_active"
+        })
+      })
+    );
   });
 
   it("shows assigned training nutrition and supplement plans once with day rows and embedded builders", async () => {
@@ -771,13 +915,41 @@ describe("ClientProfilePage", () => {
     await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
     const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
 
-    expect(tabs).toEqual(["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Roadmap", "Calendar", "Check-Ins"]);
+    expect(tabs).toEqual(["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Logs", "Roadmap", "Calendar", "Check-Ins"]);
 
     fireEvent.click(screen.getByRole("tab", { name: "Calendar" }));
 
     expect(screen.getByRole("tabpanel", { name: "Calendar" })).toBeInTheDocument();
     expect(screen.getByRole("grid", { name: "Full client calendar" })).toBeInTheDocument();
     expect(screen.getAllByRole("gridcell", { name: /Create event on/i })).toHaveLength(42);
+  });
+
+  it("saves completed client logs and updates the compliance summary", async () => {
+    mockMarcusProfile();
+    const fetchMock = vi.mocked(globalThis.fetch);
+    render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
+    fireEvent.click(screen.getByRole("tab", { name: "Logs" }));
+
+    expect(await screen.findByRole("tabpanel", { name: "Logs" })).toBeInTheDocument();
+    expect(await screen.findByText("0/21 logs completed")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark Training completed on 2026-07-24" }));
+
+    expect(await screen.findByText("1/21 logs completed")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/clients/1/logs",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          domain: "training",
+          logDate: "2026-07-24",
+          status: "completed",
+          notes: undefined
+        })
+      })
+    );
   });
 
   it("renders a yearly roadmap periodisation with the active phase highlighted", async () => {
@@ -1129,6 +1301,10 @@ describe("ClientProfilePage", () => {
         return Promise.resolve(new Response(JSON.stringify({ data: {} }), { status: 200 }));
       }
 
+      if (url === "/api/v1/clients/1/activity" && init?.method === "POST") {
+        return Promise.resolve(new Response(JSON.stringify({ data: { id: "activity_target" } }), { status: 201 }));
+      }
+
       if (url === "/api/v1/clients/1/profile") {
         return Promise.resolve(new Response(JSON.stringify({ data: null }), { status: 200 }));
       }
@@ -1164,6 +1340,20 @@ describe("ClientProfilePage", () => {
         })
       );
     });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/clients/1/activity",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          type: "client-profile-target-updated",
+          title: "Water target updated",
+          metadata: {
+            target: "water",
+            value: 3.5
+          }
+        })
+      })
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Set step target" }));
     fireEvent.change(screen.getByLabelText("Step target"), { target: { value: "12000" } });
@@ -1178,6 +1368,20 @@ describe("ClientProfilePage", () => {
         })
       );
     });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/clients/1/activity",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          type: "client-profile-target-updated",
+          title: "Step target updated",
+          metadata: {
+            target: "steps",
+            value: 12000
+          }
+        })
+      })
+    );
   });
 
   it("renders the full client notes page with word and date search", async () => {

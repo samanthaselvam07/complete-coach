@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, Check, ChevronDown, Eye, Filter, Pencil, Plus, Search, Upload } from "lucide-react";
+import { Archive, Check, ChevronDown, Eye, Filter, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import type { Route } from "next";
@@ -20,10 +20,13 @@ import {
   upsertClient
 } from "./client-form-dialog";
 import {
+  assignSelectedClientForms,
   assignSelectedClientPlans,
   type ClientProfileResponse,
-  fetchClientFormOptions,
+  fetchAssignedClientFormIds,
   fetchAssignedClientPlanIds,
+  fetchClientFormOptions,
+  fetchClientFormOptionsFromUrls,
   scheduleAssignedPackagePaymentChange,
   toDateInputValue,
   updateClientProfile
@@ -108,7 +111,12 @@ export function ClientsPage() {
         supplementationPlans
       ] = await Promise.all([
         fetchClientFormOptions("/api/v1/packages?status=active&limit=100"),
-        fetchClientFormOptions("/api/v1/forms?type=intake&status=published&limit=100"),
+        fetchClientFormOptionsFromUrls([
+          "/api/v1/forms?type=intake&status=published&limit=100",
+          "/api/v1/forms?type=application&status=published&limit=100",
+          "/api/v1/forms?type=contact&status=published&limit=100",
+          "/api/v1/forms?type=terms-and-conditions&status=published&limit=100"
+        ]),
         fetchClientFormOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
         fetchClientFormOptions("/api/v1/forms?type=check-in&status=published&limit=100"),
         fetchClientFormOptions("/api/v1/training-program-templates?limit=100"),
@@ -191,6 +199,7 @@ export function ClientsPage() {
       }
 
       await updateClientProfile(editingClient.id, clientForm);
+      await assignSelectedClientForms(editingClient.id, clientForm);
       await assignSelectedClientPlans(editingClient.id, clientForm);
       await scheduleAssignedPackagePaymentChange(clientForm);
 
@@ -212,13 +221,17 @@ export function ClientsPage() {
 
   const loadClientProfile = async (clientId: string) => {
     try {
-      const [response, assignedPlanIds] = await Promise.all([
+      const [response, assignedPlanIds, assignedFormIds] = await Promise.all([
         fetch(`/api/v1/clients/${clientId}/profile`),
-        fetchAssignedClientPlanIds(clientId)
+        fetchAssignedClientPlanIds(clientId),
+        fetchAssignedClientFormIds(clientId)
       ]);
 
       setClientForm((currentForm) => ({
         ...currentForm,
+        initialQuestionnaire: assignedFormIds.initialQuestionnaire,
+        dailyHabitForm: assignedFormIds.dailyHabitForm,
+        checkInForm: assignedFormIds.checkInForm,
         trainingPlanIds: assignedPlanIds.trainingPlanIds,
         nutritionPlanIds: assignedPlanIds.nutritionPlanIds,
         supplementationPlanIds: assignedPlanIds.supplementationPlanIds
@@ -264,6 +277,30 @@ export function ClientsPage() {
       }
     } catch {
       setClientFormError("Client could not be archived. Try again.");
+    }
+  };
+
+  const deleteClient = async (client: ClientSummary) => {
+    if (
+      !confirmDestructiveAction({
+        action: "delete",
+        itemName: client.name,
+        itemType: "client"
+      })
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/v1/clients/${client.id}`, { method: "DELETE" });
+
+      if (!response.ok) {
+        throw new Error("Delete failed.");
+      }
+
+      setClients((currentClients) => currentClients.filter((currentClient) => currentClient.id !== client.id));
+    } catch {
+      setClientFormError("Client could not be deleted. Try again.");
     }
   };
 
@@ -470,6 +507,14 @@ export function ClientsPage() {
                   onClick={() => void archiveClient(client)}
                 >
                   <Archive className="size-4 text-gray-600" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Delete ${client.name}`}
+                  className="rounded-lg p-2 transition-colors hover:bg-red-50"
+                  onClick={() => void deleteClient(client)}
+                >
+                  <Trash2 className="size-4 text-red-600" aria-hidden="true" />
                 </button>
               </div>
 

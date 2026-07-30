@@ -18,6 +18,15 @@ Ticket 012B extends the persistence foundation into the working UI:
 - Lead stage movements reconcile the optimistic UI with the API response.
 - CRM search filters persisted leads across name, contact, source, location, and notes.
 
+## Client Logs And Compliance
+- Client profile Logs stores training, nutrition, and supplementation completion records in `client_activity_logs`.
+- Logs are unique per organization, client, domain, and date, and support `completed` or `missed` status plus optional notes.
+- The default compliance score uses the latest seven-day window across all three domains: 21 completed logs out of 21 possible logs equals 100%.
+- Saving a client log recalculates the latest seven-day compliance score and updates the client roster/profile compliance field.
+- Client profile Goals & Countdowns stores goal countdowns in `client_goals`, including target date, notes, and optional roadmap phase linkage.
+- Client account activity history is stored in `client_account_activity_logs` for training, nutrition, supplement, and billing lifecycle changes.
+- Coach-set water and step targets remain in `client_profiles` and are included in external client payloads for the client app/API consumer.
+
 ## M3 Review Gate Outcome
 Completed on May 14, 2026.
 
@@ -44,6 +53,8 @@ Review verification:
 - Request bodies and filters are validated with Zod schemas before database access.
 - Error responses use stable envelopes and do not expose raw exceptions.
 - Client account setup links use one-time SHA-256 hashed tokens in `verification_tokens`, expire after seven days, and are consumed after password setup. Online-payment clients cannot set a password until the Stripe-backed client subscription is `active` or `trialing`.
+- Client activity log reads require `clients:read`, writes require `clients:write`, and all queries are scoped to the active organization plus assigned coach visibility for non-admin roles.
+- Client goal and account activity routes follow the same `clients:read`/`clients:write` permissions and active-organization scoping.
 
 ## Operational Notes
 Apply the migration and seed after deployment environment variables are configured:

@@ -9,6 +9,10 @@ import {
   emptyClientForm,
   type ClientFormState
 } from "@/components/clients/client-form-dialog";
+import {
+  assignSelectedClientForms,
+  fetchClientFormOptionsFromUrls
+} from "@/components/clients/client-form-actions";
 
 interface IntakeInitialForm {
   firstName?: string;
@@ -46,7 +50,12 @@ export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeIniti
     async function loadLookups() {
       const [packages, intakeForms, habitForms, checkInForms] = await Promise.all([
         fetchLookupOptions("/api/v1/packages?status=active&limit=100"),
-        fetchLookupOptions("/api/v1/forms?type=intake&status=published&limit=100"),
+        fetchClientFormOptionsFromUrls([
+          "/api/v1/forms?type=intake&status=published&limit=100",
+          "/api/v1/forms?type=application&status=published&limit=100",
+          "/api/v1/forms?type=contact&status=published&limit=100",
+          "/api/v1/forms?type=terms-and-conditions&status=published&limit=100"
+        ]),
         fetchLookupOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
         fetchLookupOptions("/api/v1/forms?type=check-in&status=published&limit=100")
       ]);
@@ -128,6 +137,13 @@ export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeIniti
 
       if (!response.ok) {
         throw new Error(await readClientCreateError(response));
+      }
+
+      const payload = (await response.json()) as { data?: { id?: string } };
+      const clientId = payload.data?.id;
+
+      if (clientId) {
+        await assignSelectedClientForms(clientId, form);
       }
 
       router.push("/clients");

@@ -175,6 +175,7 @@ export function serializeAssignment(record: AssignmentRecord) {
     clientId: record.clientId,
     clientName: formatPersonName(record.client),
     formName: record.form?.name ?? "Assigned form",
+    formType: record.form?.type ? serializeFormType(record.form.type) : null,
     status: serializeAssignmentStatus(record.status),
     dueAt: record.dueAt ? toIsoString(record.dueAt) : null,
     completedAt: record.completedAt ? toIsoString(record.completedAt) : null,
@@ -193,6 +194,14 @@ export function serializeAssignment(record: AssignmentRecord) {
         }
       : {})
   };
+}
+
+function serializeFormType(type: unknown) {
+  if (typeof type !== "string") {
+    return null;
+  }
+
+  return type.toLowerCase().replaceAll("_", "-");
 }
 
 export function serializeSubmission(record: SubmissionRecord) {

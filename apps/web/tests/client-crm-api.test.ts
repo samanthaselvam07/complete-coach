@@ -1,9 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ClientStatus, LeadStage, LeadStatus } from "@/app/generated/prisma/enums";
+import {
+  ClientAccountActivityType,
+  ClientActivityLogDomain,
+  ClientActivityLogStatus,
+  ClientStatus,
+  LeadStage,
+  LeadStatus
+} from "@/app/generated/prisma/enums";
 import { GET as getClients, POST as postClient } from "@/app/api/v1/clients/route";
-import { GET as getClient, PATCH as patchClient } from "@/app/api/v1/clients/[clientId]/route";
+import { DELETE as deleteClient, GET as getClient, PATCH as patchClient } from "@/app/api/v1/clients/[clientId]/route";
 import { POST as archiveClient } from "@/app/api/v1/clients/[clientId]/archive/route";
+import { GET as getClientActivityLogs, POST as postClientActivityLog } from "@/app/api/v1/clients/[clientId]/logs/route";
+import { GET as getClientAccountActivity, POST as postClientAccountActivity } from "@/app/api/v1/clients/[clientId]/activity/route";
+import { GET as getClientGoals, POST as postClientGoal } from "@/app/api/v1/clients/[clientId]/goals/route";
 import { GET as getClientNotes, POST as postClientNote } from "@/app/api/v1/clients/[clientId]/notes/route";
 import { GET as getClientRoadmap, POST as postClientRoadmap } from "@/app/api/v1/clients/[clientId]/roadmap/route";
 import {
@@ -43,9 +53,22 @@ const mocks = vi.hoisted(() => ({
       update: vi.fn()
     },
     clientProfile: {
-      upsert: vi.fn()
+      upsert: vi.fn(),
+      deleteMany: vi.fn()
     },
     clientNote: {
+      findMany: vi.fn(),
+      create: vi.fn()
+    },
+    clientActivityLog: {
+      findMany: vi.fn(),
+      upsert: vi.fn()
+    },
+    clientAccountActivityLog: {
+      findMany: vi.fn(),
+      create: vi.fn()
+    },
+    clientGoal: {
       findMany: vi.fn(),
       create: vi.fn()
     },
@@ -124,8 +147,15 @@ describe("client and CRM API tenancy", () => {
     mocks.prisma.lead.findFirst.mockReset();
     mocks.prisma.lead.update.mockReset();
     mocks.prisma.clientProfile.upsert.mockReset();
+    mocks.prisma.clientProfile.deleteMany.mockReset();
     mocks.prisma.clientNote.findMany.mockReset();
     mocks.prisma.clientNote.create.mockReset();
+    mocks.prisma.clientActivityLog.findMany.mockReset();
+    mocks.prisma.clientActivityLog.upsert.mockReset();
+    mocks.prisma.clientAccountActivityLog.findMany.mockReset();
+    mocks.prisma.clientAccountActivityLog.create.mockReset();
+    mocks.prisma.clientGoal.findMany.mockReset();
+    mocks.prisma.clientGoal.create.mockReset();
     mocks.prisma.clientRoadmapPhase.findMany.mockReset();
     mocks.prisma.clientRoadmapPhase.findFirst.mockReset();
     mocks.prisma.clientRoadmapPhase.create.mockReset();
@@ -484,7 +514,14 @@ describe("client and CRM API tenancy", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           organizationId: "org_1",
-          status: ClientStatus.ACTIVE
+          AND: expect.arrayContaining([
+            expect.objectContaining({
+              OR: expect.arrayContaining([
+                { status: ClientStatus.ACTIVE },
+                expect.objectContaining({ status: ClientStatus.NEW })
+              ])
+            })
+          ])
         }),
         include: {
           primaryCoach: {
@@ -625,6 +662,302 @@ describe("client and CRM API tenancy", () => {
         data: expect.objectContaining({
           action: "client.note_created",
           targetId: "client_1"
+        })
+      })
+    );
+  });
+
+  it("lists client activity logs with a seven day compliance summary", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.clientActivityLog.findMany.mockResolvedValue([
+      {
+        id: "log_1",
+        domain: ClientActivityLogDomain.TRAINING,
+        logDate: new Date("2026-07-24T00:00:00.000Z"),
+        status: ClientActivityLogStatus.COMPLETED,
+        notes: null,
+        createdAt: new Date("2026-07-24T01:00:00.000Z"),
+        updatedAt: new Date("2026-07-24T01:00:00.000Z")
+      },
+      {
+        id: "log_2",
+        domain: ClientActivityLogDomain.NUTRITION,
+        logDate: new Date("2026-07-24T00:00:00.000Z"),
+        status: ClientActivityLogStatus.MISSED,
+        notes: "Missed meal log.",
+        createdAt: new Date("2026-07-24T01:00:00.000Z"),
+        updatedAt: new Date("2026-07-24T01:00:00.000Z")
+      }
+    ]);
+
+    const response = await getClientActivityLogs(
+      new Request("http://test.local/api/v1/clients/client_1/logs?dateFrom=2026-07-24&dateTo=2026-07-30"),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: { logs: Array<{ domain: string }>; summary: { complianceScore: number; possibleLogs: number } } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.summary).toMatchObject({
+      complianceScore: 5,
+      possibleLogs: 21
+    });
+    expect(payload.data.logs).toHaveLength(2);
+    expect(mocks.prisma.clientActivityLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId: "org_1",
+          clientId: "client_1",
+          logDate: {
+            gte: new Date("2026-07-24T00:00:00.000Z"),
+            lte: new Date("2026-07-30T00:00:00.000Z")
+          }
+        },
+        orderBy: [{ logDate: "asc" }, { domain: "asc" }]
+      })
+    );
+  });
+
+  it("upserts a client activity log and refreshes the stored client compliance score", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.clientActivityLog.upsert.mockResolvedValue({
+      id: "log_1",
+      domain: ClientActivityLogDomain.TRAINING,
+      logDate: new Date("2026-07-30T00:00:00.000Z"),
+      status: ClientActivityLogStatus.COMPLETED,
+      notes: "Completed session.",
+      createdAt: new Date("2026-07-30T01:00:00.000Z"),
+      updatedAt: new Date("2026-07-30T01:00:00.000Z")
+    });
+    mocks.prisma.clientActivityLog.findMany.mockResolvedValue(
+      Array.from({ length: 21 }, (_, index) => ({
+        id: `log_${index}`,
+        domain: [ClientActivityLogDomain.TRAINING, ClientActivityLogDomain.NUTRITION, ClientActivityLogDomain.SUPPLEMENTATION][index % 3],
+        logDate: new Date(`2026-07-${String(24 + Math.floor(index / 3)).padStart(2, "0")}T00:00:00.000Z`),
+        status: ClientActivityLogStatus.COMPLETED,
+        notes: null,
+        createdAt: new Date("2026-07-30T01:00:00.000Z"),
+        updatedAt: new Date("2026-07-30T01:00:00.000Z")
+      }))
+    );
+    mocks.prisma.client.update.mockResolvedValue({ id: "client_1", compliance: 100 });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await postClientActivityLog(
+      new Request("http://test.local/api/v1/clients/client_1/logs", {
+        method: "POST",
+        body: JSON.stringify({
+          domain: "training",
+          logDate: "2026-07-30",
+          status: "completed",
+          notes: "Completed session."
+        })
+      }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: { summary: { complianceScore: number } } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.summary.complianceScore).toBe(100);
+    expect(mocks.prisma.clientActivityLog.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId_clientId_domain_logDate: {
+            organizationId: "org_1",
+            clientId: "client_1",
+            domain: ClientActivityLogDomain.TRAINING,
+            logDate: new Date("2026-07-30T00:00:00.000Z")
+          }
+        },
+        create: expect.objectContaining({
+          organizationId: "org_1",
+          clientId: "client_1",
+          domain: ClientActivityLogDomain.TRAINING,
+          status: ClientActivityLogStatus.COMPLETED
+        }),
+        update: expect.objectContaining({
+          status: ClientActivityLogStatus.COMPLETED,
+          notes: "Completed session."
+        })
+      })
+    );
+    expect(mocks.prisma.client.update).toHaveBeenCalledWith({
+      where: { id: "client_1", organizationId: "org_1" },
+      data: { compliance: 100 }
+    });
+  });
+
+  it("does not expose activity logs for clients outside the active organization", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue(null);
+
+    const response = await getClientActivityLogs(
+      new Request("http://test.local/api/v1/clients/client_2/logs?days=7"),
+      { params: Promise.resolve({ clientId: "client_2" }) }
+    );
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.clientActivityLog.findMany).not.toHaveBeenCalled();
+  });
+
+  it("creates client goals linked to a roadmap phase and logs account activity", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.clientRoadmapPhase.findFirst.mockResolvedValue({ id: "phase_1" });
+    mocks.prisma.clientGoal.create.mockResolvedValue({
+      id: "goal_1",
+      clientId: "client_1",
+      title: "Stage photos",
+      targetDate: new Date("2026-08-14T00:00:00.000Z"),
+      notes: "Final check before shoot.",
+      roadmapPhaseId: "phase_1",
+      roadmapPhase: { id: "phase_1", name: "Cutting Phase" },
+      createdAt: new Date("2026-07-30T00:00:00.000Z")
+    });
+    mocks.prisma.clientAccountActivityLog.create.mockResolvedValue({});
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await postClientGoal(
+      new Request("http://test.local/api/v1/clients/client_1/goals", {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Stage photos",
+          targetDate: "2026-08-14",
+          notes: "Final check before shoot.",
+          roadmapPhaseId: "phase_1"
+        })
+      }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: { title: string; roadmapPhaseName: string } };
+
+    expect(response.status).toBe(201);
+    expect(payload.data).toMatchObject({ title: "Stage photos", roadmapPhaseName: "Cutting Phase" });
+    expect(mocks.prisma.clientRoadmapPhase.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "phase_1",
+        organizationId: "org_1",
+        clientId: "client_1"
+      },
+      select: { id: true }
+    });
+    expect(mocks.prisma.clientGoal.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          clientId: "client_1",
+          roadmapPhaseId: "phase_1",
+          title: "Stage photos",
+          targetDate: new Date("2026-08-14T00:00:00.000Z")
+        })
+      })
+    );
+    expect(mocks.prisma.clientAccountActivityLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: ClientAccountActivityType.CLIENT_GOAL_CREATED,
+          title: "Goal added: Stage photos"
+        })
+      })
+    );
+  });
+
+  it("lists client goals as countdowns", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.clientGoal.findMany.mockResolvedValue([
+      {
+        id: "goal_1",
+        clientId: "client_1",
+        title: "Stage photos",
+        targetDate: new Date("2026-08-14T00:00:00.000Z"),
+        notes: "",
+        roadmapPhaseId: "phase_1",
+        roadmapPhase: { id: "phase_1", name: "Cutting Phase" },
+        createdAt: new Date("2026-07-30T00:00:00.000Z")
+      }
+    ]);
+
+    const response = await getClientGoals(
+      new Request("http://test.local/api/v1/clients/client_1/goals?limit=10"),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: Array<{ title: string; targetDate: string; roadmapPhaseName: string }> };
+
+    expect(response.status).toBe(200);
+    expect(payload.data[0]).toMatchObject({
+      title: "Stage photos",
+      targetDate: "2026-08-14",
+      roadmapPhaseName: "Cutting Phase"
+    });
+    expect(mocks.prisma.clientGoal.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId: "org_1",
+          clientId: "client_1"
+        },
+        take: 10
+      })
+    );
+  });
+
+  it("lists and creates client account activity events", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.clientAccountActivityLog.findMany.mockResolvedValue([
+      {
+        id: "activity_1",
+        clientId: "client_1",
+        type: ClientAccountActivityType.NUTRITION_PLAN_UPDATED,
+        title: "Nutrition plan updated",
+        occurredAt: new Date("2026-07-30T01:00:00.000Z"),
+        metadata: { templateId: "meal_1" },
+        actor: { name: "Sam Coach", email: "sam@example.com" }
+      }
+    ]);
+    mocks.prisma.clientAccountActivityLog.create.mockResolvedValue({
+      id: "activity_2",
+      clientId: "client_1",
+      type: ClientAccountActivityType.TRAINING_PLAN_UPDATED,
+      title: "Training plan updated",
+      occurredAt: new Date("2026-07-30T02:00:00.000Z"),
+      metadata: { templateId: "training_1" },
+      actor: { name: "Sam Coach", email: "sam@example.com" }
+    });
+
+    const listResponse = await getClientAccountActivity(
+      new Request("http://test.local/api/v1/clients/client_1/activity?limit=5"),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const createResponse = await postClientAccountActivity(
+      new Request("http://test.local/api/v1/clients/client_1/activity", {
+        method: "POST",
+        body: JSON.stringify({
+          type: "training-plan-updated",
+          title: "Training plan updated",
+          metadata: { templateId: "training_1" }
+        })
+      }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+
+    expect(listResponse.status).toBe(200);
+    expect(createResponse.status).toBe(201);
+    expect(mocks.prisma.clientAccountActivityLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId: "org_1",
+          clientId: "client_1"
+        },
+        take: 5
+      })
+    );
+    expect(mocks.prisma.clientAccountActivityLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: ClientAccountActivityType.TRAINING_PLAN_UPDATED,
+          title: "Training plan updated"
         })
       })
     );
@@ -909,6 +1242,76 @@ describe("client and CRM API tenancy", () => {
     );
     expect(mocks.prisma.client.update).not.toHaveBeenCalled();
     expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("deletes scoped clients and their profile records", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({
+      id: "client_delete",
+      organizationId: "org_1"
+    });
+    mocks.prisma.clientProfile.deleteMany.mockResolvedValue({ count: 1 });
+    mocks.prisma.client.update.mockResolvedValue({
+      id: "client_delete",
+      firstName: "Delete",
+      lastName: "Client",
+      email: null,
+      status: ClientStatus.ARCHIVED,
+      packageName: null,
+      checkInDay: null,
+      startDate: null,
+      latestCheckInAt: null,
+      compliance: 0,
+      deletedAt: new Date("2026-07-30T00:00:00.000Z")
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await deleteClient(
+      new Request("http://test.local/api/v1/clients/client_delete", { method: "DELETE" }),
+      { params: Promise.resolve({ clientId: "client_delete" }) }
+    );
+    const payload = (await response.json()) as { data: { id: string; deleted: boolean } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual({ id: "client_delete", deleted: true });
+    expect(mocks.prisma.$transaction).toHaveBeenCalledOnce();
+    expect(mocks.prisma.clientProfile.deleteMany).toHaveBeenCalledWith({
+      where: {
+        clientId: "client_delete",
+        organizationId: "org_1"
+      }
+    });
+    expect(mocks.prisma.client.update).toHaveBeenCalledWith({
+      where: { id: "client_delete", organizationId: "org_1" },
+      data: expect.objectContaining({
+        status: ClientStatus.ARCHIVED,
+        deletedAt: expect.any(Date)
+      })
+    });
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "client.deleted",
+          targetId: "client_delete"
+        })
+      })
+    );
+  });
+
+  it("does not delete clients outside the active organization scope", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue(null);
+
+    const response = await deleteClient(
+      new Request("http://test.local/api/v1/clients/org_2_client", { method: "DELETE" }),
+      { params: Promise.resolve({ clientId: "org_2_client" }) }
+    );
+    const payload = (await response.json()) as { error: { code: string } };
+
+    expect(response.status).toBe(404);
+    expect(payload.error.code).toBe("not_found");
+    expect(mocks.prisma.clientProfile.deleteMany).not.toHaveBeenCalled();
+    expect(mocks.prisma.client.update).not.toHaveBeenCalled();
   });
 
   it("does not read or update client profiles outside the active organization scope", async () => {

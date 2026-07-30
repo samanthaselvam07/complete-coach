@@ -98,6 +98,10 @@ const clientRecord = {
   startDate: new Date("2026-05-01T00:00:00.000Z"),
   latestCheckInAt: new Date("2026-05-14T06:00:00.000Z"),
   compliance: 92,
+  profile: {
+    waterTargetLitres: "3.50",
+    stepTarget: 12000
+  },
   archivedAt: null,
   createdAt: new Date("2026-05-01T00:00:00.000Z"),
   updatedAt: new Date("2026-05-14T06:00:00.000Z"),
@@ -222,7 +226,9 @@ describe("external read APIs", () => {
       expect.objectContaining({
         externalClientId: "ext_client_1",
         status: "active",
-        packageName: "Performance"
+        packageName: "Performance",
+        waterTargetLitres: 3.5,
+        stepTarget: 12000
       })
     );
     expect(payload.data[0]).not.toHaveProperty("firstName");

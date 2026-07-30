@@ -30,6 +30,14 @@ export async function GET(request: Request) {
         ...(query.updated_since ? { updatedAt: { gte: new Date(query.updated_since) } } : {}),
         ...buildExternalCursorWhere(query.cursor, "updatedAt")
       },
+      include: {
+        profile: {
+          select: {
+            waterTargetLitres: true,
+            stepTarget: true
+          }
+        }
+      },
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: query.limit + 1
     });

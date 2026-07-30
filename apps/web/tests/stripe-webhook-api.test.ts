@@ -3,6 +3,7 @@ import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  ClientAccountActivityType,
   ClientSubscriptionStatus,
   PaymentEventProcessingStatus
 } from "@/app/generated/prisma/enums";
@@ -25,6 +26,9 @@ const mocks = vi.hoisted(() => ({
     clientSubscription: {
       findFirst: vi.fn(),
       update: vi.fn()
+    },
+    clientAccountActivityLog: {
+      create: vi.fn()
     },
     organization: {
       findUnique: vi.fn(),
@@ -52,6 +56,7 @@ describe("Stripe webhook API", () => {
     vi.setSystemTime(new Date(nowSeconds * 1000));
     mocks.prisma.clientSubscription.findFirst.mockReset();
     mocks.prisma.clientSubscription.update.mockReset();
+    mocks.prisma.clientAccountActivityLog.create.mockReset();
     mocks.prisma.organization.findUnique.mockReset();
     mocks.prisma.organization.findFirst.mockReset();
     mocks.prisma.organization.update.mockReset();
@@ -183,7 +188,11 @@ describe("Stripe webhook API", () => {
         }
       }
     };
-    mocks.prisma.clientSubscription.findFirst.mockResolvedValue({ id: "client_subscription_1" });
+    mocks.prisma.clientSubscription.findFirst.mockResolvedValue({
+      id: "client_subscription_1",
+      clientId: "client_1",
+      status: ClientSubscriptionStatus.INCOMPLETE
+    });
     mocks.prisma.clientSubscription.update.mockResolvedValue({});
 
     const response = await processStripeWebhook(buildSignedRequest(event));
@@ -194,7 +203,7 @@ describe("Stripe webhook API", () => {
         id: "client_subscription_1",
         organizationId: "org_1"
       },
-      select: { id: true }
+      select: { id: true, clientId: true, status: true }
     });
     expect(mocks.prisma.clientSubscription.update).toHaveBeenCalledWith({
       where: { id: "client_subscription_1" },
@@ -206,6 +215,14 @@ describe("Stripe webhook API", () => {
         currentPeriodEnd: new Date("2026-06-16T16:00:00.000Z"),
         cancelAt: null
       }
+    });
+    expect(mocks.prisma.clientAccountActivityLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        organizationId: "org_1",
+        clientId: "client_1",
+        type: ClientAccountActivityType.BILLING_STARTED,
+        title: "Billing started"
+      })
     });
   });
 
@@ -578,7 +595,11 @@ describe("Stripe webhook API", () => {
         }
       }
     };
-    mocks.prisma.clientSubscription.findFirst.mockResolvedValue({ id: "client_subscription_1" });
+    mocks.prisma.clientSubscription.findFirst.mockResolvedValue({
+      id: "client_subscription_1",
+      clientId: "client_1",
+      status: ClientSubscriptionStatus.ACTIVE
+    });
     mocks.prisma.clientSubscription.update.mockResolvedValue({});
 
     const response = await processStripeWebhook(buildSignedRequest(event));
@@ -589,12 +610,19 @@ describe("Stripe webhook API", () => {
         organizationId: "org_1",
         OR: [{ stripeSubscriptionId: "sub_1" }, { stripeCustomerId: "cus_1" }]
       },
-      select: { id: true }
+      select: { id: true, clientId: true, status: true }
     });
     expect(mocks.prisma.clientSubscription.update).toHaveBeenCalledWith({
       where: { id: "client_subscription_1" },
       data: expect.objectContaining({
         status: ClientSubscriptionStatus.CANCELED
+      })
+    });
+    expect(mocks.prisma.clientAccountActivityLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        clientId: "client_1",
+        type: ClientAccountActivityType.BILLING_CANCELLED,
+        title: "Billing cancelled"
       })
     });
   });

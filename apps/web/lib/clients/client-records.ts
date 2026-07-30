@@ -19,6 +19,7 @@ const statusFromPrisma: Record<ClientStatus, ApiClientStatus> = {
   [ClientStatus.NEW]: "new",
   [ClientStatus.DEACTIVATED]: "deactivated"
 };
+const newClientLabelDurationMs = 3 * 24 * 60 * 60 * 1000;
 
 export const clientListQuerySchema = z.object({
   status: z.enum(clientStatusValues).optional(),
@@ -68,6 +69,7 @@ interface ClientRecord {
   timezone?: string | null;
   startDate: Date | string | null;
   latestCheckInAt: Date | string | null;
+  createdAt?: Date | string;
   compliance: number;
   primaryCoach?: {
     name: string | null;
@@ -80,12 +82,18 @@ export function toPrismaClientStatus(status: ApiClientStatus) {
 }
 
 export function buildClientWhere(organizationId: string, query: ClientListQuery) {
-  return {
-    organizationId,
-    deletedAt: null,
-    ...(query.status ? { status: toPrismaClientStatus(query.status) } : {}),
-    ...(query.checkInDay ? { checkInDay: query.checkInDay } : {}),
-    ...(query.search
+  const newClientCutoff = new Date(Date.now() - newClientLabelDurationMs);
+  const conditions = [
+    query.status === "active"
+      ? {
+          OR: [
+            { status: ClientStatus.ACTIVE },
+            { status: ClientStatus.NEW, createdAt: { lte: newClientCutoff } }
+          ]
+        }
+      : null,
+    query.status === "new" ? { status: ClientStatus.NEW, createdAt: { gt: newClientCutoff } } : null,
+    query.search
       ? {
           OR: [
             { firstName: { contains: query.search, mode: "insensitive" as const } },
@@ -93,7 +101,15 @@ export function buildClientWhere(organizationId: string, query: ClientListQuery)
             { email: { contains: query.search, mode: "insensitive" as const } }
           ]
         }
-      : {})
+      : null
+  ].filter((condition): condition is NonNullable<typeof condition> => Boolean(condition));
+
+  return {
+    organizationId,
+    deletedAt: null,
+    ...(query.status && !["active", "new"].includes(query.status) ? { status: toPrismaClientStatus(query.status) } : {}),
+    ...(query.checkInDay ? { checkInDay: query.checkInDay } : {}),
+    ...(conditions.length > 0 ? { AND: conditions } : {})
   };
 }
 
@@ -107,13 +123,27 @@ export function serializeClient(record: ClientRecord): ClientSummary {
     compliance: record.compliance,
     checkInDay: record.checkInDay || "Unscheduled",
     latestCheckIn: formatDisplayDate(record.latestCheckInAt),
-    status: statusFromPrisma[record.status],
+    status: getDisplayClientStatus(record),
     assignedCoachName: record.primaryCoach?.name || record.primaryCoach?.email || null,
     startDate: formatDisplayDate(record.startDate),
     timezone: record.timezone || "UTC",
     initials: getInitials(record.firstName, record.lastName),
     avatarColor: "bg-slate-900"
   };
+}
+
+function getDisplayClientStatus(record: ClientRecord): ApiClientStatus {
+  if (record.status !== ClientStatus.NEW) {
+    return statusFromPrisma[record.status];
+  }
+
+  if (!record.createdAt) {
+    return "new";
+  }
+
+  const createdAt = record.createdAt instanceof Date ? record.createdAt : new Date(record.createdAt);
+
+  return Date.now() - createdAt.getTime() > newClientLabelDurationMs ? "active" : "new";
 }
 
 export function getClientCreateData(organizationId: string, input: CreateClientInput) {

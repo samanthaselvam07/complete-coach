@@ -14,8 +14,20 @@ export interface AssignedClientPlanIds {
   supplementationPlanIds: string[];
 }
 
+export interface AssignedClientFormIds {
+  initialQuestionnaire: string;
+  dailyHabitForm: string;
+  checkInForm: string;
+}
+
 interface ClientPlanAssignmentResponse {
   templateId?: string | null;
+  status?: string | null;
+}
+
+interface ClientFormAssignmentResponse {
+  formId?: string | null;
+  formType?: string | null;
   status?: string | null;
 }
 
@@ -39,6 +51,42 @@ export async function fetchClientFormOptions(url: string): Promise<ClientFormOpt
   }
 }
 
+export async function fetchClientFormOptionsFromUrls(urls: string[]): Promise<ClientFormOption[]> {
+  const optionGroups = await Promise.all(urls.map((url) => fetchClientFormOptions(url)));
+  const optionsById = new Map<string, ClientFormOption>();
+
+  optionGroups.flat().forEach((option) => {
+    if (!optionsById.has(option.value)) {
+      optionsById.set(option.value, option);
+    }
+  });
+
+  return Array.from(optionsById.values());
+}
+
+export async function fetchAssignedClientFormIds(clientId: string): Promise<AssignedClientFormIds> {
+  try {
+    const response = await fetch(`/api/v1/form-assignments?clientId=${encodeURIComponent(clientId)}&limit=100`);
+
+    if (!response.ok) {
+      return emptyAssignedClientFormIds();
+    }
+
+    const payload = (await response.json()) as { data?: ClientFormAssignmentResponse[] };
+    const activeAssignments = (payload.data ?? []).filter(
+      (assignment) => !assignment.status || !["completed", "cancelled"].includes(assignment.status)
+    );
+
+    return {
+      initialQuestionnaire: findAssignedFormByTypes(activeAssignments, ["intake", "application", "contact", "terms-and-conditions"]),
+      dailyHabitForm: findAssignedFormByTypes(activeAssignments, ["habit-tracker"]),
+      checkInForm: findAssignedFormByTypes(activeAssignments, ["check-in"])
+    };
+  } catch {
+    return emptyAssignedClientFormIds();
+  }
+}
+
 export async function fetchAssignedClientPlanIds(clientId: string): Promise<AssignedClientPlanIds> {
   const [trainingPlanIds, nutritionPlanIds, supplementationPlanIds] = await Promise.all([
     fetchAssignedTemplateIds(`/api/v1/training-program-assignments?clientId=${encodeURIComponent(clientId)}&limit=100`),
@@ -51,6 +99,23 @@ export async function fetchAssignedClientPlanIds(clientId: string): Promise<Assi
     nutritionPlanIds,
     supplementationPlanIds
   };
+}
+
+export async function assignSelectedClientForms(clientId: string, form: ClientFormState) {
+  const assignedFormIds = await fetchAssignedClientFormIds(clientId);
+  const assignmentRequests = [
+    ...withoutExistingIds([form.initialQuestionnaire].filter(Boolean), [assignedFormIds.initialQuestionnaire]).map((formId) =>
+      createFormAssignment(formId, clientId)
+    ),
+    ...withoutExistingIds([form.dailyHabitForm].filter(Boolean), [assignedFormIds.dailyHabitForm]).map((formId) =>
+      createFormAssignment(formId, clientId)
+    ),
+    ...withoutExistingIds([form.checkInForm].filter(Boolean), [assignedFormIds.checkInForm]).map((formId) =>
+      createFormAssignment(formId, clientId)
+    )
+  ];
+
+  await Promise.all(assignmentRequests);
 }
 
 export async function updateClientProfile(clientId: string, form: ClientFormState) {
@@ -72,19 +137,24 @@ export async function updateClientProfile(clientId: string, form: ClientFormStat
 export async function assignSelectedClientPlans(clientId: string, form: ClientFormState) {
   const startsOn = form.planStartDate || todayDate();
   const assignedPlanIds = await fetchAssignedClientPlanIds(clientId);
+  const trainingPlanIds = withoutExistingIds(form.trainingPlanIds, assignedPlanIds.trainingPlanIds);
+  const nutritionPlanIds = withoutExistingIds(form.nutritionPlanIds, assignedPlanIds.nutritionPlanIds);
+  const supplementationPlanIds = withoutExistingIds(form.supplementationPlanIds, assignedPlanIds.supplementationPlanIds);
   const assignmentRequests = [
-    ...withoutExistingIds(form.trainingPlanIds, assignedPlanIds.trainingPlanIds).map((templateId) =>
+    ...trainingPlanIds.map((templateId) =>
       createPlanAssignment("/api/v1/training-program-assignments", clientId, templateId, startsOn)
     ),
-    ...withoutExistingIds(form.nutritionPlanIds, assignedPlanIds.nutritionPlanIds).map((templateId) =>
+    ...nutritionPlanIds.map((templateId) =>
       createPlanAssignment("/api/v1/meal-plan-assignments", clientId, templateId, startsOn)
     ),
-    ...withoutExistingIds(form.supplementationPlanIds, assignedPlanIds.supplementationPlanIds).map((templateId) =>
+    ...supplementationPlanIds.map((templateId) =>
       createPlanAssignment("/api/v1/supplement-plan-assignments", clientId, templateId, startsOn)
     )
   ];
 
   await Promise.all(assignmentRequests);
+
+  return { trainingPlanIds, nutritionPlanIds, supplementationPlanIds };
 }
 
 export async function scheduleAssignedPackagePaymentChange(form: ClientFormState) {
@@ -134,6 +204,18 @@ async function createPlanAssignment(url: string, clientId: string, templateId: s
   }
 }
 
+async function createFormAssignment(formId: string, clientId: string) {
+  const response = await fetch(`/api/v1/forms/${formId}/assignments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientId })
+  });
+
+  if (!response.ok) {
+    throw new Error("Client form assignments could not be saved.");
+  }
+}
+
 async function fetchAssignedTemplateIds(url: string): Promise<string[]> {
   try {
     const response = await fetch(url);
@@ -161,4 +243,16 @@ function withoutExistingIds(selectedIds: string[], existingIds: string[]) {
   const existingIdSet = new Set(existingIds);
 
   return selectedIds.filter((selectedId) => !existingIdSet.has(selectedId));
+}
+
+function findAssignedFormByTypes(assignments: ClientFormAssignmentResponse[], formTypes: string[]) {
+  return assignments.find((assignment) => assignment.formId && assignment.formType && formTypes.includes(assignment.formType))?.formId ?? "";
+}
+
+function emptyAssignedClientFormIds(): AssignedClientFormIds {
+  return {
+    initialQuestionnaire: "",
+    dailyHabitForm: "",
+    checkInForm: ""
+  };
 }

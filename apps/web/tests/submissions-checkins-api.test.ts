@@ -235,10 +235,10 @@ describe("submissions, check-ins, and metrics APIs", () => {
     mocks.prisma.formAssignment.findMany.mockResolvedValue([assignmentRecord]);
 
     const response = await getAssignments(new Request("http://test.local/api/v1/form-assignments?status=assigned"));
-    const payload = (await response.json()) as { data: Array<{ id: string; clientName: string }> };
+    const payload = (await response.json()) as { data: Array<{ id: string; clientName: string; formType: string }> };
 
     expect(response.status).toBe(200);
-    expect(payload.data[0]).toEqual(expect.objectContaining({ id: "assignment_1", clientName: "Api Client" }));
+    expect(payload.data[0]).toEqual(expect.objectContaining({ id: "assignment_1", clientName: "Api Client", formType: "check-in" }));
     expect(mocks.prisma.formAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
