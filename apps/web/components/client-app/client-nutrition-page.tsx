@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, Utensils } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
+import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
   data?: {
@@ -137,13 +137,15 @@ export function ClientNutritionPage() {
 
   useEffect(() => {
     if (activePlan && activeDayIndex > activePlan.days.length - 1) {
-      setActiveDayIndex(0);
+      queueMicrotask(() => setActiveDayIndex(0));
     }
   }, [activeDayIndex, activePlan]);
 
   useEffect(() => {
-    setExpandedMealKey(null);
-    setMealDetailTab("ingredients");
+    queueMicrotask(() => {
+      setExpandedMealKey(null);
+      setMealDetailTab("ingredients");
+    });
   }, [activeDayKey]);
 
   function toggleMealLogged(mealKey: string) {
@@ -186,14 +188,12 @@ export function ClientNutritionPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fbf9f8] px-4 py-5 text-[#1b1c1c] sm:px-6">
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
-        <ClientNutritionTabs />
-        <header className="space-y-1 px-1">
-          <p className="text-xs font-extrabold uppercase tracking-wide text-[#6f6a66]">Nutrition</p>
-          <h1 className="text-3xl font-black tracking-normal">{activePlan?.name ?? "Nutrition plan"}</h1>
-          <p className="text-sm font-semibold text-[#6f6a66]">{clientName}</p>
-        </header>
+    <ClientMobileShell title="MCP" avatarLabel={clientName || "CC"}>
+      <div className="flex flex-col gap-8">
+        <ClientSectionHeading eyebrow="Fueling performance" title="Daily Fuel Plan">
+          <h2 className="sr-only">{activePlan?.name ?? "Nutrition plan"}</h2>
+          <p className="text-sm font-semibold leading-6 text-[#777584]">{activePlan?.name ?? "Nutrition plan"} • {clientName}</p>
+        </ClientSectionHeading>
 
         {activePlan && activeDay ? (
           <>
@@ -207,8 +207,8 @@ export function ClientNutritionPage() {
                     className={cn(
                       "h-11 rounded-full px-5 text-sm font-black transition",
                       index === activeDayIndex
-                        ? "bg-[#3620b8] text-white shadow-[0_10px_30px_rgba(54,32,184,0.18)]"
-                        : "bg-white text-[#6f6a66]"
+                        ? "bg-gradient-to-br from-[#5f50f0] to-[#3620b8] text-white shadow-[0_10px_30px_rgba(54,32,184,0.18)]"
+                        : "bg-white text-[#777584] shadow-[0_10px_24px_rgba(27,28,28,0.04)]"
                     )}
                   >
                     {day.name}
@@ -248,20 +248,7 @@ export function ClientNutritionPage() {
           <EmptyNutritionMessage message="No active meal plan has been assigned yet." />
         )}
       </div>
-    </main>
-  );
-}
-
-function ClientNutritionTabs() {
-  return (
-    <nav aria-label="Client app tabs" className="grid grid-cols-2 gap-2 rounded-full bg-white p-1 shadow-[0_10px_30px_rgba(27,28,28,0.06)]">
-      <Link href="/workout" className="rounded-full px-4 py-3 text-center text-sm font-black text-[#6f6a66]">
-        Workout
-      </Link>
-      <Link href="/nutrition" aria-current="page" className="rounded-full bg-[#3620b8] px-4 py-3 text-center text-sm font-black text-white">
-        Nutrition
-      </Link>
-    </nav>
+    </ClientMobileShell>
   );
 }
 
@@ -270,15 +257,16 @@ function NutritionProgress({ targets, totals }: { targets: NutritionTotals; tota
 
   return (
     <section className="space-y-3" aria-label="Daily nutrition totals">
-      <div aria-label="Calories remaining" className="rounded-[1.35rem] bg-[#3620b8] px-4 py-3 text-white shadow-[0_14px_36px_rgba(54,32,184,0.18)]">
+      <div aria-label="Calories remaining" className="relative overflow-hidden rounded-[1.65rem] bg-white p-7 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
+        <Utensils aria-hidden="true" className="absolute right-6 top-6 size-20 text-[#e9e8e7]" />
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-wide text-white/70">Calories remaining</p>
-            <p className="mt-1 text-3xl font-black leading-none">{formatNumber(caloriesRemaining)}</p>
+            <p className="text-sm font-black text-[#777584]">Calories remaining</p>
+            <p className="mt-3 text-6xl font-black leading-none tracking-normal text-[#3620b8]">{formatNumber(caloriesRemaining)}</p>
           </div>
-          <p className="pb-1 text-sm font-black text-white/80">{formatNumber(totals.calories)} / {formatNumber(targets.calories)} kcal</p>
+          <p className="relative z-10 pb-1 text-sm font-black text-[#777584]">{formatNumber(totals.calories)} / {formatNumber(targets.calories)} kcal</p>
         </div>
-        <ProgressBar current={totals.calories} target={targets.calories} className="mt-3 bg-white/20" />
+        <ProgressBar current={totals.calories} target={targets.calories} className="mt-5 bg-[#e9e8e7]" />
       </div>
 
       <div role="region" aria-label="Nutrition progress" className="grid grid-cols-2 gap-3">
@@ -293,9 +281,9 @@ function NutritionProgress({ targets, totals }: { targets: NutritionTotals; tota
 
 function MacroProgressCard({ label, current, target, unit }: { label: string; current: number; target: number; unit: string }) {
   return (
-    <div aria-label={`${label} progress`} className="rounded-[1.1rem] bg-white p-3 shadow-[0_10px_30px_rgba(27,28,28,0.05)]">
-      <p className="text-xs font-extrabold uppercase tracking-wide text-[#6f6a66]">{label}</p>
-      <p className="mt-1 text-base font-black text-[#1b1c1c]">
+    <div aria-label={`${label} progress`} className="rounded-[1.35rem] bg-[#f5f3f3] p-4 shadow-[0_10px_30px_rgba(27,28,28,0.035)]">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#777584]">{label}</p>
+      <p className="mt-2 text-base font-black text-[#1b1c1c]">
         {formatNumber(current)} / {formatNumber(target)}{unit}
       </p>
       <ProgressBar current={current} target={target} className="mt-2 bg-[#ede9e5]" />
@@ -308,7 +296,7 @@ function ProgressBar({ current, target, className }: { current: number; target: 
 
   return (
     <div className={cn("h-2 overflow-hidden rounded-full", className)}>
-      <div className="h-full rounded-full bg-[#8fe36c]" style={{ width: `${percentage}%` }} />
+      <div className="h-full rounded-full bg-gradient-to-r from-[#3620b8] to-[#f87600]" style={{ width: `${percentage}%` }} />
     </div>
   );
 }
@@ -317,12 +305,13 @@ function MealCard({ meal, logged, onOpen, onLog }: { meal: NutritionMeal; logged
   const totals = calculateMealTotals(meal);
 
   return (
-    <article className="rounded-[1.65rem] bg-white p-4 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
-      <div className="flex items-center gap-3">
+    <article className="rounded-[1.65rem] bg-white p-5 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
+      <div className="flex items-center gap-4">
         <button type="button" onClick={onOpen} aria-label={`Open ${meal.meal}`} className="min-w-0 flex-1 text-left">
-          <span className="block truncate text-base font-black text-[#1b1c1c]">{meal.meal}</span>
-          <span className="mt-1 block text-sm font-bold text-[#6f6a66]">
-            {formatNumber(totals.calories)} kcal • {meal.foods.length} ingredients
+          <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-[#f87600]">Planned meal</span>
+          <span className="mt-2 block truncate text-lg font-black text-[#1b1c1c]">{meal.meal}</span>
+          <span className="mt-1 block text-sm font-bold text-[#777584]">
+            {formatNumber(totals.calories)} kcal • {formatNumber(totals.protein)}g protein • {meal.foods.length} ingredients
           </span>
         </button>
         <button
@@ -331,7 +320,7 @@ function MealCard({ meal, logged, onOpen, onLog }: { meal: NutritionMeal; logged
           aria-label={`${logged ? "Remove" : "Log"} ${meal.meal}`}
           className={cn(
             "inline-flex h-10 flex-none items-center gap-2 rounded-full px-3 text-sm font-black transition",
-            logged ? "bg-emerald-500 text-white" : "bg-[#f5f3f3] text-[#3620b8]"
+            logged ? "bg-[#f87600] text-white" : "bg-gradient-to-br from-[#5f50f0] to-[#3620b8] text-white shadow-[0_10px_24px_rgba(54,32,184,0.18)]"
           )}
         >
           {logged ? <Check aria-hidden="true" className="size-4" /> : null}
@@ -356,7 +345,7 @@ function MealDetailsCard({
   const visibleTab = hasRecipe ? activeTab : "ingredients";
 
   return (
-    <section role="region" aria-label={`${meal.meal} details`} className="rounded-[1.65rem] bg-white p-4 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
+    <section role="region" aria-label={`${meal.meal} details`} className="rounded-[1.65rem] bg-white p-5 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
       <div role="tablist" aria-label={`${meal.meal} sections`} className="grid grid-cols-2 gap-2 rounded-full bg-[#f5f3f3] p-1">
         <button
           type="button"
@@ -365,7 +354,7 @@ function MealDetailsCard({
           onClick={() => onTabChange("ingredients")}
           className={cn(
             "rounded-full px-3 py-2 text-sm font-black",
-            visibleTab === "ingredients" ? "bg-white text-[#1b1c1c] shadow-sm" : "text-[#6f6a66]"
+            visibleTab === "ingredients" ? "bg-white text-[#1b1c1c] shadow-sm" : "text-[#777584]"
           )}
         >
           Ingredients
@@ -378,7 +367,7 @@ function MealDetailsCard({
             onClick={() => onTabChange("recipe")}
             className={cn(
               "rounded-full px-3 py-2 text-sm font-black",
-              visibleTab === "recipe" ? "bg-white text-[#1b1c1c] shadow-sm" : "text-[#6f6a66]"
+              visibleTab === "recipe" ? "bg-white text-[#1b1c1c] shadow-sm" : "text-[#777584]"
             )}
           >
             Recipe
@@ -392,7 +381,7 @@ function MealDetailsCard({
             <div key={`${food.foodName}-${index}`} className="flex items-start justify-between gap-3 rounded-2xl bg-[#f5f3f3] px-4 py-3">
               <div>
                 <p className="text-sm font-black text-[#1b1c1c]">{food.foodName}</p>
-                <p className="mt-1 text-xs font-bold text-[#6f6a66]">{food.servingSize}</p>
+                <p className="mt-1 text-xs font-bold text-[#777584]">{food.servingSize}</p>
               </div>
               <p className="text-sm font-black text-[#1b1c1c]">{formatNumber(food.calories)} kcal</p>
             </div>

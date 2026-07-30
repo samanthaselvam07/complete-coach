@@ -70,11 +70,7 @@ function DashboardShellContent({ children }: DashboardShellProps) {
     }
 
     if (status === "authenticated" && publicPath) {
-      router.replace(clientSession ? "/workout" : "/");
-    }
-
-    if (status === "authenticated" && clientSession && pathname === "/") {
-      router.replace("/workout");
+      router.replace("/");
     }
   }, [clientSession, pathname, publicPath, router, status]);
 

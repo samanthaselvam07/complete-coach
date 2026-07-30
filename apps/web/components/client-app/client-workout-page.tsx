@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { Check, ChevronLeft, ChevronRight, NotebookPen, Plus } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Flag, NotebookPen, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
+import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
   data?: {
@@ -122,12 +122,12 @@ export function ClientWorkoutPage() {
 
   useEffect(() => {
     if (activeDayIndex > trainingDays.length - 1) {
-      setActiveDayIndex(0);
+      queueMicrotask(() => setActiveDayIndex(0));
     }
   }, [activeDayIndex, trainingDays.length]);
 
   useEffect(() => {
-    setActiveWorkoutExerciseIndex(null);
+    queueMicrotask(() => setActiveWorkoutExerciseIndex(null));
   }, [activeDayIndex, activeAssignment?.id]);
 
   useEffect(() => {
@@ -211,31 +211,33 @@ export function ClientWorkoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fbf9f8] px-4 py-5 text-[#1b1c1c] sm:px-6">
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
-        <ClientWorkoutTabs />
-        <header className="space-y-1 px-1">
-          <p className="text-xs font-extrabold uppercase tracking-wide text-[#6f6a66]">Workout</p>
-          <h1 className="text-3xl font-black tracking-normal">{activeAssignment?.name ?? "Training plan"}</h1>
-          <p className="text-sm font-semibold text-[#6f6a66]">{clientName}</p>
-        </header>
+    <ClientMobileShell title="MCP" avatarLabel={clientName || "CC"}>
+      <div className="flex flex-col gap-8">
+        <ClientSectionHeading eyebrow="Your kinetic plan" title={activeAssignment?.name ?? "Training plan"}>
+          <p className="text-sm font-semibold leading-6 text-[#777584]">{clientName}</p>
+        </ClientSectionHeading>
 
         {trainingDays.length > 0 ? (
-          <nav aria-label="Training days" className="-mx-4 overflow-x-auto px-4">
-            <div className="flex min-w-max gap-2">
+          <nav aria-label="Training days" className="-mx-6 overflow-x-auto px-6">
+            <div className="flex min-w-max gap-3">
               {trainingDays.map((day, index) => (
                 <button
                   key={`${day.name}-${index}`}
                   type="button"
+                  aria-label={day.name || `Day ${index + 1}`}
                   onClick={() => setActiveDayIndex(index)}
                   className={cn(
-                    "h-11 rounded-full px-5 text-sm font-black transition",
+                    "flex h-32 w-28 flex-none flex-col items-center justify-center gap-2 rounded-[1.25rem] px-3 text-center transition active:scale-95",
                     index === activeDayIndex
-                      ? "bg-[#3620b8] text-white shadow-[0_10px_30px_rgba(54,32,184,0.18)]"
-                      : "bg-white text-[#6f6a66]"
+                      ? "bg-gradient-to-br from-[#5f50f0] to-[#3620b8] text-white shadow-[0_18px_38px_rgba(54,32,184,0.24)]"
+                      : "bg-white text-[#1b1c1c] shadow-[0_12px_30px_rgba(27,28,28,0.05)]"
                   )}
                 >
-                  {day.name || `Day ${index + 1}`}
+                  <span className={cn("text-[10px] font-black uppercase tracking-[0.18em]", index === activeDayIndex ? "text-white/75" : "text-[#777584]")}>
+                    Day {index + 1}
+                  </span>
+                  <span className="text-sm font-black leading-5">{day.name || `Day ${index + 1}`}</span>
+                  {index === activeDayIndex ? <span className="size-1 rounded-full bg-white" /> : null}
                 </button>
               ))}
             </div>
@@ -243,7 +245,13 @@ export function ClientWorkoutPage() {
         ) : null}
 
         {activeDay ? (
-          <section aria-label={`${activeDay.name} exercises`} className="space-y-3">
+          <section aria-label={`${activeDay.name} exercises`} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-[#1b1c1c]">
+                Exercises <span className="font-semibold text-[#777584]">({activeDay.exercises.length})</span>
+              </h2>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#777584]">Today</p>
+            </div>
             {activeDay.exercises.length > 0 ? (
               activeDay.exercises.map((exercise, index) => (
                 <ExerciseCard
@@ -261,20 +269,7 @@ export function ClientWorkoutPage() {
           <EmptyWorkoutMessage message="No training days have been assigned yet." />
         )}
       </div>
-    </main>
-  );
-}
-
-function ClientWorkoutTabs() {
-  return (
-    <nav aria-label="Client app tabs" className="grid grid-cols-2 gap-2 rounded-full bg-white p-1 shadow-[0_10px_30px_rgba(27,28,28,0.06)]">
-      <Link href="/workout" aria-current="page" className="rounded-full bg-[#3620b8] px-4 py-3 text-center text-sm font-black text-white">
-        Workout
-      </Link>
-      <Link href="/nutrition" className="rounded-full px-4 py-3 text-center text-sm font-black text-[#6f6a66]">
-        Nutrition
-      </Link>
-    </nav>
+    </ClientMobileShell>
   );
 }
 
@@ -288,7 +283,7 @@ function ExerciseCard({ exercise, imageUrl, onClick }: { exercise: TrainingExerc
       <ExerciseThumbnail exerciseName={exercise.exerciseName} imageUrl={imageUrl} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-base font-black text-[#1b1c1c]">{exercise.exerciseName}</span>
-        <span className="mt-1 block truncate text-sm font-bold text-[#6f6a66]">{formatExercisePrescription(exercise)}</span>
+        <span className="mt-1 block truncate text-sm font-bold text-[#777584]">{formatExercisePrescription(exercise)}</span>
       </span>
       <ChevronRight aria-hidden="true" className="size-5 flex-none text-[#c8c3bf]" />
     </button>
@@ -323,9 +318,10 @@ function ActiveWorkoutLogger({
   const [workoutNotes, setWorkoutNotes] = useState<ClientNoteSummary[]>([]);
   const [noteBody, setNoteBody] = useState("");
   const [notesError, setNotesError] = useState("");
+  const savedRowsForExercise = setRowsByExerciseIndex[exerciseIndex];
 
   useEffect(() => {
-    setDurationSeconds(0);
+    queueMicrotask(() => setDurationSeconds(0));
   }, [day.id, day.name, initialExerciseIndex]);
 
   useEffect(() => {
@@ -337,9 +333,11 @@ function ActiveWorkoutLogger({
   }, []);
 
   useEffect(() => {
-    setSetRows(setRowsByExerciseIndex[exerciseIndex] ?? createSetRows(activeExercise));
-    setRestSeconds(null);
-  }, [activeExercise, exerciseIndex]);
+    queueMicrotask(() => {
+      setSetRows(savedRowsForExercise ?? createSetRows(activeExercise));
+      setRestSeconds(null);
+    });
+  }, [activeExercise, exerciseIndex, savedRowsForExercise]);
 
   useEffect(() => {
     if (restSeconds === null || restSeconds <= 0) {
@@ -497,8 +495,8 @@ function ActiveWorkoutLogger({
   }
 
   return (
-    <main className="min-h-screen bg-[#fbf9f8] px-4 py-5 text-[#1b1c1c] sm:px-6">
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
+    <ClientMobileShell title={assignmentName} kicker="Session active" avatarLabel={assignmentName} hideBottomNav>
+      <div className="flex flex-col gap-6 pb-28">
         <header className="flex items-center justify-between gap-4">
           <button
             type="button"
@@ -516,30 +514,54 @@ function ActiveWorkoutLogger({
           </div>
         </header>
 
-        <section className="rounded-[1.65rem] bg-white p-4 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
-          <div className="flex items-center gap-4">
-            <ExerciseThumbnail
-              exerciseName={activeExercise.exerciseName}
-              imageUrl={activeExercise.exerciseId ? exerciseImages[activeExercise.exerciseId] : undefined}
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-extrabold uppercase tracking-wide text-[#6f6a66]">
-                Exercise {Math.min(exerciseIndex + 1, day.exercises.length)}/{day.exercises.length}
+        <section className="rounded-[1.65rem] bg-white p-8 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#777584]">Workout duration</p>
+              <p className="mt-5 text-6xl font-black leading-none tracking-normal text-[#1b1c1c]">
+                {formatTimer(durationSeconds)}
               </p>
-              <h1 className="truncate text-2xl font-black tracking-normal">{activeExercise.exerciseName}</h1>
-              <p className="mt-1 text-sm font-bold text-[#6f6a66]">{formatExercisePrescription(activeExercise)}</p>
             </div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#f87600]">
+              Exercise {Math.min(exerciseIndex + 1, day.exercises.length)}/{day.exercises.length}
+            </p>
           </div>
         </section>
 
         {restSeconds !== null ? (
-          <section role="timer" aria-label="Rest timer" className="rounded-[1.65rem] bg-[#3620b8] px-5 py-4 text-white shadow-[0_18px_45px_rgba(54,32,184,0.18)]">
-            <p className="text-xs font-extrabold uppercase tracking-wide text-white/70">Rest timer</p>
-            <p className="mt-1 text-3xl font-black">{formatTimer(restSeconds)}</p>
+          <section role="timer" aria-label="Rest timer" className="flex items-center justify-between rounded-[1.65rem] bg-white/70 px-6 py-5 shadow-[0_10px_30px_rgba(27,28,28,0.05)] backdrop-blur-2xl">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#777584]">Rest timer</p>
+              <p className="mt-2 text-3xl font-black text-[#3620b8]">{formatTimer(restSeconds)}</p>
+            </div>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setRestSeconds(60)} className="inline-flex size-12 items-center justify-center rounded-full bg-[#e9e8e7] text-[#1b1c1c]" aria-label="Restart rest timer">
+                <RotateCcw aria-hidden="true" className="size-5" />
+              </button>
+              <button type="button" onClick={() => setRestSeconds(null)} className="inline-flex size-12 items-center justify-center rounded-full bg-[#3620b8] text-white shadow-[0_12px_26px_rgba(54,32,184,0.22)]" aria-label="Dismiss rest timer">
+                <Check aria-hidden="true" className="size-5" />
+              </button>
+            </div>
           </section>
         ) : null}
 
-        <section className="space-y-3" aria-label={`${activeExercise.exerciseName} sets`}>
+        <section className="overflow-hidden rounded-[1.65rem] bg-white shadow-[0_18px_45px_rgba(27,28,28,0.06)]" aria-label={`${activeExercise.exerciseName} sets`}>
+          <div className="relative min-h-56 overflow-hidden bg-[#1b1c1c]">
+            <ExerciseHeroImage
+              exerciseName={activeExercise.exerciseName}
+              imageUrl={activeExercise.exerciseId ? exerciseImages[activeExercise.exerciseId] : undefined}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-6">
+              <span className="inline-flex rounded-full bg-[#f87600] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white">
+                {activeExercise.section ?? "Target"}
+              </span>
+              <h1 className="mt-3 text-3xl font-black leading-tight tracking-normal text-white">{activeExercise.exerciseName}</h1>
+              <p className="mt-1 text-sm font-bold text-white/75">{formatExercisePrescription(activeExercise)}</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 p-5">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-sm font-black uppercase tracking-wide text-[#6f6a66]">Sets</h2>
             <button
@@ -603,6 +625,7 @@ function ActiveWorkoutLogger({
               </button>
             </div>
           ))}
+          </div>
         </section>
 
         <button
@@ -623,22 +646,25 @@ function ActiveWorkoutLogger({
           {nextExercise ? <ChevronRight aria-hidden="true" className="size-5 flex-none opacity-70" /> : null}
         </button>
 
-        <section className="grid grid-cols-2 gap-3">
+        <section className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-[#fbf9f8] via-[#fbf9f8] to-transparent px-6 pb-6 pt-10">
+          <div className="mx-auto grid max-w-xl grid-cols-[4.5rem_1fr] gap-4">
           <button
             type="button"
             onClick={openWorkoutNotes}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white text-sm font-black text-[#3620b8] shadow-[0_10px_30px_rgba(27,28,28,0.06)]"
+            className="inline-flex h-16 items-center justify-center gap-2 rounded-[1.5rem] bg-white text-sm font-black text-[#1b1c1c] shadow-[0_16px_34px_rgba(27,28,28,0.10)]"
           >
             <NotebookPen aria-hidden="true" className="size-4" />
-            Notes
+            <span className="sr-only">Notes</span>
           </button>
           <button
             type="button"
             onClick={openFinishSummary}
-            className="inline-flex h-12 items-center justify-center rounded-full bg-[#3620b8] text-sm font-black text-white shadow-[0_10px_30px_rgba(54,32,184,0.18)]"
+            className="inline-flex h-16 items-center justify-center gap-3 rounded-[1.5rem] bg-gradient-to-br from-[#5f50f0] to-[#3620b8] text-lg font-black text-white shadow-[0_20px_50px_rgba(54,32,184,0.30)] transition active:scale-[0.98]"
           >
             Finish session
+            <Flag aria-hidden="true" className="size-5" />
           </button>
+          </div>
         </section>
 
         {finishSummaryOpen ? (
@@ -662,7 +688,7 @@ function ActiveWorkoutLogger({
           />
         ) : null}
       </div>
-    </main>
+    </ClientMobileShell>
   );
 }
 
@@ -815,6 +841,18 @@ function ExerciseThumbnail({ exerciseName, imageUrl }: { exerciseName: string; i
     <span className="flex size-16 flex-none items-center justify-center rounded-xl bg-[#1b1c1c] text-lg font-black text-white">
       {getExerciseInitials(exerciseName)}
     </span>
+  );
+}
+
+function ExerciseHeroImage({ exerciseName, imageUrl }: { exerciseName: string; imageUrl?: string }) {
+  if (imageUrl) {
+    return <img src={imageUrl} alt="" className="absolute inset-0 size-full object-cover" />;
+  }
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,rgba(248,118,0,0.28),transparent_34%),linear-gradient(135deg,#1b1c1c,#3620b8)]">
+      <span className="text-6xl font-black text-white/20">{getExerciseInitials(exerciseName)}</span>
+    </div>
   );
 }
 
