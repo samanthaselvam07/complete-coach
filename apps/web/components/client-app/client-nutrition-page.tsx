@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronRight, Utensils } from "lucide-react";
+import { Check, ChevronRight, Droplets, Utensils } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
@@ -92,6 +92,7 @@ export function ClientNutritionPage() {
   const [loggedMealKeysByDay, setLoggedMealKeysByDay] = useState<Record<string, string[]>>({});
   const [expandedMealKey, setExpandedMealKey] = useState<string | null>(null);
   const [mealDetailTab, setMealDetailTab] = useState<MealDetailTab>("ingredients");
+  const [hydrationMl, setHydrationMl] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -218,6 +219,7 @@ export function ClientNutritionPage() {
             </nav>
 
             <NutritionProgress targets={activePlan.targets} totals={loggedTotals} />
+            <HydrationProgress hydrationMl={hydrationMl} targetMl={2500} onAddHydration={(amountMl) => setHydrationMl((current) => current + amountMl)} />
 
             <section aria-label={`${activeDay.name} meals`} className="space-y-3">
               {activeDay.meals.map((meal) => {
@@ -279,6 +281,45 @@ function NutritionProgress({ targets, totals }: { targets: NutritionTotals; tota
   );
 }
 
+function HydrationProgress({
+  hydrationMl,
+  targetMl,
+  onAddHydration
+}: {
+  hydrationMl: number;
+  targetMl: number;
+  onAddHydration: (amountMl: number) => void;
+}) {
+  return (
+    <section aria-label="Hydration progress" className="rounded-[1.65rem] bg-white p-5 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
+      <div className="flex items-center gap-4">
+        <div className="flex size-12 flex-none items-center justify-center rounded-2xl bg-[#e9f7ff] text-[#0284c7]">
+          <Droplets aria-hidden="true" className="size-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#777584]">Hydration</p>
+          <p className="mt-1 text-lg font-black text-[#1b1c1c]">
+            {formatNumber(hydrationMl)}ml / {formatNumber(targetMl)}ml
+          </p>
+        </div>
+      </div>
+      <ProgressBar current={hydrationMl} target={targetMl} className="mt-4 bg-[#e9e8e7]" />
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        {[250, 500].map((amountMl) => (
+          <button
+            key={amountMl}
+            type="button"
+            onClick={() => onAddHydration(amountMl)}
+            className="h-12 rounded-[1.1rem] bg-[#f5f3f3] text-sm font-black text-[#3620b8] transition active:scale-95"
+          >
+            +{amountMl}ml
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function MacroProgressCard({ label, current, target, unit }: { label: string; current: number; target: number; unit: string }) {
   return (
     <div aria-label={`${label} progress`} className="rounded-[1.35rem] bg-[#f5f3f3] p-4 shadow-[0_10px_30px_rgba(27,28,28,0.035)]">
@@ -296,7 +337,7 @@ function ProgressBar({ current, target, className }: { current: number; target: 
 
   return (
     <div className={cn("h-2 overflow-hidden rounded-full", className)}>
-      <div className="h-full rounded-full bg-gradient-to-r from-[#3620b8] to-[#f87600]" style={{ width: `${percentage}%` }} />
+      <div className="h-full rounded-full bg-[#3620b8]" style={{ width: `${percentage}%` }} />
     </div>
   );
 }

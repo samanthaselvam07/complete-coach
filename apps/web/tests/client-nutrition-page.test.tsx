@@ -105,6 +105,9 @@ describe("ClientNutritionPage", () => {
     expect(screen.getByLabelText("Carbs progress")).toHaveTextContent("0 / 220g");
     expect(screen.getByLabelText("Fat progress")).toHaveTextContent("0 / 65g");
     expect(screen.getByLabelText("Fibre progress")).toHaveTextContent("0 / 30g");
+    expect(screen.getByRole("region", { name: "Hydration progress" })).toHaveTextContent("0ml / 2500ml");
+    expect(screen.getByRole("button", { name: "+250ml" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+500ml" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /swap meal/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/Chef notes/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Chef notes should not show.")).not.toBeInTheDocument();
@@ -117,6 +120,11 @@ describe("ClientNutritionPage", () => {
     expect(screen.getByLabelText("Carbs progress")).toHaveTextContent("32 / 220g");
     expect(screen.getByLabelText("Fat progress")).toHaveTextContent("4 / 65g");
     expect(screen.getByLabelText("Fibre progress")).toHaveTextContent("4 / 30g");
+
+    fireEvent.click(screen.getByRole("button", { name: "+250ml" }));
+    fireEvent.click(screen.getByRole("button", { name: "+500ml" }));
+
+    expect(screen.getByRole("region", { name: "Hydration progress" })).toHaveTextContent("750ml / 2500ml");
 
     fireEvent.click(screen.getByRole("button", { name: "Open Breakfast Bowl" }));
 

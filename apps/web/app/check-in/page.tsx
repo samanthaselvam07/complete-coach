@@ -1,5 +1,5 @@
-import { ClientPlaceholderPage } from "@/components/client-app/client-placeholder-page";
+import { ClientDailyCheckInPage } from "@/components/client-app/client-daily-check-in-page";
 
 export default function ClientCheckInPage() {
-  return <ClientPlaceholderPage type="check-in" />;
+  return <ClientDailyCheckInPage />;
 }

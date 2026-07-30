@@ -34,6 +34,23 @@ interface ClientMeResponse {
 type LoadState = "loading" | "ready" | "error";
 type ClientHomeTileHref = "/workout" | "/nutrition";
 
+interface RoadmapPhase {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  items: RoadmapItem[];
+}
+
+interface RoadmapItem {
+  id: string;
+  title: string;
+  type: string;
+  date: string;
+  notes: string;
+}
+
 export function ClientHomePage() {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
@@ -42,6 +59,7 @@ export function ClientHomePage() {
   const [mealPlanName, setMealPlanName] = useState("Nutrition plan");
   const [trainingDays, setTrainingDays] = useState(0);
   const [targetCalories, setTargetCalories] = useState(0);
+  const [roadmapPhases, setRoadmapPhases] = useState<RoadmapPhase[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -62,6 +80,9 @@ export function ClientHomePage() {
           ?? payload.data.mealPlanAssignments[0]
           ?? null;
 
+        const roadmapResponse = await fetch("/api/v1/client/roadmap");
+        const roadmapPayload = (await roadmapResponse.json().catch(() => null)) as { data?: RoadmapPhase[] } | null;
+
         if (!mounted) {
           return;
         }
@@ -71,6 +92,7 @@ export function ClientHomePage() {
         setMealPlanName(activeMealPlan?.name ?? "Nutrition plan");
         setTrainingDays(countTrainingDays(activeTraining?.snapshot));
         setTargetCalories(activeMealPlan?.targetCalories ?? 0);
+        setRoadmapPhases(roadmapResponse.ok && Array.isArray(roadmapPayload?.data) ? roadmapPayload.data : []);
         setLoadState("ready");
       } catch (error) {
         if (!mounted) {
@@ -95,6 +117,12 @@ export function ClientHomePage() {
     day: "numeric",
     month: "long"
   }).format(new Date()), []);
+  const activePhase = useMemo(
+    () => roadmapPhases.find((phase) => phase.status === "active") ?? roadmapPhases[0] ?? null,
+    [roadmapPhases]
+  );
+  const upcomingCalendarItems = useMemo(() => getUpcomingRoadmapItems(roadmapPhases), [roadmapPhases]);
+  const calendarMeta = activePhase ? activePhase.name : "Coach calendar";
 
   return (
     <ClientMobileShell title="Complete Coach" avatarLabel={firstName || "CC"}>
@@ -127,7 +155,7 @@ export function ClientHomePage() {
             </Link>
           </section>
 
-          <section className="grid grid-cols-2 gap-4">
+          <section aria-label="Dashboard modules" className="grid grid-cols-3 gap-3">
             <ClientHomeTile
               href="/workout"
               icon={<Dumbbell aria-hidden="true" className="size-5" />}
@@ -141,6 +169,10 @@ export function ClientHomePage() {
               label="Nutrition"
               title={mealPlanName}
               meta={targetCalories ? `${targetCalories.toLocaleString()} kcal target` : "Meal plan ready"}
+            />
+            <ClientCalendarTile
+              phaseName={calendarMeta}
+              items={upcomingCalendarItems}
             />
           </section>
 
@@ -204,14 +236,49 @@ function ClientHomeTile({
   meta: string;
 }) {
   return (
-    <Link href={href} className="rounded-[1.65rem] bg-white p-5 shadow-[0_18px_45px_rgba(27,28,28,0.06)] transition active:scale-[0.98]">
-      <div className="mb-8 flex size-12 items-center justify-center rounded-2xl bg-[#f5f3f3] text-[#3620b8]">
+    <Link href={href} className="rounded-[1.35rem] bg-white p-4 shadow-[0_18px_45px_rgba(27,28,28,0.06)] transition active:scale-[0.98]">
+      <div className="mb-5 flex size-10 items-center justify-center rounded-2xl bg-[#f5f3f3] text-[#3620b8]">
         {icon}
       </div>
-      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#777584]">{label}</p>
-      <p className="mt-2 min-h-12 overflow-hidden text-lg font-black leading-6 text-[#1b1c1c]">{title}</p>
-      <p className="mt-3 text-xs font-bold text-[#777584]">{meta}</p>
+      <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#777584]">{label}</p>
+      <p className="mt-2 min-h-12 overflow-hidden text-sm font-black leading-5 text-[#1b1c1c]">{title}</p>
+      <p className="mt-2 text-[11px] font-bold leading-4 text-[#777584]">{meta}</p>
     </Link>
+  );
+}
+
+function ClientCalendarTile({ phaseName, items }: { phaseName: string; items: RoadmapItem[] }) {
+  const weekDays = getDashboardWeekDays();
+  const nextItem = items[0] ?? null;
+  const itemDates = new Set(items.map((item) => item.date));
+
+  return (
+    <article aria-label="Calendar module" className="rounded-[1.35rem] bg-white p-4 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
+      <div className="mb-4 flex size-10 items-center justify-center rounded-2xl bg-[#eaf8f0] text-[#059669]">
+        <CalendarDays aria-hidden="true" className="size-5" />
+      </div>
+      <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#777584]">Calendar</p>
+      <p className="mt-2 min-h-10 overflow-hidden text-sm font-black leading-5 text-[#1b1c1c]">{phaseName}</p>
+      <div className="mt-3 grid grid-cols-7 gap-1" aria-label="Client calendar week">
+        {weekDays.map((day) => (
+          <div key={day.date} className="text-center">
+            <p className="text-[8px] font-black uppercase text-[#aaa6a1]">{day.weekday}</p>
+            <div
+              className={cn(
+                "mt-1 flex aspect-square items-center justify-center rounded-lg text-[10px] font-black",
+                day.isToday ? "bg-[#3620b8] text-white" : "bg-[#f5f3f3] text-[#1b1c1c]"
+              )}
+            >
+              {day.day}
+            </div>
+            <span className={cn("mx-auto mt-1 block size-1 rounded-full", itemDates.has(day.date) ? "bg-[#f87600]" : "bg-transparent")} />
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 truncate text-[11px] font-bold leading-4 text-[#777584]">
+        {nextItem ? `${formatShortDate(nextItem.date)} • ${nextItem.title}` : "No upcoming events"}
+      </p>
+    </article>
   );
 }
 
@@ -223,4 +290,40 @@ function countTrainingDays(snapshot: unknown) {
   const days = (snapshot as { days?: unknown }).days;
 
   return Array.isArray(days) ? days.length : 0;
+}
+
+function getUpcomingRoadmapItems(phases: RoadmapPhase[]) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  return phases
+    .flatMap((phase) => phase.items)
+    .filter((item) => item.date >= today)
+    .sort((left, right) => left.date.localeCompare(right.date))
+    .slice(0, 5);
+}
+
+function getDashboardWeekDays() {
+  const today = new Date();
+  const start = new Date(today);
+  start.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    const value = date.toISOString().slice(0, 10);
+
+    return {
+      date: value,
+      day: date.getDate(),
+      weekday: new Intl.DateTimeFormat("en-AU", { weekday: "narrow" }).format(date),
+      isToday: value === today.toISOString().slice(0, 10)
+    };
+  });
+}
+
+function formatShortDate(value: string) {
+  return new Intl.DateTimeFormat("en-AU", {
+    day: "numeric",
+    month: "short"
+  }).format(new Date(`${value}T00:00:00.000Z`));
 }

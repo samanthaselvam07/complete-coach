@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, ClipboardCheck, Dumbbell, Home, Package, Utensils } from "lucide-react";
+import { Bell, ClipboardCheck, Dumbbell, Home, Pill, Utensils } from "lucide-react";
 
 import { cn } from "@/components/ui/utils";
 
@@ -18,7 +18,7 @@ const clientNavItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/workout", label: "Workout", icon: Dumbbell },
   { href: "/nutrition", label: "Nutrition", icon: Utensils },
-  { href: "/vault", label: "Vault", icon: Package },
+  { href: "/vault", label: "Supps", icon: Pill },
   { href: "/check-in", label: "Check-in", icon: ClipboardCheck }
 ] as const;
 

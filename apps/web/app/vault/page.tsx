@@ -1,5 +1,5 @@
-import { ClientPlaceholderPage } from "@/components/client-app/client-placeholder-page";
+import { ClientSupplementsPage } from "@/components/client-app/client-supplements-page";
 
 export default function ClientVaultPage() {
-  return <ClientPlaceholderPage type="vault" />;
+  return <ClientSupplementsPage />;
 }
