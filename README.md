@@ -166,6 +166,10 @@ Detailed deployment notes:
 
 [docs/deployment/vercel-neon-preview.md](docs/deployment/vercel-neon-preview.md)
 
+Client-facing app deployment notes:
+
+[docs/deployment/client-app.md](docs/deployment/client-app.md)
+
 ## Documentation
 
 Core project docs:

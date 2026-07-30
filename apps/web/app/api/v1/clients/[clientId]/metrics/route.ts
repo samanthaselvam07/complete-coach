@@ -17,6 +17,7 @@ export async function GET(request: Request, context: ClientMetricsRouteContext) 
       where: {
         id: clientId,
         organizationId: actor.organizationId,
+        ...(actor.role === "client" ? { clientUserId: actor.userId } : {}),
         deletedAt: null
       }
     });

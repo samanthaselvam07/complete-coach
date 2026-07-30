@@ -72,6 +72,21 @@ const ownerSession = {
   }
 };
 
+const clientSession = {
+  user: { id: "user_client", email: "client@example.com" },
+  activeOrganization: {
+    ...ownerSession.activeOrganization,
+    role: "client"
+  },
+  activeClient: {
+    id: "client_1",
+    organizationId: "org_1",
+    name: "Client One",
+    email: "client@example.com",
+    timezone: "Australia/Melbourne"
+  }
+};
+
 const globalFood = {
   id: "food_global",
   organizationId: null,
@@ -899,6 +914,28 @@ describe("nutrition persistence APIs", () => {
 
     expect(response.status).toBe(404);
     expect(payload.error).toMatchObject({ code: "not_found", message: "Client not found." });
+    expect(mocks.prisma.mealPlanAssignment.findMany).not.toHaveBeenCalled();
+  });
+
+  it("scopes client-role meal plan reads to the linked client profile", async () => {
+    mocks.auth.mockResolvedValue(clientSession);
+    mocks.prisma.client.findFirst.mockResolvedValue(null);
+
+    const response = await getClientMealPlans(new Request("http://test.local/api/v1/clients/other_client/meal-plans"), {
+      params: Promise.resolve({ clientId: "other_client" })
+    });
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.client.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "other_client",
+          organizationId: "org_1",
+          clientUserId: "user_client",
+          deletedAt: null
+        }
+      })
+    );
     expect(mocks.prisma.mealPlanAssignment.findMany).not.toHaveBeenCalled();
   });
 

@@ -85,6 +85,21 @@ const ownerSession = {
   }
 };
 
+const clientSession = {
+  user: { id: "user_client", email: "client@example.com" },
+  activeOrganization: {
+    ...ownerSession.activeOrganization,
+    role: "client"
+  },
+  activeClient: {
+    id: "client_1",
+    organizationId: "org_1",
+    name: "Client One",
+    email: "client@example.com",
+    timezone: "Australia/Melbourne"
+  }
+};
+
 const formDefinition = {
   title: "Weekly Check-In",
   fields: [
@@ -796,6 +811,29 @@ describe("submissions, check-ins, and metrics APIs", () => {
         })
       })
     );
+  });
+
+  it("scopes client-role metric reads to the linked client profile", async () => {
+    mocks.auth.mockResolvedValue(clientSession);
+    mocks.prisma.client.findFirst.mockResolvedValue(null);
+
+    const response = await getClientMetrics(
+      new Request("http://test.local/api/v1/clients/other_client/metrics"),
+      { params: Promise.resolve({ clientId: "other_client" }) }
+    );
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.client.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "other_client",
+          organizationId: "org_1",
+          clientUserId: "user_client",
+          deletedAt: null
+        }
+      })
+    );
+    expect(mocks.prisma.clientMeasurement.findMany).not.toHaveBeenCalled();
   });
 
   it("returns starting and current body weight summaries from client measurements", async () => {

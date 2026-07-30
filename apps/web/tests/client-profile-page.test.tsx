@@ -74,6 +74,17 @@ const marcusNotes = [
   }
 ];
 
+const marcusWorkoutNotes = [
+  {
+    id: "workout_note_1",
+    clientId: "1",
+    noteDate: "2026-07-22",
+    body: "Workout note: Strength Foundation / Day 1 / Back Squat\n\nFelt strong today, but left knee felt tight on the final set.",
+    authorName: "Marcus Rodriguez",
+    createdAt: "2026-07-22T06:00:00.000Z"
+  }
+];
+
 const marcusWeightSummary = {
   startingWeight: {
     measuredAt: "2026-05-01T00:00:00.000Z",
@@ -351,6 +362,10 @@ function mockMarcusProfile() {
       return Promise.resolve(new Response(JSON.stringify({ data: marcusNotes }), { status: 200 }));
     }
 
+    if (url === "/api/v1/clients/1/notes?limit=10&search=Workout+note%3A+Strength+Foundation+%2F+Day+1") {
+      return Promise.resolve(new Response(JSON.stringify({ data: marcusWorkoutNotes }), { status: 200 }));
+    }
+
     if (url === "/api/v1/clients/1/metrics?summary=weight") {
       return Promise.resolve(new Response(JSON.stringify({ data: marcusWeightSummary }), { status: 200 }));
     }
@@ -541,6 +556,9 @@ describe("ClientProfilePage", () => {
     expect(screen.queryByRole("button", { name: /Delete Strength Foundation/i })).not.toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Strength Foundation exercises" })).toBeInTheDocument();
     expect(screen.getByText("Back Squat")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Workout Notes" })).toBeInTheDocument();
+    expect(screen.getAllByText("Back Squat").length).toBeGreaterThan(1);
+    expect(screen.getByText("Felt strong today, but left knee felt tight on the final set.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Switch training program" }));
     fireEvent.click(screen.getByRole("menuitemradio", { name: /Conditioning Reset/i }));
     expect(screen.getByRole("heading", { name: "Conditioning Reset" })).toBeInTheDocument();

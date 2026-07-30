@@ -9,6 +9,7 @@ import {
   MembershipStatus
 } from "@/app/generated/prisma/enums";
 import { credentialsSchema } from "@/lib/auth/credentials";
+import { resolveActiveClientSessionForUser } from "@/lib/auth/active-client";
 import { createLocalDevelopmentSession, isLocalDevAuthBypassEnabled, localDevelopmentSession } from "@/lib/auth/local-dev-session";
 import { resolveActiveOrganizationSessionForUser } from "@/lib/auth/session-organization";
 import { prisma } from "@/lib/db/prisma";
@@ -26,6 +27,22 @@ function isActiveOrganization(value: unknown): value is NonNullable<Session["act
     typeof organization.slug === "string" &&
     typeof organization.name === "string" &&
     ["owner", "admin", "coach", "assistant", "client"].includes(String(organization.role))
+  );
+}
+
+function isActiveClient(value: unknown): value is NonNullable<Session["activeClient"]> {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const client = value as Record<string, unknown>;
+
+  return (
+    typeof client.id === "string" &&
+    typeof client.organizationId === "string" &&
+    typeof client.name === "string" &&
+    (typeof client.email === "string" || client.email === null) &&
+    typeof client.timezone === "string"
   );
 }
 
@@ -87,8 +104,20 @@ const nextAuth = NextAuth(() => {
 
         if (activeOrganization) {
           token.activeOrganization = activeOrganization;
+          if (activeOrganization.role === "client") {
+            const activeClient = await resolveActiveClientSessionForUser(userId, activeOrganization.id);
+
+            if (activeClient) {
+              token.activeClient = activeClient;
+            } else {
+              delete token.activeClient;
+            }
+          } else {
+            delete token.activeClient;
+          }
         } else {
           delete token.activeOrganization;
+          delete token.activeClient;
         }
 
         return token;
@@ -100,6 +129,10 @@ const nextAuth = NextAuth(() => {
 
         if (isActiveOrganization(token.activeOrganization)) {
           session.activeOrganization = token.activeOrganization;
+        }
+
+        if (isActiveClient(token.activeClient)) {
+          session.activeClient = token.activeClient;
         }
 
         return session;

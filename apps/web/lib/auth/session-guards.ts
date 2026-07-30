@@ -19,6 +19,13 @@ export class ActiveOrganizationRequiredError extends Error {
   }
 }
 
+export class ActiveClientRequiredError extends Error {
+  constructor() {
+    super("Authenticated client session requires a linked client profile");
+    this.name = "ActiveClientRequiredError";
+  }
+}
+
 export class PlatformBillingAccessRequiredError extends Error {
   constructor(readonly message: string) {
     super(message);
@@ -65,5 +72,27 @@ export function requireActiveActor(
     organizationSlug: organization.slug,
     organizationName: organization.name,
     role: organization.role
+  };
+}
+
+export function requireActiveClientActor(session: AppSession | null): ActorContext & {
+  clientId: string;
+  clientName: string;
+  clientEmail: string | null;
+  clientTimezone: string;
+} {
+  const actor = requireActiveActor(session);
+  const activeClient = requireAuthenticatedSession(session).activeClient;
+
+  if (actor.role !== "client" || !activeClient || activeClient.organizationId !== actor.organizationId) {
+    throw new ActiveClientRequiredError();
+  }
+
+  return {
+    ...actor,
+    clientId: activeClient.id,
+    clientName: activeClient.name,
+    clientEmail: activeClient.email,
+    clientTimezone: activeClient.timezone
   };
 }

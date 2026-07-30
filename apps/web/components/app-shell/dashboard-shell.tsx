@@ -60,8 +60,9 @@ function PublicLoadingScreen() {
 function DashboardShellContent({ children }: DashboardShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const publicPath = isPublicPath(pathname);
+  const clientSession = session?.activeOrganization?.role === "client";
 
   useEffect(() => {
     if (status === "unauthenticated" && !publicPath) {
@@ -69,9 +70,13 @@ function DashboardShellContent({ children }: DashboardShellProps) {
     }
 
     if (status === "authenticated" && publicPath) {
-      router.replace("/");
+      router.replace(clientSession ? "/workout" : "/");
     }
-  }, [publicPath, router, status]);
+
+    if (status === "authenticated" && clientSession && pathname === "/") {
+      router.replace("/workout");
+    }
+  }, [clientSession, pathname, publicPath, router, status]);
 
   if (publicPath && status !== "authenticated") {
     return <>{children}</>;
@@ -79,6 +84,10 @@ function DashboardShellContent({ children }: DashboardShellProps) {
 
   if (status !== "authenticated") {
     return <PublicLoadingScreen />;
+  }
+
+  if (clientSession) {
+    return <>{children}</>;
   }
 
   return (

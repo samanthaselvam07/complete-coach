@@ -89,6 +89,9 @@ Default:
 - `DELETE /api/v1/team-members/{membership_id}`: marks the membership removed. The last active owner cannot be removed. Requires `team:manage`.
 
 ### Clients
+- `GET /api/v1/client/me`: client-facing endpoint for the authenticated `client` role. Returns the linked client profile, active organization summary, assigned training program snapshots, and assigned meal plan snapshots for the `Client.clientUserId` attached to the signed-in user. This endpoint must only return data for the signed-in client's own organization-scoped `Client` record.
+- `GET /api/v1/client/workout-notes`: client-facing endpoint for the authenticated `client` role. Query: `assignmentName`, `dayName`, optional `limit`. Returns the signed-in client's notes for that assigned workout/day.
+- `POST /api/v1/client/workout-notes`: creates a client-authored workout note as an organization-scoped `ClientNote` so it is visible in the coach-facing client profile notes. Body: `assignmentName`, `dayName`, optional `exerciseName`, and `body`.
 - `GET /api/v1/clients`
 - `POST /api/v1/clients`: creates an organization-scoped client. Body: `firstName`, `lastName`, optional `email`, `phone`, `status`, `packageId`, `packageName`, `checkInDay`, `timezone`, `startDate`, and optional `onboarding` setup metadata for the new-client intake flow (`dateOfBirth`, `paymentMode` as `offline` or `payment-link`, selected form ids, check-in frequency/days, weight unit, and default exercise unit). When `email` is present, the API creates a seven-day one-time client setup token and queues an onboarding email. When `onboarding.needsPayment=true` and `paymentMode=payment-link`, `email` and `packageId` are required, a connected-account Stripe Checkout subscription session is created for the selected synced recurring package, and the email links to Stripe before account setup.
 - `GET /api/v1/clients/{client_id}`

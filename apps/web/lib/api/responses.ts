@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import { ZodError } from "zod";
 
 import {
+  ActiveClientRequiredError,
   ActiveOrganizationRequiredError,
   AuthenticationRequiredError,
   PlatformBillingAccessRequiredError
@@ -34,6 +35,10 @@ export function handleApiError(error: unknown) {
 
   if (error instanceof ActiveOrganizationRequiredError) {
     return errorResponse("active_organization_required", "An active organization is required.", 403);
+  }
+
+  if (error instanceof ActiveClientRequiredError) {
+    return errorResponse("active_client_required", "A linked client profile is required.", 403);
   }
 
   if (error instanceof ForbiddenError) {

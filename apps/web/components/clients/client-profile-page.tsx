@@ -616,6 +616,22 @@ async function loadPersistedNotes(clientId: string, limit: number) {
   return Array.isArray(payload.data) ? payload.data : [];
 }
 
+async function loadPersistedWorkoutNotes(clientId: string, assignmentName: string, dayName: string) {
+  const params = new URLSearchParams({
+    limit: "10",
+    search: buildWorkoutNotePrefix(assignmentName, dayName)
+  });
+  const response = await fetch(`/api/v1/clients/${clientId}/notes?${params.toString()}`);
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const payload = (await response.json()) as { data?: ClientNoteSummary[] };
+
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
 async function loadPersistedWeightSummary(clientId: string): Promise<ApiWeightSummary | null> {
   const response = await fetch(`/api/v1/clients/${clientId}/metrics?summary=weight`);
 
@@ -1367,6 +1383,8 @@ function TrainingPanel({ client }: { client: ClientProfileView }) {
   const [programDraft, setProgramDraft] = useState<TrainingProgramDraft | null>(null);
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [workoutNotes, setWorkoutNotes] = useState<ClientNoteSummary[]>([]);
+  const [loadingWorkoutNotes, setLoadingWorkoutNotes] = useState(false);
   const activeDay = program?.template.days?.find((day) => day.name === activeDayName) ?? program?.template.days?.[0] ?? null;
   const trainingSections = getTrainingExerciseSections(activeDay?.exercises ?? []);
   const volumeChips = getTrainingVolumeChips(activeDay?.exercises ?? []);
@@ -1381,6 +1399,32 @@ function TrainingPanel({ client }: { client: ClientProfileView }) {
     setSelectedProgramId(programId);
     setActiveDayName(nextProgram?.template.days?.[0]?.name ?? "");
   };
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadWorkoutNotes() {
+      if (!program || !activeDay) {
+        setWorkoutNotes([]);
+        setLoadingWorkoutNotes(false);
+        return;
+      }
+
+      setLoadingWorkoutNotes(true);
+      const notes = await loadPersistedWorkoutNotes(client.id, program.name, activeDay.name).catch(() => []);
+
+      if (active) {
+        setWorkoutNotes(notes);
+        setLoadingWorkoutNotes(false);
+      }
+    }
+
+    void loadWorkoutNotes();
+
+    return () => {
+      active = false;
+    };
+  }, [activeDay, client.id, program]);
 
   if (programDraft) {
     return (
@@ -1438,11 +1482,68 @@ function TrainingPanel({ client }: { client: ClientProfileView }) {
               ))}
             </tbody>
           </table>
+          <WorkoutNotesPanel
+            notes={workoutNotes}
+            loading={loadingWorkoutNotes}
+            assignmentName={program.name}
+            dayName={activeDay?.name ?? ""}
+          />
         </>
       ) : (
         <p className="text-sm text-gray-500">No persisted training program has been assigned yet.</p>
       )}
     </div>
+  );
+}
+
+function WorkoutNotesPanel({
+  notes,
+  loading,
+  assignmentName,
+  dayName
+}: {
+  notes: ClientNoteSummary[];
+  loading: boolean;
+  assignmentName: string;
+  dayName: string;
+}) {
+  const prefix = buildWorkoutNotePrefix(assignmentName, dayName);
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label={`${assignmentName} ${dayName} workout notes`}>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-base font-black text-slate-950">Workout Notes</h3>
+          <p className="mt-1 text-sm font-semibold text-slate-500">{dayName}</p>
+        </div>
+        <span className="rounded-lg bg-indigo-50 px-3 py-1 text-xs font-black uppercase text-indigo-600">
+          {notes.length} logged
+        </span>
+      </div>
+      <div className="mt-4 space-y-3">
+        {loading ? <p className="text-sm text-slate-500">Loading workout notes...</p> : null}
+        {!loading && notes.length === 0 ? (
+          <p className="text-sm text-slate-500">No logged notes for this workout yet.</p>
+        ) : null}
+        {notes.map((note) => {
+          const display = parseWorkoutNoteBody(note.body, prefix);
+
+          return (
+            <article key={note.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-black uppercase text-slate-500">
+                  {formatTrainingDate(note.noteDate)} by {note.authorName}
+                </p>
+                {display.context ? (
+                  <span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">{display.context}</span>
+                ) : null}
+              </div>
+              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">{display.body}</p>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -1452,6 +1553,25 @@ function formatTrainingDate(value: string) {
     day: "numeric",
     year: "numeric"
   }).format(new Date(value));
+}
+
+function buildWorkoutNotePrefix(assignmentName: string, dayName: string) {
+  return `Workout note: ${assignmentName} / ${dayName}`;
+}
+
+function parseWorkoutNoteBody(body: string, prefix: string) {
+  if (!body.startsWith(prefix)) {
+    return { context: "", body };
+  }
+
+  const [rawContext = "", ...contentParts] = body.slice(prefix.length).split("\n\n");
+  const context = rawContext.replace(/^ \/\s*/, "").trim();
+  const content = contentParts.join("\n\n").trim();
+
+  return {
+    context,
+    body: content || body
+  };
 }
 
 function NutritionPanel({ client }: { client: ClientProfileView }) {

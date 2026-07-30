@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ActiveClientRequiredError,
   PlatformBillingAccessRequiredError,
+  requireActiveClientActor,
   requireActiveActor,
   requireAuthenticatedSession,
   type AppSession
@@ -100,5 +102,51 @@ describe("session guards", () => {
       userId: "user_1",
       organizationId: "org_1"
     });
+  });
+
+  it("returns linked client context for a client session", () => {
+    const clientSession: AppSession = {
+      user: {
+        id: "user_client",
+        email: "client@example.com",
+        name: "Demo Client"
+      },
+      activeOrganization: {
+        ...activeOrganization,
+        role: "client"
+      },
+      activeClient: {
+        id: "client_1",
+        organizationId: "org_1",
+        name: "Demo Client",
+        email: "client@example.com",
+        timezone: "Australia/Melbourne"
+      },
+      expires: "2099-01-01T00:00:00.000Z"
+    };
+
+    expect(requireActiveClientActor(clientSession)).toEqual({
+      userId: "user_client",
+      organizationId: "org_1",
+      organizationSlug: "complete-coach-demo",
+      organizationName: "Complete Coach Demo",
+      role: "client",
+      clientId: "client_1",
+      clientName: "Demo Client",
+      clientEmail: "client@example.com",
+      clientTimezone: "Australia/Melbourne"
+    });
+  });
+
+  it("rejects client sessions without a linked client profile", () => {
+    expect(() =>
+      requireActiveClientActor({
+        ...authenticatedSession,
+        activeOrganization: {
+          ...activeOrganization,
+          role: "client"
+        }
+      })
+    ).toThrow(ActiveClientRequiredError);
   });
 });

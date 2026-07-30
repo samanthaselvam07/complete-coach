@@ -10,17 +10,27 @@ export interface ActiveOrganizationSession {
   platformAccess?: PlatformBillingAccess;
 }
 
+export interface ActiveClientSession {
+  id: string;
+  organizationId: string;
+  name: string;
+  email: string | null;
+  timezone: string;
+}
+
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
     } & DefaultSession["user"];
     activeOrganization?: ActiveOrganizationSession;
+    activeClient?: ActiveClientSession;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     activeOrganization?: ActiveOrganizationSession;
+    activeClient?: ActiveClientSession;
   }
 }

@@ -67,6 +67,21 @@ const ownerSession = {
   }
 };
 
+const clientSession = {
+  user: { id: "user_client", email: "client@example.com" },
+  activeOrganization: {
+    ...ownerSession.activeOrganization,
+    role: "client"
+  },
+  activeClient: {
+    id: "client_1",
+    organizationId: "org_1",
+    name: "Client One",
+    email: "client@example.com",
+    timezone: "Australia/Melbourne"
+  }
+};
+
 const globalExercise = {
   id: "exercise_global",
   organizationId: null,
@@ -568,6 +583,29 @@ describe("training persistence APIs", () => {
         where: expect.objectContaining({ organizationId: "org_1", clientId: "client_1" })
       })
     );
+  });
+
+  it("scopes client-role training program reads to the linked client profile", async () => {
+    mocks.auth.mockResolvedValue(clientSession);
+    mocks.prisma.client.findFirst.mockResolvedValue(null);
+
+    const response = await getClientTrainingPrograms(
+      new Request("http://test.local/api/v1/clients/other_client/training-programs"),
+      { params: Promise.resolve({ clientId: "other_client" }) }
+    );
+
+    expect(response.status).toBe(404);
+    expect(mocks.prisma.client.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "other_client",
+          organizationId: "org_1",
+          clientUserId: "user_client",
+          deletedAt: null
+        }
+      })
+    );
+    expect(mocks.prisma.trainingProgramAssignment.findMany).not.toHaveBeenCalled();
   });
 
   it("creates organization-scoped signed upload URLs for exercise media", async () => {

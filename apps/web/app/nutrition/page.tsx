@@ -1,5 +1,5 @@
-import { NutritionPage } from "@/components/nutrition/nutrition-page";
+import { NutritionRoutePage } from "@/components/nutrition/nutrition-route-page";
 
 export default function NutritionRoute() {
-  return <NutritionPage />;
+  return <NutritionRoutePage />;
 }
