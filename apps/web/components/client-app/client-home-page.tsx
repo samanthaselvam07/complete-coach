@@ -12,6 +12,7 @@ interface ClientMeResponse {
     client: {
       id: string;
       name: string;
+      checkInDay: string;
     };
     trainingAssignments: Array<{
       id: string;
@@ -51,7 +52,7 @@ interface RoadmapItem {
   notes: string;
 }
 
-export function ClientHomePage() {
+export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }: { today?: string } = {}) {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [clientName, setClientName] = useState("");
@@ -59,6 +60,7 @@ export function ClientHomePage() {
   const [mealPlanName, setMealPlanName] = useState("Nutrition plan");
   const [trainingDays, setTrainingDays] = useState(0);
   const [targetCalories, setTargetCalories] = useState(0);
+  const [weeklyCheckInDay, setWeeklyCheckInDay] = useState("Unscheduled");
   const [roadmapPhases, setRoadmapPhases] = useState<RoadmapPhase[]>([]);
 
   useEffect(() => {
@@ -92,6 +94,7 @@ export function ClientHomePage() {
         setMealPlanName(activeMealPlan?.name ?? "Nutrition plan");
         setTrainingDays(countTrainingDays(activeTraining?.snapshot));
         setTargetCalories(activeMealPlan?.targetCalories ?? 0);
+        setWeeklyCheckInDay(payload.data.client.checkInDay ?? "Unscheduled");
         setRoadmapPhases(roadmapResponse.ok && Array.isArray(roadmapPayload?.data) ? roadmapPayload.data : []);
         setLoadState("ready");
       } catch (error) {
@@ -147,13 +150,15 @@ export function ClientHomePage() {
               <TrendingUp aria-hidden="true" className="size-14 text-[#e9e8e7]" />
             </div>
             <Link
-              href="/check-in"
+              href={{ pathname: "/check-in/daily" }}
               className="mt-7 inline-flex h-14 w-full items-center justify-center gap-3 rounded-[1.25rem] bg-gradient-to-br from-[#5f50f0] to-[#3620b8] text-base font-black text-white shadow-[0_20px_45px_rgba(54,32,184,0.24)] transition active:scale-[0.98]"
             >
               Log Daily Check In
               <ArrowRight aria-hidden="true" className="size-5" />
             </Link>
           </section>
+
+          <WeeklyCheckInCard checkInDay={weeklyCheckInDay} today={today} />
 
           <section aria-label="Dashboard modules" className="grid grid-cols-3 gap-3">
             <ClientHomeTile
@@ -189,19 +194,6 @@ export function ClientHomePage() {
             </div>
           </section>
 
-          <section className="rounded-[1.65rem] bg-white p-6 shadow-[0_18px_45px_rgba(27,28,28,0.05)]">
-            <div className="flex items-start gap-4">
-              <div className="flex size-12 flex-none items-center justify-center rounded-2xl bg-[#fff0e6] text-[#f87600]">
-                <CalendarDays aria-hidden="true" className="size-5" />
-              </div>
-              <div>
-                <p className="font-black text-[#1b1c1c]">Weekly check-in</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-[#777584]">
-                  Review progress, training feedback and recovery notes with your coach.
-                </p>
-              </div>
-            </div>
-          </section>
         </div>
       ) : null}
     </ClientMobileShell>
@@ -219,6 +211,28 @@ function ClientHomeStatus({ message, tone = "default" }: { message: string; tone
     >
       {message}
     </div>
+  );
+}
+
+function WeeklyCheckInCard({ checkInDay, today }: { checkInDay: string; today: string }) {
+  const countdown = getWeeklyCheckInCountdown(checkInDay, today);
+
+  return (
+    <section className="rounded-[1.65rem] bg-white p-6 shadow-[0_18px_45px_rgba(27,28,28,0.05)]">
+      <div className="flex items-start gap-4">
+        <div className="flex size-12 flex-none items-center justify-center rounded-2xl bg-[#fff0e6] text-[#f87600]">
+          <CalendarDays aria-hidden="true" className="size-5" />
+        </div>
+        <div>
+          <p className="font-black text-[#1b1c1c]">Weekly check-in</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-[#777584]">
+            {countdown
+              ? `${checkInDay} • ${countdown}`
+              : "Your coach has not assigned a weekly check-in day yet."}
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -248,37 +262,23 @@ function ClientHomeTile({
 }
 
 function ClientCalendarTile({ phaseName, items }: { phaseName: string; items: RoadmapItem[] }) {
-  const weekDays = getDashboardWeekDays();
   const nextItem = items[0] ?? null;
-  const itemDates = new Set(items.map((item) => item.date));
 
   return (
-    <article aria-label="Calendar module" className="rounded-[1.35rem] bg-white p-4 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
+    <Link
+      href={{ pathname: "/calendar" }}
+      aria-label="Open calendar"
+      className="rounded-[1.35rem] bg-white p-4 shadow-[0_18px_45px_rgba(27,28,28,0.06)] transition active:scale-[0.98]"
+    >
       <div className="mb-4 flex size-10 items-center justify-center rounded-2xl bg-[#eaf8f0] text-[#059669]">
         <CalendarDays aria-hidden="true" className="size-5" />
       </div>
       <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#777584]">Calendar</p>
       <p className="mt-2 min-h-10 overflow-hidden text-sm font-black leading-5 text-[#1b1c1c]">{phaseName}</p>
-      <div className="mt-3 grid grid-cols-7 gap-1" aria-label="Client calendar week">
-        {weekDays.map((day) => (
-          <div key={day.date} className="text-center">
-            <p className="text-[8px] font-black uppercase text-[#aaa6a1]">{day.weekday}</p>
-            <div
-              className={cn(
-                "mt-1 flex aspect-square items-center justify-center rounded-lg text-[10px] font-black",
-                day.isToday ? "bg-[#3620b8] text-white" : "bg-[#f5f3f3] text-[#1b1c1c]"
-              )}
-            >
-              {day.day}
-            </div>
-            <span className={cn("mx-auto mt-1 block size-1 rounded-full", itemDates.has(day.date) ? "bg-[#f87600]" : "bg-transparent")} />
-          </div>
-        ))}
-      </div>
-      <p className="mt-3 truncate text-[11px] font-bold leading-4 text-[#777584]">
+      <p className="mt-3 text-[11px] font-bold leading-4 text-[#777584]">
         {nextItem ? `${formatShortDate(nextItem.date)} • ${nextItem.title}` : "No upcoming events"}
       </p>
-    </article>
+    </Link>
   );
 }
 
@@ -302,28 +302,32 @@ function getUpcomingRoadmapItems(phases: RoadmapPhase[]) {
     .slice(0, 5);
 }
 
-function getDashboardWeekDays() {
-  const today = new Date();
-  const start = new Date(today);
-  start.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(start);
-    date.setDate(start.getDate() + index);
-    const value = date.toISOString().slice(0, 10);
-
-    return {
-      date: value,
-      day: date.getDate(),
-      weekday: new Intl.DateTimeFormat("en-AU", { weekday: "narrow" }).format(date),
-      isToday: value === today.toISOString().slice(0, 10)
-    };
-  });
-}
-
 function formatShortDate(value: string) {
   return new Intl.DateTimeFormat("en-AU", {
     day: "numeric",
     month: "short"
   }).format(new Date(`${value}T00:00:00.000Z`));
+}
+
+const weekdayLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function getWeeklyCheckInCountdown(checkInDay: string, today: string) {
+  const targetIndex = weekdayLabels.findIndex((day) => day.toLowerCase() === checkInDay.toLowerCase());
+
+  if (targetIndex < 0) {
+    return null;
+  }
+
+  const todayDate = new Date(`${today}T00:00:00.000Z`);
+  const daysUntil = (targetIndex - todayDate.getUTCDay() + 7) % 7;
+
+  if (daysUntil === 0) {
+    return "due today";
+  }
+
+  if (daysUntil === 1) {
+    return "1 day until check-in";
+  }
+
+  return `${daysUntil} days until check-in`;
 }

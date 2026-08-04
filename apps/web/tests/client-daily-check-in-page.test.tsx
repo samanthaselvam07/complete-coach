@@ -14,7 +14,7 @@ describe("ClientDailyCheckInPage", () => {
         return new Response(
           JSON.stringify({
             data: {
-              client: { id: "client_1", name: "Client One" },
+              client: { id: "client_1", name: "Client One", checkInDay: "Monday" },
               trainingAssignments: [
                 {
                   id: "training_assignment_1",
@@ -69,7 +69,8 @@ describe("ClientDailyCheckInPage", () => {
     expect(screen.getByRole("heading", { name: "Metabolic Priming" })).toBeInTheDocument();
     expect(screen.getByText("Week 5 of 8")).toBeInTheDocument();
     expect(screen.getByText("63% complete")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Start daily check-in" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Start daily check-in" })).toHaveAttribute("href", "/check-in/daily");
+    expect(screen.getByText("Monday • 4 days until check-in")).toBeInTheDocument();
 
     const checkIns = screen.getByRole("heading", { name: "Submitted history" }).closest("section");
     expect(checkIns).not.toBeNull();

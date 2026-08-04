@@ -5,11 +5,15 @@ import {
   ClientActivityLogDomain,
   ClientActivityLogStatus,
   ClientStatus,
+  FormAssignmentStatus,
+  FormSubmissionStatus,
+  FormType,
   MealPlanAssignmentStatus,
   SupplementPlanAssignmentStatus,
   TrainingProgramAssignmentStatus
 } from "@/app/generated/prisma/enums";
 import { GET as getClientCheckIns } from "@/app/api/v1/client/check-ins/route";
+import { GET as getDailyCheckIn, POST as postDailyCheckIn } from "@/app/api/v1/client/daily-check-in/route";
 import { GET as getClientLogs, POST as postClientLog } from "@/app/api/v1/client/logs/route";
 import { GET as getClientMe } from "@/app/api/v1/client/me/route";
 import { GET as getClientRoadmap } from "@/app/api/v1/client/roadmap/route";
@@ -39,7 +43,15 @@ const mocks = vi.hoisted(() => ({
       findMany: vi.fn()
     },
     clientMeasurement: {
-      findMany: vi.fn()
+      findMany: vi.fn(),
+      upsert: vi.fn()
+    },
+    formAssignment: {
+      findFirst: vi.fn(),
+      update: vi.fn()
+    },
+    formSubmission: {
+      create: vi.fn()
     },
     clientRoadmapPhase: {
       findMany: vi.fn()
@@ -50,7 +62,8 @@ const mocks = vi.hoisted(() => ({
     },
     auditLog: {
       create: vi.fn()
-    }
+    },
+    $transaction: vi.fn()
   }
 }));
 
@@ -279,6 +292,34 @@ describe("client app APIs", () => {
       author: { name: "Client One", email: "client@example.com" }
     });
     mocks.prisma.auditLog.create.mockResolvedValue({});
+    mocks.prisma.formAssignment.findFirst.mockResolvedValue(null);
+    mocks.prisma.formAssignment.update.mockResolvedValue({});
+    mocks.prisma.formSubmission.create.mockResolvedValue({
+      id: "submission_daily_1",
+      formId: "form_daily",
+      formVersionId: "form_version_daily",
+      assignmentId: "assignment_daily_1",
+      clientId: "client_1",
+      answersJson: { body_weight: 74.5 },
+      status: FormSubmissionStatus.SUBMITTED,
+      submittedAt: now,
+      reviewedAt: null,
+      createdAt: now,
+      updatedAt: now,
+      client: { firstName: "Client", lastName: "One" },
+      form: { id: "form_daily", name: "Daily Basics", type: FormType.HABIT_TRACKER },
+      formVersion: {
+        id: "form_version_daily",
+        formId: "form_daily",
+        versionNumber: 1,
+        schemaJson: {},
+        uiJson: {},
+        publishedAt: now,
+        createdAt: now
+      }
+    });
+    mocks.prisma.clientMeasurement.upsert.mockResolvedValue({});
+    mocks.prisma.$transaction.mockImplementation(async (callback) => callback(mocks.prisma));
   });
 
   it("returns the signed-in client's organization-scoped profile and assigned plans", async () => {
@@ -455,6 +496,69 @@ describe("client app APIs", () => {
     );
   });
 
+  it("returns the signed-in client's assigned daily check-in form", async () => {
+    mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(dailyAssignmentRecord());
+
+    const response = await getDailyCheckIn();
+    const payload = (await response.json()) as {
+      data: {
+        id: string;
+        formName: string;
+        formVersion: { schema: { title: string } };
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.id).toBe("assignment_daily_1");
+    expect(payload.data.formName).toBe("Daily Basics");
+    expect(payload.data.formVersion.schema.title).toBe("Daily Basics");
+    expect(mocks.prisma.formAssignment.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: "org_1",
+          clientId: "client_1",
+          form: expect.objectContaining({ type: FormType.HABIT_TRACKER })
+        })
+      })
+    );
+  });
+
+  it("submits the signed-in client's reusable daily habit form without completing the assignment", async () => {
+    mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(dailyAssignmentRecord());
+
+    const response = await postDailyCheckIn(
+      new Request("http://test.local/api/v1/client/daily-check-in", {
+        method: "POST",
+        body: JSON.stringify({ answers: { body_weight: 74.5, notes: "Good recovery." } })
+      })
+    );
+    const payload = (await response.json()) as { data: { id: string; answers: { body_weight: number } } };
+
+    expect(response.status).toBe(201);
+    expect(payload.data.id).toBe("submission_daily_1");
+    expect(payload.data.answers.body_weight).toBe(74.5);
+    expect(mocks.prisma.formSubmission.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          clientId: "client_1",
+          submittedByUserId: "user_client",
+          answersJson: { body_weight: 74.5, notes: "Good recovery." }
+        })
+      })
+    );
+    expect(mocks.prisma.formAssignment.update).not.toHaveBeenCalled();
+    expect(mocks.prisma.clientMeasurement.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          clientId: "client_1",
+          metricKey: "body_weight",
+          metricValue: 74.5
+        })
+      })
+    );
+  });
+
   it("returns the signed-in client's roadmap phases from their coach profile", async () => {
     const response = await getClientRoadmap();
     const payload = (await response.json()) as {
@@ -549,3 +653,53 @@ describe("client app APIs", () => {
     );
   });
 });
+
+function dailyAssignmentRecord() {
+  return {
+    id: "assignment_daily_1",
+    organizationId: "org_1",
+    formId: "form_daily",
+    formVersionId: "form_version_daily",
+    clientId: "client_1",
+    status: FormAssignmentStatus.ASSIGNED,
+    dueAt: null,
+    completedAt: null,
+    createdAt: now,
+    updatedAt: now,
+    client: { firstName: "Client", lastName: "One" },
+    form: {
+      id: "form_daily",
+      name: "Daily Basics",
+      type: FormType.HABIT_TRACKER
+    },
+    formVersion: {
+      id: "form_version_daily",
+      formId: "form_daily",
+      versionNumber: 1,
+      schemaJson: {
+        title: "Daily Basics",
+        fields: [
+          {
+            id: "body_weight",
+            type: "number",
+            label: "Bodyweight",
+            required: true,
+            metricKey: "body_weight",
+            metricUnit: "kg",
+            exportPolicy: "metric"
+          },
+          {
+            id: "notes",
+            type: "long-text",
+            label: "Notes",
+            required: false,
+            exportPolicy: "private"
+          }
+        ]
+      },
+      uiJson: {},
+      publishedAt: now,
+      createdAt: now
+    }
+  };
+}

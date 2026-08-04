@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarCheck, Camera, ClipboardCheck, LineChart, TrendingUp } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
@@ -11,6 +12,7 @@ interface ClientMeResponse {
     client: {
       id: string;
       name: string;
+      checkInDay: string;
     };
     trainingAssignments: TrainingAssignment[];
   };
@@ -83,6 +85,7 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [clientName, setClientName] = useState("");
+  const [weeklyCheckInDay, setWeeklyCheckInDay] = useState("Unscheduled");
   const [assignments, setAssignments] = useState<TrainingAssignment[]>([]);
   const [checkIns, setCheckIns] = useState<ClientCheckIn[]>([]);
   const [metrics, setMetrics] = useState<ClientMetricRecord[]>([]);
@@ -109,6 +112,7 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
         }
 
         setClientName(payload.data.client.name);
+        setWeeklyCheckInDay(payload.data.client.checkInDay ?? "Unscheduled");
         setAssignments(payload.data.trainingAssignments);
 
         const [checkInsResponse, metricsResponse] = await Promise.all([
@@ -223,16 +227,23 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
               </p>
             </div>
           </div>
-          <button
-            type="button"
+          <Link
+            href={{ pathname: "/check-in/daily" }}
             className="mt-6 inline-flex h-14 w-full items-center justify-center gap-3 rounded-[1.25rem] bg-gradient-to-br from-[#5f50f0] to-[#3620b8] text-base font-black text-white shadow-[0_20px_45px_rgba(54,32,184,0.24)]"
           >
             <CalendarCheck aria-hidden="true" className="size-5" />
             Start daily check-in
-          </button>
+          </Link>
         </section>
 
-        <WeeklyCheckInsModule checkIns={visibleCheckIns} totalCount={checkIns.length} showAll={showAllCheckIns} onToggleShowAll={() => setShowAllCheckIns((current) => !current)} />
+        <WeeklyCheckInsModule
+          checkInDay={weeklyCheckInDay}
+          today={today}
+          checkIns={visibleCheckIns}
+          totalCount={checkIns.length}
+          showAll={showAllCheckIns}
+          onToggleShowAll={() => setShowAllCheckIns((current) => !current)}
+        />
 
         <ProgressMetricsModule
           metrics={metrics}
@@ -257,22 +268,33 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
 }
 
 function WeeklyCheckInsModule({
+  checkInDay,
+  today,
   checkIns,
   totalCount,
   showAll,
   onToggleShowAll
 }: {
+  checkInDay: string;
+  today: string;
   checkIns: ClientCheckIn[];
   totalCount: number;
   showAll: boolean;
   onToggleShowAll: () => void;
 }) {
+  const countdown = getWeeklyCheckInCountdown(checkInDay, today);
+
   return (
     <section className="rounded-[1.65rem] bg-white p-5 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#777584]">Weekly check-ins</p>
           <h2 className="mt-2 text-xl font-black text-[#1b1c1c]">Submitted history</h2>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#777584]">
+            {countdown
+              ? `${checkInDay} • ${countdown}`
+              : "Your coach has not assigned a weekly check-in day yet."}
+          </p>
         </div>
         {totalCount > 3 ? (
           <button type="button" onClick={onToggleShowAll} className="rounded-full bg-[#f5f3f3] px-4 py-2 text-xs font-black text-[#3620b8]">
@@ -611,6 +633,29 @@ function formatDate(value: string) {
     day: "numeric",
     month: "short"
   }).format(date);
+}
+
+const weekdayLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function getWeeklyCheckInCountdown(checkInDay: string, today: string) {
+  const targetIndex = weekdayLabels.findIndex((day) => day.toLowerCase() === checkInDay.toLowerCase());
+
+  if (targetIndex < 0) {
+    return null;
+  }
+
+  const todayDate = new Date(`${today}T00:00:00.000Z`);
+  const daysUntil = (targetIndex - todayDate.getUTCDay() + 7) % 7;
+
+  if (daysUntil === 0) {
+    return "due today";
+  }
+
+  if (daysUntil === 1) {
+    return "1 day until check-in";
+  }
+
+  return `${daysUntil} days until check-in`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -14,7 +14,7 @@ describe("ClientHomePage", () => {
         return new Response(
           JSON.stringify({
             data: {
-              client: { id: "client_1", name: "Client One" },
+              client: { id: "client_1", name: "Client One", checkInDay: "Monday" },
               trainingAssignments: [
                 {
                   id: "training_assignment_1",
@@ -71,16 +71,19 @@ describe("ClientHomePage", () => {
       });
     }));
 
-    render(<ClientHomePage />);
+    render(<ClientHomePage today="2026-07-30" />);
 
     expect(await screen.findByRole("heading", { name: "Hello, Client" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /log daily check in/i })).toHaveAttribute("href", "/check-in/daily");
+    expect(screen.getByText("Monday • 4 days until check-in")).toBeInTheDocument();
 
     const dashboardGrid = screen.getByRole("region", { name: "Dashboard modules" });
     expect(dashboardGrid).toHaveClass("grid-cols-3");
     expect(within(dashboardGrid).getByText("Workout")).toBeInTheDocument();
     expect(within(dashboardGrid).getByText("Nutrition")).toBeInTheDocument();
-    expect(within(dashboardGrid).getByLabelText("Calendar module")).toBeInTheDocument();
+    expect(within(dashboardGrid).getByRole("link", { name: "Open calendar" })).toHaveAttribute("href", "/calendar");
     expect(within(dashboardGrid).getByText("Hypertrophy Phase")).toBeInTheDocument();
     expect(within(dashboardGrid).getByText(/Weekly coaching sync/)).toBeInTheDocument();
+    expect(within(dashboardGrid).queryByLabelText("Client calendar week")).not.toBeInTheDocument();
   });
 });

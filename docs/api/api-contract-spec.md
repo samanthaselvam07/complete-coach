@@ -90,6 +90,8 @@ Default:
 
 ### Clients
 - `GET /api/v1/client/me`: client-facing endpoint for the authenticated `client` role. Returns the linked client profile, active organization summary, assigned training program snapshots, and assigned meal plan snapshots for the `Client.clientUserId` attached to the signed-in user. This endpoint must only return data for the signed-in client's own organization-scoped `Client` record.
+- `GET /api/v1/client/daily-check-in`: client-facing endpoint for the authenticated `client` role. Returns the signed-in client's current assigned daily form, preferring a published `habit-tracker` assignment before a `check-in` assignment. The response includes the immutable assigned form version schema.
+- `POST /api/v1/client/daily-check-in`: submits answers for the signed-in client's current assigned daily form. Body: `answers`. Habit tracker assignments are reusable and remain assigned after submission; check-in assignments keep the normal one-off assignment completion and check-in creation behavior. Metric fields are extracted into client measurements.
 - `GET /api/v1/client/workout-notes`: client-facing endpoint for the authenticated `client` role. Query: `assignmentName`, `dayName`, optional `limit`. Returns the signed-in client's notes for that assigned workout/day.
 - `POST /api/v1/client/workout-notes`: creates a client-authored workout note as an organization-scoped `ClientNote` so it is visible in the coach-facing client profile notes. Body: `assignmentName`, `dayName`, optional `exerciseName`, and `body`.
 - `GET /api/v1/clients`

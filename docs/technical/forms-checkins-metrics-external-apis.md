@@ -57,6 +57,7 @@ Delivered:
 - `GET /api/v1/form-submissions` and `GET /api/v1/form-submissions/{submission_id}` for persisted submission reads.
 - `GET /api/v1/check-ins`, `GET /api/v1/check-ins/{check_in_id}`, review, complete, and extracted-metrics routes with semantic state transition errors.
 - `GET /api/v1/clients/{client_id}/metrics` with client, metric key, date range, and limit filters.
+- `GET` and `POST /api/v1/client/daily-check-in` expose the signed-in client's assigned daily habit/check-in form to the client app. Habit tracker assignments are reusable daily forms; check-in assignments retain one-off completion semantics.
 - `/clients/check-ins` now prefers persisted API data, opens persisted answers and extracted metrics, and performs review/complete mutations against the API.
 - Integration and component tests cover assignment submission, check-in review/complete transitions, metric extraction/querying, and UI fallback behavior.
 
