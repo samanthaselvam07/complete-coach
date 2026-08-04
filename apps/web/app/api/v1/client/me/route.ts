@@ -19,6 +19,13 @@ export async function GET() {
           deletedAt: null
         },
         include: {
+          profile: {
+            select: {
+              trainingLogTargetDays: true,
+              waterTargetLitres: true,
+              stepTarget: true
+            }
+          },
           primaryCoach: {
             select: {
               name: true,
@@ -81,6 +88,16 @@ export async function GET() {
         name: actor.organizationName
       },
       client: serializeClient(client),
+      profile: client.profile
+        ? {
+            trainingLogTargetDays: client.profile.trainingLogTargetDays,
+            waterTargetLitres:
+              client.profile.waterTargetLitres === null || client.profile.waterTargetLitres === undefined
+                ? null
+                : Number(client.profile.waterTargetLitres),
+            stepTarget: client.profile.stepTarget
+          }
+        : null,
       trainingAssignments: trainingAssignments.map(serializeTrainingAssignment),
       mealPlanAssignments: mealPlanAssignments.map(serializeMealPlanAssignment),
       supplementPlanAssignments: supplementPlanAssignments.map(serializeSupplementAssignment)

@@ -66,6 +66,7 @@ interface ApiClientProfile {
   dateOfBirth?: string | null;
   waterTargetLitres?: number | string | null;
   stepTarget?: number | null;
+  trainingLogTargetDays?: number | null;
 }
 
 interface ApiMetric {
@@ -714,6 +715,7 @@ function createProfileFromSummary(
     age: getAge(profile?.dateOfBirth),
     waterTargetLitres: normalizeNullableNumber(profile?.waterTargetLitres),
     stepTarget: profile?.stepTarget ?? null,
+    trainingLogTargetDays: profile?.trainingLogTargetDays ?? null,
     weeksWithCoach: 0,
     protocol: profile?.goals?.[0] ?? "Unassigned",
     bio: profile?.bio ?? "Profile details are ready for persistence-backed coaching notes.",
@@ -1454,13 +1456,13 @@ function LogsPanel({
   const [summary, setSummary] = useState<ClientActivityLogSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [trainingTargetDays, setTrainingTargetDays] = useState(client.trainingLogTargetDays ?? 7);
+  const [savingTrainingTarget, setSavingTrainingTarget] = useState(false);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadLogs() {
+  const refreshLogs = useCallback(
+    async (isActive: () => boolean = () => true) => {
       setLoading(true);
       setError(null);
 
@@ -1473,29 +1475,34 @@ function LogsPanel({
 
         const payload = (await response.json()) as { data?: { logs: ClientActivityLog[]; summary: ClientActivityLogSummary } };
 
-        if (active && payload.data) {
+        if (isActive() && payload.data) {
           setLogs(payload.data.logs);
           setSummary(payload.data.summary);
           setNoteDrafts(createLogNoteDrafts(payload.data.logs));
           onComplianceScoreChange(payload.data.summary.complianceScore);
         }
       } catch {
-        if (active) {
+        if (isActive()) {
           setError("Client logs could not be loaded.");
         }
       } finally {
-        if (active) {
+        if (isActive()) {
           setLoading(false);
         }
       }
-    }
+    },
+    [client.id, onComplianceScoreChange]
+  );
 
-    void loadLogs();
+  useEffect(() => {
+    let active = true;
+
+    void Promise.resolve().then(() => refreshLogs(() => active));
 
     return () => {
       active = false;
     };
-  }, [client.id, onComplianceScoreChange]);
+  }, [refreshLogs]);
 
   const dates = summary ? getDateRangeLabels(summary.dateFrom, summary.dateTo) : getDateRangeLabelsFromToday(7);
 
@@ -1534,10 +1541,33 @@ function LogsPanel({
     }
   };
 
+  const saveTrainingTarget = async () => {
+    setSavingTrainingTarget(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/v1/clients/${client.id}/profile`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trainingLogTargetDays: trainingTargetDays })
+      });
+
+      if (!response.ok) {
+        throw new Error("Training target could not be saved.");
+      }
+
+      await refreshLogs();
+    } catch {
+      setError("Training days per week could not be saved.");
+    } finally {
+      setSavingTrainingTarget(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {error ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p> : null}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
           <p className="text-xs font-black uppercase text-slate-500">7-day compliance</p>
           <p className="mt-3 text-3xl font-black text-slate-950">{summary?.complianceScore ?? client.compliance}%</p>
@@ -1558,6 +1588,30 @@ function LogsPanel({
             </div>
           );
         })}
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <label htmlFor="training-target-days" className="text-xs font-black uppercase text-slate-500">Training target</label>
+          <div className="mt-3 flex items-center gap-2">
+            <select
+              id="training-target-days"
+              value={trainingTargetDays}
+              className="h-10 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900"
+              onChange={(event) => setTrainingTargetDays(Number(event.target.value))}
+            >
+              {Array.from({ length: 8 }, (_, days) => (
+                <option key={days} value={days}>{days} days</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="h-10 rounded-lg bg-slate-900 px-3 text-sm font-bold text-white disabled:bg-slate-300"
+              disabled={savingTrainingTarget}
+              onClick={() => void saveTrainingTarget()}
+            >
+              Save
+            </button>
+          </div>
+          <p className="mt-2 text-xs font-semibold text-slate-500">Used for weekly training compliance.</p>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">

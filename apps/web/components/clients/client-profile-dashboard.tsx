@@ -482,14 +482,14 @@ function formatMetricDate(value: string) {
 
 export function ClientCalendarPanel({ client, compact = false }: { client: ClientProfile; compact?: boolean }) {
   const clientTimezone = client.timezone || "UTC";
-  const [events, setEvents] = useState<ClientCalendarEvent[]>(() => createInitialCalendarEvents(clientTimezone));
+  const [events, setEvents] = useState<ClientCalendarEvent[]>([]);
   const [windowStart, setWindowStart] = useState(createDateFromDateValue(getTodayDateValue(clientTimezone)));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [draft, setDraft] = useState<CalendarDraft>(() => createCalendarDraft(getTodayDateValue(clientTimezone), getTodayDateValue(clientTimezone), client.protocol));
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [selectionStart, setSelectionStart] = useState<string | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<string | null>(null);
-  const [roadmapPhases, setRoadmapPhases] = useState<RoadmapPhase[]>(() => createInitialRoadmapPhases(client.protocol, clientTimezone));
+  const [roadmapPhases, setRoadmapPhases] = useState<RoadmapPhase[]>([]);
   const visibleDays = useMemo(
     () => Array.from({ length: compact ? 14 : 42 }, (_, index) => addDays(windowStart, index)),
     [compact, windowStart]
@@ -512,7 +512,7 @@ export function ClientCalendarPanel({ client, compact = false }: { client: Clien
         const payload = (await response.json()) as { data?: RoadmapPhase[] };
         const persistedPhases = Array.isArray(payload.data) ? payload.data : [];
 
-        if (active && persistedPhases.length > 0) {
+        if (active) {
           setRoadmapPhases(persistedPhases);
         }
       } catch {
@@ -714,13 +714,13 @@ export function ClientRoadmapPeriodisationPanel({ client }: { client: ClientProf
   const clientTimezone = client.timezone || "UTC";
   const currentYear = Number(getTodayDateValue(clientTimezone).slice(0, 4));
   const [roadmapYear, setRoadmapYear] = useState(currentYear);
-  const [phases, setPhases] = useState<RoadmapPhase[]>(() => createInitialRoadmapPhases(client.protocol, clientTimezone));
-  const [events, setEvents] = useState<RoadmapEvent[]>(() => createInitialRoadmapEvents(clientTimezone));
+  const [phases, setPhases] = useState<RoadmapPhase[]>([]);
+  const [events, setEvents] = useState<RoadmapEvent[]>([]);
   const [phaseDialogOpen, setPhaseDialogOpen] = useState(false);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [phaseDraft, setPhaseDraft] = useState<RoadmapPhaseDraft>(() => createRoadmapPhaseDraft(clientTimezone));
-  const [eventDraft, setEventDraft] = useState<RoadmapEventDraft>(() => createRoadmapEventDraft("phase_active", clientTimezone));
-  const [expandedPhaseIds, setExpandedPhaseIds] = useState<string[]>(["phase_active"]);
+  const [eventDraft, setEventDraft] = useState<RoadmapEventDraft>(() => createRoadmapEventDraft("", clientTimezone));
+  const [expandedPhaseIds, setExpandedPhaseIds] = useState<string[]>([]);
   const [roadmapError, setRoadmapError] = useState<string | null>(null);
   const months = useMemo(() => Array.from({ length: 12 }, (_, monthIndex) => new Date(roadmapYear, monthIndex, 1)), [roadmapYear]);
   const visiblePhases = phases.filter((phase) => isRoadmapPhaseInYear(phase, roadmapYear));
@@ -745,14 +745,14 @@ export function ClientRoadmapPeriodisationPanel({ client }: { client: ClientProf
         const payload = (await response.json()) as { data?: RoadmapPhase[] };
         const persistedPhases = Array.isArray(payload.data) ? payload.data : [];
 
-        if (active && persistedPhases.length > 0) {
+        if (active) {
           setPhases(persistedPhases);
           setEvents(persistedPhases.flatMap((phase) => phase.items ?? []));
           setExpandedPhaseIds(persistedPhases.filter((phase) => getRoadmapPhaseStatusForTimezone(phase, clientTimezone) === "active").map((phase) => phase.id));
         }
       } catch {
         if (active) {
-          setRoadmapError("Roadmap could not be loaded. Starter phases are shown until the connection recovers.");
+          setRoadmapError("Roadmap could not be loaded. Please try again.");
         }
       }
     }
@@ -1282,89 +1282,6 @@ function CalendarTextarea({ label, value, onChange }: { label: string; value: st
       />
     </label>
   );
-}
-
-function createInitialCalendarEvents(timezone = "UTC"): ClientCalendarEvent[] {
-  const today = createDateFromDateValue(getTodayDateValue(timezone));
-
-  return [
-    createCalendarEvent("Training block", "strength", toDateValue(addDays(today, 1)), toDateValue(addDays(today, 1))),
-    createCalendarEvent("Check-in call", "video-call", toDateValue(addDays(today, 3)), toDateValue(addDays(today, 3)), false, "10:00"),
-    createCalendarEvent("Recovery day", "rest", toDateValue(addDays(today, 5)), toDateValue(addDays(today, 5))),
-    createCalendarEvent("Phase review", "phase", toDateValue(addDays(today, 9)), toDateValue(addDays(today, 12)))
-  ];
-}
-
-function createCalendarEvent(title: string, type: ClientCalendarEventType, startDate: string, endDate: string, allDay = true, time = ""): ClientCalendarEvent {
-  return {
-    id: `${type}_${startDate}_${title}`,
-    title,
-    type,
-    startDate,
-    endDate,
-    allDay,
-    time,
-    recurring: false,
-    recurrenceCount: "",
-    recurrenceEndsOn: "",
-    recurrenceDays: [],
-    goal: "",
-    notes: "",
-    meetingUrl: "",
-    roadmapPhaseId: ""
-  };
-}
-
-function createInitialRoadmapPhases(activePhaseName: string, timezone = "UTC"): RoadmapPhase[] {
-  const today = createDateFromDateValue(getTodayDateValue(timezone));
-  const year = today.getFullYear();
-
-  return [
-    {
-      id: "phase_completed",
-      name: "Foundation Block",
-      startDate: toDateValue(new Date(year, 0, 1)),
-      endDate: toDateValue(addDays(today, -31)),
-      status: "completed"
-    },
-    {
-      id: "phase_active",
-      name: activePhaseName === "Unassigned" ? "Current Coaching Phase" : activePhaseName,
-      startDate: toDateValue(addDays(today, -30)),
-      endDate: toDateValue(addDays(today, 60)),
-      status: "active"
-    },
-    {
-      id: "phase_planned",
-      name: "Performance Build",
-      startDate: toDateValue(addDays(today, 61)),
-      endDate: toDateValue(new Date(year, 11, 31)),
-      status: "planned"
-    }
-  ];
-}
-
-function createInitialRoadmapEvents(timezone = "UTC"): RoadmapEvent[] {
-  const today = createDateFromDateValue(getTodayDateValue(timezone));
-
-  return [
-    {
-      id: "roadmap_event_check_in",
-      phaseId: "phase_active",
-      title: "Phase review",
-      type: "event",
-      date: toDateValue(addDays(today, 14)),
-      notes: "Review adherence, recovery, and progression before the next training block."
-    },
-    {
-      id: "roadmap_event_milestone",
-      phaseId: "phase_active",
-      title: "Progress milestone",
-      type: "milestone",
-      date: toDateValue(addDays(today, 42)),
-      notes: "Compare bodyweight, waist, photos, and client feedback."
-    }
-  ];
 }
 
 function createRoadmapPhaseDraft(timezone = "UTC"): RoadmapPhaseDraft {

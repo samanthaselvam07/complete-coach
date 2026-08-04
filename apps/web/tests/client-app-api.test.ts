@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   CheckInStatus,
+  ClientActivityLogDomain,
+  ClientActivityLogStatus,
   ClientStatus,
   MealPlanAssignmentStatus,
   SupplementPlanAssignmentStatus,
   TrainingProgramAssignmentStatus
 } from "@/app/generated/prisma/enums";
 import { GET as getClientCheckIns } from "@/app/api/v1/client/check-ins/route";
+import { GET as getClientLogs, POST as postClientLog } from "@/app/api/v1/client/logs/route";
 import { GET as getClientMe } from "@/app/api/v1/client/me/route";
 import { GET as getClientRoadmap } from "@/app/api/v1/client/roadmap/route";
 import { GET as getWorkoutNotes, POST as postWorkoutNote } from "@/app/api/v1/client/workout-notes/route";
@@ -16,7 +19,8 @@ const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
   prisma: {
     client: {
-      findFirstOrThrow: vi.fn()
+      findFirstOrThrow: vi.fn(),
+      update: vi.fn()
     },
     mealPlanAssignment: {
       findMany: vi.fn()
@@ -39,6 +43,10 @@ const mocks = vi.hoisted(() => ({
     },
     clientRoadmapPhase: {
       findMany: vi.fn()
+    },
+    clientActivityLog: {
+      findMany: vi.fn(),
+      upsert: vi.fn()
     },
     auditLog: {
       create: vi.fn()
@@ -88,6 +96,11 @@ describe("client app APIs", () => {
       primaryCoach: {
         name: "Sam Coach",
         email: "sam@example.com"
+      },
+      profile: {
+        trainingLogTargetDays: 4,
+        waterTargetLitres: 3,
+        stepTarget: 10000
       }
     });
     mocks.prisma.trainingProgramAssignment.findMany.mockResolvedValue([
@@ -246,6 +259,17 @@ describe("client app APIs", () => {
         ]
       }
     ]);
+    mocks.prisma.clientActivityLog.findMany.mockResolvedValue([]);
+    mocks.prisma.clientActivityLog.upsert.mockResolvedValue({
+      id: "log_1",
+      domain: ClientActivityLogDomain.TRAINING,
+      logDate: new Date("2026-07-29T00:00:00.000Z"),
+      status: ClientActivityLogStatus.COMPLETED,
+      notes: "Lower session completed.",
+      createdAt: now,
+      updatedAt: now
+    });
+    mocks.prisma.client.update.mockResolvedValue({ id: "client_1", compliance: 6 });
     mocks.prisma.clientNote.create.mockResolvedValue({
       id: "workout_note_1",
       clientId: "client_1",
@@ -263,6 +287,7 @@ describe("client app APIs", () => {
       data: {
         organization: { id: string };
         client: { id: string; name: string };
+        profile: { trainingLogTargetDays: number | null };
         trainingAssignments: Array<{ id: string }>;
         mealPlanAssignments: Array<{ id: string }>;
         supplementPlanAssignments: Array<{ id: string }>;
@@ -272,6 +297,7 @@ describe("client app APIs", () => {
     expect(response.status).toBe(200);
     expect(payload.data.organization.id).toBe("org_1");
     expect(payload.data.client).toMatchObject({ id: "client_1", name: "Client One" });
+    expect(payload.data.profile.trainingLogTargetDays).toBe(4);
     expect(payload.data.trainingAssignments).toHaveLength(1);
     expect(payload.data.mealPlanAssignments).toHaveLength(1);
     expect(payload.data.supplementPlanAssignments).toHaveLength(1);
@@ -293,6 +319,93 @@ describe("client app APIs", () => {
     expect(mocks.prisma.supplementPlanAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { organizationId: "org_1", clientId: "client_1" }
+      })
+    );
+  });
+
+  it("lets the signed-in client upsert their own activity log and updates compliance", async () => {
+    mocks.prisma.clientActivityLog.findMany.mockResolvedValue([
+      {
+        id: "log_1",
+        domain: ClientActivityLogDomain.TRAINING,
+        logDate: new Date("2026-07-29T00:00:00.000Z"),
+        status: ClientActivityLogStatus.COMPLETED,
+        notes: "Lower session completed.",
+        createdAt: now,
+        updatedAt: now
+      }
+    ]);
+
+    const response = await postClientLog(
+      new Request("http://test.local/api/v1/client/logs", {
+        method: "POST",
+        body: JSON.stringify({
+          domain: "training",
+          logDate: "2026-07-29",
+          status: "completed",
+          notes: "Lower session completed."
+        })
+      })
+    );
+    const payload = (await response.json()) as { data: { summary: { possibleLogs: number; complianceScore: number } } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.summary).toMatchObject({
+      possibleLogs: 18,
+      complianceScore: 6
+    });
+    expect(mocks.prisma.clientActivityLog.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId_clientId_domain_logDate: {
+            organizationId: "org_1",
+            clientId: "client_1",
+            domain: ClientActivityLogDomain.TRAINING,
+            logDate: new Date("2026-07-29T00:00:00.000Z")
+          }
+        },
+        create: expect.objectContaining({
+          organizationId: "org_1",
+          clientId: "client_1",
+          sourceType: "client_app",
+          sourceId: "user_client"
+        })
+      })
+    );
+    expect(mocks.prisma.client.update).toHaveBeenCalledWith({
+      where: { id: "client_1", organizationId: "org_1" },
+      data: { compliance: 6 }
+    });
+  });
+
+  it("returns client activity logs using the coach-set training target", async () => {
+    mocks.prisma.clientActivityLog.findMany.mockResolvedValue([
+      {
+        id: "log_1",
+        domain: ClientActivityLogDomain.TRAINING,
+        logDate: new Date("2026-07-29T00:00:00.000Z"),
+        status: ClientActivityLogStatus.COMPLETED,
+        notes: null,
+        createdAt: now,
+        updatedAt: now
+      }
+    ]);
+
+    const response = await getClientLogs(new Request("http://test.local/api/v1/client/logs?days=7"));
+    const payload = (await response.json()) as { data: { summary: { possibleLogs: number; complianceScore: number } } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.summary).toMatchObject({
+      possibleLogs: 18,
+      complianceScore: 6
+    });
+    expect(mocks.prisma.clientActivityLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId: "org_1",
+          clientId: "client_1",
+          logDate: expect.any(Object)
+        }
       })
     );
   });

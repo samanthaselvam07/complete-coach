@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
-import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
-import { requireActiveActor } from "@/lib/auth/session-guards";
+import { dataResponse, handleApiError } from "@/lib/api/responses";
+import { requireActiveClientActor } from "@/lib/auth/session-guards";
 import {
   buildClientActivityLogSummary,
   clientActivityLogsQuerySchema,
@@ -11,24 +11,18 @@ import {
   toPrismaClientActivityLogStatus,
   upsertClientActivityLogSchema
 } from "@/lib/clients/client-activity-logs";
-import { canViewAllClientNotes } from "@/lib/clients/client-notes";
 import { prisma } from "@/lib/db/prisma";
 
-interface ClientActivityLogsRouteContext {
-  params: Promise<{ clientId: string }>;
-}
-
-export async function GET(request: Request, context: ClientActivityLogsRouteContext) {
+export async function GET(request: Request) {
   try {
-    const actor = requireActiveActor(await auth(), "clients:read");
-    const { clientId } = await context.params;
+    const actor = requireActiveClientActor(await auth());
     const query = clientActivityLogsQuerySchema.parse(Object.fromEntries(new URL(request.url).searchParams));
-    const client = await prisma.client.findFirst({
+    const client = await prisma.client.findFirstOrThrow({
       where: {
-        id: clientId,
+        id: actor.clientId,
         organizationId: actor.organizationId,
-        deletedAt: null,
-        ...(canViewAllClientNotes(actor.role) ? {} : { primaryCoachUserId: actor.userId })
+        clientUserId: actor.userId,
+        deletedAt: null
       },
       select: {
         id: true,
@@ -39,16 +33,11 @@ export async function GET(request: Request, context: ClientActivityLogsRouteCont
         }
       }
     });
-
-    if (!client) {
-      return errorResponse("not_found", "Client not found.", 404);
-    }
-
     const { dateFrom, dateTo } = getClientActivityLogDateRange(query);
     const logs = await prisma.clientActivityLog.findMany({
       where: {
         organizationId: actor.organizationId,
-        clientId,
+        clientId: actor.clientId,
         logDate: {
           gte: dateFrom,
           lte: dateTo
@@ -68,17 +57,16 @@ export async function GET(request: Request, context: ClientActivityLogsRouteCont
   }
 }
 
-export async function POST(request: Request, context: ClientActivityLogsRouteContext) {
+export async function POST(request: Request) {
   try {
-    const actor = requireActiveActor(await auth(), "clients:write");
-    const { clientId } = await context.params;
+    const actor = requireActiveClientActor(await auth());
     const input = upsertClientActivityLogSchema.parse(await request.json());
-    const client = await prisma.client.findFirst({
+    const client = await prisma.client.findFirstOrThrow({
       where: {
-        id: clientId,
+        id: actor.clientId,
         organizationId: actor.organizationId,
-        deletedAt: null,
-        ...(canViewAllClientNotes(actor.role) ? {} : { primaryCoachUserId: actor.userId })
+        clientUserId: actor.userId,
+        deletedAt: null
       },
       select: {
         id: true,
@@ -89,11 +77,6 @@ export async function POST(request: Request, context: ClientActivityLogsRouteCon
         }
       }
     });
-
-    if (!client) {
-      return errorResponse("not_found", "Client not found.", 404);
-    }
-
     const domain = toPrismaClientActivityLogDomain(input.domain);
     const status = toPrismaClientActivityLogStatus(input.status);
     const logDate = toDateOnly(input.logDate);
@@ -101,30 +84,33 @@ export async function POST(request: Request, context: ClientActivityLogsRouteCon
       where: {
         organizationId_clientId_domain_logDate: {
           organizationId: actor.organizationId,
-          clientId,
+          clientId: actor.clientId,
           domain,
           logDate
         }
       },
       create: {
         organizationId: actor.organizationId,
-        clientId,
+        clientId: actor.clientId,
         domain,
         logDate,
         status,
+        sourceType: "client_app",
+        sourceId: actor.userId,
         notes: input.notes ?? null
       },
       update: {
         status,
+        sourceType: "client_app",
+        sourceId: actor.userId,
         notes: input.notes ?? null
       }
     });
-
     const { dateFrom, dateTo } = getClientActivityLogDateRange({ days: 7 });
     const logs = await prisma.clientActivityLog.findMany({
       where: {
         organizationId: actor.organizationId,
-        clientId,
+        clientId: actor.clientId,
         logDate: {
           gte: dateFrom,
           lte: dateTo
@@ -137,23 +123,8 @@ export async function POST(request: Request, context: ClientActivityLogsRouteCon
     });
 
     await prisma.client.update({
-      where: { id: clientId, organizationId: actor.organizationId },
+      where: { id: actor.clientId, organizationId: actor.organizationId },
       data: { compliance: summary.complianceScore }
-    });
-
-    await prisma.auditLog.create({
-      data: {
-        organizationId: actor.organizationId,
-        actorUserId: actor.userId,
-        action: "client.activity_log_upserted",
-        targetType: "client",
-        targetId: clientId,
-        metadata: {
-          domain: input.domain,
-          logDate: input.logDate,
-          status: input.status
-        }
-      }
     });
 
     return dataResponse({

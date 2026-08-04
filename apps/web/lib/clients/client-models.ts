@@ -26,6 +26,7 @@ export interface ClientProfile extends ClientSummary {
   age: number;
   waterTargetLitres?: number | null;
   stepTarget?: number | null;
+  trainingLogTargetDays?: number | null;
   weeksWithCoach: number;
   protocol: string;
   bio: string;

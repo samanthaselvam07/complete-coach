@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ClientActivityLogDomain, ClientActivityLogStatus } from "@/app/generated/prisma/enums";
+import type { FormDefinition } from "@/lib/forms/schema";
 
 export const clientActivityLogDomainValues = ["training", "nutrition", "supplementation"] as const;
 export const clientActivityLogStatusValues = ["completed", "missed"] as const;
@@ -45,6 +46,17 @@ export const upsertClientActivityLogSchema = z.object({
 
 export type ClientActivityLogsQuery = z.infer<typeof clientActivityLogsQuerySchema>;
 export type UpsertClientActivityLogInput = z.infer<typeof upsertClientActivityLogSchema>;
+
+interface ClientActivityLogSummaryOptions {
+  trainingLogTargetDays?: number | null;
+}
+
+export interface InferredClientActivityLog {
+  domain: ApiClientActivityLogDomain;
+  logDate: Date;
+  status: ApiClientActivityLogStatus;
+  notes: string | null;
+}
 
 export interface ClientActivityLogRecord {
   id: string;
@@ -91,10 +103,23 @@ export function serializeClientActivityLog(record: ClientActivityLogRecord) {
   };
 }
 
-export function buildClientActivityLogSummary(records: ClientActivityLogRecord[], dateFrom: Date, dateTo: Date) {
+export function buildClientActivityLogSummary(
+  records: ClientActivityLogRecord[],
+  dateFrom: Date,
+  dateTo: Date,
+  options: ClientActivityLogSummaryOptions = {}
+) {
   const days = getInclusiveDayCount(dateFrom, dateTo);
-  const possibleLogs = days * clientActivityLogDomainValues.length;
-  const completedLogs = records.filter((record) => record.status === ClientActivityLogStatus.COMPLETED).length;
+  const possibleLogsByDomain = getPossibleLogsByDomain(days, options.trainingLogTargetDays);
+  const possibleLogs = clientActivityLogDomainValues.reduce((total, domain) => total + possibleLogsByDomain[domain], 0);
+  const completedLogs = clientActivityLogDomainValues.reduce((total, domain) => {
+    const prismaDomain = domainToPrisma[domain];
+    const domainCompletedLogs = records.filter(
+      (record) => record.domain === prismaDomain && record.status === ClientActivityLogStatus.COMPLETED
+    ).length;
+
+    return total + Math.min(domainCompletedLogs, possibleLogsByDomain[domain]);
+  }, 0);
   const complianceScore = possibleLogs > 0 ? Math.round((completedLogs / possibleLogs) * 100) : 0;
 
   return {
@@ -106,18 +131,128 @@ export function buildClientActivityLogSummary(records: ClientActivityLogRecord[]
     complianceScore,
     byDomain: clientActivityLogDomainValues.map((domain) => {
       const prismaDomain = domainToPrisma[domain];
+      const domainPossibleLogs = possibleLogsByDomain[domain];
       const domainCompletedLogs = records.filter(
         (record) => record.domain === prismaDomain && record.status === ClientActivityLogStatus.COMPLETED
       ).length;
+      const cappedCompletedLogs = Math.min(domainCompletedLogs, domainPossibleLogs);
 
       return {
         domain,
-        completedLogs: domainCompletedLogs,
-        possibleLogs: days,
-        complianceScore: days > 0 ? Math.round((domainCompletedLogs / days) * 100) : 0
+        completedLogs: cappedCompletedLogs,
+        possibleLogs: domainPossibleLogs,
+        complianceScore: domainPossibleLogs > 0 ? Math.round((cappedCompletedLogs / domainPossibleLogs) * 100) : 0
       };
     })
   };
+}
+
+export function inferClientActivityLogsFromSubmission({
+  answers,
+  definition,
+  submittedAt
+}: {
+  answers: Record<string, unknown>;
+  definition: FormDefinition;
+  submittedAt: Date;
+}): InferredClientActivityLog[] {
+  const inferredLogs = new Map<ApiClientActivityLogDomain, InferredClientActivityLog>();
+  const logDate = toDateOnly(submittedAt.toISOString().slice(0, 10));
+
+  for (const field of definition.fields) {
+    const answer = answers[field.id];
+    const status = inferLogStatus(answer);
+
+    if (!status) {
+      continue;
+    }
+
+    const domain = inferLogDomain(field.id, field.label);
+
+    if (!domain) {
+      continue;
+    }
+
+    inferredLogs.set(domain, {
+      domain,
+      logDate,
+      status,
+      notes: `${field.label}: ${formatAnswerForLog(answer)}`
+    });
+  }
+
+  return Array.from(inferredLogs.values());
+}
+
+function getPossibleLogsByDomain(days: number, trainingLogTargetDays?: number | null) {
+  const normalizedTrainingTarget = normalizeTrainingLogTargetDays(trainingLogTargetDays);
+  const trainingPossibleLogs = Math.min(days, Math.max(0, Math.round((days / 7) * normalizedTrainingTarget)));
+
+  return {
+    training: trainingPossibleLogs,
+    nutrition: days,
+    supplementation: days
+  } satisfies Record<ApiClientActivityLogDomain, number>;
+}
+
+export function normalizeTrainingLogTargetDays(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return 7;
+  }
+
+  return Math.min(7, Math.max(0, Math.round(value)));
+}
+
+function inferLogDomain(fieldId: string, label: string): ApiClientActivityLogDomain | null {
+  const haystack = `${fieldId} ${label}`.toLowerCase();
+
+  if (/\b(supplement|supplements|supplementation)\b/.test(haystack)) {
+    return "supplementation";
+  }
+
+  if (/\b(training|train|trained|workout|session|sessions)\b/.test(haystack)) {
+    return "training";
+  }
+
+  if (/\b(nutrition|meal|meals|macro|macros|calorie|calories|protein)\b/.test(haystack)) {
+    return "nutrition";
+  }
+
+  return null;
+}
+
+function inferLogStatus(answer: unknown): ApiClientActivityLogStatus | null {
+  if (typeof answer === "boolean") {
+    return answer ? "completed" : "missed";
+  }
+
+  if (typeof answer !== "string") {
+    return null;
+  }
+
+  const normalized = answer.trim().toLowerCase();
+
+  if (["yes", "y", "true", "completed", "complete", "done", "hit", "adherent"].includes(normalized)) {
+    return "completed";
+  }
+
+  if (["no", "n", "false", "missed", "incomplete", "not completed", "did not complete"].includes(normalized)) {
+    return "missed";
+  }
+
+  return null;
+}
+
+function formatAnswerForLog(answer: unknown) {
+  if (typeof answer === "string") {
+    return answer.trim();
+  }
+
+  if (typeof answer === "boolean") {
+    return answer ? "Yes" : "No";
+  }
+
+  return String(answer);
 }
 
 export function toDateOnly(value: string) {

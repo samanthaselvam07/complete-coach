@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   CheckInStatus,
+  ClientActivityLogDomain,
+  ClientActivityLogStatus,
   FormAssignmentStatus,
   FormSubmissionStatus,
   FormType,
@@ -33,7 +35,7 @@ const mocks = vi.hoisted(() => ({
   prisma: {
     $transaction: vi.fn(),
     auditLog: { create: vi.fn() },
-    client: { findFirst: vi.fn() },
+    client: { findFirst: vi.fn(), update: vi.fn() },
     formAssignment: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -61,6 +63,10 @@ const mocks = vi.hoisted(() => ({
     },
     clientMeasurement: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
+      upsert: vi.fn()
+    },
+    clientActivityLog: {
       findMany: vi.fn(),
       upsert: vi.fn()
     }
@@ -158,7 +164,10 @@ const assignmentRecord = {
   client: {
     id: "client_1",
     firstName: "Api",
-    lastName: "Client"
+    lastName: "Client",
+    profile: {
+      trainingLogTargetDays: 4
+    }
   }
 };
 
@@ -211,6 +220,7 @@ describe("submissions, check-ins, and metrics APIs", () => {
     mocks.prisma.$transaction.mockImplementation(async (callback) => callback(mocks.prisma));
     mocks.prisma.auditLog.create.mockReset();
     mocks.prisma.client.findFirst.mockReset();
+    mocks.prisma.client.update.mockReset();
     mocks.prisma.formAssignment.findMany.mockReset();
     mocks.prisma.formAssignment.findFirst.mockReset();
     mocks.prisma.formAssignment.update.mockReset();
@@ -229,6 +239,8 @@ describe("submissions, check-ins, and metrics APIs", () => {
     mocks.prisma.clientMeasurement.findFirst.mockReset();
     mocks.prisma.clientMeasurement.findMany.mockReset();
     mocks.prisma.clientMeasurement.upsert.mockReset();
+    mocks.prisma.clientActivityLog.findMany.mockReset();
+    mocks.prisma.clientActivityLog.upsert.mockReset();
   });
 
   it("lists tenant-scoped form assignments", async () => {
@@ -375,6 +387,110 @@ describe("submissions, check-ins, and metrics APIs", () => {
         }
       })
     );
+  });
+
+  it("automatically upserts activity logs from clear client habit answers", async () => {
+    const habitAssignment = {
+      ...assignmentRecord,
+      form: {
+        ...assignmentRecord.form,
+        name: "Daily Habits"
+      },
+      formVersion: {
+        ...assignmentRecord.formVersion,
+        schemaJson: {
+          title: "Daily Habits",
+          fields: [
+            { id: "habit-training", type: "radio-buttons", label: "Did you complete training today?", required: false, options: ["Yes", "No"] },
+            { id: "habit-calorie-target", type: "radio-buttons", label: "Did you hit your calorie or macro target?", required: false, options: ["Yes", "No"] },
+            { id: "habit-supplements", type: "radio-buttons", label: "Did you take your supplements?", required: false, options: ["Yes", "No"] }
+          ]
+        }
+      }
+    };
+
+    mocks.prisma.formAssignment.findFirst.mockResolvedValue(habitAssignment);
+    mocks.prisma.formSubmission.create.mockResolvedValue({
+      ...submissionRecord,
+      answersJson: {
+        "habit-training": "Yes",
+        "habit-calorie-target": "No",
+        "habit-supplements": "Yes"
+      }
+    });
+    mocks.prisma.formAssignment.update.mockResolvedValue({ ...habitAssignment, status: FormAssignmentStatus.SUBMITTED });
+    mocks.prisma.checkIn.create.mockResolvedValue(checkInRecord);
+    mocks.prisma.clientActivityLog.upsert.mockResolvedValue({});
+    mocks.prisma.clientActivityLog.findMany.mockResolvedValue([
+      {
+        id: "log_1",
+        domain: ClientActivityLogDomain.TRAINING,
+        logDate: new Date("2026-05-14T00:00:00.000Z"),
+        status: ClientActivityLogStatus.COMPLETED,
+        notes: null,
+        createdAt: new Date("2026-05-14T06:00:00.000Z"),
+        updatedAt: new Date("2026-05-14T06:00:00.000Z")
+      },
+      {
+        id: "log_2",
+        domain: ClientActivityLogDomain.NUTRITION,
+        logDate: new Date("2026-05-14T00:00:00.000Z"),
+        status: ClientActivityLogStatus.MISSED,
+        notes: null,
+        createdAt: new Date("2026-05-14T06:00:00.000Z"),
+        updatedAt: new Date("2026-05-14T06:00:00.000Z")
+      },
+      {
+        id: "log_3",
+        domain: ClientActivityLogDomain.SUPPLEMENTATION,
+        logDate: new Date("2026-05-14T00:00:00.000Z"),
+        status: ClientActivityLogStatus.COMPLETED,
+        notes: null,
+        createdAt: new Date("2026-05-14T06:00:00.000Z"),
+        updatedAt: new Date("2026-05-14T06:00:00.000Z")
+      }
+    ]);
+    mocks.prisma.client.update.mockResolvedValue({ id: "client_1", compliance: 12 });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await submitAssignment(
+      new Request("http://test.local/api/v1/form-assignments/assignment_1/submit", {
+        method: "POST",
+        body: JSON.stringify({
+          answers: {
+            "habit-training": "Yes",
+            "habit-calorie-target": "No",
+            "habit-supplements": "Yes"
+          }
+        })
+      }),
+      { params: Promise.resolve({ assignmentId: "assignment_1" }) }
+    );
+
+    expect(response.status).toBe(201);
+    expect(mocks.prisma.clientActivityLog.upsert).toHaveBeenCalledTimes(3);
+    expect(mocks.prisma.clientActivityLog.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          domain: ClientActivityLogDomain.TRAINING,
+          status: ClientActivityLogStatus.COMPLETED,
+          sourceType: "form_submission",
+          sourceId: "submission_1"
+        })
+      })
+    );
+    expect(mocks.prisma.clientActivityLog.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          domain: ClientActivityLogDomain.NUTRITION,
+          status: ClientActivityLogStatus.MISSED
+        })
+      })
+    );
+    expect(mocks.prisma.client.update).toHaveBeenCalledWith({
+      where: { id: "client_1", organizationId: "org_1" },
+      data: { compliance: 11 }
+    });
   });
 
   it("rejects invalid submission answers without writing records", async () => {

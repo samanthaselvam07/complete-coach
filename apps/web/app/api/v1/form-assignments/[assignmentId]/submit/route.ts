@@ -12,6 +12,13 @@ import {
 import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
+import {
+  buildClientActivityLogSummary,
+  getClientActivityLogDateRange,
+  inferClientActivityLogsFromSubmission,
+  toPrismaClientActivityLogDomain,
+  toPrismaClientActivityLogStatus
+} from "@/lib/clients/client-activity-logs";
 import { prisma } from "@/lib/db/prisma";
 import { extractMeasurementsFromSubmission } from "@/lib/forms/metric-extraction";
 import { FormDefinitionSchema, type FormDefinition, type FormFieldDefinition } from "@/lib/forms/schema";
@@ -49,7 +56,11 @@ export async function POST(request: Request, context: SubmitAssignmentRouteConte
         organizationId: actor.organizationId
       },
       include: {
-        client: true,
+        client: {
+          include: {
+            profile: true
+          }
+        },
         form: true,
         formVersion: true
       }
@@ -159,6 +170,66 @@ export async function POST(request: Request, context: SubmitAssignmentRouteConte
         });
       }
 
+      const inferredLogs = inferClientActivityLogsFromSubmission({
+        answers: input.answers,
+        definition,
+        submittedAt
+      });
+
+      for (const inferredLog of inferredLogs) {
+        const domain = toPrismaClientActivityLogDomain(inferredLog.domain);
+
+        await tx.clientActivityLog.upsert({
+          where: {
+            organizationId_clientId_domain_logDate: {
+              organizationId: actor.organizationId,
+              clientId: assignment.clientId,
+              domain,
+              logDate: inferredLog.logDate
+            }
+          },
+          create: {
+            organizationId: actor.organizationId,
+            clientId: assignment.clientId,
+            domain,
+            logDate: inferredLog.logDate,
+            status: toPrismaClientActivityLogStatus(inferredLog.status),
+            sourceType: "form_submission",
+            sourceId: createdSubmission.id,
+            notes: inferredLog.notes
+          },
+          update: {
+            status: toPrismaClientActivityLogStatus(inferredLog.status),
+            sourceType: "form_submission",
+            sourceId: createdSubmission.id,
+            notes: inferredLog.notes
+          }
+        });
+      }
+
+      if (inferredLogs.length > 0) {
+        const { dateFrom, dateTo } = getClientActivityLogDateRange({ days: 7 }, submittedAt);
+        const logs = await tx.clientActivityLog.findMany({
+          where: {
+            organizationId: actor.organizationId,
+            clientId: assignment.clientId,
+            logDate: {
+              gte: dateFrom,
+              lte: dateTo
+            }
+          },
+          orderBy: [{ logDate: "asc" }, { domain: "asc" }]
+        });
+        const summary = buildClientActivityLogSummary(logs, dateFrom, dateTo, {
+          trainingLogTargetDays: assignment.client.profile?.trainingLogTargetDays
+        });
+
+        await tx.client.update({
+          where: { id: assignment.clientId, organizationId: actor.organizationId },
+          data: { compliance: summary.complianceScore }
+        });
+      }
+
       await tx.auditLog.create({
         data: {
           organizationId: actor.organizationId,
@@ -170,7 +241,8 @@ export async function POST(request: Request, context: SubmitAssignmentRouteConte
             formId: assignment.formId,
             formVersionId: assignment.formVersionId,
             assignmentId: assignment.id,
-            extractedMetricCount: measurements.length
+            extractedMetricCount: measurements.length,
+            inferredActivityLogCount: inferredLogs.length
           }
         }
       });

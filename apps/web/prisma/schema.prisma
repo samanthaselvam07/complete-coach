@@ -1160,6 +1160,7 @@ model ClientProfile {
   emergencyContact Json?        @map("emergency_contact")
   waterTargetLitres Decimal?    @map("water_target_litres") @db.Decimal(6, 2)
   stepTarget       Int?         @map("step_target")
+  trainingLogTargetDays Int?    @map("training_log_target_days")
   createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
