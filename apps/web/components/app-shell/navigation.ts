@@ -7,7 +7,6 @@ import {
   FileText,
   LayoutGrid,
   Library,
-  MessageSquare,
   Package,
   Pill,
   Share2,
@@ -65,8 +64,7 @@ export const navigationItems = [
       { href: "/clients", label: "Client Roster", icon: Users },
       { href: "/clients/new", label: "New Client Intake", icon: UserPlus },
       { href: "/clients/check-ins", label: "Check-ins", icon: ClipboardCheck },
-      { href: "/clients/crm", label: "CRM", icon: Share2 },
-      { href: "/messages", label: "Messages", icon: MessageSquare }
+      { href: "/clients/crm", label: "CRM", icon: Share2 }
     ]
   },
   { href: "/forms", label: "Forms", icon: FileText },

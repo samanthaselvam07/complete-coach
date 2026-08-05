@@ -3,7 +3,6 @@ import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AddResourceRoute from "@/app/education/add/page";
 import EducationRoute from "@/app/education/page";
-import MessagesRoute from "@/app/messages/page";
 import OrganizationSettingsRoute from "@/app/organization-settings/page";
 import PackagesRoute from "@/app/packages/page";
 import SocialMediaRoute from "@/app/social-media/page";
@@ -66,7 +65,6 @@ const routeSmokeCases = [
   ["supplement plans", SupplementPlansRoute, "Supplementation Hub"],
   ["supplement protocol builder", SupplementProtocolBuilderRoute, "Create Supplement Protocol"],
   ["supplement database", SupplementDatabaseRoute, "Supplementation Library"],
-  ["messages", MessagesRoute, "Messages"],
   ["organization settings", OrganizationSettingsRoute, "Organisation Settings"],
   ["packages", PackagesRoute, "Package Ecosystem"],
   ["team management", TeamManagementRoute, "Team Management"],

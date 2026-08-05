@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { AuthSessionProvider } from "@/components/auth/auth-session-provider";
-import { MessageMenu } from "./message-menu";
 import { NewClientButton } from "./new-client-button";
 import { NotificationMenu } from "./notification-menu";
 import { SidebarNav } from "./sidebar-nav";
@@ -94,7 +93,6 @@ function DashboardShellContent({ children }: DashboardShellProps) {
           <TopSearch />
           <div className="flex items-center gap-3">
             <NewClientButton />
-            <MessageMenu />
             <NotificationMenu />
             <UserMenu />
           </div>

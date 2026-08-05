@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ChevronLeft, Droplets, Footprints, LineChart, MessageSquare, NotebookPen, Pencil, RefreshCw, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Check, ChevronLeft, Droplets, Footprints, LineChart, NotebookPen, Pencil, RefreshCw, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -369,8 +368,6 @@ export function ClientProfilePage({
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [clientFormError, setClientFormError] = useState<string | null>(null);
   const [savingClient, setSavingClient] = useState(false);
-  const [messageError, setMessageError] = useState<string | null>(null);
-  const router = useRouter();
   const [packageOptions, setPackageOptions] = useState<ClientFormOption[]>([]);
   const [initialQuestionnaireOptions, setInitialQuestionnaireOptions] = useState<ClientFormOption[]>([]);
   const [dailyHabitFormOptions, setDailyHabitFormOptions] = useState<ClientFormOption[]>([]);
@@ -528,36 +525,6 @@ export function ClientProfilePage({
     setSupplementationPlanOptions(supplementationPlans);
   };
 
-  const openClientMessages = async () => {
-    if (!client) {
-      return;
-    }
-
-    setMessageError(null);
-
-    try {
-      const response = await fetch("/api/v1/conversations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId: client.id, title: client.name })
-      });
-
-      if (!response.ok) {
-        throw new Error("Conversation could not be opened.");
-      }
-
-      const payload = (await response.json()) as { data?: { id: string } };
-      const conversationId = payload.data?.id;
-
-      if (!conversationId) {
-        throw new Error("Conversation could not be opened.");
-      }
-
-      router.push(`/messages?conversation=${encodeURIComponent(conversationId)}`);
-    } catch {
-      setMessageError("Client messages could not be opened. Please try again.");
-    }
-  };
   if (!client && loadingClient) {
     return (
       <CompleteCoachLoadingScreen
@@ -596,11 +563,8 @@ export function ClientProfilePage({
         client={client}
         onNoteCreated={(note) => setRecentNotes((currentNotes) => [note, ...currentNotes].slice(0, 3))}
         onEditClient={() => openEditClient(client)}
-        onOpenMessages={() => void openClientMessages()}
         onProfileTargetSaved={(target) => setClient((currentClient) => (currentClient ? { ...currentClient, ...target } : currentClient))}
       />
-
-      {messageError ? <p role="alert" className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{messageError}</p> : null}
 
       <div className="mb-6 w-full rounded-xl border border-gray-200 bg-white p-1">
         <div role="tablist" aria-label="Client profile sections" className="grid grid-cols-2 gap-1 md:grid-cols-4 lg:grid-cols-11">
@@ -1269,13 +1233,11 @@ function ClientProfileHeader({
   client,
   onNoteCreated,
   onEditClient,
-  onOpenMessages,
   onProfileTargetSaved
 }: {
   client: ClientProfile;
   onNoteCreated: (note: ClientNoteSummary) => void;
   onEditClient: () => void;
-  onOpenMessages: () => void;
   onProfileTargetSaved: (target: Pick<ClientProfile, "waterTargetLitres"> | Pick<ClientProfile, "stepTarget">) => void;
 }) {
   const startingWeight = findMetric(client, "Starting Weight")?.value ?? "0";
@@ -1312,15 +1274,6 @@ function ClientProfileHeader({
         </div>
 
         <div className="flex flex-wrap items-start gap-3">
-          <button
-            type="button"
-            aria-label="Open client messages"
-            title="Open client messages"
-            className="inline-flex size-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50"
-            onClick={onOpenMessages}
-          >
-            <MessageSquare className="size-4" aria-hidden="true" />
-          </button>
           <button
             type="button"
             aria-label="Open progress analytics"

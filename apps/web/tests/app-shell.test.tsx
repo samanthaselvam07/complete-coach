@@ -3,7 +3,6 @@ import { createElement } from "react";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardShell } from "@/components/app-shell/dashboard-shell";
-import { MessageMenu } from "@/components/app-shell/message-menu";
 import { NewClientButton } from "@/components/app-shell/new-client-button";
 import { NotificationMenu } from "@/components/app-shell/notification-menu";
 import { SidebarNav } from "@/components/app-shell/sidebar-nav";
@@ -88,11 +87,7 @@ describe("app shell navigation", () => {
       "href",
       "/clients/check-ins"
     );
-    expect(within(nav).getByRole("link", { name: /^messages$/i })).toHaveAttribute(
-      "href",
-      "/messages"
-    );
-    expect(within(nav).queryAllByRole("link", { name: /^messages$/i })).toHaveLength(1);
+    expect(within(nav).queryByRole("link", { name: /^messages$/i })).not.toBeInTheDocument();
 
     fireEvent.click(within(nav).getByRole("button", { name: /expand packages menu/i }));
 
@@ -324,7 +319,7 @@ describe("dashboard shell auth boundary", () => {
     expect(screen.getByRole("searchbox", { name: /search tasks/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Schedule Event / Call" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "New Client" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /messages/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /messages/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /notifications/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /open account menu for demo coach/i }));
     expect(screen.getByText("Complete Coach Demo · owner")).toBeInTheDocument();
@@ -536,78 +531,5 @@ describe("notifications", () => {
     expect(within(menu).getByText("2 minutes ago")).toBeInTheDocument();
     expect(within(menu).getByText("2 hours ago")).toBeInTheDocument();
     expect(within(menu).getByText("2 days ago")).toBeInTheDocument();
-  });
-});
-
-describe("messages menu", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("does not show local conversations when the persistence API is unavailable", () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
-
-    render(createElement(MessageMenu));
-
-    const trigger = screen.getByRole("button", { name: /messages/i });
-    fireEvent.click(trigger);
-
-    const menu = screen.getByRole("region", { name: "Messages" });
-    expect(within(menu).queryByText("Sarah Johnson")).not.toBeInTheDocument();
-    expect(within(menu).queryByText("Thanks for the updated meal plan!")).not.toBeInTheDocument();
-    expect(within(menu).getByRole("link", { name: "Open full inbox" })).toHaveAttribute("href", "/messages");
-  });
-
-  it("closes the messages popup when clicking outside it", () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("API unavailable"));
-    render(createElement(MessageMenu));
-
-    fireEvent.click(screen.getByRole("button", { name: /messages/i }));
-    expect(screen.getByRole("region", { name: "Messages" })).toBeInTheDocument();
-
-    fireEvent.pointerDown(document.body);
-
-    expect(screen.queryByRole("region", { name: "Messages" })).not.toBeInTheDocument();
-  });
-
-  it("loads persisted conversations in the inline messages window", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
-      const url = String(input);
-
-      if (url === "/api/v1/conversations?limit=20") {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              data: [
-                {
-                  id: "conversation_api",
-                  clientName: "Persisted Client",
-                  title: null,
-                  latestMessage: {
-                    id: "message_api",
-                    senderType: "client",
-                    body: "Can you review my check-in?",
-                    createdAt: "2026-06-07T08:00:00.000Z"
-                  },
-                  updatedAt: "2026-06-07T08:00:00.000Z"
-                }
-              ]
-            }),
-            { status: 200 }
-          )
-        );
-      }
-
-      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
-    });
-
-    render(createElement(MessageMenu));
-
-    await waitFor(() => expect(screen.getByRole("button", { name: /messages/i })).toHaveTextContent("1"));
-    fireEvent.click(screen.getByRole("button", { name: /messages/i }));
-
-    const menu = screen.getByRole("region", { name: "Messages" });
-    expect(within(menu).getByText("Persisted Client")).toBeInTheDocument();
-    expect(within(menu).getByText("Can you review my check-in?")).toBeInTheDocument();
   });
 });

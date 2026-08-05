@@ -881,7 +881,7 @@ describe("ClientProfilePage", () => {
     expect(screen.queryByRole("button", { name: "Open Trellis" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Notes" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Message" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open client messages" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Open client messages" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open progress analytics" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add client note" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Set water target" })).toBeInTheDocument();
@@ -1432,7 +1432,7 @@ describe("ClientProfilePage", () => {
     expect(screen.getAllByRole("img", { name: "Progress analytics chart" }).length).toBeGreaterThan(0);
   });
 
-  it("starts or loads the client conversation from the profile message icon", async () => {
+  it("temporarily hides the client conversation action from the profile header", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
 
@@ -1492,18 +1492,9 @@ describe("ClientProfilePage", () => {
     render(createElement(ClientProfilePage, { clientId: "1" }));
 
     await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
-    fireEvent.click(screen.getByRole("button", { name: "Open client messages" }));
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/v1/conversations",
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({ clientId: "1", title: "Marcus Rodriguez" })
-        })
-      );
-    });
-    expect(navigationMocks.push).toHaveBeenCalledWith("/messages?conversation=conversation_marcus");
+    expect(screen.queryByRole("button", { name: "Open client messages" })).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/conversations", expect.anything());
+    expect(navigationMocks.push).not.toHaveBeenCalledWith(expect.stringContaining("/messages"));
   });
 
   it("opens the roster edit client dialog from the profile pencil icon", async () => {

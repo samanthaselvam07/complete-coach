@@ -1,5 +1,5 @@
-import { MessagesPage } from "@/components/messages/messages-page";
+import { notFound } from "next/navigation";
 
 export default function MessagesRoute() {
-  return <MessagesPage />;
+  notFound();
 }
