@@ -366,8 +366,7 @@ describe("client app APIs", () => {
       expect.objectContaining({
         where: {
           organizationId: "org_1",
-          clientId: "client_1",
-          status: TrainingProgramAssignmentStatus.ACTIVE
+          clientId: "client_1"
         }
       })
     );

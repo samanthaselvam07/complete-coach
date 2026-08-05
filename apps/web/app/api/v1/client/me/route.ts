@@ -1,8 +1,7 @@
 import { auth } from "@/auth";
 import {
   MealPlanAssignmentStatus,
-  SupplementPlanAssignmentStatus,
-  TrainingProgramAssignmentStatus
+  SupplementPlanAssignmentStatus
 } from "@/app/generated/prisma/enums";
 import { dataResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveClientActor } from "@/lib/auth/session-guards";
@@ -42,8 +41,7 @@ export async function GET() {
       prisma.trainingProgramAssignment.findMany({
         where: {
           organizationId: actor.organizationId,
-          clientId: actor.clientId,
-          status: TrainingProgramAssignmentStatus.ACTIVE
+          clientId: actor.clientId
         },
         include: {
           client: {

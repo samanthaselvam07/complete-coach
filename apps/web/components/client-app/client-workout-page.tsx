@@ -91,6 +91,7 @@ export function ClientWorkoutPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [clientName, setClientName] = useState("");
   const [assignments, setAssignments] = useState<TrainingAssignment[]>([]);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState("");
   const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [exerciseImages, setExerciseImages] = useState<Record<string, string>>({});
   const [activeWorkoutExerciseIndex, setActiveWorkoutExerciseIndex] = useState<number | null>(null);
@@ -112,7 +113,13 @@ export function ClientWorkoutPage() {
         }
 
         setClientName(payload.data.client.name);
-        setAssignments(payload.data.trainingAssignments);
+        const nextAssignments = payload.data.trainingAssignments;
+        const defaultAssignmentId = nextAssignments.find((assignment) => assignment.status === "active")?.id ?? nextAssignments[0]?.id ?? "";
+
+        setAssignments(nextAssignments);
+        setSelectedAssignmentId((currentAssignmentId) =>
+          nextAssignments.some((assignment) => assignment.id === currentAssignmentId) ? currentAssignmentId : defaultAssignmentId
+        );
         setLoadState("ready");
       } catch (error) {
         if (!mounted) {
@@ -143,11 +150,17 @@ export function ClientWorkoutPage() {
   }, []);
 
   const activeAssignment = useMemo(
-    () => assignments.find((assignment) => assignment.status === "active") ?? assignments[0] ?? null,
-    [assignments]
+    () => assignments.find((assignment) => assignment.id === selectedAssignmentId) ?? assignments.find((assignment) => assignment.status === "active") ?? assignments[0] ?? null,
+    [assignments, selectedAssignmentId]
   );
   const trainingDays = useMemo(() => getTrainingDays(activeAssignment?.snapshot), [activeAssignment]);
   const activeDay = trainingDays[Math.min(activeDayIndex, Math.max(trainingDays.length - 1, 0))] ?? null;
+
+  function selectTrainingProgram(assignmentId: string) {
+    setSelectedAssignmentId(assignmentId);
+    setActiveDayIndex(0);
+    setActiveWorkoutExerciseIndex(null);
+  }
 
   useEffect(() => {
     if (activeDayIndex > trainingDays.length - 1) {
@@ -247,6 +260,14 @@ export function ClientWorkoutPage() {
           <p className="text-sm font-semibold leading-6 text-[#777584]">{clientName}</p>
         </ClientSectionHeading>
 
+        {assignments.length > 0 ? (
+          <TrainingProgramSwitcher
+            assignments={assignments}
+            selectedAssignmentId={activeAssignment?.id ?? ""}
+            onSelectAssignment={selectTrainingProgram}
+          />
+        ) : null}
+
         {trainingDays.length > 0 ? (
           <nav aria-label="Training days" className="-mx-6 overflow-x-auto px-6">
             <div className="flex min-w-max gap-3">
@@ -313,6 +334,41 @@ export function ClientWorkoutPage() {
         ) : null}
       </div>
     </ClientMobileShell>
+  );
+}
+
+function TrainingProgramSwitcher({
+  assignments,
+  selectedAssignmentId,
+  onSelectAssignment
+}: {
+  assignments: TrainingAssignment[];
+  selectedAssignmentId: string;
+  onSelectAssignment: (assignmentId: string) => void;
+}) {
+  return (
+    <section aria-label="Training program switcher" className="rounded-[1.65rem] bg-white p-5 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
+      <label htmlFor="client-training-program-select" className="block text-[10px] font-black uppercase tracking-[0.22em] text-[#777584]">
+        Training program
+      </label>
+      <div className="mt-3">
+        <select
+          id="client-training-program-select"
+          value={selectedAssignmentId}
+          onChange={(event) => onSelectAssignment(event.target.value)}
+          className="h-14 w-full rounded-[1.25rem] border-0 bg-[#f5f3f3] px-4 text-base font-black text-[#1b1c1c] outline-none ring-2 ring-transparent transition focus:ring-[#3620b8]"
+        >
+          {assignments.map((assignment) => (
+            <option key={assignment.id} value={assignment.id}>
+              {assignment.name}{assignment.status === "active" ? " (active)" : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="mt-3 text-sm font-semibold leading-6 text-[#777584]">
+        Switch between training programs your coach has assigned to you.
+      </p>
+    </section>
   );
 }
 
@@ -992,11 +1048,15 @@ function EmptyWorkoutMessage({ message }: { message: string }) {
 }
 
 function getTrainingDays(snapshot: unknown): TrainingDay[] {
-  if (!snapshot || typeof snapshot !== "object" || !("days" in snapshot)) {
+  if (!snapshot || typeof snapshot !== "object") {
     return [];
   }
 
-  const days = (snapshot as { days?: unknown }).days;
+  const snapshotRecord = snapshot as { days?: unknown; template?: unknown };
+  const templateRecord = snapshotRecord.template && typeof snapshotRecord.template === "object"
+    ? snapshotRecord.template as { days?: unknown }
+    : null;
+  const days = Array.isArray(snapshotRecord.days) ? snapshotRecord.days : templateRecord?.days;
 
   if (!Array.isArray(days)) {
     return [];

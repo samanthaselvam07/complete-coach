@@ -21,34 +21,60 @@ describe("ClientWorkoutPage", () => {
                   name: "Strength Block",
                   status: "active",
                   snapshot: {
-                    days: [
-                      {
-                        name: "Lower A",
-                        exercises: [
-                          {
-                            id: "exercise_row_1",
-                            exerciseId: "exercise_leg_extension",
-                            exerciseName: "Seated Leg Extension",
-                            sets: 3,
-                            reps: "15-20",
-                            rpe: 9
-                          }
-                        ]
-                      },
-                      {
-                        name: "Upper A",
-                        exercises: [
-                          {
-                            id: "exercise_row_2",
-                            exerciseId: "exercise_press",
-                            exerciseName: "Incline DB Press",
-                            sets: 4,
-                            reps: "8-10",
-                            rir: 2
-                          }
-                        ]
-                      }
-                    ]
+                    template: {
+                      days: [
+                        {
+                          name: "Lower A",
+                          exercises: [
+                            {
+                              id: "exercise_row_1",
+                              exerciseId: "exercise_leg_extension",
+                              exerciseName: "Seated Leg Extension",
+                              sets: 3,
+                              reps: "15-20",
+                              rpe: 9
+                            }
+                          ]
+                        },
+                        {
+                          name: "Upper A",
+                          exercises: [
+                            {
+                              id: "exercise_row_2",
+                              exerciseId: "exercise_press",
+                              exerciseName: "Incline DB Press",
+                              sets: 4,
+                              reps: "8-10",
+                              rir: 2
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  id: "assignment_2",
+                  name: "Conditioning Block",
+                  status: "paused",
+                  snapshot: {
+                    template: {
+                      days: [
+                        {
+                          name: "Engine Day",
+                          exercises: [
+                            {
+                              id: "exercise_row_3",
+                              exerciseId: "exercise_sled",
+                              exerciseName: "Sled Push",
+                              sets: 5,
+                              reps: "20m",
+                              rpe: 8
+                            }
+                          ]
+                        }
+                      ]
+                    }
                   }
                 }
               ]
@@ -76,6 +102,9 @@ describe("ClientWorkoutPage", () => {
     render(<ClientWorkoutPage />);
 
     expect(await screen.findByRole("heading", { name: "Strength Block" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Training program" })).toHaveValue("assignment_1");
+    expect(screen.getByRole("option", { name: "Strength Block (active)" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Conditioning Block" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Lower A" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Upper A" })).toBeInTheDocument();
     expect(screen.getByText("Seated Leg Extension")).toBeInTheDocument();
@@ -92,6 +121,14 @@ describe("ClientWorkoutPage", () => {
     expect(screen.getByText("Incline DB Press")).toBeInTheDocument();
     expect(screen.getByText("4 × 8-10 • RIR 2")).toBeInTheDocument();
     expect(screen.queryByText("Seated Leg Extension")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Training program" }), { target: { value: "assignment_2" } });
+
+    expect(screen.getByRole("heading", { name: "Conditioning Block" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Engine Day" })).toBeInTheDocument();
+    expect(screen.getByText("Sled Push")).toBeInTheDocument();
+    expect(screen.getByText("5 × 20m • RPE 8")).toBeInTheDocument();
+    expect(screen.queryByText("Incline DB Press")).not.toBeInTheDocument();
   });
 
   it("logs a workout from zero, shows rest only after ticking a set, deletes swiped sets, and advances up next", async () => {
