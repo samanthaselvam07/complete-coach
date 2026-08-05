@@ -63,6 +63,10 @@ interface HydrationResponse {
   };
 }
 
+interface CheckInAssignmentResponse {
+  data?: { id: string; formName: string } | null;
+}
+
 export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }: { today?: string } = {}) {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
@@ -75,6 +79,8 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
   const [hydrationTargetMl, setHydrationTargetMl] = useState(2500);
   const [weeklyCheckInDay, setWeeklyCheckInDay] = useState("Unscheduled");
   const [roadmapPhases, setRoadmapPhases] = useState<RoadmapPhase[]>([]);
+  const [dailyCheckInAssigned, setDailyCheckInAssigned] = useState(false);
+  const [weeklyCheckInAssigned, setWeeklyCheckInAssigned] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -96,12 +102,18 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
           ?? null;
 
         const hydrationDate = getTodayDateValue(payload.data.client.timezone ?? undefined);
-        const [roadmapResponse, hydrationResponse] = await Promise.all([
+        const [roadmapResponse, hydrationResponse, dailyCheckInResponse, weeklyCheckInResponse] = await Promise.all([
           fetch("/api/v1/client/roadmap"),
-          fetch(`/api/v1/client/hydration?date=${hydrationDate}`)
+          fetch(`/api/v1/client/hydration?date=${hydrationDate}`),
+          fetch("/api/v1/client/daily-check-in?kind=daily"),
+          fetch("/api/v1/client/daily-check-in?kind=weekly")
         ]);
-        const roadmapPayload = (await roadmapResponse.json().catch(() => null)) as { data?: RoadmapPhase[] } | null;
-        const hydrationPayload = (await hydrationResponse.json().catch(() => null)) as HydrationResponse | null;
+        const [roadmapPayload, hydrationPayload, dailyCheckInPayload, weeklyCheckInPayload] = await Promise.all([
+          roadmapResponse.json().catch(() => null) as Promise<{ data?: RoadmapPhase[] } | null>,
+          hydrationResponse.json().catch(() => null) as Promise<HydrationResponse | null>,
+          dailyCheckInResponse.json().catch(() => null) as Promise<CheckInAssignmentResponse | null>,
+          weeklyCheckInResponse.json().catch(() => null) as Promise<CheckInAssignmentResponse | null>
+        ]);
 
         if (!mounted) {
           return;
@@ -116,6 +128,8 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
         setHydrationMl(hydrationResponse.ok && typeof hydrationPayload?.data?.hydrationMl === "number" ? hydrationPayload.data.hydrationMl : 0);
         setWeeklyCheckInDay(payload.data.client.checkInDay ?? "Unscheduled");
         setRoadmapPhases(roadmapResponse.ok && Array.isArray(roadmapPayload?.data) ? roadmapPayload.data : []);
+        setDailyCheckInAssigned(dailyCheckInResponse.ok && Boolean(dailyCheckInPayload?.data?.id));
+        setWeeklyCheckInAssigned(weeklyCheckInResponse.ok && Boolean(weeklyCheckInPayload?.data?.id));
         setLoadState("ready");
       } catch (error) {
         if (!mounted) {
@@ -155,8 +169,9 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
     () => roadmapPhases.find((phase) => phase.status === "active") ?? roadmapPhases[0] ?? null,
     [roadmapPhases]
   );
-  const upcomingCalendarItems = useMemo(() => getUpcomingRoadmapItems(roadmapPhases), [roadmapPhases]);
   const calendarMeta = activePhase ? activePhase.name : "Coach calendar";
+  const primaryCheckInHref = dailyCheckInAssigned ? "/check-in/daily" : weeklyCheckInAssigned ? "/check-in/weekly" : "/check-in";
+  const primaryCheckInLabel = dailyCheckInAssigned ? "Log Daily Check In" : weeklyCheckInAssigned ? "Submit Weekly Check In" : "View Check Ins";
 
   return (
     <ClientMobileShell title="Complete Coach" avatarLabel={firstName || "CC"}>
@@ -181,15 +196,15 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
               <TrendingUp aria-hidden="true" className="size-14 text-[#e9e8e7]" />
             </div>
             <Link
-              href={{ pathname: "/check-in/daily" }}
+              href={{ pathname: primaryCheckInHref }}
               className="mt-7 inline-flex h-14 w-full items-center justify-center gap-3 rounded-[1.25rem] bg-gradient-to-br from-[#5f50f0] to-[#3620b8] text-base font-black text-white shadow-[0_20px_45px_rgba(54,32,184,0.24)] transition active:scale-[0.98]"
             >
-              Log Daily Check In
+              {primaryCheckInLabel}
               <ArrowRight aria-hidden="true" className="size-5" />
             </Link>
           </section>
 
-          <WeeklyCheckInCard checkInDay={weeklyCheckInDay} today={today} />
+          <WeeklyCheckInCard checkInDay={weeklyCheckInDay} today={today} assigned={weeklyCheckInAssigned} />
 
           <section aria-label="Dashboard modules" className="grid grid-cols-3 gap-3">
             <ClientHomeTile
@@ -208,7 +223,6 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
             />
             <ClientCalendarTile
               phaseName={calendarMeta}
-              items={upcomingCalendarItems}
             />
           </section>
 
@@ -260,7 +274,7 @@ function ClientHomeStatus({ message, tone = "default" }: { message: string; tone
   );
 }
 
-function WeeklyCheckInCard({ checkInDay, today }: { checkInDay: string; today: string }) {
+function WeeklyCheckInCard({ checkInDay, today, assigned }: { checkInDay: string; today: string; assigned: boolean }) {
   const countdown = getWeeklyCheckInCountdown(checkInDay, today);
 
   return (
@@ -278,6 +292,12 @@ function WeeklyCheckInCard({ checkInDay, today }: { checkInDay: string; today: s
           </p>
         </div>
       </div>
+      {assigned ? (
+        <Link href={{ pathname: "/check-in/weekly" }} className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[1.1rem] bg-[#fff0e6] text-sm font-black text-[#9a4600] transition active:scale-[0.98]">
+          Submit Weekly Check In
+          <ArrowRight aria-hidden="true" className="size-4" />
+        </Link>
+      ) : null}
     </section>
   );
 }
@@ -307,9 +327,7 @@ function ClientHomeTile({
   );
 }
 
-function ClientCalendarTile({ phaseName, items }: { phaseName: string; items: RoadmapItem[] }) {
-  const nextItem = items[0] ?? null;
-
+function ClientCalendarTile({ phaseName }: { phaseName: string }) {
   return (
     <Link
       href={{ pathname: "/calendar" }}
@@ -321,9 +339,7 @@ function ClientCalendarTile({ phaseName, items }: { phaseName: string; items: Ro
       </div>
       <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#777584]">Calendar</p>
       <p className="mt-2 min-h-10 overflow-hidden text-sm font-black leading-5 text-[#1b1c1c]">{phaseName}</p>
-      <p className="mt-3 text-[11px] font-bold leading-4 text-[#777584]">
-        {nextItem ? `${formatShortDate(nextItem.date)} • ${nextItem.title}` : "No upcoming events"}
-      </p>
+      <p className="mt-3 text-[11px] font-bold leading-4 text-[#777584]">View coach events</p>
     </Link>
   );
 }
@@ -336,23 +352,6 @@ function countTrainingDays(snapshot: unknown) {
   const days = (snapshot as { days?: unknown }).days;
 
   return Array.isArray(days) ? days.length : 0;
-}
-
-function getUpcomingRoadmapItems(phases: RoadmapPhase[]) {
-  const today = new Date().toISOString().slice(0, 10);
-
-  return phases
-    .flatMap((phase) => phase.items)
-    .filter((item) => item.date >= today)
-    .sort((left, right) => left.date.localeCompare(right.date))
-    .slice(0, 5);
-}
-
-function formatShortDate(value: string) {
-  return new Intl.DateTimeFormat("en-AU", {
-    day: "numeric",
-    month: "short"
-  }).format(new Date(`${value}T00:00:00.000Z`));
 }
 
 function formatLitres(valueMl: number) {

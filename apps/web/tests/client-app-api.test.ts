@@ -632,6 +632,33 @@ describe("client app APIs", () => {
     );
   });
 
+  it("returns the signed-in client's assigned weekly check-in form", async () => {
+    mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(weeklyAssignmentRecord());
+
+    const response = await getDailyCheckIn(new Request("http://test.local/api/v1/client/daily-check-in?kind=weekly"));
+    const payload = (await response.json()) as {
+      data: {
+        id: string;
+        formName: string;
+        formVersion: { schema: { title: string } };
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.id).toBe("assignment_weekly_1");
+    expect(payload.data.formName).toBe("Weekly Review");
+    expect(payload.data.formVersion.schema.title).toBe("Weekly Review");
+    expect(mocks.prisma.formAssignment.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: "org_1",
+          clientId: "client_1",
+          form: expect.objectContaining({ type: FormType.CHECK_IN })
+        })
+      })
+    );
+  });
+
   it("submits the signed-in client's reusable daily habit form without completing the assignment", async () => {
     mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(dailyAssignmentRecord());
 
@@ -878,6 +905,37 @@ function dailyAssignmentRecord() {
       uiJson: {},
       publishedAt: now,
       createdAt: now
+    }
+  };
+}
+
+function weeklyAssignmentRecord() {
+  return {
+    ...dailyAssignmentRecord(),
+    id: "assignment_weekly_1",
+    formId: "form_weekly",
+    formVersionId: "form_version_weekly",
+    form: {
+      id: "form_weekly",
+      name: "Weekly Review",
+      type: FormType.CHECK_IN
+    },
+    formVersion: {
+      ...dailyAssignmentRecord().formVersion,
+      id: "form_version_weekly",
+      formId: "form_weekly",
+      schemaJson: {
+        title: "Weekly Review",
+        fields: [
+          {
+            id: "weekly_notes",
+            type: "long-text",
+            label: "Weekly notes",
+            required: true,
+            exportPolicy: "private"
+          }
+        ]
+      }
     }
   };
 }

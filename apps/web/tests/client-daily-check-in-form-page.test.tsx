@@ -20,7 +20,7 @@ describe("ClientDailyCheckInFormPage", () => {
 
   it("loads the assigned coach-linked daily check-in form and submits answers", async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url === "/api/v1/client/daily-check-in" && !init) {
+      if (url === "/api/v1/client/daily-check-in?kind=daily" && !init) {
         return new Response(
           JSON.stringify({
             data: {
@@ -44,7 +44,7 @@ describe("ClientDailyCheckInFormPage", () => {
         );
       }
 
-      if (url === "/api/v1/client/daily-check-in" && init?.method === "POST") {
+      if (url === "/api/v1/client/daily-check-in?kind=daily" && init?.method === "POST") {
         return new Response(JSON.stringify({ data: { id: "submission_1" } }), {
           status: 201,
           headers: { "Content-Type": "application/json" }
@@ -67,7 +67,7 @@ describe("ClientDailyCheckInFormPage", () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        "/api/v1/client/daily-check-in",
+        "/api/v1/client/daily-check-in?kind=daily",
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({
@@ -81,5 +81,61 @@ describe("ClientDailyCheckInFormPage", () => {
       );
     });
     expect(await screen.findByRole("button", { name: "Submitted" })).toBeInTheDocument();
+  });
+
+  it("loads and submits the assigned weekly check-in form", async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === "/api/v1/client/daily-check-in?kind=weekly" && !init) {
+        return new Response(
+          JSON.stringify({
+            data: {
+              id: "assignment_weekly_1",
+              formName: "Weekly Review",
+              dueAt: null,
+              formVersion: {
+                schema: {
+                  title: "Weekly Review",
+                  description: "Weekly check-in.",
+                  fields: [{ id: "wins", type: "long-text", label: "Wins", required: true }]
+                }
+              }
+            }
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url === "/api/v1/client/daily-check-in?kind=weekly" && init?.method === "POST") {
+        return new Response(JSON.stringify({ data: { id: "submission_weekly_1" } }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: { message: "Not found" } }), { status: 404 });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ClientDailyCheckInFormPage kind="weekly" />);
+
+    expect(await screen.findByRole("heading", { name: "Weekly Review" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/wins/i), { target: { value: "Training consistency improved." } });
+    fireEvent.click(screen.getByRole("button", { name: "Submit weekly check-in" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/client/daily-check-in?kind=weekly",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            answers: {
+              wins: "Training consistency improved."
+            }
+          })
+        })
+      );
+    });
   });
 });

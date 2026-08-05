@@ -73,6 +73,20 @@ describe("ClientHomePage", () => {
         });
       }
 
+      if (url === "/api/v1/client/daily-check-in?kind=daily") {
+        return new Response(JSON.stringify({ data: { id: "assignment_daily_1", formName: "Daily Basics" } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url === "/api/v1/client/daily-check-in?kind=weekly") {
+        return new Response(JSON.stringify({ data: { id: "assignment_weekly_1", formName: "Weekly Review" } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
       return new Response(JSON.stringify({ error: { message: "Not found" } }), {
         status: 404,
         headers: { "Content-Type": "application/json" }
@@ -83,6 +97,7 @@ describe("ClientHomePage", () => {
 
     expect(await screen.findByRole("heading", { name: "Hello, Client" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /log daily check in/i })).toHaveAttribute("href", "/check-in/daily");
+    expect(screen.getByRole("link", { name: /submit weekly check in/i })).toHaveAttribute("href", "/check-in/weekly");
     expect(screen.getByText("Monday • 4 days until check-in")).toBeInTheDocument();
 
     const dashboardGrid = screen.getByRole("region", { name: "Dashboard modules" });
@@ -91,7 +106,9 @@ describe("ClientHomePage", () => {
     expect(within(dashboardGrid).getByText("Nutrition")).toBeInTheDocument();
     expect(within(dashboardGrid).getByRole("link", { name: "Open calendar" })).toHaveAttribute("href", "/calendar");
     expect(within(dashboardGrid).getByText("Hypertrophy Phase")).toBeInTheDocument();
-    expect(within(dashboardGrid).getByText(/Weekly coaching sync/)).toBeInTheDocument();
+    expect(within(dashboardGrid).getByText("View coach events")).toBeInTheDocument();
+    expect(within(dashboardGrid).queryByText(/Weekly coaching sync/)).not.toBeInTheDocument();
+    expect(within(dashboardGrid).queryByText(/31 Jul/)).not.toBeInTheDocument();
     expect(within(dashboardGrid).queryByLabelText("Client calendar week")).not.toBeInTheDocument();
 
     expect(screen.getByRole("region", { name: "Hydration tracker" })).toHaveTextContent("1.3L / 3.2L");

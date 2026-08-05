@@ -14,10 +14,12 @@ import { extractMeasurementsFromSubmission } from "@/lib/forms/metric-extraction
 import { FormDefinitionSchema } from "@/lib/forms/schema";
 import { serializeAssignment, serializeSubmission, submitAssignmentSchema } from "@/lib/forms/submission-records";
 
-export async function GET() {
+type CheckInAssignmentKind = "daily" | "weekly";
+
+export async function GET(request: Request = new Request("http://test.local/api/v1/client/daily-check-in")) {
   try {
     const actor = requireActiveClientActor(await auth());
-    const assignment = await getCurrentDailyAssignment(actor.organizationId, actor.clientId);
+    const assignment = await getCurrentAssignment(actor.organizationId, actor.clientId, getAssignmentKind(request));
 
     if (!assignment) {
       return dataResponse(null);
@@ -33,10 +35,10 @@ export async function POST(request: Request) {
   try {
     const actor = requireActiveClientActor(await auth());
     const input = submitAssignmentSchema.parse(await request.json());
-    const assignment = await getCurrentDailyAssignment(actor.organizationId, actor.clientId);
+    const assignment = await getCurrentAssignment(actor.organizationId, actor.clientId, getAssignmentKind(request));
 
     if (!assignment) {
-      return errorResponse("not_found", "No assigned daily check-in form was found.", 404);
+      return errorResponse("not_found", "No assigned check-in form was found.", 404);
     }
 
     if (assignment.status === FormAssignmentStatus.CANCELLED) {
@@ -152,7 +154,21 @@ export async function POST(request: Request) {
   }
 }
 
-async function getCurrentDailyAssignment(organizationId: string, clientId: string) {
+function getAssignmentKind(request: Request): CheckInAssignmentKind | null {
+  const kind = new URL(request.url).searchParams.get("kind");
+
+  return kind === "daily" || kind === "weekly" ? kind : null;
+}
+
+async function getCurrentAssignment(organizationId: string, clientId: string, kind: CheckInAssignmentKind | null) {
+  if (kind === "daily") {
+    return getCurrentAssignmentByType(organizationId, clientId, FormType.HABIT_TRACKER);
+  }
+
+  if (kind === "weekly") {
+    return getCurrentAssignmentByType(organizationId, clientId, FormType.CHECK_IN);
+  }
+
   const habitAssignment = await getCurrentAssignmentByType(organizationId, clientId, FormType.HABIT_TRACKER);
 
   return habitAssignment ?? getCurrentAssignmentByType(organizationId, clientId, FormType.CHECK_IN);

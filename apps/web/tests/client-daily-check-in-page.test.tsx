@@ -51,6 +51,20 @@ describe("ClientDailyCheckInPage", () => {
         );
       }
 
+      if (url === "/api/v1/client/daily-check-in?kind=daily") {
+        return new Response(JSON.stringify({ data: { id: "assignment_daily_1", formName: "Daily Basics" } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url === "/api/v1/client/daily-check-in?kind=weekly") {
+        return new Response(JSON.stringify({ data: { id: "assignment_weekly_1", formName: "Weekly Review" } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
       if (url === "/api/v1/client/check-ins?limit=100") {
         return new Response(
           JSON.stringify({
@@ -89,6 +103,7 @@ describe("ClientDailyCheckInPage", () => {
     expect(screen.getByText("54% complete")).toBeInTheDocument();
     expect(screen.getByText(/4 weeks left/u)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Start daily check-in" })).toHaveAttribute("href", "/check-in/daily");
+    expect(screen.getByRole("link", { name: "Submit weekly check-in" })).toHaveAttribute("href", "/check-in/weekly");
     expect(screen.getByText("Monday • 4 days until check-in")).toBeInTheDocument();
 
     const checkIns = screen.getByRole("heading", { name: "Submitted history" }).closest("section");
@@ -135,6 +150,10 @@ describe("ClientDailyCheckInPage", () => {
 
       if (url === "/api/v1/client/roadmap") {
         return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+
+      if (url === "/api/v1/client/daily-check-in?kind=daily" || url === "/api/v1/client/daily-check-in?kind=weekly") {
+        return new Response(JSON.stringify({ data: null }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
 
       if (url === "/api/v1/client/check-ins?limit=100") {

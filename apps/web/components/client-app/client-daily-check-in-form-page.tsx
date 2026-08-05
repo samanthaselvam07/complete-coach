@@ -40,8 +40,9 @@ interface DailyCheckInField {
 
 type LoadState = "loading" | "ready" | "error";
 type SubmitState = "idle" | "submitting" | "submitted";
+type CheckInFormKind = "daily" | "weekly";
 
-export function ClientDailyCheckInFormPage() {
+export function ClientDailyCheckInFormPage({ kind = "daily" }: { kind?: CheckInFormKind } = {}) {
   const router = useRouter();
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -49,17 +50,19 @@ export function ClientDailyCheckInFormPage() {
   const [assignment, setAssignment] = useState<DailyCheckInAssignment | null>(null);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const fields = useMemo(() => assignment?.formVersion?.schema?.fields ?? [], [assignment]);
+  const formLabel = kind === "weekly" ? "weekly check-in" : "daily check-in";
+  const apiUrl = `/api/v1/client/daily-check-in?kind=${kind}`;
 
   useEffect(() => {
     let mounted = true;
 
     async function loadAssignedForm() {
       try {
-        const response = await fetch("/api/v1/client/daily-check-in");
+        const response = await fetch(apiUrl);
         const payload = (await response.json().catch(() => null)) as DailyCheckInAssignmentResponse | null;
 
         if (!response.ok) {
-          throw new Error(payload?.error?.message ?? "Your assigned daily check-in could not be loaded.");
+          throw new Error(payload?.error?.message ?? `Your assigned ${formLabel} could not be loaded.`);
         }
 
         if (!mounted) {
@@ -73,7 +76,7 @@ export function ClientDailyCheckInFormPage() {
           return;
         }
 
-        setErrorMessage(error instanceof Error ? error.message : "Your assigned daily check-in could not be loaded.");
+        setErrorMessage(error instanceof Error ? error.message : `Your assigned ${formLabel} could not be loaded.`);
         setLoadState("error");
       }
     }
@@ -83,7 +86,7 @@ export function ClientDailyCheckInFormPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [apiUrl, formLabel]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,7 +94,7 @@ export function ClientDailyCheckInFormPage() {
     setSubmitState("submitting");
 
     try {
-      const response = await fetch("/api/v1/client/daily-check-in", {
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers })
@@ -99,14 +102,14 @@ export function ClientDailyCheckInFormPage() {
       const payload = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
 
       if (!response.ok) {
-        throw new Error(payload?.error?.message ?? "Your daily check-in could not be submitted.");
+        throw new Error(payload?.error?.message ?? `Your ${formLabel} could not be submitted.`);
       }
 
       setSubmitState("submitted");
       window.setTimeout(() => router.push("/check-in"), 650);
     } catch (error) {
       setSubmitState("idle");
-      setErrorMessage(error instanceof Error ? error.message : "Your daily check-in could not be submitted.");
+      setErrorMessage(error instanceof Error ? error.message : `Your ${formLabel} could not be submitted.`);
     }
   }
 
@@ -129,12 +132,12 @@ export function ClientDailyCheckInFormPage() {
         {loadState === "error" ? <DailyFormStatus message={errorMessage} tone="error" /> : null}
 
         {loadState === "ready" && !assignment ? (
-          <DailyFormStatus message="No daily check-in form has been assigned yet." />
+          <DailyFormStatus message={`No ${formLabel} form has been assigned yet.`} />
         ) : null}
 
         {loadState === "ready" && assignment ? (
           <>
-            <ClientSectionHeading eyebrow="Daily check-in" title={assignment.formVersion?.schema?.title ?? assignment.formName}>
+            <ClientSectionHeading eyebrow={kind === "weekly" ? "Weekly check-in" : "Daily check-in"} title={assignment.formVersion?.schema?.title ?? assignment.formName}>
               <p className="text-sm font-semibold leading-6 text-[#777584]">
                 {assignment.formVersion?.schema?.description ?? "Complete today’s update for your coach."}
               </p>
@@ -162,7 +165,7 @@ export function ClientDailyCheckInFormPage() {
                 className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-[1.25rem] bg-[#3620b8] text-base font-black text-white shadow-[0_20px_45px_rgba(54,32,184,0.24)] transition active:scale-[0.98] disabled:opacity-70"
               >
                 {submitState === "submitted" ? <CheckCircle2 aria-hidden="true" className="size-5" /> : <Send aria-hidden="true" className="size-5" />}
-                {submitState === "submitted" ? "Submitted" : submitState === "submitting" ? "Submitting" : "Submit daily check-in"}
+                {submitState === "submitted" ? "Submitted" : submitState === "submitting" ? "Submitting" : `Submit ${formLabel}`}
               </button>
             </form>
           </>
