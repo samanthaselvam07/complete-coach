@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Clock3, ExternalLink, Layers3, Pill, Plus, Sparkles, Zap } from "lucide-react";
+import { Check, Clock3, ExternalLink, Layers3, Pill, Plus, Sparkles, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
@@ -47,9 +47,14 @@ interface SupplementItem {
   dosage: string;
   timing: string;
   notes?: string;
+  productUrl?: string;
 }
 
 type LoadState = "loading" | "ready" | "error";
+type SupplementWithContext = SupplementItem & {
+  phaseName: string;
+  key: string;
+};
 
 export function ClientSupplementsPage() {
   const [loadState, setLoadState] = useState<LoadState>("loading");
@@ -57,6 +62,7 @@ export function ClientSupplementsPage() {
   const [clientName, setClientName] = useState("");
   const [protocols, setProtocols] = useState<SupplementProtocol[]>([]);
   const [completedKeys, setCompletedKeys] = useState<string[]>([]);
+  const [selectedSupplement, setSelectedSupplement] = useState<SupplementWithContext | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -75,7 +81,7 @@ export function ClientSupplementsPage() {
         }
 
         setClientName(payload.data.client.name);
-        setProtocols(payload.data.supplementPlanAssignments.map(normalizeSupplementProtocol));
+        setProtocols(payload.data.supplementPlanAssignments.map(normalizeSupplementProtocol).filter(hasSupplements));
         setLoadState("ready");
       } catch (error) {
         if (!mounted) {
@@ -95,7 +101,7 @@ export function ClientSupplementsPage() {
   }, []);
 
   const activeProtocol = useMemo(
-    () => protocols.find((protocol) => protocol.status === "active") ?? protocols[0] ?? null,
+    () => protocols.find((protocol) => protocol.status === "active") ?? null,
     [protocols]
   );
   const supplements = activeProtocol?.phases.flatMap((phase) =>
@@ -198,6 +204,7 @@ export function ClientSupplementsPage() {
                   phase={phase}
                   completedKeys={completedKeys}
                   onToggle={toggleSupplement}
+                  onSelect={setSelectedSupplement}
                 />
               ))}
             </section>
@@ -205,6 +212,10 @@ export function ClientSupplementsPage() {
         ) : (
           <ClientSupplementsStatus message="No supplement protocol has been assigned yet." />
         )}
+
+        {selectedSupplement ? (
+          <SupplementDetailsDialog supplement={selectedSupplement} onClose={() => setSelectedSupplement(null)} />
+        ) : null}
       </div>
     </ClientMobileShell>
   );
@@ -262,11 +273,13 @@ function SupplementStackSummary({
 function SupplementPhaseStack({
   phase,
   completedKeys,
-  onToggle
+  onToggle,
+  onSelect
 }: {
   phase: SupplementPhase;
   completedKeys: string[];
   onToggle: (key: string) => void;
+  onSelect: (supplement: SupplementWithContext) => void;
 }) {
   const completedPhaseCount = phase.supplements.filter((supplement, index) =>
     completedKeys.includes(`${phase.name}:${supplement.supplementName}:${index}`)
@@ -302,15 +315,14 @@ function SupplementPhaseStack({
         {phase.supplements.map((supplement, index) => {
           const key = `${phase.name}:${supplement.supplementName}:${index}`;
           const completed = completedKeys.includes(key);
-          const { instructions, productUrl } = parseSupplementDisplayNotes(supplement.notes ?? "");
+          const supplementWithContext = { ...supplement, phaseName: phase.name, key };
 
           return (
             <SupplementStackCard
               key={key}
-              supplement={supplement}
+              supplement={supplementWithContext}
               completed={completed}
-              instructions={instructions}
-              productUrl={productUrl}
+              onSelect={() => onSelect(supplementWithContext)}
               onToggle={() => onToggle(key)}
             />
           );
@@ -323,20 +335,23 @@ function SupplementPhaseStack({
 function SupplementStackCard({
   supplement,
   completed,
-  instructions,
-  productUrl,
+  onSelect,
   onToggle
 }: {
-  supplement: SupplementItem;
+  supplement: SupplementWithContext;
   completed: boolean;
-  instructions: string;
-  productUrl: string;
+  onSelect: () => void;
   onToggle: () => void;
 }) {
   return (
     <article className={cn("rounded-[1.25rem] border p-4 transition", completed ? "border-[#3620b8]/20 bg-[#f7f5ff]" : "border-[#efedec] bg-[#fbf9f8]")}>
       <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 gap-3">
+        <button
+          type="button"
+          onClick={onSelect}
+          className="flex min-w-0 flex-1 gap-3 text-left transition active:scale-[0.99]"
+          aria-label={`View details for ${supplement.supplementName}`}
+        >
           <div className={cn("flex size-12 flex-none items-center justify-center rounded-2xl", completed ? "bg-[#3620b8] text-white" : "bg-white text-[#3620b8]")}>
             <Pill aria-hidden="true" className="size-5" />
           </div>
@@ -347,7 +362,7 @@ function SupplementStackCard({
               <span className="rounded-full bg-[#fff0e6] px-2.5 py-1 text-xs font-black text-[#9a4600]">{supplement.timing}</span>
             </div>
           </div>
-        </div>
+        </button>
         <button
           type="button"
           onClick={onToggle}
@@ -360,24 +375,64 @@ function SupplementStackCard({
           {completed ? <Check aria-hidden="true" className="size-5" /> : <Plus aria-hidden="true" className="size-5" />}
         </button>
       </div>
-
-      {instructions || productUrl ? (
-        <div className="mt-4 border-t border-[#ebe8e6] pt-3">
-          {instructions ? <p className="whitespace-pre-line text-sm font-semibold leading-6 text-[#777584]">{instructions}</p> : null}
-          {productUrl ? (
-            <a
-              href={productUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-flex items-center gap-2 text-sm font-black text-[#3620b8]"
-            >
-              Buy supplement
-              <ExternalLink aria-hidden="true" className="size-4" />
-            </a>
-          ) : null}
-        </div>
-      ) : null}
     </article>
+  );
+}
+
+function SupplementDetailsDialog({ supplement, onClose }: { supplement: SupplementWithContext; onClose: () => void }) {
+  const { instructions, productUrl } = parseSupplementDisplayNotes(supplement.notes ?? "", supplement.productUrl ?? "");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#1b1c1c]/35 px-4 pb-4 pt-20 backdrop-blur-sm">
+      <div role="dialog" aria-modal="true" aria-labelledby="supplement-details-title" className="w-full max-w-xl rounded-[1.65rem] bg-white p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 gap-3">
+            <div className="flex size-12 flex-none items-center justify-center rounded-2xl bg-[#edeaff] text-[#3620b8]">
+              <Pill aria-hidden="true" className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#777584]">{supplement.phaseName}</p>
+              <h2 id="supplement-details-title" className="mt-1 text-2xl font-black tracking-normal text-[#1b1c1c]">
+                {supplement.supplementName}
+              </h2>
+            </div>
+          </div>
+          <button type="button" aria-label="Close supplement details" onClick={onClose} className="inline-flex size-10 flex-none items-center justify-center rounded-full bg-[#f5f3f3] text-[#777584] transition active:scale-95">
+            <X aria-hidden="true" className="size-5" />
+          </button>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="rounded-[1.1rem] bg-[#f5f3f3] px-4 py-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777584]">Dose</p>
+            <p className="mt-1 text-sm font-black text-[#1b1c1c]">{supplement.dosage}</p>
+          </div>
+          <div className="rounded-[1.1rem] bg-[#fff0e6] px-4 py-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9a4600]">Timing</p>
+            <p className="mt-1 text-sm font-black text-[#1b1c1c]">{supplement.timing}</p>
+          </div>
+        </div>
+
+        <section className="mt-5 rounded-[1.25rem] border border-[#efedec] p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777584]">Coach notes</p>
+          <p className="mt-2 whitespace-pre-line text-sm font-semibold leading-6 text-[#1b1c1c]">
+            {instructions || "No coach notes added."}
+          </p>
+        </section>
+
+        {productUrl ? (
+          <a
+            href={productUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-[1.1rem] bg-[#3620b8] text-sm font-black text-white shadow-[0_16px_34px_rgba(54,32,184,0.22)]"
+          >
+            Purchase supplement
+            <ExternalLink aria-hidden="true" className="size-4" />
+          </a>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -437,18 +492,23 @@ function normalizeSupplementItem(supplement: unknown): SupplementItem[] {
     supplementName,
     dosage: getString(supplement.dosage) ?? "Dose set by coach",
     timing: getString(supplement.timing) ?? "Timing set by coach",
-    notes: getString(supplement.notes)
+    notes: getString(supplement.notes),
+    productUrl: getString(supplement.productUrl) ?? getString(supplement.purchaseLink) ?? getString(supplement.affiliateLink)
   }];
 }
 
-function parseSupplementDisplayNotes(notes: string) {
+function hasSupplements(protocol: SupplementProtocol) {
+  return protocol.phases.some((phase) => phase.supplements.length > 0);
+}
+
+function parseSupplementDisplayNotes(notes: string, fallbackProductUrl = "") {
   const linkPrefix = "Supplement link:";
   const lines = notes.split("\n");
   const productUrlLine = lines.find((line) => line.trim().startsWith(linkPrefix));
 
   return {
     instructions: lines.filter((line) => !line.trim().startsWith(linkPrefix)).join("\n").trim(),
-    productUrl: productUrlLine?.replace(linkPrefix, "").trim() ?? ""
+    productUrl: productUrlLine?.replace(linkPrefix, "").trim() ?? fallbackProductUrl
   };
 }
 
