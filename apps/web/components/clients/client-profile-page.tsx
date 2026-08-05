@@ -99,6 +99,14 @@ interface ApiFormSubmission {
   submittedAt: string;
 }
 
+interface ApiRoadmapPhase {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status: "planned" | "active" | "completed";
+}
+
 interface ClientProfilePhoto {
   id: string;
   url: string;
@@ -772,20 +780,37 @@ async function loadPersistedFormSubmissions(clientId: string): Promise<ApiFormSu
   return Array.isArray(payload.data) ? payload.data : [];
 }
 
+async function loadPersistedRoadmap(clientId: string): Promise<ApiRoadmapPhase[]> {
+  try {
+    const response = await fetch(`/api/v1/clients/${clientId}/roadmap`);
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = (await response.json()) as { data?: ApiRoadmapPhase[] };
+
+    return Array.isArray(payload.data) ? payload.data : [];
+  } catch {
+    return [];
+  }
+}
+
 async function loadClientProfileView(clientId: string, summaryOverride?: ClientSummary) {
   const summary = summaryOverride ?? (await loadPersistedClientSummary(clientId));
-  const [profile, trainingAssignments, mealPlanAssignments, notes, weightSummary, formSubmissions] = await Promise.all([
+  const [profile, trainingAssignments, mealPlanAssignments, notes, weightSummary, formSubmissions, roadmapPhases] = await Promise.all([
     loadPersistedProfile(clientId),
     loadPersistedTraining(clientId),
     loadPersistedMealPlans(clientId),
     loadPersistedNotes(clientId, 3),
     loadPersistedWeightSummary(clientId),
-    loadPersistedFormSubmissions(clientId).catch(() => [])
+    loadPersistedFormSubmissions(clientId).catch(() => []),
+    loadPersistedRoadmap(clientId)
   ]);
   const supplementAssignments = await loadPersistedSupplementPlans(clientId).catch(() => []);
 
   return {
-    client: createProfileFromSummary(summary, profile, trainingAssignments, mealPlanAssignments, supplementAssignments, weightSummary, formSubmissions),
+    client: createProfileFromSummary(summary, profile, trainingAssignments, mealPlanAssignments, supplementAssignments, weightSummary, formSubmissions, roadmapPhases),
     notes
   };
 }
@@ -813,13 +838,16 @@ function createProfileFromSummary(
   mealPlanAssignments: ApiMealPlanAssignment[] = [],
   supplementAssignments: ApiSupplementPlanAssignment[] = [],
   weightSummary?: ApiWeightSummary | null,
-  formSubmissions: ApiFormSubmission[] = []
+  formSubmissions: ApiFormSubmission[] = [],
+  roadmapPhases: ApiRoadmapPhase[] = []
 ): ClientProfileView {
   const trainingPrograms = createTrainingProgramsFromAssignments(trainingAssignments);
   const nutritionPlans = createNutritionPlansFromAssignments(mealPlanAssignments);
   const supplementProtocols = createSupplementProtocolsFromAssignments(supplementAssignments);
   const activeNutritionPlan = nutritionPlans[0];
   const initialQuestionnaireSubmission = findInitialQuestionnaireSubmission(formSubmissions);
+  const profileGoal = profile?.goals?.[0] ?? "Unassigned";
+  const activeRoadmapPhase = getActiveRoadmapPhaseName(roadmapPhases, summary.timezone || "UTC") ?? profileGoal;
 
   return {
     ...summary,
@@ -829,7 +857,8 @@ function createProfileFromSummary(
     stepTarget: profile?.stepTarget ?? null,
     trainingLogTargetDays: profile?.trainingLogTargetDays ?? null,
     weeksWithCoach: getWeeksWithCoach(summary.startDate),
-    protocol: profile?.goals?.[0] ?? "Unassigned",
+    protocol: profileGoal,
+    activeRoadmapPhase,
     bio: profile?.bio ?? "Profile details are ready for persistence-backed coaching notes.",
     initialQuestionnaireSubmission,
     photos: collectProfilePhotos(formSubmissions),
@@ -908,6 +937,27 @@ function normalizeNullableNumber(value: number | string | null | undefined) {
   const parsed = Number(value);
 
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getActiveRoadmapPhaseName(phases: ApiRoadmapPhase[], timezone: string) {
+  const today = getDateValueInTimeZone(new Date(), timezone);
+  const activePhase = phases.find((phase) => phase.startDate <= today && phase.endDate >= today);
+
+  return activePhase?.name ?? null;
+}
+
+function getDateValueInTimeZone(date: Date, timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value ?? String(date.getFullYear());
+  const month = parts.find((part) => part.type === "month")?.value ?? String(date.getMonth() + 1).padStart(2, "0");
+  const day = parts.find((part) => part.type === "day")?.value ?? String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 function formatWeightMetricValue(metric?: ApiMetric | null) {
@@ -1257,14 +1307,14 @@ function ClientProfileHeader({
           <div>
             <div className="mb-3 flex flex-wrap gap-2">
               <span className="rounded-lg bg-indigo-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-indigo-700">
-                Active Phase: {client.protocol}
+                Active Phase: {client.activeRoadmapPhase}
               </span>
               <span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700">
                 Assigned Check-In: Every {client.checkInDay}
               </span>
             </div>
             <h1 className="text-4xl font-black tracking-tight text-slate-950">{client.name}</h1>
-            <span className="sr-only">{client.protocol}</span>
+            <span className="sr-only">{client.activeRoadmapPhase}</span>
             <p className="mt-2 text-sm font-semibold text-slate-600">{client.packageName}</p>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{client.bio}</p>
           </div>

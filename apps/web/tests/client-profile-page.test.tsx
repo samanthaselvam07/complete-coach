@@ -389,9 +389,13 @@ interface CalendarEventFixture {
   scheduledTrainingDayName: string;
 }
 
-function mockMarcusProfile(initialCalendarEvents: CalendarEventFixture[] = []) {
+function mockMarcusProfile(
+  initialCalendarEvents: CalendarEventFixture[] = [],
+  options: { profileGoals?: string[] } = {}
+) {
   let calendarEventCounter = 0;
   let calendarEvents = [...initialCalendarEvents];
+  const profileGoals = options.profileGoals ?? ["Hypertrophy II"];
 
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
@@ -406,7 +410,7 @@ function mockMarcusProfile(initialCalendarEvents: CalendarEventFixture[] = []) {
           JSON.stringify({
             data: {
               bio: "Persisted Marcus coaching profile.",
-              goals: ["Hypertrophy II"],
+              goals: profileGoals,
               dateOfBirth: "1994-05-14T00:00:00.000Z",
               waterTargetLitres: 3,
               stepTarget: 10000
@@ -891,6 +895,14 @@ describe("ClientProfilePage", () => {
     expect(screen.getByRole("button", { name: "Custom" })).toBeInTheDocument();
     expect(screen.getByText("No persisted goals or countdowns are available for this client yet.")).toBeInTheDocument();
     expect(screen.getByText("No persisted activity events are available for this client yet.")).toBeInTheDocument();
+  });
+
+  it("uses the client's active roadmap phase in the profile header instead of the saved goal", async () => {
+    mockMarcusProfile([], { profileGoals: ["Body recomposition"] });
+    render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    expect(await screen.findByText("Active Phase: Hypertrophy II")).toBeInTheDocument();
+    expect(screen.queryByText("Active Phase: Body recomposition")).not.toBeInTheDocument();
   });
 
   it("adds a client goal and renders it as a countdown", async () => {

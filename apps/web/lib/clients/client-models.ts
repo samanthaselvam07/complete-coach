@@ -33,6 +33,7 @@ export interface ClientProfile extends ClientSummary {
   trainingLogTargetDays?: number | null;
   weeksWithCoach: number;
   protocol: string;
+  activeRoadmapPhase: string;
   bio: string;
   metrics: ClientMetric[];
   trainingSchedule: Array<{
