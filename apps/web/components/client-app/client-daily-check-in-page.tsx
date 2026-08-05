@@ -30,10 +30,19 @@ interface TrainingAssignment {
   snapshot: unknown;
 }
 
+interface ClientRoadmapPhase {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+}
+
 interface PhaseProgress {
   phaseName: string;
   weekNumber: number;
   totalWeeks: number;
+  weeksLeft: number;
   percentage: number;
   startsOn: string;
   endsOn: string | null;
@@ -87,6 +96,7 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
   const [clientName, setClientName] = useState("");
   const [weeklyCheckInDay, setWeeklyCheckInDay] = useState("Unscheduled");
   const [assignments, setAssignments] = useState<TrainingAssignment[]>([]);
+  const [roadmapPhases, setRoadmapPhases] = useState<ClientRoadmapPhase[]>([]);
   const [checkIns, setCheckIns] = useState<ClientCheckIn[]>([]);
   const [metrics, setMetrics] = useState<ClientMetricRecord[]>([]);
   const [showAllCheckIns, setShowAllCheckIns] = useState(false);
@@ -100,8 +110,14 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
 
     async function loadCheckInContext() {
       try {
-        const response = await fetch("/api/v1/client/me");
-        const payload = (await response.json().catch(() => null)) as ClientMeResponse | null;
+        const [response, roadmapResponse] = await Promise.all([
+          fetch("/api/v1/client/me"),
+          fetch("/api/v1/client/roadmap")
+        ]);
+        const [payload, roadmapPayload] = await Promise.all([
+          response.json().catch(() => null) as Promise<ClientMeResponse | null>,
+          roadmapResponse.json().catch(() => null) as Promise<{ data?: ClientRoadmapPhase[] } | null>
+        ]);
 
         if (!response.ok || !payload?.data) {
           throw new Error(payload?.error?.message ?? "Your check-in could not be loaded.");
@@ -114,6 +130,7 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
         setClientName(payload.data.client.name);
         setWeeklyCheckInDay(payload.data.client.checkInDay ?? "Unscheduled");
         setAssignments(payload.data.trainingAssignments);
+        setRoadmapPhases(roadmapResponse.ok && Array.isArray(roadmapPayload?.data) ? roadmapPayload.data : []);
 
         const [checkInsResponse, metricsResponse] = await Promise.all([
           fetch("/api/v1/client/check-ins?limit=100"),
@@ -143,8 +160,19 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
 
     void loadCheckInContext();
 
+    function reloadWhenVisible() {
+      if (document.visibilityState === "visible") {
+        void loadCheckInContext();
+      }
+    }
+
+    window.addEventListener("focus", reloadWhenVisible);
+    document.addEventListener("visibilitychange", reloadWhenVisible);
+
     return () => {
       mounted = false;
+      window.removeEventListener("focus", reloadWhenVisible);
+      document.removeEventListener("visibilitychange", reloadWhenVisible);
     };
   }, []);
 
@@ -152,7 +180,8 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
     () => assignments.find((assignment) => assignment.status === "active") ?? assignments[0] ?? null,
     [assignments]
   );
-  const phaseProgress = useMemo(() => calculatePhaseProgress(activeAssignment, today), [activeAssignment, today]);
+  const activeRoadmapPhase = useMemo(() => selectCurrentRoadmapPhase(roadmapPhases, today), [roadmapPhases, today]);
+  const phaseProgress = useMemo(() => calculatePhaseProgress(activeRoadmapPhase, activeAssignment, today), [activeRoadmapPhase, activeAssignment, today]);
   const progressPhotos = useMemo(() => extractProgressPhotos(checkIns), [checkIns]);
   const selectedMetric = progressMetricOptions.find((metric) => metric.key === selectedMetricKey) ?? progressMetricOptions[0];
   const visibleCheckIns = showAllCheckIns ? checkIns : checkIns.slice(0, 3);
@@ -211,6 +240,7 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
           </div>
           <p className="mt-4 text-sm font-semibold leading-6 text-[#777584]">
             Week {phaseProgress.weekNumber} of {phaseProgress.totalWeeks}
+            {phaseProgress.endsOn ? ` • ${formatWeeksLeft(phaseProgress.weeksLeft)}` : ""}
             {phaseProgress.endsOn ? ` • phase ends ${formatDate(phaseProgress.endsOn)}` : ""}
           </p>
         </section>
@@ -502,12 +532,37 @@ function CheckInStatus({ message, tone = "default" }: { message: string; tone?: 
   );
 }
 
-function calculatePhaseProgress(assignment: TrainingAssignment | null, today: string): PhaseProgress {
+function selectCurrentRoadmapPhase(phases: ClientRoadmapPhase[], today: string) {
+  return phases.find((phase) => phase.status === "active")
+    ?? phases.find((phase) => phase.startDate <= today && phase.endDate >= today)
+    ?? null;
+}
+
+function calculatePhaseProgress(phase: ClientRoadmapPhase | null, assignment: TrainingAssignment | null, today: string): PhaseProgress {
+  if (phase) {
+    const totalDays = Math.max(daysBetween(phase.startDate, phase.endDate) + 1, 1);
+    const elapsedDays = Math.min(Math.max(daysBetween(phase.startDate, today) + 1, 0), totalDays);
+    const totalWeeks = Math.max(Math.ceil(totalDays / 7), 1);
+    const weekNumber = Math.min(Math.max(Math.ceil(elapsedDays / 7), 1), totalWeeks);
+    const weeksLeft = Math.max(Math.ceil(daysBetween(today, phase.endDate) / 7), 0);
+
+    return {
+      phaseName: phase.name || "Current phase",
+      weekNumber,
+      totalWeeks,
+      weeksLeft,
+      percentage: Math.min(Math.max(Math.round((elapsedDays / totalDays) * 100), 0), 100),
+      startsOn: phase.startDate,
+      endsOn: phase.endDate
+    };
+  }
+
   if (!assignment) {
     return {
       phaseName: "No active phase",
       weekNumber: 0,
       totalWeeks: 0,
+      weeksLeft: 0,
       percentage: 0,
       startsOn: "",
       endsOn: null
@@ -524,6 +579,7 @@ function calculatePhaseProgress(assignment: TrainingAssignment | null, today: st
     phaseName: assignment.name || getString(snapshot.templateName) || "Current phase",
     weekNumber,
     totalWeeks,
+    weeksLeft: assignment.endsOn ? Math.max(Math.ceil(daysBetween(today, assignment.endsOn) / 7), 0) : Math.max(totalWeeks - weekNumber, 0),
     percentage: Math.min(Math.round((weekNumber / totalWeeks) * 100), 100),
     startsOn: assignment.startsOn,
     endsOn: assignment.endsOn
@@ -633,6 +689,14 @@ function formatDate(value: string) {
     day: "numeric",
     month: "short"
   }).format(date);
+}
+
+function formatWeeksLeft(weeksLeft: number) {
+  if (weeksLeft <= 0) {
+    return "final week";
+  }
+
+  return weeksLeft === 1 ? "1 week left" : `${weeksLeft} weeks left`;
 }
 
 const weekdayLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];

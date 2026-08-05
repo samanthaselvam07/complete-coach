@@ -18,7 +18,7 @@ describe("ClientDailyCheckInPage", () => {
               trainingAssignments: [
                 {
                   id: "training_assignment_1",
-                  name: "Metabolic Priming",
+                  name: "Old Training Assignment",
                   status: "active",
                   startsOn: "2026-07-01",
                   endsOn: null,
@@ -28,6 +28,24 @@ describe("ClientDailyCheckInPage", () => {
                 }
               ]
             }
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url === "/api/v1/client/roadmap") {
+        return new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "phase_1",
+                name: "Metabolic Priming",
+                startDate: "2026-07-01",
+                endDate: "2026-08-25",
+                status: "active",
+                items: []
+              }
+            ]
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
         );
@@ -67,8 +85,9 @@ describe("ClientDailyCheckInPage", () => {
 
     expect(await screen.findByRole("heading", { name: "Check In" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Metabolic Priming" })).toBeInTheDocument();
-    expect(screen.getByText("Week 5 of 8")).toBeInTheDocument();
-    expect(screen.getByText("63% complete")).toBeInTheDocument();
+    expect(screen.getByText(/Week 5 of 8/u)).toBeInTheDocument();
+    expect(screen.getByText("54% complete")).toBeInTheDocument();
+    expect(screen.getByText(/4 weeks left/u)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Start daily check-in" })).toHaveAttribute("href", "/check-in/daily");
     expect(screen.getByText("Monday • 4 days until check-in")).toBeInTheDocument();
 

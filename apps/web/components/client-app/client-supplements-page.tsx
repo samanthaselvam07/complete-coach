@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ExternalLink, Pill, Plus, Zap } from "lucide-react";
+import { Check, Clock3, ExternalLink, Layers3, Pill, Plus, Sparkles, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
@@ -142,21 +142,13 @@ export function ClientSupplementsPage() {
 
         {activeProtocol && supplements.length > 0 ? (
           <>
-            <section aria-label="Supplement adherence" className="rounded-[1.65rem] bg-[#f5f3f3] p-6">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#777584]">Daily status</p>
-                  <h2 className="mt-1 text-2xl font-black tracking-normal text-[#1b1c1c]">Stack adherence</h2>
-                </div>
-                <p className="text-3xl font-black italic text-[#3620b8]">{adherencePercentage}%</p>
-              </div>
-              <div className="mt-5 h-3 overflow-hidden rounded-full bg-[#e4e2e2]">
-                <div className="h-full rounded-full bg-gradient-to-r from-[#3620b8] to-[#5f50f0]" style={{ width: `${adherencePercentage}%` }} />
-              </div>
-              <p className="mt-4 text-sm font-semibold leading-6 text-[#777584]">
-                {completedCount} of {supplements.length} supplements completed today.
-              </p>
-            </section>
+            <SupplementStackSummary
+              protocolName={activeProtocol.name}
+              completedCount={completedCount}
+              supplementCount={supplements.length}
+              adherencePercentage={adherencePercentage}
+              phaseCount={activeProtocol.phases.length}
+            />
 
             <section className="rounded-[1.65rem] bg-gradient-to-br from-[#f87600] to-[#9a4600] p-6 shadow-[0_18px_45px_rgba(248,118,0,0.18)]">
               <div className="flex gap-4">
@@ -172,75 +164,208 @@ export function ClientSupplementsPage() {
               </div>
             </section>
 
-            {activeProtocol.phases.map((phase) => (
-              <section key={phase.name} className="space-y-4" aria-label={`${phase.name} supplements`}>
+            <section aria-label="Supplement stack" className="space-y-5">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-2xl bg-[#fff0e6] text-[#f87600]">
-                    <Pill aria-hidden="true" className="size-5" />
+                  <div className="flex size-10 items-center justify-center rounded-2xl bg-[#edeaff] text-[#3620b8]">
+                    <Layers3 aria-hidden="true" className="size-5" />
                   </div>
-                  <h2 className="text-xl font-black tracking-normal text-[#1b1c1c]">{phase.name}</h2>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#777584]">Coach assigned</p>
+                    <h2 className="text-xl font-black tracking-normal text-[#1b1c1c]">Today&apos;s stack</h2>
+                  </div>
                 </div>
+                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-[#3620b8] shadow-[0_10px_24px_rgba(27,28,28,0.05)]">
+                  {supplements.length} items
+                </span>
+              </div>
 
-                <div className="space-y-4">
-                  {phase.supplements.map((supplement, index) => {
-                    const key = `${phase.name}:${supplement.supplementName}:${index}`;
-                    const completed = completedKeys.includes(key);
-                    const { instructions, productUrl } = parseSupplementDisplayNotes(supplement.notes ?? "");
-
-                    return (
-                      <article key={key} className="rounded-[1.65rem] bg-white p-5 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex min-w-0 items-center gap-4">
-                            <div className="flex size-12 flex-none items-center justify-center rounded-2xl bg-[#f5f3f3] text-[#3620b8]">
-                              <Pill aria-hidden="true" className="size-5" />
-                            </div>
-                            <div className="min-w-0">
-                              <h3 className="truncate text-base font-black text-[#1b1c1c]">{supplement.supplementName}</h3>
-                              <p className="mt-1 text-xs font-bold text-[#777584]">
-                                {supplement.dosage} • <span className="text-[#9a4600]">{supplement.timing}</span>
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => toggleSupplement(key)}
-                            className={cn(
-                              "inline-flex size-11 flex-none items-center justify-center rounded-full transition",
-                              completed ? "bg-[#3620b8] text-white" : "bg-[#e9e8e7] text-[#777584]"
-                            )}
-                            aria-label={`${completed ? "Mark incomplete" : "Mark complete"} ${supplement.supplementName}`}
-                          >
-                            {completed ? <Check aria-hidden="true" className="size-5" /> : <Plus aria-hidden="true" className="size-5" />}
-                          </button>
-                        </div>
-                        {instructions || productUrl ? (
-                          <div className="mt-4 rounded-2xl bg-[#f5f3f3] px-4 py-3">
-                            {instructions ? <p className="text-sm font-semibold leading-6 text-[#777584]">{instructions}</p> : null}
-                            {productUrl ? (
-                              <a
-                                href={productUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-3 inline-flex items-center gap-2 text-sm font-black text-[#3620b8]"
-                              >
-                                Buy supplement
-                                <ExternalLink aria-hidden="true" className="size-4" />
-                              </a>
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </article>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+              {activeProtocol.phases.map((phase) => (
+                <SupplementPhaseStack
+                  key={phase.name}
+                  phase={phase}
+                  completedKeys={completedKeys}
+                  onToggle={toggleSupplement}
+                />
+              ))}
+            </section>
           </>
         ) : (
           <ClientSupplementsStatus message="No supplement protocol has been assigned yet." />
         )}
       </div>
     </ClientMobileShell>
+  );
+}
+
+function SupplementStackSummary({
+  protocolName,
+  completedCount,
+  supplementCount,
+  adherencePercentage,
+  phaseCount
+}: {
+  protocolName: string;
+  completedCount: number;
+  supplementCount: number;
+  adherencePercentage: number;
+  phaseCount: number;
+}) {
+  return (
+    <section aria-label="Supplement adherence" className="overflow-hidden rounded-[1.65rem] bg-[#1b1c1c] p-6 text-white shadow-[0_22px_55px_rgba(27,28,28,0.18)]">
+      <div className="flex items-start justify-between gap-5">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Sparkles aria-hidden="true" className="size-4 text-[#f87600]" />
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/60">Supplement stack</p>
+          </div>
+          <h2 className="mt-3 text-2xl font-black tracking-normal">{protocolName}</h2>
+          <p className="mt-2 text-sm font-semibold leading-6 text-white/68">
+            {completedCount} of {supplementCount} supplements completed today.
+          </p>
+        </div>
+        <div className="flex size-20 flex-none items-center justify-center rounded-[1.4rem] bg-white text-[#3620b8]">
+          <span className="text-3xl font-black italic">{adherencePercentage}%</span>
+        </div>
+      </div>
+
+      <div className="mt-6 h-3 overflow-hidden rounded-full bg-white/12">
+        <div className="h-full rounded-full bg-[#f87600]" style={{ width: `${adherencePercentage}%` }} />
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="rounded-[1.1rem] bg-white/8 px-4 py-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Timing blocks</p>
+          <p className="mt-1 text-xl font-black">{phaseCount}</p>
+        </div>
+        <div className="rounded-[1.1rem] bg-white/8 px-4 py-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Remaining</p>
+          <p className="mt-1 text-xl font-black">{Math.max(supplementCount - completedCount, 0)}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SupplementPhaseStack({
+  phase,
+  completedKeys,
+  onToggle
+}: {
+  phase: SupplementPhase;
+  completedKeys: string[];
+  onToggle: (key: string) => void;
+}) {
+  const completedPhaseCount = phase.supplements.filter((supplement, index) =>
+    completedKeys.includes(`${phase.name}:${supplement.supplementName}:${index}`)
+  ).length;
+
+  return (
+    <section aria-label={`${phase.name} supplements`} className="rounded-[1.65rem] bg-white p-5 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-11 flex-none items-center justify-center rounded-2xl bg-[#fff0e6] text-[#f87600]">
+            <Clock3 aria-hidden="true" className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="truncate text-lg font-black tracking-normal text-[#1b1c1c]">{phase.name}</h3>
+            <p className="mt-1 text-xs font-bold text-[#777584]">
+              {completedPhaseCount}/{phase.supplements.length} complete
+            </p>
+          </div>
+        </div>
+        <div className="flex -space-x-2">
+          {phase.supplements.slice(0, 3).map((supplement, index) => (
+            <span
+              key={`${phase.name}-${supplement.supplementName}-${index}`}
+              className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#edeaff] text-[10px] font-black text-[#3620b8]"
+            >
+              {supplement.supplementName.slice(0, 1).toUpperCase()}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {phase.supplements.map((supplement, index) => {
+          const key = `${phase.name}:${supplement.supplementName}:${index}`;
+          const completed = completedKeys.includes(key);
+          const { instructions, productUrl } = parseSupplementDisplayNotes(supplement.notes ?? "");
+
+          return (
+            <SupplementStackCard
+              key={key}
+              supplement={supplement}
+              completed={completed}
+              instructions={instructions}
+              productUrl={productUrl}
+              onToggle={() => onToggle(key)}
+            />
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function SupplementStackCard({
+  supplement,
+  completed,
+  instructions,
+  productUrl,
+  onToggle
+}: {
+  supplement: SupplementItem;
+  completed: boolean;
+  instructions: string;
+  productUrl: string;
+  onToggle: () => void;
+}) {
+  return (
+    <article className={cn("rounded-[1.25rem] border p-4 transition", completed ? "border-[#3620b8]/20 bg-[#f7f5ff]" : "border-[#efedec] bg-[#fbf9f8]")}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 gap-3">
+          <div className={cn("flex size-12 flex-none items-center justify-center rounded-2xl", completed ? "bg-[#3620b8] text-white" : "bg-white text-[#3620b8]")}>
+            <Pill aria-hidden="true" className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <h4 className="text-base font-black leading-5 text-[#1b1c1c]">{supplement.supplementName}</h4>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black text-[#3620b8]">{supplement.dosage}</span>
+              <span className="rounded-full bg-[#fff0e6] px-2.5 py-1 text-xs font-black text-[#9a4600]">{supplement.timing}</span>
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          className={cn(
+            "inline-flex size-11 flex-none items-center justify-center rounded-full transition active:scale-95",
+            completed ? "bg-[#3620b8] text-white" : "bg-white text-[#777584] shadow-[0_10px_24px_rgba(27,28,28,0.05)]"
+          )}
+          aria-label={`${completed ? "Mark incomplete" : "Mark complete"} ${supplement.supplementName}`}
+        >
+          {completed ? <Check aria-hidden="true" className="size-5" /> : <Plus aria-hidden="true" className="size-5" />}
+        </button>
+      </div>
+
+      {instructions || productUrl ? (
+        <div className="mt-4 border-t border-[#ebe8e6] pt-3">
+          {instructions ? <p className="whitespace-pre-line text-sm font-semibold leading-6 text-[#777584]">{instructions}</p> : null}
+          {productUrl ? (
+            <a
+              href={productUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex items-center gap-2 text-sm font-black text-[#3620b8]"
+            >
+              Buy supplement
+              <ExternalLink aria-hidden="true" className="size-4" />
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+    </article>
   );
 }
 
