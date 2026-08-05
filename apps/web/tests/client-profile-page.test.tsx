@@ -1525,7 +1525,10 @@ describe("ClientProfilePage", () => {
     expect(await screen.findByRole("option", { name: "Initial Q&A Form" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Daily Habit Form" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Weekly Check-In Form" })).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?status=published&limit=100");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=intake&status=published&limit=100");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=application&status=published&limit=100");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=habit-tracker&status=published&limit=100");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=check-in&status=published&limit=100");
     expect(screen.getByRole("button", { name: "Save client" })).toBeInTheDocument();
   });
 

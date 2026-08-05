@@ -31,18 +31,10 @@ interface ClientFormAssignmentResponse {
   status?: string | null;
 }
 
-type ClientAssignableFormType =
-  | "intake"
-  | "application"
-  | "contact"
-  | "terms-and-conditions"
-  | "habit-tracker"
-  | "check-in";
-
 interface ClientFormOptionResponse {
   id: string;
   name: string;
-  type?: ClientAssignableFormType | string | null;
+  type?: string | null;
   currency?: string | null;
 }
 
@@ -63,26 +55,26 @@ export async function fetchClientFormOptions(url: string): Promise<ClientFormOpt
 }
 
 export async function fetchPublishedClientFormsByType() {
-  try {
-    const response = await fetch("/api/v1/forms?status=published&limit=100");
+  const [
+    initialQuestionnaireOptions,
+    dailyHabitFormOptions,
+    checkInFormOptions
+  ] = await Promise.all([
+    fetchClientFormOptionsFromUrls([
+      "/api/v1/forms?type=intake&status=published&limit=100",
+      "/api/v1/forms?type=application&status=published&limit=100",
+      "/api/v1/forms?type=contact&status=published&limit=100",
+      "/api/v1/forms?type=terms-and-conditions&status=published&limit=100"
+    ]),
+    fetchClientFormOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
+    fetchClientFormOptions("/api/v1/forms?type=check-in&status=published&limit=100")
+  ]);
 
-    if (!response.ok) {
-      return emptyClientFormOptionGroups();
-    }
-
-    const payload = (await response.json()) as { data?: ClientFormOptionResponse[] };
-    const forms = payload.data ?? [];
-
-    return {
-      initialQuestionnaireOptions: toClientFormOptions(
-        forms.filter((form) => isFormType(form.type, ["intake", "application", "contact", "terms-and-conditions"]))
-      ),
-      dailyHabitFormOptions: toClientFormOptions(forms.filter((form) => isFormType(form.type, ["habit-tracker"]))),
-      checkInFormOptions: toClientFormOptions(forms.filter((form) => isFormType(form.type, ["check-in"])))
-    };
-  } catch {
-    return emptyClientFormOptionGroups();
-  }
+  return {
+    initialQuestionnaireOptions,
+    dailyHabitFormOptions,
+    checkInFormOptions
+  };
 }
 
 export async function fetchClientFormOptionsFromUrls(urls: string[]): Promise<ClientFormOption[]> {
@@ -289,18 +281,6 @@ function toClientFormOptions(records: ClientFormOptionResponse[]): ClientFormOpt
     label: record.name,
     currency: record.currency
   }));
-}
-
-function isFormType(type: ClientFormOptionResponse["type"], expectedTypes: ClientAssignableFormType[]) {
-  return Boolean(type && expectedTypes.includes(type as ClientAssignableFormType));
-}
-
-function emptyClientFormOptionGroups() {
-  return {
-    initialQuestionnaireOptions: [],
-    dailyHabitFormOptions: [],
-    checkInFormOptions: []
-  };
 }
 
 function emptyAssignedClientFormIds(): AssignedClientFormIds {

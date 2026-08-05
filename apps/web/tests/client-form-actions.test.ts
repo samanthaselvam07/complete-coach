@@ -3,7 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   assignSelectedClientForms,
   fetchAssignedClientFormIds,
-  fetchClientFormOptionsFromUrls
+  fetchClientFormOptionsFromUrls,
+  fetchPublishedClientFormsByType
 } from "@/components/clients/client-form-actions";
 import { emptyClientForm } from "@/components/clients/client-form-dialog";
 
@@ -70,6 +71,65 @@ describe("client form actions", () => {
       dailyHabitForm: "form_habit",
       checkInForm: "form_checkin"
     });
+  });
+
+  it("loads published edit form options with explicit per-type lookups", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/forms?type=intake&status=published&limit=100") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [{ id: "form_initial_qa", name: "Initial Q&A Form", type: "intake" }] }), {
+            status: 200
+          })
+        );
+      }
+
+      if (url === "/api/v1/forms?type=application&status=published&limit=100") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [{ id: "form_application", name: "Application Form", type: "application" }] }), {
+            status: 200
+          })
+        );
+      }
+
+      if (url === "/api/v1/forms?type=contact&status=published&limit=100") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/forms?type=terms-and-conditions&status=published&limit=100") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/forms?type=habit-tracker&status=published&limit=100") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [{ id: "form_daily", name: "Daily Check In", type: "habit-tracker" }] }), {
+            status: 200
+          })
+        );
+      }
+
+      if (url === "/api/v1/forms?type=check-in&status=published&limit=100") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [{ id: "form_weekly", name: "Weekly Check In", type: "check-in" }] }), {
+            status: 200
+          })
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    await expect(fetchPublishedClientFormsByType()).resolves.toEqual({
+      initialQuestionnaireOptions: [
+        { value: "form_initial_qa", label: "Initial Q&A Form", currency: undefined },
+        { value: "form_application", label: "Application Form", currency: undefined }
+      ],
+      dailyHabitFormOptions: [{ value: "form_daily", label: "Daily Check In", currency: undefined }],
+      checkInFormOptions: [{ value: "form_weekly", label: "Weekly Check In", currency: undefined }]
+    });
+
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/v1/forms?status=published&limit=100");
   });
 
   it("assigns selected forms without duplicating active assignments", async () => {
