@@ -3,6 +3,9 @@ export type ClientStatus = "active" | "archived" | "new" | "deactivated";
 export interface ClientSummary {
   id: string;
   name: string;
+  email?: string | null;
+  phone?: string | null;
+  packageId?: string | null;
   packageName: string;
   compliance: number;
   checkInDay: string;

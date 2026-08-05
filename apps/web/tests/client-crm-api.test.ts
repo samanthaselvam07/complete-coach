@@ -1476,7 +1476,9 @@ describe("client and CRM API tenancy", () => {
       firstName: "Scoped",
       lastName: "Client",
       email: "scoped@example.com",
+      phone: null,
       status: ClientStatus.ACTIVE,
+      packageId: null,
       packageName: "Premium Package",
       checkInDay: "Monday",
       startDate: null,
@@ -1487,16 +1489,68 @@ describe("client and CRM API tenancy", () => {
     const response = await getClient(new Request("http://test.local/api/v1/clients/client_1"), {
       params: Promise.resolve({ clientId: "client_1" })
     });
-    const payload = (await response.json()) as { data: { name: string } };
+    const payload = (await response.json()) as { data: { name: string; email: string | null; phone: string | null; packageId: string | null } };
 
     expect(response.status).toBe(200);
     expect(payload.data.name).toBe("Scoped Client");
+    expect(payload.data.email).toBe("scoped@example.com");
+    expect(payload.data.phone).toBeNull();
+    expect(payload.data.packageId).toBeNull();
     expect(mocks.prisma.client.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           id: "client_1",
           organizationId: "org_1",
           deletedAt: null
+        })
+      })
+    );
+  });
+
+  it("persists cleared optional client profile fields when they are sent in an update", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.client.update.mockResolvedValue({
+      id: "client_1",
+      firstName: "Scoped",
+      lastName: "Client",
+      email: null,
+      phone: null,
+      status: ClientStatus.ACTIVE,
+      packageId: null,
+      packageName: null,
+      checkInDay: null,
+      startDate: null,
+      latestCheckInAt: null,
+      compliance: 80
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await patchClient(
+      new Request("http://test.local/api/v1/clients/client_1", {
+        method: "PATCH",
+        body: JSON.stringify({
+          email: null,
+          phone: null,
+          packageId: null,
+          packageName: null,
+          checkInDay: null,
+          startDate: null
+        })
+      }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.client.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          email: null,
+          phone: null,
+          packageId: null,
+          packageName: null,
+          checkInDay: null,
+          startDate: null
         })
       })
     );

@@ -64,7 +64,9 @@ interface ClientRecord {
   lastName: string;
   email: string | null;
   status: ClientStatus;
+  packageId?: string | null;
   packageName: string | null;
+  phone?: string | null;
   checkInDay: string | null;
   timezone?: string | null;
   startDate: Date | string | null;
@@ -119,6 +121,9 @@ export function serializeClient(record: ClientRecord): ClientSummary {
   return {
     id: record.id,
     name,
+    email: record.email,
+    phone: record.phone ?? null,
+    packageId: record.packageId,
     packageName: record.packageName || "Unassigned",
     compliance: record.compliance,
     checkInDay: record.checkInDay || "Unscheduled",

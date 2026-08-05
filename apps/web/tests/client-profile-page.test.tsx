@@ -21,6 +21,9 @@ vi.mock("next/navigation", () => ({
 const marcusClient = {
   id: "1",
   name: "Marcus Rodriguez",
+  email: "marcus@example.com",
+  phone: "+61 400 000 111",
+  packageId: "package_elite",
   packageName: "Elite Performance",
   compliance: 96,
   checkInDay: "Monday",
@@ -624,6 +627,60 @@ function mockMarcusProfile(initialCalendarEvents: CalendarEventFixture[] = []) {
           { status: 200 }
         )
       );
+    }
+
+    if (url === "/api/v1/packages?status=active&limit=100") {
+      return Promise.resolve(
+        new Response(JSON.stringify({ data: [{ id: "package_elite", name: "Elite Performance", currency: "aud" }] }), { status: 200 })
+      );
+    }
+
+    if (url === "/api/v1/forms?type=intake&status=published&limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "form_initial_qa", name: "Initial Q&A Form" }] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/forms?type=application&status=published&limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/forms?type=contact&status=published&limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/forms?type=terms-and-conditions&status=published&limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/forms?type=habit-tracker&status=published&limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "form_daily_habits", name: "Daily Habit Form" }] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/forms?type=check-in&status=published&limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "form_check_in", name: "Weekly Check-In Form" }] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/form-assignments?clientId=1&limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/training-program-assignments?clientId=1&limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/meal-plan-assignments?clientId=1&limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/training-program-templates?limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/meal-plan-templates?limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/supplement-plan-templates?limit=100") {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     }
 
     if (url === "/api/v1/supplements?limit=20") {
@@ -1434,7 +1491,13 @@ describe("ClientProfilePage", () => {
     expect(dialog).toBeInTheDocument();
     expect(screen.getByLabelText("First name")).toHaveValue("Marcus");
     expect(screen.getByLabelText("Last name")).toHaveValue("Rodriguez");
+    expect(screen.getByLabelText("Email")).toHaveValue("marcus@example.com");
+    expect(screen.getByLabelText("Phone")).toHaveValue("+61 400 000 111");
+    expect(screen.getByLabelText("Payment plan/package")).toHaveValue("package_elite");
     expect(screen.getByLabelText("Date of birth")).toHaveValue("1994-05-14");
+    expect(await screen.findByRole("option", { name: "Initial Q&A Form" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Daily Habit Form" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Weekly Check-In Form" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save client" })).toBeInTheDocument();
   });
 
@@ -1594,6 +1657,7 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("No persisted training program has been assigned yet.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Edit client" }));
+    await screen.findByRole("dialog", { name: "Edit client" });
     await searchAndSelectPlan("Training plans", "Strength", "Strength Foundation");
     await searchAndSelectPlan("Nutrition plans", "Fuel", "Hypertrophy Fuel");
     await searchAndSelectPlan("Supplementation plans", "Sleep", "Sleep Support");

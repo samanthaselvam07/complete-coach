@@ -409,13 +409,12 @@ export function ClientProfilePage({
     };
   }, [loadPersistedClientView]);
 
-  const openEditClient = (clientToEdit: ClientProfileView) => {
+  const openEditClient = async (clientToEdit: ClientProfileView) => {
     setEditingClient(clientToEdit);
     setClientForm(clientSummaryToForm(clientToEdit));
     setClientFormError(null);
+    await Promise.all([loadClientFormOptions(), loadClientFormProfile(clientToEdit.id)]);
     setClientFormOpen(true);
-    void loadClientFormOptions();
-    void loadClientFormProfile(clientToEdit.id);
   };
 
   const closeClientForm = () => {
@@ -437,7 +436,7 @@ export function ClientProfilePage({
       const response = await fetch(`/api/v1/clients/${editingClient.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(createClientMutationBody(clientForm, editingClient.status, true))
+        body: JSON.stringify(createClientMutationBody(clientForm, editingClient.status, true, true))
       });
 
       if (!response.ok) {

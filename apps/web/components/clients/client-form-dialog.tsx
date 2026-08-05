@@ -71,10 +71,10 @@ export function clientSummaryToForm(client: ClientSummary): ClientFormState {
   return {
     firstName: firstName ?? "",
     lastName: lastNameParts.join(" "),
-    email: "",
+    email: client.email ?? "",
     dateOfBirth: "",
-    phone: "",
-    packageId: "",
+    phone: client.phone ?? "",
+    packageId: client.packageId ?? "",
     packageName: client.packageName === "Unassigned" ? "" : client.packageName,
     checkInDay: client.checkInDay === "Unscheduled" ? "" : client.checkInDay,
     needsPayment: false,
@@ -96,17 +96,17 @@ export function clientSummaryToForm(client: ClientSummary): ClientFormState {
   };
 }
 
-export function createClientMutationBody(form: ClientFormState, status = "new", includeOnboarding = false) {
+export function createClientMutationBody(form: ClientFormState, status = "new", includeOnboarding = false, preserveEmptyValues = false) {
   const body = {
     firstName: form.firstName,
     lastName: form.lastName,
-    email: form.email || undefined,
-    phone: form.phone || undefined,
-    packageId: form.packageId || undefined,
-    packageName: form.packageName || undefined,
-    checkInDay: form.checkInDay || undefined,
+    email: getMutationValue(form.email, preserveEmptyValues),
+    phone: getMutationValue(form.phone, preserveEmptyValues),
+    packageId: getMutationValue(form.packageId, preserveEmptyValues),
+    packageName: getMutationValue(form.packageName, preserveEmptyValues),
+    checkInDay: getMutationValue(form.checkInDay, preserveEmptyValues),
     status,
-    startDate: form.planStartDate || new Date().toISOString().slice(0, 10)
+    startDate: getMutationValue(form.planStartDate, preserveEmptyValues) ?? new Date().toISOString().slice(0, 10)
   };
 
   if (!includeOnboarding) {
@@ -128,6 +128,14 @@ export function createClientMutationBody(form: ClientFormState, status = "new", 
       defaultExerciseMetricUnit: form.defaultExerciseMetricUnit || undefined
     }
   };
+}
+
+function getMutationValue(value: string, preserveEmptyValues: boolean) {
+  if (value) {
+    return value;
+  }
+
+  return preserveEmptyValues ? null : undefined;
 }
 
 export function upsertClient(clients: ClientSummary[], client: ClientSummary) {

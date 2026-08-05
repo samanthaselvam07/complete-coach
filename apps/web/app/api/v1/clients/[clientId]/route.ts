@@ -4,10 +4,21 @@ import { prisma } from "@/lib/db/prisma";
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import { createClientSchema, serializeClient, toPrismaClientStatus } from "@/lib/clients/client-records";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
+import { z } from "zod";
 
 interface ClientRouteContext {
   params: Promise<{ clientId: string }>;
 }
+
+const patchClientSchema = createClientSchema.partial().extend({
+  email: z.string().trim().email().max(255).nullable().optional(),
+  phone: z.string().trim().max(40).nullable().optional(),
+  packageId: z.string().trim().max(120).nullable().optional(),
+  packageName: z.string().trim().max(120).nullable().optional(),
+  checkInDay: z.string().trim().max(20).nullable().optional(),
+  timezone: z.string().trim().max(80).nullable().optional(),
+  startDate: z.string().date().nullable().optional()
+});
 
 export async function GET(_request: Request, context: ClientRouteContext) {
   try {
@@ -35,7 +46,7 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
   try {
     const actor = requireActiveActor(await auth(), "clients:write");
     const { clientId } = await context.params;
-    const input = createClientSchema.partial().parse(await request.json());
+    const input = patchClientSchema.parse(await request.json());
     const existingClient = await prisma.client.findFirst({
       where: {
         id: clientId,
@@ -51,16 +62,16 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
     const client = await prisma.client.update({
       where: { id: clientId, organizationId: actor.organizationId },
       data: {
-        ...(input.firstName ? { firstName: input.firstName } : {}),
-        ...(input.lastName ? { lastName: input.lastName } : {}),
-        ...(input.email ? { email: input.email.toLowerCase() } : {}),
-        ...(input.phone ? { phone: input.phone } : {}),
+        ...getPatchField(input, "firstName", input.firstName),
+        ...getPatchField(input, "lastName", input.lastName),
+        ...getPatchField(input, "email", input.email ? input.email.toLowerCase() : input.email),
+        ...getPatchField(input, "phone", input.phone),
         ...(input.status ? { status: toPrismaClientStatus(input.status) } : {}),
-        ...(input.packageId ? { packageId: input.packageId } : {}),
-        ...(input.packageName ? { packageName: input.packageName } : {}),
-        ...(input.checkInDay ? { checkInDay: input.checkInDay } : {}),
-        ...(input.timezone ? { timezone: input.timezone } : {}),
-        ...(input.startDate ? { startDate: new Date(`${input.startDate}T00:00:00.000Z`) } : {})
+        ...getPatchField(input, "packageId", input.packageId),
+        ...getPatchField(input, "packageName", input.packageName),
+        ...getPatchField(input, "checkInDay", input.checkInDay),
+        ...getPatchField(input, "timezone", input.timezone),
+        ...getPatchField(input, "startDate", input.startDate ? new Date(`${input.startDate}T00:00:00.000Z`) : input.startDate)
       }
     });
 
@@ -78,6 +89,10 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+function getPatchField<TInput extends object, TKey extends keyof TInput, TValue>(input: TInput, key: TKey, value: TValue) {
+  return Object.prototype.hasOwnProperty.call(input, key) ? { [key]: value } : {};
 }
 
 export async function DELETE(_request: Request, context: ClientRouteContext) {
