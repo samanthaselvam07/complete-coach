@@ -80,11 +80,50 @@ describe("ClientNutritionPage", () => {
                           ]
                         }
                       ]
-                    }
                   }
                 }
-              ]
-            }
+              },
+              {
+                id: "meal_assignment_2",
+                name: "Rest Day Nutrition",
+                status: "draft",
+                targetCalories: 1800,
+                proteinGrams: 140,
+                carbsGrams: 150,
+                fatGrams: 70,
+                snapshot: {
+                  targetCalories: 1800,
+                  proteinGrams: 140,
+                  carbsGrams: 150,
+                  fatGrams: 70,
+                  fibreGrams: 28,
+                  template: {
+                    days: [
+                      {
+                        name: "Rest Day",
+                        meals: [
+                          {
+                            meal: "Salmon Salad",
+                            foods: [
+                              {
+                                foodName: "Salmon",
+                                servingSize: "120g",
+                                calories: 260,
+                                proteinGrams: 30,
+                                carbsGrams: 0,
+                                fatGrams: 15,
+                                fiberGrams: 0
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
         );
@@ -116,6 +155,9 @@ describe("ClientNutritionPage", () => {
     render(<ClientNutritionPage />);
 
     expect(await screen.findByRole("heading", { name: "Performance Nutrition" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Meal plan" })).toHaveValue("meal_assignment_1");
+    expect(screen.getByRole("option", { name: "Performance Nutrition (active)" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Rest Day Nutrition" })).toBeInTheDocument();
     expect(screen.getByLabelText("Calories remaining")).toHaveTextContent("2100");
     expect(screen.getByText("0 / 2100 kcal")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Nutrition progress" })).toHaveClass("grid-cols-2");
@@ -178,5 +220,14 @@ describe("ClientNutritionPage", () => {
 
     expect(within(mealDetails).getByText("Layer yoghurt and berries.")).toBeInTheDocument();
     expect(within(mealDetails).getByText("Chill for 10 minutes.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Meal plan" }), { target: { value: "meal_assignment_2" } });
+
+    expect(screen.getByRole("heading", { name: "Rest Day Nutrition" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Calories remaining")).toHaveTextContent("1800");
+    expect(screen.getByText("0 / 1800 kcal")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rest Day" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Salmon Salad" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Breakfast Bowl details" })).not.toBeInTheDocument();
   });
 });

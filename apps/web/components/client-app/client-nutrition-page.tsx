@@ -100,6 +100,7 @@ export function ClientNutritionPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [clientName, setClientName] = useState("");
   const [plans, setPlans] = useState<NutritionPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState("");
   const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [loggedMealKeysByDay, setLoggedMealKeysByDay] = useState<Record<string, string[]>>({});
   const [expandedMealKey, setExpandedMealKey] = useState<string | null>(null);
@@ -133,7 +134,11 @@ export function ClientNutritionPage() {
         setHydrationDate(nextHydrationDate);
         setHydrationTargetMl(targetLitres ? Math.round(targetLitres * 1000) : 2500);
         setHydrationMl(hydrationResponse.ok && typeof hydrationPayload?.data?.hydrationMl === "number" ? hydrationPayload.data.hydrationMl : 0);
-        setPlans(payload.data.mealPlanAssignments.map(normalizeMealPlanAssignment));
+        const nextPlans = payload.data.mealPlanAssignments.map(normalizeMealPlanAssignment);
+        const defaultPlanId = nextPlans.find((plan) => plan.status === "active")?.id ?? nextPlans[0]?.id ?? "";
+
+        setPlans(nextPlans);
+        setSelectedPlanId((currentPlanId) => nextPlans.some((plan) => plan.id === currentPlanId) ? currentPlanId : defaultPlanId);
         setLoadState("ready");
       } catch (error) {
         if (!mounted) {
@@ -163,7 +168,10 @@ export function ClientNutritionPage() {
     };
   }, []);
 
-  const activePlan = useMemo(() => plans.find((plan) => plan.status === "active") ?? plans[0] ?? null, [plans]);
+  const activePlan = useMemo(
+    () => plans.find((plan) => plan.id === selectedPlanId) ?? plans.find((plan) => plan.status === "active") ?? plans[0] ?? null,
+    [plans, selectedPlanId]
+  );
   const activeDay = activePlan?.days[Math.min(activeDayIndex, Math.max(activePlan.days.length - 1, 0))] ?? null;
   const activeDayKey = activePlan && activeDay ? `${activePlan.id}:${activeDay.name}` : "";
   const loggedMealKeys = loggedMealKeysByDay[activeDayKey] ?? [];
@@ -181,6 +189,13 @@ export function ClientNutritionPage() {
       setMealDetailTab("ingredients");
     });
   }, [activeDayKey]);
+
+  function selectMealPlan(planId: string) {
+    setSelectedPlanId(planId);
+    setActiveDayIndex(0);
+    setExpandedMealKey(null);
+    setMealDetailTab("ingredients");
+  }
 
   function toggleMealLogged(mealKey: string) {
     setLoggedMealKeysByDay((current) => {
@@ -264,6 +279,8 @@ export function ClientNutritionPage() {
 
         {activePlan && activeDay ? (
           <>
+            <MealPlanSwitcher plans={plans} selectedPlanId={activePlan.id} onSelectPlan={selectMealPlan} />
+
             <nav aria-label="Nutrition days" className="-mx-4 overflow-x-auto px-4">
               <div className="flex min-w-max gap-2">
                 {activePlan.days.map((day, index) => (
@@ -317,6 +334,41 @@ export function ClientNutritionPage() {
         )}
       </div>
     </ClientMobileShell>
+  );
+}
+
+function MealPlanSwitcher({
+  plans,
+  selectedPlanId,
+  onSelectPlan
+}: {
+  plans: NutritionPlan[];
+  selectedPlanId: string;
+  onSelectPlan: (planId: string) => void;
+}) {
+  return (
+    <section aria-label="Meal plan switcher" className="rounded-[1.65rem] bg-white p-5 shadow-[0_18px_45px_rgba(27,28,28,0.06)]">
+      <label htmlFor="client-meal-plan-select" className="block text-[10px] font-black uppercase tracking-[0.22em] text-[#777584]">
+        Meal plan
+      </label>
+      <div className="mt-3">
+        <select
+          id="client-meal-plan-select"
+          value={selectedPlanId}
+          onChange={(event) => onSelectPlan(event.target.value)}
+          className="h-14 w-full rounded-[1.25rem] border-0 bg-[#f5f3f3] px-4 text-base font-black text-[#1b1c1c] outline-none ring-2 ring-transparent transition focus:ring-[#3620b8]"
+        >
+          {plans.map((plan) => (
+            <option key={plan.id} value={plan.id}>
+              {plan.name}{plan.status === "active" ? " (active)" : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="mt-3 text-sm font-semibold leading-6 text-[#777584]">
+        Switch between meal plans your coach has built for you.
+      </p>
+    </section>
   );
 }
 
