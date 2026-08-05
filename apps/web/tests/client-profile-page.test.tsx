@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ClientNotesPage } from "@/components/clients/client-notes-page";
 import {
   createProgressChartSeries,
+  getMetricYAxisStep,
   normalizeProgressMetricRecord
 } from "@/components/clients/client-profile-dashboard";
 import {
@@ -911,8 +912,13 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("Y axis: Metric value")).toBeInTheDocument();
     expect(screen.getByText("X")).toBeInTheDocument();
     expect(screen.getByText("Y")).toBeInTheDocument();
+    expect(screen.getByText("Bodyweight value")).toBeInTheDocument();
+    expect(screen.getByText("80kg")).toBeInTheDocument();
+    expect(screen.getByText("90kg")).toBeInTheDocument();
+    expect(screen.getAllByText("Jul 1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Jul 22, 2026").length).toBeGreaterThan(0);
-    expect(screen.getByText("81.7kg")).toBeInTheDocument();
+    expect(screen.getAllByText("81.7kg").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("Bodyweight: 82.6kg on Jul 1, 2026")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Metrics (1)" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Metrics (1)" }));
     expect(screen.getByRole("menuitemcheckbox", { name: /Bodyweight/i })).toHaveAttribute("aria-checked", "true");
@@ -1488,6 +1494,18 @@ describe("ClientProfilePage", () => {
         chartY: expect.any(Number)
       })
     ]);
+    expect(series[0]?.yTicks.map((tick) => tick.value)).toEqual([80, 90]);
+    expect(series[0]?.yTicks.map((tick) => tick.label)).toEqual(["80kg", "90kg"]);
+  });
+
+  it("uses fixed y-axis increments for known progress metrics", () => {
+    expect(getMetricYAxisStep("body_weight")).toBe(10);
+    expect(getMetricYAxisStep("waist")).toBe(10);
+    expect(getMetricYAxisStep("steps")).toBe(5000);
+    expect(getMetricYAxisStep("total_calories")).toBe(1000);
+    expect(getMetricYAxisStep("protein")).toBe(100);
+    expect(getMetricYAxisStep("carbs")).toBe(100);
+    expect(getMetricYAxisStep("fats")).toBe(100);
   });
 
   it("temporarily hides the client conversation action from the profile header", async () => {

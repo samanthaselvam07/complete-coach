@@ -52,8 +52,15 @@ interface ProgressChartPoint extends ClientMetricRecord {
   chartY: number;
 }
 
+interface ProgressYAxisTick {
+  value: number;
+  chartY: number;
+  label: string;
+}
+
 interface ProgressChartSeries extends MetricDefinition {
   points: ProgressChartPoint[];
+  yTicks: ProgressYAxisTick[];
 }
 
 interface MetricDefinition {
@@ -73,6 +80,12 @@ const defaultMetricDefinitions: MetricDefinition[] = [
   { key: "steps", label: "Steps", color: "#7c3aed" }
 ];
 const fallbackMetricColors = ["#dc2626", "#0f766e", "#9333ea", "#ca8a04", "#475569", "#be123c"];
+const progressChartBounds = {
+  left: 56,
+  right: 620,
+  top: 36,
+  bottom: 220
+};
 
 type ClientCalendarEventType =
   | "strength"
@@ -369,6 +382,8 @@ function ProgressChart({
 }) {
   const series = createProgressChartSeries(metrics, definitions)
     .filter((definition) => definition.points.length > 0);
+  const xTicks = createProgressXAxisTicks(series);
+  const primarySeries = series[0];
 
   if (series.length === 0) {
     return (
@@ -384,15 +399,37 @@ function ProgressChart({
         <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">X axis: Date</span>
         <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">Y axis: Metric value</span>
       </div>
-      <svg role="img" aria-label="Progress analytics chart" viewBox="0 0 640 260" className="h-72 w-full">
-        <text x="28" y="18" fill="#475569" fontSize="12" fontWeight="700">
-          Y value
+      <svg role="img" aria-label="Progress analytics chart" viewBox="0 0 640 270" className="h-72 w-full overflow-visible">
+        <text x={progressChartBounds.left} y="18" fill="#475569" fontSize="12" fontWeight="700">
+          {primarySeries ? `${primarySeries.label} value` : "Y value"}
         </text>
-        <text x="560" y="252" fill="#475569" fontSize="12" fontWeight="700">
-          X date
+        <text x="560" y="264" fill="#475569" fontSize="12" fontWeight="700">
+          Date
         </text>
-        {[0, 1, 2, 3].map((line) => (
-          <line key={line} x1="28" x2="620" y1={42 + line * 54} y2={42 + line * 54} stroke="#e2e8f0" strokeWidth="1" />
+        <line x1={progressChartBounds.left} x2={progressChartBounds.left} y1={progressChartBounds.top} y2={progressChartBounds.bottom} stroke="#cbd5e1" strokeWidth="1.5" />
+        <line x1={progressChartBounds.left} x2={progressChartBounds.right} y1={progressChartBounds.bottom} y2={progressChartBounds.bottom} stroke="#cbd5e1" strokeWidth="1.5" />
+        {primarySeries?.yTicks.map((tick) => (
+          <g key={`${primarySeries.key}-tick-${tick.value}`}>
+            <line
+              x1={progressChartBounds.left}
+              x2={progressChartBounds.right}
+              y1={tick.chartY}
+              y2={tick.chartY}
+              stroke="#e2e8f0"
+              strokeWidth="1"
+            />
+            <text x={progressChartBounds.left - 8} y={tick.chartY + 4} fill="#475569" fontSize="11" textAnchor="end">
+              {tick.label}
+            </text>
+          </g>
+        ))}
+        {xTicks.map((tick) => (
+          <g key={`x-tick-${tick.value}`}>
+            <line x1={tick.chartX} x2={tick.chartX} y1={progressChartBounds.top} y2={progressChartBounds.bottom} stroke="#eef2f7" strokeWidth="1" />
+            <text x={tick.chartX} y={progressChartBounds.bottom + 18} fill="#475569" fontSize="11" textAnchor="middle">
+              {tick.label}
+            </text>
+          </g>
         ))}
         {series.map((definition) => (
           <g key={definition.key}>
@@ -405,21 +442,59 @@ function ProgressChart({
               points={toPolylinePoints(definition.points)}
             />
             {definition.points.map((point) => {
+              const tooltipText = `${definition.label}: ${formatMetricValue(point, definition)} on ${formatMetricDate(point.x)}`;
+              const labelY = Math.max(progressChartBounds.top + 10, point.chartY - 10);
+
               return (
-                <circle
-                  key={point.id}
-                  cx={point.chartX}
-                  cy={point.chartY}
-                  r="4"
-                  fill={definition.color}
-                  data-metric-key={point.metricKey}
-                  data-x={point.x}
-                  data-y={point.y}
-                  data-chart-x={point.chartX}
-                  data-chart-y={point.chartY}
-                >
-                  <title>{`${definition.label}: ${formatMetricValue(point, definition)} on ${formatMetricDate(point.measuredAt)}`}</title>
-                </circle>
+                <g key={point.id} className="group outline-none" tabIndex={0} aria-label={tooltipText}>
+                  <circle
+                    cx={point.chartX}
+                    cy={point.chartY}
+                    r="5"
+                    fill={definition.color}
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                    data-metric-key={point.metricKey}
+                    data-x={point.x}
+                    data-y={point.y}
+                    data-chart-x={point.chartX}
+                    data-chart-y={point.chartY}
+                  >
+                    <title>{tooltipText}</title>
+                  </circle>
+                  <text x={point.chartX} y={labelY} fill="#0f172a" fontSize="11" fontWeight="700" textAnchor="middle">
+                    {formatMetricValue(point, definition)}
+                  </text>
+                  <g className="pointer-events-none opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100">
+                    <rect
+                      x={Math.min(Math.max(point.chartX - 76, progressChartBounds.left), progressChartBounds.right - 152)}
+                      y={Math.max(progressChartBounds.top, point.chartY - 54)}
+                      width="152"
+                      height="38"
+                      rx="6"
+                      fill="#0f172a"
+                    />
+                    <text
+                      x={Math.min(Math.max(point.chartX, progressChartBounds.left + 76), progressChartBounds.right - 76)}
+                      y={Math.max(progressChartBounds.top + 15, point.chartY - 36)}
+                      fill="#ffffff"
+                      fontSize="11"
+                      fontWeight="700"
+                      textAnchor="middle"
+                    >
+                      {formatMetricDate(point.x)}
+                    </text>
+                    <text
+                      x={Math.min(Math.max(point.chartX, progressChartBounds.left + 76), progressChartBounds.right - 76)}
+                      y={Math.max(progressChartBounds.top + 31, point.chartY - 20)}
+                      fill="#ffffff"
+                      fontSize="11"
+                      textAnchor="middle"
+                    >
+                      {formatMetricValue(point, definition)}
+                    </text>
+                  </g>
+                </g>
               );
             })}
           </g>
@@ -526,7 +601,7 @@ export function createProgressChartSeries(metrics: ClientMetricRecord[], definit
   const chartMetrics = sortedSeries.flatMap((definition) => definition.points);
 
   if (chartMetrics.length === 0) {
-    return sortedSeries.map((definition) => ({ ...definition, points: [] }));
+    return sortedSeries.map((definition) => ({ ...definition, points: [], yTicks: [] }));
   }
 
   const minTime = Math.min(...chartMetrics.map((metric) => new Date(metric.x ?? metric.measuredAt).getTime()));
@@ -534,6 +609,7 @@ export function createProgressChartSeries(metrics: ClientMetricRecord[], definit
 
   return sortedSeries.map((definition) => ({
     ...definition,
+    yTicks: createYAxisTicks(definition.points, definition),
     points: definition.points.map((point) => {
       const [chartX, chartY] = toChartPoint(point, definition.points, minTime, maxTime);
 
@@ -550,6 +626,75 @@ export function createProgressChartSeries(metrics: ClientMetricRecord[], definit
 
 function toPolylinePoints(points: ProgressChartPoint[]) {
   return points.map((point) => `${point.chartX},${point.chartY}`).join(" ");
+}
+
+function createProgressXAxisTicks(series: ProgressChartSeries[]) {
+  const points = series.flatMap((definition) => definition.points);
+
+  if (points.length === 0) {
+    return [];
+  }
+
+  const minTime = Math.min(...points.map((point) => new Date(point.x).getTime()));
+  const maxTime = Math.max(...points.map((point) => new Date(point.x).getTime()));
+
+  if (minTime === maxTime) {
+    return [{ value: minTime, chartX: toChartX(minTime, minTime, maxTime), label: formatMetricDate(new Date(minTime).toISOString()) }];
+  }
+
+  return Array.from({ length: 5 }, (_, index) => {
+    const value = minTime + ((maxTime - minTime) / 4) * index;
+
+    return {
+      value,
+      chartX: toChartX(value, minTime, maxTime),
+      label: formatShortMetricDate(new Date(value).toISOString())
+    };
+  });
+}
+
+function createYAxisTicks(points: ClientMetricRecord[], definition: MetricDefinition): ProgressYAxisTick[] {
+  if (points.length === 0) {
+    return [];
+  }
+
+  const step = getMetricYAxisStep(definition.key);
+  const values = points.map((metric) => metric.y ?? metric.metricValue);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const start = Math.floor(minValue / step) * step;
+  const end = Math.max(start + step, Math.ceil(maxValue / step) * step);
+  const ticks: ProgressYAxisTick[] = [];
+
+  for (let value = start; value <= end; value += step) {
+    ticks.push({
+      value,
+      chartY: toChartY(value, start, end),
+      label: formatAxisValue(value, definition)
+    });
+  }
+
+  return ticks;
+}
+
+export function getMetricYAxisStep(metricKey: string) {
+  if (["body_weight", "waist"].includes(metricKey)) {
+    return 10;
+  }
+
+  if (metricKey === "steps") {
+    return 5000;
+  }
+
+  if (metricKey === "total_calories") {
+    return 1000;
+  }
+
+  if (["protein", "carbs", "fats"].includes(metricKey)) {
+    return 100;
+  }
+
+  return 10;
 }
 
 function getLatestChartPoints(series: ProgressChartSeries[]) {
@@ -571,17 +716,29 @@ function getLatestChartPoints(series: ProgressChartSeries[]) {
 }
 
 function toChartPoint(point: ClientMetricRecord, series: ClientMetricRecord[], minTime: number, maxTime: number) {
+  const metricKey = point.metricKey;
+  const step = getMetricYAxisStep(metricKey);
   const values = series.map((metric) => metric.y ?? metric.metricValue);
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
+  const minValue = Math.floor(Math.min(...values) / step) * step;
+  const maxValue = Math.max(minValue + step, Math.ceil(Math.max(...values) / step) * step);
   const time = new Date(point.x ?? point.measuredAt).getTime();
-  const xRatio = maxTime === minTime ? 0.5 : (time - minTime) / (maxTime - minTime);
   const yValue = point.y ?? point.metricValue;
-  const yRatio = maxValue === minValue ? 0.5 : (yValue - minValue) / (maxValue - minValue);
-  const x = 28 + xRatio * 592;
-  const y = 220 - yRatio * 178;
+  const x = toChartX(time, minTime, maxTime);
+  const y = toChartY(yValue, minValue, maxValue);
 
   return [Number(x.toFixed(1)), Number(y.toFixed(1))];
+}
+
+function toChartX(time: number, minTime: number, maxTime: number) {
+  const xRatio = maxTime === minTime ? 0.5 : (time - minTime) / (maxTime - minTime);
+
+  return progressChartBounds.left + xRatio * (progressChartBounds.right - progressChartBounds.left);
+}
+
+function toChartY(value: number, minValue: number, maxValue: number) {
+  const yRatio = maxValue === minValue ? 0.5 : (value - minValue) / (maxValue - minValue);
+
+  return progressChartBounds.bottom - yRatio * (progressChartBounds.bottom - progressChartBounds.top);
 }
 
 function getMetricLabel(metric: ClientMetricRecord) {
@@ -605,11 +762,25 @@ function formatMetricValue(metric: ClientMetricRecord, definition: MetricDefinit
   return unit ? `${value}${unit}` : value;
 }
 
+function formatAxisValue(value: number, definition: MetricDefinition) {
+  const unit = definition.unit;
+  const formattedValue = Number.isInteger(value) ? String(value) : value.toFixed(1);
+
+  return unit ? `${formattedValue}${unit}` : formattedValue;
+}
+
 function formatMetricDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
     year: "numeric"
+  }).format(new Date(value));
+}
+
+function formatShortMetricDate(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric"
   }).format(new Date(value));
 }
 
