@@ -109,6 +109,50 @@ describe("ClientDailyCheckInPage", () => {
     expect(screen.getByLabelText("Left photo")).toBeInTheDocument();
     expect(screen.getByLabelText("Right photo")).toBeInTheDocument();
   });
+
+  it("does not use the active training assignment as the current roadmap phase", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url === "/api/v1/client/me") {
+        return new Response(
+          JSON.stringify({
+            data: {
+              client: { id: "client_1", name: "Client One", checkInDay: "Monday" },
+              trainingAssignments: [
+                {
+                  id: "training_assignment_1",
+                  name: "Strength Block",
+                  status: "active",
+                  startsOn: "2026-07-01",
+                  endsOn: null,
+                  snapshot: { durationWeeks: 8 }
+                }
+              ]
+            }
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url === "/api/v1/client/roadmap") {
+        return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+
+      if (url === "/api/v1/client/check-ins?limit=100") {
+        return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+
+      if (url === "/api/v1/clients/client_1/metrics?limit=200") {
+        return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+
+      return new Response(JSON.stringify({ error: { message: "Not found" } }), { status: 404 });
+    }));
+
+    render(<ClientDailyCheckInPage today="2026-07-30" />);
+
+    expect(await screen.findByRole("heading", { name: "No active phase" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Strength Block" })).not.toBeInTheDocument();
+  });
 });
 
 function createCheckIn(id: string, submittedAt: string, summary: string, photoUrl: string) {

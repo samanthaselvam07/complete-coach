@@ -14,20 +14,10 @@ interface ClientMeResponse {
       name: string;
       checkInDay: string;
     };
-    trainingAssignments: TrainingAssignment[];
   };
   error?: {
     message?: string;
   };
-}
-
-interface TrainingAssignment {
-  id: string;
-  name: string;
-  status: string;
-  startsOn: string;
-  endsOn: string | null;
-  snapshot: unknown;
 }
 
 interface ClientRoadmapPhase {
@@ -95,7 +85,6 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
   const [errorMessage, setErrorMessage] = useState("");
   const [clientName, setClientName] = useState("");
   const [weeklyCheckInDay, setWeeklyCheckInDay] = useState("Unscheduled");
-  const [assignments, setAssignments] = useState<TrainingAssignment[]>([]);
   const [roadmapPhases, setRoadmapPhases] = useState<ClientRoadmapPhase[]>([]);
   const [checkIns, setCheckIns] = useState<ClientCheckIn[]>([]);
   const [metrics, setMetrics] = useState<ClientMetricRecord[]>([]);
@@ -129,7 +118,6 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
 
         setClientName(payload.data.client.name);
         setWeeklyCheckInDay(payload.data.client.checkInDay ?? "Unscheduled");
-        setAssignments(payload.data.trainingAssignments);
         setRoadmapPhases(roadmapResponse.ok && Array.isArray(roadmapPayload?.data) ? roadmapPayload.data : []);
 
         const [checkInsResponse, metricsResponse] = await Promise.all([
@@ -176,12 +164,8 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
     };
   }, []);
 
-  const activeAssignment = useMemo(
-    () => assignments.find((assignment) => assignment.status === "active") ?? assignments[0] ?? null,
-    [assignments]
-  );
   const activeRoadmapPhase = useMemo(() => selectCurrentRoadmapPhase(roadmapPhases, today), [roadmapPhases, today]);
-  const phaseProgress = useMemo(() => calculatePhaseProgress(activeRoadmapPhase, activeAssignment, today), [activeRoadmapPhase, activeAssignment, today]);
+  const phaseProgress = useMemo(() => calculatePhaseProgress(activeRoadmapPhase, today), [activeRoadmapPhase, today]);
   const progressPhotos = useMemo(() => extractProgressPhotos(checkIns), [checkIns]);
   const selectedMetric = progressMetricOptions.find((metric) => metric.key === selectedMetricKey) ?? progressMetricOptions[0];
   const visibleCheckIns = showAllCheckIns ? checkIns : checkIns.slice(0, 3);
@@ -538,7 +522,7 @@ function selectCurrentRoadmapPhase(phases: ClientRoadmapPhase[], today: string) 
     ?? null;
 }
 
-function calculatePhaseProgress(phase: ClientRoadmapPhase | null, assignment: TrainingAssignment | null, today: string): PhaseProgress {
+function calculatePhaseProgress(phase: ClientRoadmapPhase | null, today: string): PhaseProgress {
   if (phase) {
     const totalDays = Math.max(daysBetween(phase.startDate, phase.endDate) + 1, 1);
     const elapsedDays = Math.min(Math.max(daysBetween(phase.startDate, today) + 1, 0), totalDays);
@@ -557,32 +541,14 @@ function calculatePhaseProgress(phase: ClientRoadmapPhase | null, assignment: Tr
     };
   }
 
-  if (!assignment) {
-    return {
-      phaseName: "No active phase",
-      weekNumber: 0,
-      totalWeeks: 0,
-      weeksLeft: 0,
-      percentage: 0,
-      startsOn: "",
-      endsOn: null
-    };
-  }
-
-  const snapshot = isRecord(assignment.snapshot) ? assignment.snapshot : {};
-  const durationWeeks = getNumber(snapshot.durationWeeks) ?? getNumber(snapshot.weeks);
-  const totalWeeks = Math.max(calculateTotalWeeks(assignment.startsOn, assignment.endsOn, durationWeeks), 1);
-  const elapsedWeeks = Math.floor(daysBetween(assignment.startsOn, today) / 7) + 1;
-  const weekNumber = Math.min(Math.max(elapsedWeeks, 1), totalWeeks);
-
   return {
-    phaseName: assignment.name || getString(snapshot.templateName) || "Current phase",
-    weekNumber,
-    totalWeeks,
-    weeksLeft: assignment.endsOn ? Math.max(Math.ceil(daysBetween(today, assignment.endsOn) / 7), 0) : Math.max(totalWeeks - weekNumber, 0),
-    percentage: Math.min(Math.round((weekNumber / totalWeeks) * 100), 100),
-    startsOn: assignment.startsOn,
-    endsOn: assignment.endsOn
+    phaseName: "No active phase",
+    weekNumber: 0,
+    totalWeeks: 0,
+    weeksLeft: 0,
+    percentage: 0,
+    startsOn: "",
+    endsOn: null
   };
 }
 
@@ -659,18 +625,6 @@ function formatMetricNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-function calculateTotalWeeks(startsOn: string, endsOn: string | null, durationWeeks?: number) {
-  if (durationWeeks && durationWeeks > 0) {
-    return Math.ceil(durationWeeks);
-  }
-
-  if (endsOn) {
-    return Math.max(Math.ceil((daysBetween(startsOn, endsOn) + 1) / 7), 1);
-  }
-
-  return 6;
-}
-
 function daysBetween(startDate: string, endDate: string) {
   const start = Date.parse(`${startDate}T00:00:00.000Z`);
   const end = Date.parse(`${endDate}T00:00:00.000Z`);
@@ -724,22 +678,4 @@ function getWeeklyCheckInCountdown(checkInDay: string, today: string) {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object");
-}
-
-function getString(value: unknown) {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}
-
-function getNumber(value: unknown) {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-
-  if (typeof value === "string" && value.trim()) {
-    const parsedValue = Number.parseFloat(value);
-
-    return Number.isFinite(parsedValue) ? parsedValue : undefined;
-  }
-
-  return undefined;
 }
