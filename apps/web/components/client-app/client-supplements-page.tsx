@@ -4,6 +4,7 @@ import { Check, Clock3, ExternalLink, Layers3, Pill, Plus, Sparkles, Zap } from 
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
+import { saveClientActivityLog } from "./client-activity-log-actions";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
@@ -108,11 +109,22 @@ export function ClientSupplementsPage() {
   const adherencePercentage = supplements.length > 0 ? Math.round((completedCount / supplements.length) * 100) : 0;
 
   function toggleSupplement(key: string) {
-    setCompletedKeys((currentKeys) =>
-      currentKeys.includes(key)
+    setCompletedKeys((currentKeys) => {
+      const nextKeys = currentKeys.includes(key)
         ? currentKeys.filter((currentKey) => currentKey !== key)
-        : [...currentKeys, key]
-    );
+        : [...currentKeys, key];
+      const nextStatus = nextKeys.length > 0 ? "completed" : "missed";
+
+      void saveClientActivityLog({
+        domain: "supplementation",
+        status: nextStatus,
+        notes: nextKeys.length > 0
+          ? `${nextKeys.length} supplement${nextKeys.length === 1 ? "" : "s"} completed today.`
+          : "No supplements completed today."
+      }).catch(() => undefined);
+
+      return nextKeys;
+    });
   }
 
   if (loadState === "loading") {

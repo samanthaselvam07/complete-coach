@@ -656,6 +656,7 @@ model Organization {
   clientNotes                  ClientNote[]
   clientRoadmapPhases          ClientRoadmapPhase[]
   clientRoadmapItems           ClientRoadmapItem[]
+  clientCalendarEvents         ClientCalendarEvent[]
   coachProfiles                CoachProfile[]
 
   @@index([status])
@@ -1136,6 +1137,7 @@ model Client {
   notes                        ClientNote[]
   roadmapPhases                ClientRoadmapPhase[]
   roadmapItems                 ClientRoadmapItem[]
+  calendarEvents               ClientCalendarEvent[]
   activityLogs                 ClientActivityLog[]
   workoutSessions              ClientWorkoutSession[]
   accountActivityLogs          ClientAccountActivityLog[]
@@ -1244,6 +1246,7 @@ model ClientRoadmapPhase {
   client         Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
   items          ClientRoadmapItem[]
   goals          ClientGoal[]
+  calendarEvents ClientCalendarEvent[]
 
   @@index([organizationId, clientId, startDate])
   @@index([organizationId, clientId, status])
@@ -1268,6 +1271,39 @@ model ClientRoadmapItem {
   @@index([organizationId, clientId, eventDate])
   @@index([organizationId, phaseId])
   @@map("client_roadmap_items")
+}
+
+model ClientCalendarEvent {
+  id                           String              @id @default(cuid())
+  organizationId               String              @map("organization_id")
+  clientId                     String              @map("client_id")
+  title                        String
+  type                         String
+  startDate                    DateTime            @map("start_date") @db.Date
+  endDate                      DateTime            @map("end_date") @db.Date
+  allDay                       Boolean             @default(true) @map("all_day")
+  eventTime                    String?             @map("event_time")
+  recurring                    Boolean             @default(false)
+  recurrenceCount              Int?                @map("recurrence_count")
+  recurrenceEndsOn             DateTime?           @map("recurrence_ends_on") @db.Date
+  recurrenceDays               String[]            @default([]) @map("recurrence_days")
+  goal                         String?
+  notes                        String?             @db.Text
+  meetingUrl                   String?             @map("meeting_url")
+  roadmapPhaseId               String?             @map("roadmap_phase_id")
+  scheduledTrainingProgramId   String?             @map("scheduled_training_program_id")
+  scheduledTrainingProgramName String?             @map("scheduled_training_program_name")
+  scheduledTrainingDayName     String?             @map("scheduled_training_day_name")
+  createdAt                    DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                    DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization                 Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client                       Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  roadmapPhase                 ClientRoadmapPhase? @relation(fields: [roadmapPhaseId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, clientId, startDate])
+  @@index([organizationId, clientId, type])
+  @@index([organizationId, roadmapPhaseId])
+  @@map("client_calendar_events")
 }
 
 model Lead {

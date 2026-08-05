@@ -13,9 +13,19 @@ import { DELETE as deleteClient, GET as getClient, PATCH as patchClient } from "
 import { POST as archiveClient } from "@/app/api/v1/clients/[clientId]/archive/route";
 import { GET as getClientActivityLogs, POST as postClientActivityLog } from "@/app/api/v1/clients/[clientId]/logs/route";
 import { GET as getClientAccountActivity, POST as postClientAccountActivity } from "@/app/api/v1/clients/[clientId]/activity/route";
+import {
+  DELETE as deleteClientCalendarEvent,
+  GET as getClientCalendarEvents,
+  PATCH as patchClientCalendarEvent,
+  POST as postClientCalendarEvent
+} from "@/app/api/v1/clients/[clientId]/calendar-events/route";
 import { GET as getClientGoals, POST as postClientGoal } from "@/app/api/v1/clients/[clientId]/goals/route";
 import { GET as getClientNotes, POST as postClientNote } from "@/app/api/v1/clients/[clientId]/notes/route";
-import { GET as getClientRoadmap, POST as postClientRoadmap } from "@/app/api/v1/clients/[clientId]/roadmap/route";
+import {
+  DELETE as deleteClientRoadmapPhase,
+  GET as getClientRoadmap,
+  POST as postClientRoadmap
+} from "@/app/api/v1/clients/[clientId]/roadmap/route";
 import {
   GET as getClientProfile,
   PATCH as patchClientProfile
@@ -70,15 +80,24 @@ const mocks = vi.hoisted(() => ({
     },
     clientGoal: {
       findMany: vi.fn(),
-      create: vi.fn()
+      create: vi.fn(),
+      updateMany: vi.fn()
     },
     clientRoadmapPhase: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
-      create: vi.fn()
+      create: vi.fn(),
+      delete: vi.fn()
     },
     clientRoadmapItem: {
       create: vi.fn()
+    },
+    clientCalendarEvent: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn()
     },
     leadActivity: {
       findMany: vi.fn(),
@@ -156,10 +175,17 @@ describe("client and CRM API tenancy", () => {
     mocks.prisma.clientAccountActivityLog.create.mockReset();
     mocks.prisma.clientGoal.findMany.mockReset();
     mocks.prisma.clientGoal.create.mockReset();
+    mocks.prisma.clientGoal.updateMany.mockReset();
     mocks.prisma.clientRoadmapPhase.findMany.mockReset();
     mocks.prisma.clientRoadmapPhase.findFirst.mockReset();
     mocks.prisma.clientRoadmapPhase.create.mockReset();
+    mocks.prisma.clientRoadmapPhase.delete.mockReset();
     mocks.prisma.clientRoadmapItem.create.mockReset();
+    mocks.prisma.clientCalendarEvent.findMany.mockReset();
+    mocks.prisma.clientCalendarEvent.findFirst.mockReset();
+    mocks.prisma.clientCalendarEvent.create.mockReset();
+    mocks.prisma.clientCalendarEvent.update.mockReset();
+    mocks.prisma.clientCalendarEvent.delete.mockReset();
     mocks.prisma.leadActivity.findMany.mockReset();
     mocks.prisma.leadActivity.create.mockReset();
     mocks.prisma.crmStage.findMany.mockReset();
@@ -1100,6 +1126,292 @@ describe("client and CRM API tenancy", () => {
         title: "Coach task",
         type: "task"
       })
+    });
+  });
+
+  it("deletes scoped roadmap phases and unlinks associated goals", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.clientRoadmapPhase.findFirst.mockResolvedValue({
+      id: "phase_delete",
+      clientId: "client_1",
+      name: "Old Build Phase",
+      _count: {
+        items: 2,
+        goals: 1
+      }
+    });
+    mocks.prisma.clientGoal.updateMany.mockResolvedValue({ count: 1 });
+    mocks.prisma.clientRoadmapPhase.delete.mockResolvedValue({ id: "phase_delete" });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await deleteClientRoadmapPhase(
+      new Request("http://test.local/api/v1/clients/client_1/roadmap?phaseId=phase_delete", { method: "DELETE" }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: { id: string; deleted: boolean } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual({ id: "phase_delete", deleted: true });
+    expect(mocks.prisma.clientRoadmapPhase.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "phase_delete",
+        organizationId: "org_1",
+        clientId: "client_1"
+      },
+      include: {
+        _count: {
+          select: {
+            items: true,
+            goals: true
+          }
+        }
+      }
+    });
+    expect(mocks.prisma.clientGoal.updateMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        clientId: "client_1",
+        roadmapPhaseId: "phase_delete"
+      },
+      data: { roadmapPhaseId: null }
+    });
+    expect(mocks.prisma.clientRoadmapPhase.delete).toHaveBeenCalledWith({
+      where: {
+        id: "phase_delete",
+        organizationId: "org_1"
+      }
+    });
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "client.roadmap_phase_deleted",
+          targetId: "client_1",
+          metadata: expect.objectContaining({
+            phaseId: "phase_delete",
+            itemCount: 2,
+            unlinkedGoalCount: 1
+          })
+        })
+      })
+    );
+  });
+
+  it("lists persisted calendar events for an organization-scoped client", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.clientCalendarEvent.findMany.mockResolvedValue([
+      {
+        id: "calendar_event_1",
+        clientId: "client_1",
+        title: "Strength: Day 1",
+        type: "strength",
+        startDate: new Date("2026-08-05T00:00:00.000Z"),
+        endDate: new Date("2026-08-05T00:00:00.000Z"),
+        allDay: true,
+        eventTime: null,
+        recurring: false,
+        recurrenceCount: null,
+        recurrenceEndsOn: null,
+        recurrenceDays: [],
+        goal: "Hypertrophy II",
+        notes: "Keep reps controlled.",
+        meetingUrl: null,
+        roadmapPhaseId: "phase_active",
+        scheduledTrainingProgramId: "training_assignment_1",
+        scheduledTrainingProgramName: "Strength Foundation",
+        scheduledTrainingDayName: "Day 1",
+        createdAt: new Date("2026-08-05T01:00:00.000Z"),
+        updatedAt: new Date("2026-08-05T01:00:00.000Z")
+      }
+    ]);
+
+    const response = await getClientCalendarEvents(
+      new Request("http://test.local/api/v1/clients/client_1/calendar-events"),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: Array<{ title: string; scheduledTrainingDayName: string }> };
+
+    expect(response.status).toBe(200);
+    expect(payload.data[0]).toMatchObject({
+      title: "Strength: Day 1",
+      scheduledTrainingDayName: "Day 1"
+    });
+    expect(mocks.prisma.clientCalendarEvent.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        clientId: "client_1"
+      },
+      orderBy: [{ startDate: "asc" }, { createdAt: "asc" }]
+    });
+  });
+
+  it("creates and updates persisted client calendar events", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.clientRoadmapPhase.findFirst.mockResolvedValue({ id: "phase_active" });
+    mocks.prisma.clientCalendarEvent.create.mockResolvedValue({
+      id: "calendar_event_2",
+      clientId: "client_1",
+      title: "Strength: Day 2",
+      type: "strength",
+      startDate: new Date("2026-08-06T00:00:00.000Z"),
+      endDate: new Date("2026-08-06T00:00:00.000Z"),
+      allDay: true,
+      eventTime: null,
+      recurring: false,
+      recurrenceCount: null,
+      recurrenceEndsOn: null,
+      recurrenceDays: [],
+      goal: "Hypertrophy II",
+      notes: "Bench focus.",
+      meetingUrl: null,
+      roadmapPhaseId: "phase_active",
+      scheduledTrainingProgramId: "training_assignment_1",
+      scheduledTrainingProgramName: "Strength Foundation",
+      scheduledTrainingDayName: "Day 2",
+      createdAt: new Date("2026-08-05T01:00:00.000Z"),
+      updatedAt: new Date("2026-08-05T01:00:00.000Z")
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const createResponse = await postClientCalendarEvent(
+      new Request("http://test.local/api/v1/clients/client_1/calendar-events", {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Strength: Day 2",
+          type: "strength",
+          startDate: "2026-08-06",
+          endDate: "2026-08-06",
+          allDay: true,
+          recurring: false,
+          recurrenceDays: [],
+          goal: "Hypertrophy II",
+          notes: "Bench focus.",
+          roadmapPhaseId: "phase_active",
+          scheduledTrainingProgramId: "training_assignment_1",
+          scheduledTrainingProgramName: "Strength Foundation",
+          scheduledTrainingDayName: "Day 2"
+        })
+      }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+
+    expect(createResponse.status).toBe(201);
+    expect(mocks.prisma.clientRoadmapPhase.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "phase_active",
+        organizationId: "org_1",
+        clientId: "client_1"
+      },
+      select: { id: true }
+    });
+    expect(mocks.prisma.clientCalendarEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        organizationId: "org_1",
+        clientId: "client_1",
+        title: "Strength: Day 2",
+        roadmapPhaseId: "phase_active",
+        scheduledTrainingDayName: "Day 2"
+      })
+    });
+
+    mocks.prisma.clientCalendarEvent.findFirst.mockResolvedValue({
+      id: "calendar_event_2",
+      clientId: "client_1"
+    });
+    mocks.prisma.clientCalendarEvent.update.mockResolvedValue({
+      id: "calendar_event_2",
+      clientId: "client_1",
+      title: "Strength: Day 1",
+      type: "strength",
+      startDate: new Date("2026-08-07T00:00:00.000Z"),
+      endDate: new Date("2026-08-07T00:00:00.000Z"),
+      allDay: true,
+      eventTime: null,
+      recurring: false,
+      recurrenceCount: null,
+      recurrenceEndsOn: null,
+      recurrenceDays: [],
+      goal: "Hypertrophy II",
+      notes: "Updated day.",
+      meetingUrl: null,
+      roadmapPhaseId: "phase_active",
+      scheduledTrainingProgramId: "training_assignment_1",
+      scheduledTrainingProgramName: "Strength Foundation",
+      scheduledTrainingDayName: "Day 1",
+      createdAt: new Date("2026-08-05T01:00:00.000Z"),
+      updatedAt: new Date("2026-08-05T02:00:00.000Z")
+    });
+
+    const updateResponse = await patchClientCalendarEvent(
+      new Request("http://test.local/api/v1/clients/client_1/calendar-events?eventId=calendar_event_2", {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: "Strength: Day 1",
+          type: "strength",
+          startDate: "2026-08-07",
+          endDate: "2026-08-07",
+          allDay: true,
+          recurring: false,
+          recurrenceDays: [],
+          goal: "Hypertrophy II",
+          notes: "Updated day.",
+          roadmapPhaseId: "phase_active",
+          scheduledTrainingProgramId: "training_assignment_1",
+          scheduledTrainingProgramName: "Strength Foundation",
+          scheduledTrainingDayName: "Day 1"
+        })
+      }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+
+    expect(updateResponse.status).toBe(200);
+    expect(mocks.prisma.clientCalendarEvent.update).toHaveBeenCalledWith({
+      where: {
+        id: "calendar_event_2",
+        organizationId: "org_1"
+      },
+      data: expect.objectContaining({
+        title: "Strength: Day 1",
+        scheduledTrainingDayName: "Day 1"
+      })
+    });
+  });
+
+  it("deletes persisted client calendar events after scoping the client and event", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.clientCalendarEvent.findFirst.mockResolvedValue({
+      id: "calendar_event_delete",
+      clientId: "client_1",
+      title: "Technique review",
+      type: "strength",
+      startDate: new Date("2026-08-05T00:00:00.000Z")
+    });
+    mocks.prisma.clientCalendarEvent.delete.mockResolvedValue({ id: "calendar_event_delete" });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await deleteClientCalendarEvent(
+      new Request("http://test.local/api/v1/clients/client_1/calendar-events?eventId=calendar_event_delete", { method: "DELETE" }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: { id: string; deleted: boolean } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual({ id: "calendar_event_delete", deleted: true });
+    expect(mocks.prisma.clientCalendarEvent.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "calendar_event_delete",
+        organizationId: "org_1",
+        clientId: "client_1"
+      }
+    });
+    expect(mocks.prisma.clientCalendarEvent.delete).toHaveBeenCalledWith({
+      where: {
+        id: "calendar_event_delete",
+        organizationId: "org_1"
+      }
     });
   });
 

@@ -954,6 +954,7 @@ describe("submissions, check-ins, and metrics APIs", () => {
 
   it("returns starting and current body weight summaries from client measurements", async () => {
     mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1" });
+    mocks.prisma.formSubmission.findMany.mockResolvedValue([{ id: "submission_start" }]);
     mocks.prisma.clientMeasurement.findFirst
       .mockResolvedValueOnce({
         id: "metric_start",
@@ -966,6 +967,18 @@ describe("submissions, check-ins, and metrics APIs", () => {
         unit: "kg",
         metadata: { fieldId: "body-weight", label: "Body weight" },
         createdAt: new Date("2026-05-01T00:00:00.000Z")
+      })
+      .mockResolvedValueOnce({
+        id: "metric_fallback_start",
+        clientId: "client_1",
+        sourceType: "form_submission",
+        sourceId: "submission_fallback",
+        measuredAt: new Date("2026-04-28T00:00:00.000Z"),
+        metricKey: "body_weight",
+        metricValue: 85,
+        unit: "kg",
+        metadata: { fieldId: "body-weight", label: "Body weight" },
+        createdAt: new Date("2026-04-28T00:00:00.000Z")
       })
       .mockResolvedValueOnce({
         id: "metric_current",
@@ -1004,7 +1017,9 @@ describe("submissions, check-ins, and metrics APIs", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           clientId: "client_1",
-          metricKey: "body_weight"
+          metricKey: "body_weight",
+          sourceType: "form_submission",
+          sourceId: { in: ["submission_start"] }
         }),
         orderBy: [{ measuredAt: "asc" }, { createdAt: "asc" }]
       })

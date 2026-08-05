@@ -24,6 +24,7 @@ export interface ClientMetric {
 
 export interface ClientProfile extends ClientSummary {
   age: number;
+  dateOfBirth?: string | null;
   waterTargetLitres?: number | null;
   stepTarget?: number | null;
   trainingLogTargetDays?: number | null;

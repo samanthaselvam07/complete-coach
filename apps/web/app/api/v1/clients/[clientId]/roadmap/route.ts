@@ -121,6 +121,85 @@ export async function POST(request: Request, context: ClientRoadmapRouteContext)
   }
 }
 
+export async function DELETE(request: Request, context: ClientRoadmapRouteContext) {
+  try {
+    const actor = requireActiveActor(await auth(), "clients:write");
+    const { clientId } = await context.params;
+    const phaseId = new URL(request.url).searchParams.get("phaseId");
+
+    if (!phaseId) {
+      return errorResponse("validation_failed", "Roadmap phase id is required.", 400);
+    }
+
+    const client = await findAccessibleClient(clientId, actor.organizationId, actor.userId, actor.role);
+
+    if (!client) {
+      return errorResponse("not_found", "Client not found.", 404);
+    }
+
+    const phase = await prisma.clientRoadmapPhase.findFirst({
+      where: {
+        id: phaseId,
+        organizationId: actor.organizationId,
+        clientId
+      },
+      include: {
+        _count: {
+          select: {
+            items: true,
+            goals: true
+          }
+        }
+      }
+    });
+
+    if (!phase) {
+      return errorResponse("not_found", "Roadmap phase not found.", 404);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.clientGoal.updateMany({
+        where: {
+          organizationId: actor.organizationId,
+          clientId,
+          roadmapPhaseId: phase.id
+        },
+        data: { roadmapPhaseId: null }
+      });
+
+      await tx.clientRoadmapPhase.delete({
+        where: {
+          id: phase.id,
+          organizationId: actor.organizationId
+        }
+      });
+
+      await tx.auditLog.create({
+        data: {
+          organizationId: actor.organizationId,
+          actorUserId: actor.userId,
+          action: "client.roadmap_phase_deleted",
+          targetType: "client",
+          targetId: client.id,
+          metadata: {
+            phaseId: phase.id,
+            phaseName: phase.name,
+            itemCount: phase._count.items,
+            unlinkedGoalCount: phase._count.goals
+          }
+        }
+      });
+    });
+
+    return dataResponse({
+      id: phase.id,
+      deleted: true
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
 function findAccessibleClient(clientId: string, organizationId: string, userId: string, role: MembershipRole) {
   return prisma.client.findFirst({
     where: {

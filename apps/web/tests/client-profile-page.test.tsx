@@ -346,12 +346,12 @@ const marcusRoadmapPhases = [
     status: "active",
     items: [
       {
-        id: "roadmap_item_phase_review",
+        id: "roadmap_item_review",
         phaseId: "phase_active",
         title: "Phase review",
-        type: "review",
-        date: "2026-07-30",
-        notes: "Review progress before the next block."
+        type: "event",
+        date: "2026-08-14",
+        notes: "Review adherence, recovery, and progression."
       }
     ]
   },
@@ -365,7 +365,31 @@ const marcusRoadmapPhases = [
   }
 ];
 
-function mockMarcusProfile() {
+interface CalendarEventFixture {
+  id: string;
+  title: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  allDay: boolean;
+  time: string;
+  recurring: boolean;
+  recurrenceCount: string;
+  recurrenceEndsOn: string;
+  recurrenceDays: string[];
+  goal: string;
+  notes: string;
+  meetingUrl: string;
+  roadmapPhaseId: string;
+  scheduledTrainingProgramId: string;
+  scheduledTrainingProgramName: string;
+  scheduledTrainingDayName: string;
+}
+
+function mockMarcusProfile(initialCalendarEvents: CalendarEventFixture[] = []) {
+  let calendarEventCounter = 0;
+  let calendarEvents = [...initialCalendarEvents];
+
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
 
@@ -443,6 +467,41 @@ function mockMarcusProfile() {
 
     if (url === "/api/v1/clients/1/metrics?summary=weight") {
       return Promise.resolve(new Response(JSON.stringify({ data: marcusWeightSummary }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/form-submissions?clientId=1&limit=100") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "submission_initial_qa",
+                formName: "Initial Q&A",
+                formType: "intake",
+                submittedAt: "2026-01-15T00:00:00.000Z",
+                answers: {
+                  "starting-weight": "84.2",
+                  goal: "Build muscle while improving conditioning",
+                  "training-history": "Three years consistent lifting"
+                }
+              },
+              {
+                id: "submission_photos",
+                formName: "Weekly Check-In",
+                formType: "check-in",
+                submittedAt: "2026-07-22T00:00:00.000Z",
+                answers: {
+                  progressPhotos: [
+                    { url: "https://cdn.completecoach.fit/photos/front.jpg" },
+                    { url: "https://cdn.completecoach.fit/photos/side.jpg" }
+                  ]
+                }
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+      );
     }
 
     if (url === "/api/v1/clients/1/metrics?limit=200") {
@@ -624,6 +683,42 @@ function mockMarcusProfile() {
       return Promise.resolve(new Response(JSON.stringify({ data: marcusRoadmapPhases }), { status: 200 }));
     }
 
+    if (url === "/api/v1/clients/1/calendar-events" && !init?.method) {
+      return Promise.resolve(new Response(JSON.stringify({ data: calendarEvents }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/clients/1/calendar-events" && init?.method === "POST") {
+      const body = JSON.parse(String(init.body)) as (typeof calendarEvents)[number];
+      const event = {
+        ...body,
+        id: `calendar_event_created_${calendarEventCounter++}`,
+        endDate: body.endDate || body.startDate
+      };
+      calendarEvents = [...calendarEvents, event];
+
+      return Promise.resolve(new Response(JSON.stringify({ data: event }), { status: 201 }));
+    }
+
+    if (url.startsWith("/api/v1/clients/1/calendar-events?eventId=") && init?.method === "PATCH") {
+      const eventId = new URL(`http://test.local${url}`).searchParams.get("eventId");
+      const body = JSON.parse(String(init.body)) as (typeof calendarEvents)[number];
+      const event = {
+        ...body,
+        id: eventId ?? "calendar_event_updated",
+        endDate: body.endDate || body.startDate
+      };
+      calendarEvents = calendarEvents.map((currentEvent) => (currentEvent.id === event.id ? event : currentEvent));
+
+      return Promise.resolve(new Response(JSON.stringify({ data: event }), { status: 200 }));
+    }
+
+    if (url.startsWith("/api/v1/clients/1/calendar-events?eventId=") && init?.method === "DELETE") {
+      const eventId = new URL(`http://test.local${url}`).searchParams.get("eventId");
+      calendarEvents = calendarEvents.filter((event) => event.id !== eventId);
+
+      return Promise.resolve(new Response(JSON.stringify({ data: { id: eventId, deleted: true } }), { status: 200 }));
+    }
+
     if (url === "/api/v1/clients/1/notes") {
       return Promise.resolve(
         new Response(
@@ -644,6 +739,25 @@ function mockMarcusProfile() {
 
     return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
   });
+}
+
+function getTestDateValueInTimeZone(timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value ?? "2026";
+  const month = parts.find((part) => part.type === "month")?.value ?? "08";
+  const day = parts.find((part) => part.type === "day")?.value ?? "05";
+
+  return `${year}-${month}-${day}`;
+}
+
+function getTestWeeksSince(startDate: string) {
+  const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000;
+  return Math.max(0, Math.floor((Date.now() - new Date(startDate).getTime()) / millisecondsPerWeek));
 }
 
 describe("ClientProfilePage", () => {
@@ -669,6 +783,11 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("Current Weight")).toBeInTheDocument();
     expect(screen.getByText("84.2")).toBeInTheDocument();
     expect(screen.getByText("81.7")).toBeInTheDocument();
+    expect(screen.getByText(`${getTestWeeksSince("Jan 15, 2026")}`)).toBeInTheDocument();
+    expect(screen.getByText("Born 1994")).toBeInTheDocument();
+    expect(screen.getByText("initial Q&A - May 1, 2026")).toBeInTheDocument();
+    expect(screen.getByText("latest daily habit entry - Jul 22, 2026")).toBeInTheDocument();
+    expect(screen.queryByText("Daily Habit Streak")).not.toBeInTheDocument();
     expect(screen.queryByText("Recovery Score")).not.toBeInTheDocument();
   });
 
@@ -849,6 +968,38 @@ describe("ClientProfilePage", () => {
     expect(screen.getByRole("combobox", { name: "Associated goal" })).toHaveValue("Hypertrophy II");
   });
 
+  it("loads persisted calendar events into the client profile calendar", async () => {
+    const today = getTestDateValueInTimeZone(marcusClient.timezone);
+
+    mockMarcusProfile([
+      {
+        id: "calendar_event_persisted",
+        title: "Persisted strength session",
+        type: "strength",
+        startDate: today,
+        endDate: today,
+        allDay: true,
+        time: "",
+        recurring: false,
+        recurrenceCount: "",
+        recurrenceEndsOn: "",
+        recurrenceDays: [],
+        goal: "Hypertrophy II",
+        notes: "Loaded from the client calendar endpoint.",
+        meetingUrl: "",
+        roadmapPhaseId: "",
+        scheduledTrainingProgramId: "training_assignment_1",
+        scheduledTrainingProgramName: "Strength Foundation",
+        scheduledTrainingDayName: "Day 1"
+      }
+    ]);
+    render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
+
+    expect(await screen.findByRole("button", { name: "Open event Persisted strength session" })).toBeInTheDocument();
+  });
+
   it("moves the dashboard calendar date range with left and right controls", async () => {
     mockMarcusProfile();
     render(createElement(ClientProfilePage, { clientId: "1" }));
@@ -900,7 +1051,7 @@ describe("ClientProfilePage", () => {
     expect(cells[2]).not.toHaveClass("ring-indigo-300");
   });
 
-  it("opens existing dashboard calendar event details", async () => {
+  it("opens dashboard calendar event details", async () => {
     mockMarcusProfile();
     render(createElement(ClientProfilePage, { clientId: "1" }));
 
@@ -915,6 +1066,53 @@ describe("ClientProfilePage", () => {
     expect(screen.getByLabelText("Event title")).toHaveValue("Training block");
     expect(screen.getByRole("combobox", { name: "Event type" })).toHaveValue("strength");
     expect(screen.getByRole("button", { name: "Update event" })).toBeInTheDocument();
+  });
+
+  it("schedules a strength calendar event from an assigned training program", async () => {
+    mockMarcusProfile();
+    render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Event" }));
+
+    expect(await screen.findByRole("combobox", { name: "Training program" })).toHaveValue("training_assignment_1");
+    expect(screen.getByRole("combobox", { name: "Workout day" })).toHaveValue("Day 1");
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Workout day" }), { target: { value: "Day 2" } });
+
+    expect(screen.getByLabelText("Event title")).toHaveValue("Strength: Day 2");
+    expect(screen.getByText("Strength Foundation / Day 2 will be scheduled for this client.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save event" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Open event Strength: Day 2" }));
+
+    expect(await screen.findByRole("dialog", { name: "Event Details" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Training program" })).toHaveValue("training_assignment_1");
+    expect(screen.getByRole("combobox", { name: "Workout day" })).toHaveValue("Day 2");
+  });
+
+  it("deletes a calendar event only after confirmation", async () => {
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
+    mockMarcusProfile();
+    render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Event" }));
+    fireEvent.change(await screen.findByLabelText("Event title"), { target: { value: "Technique review" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save event" }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Open event Technique review" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Delete event" }));
+
+    expect(confirmSpy).toHaveBeenCalledWith("Delete Technique review? This calendar event will be removed from the client schedule.");
+    expect(screen.getByRole("dialog", { name: "Event Details" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete event" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Event Details" })).not.toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: "Open event Technique review" })).not.toBeInTheDocument();
+
+    confirmSpy.mockRestore();
   });
 
   it("saves notes directly to a calendar event", async () => {
@@ -977,13 +1175,33 @@ describe("ClientProfilePage", () => {
     await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
     const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
 
-    expect(tabs).toEqual(["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Logs", "Roadmap", "Calendar", "Check-Ins"]);
+    expect(tabs).toEqual(["Dashboard", "Initial Q&A", "Photos", "Daily Check-Ins", "Check-Ins", "Training", "Nutrition", "Supplementation", "Roadmap", "Calendar", "Logs"]);
 
     fireEvent.click(screen.getByRole("tab", { name: "Calendar" }));
 
     expect(screen.getByRole("tabpanel", { name: "Calendar" })).toBeInTheDocument();
     expect(screen.getByRole("grid", { name: "Full client calendar" })).toBeInTheDocument();
     expect(screen.getAllByRole("gridcell", { name: /Create event on/i })).toHaveLength(42);
+  });
+
+  it("renders submitted initial Q&A and progress photos in dedicated tabs", async () => {
+    mockMarcusProfile();
+    render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
+    fireEvent.click(screen.getByRole("tab", { name: "Initial Q&A" }));
+    const initialQuestionnairePanel = screen.getByRole("tabpanel", { name: "Initial Q&A" });
+
+    expect(initialQuestionnairePanel).toHaveTextContent("Initial Q&A - submitted Jan 15, 2026");
+    expect(within(initialQuestionnairePanel).getByText("Starting Weight")).toBeInTheDocument();
+    expect(within(initialQuestionnairePanel).getByText("Build muscle while improving conditioning")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Photos" }));
+
+    expect(screen.getByRole("tabpanel", { name: "Photos" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Left photo")).toBeInTheDocument();
+    expect(screen.getByLabelText("Right photo")).toBeInTheDocument();
+    expect(screen.getAllByRole("img", { name: /Weekly Check-In.*submitted Jul 22, 2026/i })).toHaveLength(2);
   });
 
   it("saves completed client logs and updates the compliance summary", async () => {
@@ -1095,7 +1313,7 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("Test squat, bench, and client readiness markers.")).toBeInTheDocument();
   });
 
-  it("opens existing full calendar event details", async () => {
+  it("opens full calendar event details", async () => {
     mockMarcusProfile();
     render(createElement(ClientProfilePage, { clientId: "1" }));
 

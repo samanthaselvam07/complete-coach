@@ -51,7 +51,18 @@ import type { ClientProfile, ClientSummary } from "@/lib/clients/client-models";
 import type { ClientNoteSummary } from "@/lib/clients/client-notes";
 import { cn } from "@/lib/utils";
 
-type ProfileTab = "Dashboard" | "Daily Check-Ins" | "Training" | "Nutrition" | "Supplementation" | "Logs" | "Roadmap" | "Calendar" | "Check-Ins";
+type ProfileTab =
+  | "Dashboard"
+  | "Initial Q&A"
+  | "Photos"
+  | "Daily Check-Ins"
+  | "Check-Ins"
+  | "Training"
+  | "Nutrition"
+  | "Supplementation"
+  | "Roadmap"
+  | "Calendar"
+  | "Logs";
 
 interface ClientProfilePageProps {
   clientId: string;
@@ -78,6 +89,22 @@ interface ApiMetric {
 interface ApiWeightSummary {
   startingWeight: ApiMetric | null;
   currentWeight: ApiMetric | null;
+}
+
+interface ApiFormSubmission {
+  id: string;
+  formName: string;
+  formType: string | null;
+  answers: unknown;
+  submittedAt: string;
+}
+
+interface ClientProfilePhoto {
+  id: string;
+  url: string;
+  label: string;
+  submittedAt: string;
+  formName: string;
 }
 
 interface ApiTrainingAssignment {
@@ -302,6 +329,8 @@ interface ClientWorkoutSession {
 }
 
 interface ClientProfileView extends ClientProfile {
+  initialQuestionnaireSubmission: ApiFormSubmission | null;
+  photos: ClientProfilePhoto[];
   trainingPrograms: ClientTrainingProgram[];
   trainingSource: "api";
   nutritionPlans: ClientNutritionPlan[];
@@ -309,7 +338,7 @@ interface ClientProfileView extends ClientProfile {
   supplementProtocols: ClientSupplementProtocol[];
 }
 
-const tabs: ProfileTab[] = ["Dashboard", "Daily Check-Ins", "Training", "Nutrition", "Supplementation", "Logs", "Roadmap", "Calendar", "Check-Ins"];
+const tabs: ProfileTab[] = ["Dashboard", "Initial Q&A", "Photos", "Daily Check-Ins", "Check-Ins", "Training", "Nutrition", "Supplementation", "Roadmap", "Calendar", "Logs"];
 const logDomains: Array<{ id: ClientLogDomain; label: string }> = [
   { id: "training", label: "Training" },
   { id: "nutrition", label: "Nutrition" },
@@ -359,16 +388,17 @@ export function ClientProfilePage({
         const payload = (await response.json()) as { data?: ClientSummary };
 
         if (active && payload.data) {
-          const [profile, trainingAssignments, mealPlanAssignments, notes, weightSummary] = await Promise.all([
+          const [profile, trainingAssignments, mealPlanAssignments, notes, weightSummary, formSubmissions] = await Promise.all([
             loadPersistedProfile(clientId),
             loadPersistedTraining(clientId),
             loadPersistedMealPlans(clientId),
             loadPersistedNotes(clientId, 3),
-            loadPersistedWeightSummary(clientId)
+            loadPersistedWeightSummary(clientId),
+            loadPersistedFormSubmissions(clientId).catch(() => [])
           ]);
           const supplementAssignments = await loadPersistedSupplementPlans(clientId).catch(() => []);
 
-          setClient(createProfileFromSummary(payload.data, profile, trainingAssignments, mealPlanAssignments, supplementAssignments, weightSummary));
+          setClient(createProfileFromSummary(payload.data, profile, trainingAssignments, mealPlanAssignments, supplementAssignments, weightSummary, formSubmissions));
           setRecentNotes(notes);
         }
       } catch {
@@ -584,7 +614,7 @@ export function ClientProfilePage({
       {messageError ? <p role="alert" className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{messageError}</p> : null}
 
       <div className="mb-6 w-full rounded-xl border border-gray-200 bg-white p-1">
-        <div role="tablist" aria-label="Client profile sections" className="grid grid-cols-2 gap-1 md:grid-cols-5 lg:grid-cols-9">
+        <div role="tablist" aria-label="Client profile sections" className="grid grid-cols-2 gap-1 md:grid-cols-4 lg:grid-cols-11">
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -740,33 +770,50 @@ async function loadPersistedWeightSummary(clientId: string): Promise<ApiWeightSu
   return payload.data ?? null;
 }
 
+async function loadPersistedFormSubmissions(clientId: string): Promise<ApiFormSubmission[]> {
+  const response = await fetch(`/api/v1/form-submissions?clientId=${clientId}&limit=100`);
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const payload = (await response.json()) as { data?: ApiFormSubmission[] };
+
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
 function createProfileFromSummary(
   summary: ClientSummary,
   profile?: ApiClientProfile | null,
   trainingAssignments: ApiTrainingAssignment[] = [],
   mealPlanAssignments: ApiMealPlanAssignment[] = [],
   supplementAssignments: ApiSupplementPlanAssignment[] = [],
-  weightSummary?: ApiWeightSummary | null
+  weightSummary?: ApiWeightSummary | null,
+  formSubmissions: ApiFormSubmission[] = []
 ): ClientProfileView {
   const trainingPrograms = createTrainingProgramsFromAssignments(trainingAssignments);
   const nutritionPlans = createNutritionPlansFromAssignments(mealPlanAssignments);
   const supplementProtocols = createSupplementProtocolsFromAssignments(supplementAssignments);
   const activeNutritionPlan = nutritionPlans[0];
+  const initialQuestionnaireSubmission = findInitialQuestionnaireSubmission(formSubmissions);
 
   return {
     ...summary,
     age: getAge(profile?.dateOfBirth),
+    dateOfBirth: profile?.dateOfBirth ?? null,
     waterTargetLitres: normalizeNullableNumber(profile?.waterTargetLitres),
     stepTarget: profile?.stepTarget ?? null,
     trainingLogTargetDays: profile?.trainingLogTargetDays ?? null,
-    weeksWithCoach: 0,
+    weeksWithCoach: getWeeksWithCoach(summary.startDate),
     protocol: profile?.goals?.[0] ?? "Unassigned",
     bio: profile?.bio ?? "Profile details are ready for persistence-backed coaching notes.",
+    initialQuestionnaireSubmission,
+    photos: collectProfilePhotos(formSubmissions),
     metrics: [
       {
         label: "Starting Weight",
         value: formatWeightMetricValue(weightSummary?.startingWeight),
-        detail: formatWeightMetricDetail(weightSummary?.startingWeight, "first body-weight entry"),
+        detail: formatWeightMetricDetail(weightSummary?.startingWeight, "initial Q&A"),
         tone: "text-indigo-600"
       },
       {
@@ -852,7 +899,107 @@ function formatWeightMetricDetail(metric: ApiMetric | null | undefined, fallback
     return fallback;
   }
 
-  return formatTrainingDate(metric.measuredAt);
+  return `${fallback} - ${formatTrainingDate(metric.measuredAt)}`;
+}
+
+function findInitialQuestionnaireSubmission(submissions: ApiFormSubmission[]) {
+  return submissions.find((submission) => isInitialQuestionnaireType(submission.formType)) ?? null;
+}
+
+function isInitialQuestionnaireType(formType: string | null) {
+  return formType === "intake" || formType === "application" || formType === "contact";
+}
+
+function collectProfilePhotos(submissions: ApiFormSubmission[]): ClientProfilePhoto[] {
+  return submissions.flatMap((submission) =>
+    collectPhotoUrls(submission.answers).map((url, index) => ({
+      id: `${submission.id}:${index}`,
+      url,
+      label: `${submission.formName}${index > 0 ? ` #${index + 1}` : ""}`,
+      submittedAt: submission.submittedAt,
+      formName: submission.formName
+    }))
+  );
+}
+
+function collectPhotoUrls(value: unknown): string[] {
+  if (typeof value === "string") {
+    return isPhotoUrl(value) ? [value] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(collectPhotoUrls);
+  }
+
+  if (!isRecord(value)) {
+    return [];
+  }
+
+  const directUrl = [value.url, value.src, value.photoUrl, value.fileUrl, value.previewUrl]
+    .find((candidate): candidate is string => typeof candidate === "string" && isPhotoUrl(candidate));
+
+  return [
+    ...(directUrl ? [directUrl] : []),
+    ...Object.entries(value)
+      .filter(([key]) => key !== "url" && key !== "src" && key !== "photoUrl" && key !== "fileUrl" && key !== "previewUrl")
+      .flatMap(([, nestedValue]) => collectPhotoUrls(nestedValue))
+  ];
+}
+
+function isPhotoUrl(value: string) {
+  return /^https?:\/\//u.test(value) && /\.(?:avif|gif|heic|heif|jpe?g|png|webp)(?:[?#].*)?$/iu.test(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function formatSubmissionAnswers(answers: unknown) {
+  if (!isRecord(answers)) {
+    return [];
+  }
+
+  return Object.entries(answers).map(([key, value]) => ({
+    label: formatAnswerLabel(key),
+    value: formatAnswerValue(value)
+  }));
+}
+
+function formatAnswerLabel(key: string) {
+  return key
+    .replace(/[_-]+/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim()
+    .replace(/\b\w/gu, (match) => match.toUpperCase());
+}
+
+function formatAnswerValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") {
+    return "Not answered";
+  }
+
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(formatAnswerValue).join(", ");
+  }
+
+  if (isRecord(value)) {
+    const directLabel = [value.label, value.name, value.fileName, value.url, value.photoUrl, value.fileUrl]
+      .find((candidate): candidate is string => typeof candidate === "string" && candidate.trim().length > 0);
+
+    if (directLabel) {
+      return directLabel;
+    }
+
+    return Object.entries(value)
+      .map(([nestedKey, nestedValue]) => `${formatAnswerLabel(nestedKey)}: ${formatAnswerValue(nestedValue)}`)
+      .join("\n");
+  }
+
+  return String(value);
 }
 
 export function createTrainingProgramsFromAssignments(
@@ -1014,6 +1161,45 @@ function getAge(dateOfBirth?: string | null) {
   return age;
 }
 
+function getBirthYear(dateOfBirth?: string | null) {
+  if (!dateOfBirth) {
+    return "Not set";
+  }
+
+  const birthDate = new Date(dateOfBirth);
+
+  if (Number.isNaN(birthDate.getTime())) {
+    return "Not set";
+  }
+
+  return String(birthDate.getUTCFullYear());
+}
+
+function getWeeksWithCoach(startDate?: string | null) {
+  if (!startDate) {
+    return 0;
+  }
+
+  const parsedStartDate = new Date(startDate);
+
+  if (Number.isNaN(parsedStartDate.getTime())) {
+    return 0;
+  }
+
+  const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000;
+  const elapsedWeeks = Math.floor((Date.now() - parsedStartDate.getTime()) / millisecondsPerWeek);
+
+  return Math.max(0, elapsedWeeks);
+}
+
+function formatStartDateDetail(startDate?: string | null) {
+  if (!startDate) {
+    return "Start date not set";
+  }
+
+  return `Since ${formatTrainingDate(startDate)}`;
+}
+
 function ClientProfileHeader({
   client,
   onNoteCreated,
@@ -1028,10 +1214,9 @@ function ClientProfileHeader({
   onProfileTargetSaved: (target: Pick<ClientProfile, "waterTargetLitres"> | Pick<ClientProfile, "stepTarget">) => void;
 }) {
   const startingWeight = findMetric(client, "Starting Weight")?.value ?? "0";
-  const startingWeightDetail = findMetric(client, "Starting Weight")?.detail ?? "first body-weight entry";
+  const startingWeightDetail = findMetric(client, "Starting Weight")?.detail ?? "initial Q&A";
   const currentWeight = findMetric(client, "Current Weight")?.value ?? "0";
   const currentWeightDetail = findMetric(client, "Current Weight")?.detail ?? "latest daily habit entry";
-  const habitStreak = findMetric(client, "Habit Streak")?.value ?? "0";
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [progressDialogOpen, setProgressDialogOpen] = useState(false);
   const [targetDialog, setTargetDialog] = useState<"water" | "steps" | null>(null);
@@ -1119,12 +1304,12 @@ function ClientProfileHeader({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
         <ProfileMetric accent="border-indigo-500" label="Starting Weight" value={startingWeight} suffix="kg" detail={startingWeightDetail} />
         <ProfileMetric accent="border-orange-500" label="Current Weight" value={currentWeight} suffix="kg" detail={currentWeightDetail} />
-        <ProfileMetric accent="border-green-500" label="Daily Habit Streak" value={habitStreak} suffix="days" detail="Consistent" />
-        <ProfileMetric accent="border-blue-500" label="Time With Coach" value={`${client.weeksWithCoach}`} suffix="wks" detail="6mo" />
-        <ProfileMetric accent="border-pink-500" label="Age" value={`${client.age}`} suffix="yrs" detail="Born 1994" />
+        <ProfileMetric accent="border-blue-500" label="Time With Coach" value={`${client.weeksWithCoach}`} suffix="wks" detail={formatStartDateDetail(client.startDate)} />
+        <ProfileMetric accent="border-pink-500" label="Age" value={`${client.age}`} suffix="yrs" detail={`Born ${getBirthYear(client.dateOfBirth)}`} />
+        <ProfileMetric accent="border-green-500" label="Compliance" value={`${client.compliance}`} suffix="%" detail="Current logs" />
       </div>
 
       {noteDialogOpen ? (
@@ -1472,6 +1657,8 @@ function ClientProfileTabPanel({
       )}
     >
       {activeTab === "Daily Check-Ins" ? <DailyCheckInsPanel /> : null}
+      {activeTab === "Initial Q&A" ? <InitialQuestionnairePanel client={client} /> : null}
+      {activeTab === "Photos" ? <PhotosPanel client={client} /> : null}
       {activeTab === "Training" ? <TrainingPanel client={client} /> : null}
       {activeTab === "Nutrition" ? <NutritionPanel client={client} /> : null}
       {activeTab === "Supplementation" ? <SupplementationPanel client={client} /> : null}
@@ -1486,6 +1673,104 @@ function ClientProfileTabPanel({
 
 function DashboardPanel({ client, recentNotes }: { client: ClientProfile; recentNotes: ClientNoteSummary[] }) {
   return <ClientProfileDashboard client={client} recentNotes={recentNotes} />;
+}
+
+function InitialQuestionnairePanel({ client }: { client: ClientProfileView }) {
+  const submission = client.initialQuestionnaireSubmission;
+  const answers = submission ? formatSubmissionAnswers(submission.answers) : [];
+
+  return (
+    <div>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-slate-950">Initial Q&A</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            {submission ? `${submission.formName} - submitted ${formatTrainingDate(submission.submittedAt)}` : "No submitted initial questionnaire is available yet."}
+          </p>
+        </div>
+      </div>
+
+      {answers.length > 0 ? (
+        <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+          {answers.map((answer) => (
+            <div key={answer.label} className="grid gap-2 p-4 md:grid-cols-[minmax(180px,0.35fr)_1fr]">
+              <dt className="text-sm font-black text-slate-800">{answer.label}</dt>
+              <dd className="whitespace-pre-wrap text-sm leading-6 text-slate-600">{answer.value}</dd>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+          Assign and collect an initial Q&A form to display the completed intake here.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function PhotosPanel({ client }: { client: ClientProfileView }) {
+  const [leftPhotoId, setLeftPhotoId] = useState(client.photos[0]?.id ?? "");
+  const [rightPhotoId, setRightPhotoId] = useState(client.photos[1]?.id ?? client.photos[0]?.id ?? "");
+  const leftPhoto = client.photos.find((photo) => photo.id === leftPhotoId) ?? null;
+  const rightPhoto = client.photos.find((photo) => photo.id === rightPhotoId) ?? null;
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="text-2xl font-black text-slate-950">Photos</h2>
+        <p className="mt-1 text-sm text-slate-600">Compare progress photos submitted through client forms.</p>
+      </div>
+
+      {client.photos.length > 0 ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <PhotoCompareColumn label="Left photo" photos={client.photos} selectedPhotoId={leftPhotoId} photo={leftPhoto} onChange={setLeftPhotoId} />
+          <PhotoCompareColumn label="Right photo" photos={client.photos} selectedPhotoId={rightPhotoId} photo={rightPhoto} onChange={setRightPhotoId} />
+        </div>
+      ) : (
+        <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+          Progress photos submitted through check-ins or intake forms will appear here.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function PhotoCompareColumn({
+  label,
+  photos,
+  selectedPhotoId,
+  photo,
+  onChange
+}: {
+  label: string;
+  photos: ClientProfilePhoto[];
+  selectedPhotoId: string;
+  photo: ClientProfilePhoto | null;
+  onChange: (photoId: string) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 p-4">
+      <label className="block">
+        <span className="mb-2 block text-sm font-semibold text-slate-700">{label}</span>
+        <select value={selectedPhotoId} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" onChange={(event) => onChange(event.target.value)}>
+          {photos.map((option) => (
+            <option key={option.id} value={option.id}>
+              {formatTrainingDate(option.submittedAt)} - {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {photo ? (
+        <figure className="mt-4">
+          <img src={photo.url} alt={`${photo.label} submitted ${formatTrainingDate(photo.submittedAt)}`} className="aspect-[3/4] w-full rounded-lg object-cover" />
+          <figcaption className="mt-2 text-xs font-semibold text-slate-500">
+            {photo.formName} - {formatTrainingDate(photo.submittedAt)}
+          </figcaption>
+        </figure>
+      ) : null}
+    </div>
+  );
 }
 
 function LogsPanel({

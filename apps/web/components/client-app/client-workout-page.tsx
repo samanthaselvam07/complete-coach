@@ -4,6 +4,7 @@ import { Check, ChevronLeft, ChevronRight, Flag, NotebookPen, Play, Plus, Rotate
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
+import { saveClientActivityLog } from "./client-activity-log-actions";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
@@ -501,6 +502,10 @@ function ActiveWorkoutLogger({
     ...setRowsByExerciseIndex,
     [exerciseIndex]: setRows
   });
+  const completedSetCount = getCompletedSetCount(day.exercises, {
+    ...setRowsByExerciseIndex,
+    [exerciseIndex]: setRows
+  });
 
   async function saveWorkoutNote() {
     if (!noteBody.trim()) {
@@ -565,6 +570,14 @@ function ActiveWorkoutLogger({
 
       if (!response.ok) {
         throw new Error(payload?.error?.message ?? "Workout could not be saved.");
+      }
+
+      if (completedSetCount > 0) {
+        await saveClientActivityLog({
+          domain: "training",
+          status: "completed",
+          notes: `${assignmentName} / ${day.name}: ${completedSetCount} completed set${completedSetCount === 1 ? "" : "s"}.`
+        });
       }
 
       setFinishSummaryOpen(false);
@@ -1129,6 +1142,14 @@ function createWorkoutExerciseLogs(exercises: TrainingExercise[], rowsByExercise
       completed: row.completed
     }))
   }));
+}
+
+function getCompletedSetCount(exercises: TrainingExercise[], rowsByExerciseIndex: Record<number, WorkoutSetRow[]>) {
+  return exercises.reduce((total, _exercise, exerciseIndex) => {
+    const rows = rowsByExerciseIndex[exerciseIndex] ?? [];
+
+    return total + rows.filter((row) => row.completed).length;
+  }, 0);
 }
 
 function parseWeight(value: string) {

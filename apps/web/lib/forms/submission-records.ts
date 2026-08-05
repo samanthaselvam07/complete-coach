@@ -213,6 +213,7 @@ export function serializeSubmission(record: SubmissionRecord) {
     clientId: record.clientId,
     clientName: formatPersonName(record.client),
     formName: record.form?.name ?? "Submitted form",
+    formType: record.form?.type ? serializeFormType(record.form.type) : null,
     answers: record.answersJson,
     status: serializeSubmissionStatus(record.status),
     submittedAt: toIsoString(record.submittedAt),

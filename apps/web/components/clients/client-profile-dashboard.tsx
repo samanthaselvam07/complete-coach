@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, NotebookPen, Target } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, NotebookPen, Target, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { ClientProfile } from "@/lib/clients/client-models";
@@ -86,6 +86,9 @@ interface ClientCalendarEvent {
   notes: string;
   meetingUrl: string;
   roadmapPhaseId: string;
+  scheduledTrainingProgramId: string;
+  scheduledTrainingProgramName: string;
+  scheduledTrainingDayName: string;
 }
 
 interface CalendarDraft {
@@ -103,6 +106,21 @@ interface CalendarDraft {
   notes: string;
   meetingUrl: string;
   roadmapPhaseId: string;
+  scheduledTrainingProgramId: string;
+  scheduledTrainingProgramName: string;
+  scheduledTrainingDayName: string;
+}
+
+interface CalendarTrainingProgram {
+  id: string;
+  name: string;
+  status: string;
+  days: CalendarTrainingDay[];
+}
+
+interface CalendarTrainingDay {
+  name: string;
+  exerciseCount: number;
 }
 
 interface RoadmapPhase {
@@ -482,14 +500,19 @@ function formatMetricDate(value: string) {
 
 export function ClientCalendarPanel({ client, compact = false }: { client: ClientProfile; compact?: boolean }) {
   const clientTimezone = client.timezone || "UTC";
+  const trainingPrograms = useMemo(() => getCalendarTrainingPrograms(client), [client]);
   const [events, setEvents] = useState<ClientCalendarEvent[]>([]);
   const [windowStart, setWindowStart] = useState(createDateFromDateValue(getTodayDateValue(clientTimezone)));
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [draft, setDraft] = useState<CalendarDraft>(() => createCalendarDraft(getTodayDateValue(clientTimezone), getTodayDateValue(clientTimezone), client.protocol));
+  const [draft, setDraft] = useState<CalendarDraft>(() =>
+    applyDefaultStrengthWorkout(createCalendarDraft(getTodayDateValue(clientTimezone), getTodayDateValue(clientTimezone), client.protocol), trainingPrograms)
+  );
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [selectionStart, setSelectionStart] = useState<string | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<string | null>(null);
   const [roadmapPhases, setRoadmapPhases] = useState<RoadmapPhase[]>([]);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+  const [savingEvent, setSavingEvent] = useState(false);
   const visibleDays = useMemo(
     () => Array.from({ length: compact ? 14 : 42 }, (_, index) => addDays(windowStart, index)),
     [compact, windowStart]
@@ -501,26 +524,32 @@ export function ClientCalendarPanel({ client, compact = false }: { client: Clien
   useEffect(() => {
     let active = true;
 
-    async function loadRoadmapPhases() {
+    async function loadCalendarContext() {
       try {
-        const response = await fetch(`/api/v1/clients/${client.id}/roadmap`);
+        const [roadmapResponse, eventsResponse] = await Promise.all([
+          fetch(`/api/v1/clients/${client.id}/roadmap`),
+          fetch(`/api/v1/clients/${client.id}/calendar-events`)
+        ]);
 
-        if (!response.ok) {
-          return;
-        }
-
-        const payload = (await response.json()) as { data?: RoadmapPhase[] };
-        const persistedPhases = Array.isArray(payload.data) ? payload.data : [];
+        const roadmapPayload = roadmapResponse.ok ? ((await roadmapResponse.json()) as { data?: RoadmapPhase[] }) : {};
+        const eventsPayload = eventsResponse.ok ? ((await eventsResponse.json()) as { data?: ClientCalendarEvent[] }) : {};
 
         if (active) {
-          setRoadmapPhases(persistedPhases);
+          setRoadmapPhases(Array.isArray(roadmapPayload.data) ? roadmapPayload.data : []);
+          setEvents(Array.isArray(eventsPayload.data) ? eventsPayload.data : []);
+
+          if (!eventsResponse.ok) {
+            setCalendarError("Calendar events could not be loaded.");
+          }
         }
       } catch {
-        // Roadmap phases are optional context for calendar events.
+        if (active) {
+          setCalendarError("Calendar events could not be loaded.");
+        }
       }
     }
 
-    void loadRoadmapPhases();
+    void loadCalendarContext();
 
     return () => {
       active = false;
@@ -529,7 +558,7 @@ export function ClientCalendarPanel({ client, compact = false }: { client: Clien
 
   const openDraft = (startDate = getTodayDateValue(clientTimezone), endDate = startDate) => {
     setEditingEventId(null);
-    setDraft(createCalendarDraft(startDate, endDate, goalOptions[0] ?? ""));
+    setDraft(applyDefaultStrengthWorkout(createCalendarDraft(startDate, endDate, goalOptions[0] ?? ""), trainingPrograms));
     setDialogOpen(true);
   };
 
@@ -555,31 +584,72 @@ export function ClientCalendarPanel({ client, compact = false }: { client: Clien
     openDraft(startDate, endDate);
   };
 
-  const saveEvent = () => {
-    setEvents((currentEvents) => {
-      if (editingEventId) {
-        return currentEvents.map((event) =>
-          event.id === editingEventId
-            ? {
-                ...event,
-                ...draft,
-                endDate: draft.endDate || draft.startDate
-              }
-            : event
-        );
-      }
+  const saveEvent = async () => {
+    setSavingEvent(true);
+    setCalendarError(null);
 
-      return [
-        ...currentEvents,
-        {
-          id: `event_${Date.now()}`,
+    try {
+      const response = await fetch(`/api/v1/clients/${client.id}/calendar-events${editingEventId ? `?eventId=${encodeURIComponent(editingEventId)}` : ""}`, {
+        method: editingEventId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           ...draft,
           endDate: draft.endDate || draft.startDate
+        })
+      });
+      const payload = (await response.json().catch(() => null)) as { data?: ClientCalendarEvent } | null;
+
+      if (!response.ok || !payload?.data) {
+        throw new Error("Calendar event could not be saved.");
+      }
+
+      setEvents((currentEvents) => {
+        if (editingEventId) {
+          return currentEvents.map((event) => (event.id === editingEventId ? payload.data as ClientCalendarEvent : event));
         }
-      ];
-    });
-    setEditingEventId(null);
-    setDialogOpen(false);
+
+        return [...currentEvents, payload.data as ClientCalendarEvent];
+      });
+      setEditingEventId(null);
+      setDialogOpen(false);
+    } catch {
+      setCalendarError("Calendar event could not be saved. Please try again.");
+    } finally {
+      setSavingEvent(false);
+    }
+  };
+
+  const deleteEvent = async () => {
+    if (!editingEventId) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete ${draft.title || "this event"}? This calendar event will be removed from the client schedule.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setSavingEvent(true);
+    setCalendarError(null);
+
+    try {
+      const response = await fetch(`/api/v1/clients/${client.id}/calendar-events?eventId=${encodeURIComponent(editingEventId)}`, {
+        method: "DELETE"
+      });
+
+      if (!response.ok) {
+        throw new Error("Calendar event could not be deleted.");
+      }
+
+      setEvents((currentEvents) => currentEvents.filter((event) => event.id !== editingEventId));
+      setEditingEventId(null);
+      setDialogOpen(false);
+    } catch {
+      setCalendarError("Calendar event could not be deleted. Please try again.");
+    } finally {
+      setSavingEvent(false);
+    }
   };
 
   return (
@@ -691,19 +761,23 @@ export function ClientCalendarPanel({ client, compact = false }: { client: Clien
           </span>
         ))}
       </div>
+      {calendarError ? <p role="alert" className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{calendarError}</p> : null}
 
       {dialogOpen ? (
         <CalendarEventDialog
           draft={draft}
           goalOptions={goalOptions}
           roadmapPhases={roadmapPhases}
+          trainingPrograms={trainingPrograms}
           editing={Boolean(editingEventId)}
           onChange={(nextDraft) => setDraft(nextDraft)}
           onClose={() => {
             setEditingEventId(null);
             setDialogOpen(false);
           }}
-          onSave={saveEvent}
+          onDelete={() => void deleteEvent()}
+          onSave={() => void saveEvent()}
+          saving={savingEvent}
         />
       ) : null}
     </section>
@@ -844,6 +918,32 @@ export function ClientRoadmapPeriodisationPanel({ client }: { client: ClientProf
     }
   };
 
+  const deletePhase = async (phase: RoadmapPhase) => {
+    const confirmed = window.confirm(`Delete ${phase.name}? Events, milestones, and tasks attached to this phase will also be deleted.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setRoadmapError(null);
+
+      const response = await fetch(`/api/v1/clients/${client.id}/roadmap?phaseId=${encodeURIComponent(phase.id)}`, {
+        method: "DELETE"
+      });
+
+      if (!response.ok) {
+        throw new Error("Roadmap phase could not be deleted.");
+      }
+
+      setPhases((currentPhases) => currentPhases.filter((currentPhase) => currentPhase.id !== phase.id));
+      setEvents((currentEvents) => currentEvents.filter((event) => event.phaseId !== phase.id));
+      setExpandedPhaseIds((currentIds) => currentIds.filter((phaseId) => phaseId !== phase.id));
+    } catch {
+      setRoadmapError("Roadmap phase could not be deleted. Please try again.");
+    }
+  };
+
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -942,6 +1042,14 @@ export function ClientRoadmapPeriodisationPanel({ client }: { client: ClientProf
                 ) : null}
                 <button type="button" className="mt-2 text-sm font-bold text-indigo-600 hover:text-indigo-700" onClick={() => openEventDialog(phase.id)}>
                   Add to phase
+                </button>
+                <button
+                  type="button"
+                  className="ml-4 mt-2 inline-flex items-center gap-1 text-sm font-bold text-red-600 hover:text-red-700"
+                  onClick={() => void deletePhase(phase)}
+                >
+                  <Trash2 className="size-4" aria-hidden="true" />
+                  Delete phase
                 </button>
               </article>
             );
@@ -1125,21 +1233,78 @@ function CalendarEventDialog({
   draft,
   goalOptions,
   roadmapPhases,
+  trainingPrograms,
   editing,
   onChange,
   onClose,
-  onSave
+  onDelete,
+  onSave,
+  saving
 }: {
   draft: CalendarDraft;
   goalOptions: string[];
   roadmapPhases: RoadmapPhase[];
+  trainingPrograms: CalendarTrainingProgram[];
   editing: boolean;
   onChange: (draft: CalendarDraft) => void;
   onClose: () => void;
+  onDelete: () => void;
   onSave: () => void;
+  saving: boolean;
 }) {
+  const selectedTrainingProgram = trainingPrograms.find((program) => program.id === draft.scheduledTrainingProgramId) ?? trainingPrograms[0] ?? null;
+  const selectedTrainingDay = selectedTrainingProgram?.days.find((day) => day.name === draft.scheduledTrainingDayName) ?? selectedTrainingProgram?.days[0] ?? null;
+
   const updateDraft = <TKey extends keyof CalendarDraft>(key: TKey, value: CalendarDraft[TKey]) => {
     onChange({ ...draft, [key]: value });
+  };
+
+  const updateEventType = (type: ClientCalendarEventType) => {
+    if (type !== "strength") {
+      onChange({
+        ...draft,
+        type,
+        scheduledTrainingProgramId: "",
+        scheduledTrainingProgramName: "",
+        scheduledTrainingDayName: ""
+      });
+      return;
+    }
+
+    const program = selectedTrainingProgram ?? trainingPrograms[0] ?? null;
+    const day = program?.days[0] ?? null;
+
+    onChange({
+      ...draft,
+      type,
+      scheduledTrainingProgramId: program?.id ?? "",
+      scheduledTrainingProgramName: program?.name ?? "",
+      scheduledTrainingDayName: day?.name ?? "",
+      title: draft.title.trim() || (day ? `Strength: ${day.name}` : "Strength session")
+    });
+  };
+
+  const updateTrainingProgram = (programId: string) => {
+    const program = trainingPrograms.find((item) => item.id === programId) ?? null;
+    const day = program?.days[0] ?? null;
+
+    onChange({
+      ...draft,
+      scheduledTrainingProgramId: program?.id ?? "",
+      scheduledTrainingProgramName: program?.name ?? "",
+      scheduledTrainingDayName: day?.name ?? "",
+      title: day ? getNextStrengthTitle(draft.title, day.name) : draft.title
+    });
+  };
+
+  const updateTrainingDay = (dayName: string) => {
+    onChange({
+      ...draft,
+      scheduledTrainingProgramId: selectedTrainingProgram?.id ?? "",
+      scheduledTrainingProgramName: selectedTrainingProgram?.name ?? "",
+      scheduledTrainingDayName: dayName,
+      title: getNextStrengthTitle(draft.title, dayName)
+    });
   };
 
   const toggleRecurrenceDay = (day: string) => {
@@ -1168,12 +1333,54 @@ function CalendarEventDialog({
           <CalendarInput label="Event title" value={draft.title} onChange={(value) => updateDraft("title", value)} />
           <label className="block">
             <span className="mb-1 block text-sm font-semibold text-slate-700">Event type</span>
-            <select aria-label="Event type" value={draft.type} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" onChange={(event) => updateDraft("type", event.target.value as ClientCalendarEventType)}>
+            <select aria-label="Event type" value={draft.type} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" onChange={(event) => updateEventType(event.target.value as ClientCalendarEventType)}>
               {calendarEventTypes.map((type) => (
                 <option key={type.value} value={type.value}>{type.label}</option>
               ))}
             </select>
           </label>
+          {draft.type === "strength" ? (
+            <div className="grid gap-4 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 md:col-span-2 md:grid-cols-2">
+              <label className="block">
+                <span className="mb-1 block text-sm font-semibold text-slate-700">Training program</span>
+                <select
+                  aria-label="Training program"
+                  value={draft.scheduledTrainingProgramId}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  onChange={(event) => updateTrainingProgram(event.target.value)}
+                >
+                  <option value="">No assigned program selected</option>
+                  {trainingPrograms.map((program) => (
+                    <option key={program.id} value={program.id}>
+                      {program.name}{program.status ? ` - ${program.status}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-semibold text-slate-700">Workout day</span>
+                <select
+                  aria-label="Workout day"
+                  value={draft.scheduledTrainingDayName}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  disabled={!selectedTrainingProgram}
+                  onChange={(event) => updateTrainingDay(event.target.value)}
+                >
+                  <option value="">Select workout day</option>
+                  {selectedTrainingProgram?.days.map((day) => (
+                    <option key={day.name} value={day.name}>
+                      {day.name} ({day.exerciseCount} exercises)
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="text-xs font-semibold text-slate-600 md:col-span-2">
+                {selectedTrainingProgram && selectedTrainingDay
+                  ? `${selectedTrainingProgram.name} / ${selectedTrainingDay.name} will be scheduled for this client.`
+                  : "Choose an assigned training program and workout day to schedule a strength session."}
+              </p>
+            </div>
+          ) : null}
           <CalendarInput label="Start date" type="date" value={draft.startDate} onChange={(value) => updateDraft("startDate", value)} />
           <CalendarInput label="End date" type="date" value={draft.endDate} onChange={(value) => updateDraft("endDate", value)} />
           {draft.type === "video-call" ? (
@@ -1239,11 +1446,20 @@ function CalendarEventDialog({
           <CalendarTextarea label="Event notes" value={draft.notes} onChange={(value) => updateDraft("notes", value)} />
         </div>
 
-        <div className="mt-6 flex justify-end gap-3">
-          <button type="button" className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700" onClick={onClose}>Cancel</button>
-          <button type="button" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white disabled:bg-slate-300" disabled={!draft.title.trim() || !draft.startDate} onClick={onSave}>
-            {editing ? "Update event" : "Save event"}
-          </button>
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          {editing ? (
+            <button type="button" className="rounded-lg bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-100 disabled:opacity-60" disabled={saving} onClick={onDelete}>
+              Delete event
+            </button>
+          ) : (
+            <span aria-hidden="true" />
+          )}
+          <div className="flex justify-end gap-3">
+            <button type="button" className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700" onClick={onClose}>Cancel</button>
+            <button type="button" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white disabled:bg-slate-300" disabled={saving || !draft.title.trim() || !draft.startDate} onClick={onSave}>
+              {saving ? "Saving..." : editing ? "Update event" : "Save event"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1319,7 +1535,10 @@ function createCalendarDraft(startDate: string, endDate: string, goal: string): 
     goal,
     notes: "",
     meetingUrl: "",
-    roadmapPhaseId: ""
+    roadmapPhaseId: "",
+    scheduledTrainingProgramId: "",
+    scheduledTrainingProgramName: "",
+    scheduledTrainingDayName: ""
   };
 }
 
@@ -1338,8 +1557,70 @@ function calendarEventToDraft(event: ClientCalendarEvent): CalendarDraft {
     goal: event.goal,
     notes: event.notes,
     meetingUrl: event.meetingUrl,
-    roadmapPhaseId: event.roadmapPhaseId
+    roadmapPhaseId: event.roadmapPhaseId,
+    scheduledTrainingProgramId: event.scheduledTrainingProgramId,
+    scheduledTrainingProgramName: event.scheduledTrainingProgramName,
+    scheduledTrainingDayName: event.scheduledTrainingDayName
   };
+}
+
+function applyDefaultStrengthWorkout(draft: CalendarDraft, trainingPrograms: CalendarTrainingProgram[]) {
+  if (draft.type !== "strength" || draft.scheduledTrainingProgramId) {
+    return draft;
+  }
+
+  const program = trainingPrograms[0];
+  const day = program?.days[0];
+
+  if (!program || !day) {
+    return draft;
+  }
+
+  return {
+    ...draft,
+    scheduledTrainingProgramId: program.id,
+    scheduledTrainingProgramName: program.name,
+    scheduledTrainingDayName: day.name,
+    title: draft.title.trim() || `Strength: ${day.name}`
+  };
+}
+
+function getNextStrengthTitle(currentTitle: string, dayName: string) {
+  if (!currentTitle.trim() || currentTitle.startsWith("Strength:")) {
+    return `Strength: ${dayName}`;
+  }
+
+  return currentTitle;
+}
+
+function getCalendarTrainingPrograms(client: ClientProfile): CalendarTrainingProgram[] {
+  const clientWithPrograms = client as ClientProfile & {
+    trainingPrograms?: Array<{
+      id: string;
+      name: string;
+      status?: string;
+      template?: {
+        days?: Array<{
+          name: string;
+          exercises?: unknown[];
+        }>;
+      };
+    }>;
+  };
+
+  return (clientWithPrograms.trainingPrograms ?? [])
+    .map((program) => ({
+      id: program.id,
+      name: program.name,
+      status: program.status ?? "",
+      days: (program.template?.days ?? [])
+        .filter((day) => Boolean(day.name))
+        .map((day) => ({
+          name: day.name,
+          exerciseCount: Array.isArray(day.exercises) ? day.exercises.length : 0
+        }))
+    }))
+    .filter((program) => program.days.length > 0);
 }
 
 function getCalendarEventType(type: ClientCalendarEventType) {

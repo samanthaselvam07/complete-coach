@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { FormType } from "@/app/generated/prisma/enums";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
@@ -27,7 +28,33 @@ export async function GET(request: Request, context: ClientMetricsRouteContext) 
     }
 
     if (query.summary === "weight") {
-      const [startingWeight, currentWeight] = await Promise.all([
+      const initialQuestionnaireSubmissions = await prisma.formSubmission.findMany({
+        where: {
+          organizationId: actor.organizationId,
+          clientId,
+          form: {
+            type: {
+              in: [FormType.INTAKE, FormType.APPLICATION, FormType.CONTACT]
+            }
+          }
+        },
+        select: { id: true },
+        orderBy: [{ submittedAt: "asc" }, { createdAt: "asc" }]
+      });
+      const initialQuestionnaireSubmissionIds = initialQuestionnaireSubmissions.map((submission) => submission.id);
+      const [initialQuestionnaireWeight, fallbackStartingWeight, currentWeight] = await Promise.all([
+        initialQuestionnaireSubmissionIds.length > 0
+          ? prisma.clientMeasurement.findFirst({
+              where: {
+                organizationId: actor.organizationId,
+                clientId,
+                metricKey: "body_weight",
+                sourceType: "form_submission",
+                sourceId: { in: initialQuestionnaireSubmissionIds }
+              },
+              orderBy: [{ measuredAt: "asc" }, { createdAt: "asc" }]
+            })
+          : Promise.resolve(null),
         prisma.clientMeasurement.findFirst({
           where: {
             organizationId: actor.organizationId,
@@ -45,6 +72,7 @@ export async function GET(request: Request, context: ClientMetricsRouteContext) 
           orderBy: [{ measuredAt: "desc" }, { createdAt: "desc" }]
         })
       ]);
+      const startingWeight = initialQuestionnaireWeight ?? fallbackStartingWeight;
 
       return dataResponse({
         startingWeight: startingWeight ? serializeMetric(startingWeight) : null,

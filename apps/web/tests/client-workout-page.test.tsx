@@ -283,6 +283,15 @@ describe("ClientWorkoutPage", () => {
     });
     expect(await screen.findByRole("heading", { name: "Strength Block" })).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "Workout Summary" })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/v1/client/logs",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("\"domain\":\"training\"")
+        })
+      );
+    });
   });
 });
 
@@ -353,6 +362,13 @@ function stubWorkoutFetch(days: Array<{ name: string; exercises: Array<Record<st
         }),
         { status: 201, headers: { "Content-Type": "application/json" } }
       );
+    }
+
+    if (url === "/api/v1/client/logs" && init?.method === "POST") {
+      return new Response(JSON.stringify({ data: { log: { id: "log_1" }, summary: { complianceScore: 100 } } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
     return new Response(JSON.stringify({ error: { message: "Not found" } }), {

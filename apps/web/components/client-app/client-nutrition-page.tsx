@@ -4,6 +4,7 @@ import { Check, ChevronRight, Droplets, Utensils } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
+import { saveClientActivityLog } from "./client-activity-log-actions";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
@@ -187,6 +188,15 @@ export function ClientNutritionPage() {
       const nextKeys = currentKeys.includes(mealKey)
         ? currentKeys.filter((key) => key !== mealKey)
         : [...currentKeys, mealKey];
+      const nextStatus = nextKeys.length > 0 ? "completed" : "missed";
+
+      void saveClientActivityLog({
+        domain: "nutrition",
+        status: nextStatus,
+        notes: nextKeys.length > 0
+          ? `${nextKeys.length} meal${nextKeys.length === 1 ? "" : "s"} logged for ${activeDay?.name ?? "today"}.`
+          : `No meals logged for ${activeDay?.name ?? "today"}.`
+      }).catch(() => undefined);
 
       return {
         ...current,

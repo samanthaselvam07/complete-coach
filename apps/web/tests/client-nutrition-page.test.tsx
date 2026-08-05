@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ClientNutritionPage } from "@/components/client-app/client-nutrition-page";
@@ -138,6 +138,15 @@ describe("ClientNutritionPage", () => {
     expect(screen.getByLabelText("Carbs progress")).toHaveTextContent("32 / 220g");
     expect(screen.getByLabelText("Fat progress")).toHaveTextContent("4 / 65g");
     expect(screen.getByLabelText("Fibre progress")).toHaveTextContent("4 / 30g");
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/v1/client/logs",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("\"domain\":\"nutrition\"")
+        })
+      );
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "+250ml" }));
     fireEvent.click(screen.getByRole("button", { name: "+500ml" }));

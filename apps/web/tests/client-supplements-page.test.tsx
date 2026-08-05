@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ClientSupplementsPage } from "@/components/client-app/client-supplements-page";
@@ -81,5 +81,14 @@ describe("ClientSupplementsPage", () => {
 
     expect(screen.getByRole("region", { name: "Supplement adherence" })).toHaveTextContent("50%");
     expect(screen.getByText("1 of 2 supplements completed today.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/v1/client/logs",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("\"domain\":\"supplementation\"")
+        })
+      );
+    });
   });
 });
