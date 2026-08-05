@@ -1,4 +1,9 @@
 import { auth } from "@/auth";
+import {
+  MealPlanAssignmentStatus,
+  SupplementPlanAssignmentStatus,
+  TrainingProgramAssignmentStatus
+} from "@/app/generated/prisma/enums";
 import { dataResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveClientActor } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
@@ -37,7 +42,8 @@ export async function GET() {
       prisma.trainingProgramAssignment.findMany({
         where: {
           organizationId: actor.organizationId,
-          clientId: actor.clientId
+          clientId: actor.clientId,
+          status: TrainingProgramAssignmentStatus.ACTIVE
         },
         include: {
           client: {
@@ -52,7 +58,8 @@ export async function GET() {
       prisma.mealPlanAssignment.findMany({
         where: {
           organizationId: actor.organizationId,
-          clientId: actor.clientId
+          clientId: actor.clientId,
+          status: MealPlanAssignmentStatus.ACTIVE
         },
         include: {
           client: {
@@ -67,7 +74,8 @@ export async function GET() {
       prisma.supplementPlanAssignment.findMany({
         where: {
           organizationId: actor.organizationId,
-          clientId: actor.clientId
+          clientId: actor.clientId,
+          status: SupplementPlanAssignmentStatus.ACTIVE
         },
         include: {
           client: {

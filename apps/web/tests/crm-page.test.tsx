@@ -3,6 +3,14 @@ import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CRMPage } from "@/components/crm/crm-page";
 
+const navigationMocks = vi.hoisted(() => ({
+  searchParams: new URLSearchParams()
+}));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => navigationMocks.searchParams
+}));
+
 const apiLeads = [
   {
     id: "lead_1",

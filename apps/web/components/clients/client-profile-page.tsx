@@ -374,32 +374,21 @@ export function ClientProfilePage({
     setClient((currentClient) => (currentClient ? { ...currentClient, compliance } : currentClient));
   }, []);
 
+  const loadPersistedClientView = useCallback(
+    async (summaryOverride?: ClientSummary) => loadClientProfileView(clientId, summaryOverride),
+    [clientId]
+  );
+
   useEffect(() => {
     let active = true;
 
     async function loadClient() {
       try {
-        const response = await fetch(`/api/v1/clients/${clientId}`);
+        const nextView = await loadPersistedClientView();
 
-        if (!response.ok) {
-          throw new Error("Client API unavailable.");
-        }
-
-        const payload = (await response.json()) as { data?: ClientSummary };
-
-        if (active && payload.data) {
-          const [profile, trainingAssignments, mealPlanAssignments, notes, weightSummary, formSubmissions] = await Promise.all([
-            loadPersistedProfile(clientId),
-            loadPersistedTraining(clientId),
-            loadPersistedMealPlans(clientId),
-            loadPersistedNotes(clientId, 3),
-            loadPersistedWeightSummary(clientId),
-            loadPersistedFormSubmissions(clientId).catch(() => [])
-          ]);
-          const supplementAssignments = await loadPersistedSupplementPlans(clientId).catch(() => []);
-
-          setClient(createProfileFromSummary(payload.data, profile, trainingAssignments, mealPlanAssignments, supplementAssignments, weightSummary, formSubmissions));
-          setRecentNotes(notes);
+        if (active) {
+          setClient(nextView.client);
+          setRecentNotes(nextView.notes);
         }
       } catch {
         if (active) {
@@ -418,7 +407,7 @@ export function ClientProfilePage({
     return () => {
       active = false;
     };
-  }, [clientId]);
+  }, [loadPersistedClientView]);
 
   const openEditClient = (clientToEdit: ClientProfileView) => {
     setEditingClient(clientToEdit);
@@ -464,7 +453,9 @@ export function ClientProfilePage({
       const payload = (await response.json()) as { data?: ClientSummary };
 
       if (payload.data) {
-        setClient((currentClient) => (currentClient ? { ...currentClient, ...payload.data } : currentClient));
+        const nextView = await loadPersistedClientView(payload.data);
+        setClient(nextView.client);
+        setRecentNotes(nextView.notes);
       }
 
       closeClientForm();
@@ -623,7 +614,7 @@ export function ClientProfilePage({
               aria-selected={activeTab === tab}
               aria-controls={`client-tab-${tab}`}
               className={cn(
-                "rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors",
+                "rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
                 activeTab === tab ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
               )}
               onClick={() => setActiveTab(tab)}
@@ -780,6 +771,40 @@ async function loadPersistedFormSubmissions(clientId: string): Promise<ApiFormSu
   const payload = (await response.json()) as { data?: ApiFormSubmission[] };
 
   return Array.isArray(payload.data) ? payload.data : [];
+}
+
+async function loadClientProfileView(clientId: string, summaryOverride?: ClientSummary) {
+  const summary = summaryOverride ?? (await loadPersistedClientSummary(clientId));
+  const [profile, trainingAssignments, mealPlanAssignments, notes, weightSummary, formSubmissions] = await Promise.all([
+    loadPersistedProfile(clientId),
+    loadPersistedTraining(clientId),
+    loadPersistedMealPlans(clientId),
+    loadPersistedNotes(clientId, 3),
+    loadPersistedWeightSummary(clientId),
+    loadPersistedFormSubmissions(clientId).catch(() => [])
+  ]);
+  const supplementAssignments = await loadPersistedSupplementPlans(clientId).catch(() => []);
+
+  return {
+    client: createProfileFromSummary(summary, profile, trainingAssignments, mealPlanAssignments, supplementAssignments, weightSummary, formSubmissions),
+    notes
+  };
+}
+
+async function loadPersistedClientSummary(clientId: string): Promise<ClientSummary> {
+  const response = await fetch(`/api/v1/clients/${clientId}`);
+
+  if (!response.ok) {
+    throw new Error("Client API unavailable.");
+  }
+
+  const payload = (await response.json()) as { data?: ClientSummary };
+
+  if (!payload.data) {
+    throw new Error("Client profile could not be loaded.");
+  }
+
+  return payload.data;
 }
 
 function createProfileFromSummary(

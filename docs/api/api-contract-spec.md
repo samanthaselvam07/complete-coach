@@ -264,6 +264,9 @@ AI output statuses:
 
 Task categories: `current-client-care`, `new-client-onboarding`, `social-media`, `business-operations`.
 
+### Global Search
+- `GET /api/v1/search`: returns active-organization global search results for the app shell top search. Query: `query` (minimum two characters to search), optional `limit` (1-10, default 5). Response includes `results` with `type` (`task`, `client`, `lead`), `id`, `title`, `subtitle`, and `href`. Tasks are limited to open tasks. Clients exclude deleted and archived records, and non-admin roles only see their assigned clients. CRM leads exclude deleted records, and non-admin roles only see leads assigned to them.
+
 ### Dashboard CRM
 - `GET /api/v1/dashboard/crm-summary`: returns role-gated CRM dashboard metrics for the active organization. Requires `clients:read`. Response includes `newLeadsLastFiveDays`, `totalLeadsAndCustomers`, `stageBreakdown` with stage id/label/count for every CRM stage, and `updatedAt`.
 - `GET /api/v1/dashboard/metadata`: returns role-gated dashboard metadata for the active organization. Requires `tasks:read`. Response includes the organization `timezone` used for dashboard-local date rendering.

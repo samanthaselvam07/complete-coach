@@ -364,12 +364,29 @@ describe("client app APIs", () => {
     );
     expect(mocks.prisma.trainingProgramAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { organizationId: "org_1", clientId: "client_1" }
+        where: {
+          organizationId: "org_1",
+          clientId: "client_1",
+          status: TrainingProgramAssignmentStatus.ACTIVE
+        }
+      })
+    );
+    expect(mocks.prisma.mealPlanAssignment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId: "org_1",
+          clientId: "client_1",
+          status: MealPlanAssignmentStatus.ACTIVE
+        }
       })
     );
     expect(mocks.prisma.supplementPlanAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { organizationId: "org_1", clientId: "client_1" }
+        where: {
+          organizationId: "org_1",
+          clientId: "client_1",
+          status: SupplementPlanAssignmentStatus.ACTIVE
+        }
       })
     );
   });

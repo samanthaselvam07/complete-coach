@@ -760,6 +760,11 @@ function getTestWeeksSince(startDate: string) {
   return Math.max(0, Math.floor((Date.now() - new Date(startDate).getTime()) / millisecondsPerWeek));
 }
 
+async function searchAndSelectPlan(label: string, query: string, optionName: string) {
+  fireEvent.change(screen.getByLabelText(label), { target: { value: query } });
+  fireEvent.click(await screen.findByLabelText(optionName));
+}
+
 describe("ClientProfilePage", () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -1176,6 +1181,7 @@ describe("ClientProfilePage", () => {
     const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
 
     expect(tabs).toEqual(["Dashboard", "Initial Q&A", "Photos", "Daily Check-Ins", "Check-Ins", "Training", "Nutrition", "Supplementation", "Roadmap", "Calendar", "Logs"]);
+    expect(screen.getByRole("tab", { name: "Supplementation" })).toHaveClass("text-xs", "px-3", "py-2");
 
     fireEvent.click(screen.getByRole("tab", { name: "Calendar" }));
 
@@ -1502,6 +1508,109 @@ describe("ClientProfilePage", () => {
     expect(await screen.findByRole("button", { name: /Strength Foundation/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Hypertrophy Fuel/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Sleep Support/i })).toBeInTheDocument();
+  });
+
+  it("refreshes profile sections from persisted plan assignments after saving the profile editor", async () => {
+    let trainingAssignments: typeof marcusTrainingAssignments = [];
+    let mealPlanAssignments: typeof marcusMealPlanAssignments = [];
+    let supplementAssignments: typeof marcusSupplementAssignments = [];
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/clients/1" && init?.method === "PATCH") {
+        return new Response(JSON.stringify({ data: marcusClient }), { status: 200 });
+      }
+
+      if (url === "/api/v1/clients/1") {
+        return new Response(JSON.stringify({ data: marcusClient }), { status: 200 });
+      }
+
+      if (url === "/api/v1/clients/1/profile" && init?.method === "PATCH") {
+        return new Response(JSON.stringify({ data: { dateOfBirth: "1994-05-14T00:00:00.000Z" } }), { status: 200 });
+      }
+
+      if (url === "/api/v1/clients/1/profile") {
+        return new Response(JSON.stringify({ data: { dateOfBirth: "1994-05-14T00:00:00.000Z" } }), { status: 200 });
+      }
+
+      if (url === "/api/v1/training-program-templates?limit=100") {
+        return new Response(JSON.stringify({ data: [{ id: "training_template_1", name: "Strength Foundation" }] }), { status: 200 });
+      }
+
+      if (url === "/api/v1/meal-plan-templates?limit=100") {
+        return new Response(JSON.stringify({ data: [{ id: "meal_template_1", name: "Hypertrophy Fuel" }] }), { status: 200 });
+      }
+
+      if (url === "/api/v1/supplement-plan-templates?limit=100") {
+        return new Response(JSON.stringify({ data: [{ id: "supplement_template_1", name: "Sleep Support" }] }), { status: 200 });
+      }
+
+      if (url === "/api/v1/clients/1/training-programs" || url === "/api/v1/training-program-assignments?clientId=1&limit=100") {
+        return new Response(JSON.stringify({ data: trainingAssignments }), { status: 200 });
+      }
+
+      if (url === "/api/v1/clients/1/meal-plans" || url === "/api/v1/meal-plan-assignments?clientId=1&limit=100") {
+        return new Response(JSON.stringify({ data: mealPlanAssignments }), { status: 200 });
+      }
+
+      if (url === "/api/v1/supplement-plan-assignments?clientId=1&limit=100") {
+        return new Response(JSON.stringify({ data: supplementAssignments }), { status: 200 });
+      }
+
+      if (url === "/api/v1/training-program-assignments" && init?.method === "POST") {
+        trainingAssignments = [marcusTrainingAssignments[0]];
+        return new Response(JSON.stringify({ data: trainingAssignments[0] }), { status: 201 });
+      }
+
+      if (url === "/api/v1/meal-plan-assignments" && init?.method === "POST") {
+        mealPlanAssignments = [marcusMealPlanAssignments[0]];
+        return new Response(JSON.stringify({ data: mealPlanAssignments[0] }), { status: 201 });
+      }
+
+      if (url === "/api/v1/supplement-plan-assignments" && init?.method === "POST") {
+        supplementAssignments = [marcusSupplementAssignments[0]];
+        return new Response(JSON.stringify({ data: supplementAssignments[0] }), { status: 201 });
+      }
+
+      if (
+        url === "/api/v1/clients/1/notes?limit=3" ||
+        url === "/api/v1/form-submissions?clientId=1&limit=100" ||
+        url === "/api/v1/check-ins?clientId=1&limit=100"
+      ) {
+        return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      }
+
+      if (url === "/api/v1/clients/1/metrics?summary=weight") {
+        return new Response(JSON.stringify({ data: marcusWeightSummary }), { status: 200 });
+      }
+
+      return new Response(JSON.stringify({ data: [] }), { status: 200 });
+    });
+
+    render(createElement(ClientProfilePage, { clientId: "1" }));
+
+    await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
+    fireEvent.click(screen.getByRole("tab", { name: "Training" }));
+    expect(screen.getByText("No persisted training program has been assigned yet.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit client" }));
+    await searchAndSelectPlan("Training plans", "Strength", "Strength Foundation");
+    await searchAndSelectPlan("Nutrition plans", "Fuel", "Hypertrophy Fuel");
+    await searchAndSelectPlan("Supplementation plans", "Sleep", "Sleep Support");
+    fireEvent.click(screen.getByRole("button", { name: "Save client" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/training-program-assignments", expect.objectContaining({ method: "POST" }));
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/meal-plan-assignments", expect.objectContaining({ method: "POST" }));
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/supplement-plan-assignments", expect.objectContaining({ method: "POST" }));
+    });
+
+    fireEvent.click(await screen.findByRole("tab", { name: "Training" }));
+    expect(screen.getByRole("heading", { name: "Strength Foundation" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Nutrition" }));
+    expect(screen.getByRole("heading", { name: "Hypertrophy Fuel" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Supplementation" }));
+    expect(screen.getByRole("heading", { name: "Sleep Support" })).toBeInTheDocument();
   });
 
   it("adds a dated note from the client profile header", async () => {

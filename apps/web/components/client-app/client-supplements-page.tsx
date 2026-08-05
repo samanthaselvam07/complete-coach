@@ -95,8 +95,19 @@ export function ClientSupplementsPage() {
 
     void loadSupplements();
 
+    const refreshSupplements = () => {
+      if (document.visibilityState === "visible") {
+        void loadSupplements();
+      }
+    };
+
+    window.addEventListener("focus", refreshSupplements);
+    document.addEventListener("visibilitychange", refreshSupplements);
+
     return () => {
       mounted = false;
+      window.removeEventListener("focus", refreshSupplements);
+      document.removeEventListener("visibilitychange", refreshSupplements);
     };
   }, []);
 

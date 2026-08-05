@@ -150,8 +150,11 @@ export function SupplementPlansPage() {
         ])) as [{ data?: ApiSupplementAssignment[] }, { data?: ApiSupplementTemplate[] }];
 
         if (mounted) {
-          setActiveProtocols((assignmentsPayload.data ?? []).map(mapApiAssignmentToProtocol));
-          setTemplates((templatesPayload.data ?? []).map(mapApiTemplateToCard));
+          setActiveProtocols([
+            ...(assignmentsPayload.data ?? []).map(mapApiAssignmentToProtocol),
+            ...(templatesPayload.data ?? []).map(mapApiTemplateToProtocol)
+          ]);
+          setTemplates([]);
         }
       } catch {
         if (mounted) {
@@ -304,6 +307,27 @@ export function SupplementPlansPage() {
   }
 
   async function duplicateAssignment(protocol: ActiveSupplementProtocol) {
+    if (isUnassignedSavedProtocol(protocol)) {
+      try {
+        const createdTemplate = await createPersistedTemplate({
+          id: undefined,
+          name: `${protocol.protocol} (copy)`,
+          category: "General Health",
+          description: `Copy of ${protocol.protocol}.`,
+          supplements: Math.max(1, protocol.supplements.length),
+          status: "draft",
+          template: protocol.template
+        });
+
+        setActiveProtocols((currentProtocols) => [mapProtocolTemplateToProtocol(createdTemplate), ...currentProtocols]);
+        setStatusMessage(`${protocol.protocol} duplicated.`);
+      } catch {
+        setStatusMessage("Supplement protocol copy could not be saved.");
+      }
+
+      return;
+    }
+
     if (!protocol.templateId) {
       setStatusMessage("This protocol cannot be duplicated because it is not linked to a template.");
       return;
@@ -372,13 +396,16 @@ export function SupplementPlansPage() {
     }
 
     try {
-      const response = await fetch(`/api/v1/supplement-plan-assignments/${protocol.id}`, { method: "DELETE" });
+      const response = isUnassignedSavedProtocol(protocol)
+        ? await fetch(`/api/v1/supplement-plan-templates/${protocol.templateId}`, { method: "DELETE" })
+        : await fetch(`/api/v1/supplement-plan-assignments/${protocol.id}`, { method: "DELETE" });
 
       if (!response.ok) {
         throw new Error("Protocol could not be deleted.");
       }
 
       setActiveProtocols((currentProtocols) => currentProtocols.filter((item) => item.id !== protocol.id));
+      setTemplates((currentTemplates) => currentTemplates.filter((item) => item.id !== protocol.templateId));
       setStatusMessage(`${protocol.protocol} deleted.`);
     } catch {
       setStatusMessage("Supplement protocol could not be deleted.");
@@ -528,6 +555,10 @@ function SupplementProtocolsTable({
   onDelete: (protocol: ActiveSupplementProtocol) => void;
 }) {
   const assignmentCounts = protocols.reduce((counts, protocol) => {
+    if (isUnassignedSavedProtocol(protocol)) {
+      return counts;
+    }
+
     const key = protocol.templateId ?? protocol.protocol;
     counts.set(key, (counts.get(key) ?? 0) + 1);
     return counts;
@@ -573,7 +604,9 @@ function SupplementProtocolsTable({
                     </span>
                   </td>
                   <td className="px-6 py-4 font-semibold text-slate-950">
-                    {assignedClientCount} active {assignedClientCount === 1 ? "client" : "clients"}
+                    {isUnassignedSavedProtocol(protocol)
+                      ? "Not assigned"
+                      : `${assignedClientCount} active ${assignedClientCount === 1 ? "client" : "clients"}`}
                   </td>
                   <td className="px-6 py-4 text-slate-600">{protocol.createdOn}</td>
                   <td className="px-6 py-4 text-slate-600">{protocol.assignedOn}</td>
@@ -968,6 +1001,31 @@ function mapApiAssignmentToProtocol(assignment: ApiSupplementAssignment): Active
   };
 }
 
+function mapApiTemplateToProtocol(template: ApiSupplementTemplate): ActiveSupplementProtocol {
+  return mapProtocolTemplateToProtocol(mapApiTemplateToCard(template), template.createdAt ?? template.updatedAt);
+}
+
+function mapProtocolTemplateToProtocol(template: ProtocolTemplate, createdAt?: string): ActiveSupplementProtocol {
+  const supplements =
+    template.template?.phases?.flatMap((phase) =>
+      phase.supplements?.map((supplement) => supplement.supplementName ?? "Supplement") ?? []
+    ) ?? [];
+
+  return {
+    id: `template-${template.id}`,
+    clientId: "",
+    templateId: template.id,
+    clientName: "No client assigned",
+    protocol: template.name,
+    supplements,
+    status: "Inactive",
+    compliance: null,
+    createdOn: formatDisplayDate(createdAt),
+    assignedOn: "Not assigned",
+    template: template.template
+  };
+}
+
 function mapApiTemplateToCard(template: ApiSupplementTemplate): ProtocolTemplate {
   const supplementCount = template.template?.phases?.reduce((total, phase) => total + (phase.supplements?.length ?? 0), 0) ?? 0;
 
@@ -980,6 +1038,10 @@ function mapApiTemplateToCard(template: ApiSupplementTemplate): ProtocolTemplate
     status: template.status,
     template: template.template ?? createTemplateJson("General Health", Math.max(1, supplementCount))
   };
+}
+
+function isUnassignedSavedProtocol(protocol: ActiveSupplementProtocol) {
+  return !protocol.clientId && protocol.templateId !== null;
 }
 
 function createProtocolTemplateFromProtocol(protocol: ActiveSupplementProtocol): ProtocolTemplate {

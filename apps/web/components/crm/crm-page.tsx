@@ -2,6 +2,7 @@
 
 import { Clock, GripVertical, Link2, Mail, MapPin, Phone, Plus, Search, Settings2, Tag, Trash2, UserCheck, X } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
@@ -62,9 +63,10 @@ const emptyLeadForm: LeadFormState = {
 const leadSaveFallbackError = "Lead could not be saved. Check the details and try again.";
 
 export function CRMPage() {
+  const searchParams = useSearchParams();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
-  const [leadSearch, setLeadSearch] = useState("");
+  const [leadSearch, setLeadSearch] = useState(searchParams.get("search") ?? "");
   const [leadFormOpen, setLeadFormOpen] = useState(false);
   const [stageSettingsOpen, setStageSettingsOpen] = useState(false);
   const [crmStages, setCrmStages] = useState<LeadStage[]>(pipelineStages);
@@ -89,6 +91,13 @@ export function CRMPage() {
       ),
     [crmStages]
   );
+
+  useEffect(() => {
+    const nextSearch = searchParams.get("search") ?? "";
+    const timeoutId = window.setTimeout(() => setLeadSearch(nextSearch), 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchParams]);
 
   useEffect(() => {
     let active = true;

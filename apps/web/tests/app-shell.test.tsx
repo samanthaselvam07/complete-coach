@@ -356,8 +356,61 @@ describe("topbar controls", () => {
     render(createElement(TopSearch));
 
     expect(
-      screen.getByRole("searchbox", { name: /search tasks, clients, or pipeline/i })
+      screen.getByRole("searchbox", { name: /search tasks, clients, or crm/i })
     ).toBeInTheDocument();
+  });
+
+  it("loads task, client, and CRM lead results from global search", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            results: [
+              {
+                id: "task_1",
+                type: "task",
+                title: "Review Sarah check-in",
+                subtitle: "Open task",
+                href: "/"
+              },
+              {
+                id: "client_1",
+                type: "client",
+                title: "Sarah Johnson",
+                subtitle: "Core Coaching",
+                href: "/clients/client_1"
+              },
+              {
+                id: "lead_1",
+                type: "lead",
+                title: "Sarah Prospect",
+                subtitle: "warm lead from Website",
+                href: "/clients/crm?search=Sarah%20Prospect"
+              }
+            ]
+          }
+        }),
+        { status: 200 }
+      )
+    );
+
+    render(createElement(TopSearch));
+
+    fireEvent.change(screen.getByRole("searchbox", { name: /search tasks, clients, or crm/i }), {
+      target: { value: "sarah" }
+    });
+
+    const results = await screen.findByRole("region", { name: "Global search results" });
+    expect(within(results).getByText("Task")).toBeInTheDocument();
+    expect(within(results).getByRole("link", { name: /Review Sarah check-in/i })).toHaveAttribute("href", "/");
+    expect(within(results).getByText("Client")).toBeInTheDocument();
+    expect(within(results).getByRole("link", { name: /Sarah Johnson/i })).toHaveAttribute("href", "/clients/client_1");
+    expect(within(results).getByText("CRM")).toBeInTheDocument();
+    expect(within(results).getByRole("link", { name: /Sarah Prospect/i })).toHaveAttribute(
+      "href",
+      "/clients/crm?search=Sarah%20Prospect"
+    );
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/search?query=sarah&limit=5", expect.objectContaining({ signal: expect.any(AbortSignal) }));
   });
 });
 

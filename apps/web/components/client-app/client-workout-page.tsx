@@ -126,8 +126,19 @@ export function ClientWorkoutPage() {
 
     void loadClientTraining();
 
+    const refreshClientTraining = () => {
+      if (document.visibilityState === "visible") {
+        void loadClientTraining();
+      }
+    };
+
+    window.addEventListener("focus", refreshClientTraining);
+    document.addEventListener("visibilitychange", refreshClientTraining);
+
     return () => {
       mounted = false;
+      window.removeEventListener("focus", refreshClientTraining);
+      document.removeEventListener("visibilitychange", refreshClientTraining);
     };
   }, []);
 
