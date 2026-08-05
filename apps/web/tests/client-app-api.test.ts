@@ -817,9 +817,10 @@ describe("client app APIs", () => {
               exerciseName: "Seated Leg Extension",
               prescribedSets: "3",
               prescribedReps: "15-20",
+              prescribedRpe: "9",
               prescribedRestSeconds: 120,
               sets: [
-                { setNumber: 1, reps: "15", weightKg: 45, completed: true }
+                { setNumber: 1, reps: "15", weightKg: 45, rpe: 9.5, completed: true }
               ]
             }
           ],
@@ -841,7 +842,30 @@ describe("client app APIs", () => {
           clientId: "client_1",
           assignmentName: "Strength Block",
           dayName: "Lower A",
-          durationSeconds: 1800
+          durationSeconds: 1800,
+          exercisesJson: [
+            expect.objectContaining({
+              exerciseName: "Seated Leg Extension",
+              prescribedRpe: "9",
+              sets: [
+                expect.objectContaining({
+                  setNumber: 1,
+                  reps: "15",
+                  weightKg: 45,
+                  rpe: 9.5,
+                  completed: true
+                })
+              ]
+            })
+          ],
+          personalBestsJson: [
+            expect.objectContaining({
+              exerciseName: "Seated Leg Extension",
+              setNumber: 1,
+              weightKg: 45,
+              previousBestKg: 40
+            })
+          ]
         })
       })
     );
@@ -851,7 +875,14 @@ describe("client app APIs", () => {
           domain: ClientActivityLogDomain.TRAINING,
           status: ClientActivityLogStatus.COMPLETED,
           sourceType: "workout_session",
-          sourceId: "session_1"
+          sourceId: "session_1",
+          notes: "Strength Block / Lower A"
+        }),
+        update: expect.objectContaining({
+          status: ClientActivityLogStatus.COMPLETED,
+          sourceType: "workout_session",
+          sourceId: "session_1",
+          notes: "Strength Block / Lower A"
         })
       })
     );
@@ -954,7 +985,8 @@ function workoutSessionRecord() {
     exercisesJson: [
       {
         exerciseName: "Seated Leg Extension",
-        sets: [{ setNumber: 1, reps: "15", weightKg: 45, completed: true }]
+        prescribedRpe: "9",
+        sets: [{ setNumber: 1, reps: "15", weightKg: 45, rpe: 9.5, completed: true }]
       }
     ],
     personalBestsJson: [
