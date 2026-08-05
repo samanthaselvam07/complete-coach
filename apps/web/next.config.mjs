@@ -1,9 +1,16 @@
 import { withSentryConfig } from "@sentry/nextjs";
+import path from "node:path";
 import process from "node:process";
+
+const workspaceRoot = path.resolve(process.cwd(), "../..");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingRoot: workspaceRoot,
   reactStrictMode: true,
+  turbopack: {
+    root: workspaceRoot
+  },
   typedRoutes: true,
   async headers() {
     return [
