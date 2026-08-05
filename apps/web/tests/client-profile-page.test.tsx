@@ -907,6 +907,12 @@ describe("ClientProfilePage", () => {
     const bodyweightPoint = document.querySelector('circle[data-metric-key="body_weight"]');
     expect(bodyweightPoint).toHaveAttribute("data-x", "2026-07-01T00:00:00.000Z");
     expect(bodyweightPoint).toHaveAttribute("data-y", "82.6");
+    expect(screen.getByText("X axis: Date")).toBeInTheDocument();
+    expect(screen.getByText("Y axis: Metric value")).toBeInTheDocument();
+    expect(screen.getByText("X")).toBeInTheDocument();
+    expect(screen.getByText("Y")).toBeInTheDocument();
+    expect(screen.getAllByText("Jul 22, 2026").length).toBeGreaterThan(0);
+    expect(screen.getByText("81.7kg")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Metrics (1)" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Metrics (1)" }));
     expect(screen.getByRole("menuitemcheckbox", { name: /Bodyweight/i })).toHaveAttribute("aria-checked", "true");

@@ -380,7 +380,17 @@ function ProgressChart({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+        <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">X axis: Date</span>
+        <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">Y axis: Metric value</span>
+      </div>
       <svg role="img" aria-label="Progress analytics chart" viewBox="0 0 640 260" className="h-72 w-full">
+        <text x="28" y="18" fill="#475569" fontSize="12" fontWeight="700">
+          Y value
+        </text>
+        <text x="560" y="252" fill="#475569" fontSize="12" fontWeight="700">
+          X date
+        </text>
         {[0, 1, 2, 3].map((line) => (
           <line key={line} x1="28" x2="620" y1={42 + line * 54} y2={42 + line * 54} stroke="#e2e8f0" strokeWidth="1" />
         ))}
@@ -415,6 +425,26 @@ function ProgressChart({
           </g>
         ))}
       </svg>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {getLatestChartPoints(series).map((point) => (
+          <div key={`${point.metricKey}-${point.id}`} className="rounded-lg bg-white px-3 py-2 text-xs ring-1 ring-slate-200">
+            <div className="mb-1 flex items-center gap-2 font-bold text-slate-800">
+              <span className="size-2 rounded-full" style={{ backgroundColor: point.color }} aria-hidden="true" />
+              {point.label}
+            </div>
+            <dl className="grid grid-cols-2 gap-2 text-slate-600">
+              <div>
+                <dt className="font-bold text-slate-500">X</dt>
+                <dd>{formatMetricDate(point.x)}</dd>
+              </div>
+              <div>
+                <dt className="font-bold text-slate-500">Y</dt>
+                <dd>{formatMetricValue(point, { key: point.key, label: point.label, color: point.color, unit: point.unit ?? undefined })}</dd>
+              </div>
+            </dl>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -520,6 +550,24 @@ export function createProgressChartSeries(metrics: ClientMetricRecord[], definit
 
 function toPolylinePoints(points: ProgressChartPoint[]) {
   return points.map((point) => `${point.chartX},${point.chartY}`).join(" ");
+}
+
+function getLatestChartPoints(series: ProgressChartSeries[]) {
+  return series
+    .map((definition) => {
+      const latestPoint = definition.points.at(-1);
+
+      return latestPoint
+        ? {
+            ...latestPoint,
+            key: definition.key,
+            color: definition.color,
+            label: definition.label,
+            unit: latestPoint.unit ?? definition.unit ?? null
+          }
+        : null;
+    })
+    .filter((point): point is ProgressChartPoint & MetricDefinition & { unit: string | null } => point !== null);
 }
 
 function toChartPoint(point: ClientMetricRecord, series: ClientMetricRecord[], minTime: number, maxTime: number) {
