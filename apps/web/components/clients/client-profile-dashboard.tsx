@@ -38,8 +38,22 @@ interface ClientMetricRecord {
   measuredAt: string;
   metricKey: string;
   metricValue: number;
+  x?: string;
+  y?: number;
   unit: string | null;
   metadata: unknown;
+}
+
+interface ProgressChartPoint extends ClientMetricRecord {
+  metricKey: string;
+  x: string;
+  y: number;
+  chartX: number;
+  chartY: number;
+}
+
+interface ProgressChartSeries extends MetricDefinition {
+  points: ProgressChartPoint[];
 }
 
 interface MetricDefinition {
@@ -223,10 +237,11 @@ export function ProgressAnalyticsCard({ client }: { client: ClientProfile }) {
     };
   }, [client.id]);
 
-  const metricDefinitions = useMemo(() => createMetricDefinitions(metrics), [metrics]);
+  const normalizedMetrics = useMemo(() => metrics.map(normalizeProgressMetricRecord), [metrics]);
+  const metricDefinitions = useMemo(() => createMetricDefinitions(normalizedMetrics), [normalizedMetrics]);
   const filteredMetrics = useMemo(
-    () => filterMetricsByRange(metrics, range, customFrom, customTo),
-    [customFrom, customTo, metrics, range]
+    () => filterMetricsByRange(normalizedMetrics, range, customFrom, customTo),
+    [customFrom, customTo, normalizedMetrics, range]
   );
   const visibleMetrics = filteredMetrics.filter((metric) => selectedMetricKeys.includes(metric.metricKey));
 
@@ -352,13 +367,7 @@ function ProgressChart({
   metrics: ClientMetricRecord[];
   definitions: MetricDefinition[];
 }) {
-  const series = definitions
-    .map((definition) => ({
-      ...definition,
-      points: metrics
-        .filter((metric) => metric.metricKey === definition.key)
-        .sort((a, b) => new Date(a.measuredAt).getTime() - new Date(b.measuredAt).getTime())
-    }))
+  const series = createProgressChartSeries(metrics, definitions)
     .filter((definition) => definition.points.length > 0);
 
   if (series.length === 0) {
@@ -368,10 +377,6 @@ function ProgressChart({
       </div>
     );
   }
-
-  const chartMetrics = series.flatMap((definition) => definition.points);
-  const minTime = Math.min(...chartMetrics.map((metric) => new Date(metric.measuredAt).getTime()));
-  const maxTime = Math.max(...chartMetrics.map((metric) => new Date(metric.measuredAt).getTime()));
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -387,13 +392,22 @@ function ProgressChart({
               strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
-              points={toPolylinePoints(definition.points, minTime, maxTime)}
+              points={toPolylinePoints(definition.points)}
             />
             {definition.points.map((point) => {
-              const [cx, cy] = toChartPoint(point, definition.points, minTime, maxTime);
-
               return (
-                <circle key={point.id} cx={cx} cy={cy} r="4" fill={definition.color}>
+                <circle
+                  key={point.id}
+                  cx={point.chartX}
+                  cy={point.chartY}
+                  r="4"
+                  fill={definition.color}
+                  data-metric-key={point.metricKey}
+                  data-x={point.x}
+                  data-y={point.y}
+                  data-chart-x={point.chartX}
+                  data-chart-y={point.chartY}
+                >
                   <title>{`${definition.label}: ${formatMetricValue(point, definition)} on ${formatMetricDate(point.measuredAt)}`}</title>
                 </circle>
               );
@@ -403,6 +417,15 @@ function ProgressChart({
       </svg>
     </div>
   );
+}
+
+export function normalizeProgressMetricRecord(metric: ClientMetricRecord): ClientMetricRecord & { x: string; y: number } {
+  return {
+    ...metric,
+    metricKey: normalizeProgressMetricKey(metric.metricKey),
+    x: metric.x ?? metric.measuredAt,
+    y: typeof metric.y === "number" ? metric.y : metric.metricValue
+  };
 }
 
 function createMetricDefinitions(metrics: ClientMetricRecord[]) {
@@ -425,6 +448,16 @@ function createMetricDefinitions(metrics: ClientMetricRecord[]) {
   });
 
   return definitions;
+}
+
+function normalizeProgressMetricKey(metricKey: string) {
+  const normalized = metricKey.trim().toLowerCase();
+
+  if (["bodyweight", "body_weight", "body-weight", "body weight", "weight"].includes(normalized)) {
+    return "body_weight";
+  }
+
+  return normalized.replaceAll("-", "_").replaceAll(" ", "_");
 }
 
 function filterMetricsByRange(metrics: ClientMetricRecord[], range: ProgressRange, customFrom: string, customTo: string) {
@@ -453,17 +486,50 @@ function getRangeStart(range: ProgressRange, now: number, customFrom: string) {
   return now - days * 24 * 60 * 60 * 1000;
 }
 
-function toPolylinePoints(points: ClientMetricRecord[], minTime: number, maxTime: number) {
-  return points.map((point) => toChartPoint(point, points, minTime, maxTime).join(",")).join(" ");
+export function createProgressChartSeries(metrics: ClientMetricRecord[], definitions: MetricDefinition[]): ProgressChartSeries[] {
+  const sortedSeries = definitions.map((definition) => ({
+    ...definition,
+    points: metrics
+      .filter((metric) => metric.metricKey === definition.key)
+      .sort((a, b) => new Date(a.x ?? a.measuredAt).getTime() - new Date(b.x ?? b.measuredAt).getTime())
+  }));
+  const chartMetrics = sortedSeries.flatMap((definition) => definition.points);
+
+  if (chartMetrics.length === 0) {
+    return sortedSeries.map((definition) => ({ ...definition, points: [] }));
+  }
+
+  const minTime = Math.min(...chartMetrics.map((metric) => new Date(metric.x ?? metric.measuredAt).getTime()));
+  const maxTime = Math.max(...chartMetrics.map((metric) => new Date(metric.x ?? metric.measuredAt).getTime()));
+
+  return sortedSeries.map((definition) => ({
+    ...definition,
+    points: definition.points.map((point) => {
+      const [chartX, chartY] = toChartPoint(point, definition.points, minTime, maxTime);
+
+      return {
+        ...point,
+        x: point.x ?? point.measuredAt,
+        y: typeof point.y === "number" ? point.y : point.metricValue,
+        chartX,
+        chartY
+      };
+    })
+  }));
+}
+
+function toPolylinePoints(points: ProgressChartPoint[]) {
+  return points.map((point) => `${point.chartX},${point.chartY}`).join(" ");
 }
 
 function toChartPoint(point: ClientMetricRecord, series: ClientMetricRecord[], minTime: number, maxTime: number) {
-  const values = series.map((metric) => metric.metricValue);
+  const values = series.map((metric) => metric.y ?? metric.metricValue);
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
-  const time = new Date(point.measuredAt).getTime();
+  const time = new Date(point.x ?? point.measuredAt).getTime();
   const xRatio = maxTime === minTime ? 0.5 : (time - minTime) / (maxTime - minTime);
-  const yRatio = maxValue === minValue ? 0.5 : (point.metricValue - minValue) / (maxValue - minValue);
+  const yValue = point.y ?? point.metricValue;
+  const yRatio = maxValue === minValue ? 0.5 : (yValue - minValue) / (maxValue - minValue);
   const x = 28 + xRatio * 592;
   const y = 220 - yRatio * 178;
 
@@ -484,7 +550,8 @@ function getMetricLabel(metric: ClientMetricRecord) {
 }
 
 function formatMetricValue(metric: ClientMetricRecord, definition: MetricDefinition) {
-  const value = Number.isInteger(metric.metricValue) ? String(metric.metricValue) : metric.metricValue.toFixed(1);
+  const metricValue = metric.y ?? metric.metricValue;
+  const value = Number.isInteger(metricValue) ? String(metricValue) : metricValue.toFixed(1);
   const unit = metric.unit ?? definition.unit;
 
   return unit ? `${value}${unit}` : value;

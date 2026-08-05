@@ -1023,7 +1023,7 @@ describe("submissions, check-ins, and metrics APIs", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           clientId: "client_1",
-          metricKey: "body_weight",
+          metricKey: { in: ["body_weight", "bodyweight"] },
           sourceType: "form_submission",
           sourceId: { in: ["submission_start"] }
         }),
@@ -1034,7 +1034,7 @@ describe("submissions, check-ins, and metrics APIs", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           clientId: "client_1",
-          metricKey: "body_weight"
+          metricKey: { in: ["body_weight", "bodyweight"] }
         }),
         orderBy: [{ measuredAt: "desc" }, { createdAt: "desc" }]
       })
@@ -1095,6 +1095,26 @@ describe("submissions, check-ins, and metrics APIs", () => {
     ).toBe("4 days ago");
     expect(serializeCheckInDetail({ ...checkInRecord, formSubmission: null }, [])).toEqual(
       expect.objectContaining({ answers: null, submission: null, metrics: [] })
+    );
+    expect(
+      serializeMetric({
+        id: "metric_sparse",
+        clientId: "client_1",
+        sourceType: "manual",
+        sourceId: "source_1",
+        measuredAt: "2026-05-14T00:00:00.000Z",
+        metricKey: "energy",
+        metricValue: { toString: () => "7" },
+        unit: null,
+        metadata: null
+      })
+    ).toEqual(
+      expect.objectContaining({
+        measuredAt: "2026-05-14T00:00:00.000Z",
+        metricValue: 7,
+        x: "2026-05-14T00:00:00.000Z",
+        y: 7
+      })
     );
     expect(
       serializeMetric({

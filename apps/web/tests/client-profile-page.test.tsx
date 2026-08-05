@@ -3,6 +3,10 @@ import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ClientNotesPage } from "@/components/clients/client-notes-page";
 import {
+  createProgressChartSeries,
+  normalizeProgressMetricRecord
+} from "@/components/clients/client-profile-dashboard";
+import {
   ClientProfilePage,
   createNutritionPlansFromAssignments,
   createTrainingProgramsFromAssignments
@@ -900,6 +904,9 @@ describe("ClientProfilePage", () => {
     expect(screen.getByRole("link", { name: "View all" })).toHaveAttribute("href", "/clients/1/notes");
     expect(screen.getByText("Account Activity Log")).toBeInTheDocument();
     expect(await screen.findByRole("img", { name: "Progress analytics chart" })).toBeInTheDocument();
+    const bodyweightPoint = document.querySelector('circle[data-metric-key="body_weight"]');
+    expect(bodyweightPoint).toHaveAttribute("data-x", "2026-07-01T00:00:00.000Z");
+    expect(bodyweightPoint).toHaveAttribute("data-y", "82.6");
     expect(screen.getByRole("button", { name: "Metrics (1)" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Metrics (1)" }));
     expect(screen.getByRole("menuitemcheckbox", { name: /Bodyweight/i })).toHaveAttribute("aria-checked", "true");
@@ -1430,6 +1437,51 @@ describe("ClientProfilePage", () => {
 
     expect(dialog).toBeInTheDocument();
     expect(screen.getAllByRole("img", { name: "Progress analytics chart" }).length).toBeGreaterThan(0);
+  });
+
+  it("normalizes imported progress metrics into readable x and y chart points", () => {
+    const importedMetric = normalizeProgressMetricRecord({
+      id: "imported_bodyweight_1",
+      measuredAt: "2026-07-01T00:00:00.000Z",
+      metricKey: "bodyweight",
+      metricValue: 82.6,
+      unit: "kg",
+      metadata: { label: "Bodyweight" }
+    });
+    const series = createProgressChartSeries(
+      [
+        importedMetric,
+        normalizeProgressMetricRecord({
+          id: "imported_bodyweight_2",
+          measuredAt: "2026-07-08T00:00:00.000Z",
+          metricKey: "bodyweight",
+          metricValue: 81.9,
+          unit: "kg",
+          metadata: { label: "Bodyweight" }
+        })
+      ],
+      [{ key: "body_weight", label: "Bodyweight", color: "#4f46e5", unit: "kg" }]
+    );
+
+    expect(importedMetric.metricKey).toBe("body_weight");
+    expect(importedMetric.x).toBe("2026-07-01T00:00:00.000Z");
+    expect(importedMetric.y).toBe(82.6);
+    expect(series[0]?.points).toEqual([
+      expect.objectContaining({
+        id: "imported_bodyweight_1",
+        x: "2026-07-01T00:00:00.000Z",
+        y: 82.6,
+        chartX: expect.any(Number),
+        chartY: expect.any(Number)
+      }),
+      expect.objectContaining({
+        id: "imported_bodyweight_2",
+        x: "2026-07-08T00:00:00.000Z",
+        y: 81.9,
+        chartX: expect.any(Number),
+        chartY: expect.any(Number)
+      })
+    ]);
   });
 
   it("temporarily hides the client conversation action from the profile header", async () => {

@@ -256,14 +256,19 @@ export function serializeCheckInDetail(record: CheckInRecord, metrics: MetricRec
 }
 
 export function serializeMetric(record: MetricRecord) {
+  const measuredAt = toIsoString(record.measuredAt);
+  const metricValue = Number(record.metricValue);
+
   return {
     id: record.id,
     clientId: record.clientId,
     sourceType: record.sourceType,
     sourceId: record.sourceId,
-    measuredAt: toIsoString(record.measuredAt),
+    measuredAt,
     metricKey: record.metricKey,
-    metricValue: Number(record.metricValue),
+    metricValue,
+    x: measuredAt,
+    y: metricValue,
     unit: record.unit,
     metadata: record.metadata,
     ...(record.createdAt ? { createdAt: toIsoString(record.createdAt) } : {})

@@ -42,13 +42,14 @@ export async function GET(request: Request, context: ClientMetricsRouteContext) 
         orderBy: [{ submittedAt: "asc" }, { createdAt: "asc" }]
       });
       const initialQuestionnaireSubmissionIds = initialQuestionnaireSubmissions.map((submission) => submission.id);
+      const bodyWeightKeys = ["body_weight", "bodyweight"];
       const [initialQuestionnaireWeight, fallbackStartingWeight, currentWeight] = await Promise.all([
         initialQuestionnaireSubmissionIds.length > 0
           ? prisma.clientMeasurement.findFirst({
               where: {
                 organizationId: actor.organizationId,
                 clientId,
-                metricKey: "body_weight",
+                metricKey: { in: bodyWeightKeys },
                 sourceType: "form_submission",
                 sourceId: { in: initialQuestionnaireSubmissionIds }
               },
@@ -59,7 +60,7 @@ export async function GET(request: Request, context: ClientMetricsRouteContext) 
           where: {
             organizationId: actor.organizationId,
             clientId,
-            metricKey: "body_weight"
+            metricKey: { in: bodyWeightKeys }
           },
           orderBy: [{ measuredAt: "asc" }, { createdAt: "asc" }]
         }),
@@ -67,7 +68,7 @@ export async function GET(request: Request, context: ClientMetricsRouteContext) 
           where: {
             organizationId: actor.organizationId,
             clientId,
-            metricKey: "body_weight"
+            metricKey: { in: bodyWeightKeys }
           },
           orderBy: [{ measuredAt: "desc" }, { createdAt: "desc" }]
         })
