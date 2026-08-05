@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 
@@ -15,6 +15,21 @@ interface ApiCheckInRecord {
   summary?: string | null;
   coachNotes?: string | null;
   status: string;
+  checkInStatus?: string;
+  answers?: Record<string, unknown> | null;
+  submission?: {
+    formName?: string;
+    formVersion?: {
+      schema?: {
+        title?: string;
+        fields?: Array<{
+          id: string;
+          type: string;
+          label: string;
+        }>;
+      };
+    };
+  } | null;
 }
 
 interface CheckInDetailView {
@@ -22,12 +37,9 @@ interface CheckInDetailView {
   week: string;
   submitted: string;
   assigned: string;
-  recordingUrl: string | null;
-  measurements: Record<string, string>;
-  wellbeing: Record<string, string>;
-  wins: string;
-  struggles: string;
-  dietNotes: string;
+  status: string;
+  questions: Array<{ id: string; label: string; answer: string }>;
+  photos: Array<{ label: string; url: string }>;
 }
 
 export function CheckInDetailPage({
@@ -43,6 +55,8 @@ export function CheckInDetailPage({
 }) {
   const [checkIns, setCheckIns] = useState<ApiCheckInRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [completing, setCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
   const [comparisonSelection, setComparisonSelection] = useState("");
   const selectedComparisonId = typeof compare === "string" && compare !== "previous" ? compare : "";
   const isComparing = Boolean(compare);
@@ -56,7 +70,27 @@ export function CheckInDetailPage({
   const compareOptions = checkInOptions.filter((option) => option.id !== selectedCheckIn?.id);
   const currentCheckInValue = selectedCheckIn?.id ?? "";
   const selectedCompareValue = comparisonSelection || selectedComparisonId || compareOptions[0]?.id || "";
-  const comparedCheckIn = checkIns.find((item) => item.id === selectedCompareValue) ?? checkIns.find((item) => item.id !== selectedCheckIn?.id) ?? null;
+  const comparedCheckIn = checkIns.find((item) => item.id === selectedCompareValue) ?? null;
+
+  const hydrateCheckInDetail = useCallback(async (id: string, active: boolean) => {
+    try {
+      const response = await fetch(`/api/v1/check-ins/${id}`);
+
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = (await response.json()) as { data?: ApiCheckInRecord };
+
+      if (active && payload.data && !Array.isArray(payload.data)) {
+        setCheckIns((currentCheckIns) =>
+          currentCheckIns.map((item) => (item.id === id ? { ...item, ...payload.data } : item))
+        );
+      }
+    } catch {
+      // Keep the list-backed check-in if the detail endpoint is unavailable.
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -74,6 +108,11 @@ export function CheckInDetailPage({
 
         if (active) {
           setCheckIns(payload.data ?? []);
+          const current = (payload.data ?? []).find((item) => item.id === checkInId) ?? payload.data?.[0] ?? null;
+          const comparisonId = selectedComparisonId || (compare ? findPreviousCheckInId(payload.data ?? [], current?.id) : "");
+          const idsToHydrate = [current?.id, comparisonId].filter(Boolean) as string[];
+
+          await Promise.all(idsToHydrate.map((id) => hydrateCheckInDetail(id, active)));
         }
       } catch {
         if (active) {
@@ -91,7 +130,38 @@ export function CheckInDetailPage({
     return () => {
       active = false;
     };
-  }, [clientId]);
+  }, [checkInId, clientId, compare, hydrateCheckInDetail, selectedComparisonId]);
+
+  async function completeCheckIn() {
+    if (!selectedCheckIn || completing) {
+      return;
+    }
+
+    setCompleting(true);
+    setCompleteError(null);
+
+    try {
+      const response = await fetch(`/api/v1/check-ins/${selectedCheckIn.id}/complete`, { method: "POST" });
+
+      if (!response.ok) {
+        throw new Error("Unable to complete check-in.");
+      }
+
+      const payload = (await response.json()) as { data?: ApiCheckInRecord };
+
+      setCheckIns((currentCheckIns) =>
+        currentCheckIns.map((item) =>
+          item.id === selectedCheckIn.id
+            ? { ...item, status: "completed", checkInStatus: "completed", ...payload.data }
+            : item
+        )
+      );
+    } catch {
+      setCompleteError("Check-in could not be marked complete. Try again.");
+    } finally {
+      setCompleting(false);
+    }
+  }
 
   if (loading && !embedded) {
     return (
@@ -106,9 +176,6 @@ export function CheckInDetailPage({
     <main className={embedded ? "overflow-hidden rounded-xl border border-slate-200 bg-white" : "min-h-screen bg-gray-50"}>
       <header className="flex flex-col gap-3 border-b border-slate-200 bg-white px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
         <nav className="flex flex-wrap items-center gap-4 text-sm font-bold text-slate-600" aria-label="Check-in actions">
-          <Link href={currentHref as Route} className="hover:text-indigo-600">
-            Reply
-          </Link>
           {isComparing ? (
             <Link href={currentHref as Route} className="hover:text-indigo-600">
               Close
@@ -118,6 +185,21 @@ export function CheckInDetailPage({
             Go Back
           </Link>
         </nav>
+        <div className="flex flex-wrap items-center gap-3">
+          {selectedCheckIn?.checkInStatus === "completed" || selectedCheckIn?.status === "completed" ? (
+            <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-green-700">Completed</span>
+          ) : (
+            <button
+              type="button"
+              className="rounded-lg bg-green-600 px-4 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-60"
+              disabled={!selectedCheckIn || completing}
+              onClick={() => void completeCheckIn()}
+            >
+              Complete
+            </button>
+          )}
+          {completeError ? <span className="text-sm font-semibold text-red-600">{completeError}</span> : null}
+        </div>
         <form action={compareFormAction} method="get" className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {embedded ? (
             <>
@@ -146,6 +228,7 @@ export function CheckInDetailPage({
             value={selectedCompareValue}
             onChange={(event) => setComparisonSelection(event.target.value)}
           >
+            {compareOptions.length === 0 ? <option value="">No previous check-in</option> : null}
             {compareOptions.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
             ))}
@@ -163,9 +246,17 @@ export function CheckInDetailPage({
         <section className="bg-white p-6 text-sm text-slate-500">Preparing check-in...</section>
       ) : !selectedCheckIn ? (
         <section className="bg-white p-6 text-sm text-slate-500">No persisted check-in was found for this client.</section>
-      ) : isComparing && comparedCheckIn ? (
+      ) : isComparing ? (
         <div className="grid divide-y divide-slate-200 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-          <CheckInColumn title="Previous Check in" checkIn={mapApiCheckInToDetail(comparedCheckIn)} muted />
+          {comparedCheckIn ? (
+            <CheckInColumn title="Previous Check in" checkIn={mapApiCheckInToDetail(comparedCheckIn)} muted />
+          ) : (
+            <section className="bg-gray-50 p-6" aria-label="No comparison check-in">
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm font-semibold text-slate-500">
+                No check in to compare
+              </div>
+            </section>
+          )}
           <CheckInColumn title="Current Checkin" checkIn={mapApiCheckInToDetail(selectedCheckIn)} />
         </div>
       ) : (
@@ -192,94 +283,129 @@ function CheckInColumn({
         <p className="mt-1 text-sm text-slate-600">Assigned: {checkIn.assigned}</p>
       </div>
 
-      <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="font-bold text-indigo-950">Check-In Recording</p>
-            {checkIn.recordingUrl ? (
-              <a href={checkIn.recordingUrl} className="text-sm font-bold text-indigo-600">
-                {checkIn.recordingUrl}
-              </a>
-            ) : (
-              <span className="text-sm font-bold text-slate-500">No recording attached</span>
-            )}
-          </div>
-          <button type="button" className="text-sm font-bold text-indigo-600">Copy Link</button>
-        </div>
+      <section className="rounded-xl border border-slate-200 bg-white p-4">
+        <h2 className="mb-4 text-sm font-bold text-slate-700">Submitted answers</h2>
+        {checkIn.questions.length > 0 ? (
+          <dl className="space-y-4">
+            {checkIn.questions.map((question) => (
+              <div key={question.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                <dt className="text-sm font-bold text-slate-950">{question.label}</dt>
+                <dd className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">{question.answer}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="text-sm text-slate-500">No submitted answers were found for this check-in.</p>
+        )}
       </section>
 
-      <MetricGroup title="Key Measurements" metrics={checkIn.measurements} />
-      <MetricGroup title="Well-being" metrics={checkIn.wellbeing} />
-      <TextPanel title="Wins" tone="text-green-600" body={checkIn.wins} />
-      <TextPanel title="Struggles" tone="text-red-600" body={checkIn.struggles} />
-      <TextPanel title="Diet Notes" tone="text-slate-700" body={checkIn.dietNotes} />
-    </section>
-  );
-}
-
-function MetricGroup({
-  title,
-  metrics,
-  deltas
-}: {
-  title: string;
-  metrics: Record<string, string>;
-  deltas?: Record<string, string>;
-}) {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4">
-      <h2 className="mb-4 text-sm font-bold text-slate-700">{title}</h2>
-      <dl className="grid gap-3 md:grid-cols-2">
-        {Object.entries(metrics).map(([label, value]) => (
-          <div key={label} className="flex justify-between gap-4 text-sm">
-            <dt className="text-slate-500">{label}</dt>
-            <dd className="font-bold text-slate-950">
-              {deltas?.[label] ? (
-                <span className={deltas[label].startsWith("-") ? "mr-3 text-red-600" : "mr-3 text-green-600"}>
-                  {deltas[label]}
-                </span>
-              ) : null}
-              {value}
-            </dd>
+      <section className="rounded-xl border border-slate-200 bg-white p-4">
+        <h2 className="mb-4 text-sm font-bold text-slate-700">Submitted photos</h2>
+        {checkIn.photos.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {checkIn.photos.map((photo, index) => (
+              <a key={`${photo.url}-${index}`} href={photo.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border border-slate-200">
+                <img src={photo.url} alt={`${photo.label} ${index + 1}`} className="aspect-[4/5] w-full object-cover" />
+              </a>
+            ))}
           </div>
-        ))}
-      </dl>
-    </section>
-  );
-}
-
-function TextPanel({ title, tone, body }: { title: string; tone: string; body: string }) {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4">
-      <h2 className={`mb-3 text-sm font-bold ${tone}`}>{title}</h2>
-      <p className="text-sm leading-6 text-slate-700">{body}</p>
+        ) : (
+          <p className="text-sm text-slate-500">No photos were submitted with this check-in.</p>
+        )}
+      </section>
     </section>
   );
 }
 
 function mapApiCheckInToDetail(checkIn: ApiCheckInRecord): CheckInDetailView {
+  const fields = checkIn.submission?.formVersion?.schema?.fields ?? [];
+  const answers = isRecord(checkIn.answers) ? checkIn.answers : {};
+  const photoFieldIds = new Set(fields.filter((field) => field.type === "photo").map((field) => field.id));
+  const questionRows = fields
+    .filter((field) => field.type !== "photo")
+    .map((field) => ({
+      id: field.id,
+      label: field.label,
+      answer: formatAnswer(answers[field.id])
+    }));
+  const unknownAnswerRows = Object.entries(answers)
+    .filter(([id]) => !fields.some((field) => field.id === id) && !looksLikePhotoAnswer(answers[id]))
+    .map(([id, answer]) => ({ id, label: humanizeFieldId(id), answer: formatAnswer(answer) }));
+
   return {
     id: checkIn.id,
     week: checkIn.name,
     submitted: formatCheckInDateTime(checkIn.submittedAt),
     assigned: checkIn.dueAt ? formatCheckInDateTime(checkIn.dueAt) : "Not assigned",
-    recordingUrl: null,
-    measurements: {
-      Weight: "Not recorded",
-      Waist: "Not recorded",
-      "Body Fat": "Not recorded",
-      Chest: "Not recorded"
-    },
-    wellbeing: {
-      "Energy Level": "Not recorded",
-      "Sleep Quality": "Not recorded",
-      "Stress Level": "Not recorded",
-      Adherence: "Not recorded"
-    },
-    wins: checkIn.summary ?? "No persisted wins summary has been recorded.",
-    struggles: checkIn.coachNotes ?? "No persisted struggles summary has been recorded.",
-    dietNotes: "No persisted diet notes have been recorded."
+    status: checkIn.checkInStatus ?? checkIn.status,
+    questions: [...questionRows, ...unknownAnswerRows],
+    photos: Object.entries(answers).flatMap(([id, answer]) => {
+      if (!photoFieldIds.has(id) && !looksLikePhotoAnswer(answer)) {
+        return [];
+      }
+
+      const label = fields.find((field) => field.id === id)?.label ?? humanizeFieldId(id);
+      return getPhotoUrls(answer).map((url) => ({ label, url }));
+    })
   };
+}
+
+function findPreviousCheckInId(checkIns: ApiCheckInRecord[], currentId?: string) {
+  const currentIndex = checkIns.findIndex((item) => item.id === currentId);
+
+  if (currentIndex < 0) {
+    return checkIns.find((item) => item.id !== currentId)?.id ?? "";
+  }
+
+  return checkIns[currentIndex + 1]?.id ?? "";
+}
+
+function formatAnswer(value: unknown): string {
+  if (value === null || value === undefined || value === "") {
+    return "No answer submitted";
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(formatAnswer).join(", ");
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+}
+
+function getPhotoUrls(value: unknown): string[] {
+  if (typeof value === "string") {
+    return value ? [value] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(getPhotoUrls);
+  }
+
+  if (isRecord(value)) {
+    const possibleUrl = value.url ?? value.src ?? value.href;
+    return typeof possibleUrl === "string" ? [possibleUrl] : [];
+  }
+
+  return [];
+}
+
+function looksLikePhotoAnswer(value: unknown) {
+  return getPhotoUrls(value).some((url) => /\.(avif|gif|jpe?g|png|webp)(\?|$)/i.test(url));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function humanizeFieldId(value: string) {
+  return value
+    .replaceAll("-", " ")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function formatCheckInDate(value: string) {

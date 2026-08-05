@@ -1,4 +1,4 @@
-import { CheckInStatus, FormSubmissionStatus } from "@/app/generated/prisma/enums";
+import { CheckInStatus, FormAssignmentStatus, FormSubmissionStatus } from "@/app/generated/prisma/enums";
 import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
@@ -51,6 +51,16 @@ export async function POST(_request: Request, context: CompleteCheckInRouteConte
             reviewedByUserId: checkIn.formSubmission?.reviewedByUserId ?? actor.userId
           }
         });
+
+        if (checkIn.formSubmission?.assignmentId) {
+          await tx.formAssignment.update({
+            where: { id: checkIn.formSubmission.assignmentId, organizationId: actor.organizationId },
+            data: {
+              status: FormAssignmentStatus.COMPLETED,
+              completedAt
+            }
+          });
+        }
       }
 
       await tx.auditLog.create({

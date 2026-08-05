@@ -31,6 +31,21 @@ interface ClientFormAssignmentResponse {
   status?: string | null;
 }
 
+type ClientAssignableFormType =
+  | "intake"
+  | "application"
+  | "contact"
+  | "terms-and-conditions"
+  | "habit-tracker"
+  | "check-in";
+
+interface ClientFormOptionResponse {
+  id: string;
+  name: string;
+  type?: ClientAssignableFormType | string | null;
+  currency?: string | null;
+}
+
 export async function fetchClientFormOptions(url: string): Promise<ClientFormOption[]> {
   try {
     const response = await fetch(url);
@@ -39,15 +54,34 @@ export async function fetchClientFormOptions(url: string): Promise<ClientFormOpt
       return [];
     }
 
-    const payload = (await response.json()) as { data?: Array<{ id: string; name: string; currency?: string | null }> };
+    const payload = (await response.json()) as { data?: ClientFormOptionResponse[] };
 
-    return (payload.data ?? []).map((record) => ({
-      value: record.id,
-      label: record.name,
-      currency: record.currency
-    }));
+    return toClientFormOptions(payload.data ?? []);
   } catch {
     return [];
+  }
+}
+
+export async function fetchPublishedClientFormsByType() {
+  try {
+    const response = await fetch("/api/v1/forms?status=published&limit=100");
+
+    if (!response.ok) {
+      return emptyClientFormOptionGroups();
+    }
+
+    const payload = (await response.json()) as { data?: ClientFormOptionResponse[] };
+    const forms = payload.data ?? [];
+
+    return {
+      initialQuestionnaireOptions: toClientFormOptions(
+        forms.filter((form) => isFormType(form.type, ["intake", "application", "contact", "terms-and-conditions"]))
+      ),
+      dailyHabitFormOptions: toClientFormOptions(forms.filter((form) => isFormType(form.type, ["habit-tracker"]))),
+      checkInFormOptions: toClientFormOptions(forms.filter((form) => isFormType(form.type, ["check-in"])))
+    };
+  } catch {
+    return emptyClientFormOptionGroups();
   }
 }
 
@@ -247,6 +281,26 @@ function withoutExistingIds(selectedIds: string[], existingIds: string[]) {
 
 function findAssignedFormByTypes(assignments: ClientFormAssignmentResponse[], formTypes: string[]) {
   return assignments.find((assignment) => assignment.formId && assignment.formType && formTypes.includes(assignment.formType))?.formId ?? "";
+}
+
+function toClientFormOptions(records: ClientFormOptionResponse[]): ClientFormOption[] {
+  return records.map((record) => ({
+    value: record.id,
+    label: record.name,
+    currency: record.currency
+  }));
+}
+
+function isFormType(type: ClientFormOptionResponse["type"], expectedTypes: ClientAssignableFormType[]) {
+  return Boolean(type && expectedTypes.includes(type as ClientAssignableFormType));
+}
+
+function emptyClientFormOptionGroups() {
+  return {
+    initialQuestionnaireOptions: [],
+    dailyHabitFormOptions: [],
+    checkInFormOptions: []
+  };
 }
 
 function emptyAssignedClientFormIds(): AssignedClientFormIds {

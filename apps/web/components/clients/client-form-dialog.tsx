@@ -240,9 +240,27 @@ export function ClientFormDialog({
             ]}
             onChange={(value) => onChange("weightMeasurement", value)}
           />
-          <ClientSelectField label="Initial Q/A" value={form.initialQuestionnaire} options={initialQuestionnaireOptions} onChange={(value) => onChange("initialQuestionnaire", value)} />
-          <ClientSelectField label="Daily habit form" value={form.dailyHabitForm} options={dailyHabitFormOptions} onChange={(value) => onChange("dailyHabitForm", value)} />
-          <ClientSelectField label="Check in form" value={form.checkInForm} options={checkInFormOptions} onChange={(value) => onChange("checkInForm", value)} />
+          <ClientSelectField
+            label="Initial Q/A"
+            value={form.initialQuestionnaire}
+            options={initialQuestionnaireOptions}
+            emptyMessage="No published initial Q&A forms found."
+            onChange={(value) => onChange("initialQuestionnaire", value)}
+          />
+          <ClientSelectField
+            label="Daily habit form"
+            value={form.dailyHabitForm}
+            options={dailyHabitFormOptions}
+            emptyMessage="No published daily habit forms found."
+            onChange={(value) => onChange("dailyHabitForm", value)}
+          />
+          <ClientSelectField
+            label="Check in form"
+            value={form.checkInForm}
+            options={checkInFormOptions}
+            emptyMessage="No published check-in forms found."
+            onChange={(value) => onChange("checkInForm", value)}
+          />
           <ClientSelectField
             label="Check-in Frequency"
             value={form.checkInFrequency}
@@ -352,11 +370,13 @@ function ClientSelectField({
   label,
   value,
   options,
+  emptyMessage,
   onChange
 }: {
   label: string;
   value: string;
   options: ClientFormOption[];
+  emptyMessage?: string;
   onChange: (value: string) => void;
 }) {
   const id = `client-${label.toLowerCase().replaceAll(" ", "-").replaceAll("/", "")}`;
@@ -379,6 +399,9 @@ function ClientSelectField({
           </option>
         ))}
       </select>
+      {emptyMessage && options.length === 0 ? (
+        <p className="mt-1 text-xs font-medium text-amber-700">{emptyMessage}</p>
+      ) : null}
     </div>
   );
 }

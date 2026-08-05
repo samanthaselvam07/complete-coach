@@ -15,7 +15,7 @@ import {
   fetchAssignedClientFormIds,
   fetchAssignedClientPlanIds,
   fetchClientFormOptions,
-  fetchClientFormOptionsFromUrls,
+  fetchPublishedClientFormsByType,
   scheduleAssignedPackagePaymentChange,
   toDateInputValue,
   updateClientProfile
@@ -507,31 +507,22 @@ export function ClientProfilePage({
   const loadClientFormOptions = async () => {
     const [
       packages,
-      intakeForms,
-      habitForms,
-      checkInForms,
+      publishedFormGroups,
       trainingPlans,
       nutritionPlans,
       supplementationPlans
     ] = await Promise.all([
       fetchClientFormOptions("/api/v1/packages?status=active&limit=100"),
-      fetchClientFormOptionsFromUrls([
-        "/api/v1/forms?type=intake&status=published&limit=100",
-        "/api/v1/forms?type=application&status=published&limit=100",
-        "/api/v1/forms?type=contact&status=published&limit=100",
-        "/api/v1/forms?type=terms-and-conditions&status=published&limit=100"
-      ]),
-      fetchClientFormOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
-      fetchClientFormOptions("/api/v1/forms?type=check-in&status=published&limit=100"),
+      fetchPublishedClientFormsByType(),
       fetchClientFormOptions("/api/v1/training-program-templates?limit=100"),
       fetchClientFormOptions("/api/v1/meal-plan-templates?limit=100"),
       fetchClientFormOptions("/api/v1/supplement-plan-templates?limit=100")
     ]);
 
     setPackageOptions(packages);
-    setInitialQuestionnaireOptions(intakeForms);
-    setDailyHabitFormOptions(habitForms);
-    setCheckInFormOptions(checkInForms);
+    setInitialQuestionnaireOptions(publishedFormGroups.initialQuestionnaireOptions);
+    setDailyHabitFormOptions(publishedFormGroups.dailyHabitFormOptions);
+    setCheckInFormOptions(publishedFormGroups.checkInFormOptions);
     setTrainingPlanOptions(trainingPlans);
     setNutritionPlanOptions(nutritionPlans);
     setSupplementationPlanOptions(supplementationPlans);

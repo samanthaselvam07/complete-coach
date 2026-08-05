@@ -842,6 +842,12 @@ describe("submissions, check-ins, and metrics APIs", () => {
     expect(mocks.prisma.checkIn.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ status: CheckInStatus.COMPLETED }) })
     );
+    expect(mocks.prisma.formAssignment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "assignment_1", organizationId: "org_1" },
+        data: expect.objectContaining({ status: FormAssignmentStatus.COMPLETED })
+      })
+    );
   });
 
   it("rejects invalid check-in state transitions", async () => {

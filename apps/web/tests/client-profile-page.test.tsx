@@ -616,6 +616,21 @@ function mockMarcusProfile(
       return Promise.resolve(new Response(JSON.stringify({ data: marcusSupplementAssignments }), { status: 200 }));
     }
 
+    if (url === "/api/v1/forms?status=published&limit=100") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              { id: "form_initial_qa", name: "Initial Q&A Form", type: "intake" },
+              { id: "form_daily_habits", name: "Daily Habit Form", type: "habit-tracker" },
+              { id: "form_check_in", name: "Weekly Check-In Form", type: "check-in" }
+            ]
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
     if (url === "/api/v1/supplement-plan-templates/supplement_template_1") {
       return Promise.resolve(
         new Response(
@@ -1492,7 +1507,7 @@ describe("ClientProfilePage", () => {
   });
 
   it("opens the roster edit client dialog from the profile pencil icon", async () => {
-    mockMarcusProfile();
+    const fetchMock = mockMarcusProfile();
     render(createElement(ClientProfilePage, { clientId: "1" }));
 
     await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
@@ -1510,6 +1525,7 @@ describe("ClientProfilePage", () => {
     expect(await screen.findByRole("option", { name: "Initial Q&A Form" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Daily Habit Form" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Weekly Check-In Form" })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?status=published&limit=100");
     expect(screen.getByRole("button", { name: "Save client" })).toBeInTheDocument();
   });
 
