@@ -275,6 +275,32 @@ interface ClientActivityLogSummary {
   byDomain: ClientActivityLogDomainSummary[];
 }
 
+interface ClientWorkoutSession {
+  id: string;
+  assignmentName: string;
+  dayName: string;
+  completedAt: string;
+  durationSeconds: number;
+  exercises: Array<{
+    exerciseName: string;
+    prescribedSets?: string | null;
+    prescribedReps?: string | null;
+    prescribedRestSeconds?: number | null;
+    sets: Array<{
+      setNumber: number;
+      reps?: string;
+      weightKg?: number | null;
+      completed: boolean;
+    }>;
+  }>;
+  personalBests: Array<{
+    exerciseName: string;
+    setNumber: number;
+    weightKg: number;
+    previousBestKg: number;
+  }>;
+}
+
 interface ClientProfileView extends ClientProfile {
   trainingPrograms: ClientTrainingProgram[];
   trainingSource: "api";
@@ -681,6 +707,23 @@ async function loadPersistedWorkoutNotes(clientId: string, assignmentName: strin
   }
 
   const payload = (await response.json()) as { data?: ClientNoteSummary[] };
+
+  return Array.isArray(payload.data) ? payload.data : [];
+}
+
+async function loadPersistedWorkoutSessions(clientId: string, assignmentName: string, dayName: string) {
+  const params = new URLSearchParams({
+    assignmentName,
+    dayName,
+    limit: "12"
+  });
+  const response = await fetch(`/api/v1/clients/${clientId}/workout-sessions?${params.toString()}`);
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const payload = (await response.json()) as { data?: ClientWorkoutSession[] };
 
   return Array.isArray(payload.data) ? payload.data : [];
 }
@@ -1706,6 +1749,8 @@ function TrainingPanel({ client }: { client: ClientProfileView }) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [workoutNotes, setWorkoutNotes] = useState<ClientNoteSummary[]>([]);
   const [loadingWorkoutNotes, setLoadingWorkoutNotes] = useState(false);
+  const [workoutSessions, setWorkoutSessions] = useState<ClientWorkoutSession[]>([]);
+  const [loadingWorkoutSessions, setLoadingWorkoutSessions] = useState(false);
   const activeDay = program?.template.days?.find((day) => day.name === activeDayName) ?? program?.template.days?.[0] ?? null;
   const trainingSections = getTrainingExerciseSections(activeDay?.exercises ?? []);
   const volumeChips = getTrainingVolumeChips(activeDay?.exercises ?? []);
@@ -1741,6 +1786,32 @@ function TrainingPanel({ client }: { client: ClientProfileView }) {
     }
 
     void loadWorkoutNotes();
+
+    return () => {
+      active = false;
+    };
+  }, [activeDay, client.id, program]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadWorkoutSessions() {
+      if (!program || !activeDay) {
+        setWorkoutSessions([]);
+        setLoadingWorkoutSessions(false);
+        return;
+      }
+
+      setLoadingWorkoutSessions(true);
+      const sessions = await loadPersistedWorkoutSessions(client.id, program.name, activeDay.name).catch(() => []);
+
+      if (active) {
+        setWorkoutSessions(sessions);
+        setLoadingWorkoutSessions(false);
+      }
+    }
+
+    void loadWorkoutSessions();
 
     return () => {
       active = false;
@@ -1809,6 +1880,12 @@ function TrainingPanel({ client }: { client: ClientProfileView }) {
             assignmentName={program.name}
             dayName={activeDay?.name ?? ""}
           />
+          <CompletedWorkoutSessionsPanel
+            sessions={workoutSessions}
+            loading={loadingWorkoutSessions}
+            assignmentName={program.name}
+            dayName={activeDay?.name ?? ""}
+          />
         </>
       ) : (
         <p className="text-sm text-gray-500">No persisted training program has been assigned yet.</p>
@@ -1868,12 +1945,116 @@ function WorkoutNotesPanel({
   );
 }
 
+function CompletedWorkoutSessionsPanel({
+  sessions,
+  loading,
+  assignmentName,
+  dayName
+}: {
+  sessions: ClientWorkoutSession[];
+  loading: boolean;
+  assignmentName: string;
+  dayName: string;
+}) {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label={`${assignmentName} ${dayName} completed workout sessions`}>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-base font-black text-slate-950">Completed Workouts</h3>
+          <p className="mt-1 text-sm font-semibold text-slate-500">{dayName}</p>
+        </div>
+        <span className="rounded-lg bg-green-50 px-3 py-1 text-xs font-black uppercase text-green-600">
+          {sessions.length} logged
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-4">
+        {loading ? <p className="text-sm text-slate-500">Loading completed workouts...</p> : null}
+        {!loading && sessions.length === 0 ? (
+          <p className="text-sm text-slate-500">No completed workouts logged for this day yet.</p>
+        ) : null}
+        {sessions.map((session) => (
+          <article key={session.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-black text-slate-950">{formatTrainingDate(session.completedAt)}</p>
+                <p className="mt-1 text-xs font-bold text-slate-500">{formatWorkoutDuration(session.durationSeconds)}</p>
+              </div>
+              {session.personalBests.length > 0 ? (
+                <span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-indigo-600">{session.personalBests.length} PBs</span>
+              ) : null}
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {session.exercises.map((exercise) => {
+                const bestSet = getBestLoggedSet(exercise.sets);
+
+                return (
+                  <div key={`${session.id}-${exercise.exerciseName}`} className="rounded-lg bg-white p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-black text-slate-950">{exercise.exerciseName}</p>
+                      {bestSet ? (
+                        <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
+                          Best {formatLoggedSet(bestSet)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {exercise.sets.map((set) => (
+                        <span key={`${exercise.exerciseName}-${set.setNumber}`} className="rounded-md bg-slate-50 px-2 py-1 text-xs font-bold text-slate-600">
+                          Set {set.setNumber}: {formatLoggedSet(set)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function formatTrainingDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
     year: "numeric"
   }).format(new Date(value));
+}
+
+function formatWorkoutDuration(durationSeconds: number) {
+  const minutes = Math.floor(durationSeconds / 60);
+  const seconds = durationSeconds % 60;
+
+  if (minutes === 0) {
+    return `${seconds}s`;
+  }
+
+  return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
+}
+
+function formatLoggedSet(set: ClientWorkoutSession["exercises"][number]["sets"][number]) {
+  const weight = typeof set.weightKg === "number" ? `${Number.isInteger(set.weightKg) ? set.weightKg.toFixed(0) : set.weightKg.toFixed(1)}kg` : "no weight";
+  const reps = set.reps?.trim() ? `${set.reps} reps` : "no reps";
+
+  return `${weight} x ${reps}`;
+}
+
+function getBestLoggedSet(sets: ClientWorkoutSession["exercises"][number]["sets"]) {
+  return sets.reduce<ClientWorkoutSession["exercises"][number]["sets"][number] | null>((best, set) => {
+    if (typeof set.weightKg !== "number") {
+      return best;
+    }
+
+    if (!best || typeof best.weightKg !== "number" || set.weightKg > best.weightKg) {
+      return set;
+    }
+
+    return best;
+  }, null);
 }
 
 function buildWorkoutNotePrefix(assignmentName: string, dayName: string) {

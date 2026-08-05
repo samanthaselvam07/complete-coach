@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Dumbbell, TrendingUp, Utensils } from "lucide-react";
+import { ArrowRight, CalendarDays, Droplets, Dumbbell, TrendingUp, Utensils } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
@@ -13,7 +13,11 @@ interface ClientMeResponse {
       id: string;
       name: string;
       checkInDay: string;
+      timezone?: string | null;
     };
+    profile?: {
+      waterTargetLitres?: number | null;
+    } | null;
     trainingAssignments: Array<{
       id: string;
       name: string;
@@ -52,6 +56,13 @@ interface RoadmapItem {
   notes: string;
 }
 
+interface HydrationResponse {
+  data?: {
+    date: string;
+    hydrationMl: number;
+  };
+}
+
 export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }: { today?: string } = {}) {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
@@ -60,6 +71,8 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
   const [mealPlanName, setMealPlanName] = useState("Nutrition plan");
   const [trainingDays, setTrainingDays] = useState(0);
   const [targetCalories, setTargetCalories] = useState(0);
+  const [hydrationMl, setHydrationMl] = useState(0);
+  const [hydrationTargetMl, setHydrationTargetMl] = useState(2500);
   const [weeklyCheckInDay, setWeeklyCheckInDay] = useState("Unscheduled");
   const [roadmapPhases, setRoadmapPhases] = useState<RoadmapPhase[]>([]);
 
@@ -82,8 +95,13 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
           ?? payload.data.mealPlanAssignments[0]
           ?? null;
 
-        const roadmapResponse = await fetch("/api/v1/client/roadmap");
+        const hydrationDate = getTodayDateValue(payload.data.client.timezone ?? undefined);
+        const [roadmapResponse, hydrationResponse] = await Promise.all([
+          fetch("/api/v1/client/roadmap"),
+          fetch(`/api/v1/client/hydration?date=${hydrationDate}`)
+        ]);
         const roadmapPayload = (await roadmapResponse.json().catch(() => null)) as { data?: RoadmapPhase[] } | null;
+        const hydrationPayload = (await hydrationResponse.json().catch(() => null)) as HydrationResponse | null;
 
         if (!mounted) {
           return;
@@ -94,6 +112,8 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
         setMealPlanName(activeMealPlan?.name ?? "Nutrition plan");
         setTrainingDays(countTrainingDays(activeTraining?.snapshot));
         setTargetCalories(activeMealPlan?.targetCalories ?? 0);
+        setHydrationTargetMl(payload.data.profile?.waterTargetLitres ? Math.round(payload.data.profile.waterTargetLitres * 1000) : 2500);
+        setHydrationMl(hydrationResponse.ok && typeof hydrationPayload?.data?.hydrationMl === "number" ? hydrationPayload.data.hydrationMl : 0);
         setWeeklyCheckInDay(payload.data.client.checkInDay ?? "Unscheduled");
         setRoadmapPhases(roadmapResponse.ok && Array.isArray(roadmapPayload?.data) ? roadmapPayload.data : []);
         setLoadState("ready");
@@ -109,8 +129,19 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
 
     void loadClientHome();
 
+    const refreshClientHome = () => {
+      if (document.visibilityState === "visible") {
+        void loadClientHome();
+      }
+    };
+
+    window.addEventListener("focus", refreshClientHome);
+    document.addEventListener("visibilitychange", refreshClientHome);
+
     return () => {
       mounted = false;
+      window.removeEventListener("focus", refreshClientHome);
+      document.removeEventListener("visibilitychange", refreshClientHome);
     };
   }, []);
 
@@ -181,22 +212,37 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
             />
           </section>
 
-          <section className="rounded-[1.65rem] bg-[#f5f3f3] p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xl font-black text-[#1b1c1c]">Hydration</p>
-                <p className="text-sm font-semibold text-[#777584]">Daily rhythm</p>
-              </div>
-              <p className="text-2xl font-black text-[#3620b8]">0L <span className="text-sm text-[#777584]">/ 3.0L</span></p>
-            </div>
-            <div className="mt-5 h-3 overflow-hidden rounded-full bg-[#e4e2e2]">
-              <div className="h-full w-0 rounded-full bg-gradient-to-r from-[#3620b8] to-[#5f50f0]" />
-            </div>
-          </section>
+          <HydrationDashboardCard hydrationMl={hydrationMl} targetMl={hydrationTargetMl} />
 
         </div>
       ) : null}
     </ClientMobileShell>
+  );
+}
+
+function HydrationDashboardCard({ hydrationMl, targetMl }: { hydrationMl: number; targetMl: number }) {
+  const progress = targetMl > 0 ? Math.min(Math.max((hydrationMl / targetMl) * 100, 0), 100) : 0;
+
+  return (
+    <section aria-label="Hydration tracker" className="rounded-[1.65rem] bg-[#f5f3f3] p-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex size-11 flex-none items-center justify-center rounded-2xl bg-[#e9f7ff] text-[#0284c7]">
+            <Droplets aria-hidden="true" className="size-5" />
+          </div>
+          <div>
+            <p className="text-xl font-black text-[#1b1c1c]">Hydration</p>
+            <p className="text-sm font-semibold text-[#777584]">Daily rhythm</p>
+          </div>
+        </div>
+        <p className="text-2xl font-black text-[#3620b8]">
+          {formatLitres(hydrationMl)} <span className="text-sm text-[#777584]">/ {formatLitres(targetMl)}</span>
+        </p>
+      </div>
+      <div className="mt-5 h-3 overflow-hidden rounded-full bg-[#e4e2e2]">
+        <div className="h-full rounded-full bg-[#3620b8]" style={{ width: `${progress}%` }} />
+      </div>
+    </section>
   );
 }
 
@@ -307,6 +353,24 @@ function formatShortDate(value: string) {
     day: "numeric",
     month: "short"
   }).format(new Date(`${value}T00:00:00.000Z`));
+}
+
+function formatLitres(valueMl: number) {
+  return `${(valueMl / 1000).toFixed(1)}L`;
+}
+
+function getTodayDateValue(timezone = "UTC") {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value ?? "1970";
+  const month = parts.find((part) => part.type === "month")?.value ?? "01";
+  const day = parts.find((part) => part.type === "day")?.value ?? "01";
+
+  return `${year}-${month}-${day}`;
 }
 
 const weekdayLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];

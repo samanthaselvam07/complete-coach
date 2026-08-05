@@ -11,7 +11,11 @@ interface ClientMeResponse {
     client: {
       id: string;
       name: string;
+      timezone?: string | null;
     };
+    profile?: {
+      waterTargetLitres?: number | null;
+    } | null;
     mealPlanAssignments: MealPlanAssignment[];
   };
   error?: {
@@ -75,6 +79,13 @@ interface NutritionTotals {
 type LoadState = "loading" | "ready" | "error";
 type MealDetailTab = "ingredients" | "recipe";
 
+interface HydrationResponse {
+  data?: {
+    date: string;
+    hydrationMl: number;
+  };
+}
+
 const zeroTotals: NutritionTotals = {
   calories: 0,
   protein: 0,
@@ -93,6 +104,8 @@ export function ClientNutritionPage() {
   const [expandedMealKey, setExpandedMealKey] = useState<string | null>(null);
   const [mealDetailTab, setMealDetailTab] = useState<MealDetailTab>("ingredients");
   const [hydrationMl, setHydrationMl] = useState(0);
+  const [hydrationTargetMl, setHydrationTargetMl] = useState(2500);
+  const [hydrationDate, setHydrationDate] = useState(getTodayDateValue());
 
   useEffect(() => {
     let mounted = true;
@@ -106,11 +119,19 @@ export function ClientNutritionPage() {
           throw new Error(payload?.error?.message ?? "Your nutrition plan could not be loaded.");
         }
 
+        const nextHydrationDate = getTodayDateValue(payload.data.client.timezone ?? undefined);
+        const targetLitres = payload.data.profile?.waterTargetLitres;
+        const hydrationResponse = await fetch(`/api/v1/client/hydration?date=${nextHydrationDate}`);
+        const hydrationPayload = (await hydrationResponse.json().catch(() => null)) as HydrationResponse | null;
+
         if (!mounted) {
           return;
         }
 
         setClientName(payload.data.client.name);
+        setHydrationDate(nextHydrationDate);
+        setHydrationTargetMl(targetLitres ? Math.round(targetLitres * 1000) : 2500);
+        setHydrationMl(hydrationResponse.ok && typeof hydrationPayload?.data?.hydrationMl === "number" ? hydrationPayload.data.hydrationMl : 0);
         setPlans(payload.data.mealPlanAssignments.map(normalizeMealPlanAssignment));
         setLoadState("ready");
       } catch (error) {
@@ -125,8 +146,19 @@ export function ClientNutritionPage() {
 
     void loadClientNutrition();
 
+    const refreshClientNutrition = () => {
+      if (document.visibilityState === "visible") {
+        void loadClientNutrition();
+      }
+    };
+
+    window.addEventListener("focus", refreshClientNutrition);
+    document.addEventListener("visibilitychange", refreshClientNutrition);
+
     return () => {
       mounted = false;
+      window.removeEventListener("focus", refreshClientNutrition);
+      document.removeEventListener("visibilitychange", refreshClientNutrition);
     };
   }, []);
 
@@ -166,6 +198,30 @@ export function ClientNutritionPage() {
   function openMeal(mealKey: string) {
     setExpandedMealKey((currentMealKey) => currentMealKey === mealKey ? null : mealKey);
     setMealDetailTab("ingredients");
+  }
+
+  async function addHydration(amountMl: number) {
+    const previousHydrationMl = hydrationMl;
+    const optimisticHydrationMl = Math.min(hydrationMl + amountMl, 20_000);
+
+    setHydrationMl(optimisticHydrationMl);
+
+    try {
+      const response = await fetch("/api/v1/client/hydration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: hydrationDate, amountMl })
+      });
+      const payload = (await response.json().catch(() => null)) as HydrationResponse | null;
+
+      if (!response.ok || typeof payload?.data?.hydrationMl !== "number") {
+        throw new Error("Hydration could not be saved.");
+      }
+
+      setHydrationMl(payload.data.hydrationMl);
+    } catch {
+      setHydrationMl(previousHydrationMl);
+    }
   }
 
   if (loadState === "loading") {
@@ -219,7 +275,7 @@ export function ClientNutritionPage() {
             </nav>
 
             <NutritionProgress targets={activePlan.targets} totals={loggedTotals} />
-            <HydrationProgress hydrationMl={hydrationMl} targetMl={2500} onAddHydration={(amountMl) => setHydrationMl((current) => current + amountMl)} />
+            <HydrationProgress hydrationMl={hydrationMl} targetMl={hydrationTargetMl} onAddHydration={(amountMl) => void addHydration(amountMl)} />
 
             <section aria-label={`${activeDay.name} meals`} className="space-y-3">
               {activeDay.meals.map((meal) => {
@@ -593,4 +649,18 @@ function getNumber(value: unknown) {
   }
 
   return undefined;
+}
+
+function getTodayDateValue(timezone = "UTC") {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value ?? "1970";
+  const month = parts.find((part) => part.type === "month")?.value ?? "01";
+  const day = parts.find((part) => part.type === "day")?.value ?? "01";
+
+  return `${year}-${month}-${day}`;
 }

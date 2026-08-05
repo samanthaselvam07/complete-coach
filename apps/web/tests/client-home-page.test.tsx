@@ -14,7 +14,8 @@ describe("ClientHomePage", () => {
         return new Response(
           JSON.stringify({
             data: {
-              client: { id: "client_1", name: "Client One", checkInDay: "Monday" },
+              client: { id: "client_1", name: "Client One", checkInDay: "Monday", timezone: "Australia/Melbourne" },
+              profile: { waterTargetLitres: 3.2 },
               trainingAssignments: [
                 {
                   id: "training_assignment_1",
@@ -65,6 +66,13 @@ describe("ClientHomePage", () => {
         );
       }
 
+      if (url.startsWith("/api/v1/client/hydration?date=")) {
+        return new Response(JSON.stringify({ data: { date: "2026-07-30", hydrationMl: 1250 } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
       return new Response(JSON.stringify({ error: { message: "Not found" } }), {
         status: 404,
         headers: { "Content-Type": "application/json" }
@@ -85,5 +93,7 @@ describe("ClientHomePage", () => {
     expect(within(dashboardGrid).getByText("Hypertrophy Phase")).toBeInTheDocument();
     expect(within(dashboardGrid).getByText(/Weekly coaching sync/)).toBeInTheDocument();
     expect(within(dashboardGrid).queryByLabelText("Client calendar week")).not.toBeInTheDocument();
+
+    expect(screen.getByRole("region", { name: "Hydration tracker" })).toHaveTextContent("1.3L / 3.2L");
   });
 });

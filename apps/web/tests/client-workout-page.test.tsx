@@ -80,6 +80,7 @@ describe("ClientWorkoutPage", () => {
     expect(screen.getByRole("button", { name: "Upper A" })).toBeInTheDocument();
     expect(screen.getByText("Seated Leg Extension")).toBeInTheDocument();
     expect(screen.getByText("3 × 15-20 • RPE 9")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start workout" })).toBeInTheDocument();
     expect(screen.queryByText("Incline DB Press")).not.toBeInTheDocument();
 
     await waitFor(() => {
@@ -104,7 +105,8 @@ describe("ClientWorkoutPage", () => {
             exerciseName: "Seated Leg Extension",
             sets: 2,
             reps: "15-20",
-            rpe: 9
+            rpe: 9,
+            restSeconds: 120
           },
           {
             id: "exercise_row_2",
@@ -128,7 +130,7 @@ describe("ClientWorkoutPage", () => {
 
     render(<ClientWorkoutPage />);
 
-    fireEvent.click(await screen.findByText("Seated Leg Extension"));
+    fireEvent.click(await screen.findByRole("button", { name: "Start workout" }));
 
     expect(screen.getByLabelText("Workout duration")).toHaveTextContent("00:00");
     expect(screen.queryByRole("timer", { name: "Rest timer" })).not.toBeInTheDocument();
@@ -137,7 +139,8 @@ describe("ClientWorkoutPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
 
-    expect(screen.getByRole("timer", { name: "Rest timer" })).toHaveTextContent("01:00");
+    expect(screen.getByRole("timer", { name: "Rest timer" })).toHaveTextContent("02:00");
+    expect(screen.getByRole("timer", { name: "Rest timer" })).toHaveTextContent("Coach set 2m");
 
     fireEvent.click(screen.getByRole("button", { name: "Add set" }));
     expect(screen.getByRole("row", { name: "Set 3" })).toBeInTheDocument();
@@ -209,7 +212,7 @@ describe("ClientWorkoutPage", () => {
   });
 
   it("shows personal bests on finish and returns home after submit", async () => {
-    stubWorkoutFetch([
+    const fetchMock = stubWorkoutFetch([
       {
         name: "Lower A",
         exercises: [
@@ -243,7 +246,42 @@ describe("ClientWorkoutPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Submit workout" }));
 
-    expect(screen.getByRole("heading", { name: "Strength Block" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/client/workout-sessions",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("\"exerciseName\":\"Seated Leg Extension\"")
+        })
+      );
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls.find(([url, init]) => url === "/api/v1/client/workout-sessions" && init?.method === "POST")?.[1]?.body))).toMatchObject({
+      assignmentId: "assignment_1",
+      assignmentName: "Strength Block",
+      dayName: "Lower A",
+      exercises: [
+        {
+          exerciseName: "Seated Leg Extension",
+          sets: [
+            {
+              setNumber: 1,
+              reps: "15-20",
+              weightKg: 45,
+              completed: true
+            }
+          ]
+        }
+      ],
+      personalBests: [
+        {
+          exerciseName: "Seated Leg Extension",
+          setNumber: 1,
+          weightKg: 45,
+          previousBestKg: 40
+        }
+      ]
+    });
+    expect(await screen.findByRole("heading", { name: "Strength Block" })).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "Workout Summary" })).not.toBeInTheDocument();
   });
 });
@@ -299,6 +337,18 @@ function stubWorkoutFetch(days: Array<{ name: string; exercises: Array<Record<st
             body: `Workout note: ${body.assignmentName} / ${body.dayName} / ${body.exerciseName}\n\n${body.body}`,
             authorName: "Client One",
             createdAt: "2026-07-29T00:00:00.000Z"
+          }
+        }),
+        { status: 201, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (url === "/api/v1/client/workout-sessions" && init?.method === "POST") {
+      return new Response(
+        JSON.stringify({
+          data: {
+            session: { id: "session_1" },
+            summary: { complianceScore: 80 }
           }
         }),
         { status: 201, headers: { "Content-Type": "application/json" } }

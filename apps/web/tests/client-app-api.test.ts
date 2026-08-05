@@ -14,10 +14,12 @@ import {
 } from "@/app/generated/prisma/enums";
 import { GET as getClientCheckIns } from "@/app/api/v1/client/check-ins/route";
 import { GET as getDailyCheckIn, POST as postDailyCheckIn } from "@/app/api/v1/client/daily-check-in/route";
+import { GET as getClientHydration, POST as postClientHydration } from "@/app/api/v1/client/hydration/route";
 import { GET as getClientLogs, POST as postClientLog } from "@/app/api/v1/client/logs/route";
 import { GET as getClientMe } from "@/app/api/v1/client/me/route";
 import { GET as getClientRoadmap } from "@/app/api/v1/client/roadmap/route";
 import { GET as getWorkoutNotes, POST as postWorkoutNote } from "@/app/api/v1/client/workout-notes/route";
+import { POST as postWorkoutSession } from "@/app/api/v1/client/workout-sessions/route";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -43,6 +45,7 @@ const mocks = vi.hoisted(() => ({
       findMany: vi.fn()
     },
     clientMeasurement: {
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       upsert: vi.fn()
     },
@@ -59,6 +62,10 @@ const mocks = vi.hoisted(() => ({
     clientActivityLog: {
       findMany: vi.fn(),
       upsert: vi.fn()
+    },
+    clientWorkoutSession: {
+      create: vi.fn(),
+      findMany: vi.fn()
     },
     auditLog: {
       create: vi.fn()
@@ -282,6 +289,8 @@ describe("client app APIs", () => {
       createdAt: now,
       updatedAt: now
     });
+    mocks.prisma.clientWorkoutSession.create.mockResolvedValue(workoutSessionRecord());
+    mocks.prisma.clientWorkoutSession.findMany.mockResolvedValue([workoutSessionRecord()]);
     mocks.prisma.client.update.mockResolvedValue({ id: "client_1", compliance: 6 });
     mocks.prisma.clientNote.create.mockResolvedValue({
       id: "workout_note_1",
@@ -318,7 +327,8 @@ describe("client app APIs", () => {
         createdAt: now
       }
     });
-    mocks.prisma.clientMeasurement.upsert.mockResolvedValue({});
+    mocks.prisma.clientMeasurement.findFirst.mockResolvedValue(null);
+    mocks.prisma.clientMeasurement.upsert.mockResolvedValue({ id: "measurement_1" });
     mocks.prisma.$transaction.mockImplementation(async (callback) => callback(mocks.prisma));
   });
 
@@ -447,6 +457,88 @@ describe("client app APIs", () => {
           clientId: "client_1",
           logDate: expect.any(Object)
         }
+      })
+    );
+  });
+
+  it("returns the signed-in client's daily hydration total", async () => {
+    mocks.prisma.clientMeasurement.findFirst.mockResolvedValueOnce({
+      id: "measurement_water_1",
+      organizationId: "org_1",
+      clientId: "client_1",
+      sourceType: "client_hydration",
+      sourceId: "hydration:2026-07-29",
+      measuredAt: now,
+      metricKey: "water_intake",
+      metricValue: 1250,
+      unit: "ml",
+      metadata: { date: "2026-07-29" },
+      createdAt: now
+    });
+
+    const response = await getClientHydration(new Request("http://test.local/api/v1/client/hydration?date=2026-07-29"));
+    const payload = (await response.json()) as { data: { date: string; hydrationMl: number } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual({ date: "2026-07-29", hydrationMl: 1250 });
+    expect(mocks.prisma.clientMeasurement.findFirst).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        clientId: "client_1",
+        sourceType: "client_hydration",
+        sourceId: "hydration:2026-07-29",
+        metricKey: "water_intake"
+      }
+    });
+  });
+
+  it("adds water to the signed-in client's daily hydration total", async () => {
+    mocks.prisma.clientMeasurement.findFirst.mockResolvedValueOnce({
+      id: "measurement_water_1",
+      organizationId: "org_1",
+      clientId: "client_1",
+      sourceType: "client_hydration",
+      sourceId: "hydration:2026-07-29",
+      measuredAt: now,
+      metricKey: "water_intake",
+      metricValue: 500,
+      unit: "ml",
+      metadata: { date: "2026-07-29" },
+      createdAt: now
+    });
+
+    const response = await postClientHydration(
+      new Request("http://test.local/api/v1/client/hydration", {
+        method: "POST",
+        body: JSON.stringify({ date: "2026-07-29", amountMl: 250 })
+      })
+    );
+    const payload = (await response.json()) as { data: { date: string; hydrationMl: number } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual({ date: "2026-07-29", hydrationMl: 750 });
+    expect(mocks.prisma.clientMeasurement.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          organizationId_sourceType_sourceId_metricKey: {
+            organizationId: "org_1",
+            sourceType: "client_hydration",
+            sourceId: "hydration:2026-07-29",
+            metricKey: "water_intake"
+          }
+        },
+        update: expect.objectContaining({
+          metricValue: 750,
+          unit: "ml"
+        })
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "client.hydration_logged",
+          targetType: "client_measurement"
+        })
       })
     );
   });
@@ -652,6 +744,75 @@ describe("client app APIs", () => {
       })
     );
   });
+
+  it("stores a completed workout session and marks training completed for the client", async () => {
+    mocks.prisma.clientActivityLog.findMany.mockResolvedValue([
+      {
+        id: "log_1",
+        domain: ClientActivityLogDomain.TRAINING,
+        logDate: new Date("2026-07-29T00:00:00.000Z"),
+        status: ClientActivityLogStatus.COMPLETED,
+        notes: "Strength Block / Lower A",
+        createdAt: now,
+        updatedAt: now
+      }
+    ]);
+
+    const response = await postWorkoutSession(
+      new Request("http://test.local/api/v1/client/workout-sessions", {
+        method: "POST",
+        body: JSON.stringify({
+          assignmentId: "assignment_1",
+          assignmentName: "Strength Block",
+          dayId: "day_lower_a",
+          dayName: "Lower A",
+          startedAt: "2026-07-29T08:00:00.000Z",
+          durationSeconds: 1800,
+          exercises: [
+            {
+              exerciseId: "exercise_leg_extension",
+              exerciseName: "Seated Leg Extension",
+              prescribedSets: "3",
+              prescribedReps: "15-20",
+              prescribedRestSeconds: 120,
+              sets: [
+                { setNumber: 1, reps: "15", weightKg: 45, completed: true }
+              ]
+            }
+          ],
+          personalBests: [
+            { exerciseName: "Seated Leg Extension", setNumber: 1, weightKg: 45, previousBestKg: 40 }
+          ]
+        })
+      })
+    );
+    const payload = (await response.json()) as { data: { session: { id: string; exercises: Array<{ exerciseName: string }> } } };
+
+    expect(response.status).toBe(201);
+    expect(payload.data.session.id).toBe("session_1");
+    expect(payload.data.session.exercises[0].exerciseName).toBe("Seated Leg Extension");
+    expect(mocks.prisma.clientWorkoutSession.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          clientId: "client_1",
+          assignmentName: "Strength Block",
+          dayName: "Lower A",
+          durationSeconds: 1800
+        })
+      })
+    );
+    expect(mocks.prisma.clientActivityLog.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          domain: ClientActivityLogDomain.TRAINING,
+          status: ClientActivityLogStatus.COMPLETED,
+          sourceType: "workout_session",
+          sourceId: "session_1"
+        })
+      })
+    );
+  });
 });
 
 function dailyAssignmentRecord() {
@@ -701,5 +862,31 @@ function dailyAssignmentRecord() {
       publishedAt: now,
       createdAt: now
     }
+  };
+}
+
+function workoutSessionRecord() {
+  return {
+    id: "session_1",
+    organizationId: "org_1",
+    clientId: "client_1",
+    assignmentId: "assignment_1",
+    assignmentName: "Strength Block",
+    dayId: "day_lower_a",
+    dayName: "Lower A",
+    startedAt: new Date("2026-07-29T08:00:00.000Z"),
+    completedAt: new Date("2026-07-29T08:30:00.000Z"),
+    durationSeconds: 1800,
+    exercisesJson: [
+      {
+        exerciseName: "Seated Leg Extension",
+        sets: [{ setNumber: 1, reps: "15", weightKg: 45, completed: true }]
+      }
+    ],
+    personalBestsJson: [
+      { exerciseName: "Seated Leg Extension", setNumber: 1, weightKg: 45, previousBestKg: 40 }
+    ],
+    createdAt: now,
+    updatedAt: now
   };
 }

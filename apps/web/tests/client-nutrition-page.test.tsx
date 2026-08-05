@@ -9,12 +9,13 @@ describe("ClientNutritionPage", () => {
   });
 
   it("starts each nutrition day at zero, logs linked meals into compact sliders, and expands meal recipes inline", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url === "/api/v1/client/me") {
         return new Response(
           JSON.stringify({
             data: {
-              client: { id: "client_1", name: "Client One" },
+              client: { id: "client_1", name: "Client One", timezone: "Australia/Melbourne" },
+              profile: { waterTargetLitres: 3.2 },
               mealPlanAssignments: [
                 {
                   id: "meal_assignment_1",
@@ -89,11 +90,28 @@ describe("ClientNutritionPage", () => {
         );
       }
 
+      if (url.startsWith("/api/v1/client/hydration?date=")) {
+        return new Response(JSON.stringify({ data: { date: "2026-07-30", hydrationMl: 500 } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url === "/api/v1/client/hydration" && init?.method === "POST") {
+        const body = JSON.parse(String(init.body)) as { amountMl: number };
+
+        return new Response(JSON.stringify({ data: { date: "2026-07-30", hydrationMl: body.amountMl === 250 ? 750 : 1250 } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
       return new Response(JSON.stringify({ error: { message: "Not found" } }), {
         status: 404,
         headers: { "Content-Type": "application/json" }
       });
-    }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<ClientNutritionPage />);
 
@@ -105,7 +123,7 @@ describe("ClientNutritionPage", () => {
     expect(screen.getByLabelText("Carbs progress")).toHaveTextContent("0 / 220g");
     expect(screen.getByLabelText("Fat progress")).toHaveTextContent("0 / 65g");
     expect(screen.getByLabelText("Fibre progress")).toHaveTextContent("0 / 30g");
-    expect(screen.getByRole("region", { name: "Hydration progress" })).toHaveTextContent("0ml / 2500ml");
+    expect(screen.getByRole("region", { name: "Hydration progress" })).toHaveTextContent("500ml / 3200ml");
     expect(screen.getByRole("button", { name: "+250ml" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "+500ml" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /swap meal/i })).not.toBeInTheDocument();
@@ -124,7 +142,21 @@ describe("ClientNutritionPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "+250ml" }));
     fireEvent.click(screen.getByRole("button", { name: "+500ml" }));
 
-    expect(screen.getByRole("region", { name: "Hydration progress" })).toHaveTextContent("750ml / 2500ml");
+    expect(screen.getByRole("region", { name: "Hydration progress" })).toHaveTextContent("1250ml / 3200ml");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/client/hydration",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("\"amountMl\":250")
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/client/hydration",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("\"amountMl\":500")
+      })
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Open Breakfast Bowl" }));
 

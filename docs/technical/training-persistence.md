@@ -120,6 +120,15 @@ Rules:
 - `GET /api/v1/training-program-assignments`
 - `POST /api/v1/training-program-assignments`
 - `GET /api/v1/clients/{client_id}/training-programs`
+- `GET /api/v1/client/workout-sessions`
+- `POST /api/v1/client/workout-sessions`
+- `GET /api/v1/clients/{client_id}/workout-sessions`
+
+## Client Workout Session Logging
+- The client app workout tab starts an in-progress workout from the assigned training day and logs completed sets with weight and reps.
+- Logged sessions are stored in `client_workout_sessions` with organization, client, assignment/day labels, duration, structured exercise set logs, and personal best metadata.
+- Submitting a completed workout also upserts a `client_activity_logs` training record for the completion date and recalculates the client's seven-day compliance score.
+- The coach-facing client profile Training tab reads `GET /api/v1/clients/{client_id}/workout-sessions` for the selected assignment/day so coaches can review completed workout progress over time.
 
 ## Training Builder Anatomy Heatmap
 - The program builder anatomy volume map uses the licensed Fitness Visuals Rive asset at `apps/web/public/vendor/fitness-visuals/human_anatomy_basic.riv`.

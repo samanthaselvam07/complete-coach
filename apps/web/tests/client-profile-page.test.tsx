@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createElement } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ClientNotesPage } from "@/components/clients/client-notes-page";
 import {
   ClientProfilePage,
@@ -344,7 +344,16 @@ const marcusRoadmapPhases = [
     startDate: "2026-07-01",
     endDate: "2026-08-31",
     status: "active",
-    items: []
+    items: [
+      {
+        id: "roadmap_item_phase_review",
+        phaseId: "phase_active",
+        title: "Phase review",
+        type: "review",
+        date: "2026-07-30",
+        notes: "Review progress before the next block."
+      }
+    ]
   },
   {
     id: "phase_planned",
@@ -391,6 +400,45 @@ function mockMarcusProfile() {
 
     if (url === "/api/v1/clients/1/notes?limit=10&search=Workout+note%3A+Strength+Foundation+%2F+Day+1") {
       return Promise.resolve(new Response(JSON.stringify({ data: marcusWorkoutNotes }), { status: 200 }));
+    }
+
+    if (url === "/api/v1/clients/1/workout-sessions?assignmentName=Strength+Foundation&dayName=Day+1&limit=12") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "session_1",
+                assignmentName: "Strength Foundation",
+                dayName: "Day 1",
+                startedAt: "2026-07-29T08:00:00.000Z",
+                completedAt: "2026-07-29T08:45:00.000Z",
+                durationSeconds: 2700,
+                exercises: [
+                  {
+                    exerciseName: "Back Squat",
+                    prescribedSets: "4",
+                    prescribedReps: "6",
+                    prescribedRestSeconds: 180,
+                    sets: [
+                      { setNumber: 1, reps: "6", weightKg: 100, completed: true },
+                      { setNumber: 2, reps: "6", weightKg: 105, completed: true }
+                    ]
+                  }
+                ],
+                personalBests: [
+                  { exerciseName: "Back Squat", setNumber: 2, weightKg: 105, previousBestKg: 100 }
+                ]
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
+    if (url.startsWith("/api/v1/clients/1/workout-sessions?")) {
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     }
 
     if (url === "/api/v1/clients/1/metrics?summary=weight") {
@@ -599,7 +647,13 @@ function mockMarcusProfile() {
 }
 
 describe("ClientProfilePage", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-07-30T10:00:00.000Z"));
+  });
+
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
     navigationMocks.push.mockReset();
   });
@@ -701,6 +755,9 @@ describe("ClientProfilePage", () => {
     expect(screen.getByRole("table", { name: "Strength Foundation exercises" })).toBeInTheDocument();
     expect(screen.getByText("Back Squat")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Workout Notes" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Completed Workouts" })).toBeInTheDocument();
+    expect(screen.getByText("45m")).toBeInTheDocument();
+    expect(screen.getByText("Best 105kg x 6 reps")).toBeInTheDocument();
     expect(screen.getAllByText("Back Squat").length).toBeGreaterThan(1);
     expect(screen.getByText("Felt strong today, but left knee felt tight on the final set.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Switch training program" }));
@@ -711,8 +768,9 @@ describe("ClientProfilePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Switch training program" }));
     fireEvent.click(screen.getByRole("menuitemradio", { name: /Strength Foundation/i }));
     fireEvent.click(screen.getByRole("button", { name: "Day 2" }));
+    const activeExerciseTable = screen.getByRole("table", { name: "Strength Foundation exercises" });
     expect(screen.getByText("Bench Press")).toBeInTheDocument();
-    expect(screen.queryByText("Back Squat")).not.toBeInTheDocument();
+    expect(within(activeExerciseTable).queryByText("Back Squat")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Edit training program" }));
     expect(screen.getByLabelText(/Program Title/i)).toHaveValue("Strength Foundation");
 
@@ -847,6 +905,10 @@ describe("ClientProfilePage", () => {
     render(createElement(ClientProfilePage, { clientId: "1" }));
 
     await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Event" }));
+    fireEvent.change(await screen.findByLabelText("Event title"), { target: { value: "Training block" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Event type" }), { target: { value: "strength" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save event" }));
     fireEvent.click(await screen.findByRole("button", { name: "Open event Training block" }));
 
     expect(await screen.findByRole("dialog", { name: "Event Details" })).toBeInTheDocument();
@@ -962,7 +1024,7 @@ describe("ClientProfilePage", () => {
     expect(screen.getByRole("tabpanel", { name: "Roadmap" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Roadmap Periodisation" })).toBeInTheDocument();
     expect(screen.getByText("Annual phase plan for Marcus Rodriguez")).toBeInTheDocument();
-    expect(screen.getByText("Active Phase")).toBeInTheDocument();
+    expect(await screen.findByText("Active Phase")).toBeInTheDocument();
     expect(screen.getAllByText("Hypertrophy II").length).toBeGreaterThan(0);
     expect(screen.getByTestId("roadmap-phase-active")).toHaveClass("border-purple-500");
     expect(screen.getByTestId("roadmap-phase-planned")).toHaveClass("border-slate-200");
@@ -1005,14 +1067,14 @@ describe("ClientProfilePage", () => {
     await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
     fireEvent.click(screen.getByRole("tab", { name: "Roadmap" }));
 
-    expect(screen.getByText("Phase review")).toBeInTheDocument();
+    expect(await screen.findByText("Phase review")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Hypertrophy II/i }));
 
     expect(screen.queryByText("Phase review")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Hypertrophy II/i }));
 
-    expect(screen.getByText("Phase review")).toBeInTheDocument();
+    expect(await screen.findByText("Phase review")).toBeInTheDocument();
   });
 
   it("adds a roadmap event linked to a phase and shows it in the phase breakdown", async () => {
@@ -1039,6 +1101,9 @@ describe("ClientProfilePage", () => {
 
     await screen.findByRole("heading", { level: 1, name: "Marcus Rodriguez" });
     fireEvent.click(screen.getByRole("tab", { name: "Calendar" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Event" }));
+    fireEvent.change(await screen.findByLabelText("Event title"), { target: { value: "Training block" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save event" }));
     fireEvent.click(await screen.findByRole("button", { name: "Open event Training block" }));
 
     expect(await screen.findByRole("dialog", { name: "Event Details" })).toBeInTheDocument();

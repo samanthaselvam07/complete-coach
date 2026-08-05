@@ -64,3 +64,22 @@ GET /api/v1/client/me
 ```
 
 The response includes the client's assigned training program snapshots. The workout tab renders the `snapshot.days` array as the training-day tabs and only displays exercises from the selected assigned day.
+
+The in-progress workout flow starts from the selected assigned day, uses each exercise's prescribed rest timer from the training snapshot, and lets the client log weight and reps per set. Finished workouts are submitted to:
+
+```text
+POST /api/v1/client/workout-sessions
+```
+
+Completed sessions are stored in `client_workout_sessions`, also mark the training activity log as completed for the completion date, and are visible to coaches in the client profile Training tab through `GET /api/v1/clients/{client_id}/workout-sessions`.
+
+## Client Hydration Tracker
+
+The client home dashboard and nutrition tab both use the coach-set water target from `GET /api/v1/client/me` (`profile.waterTargetLitres`). The daily water total is shared between both pages through:
+
+```text
+GET /api/v1/client/hydration?date=YYYY-MM-DD
+POST /api/v1/client/hydration
+```
+
+Nutrition tab `+250ml` and `+500ml` actions post increments to the hydration endpoint. The home dashboard reads the same persisted daily total, so water logged in nutrition is reflected in the dashboard tracker.

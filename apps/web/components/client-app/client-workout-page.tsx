@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Flag, NotebookPen, Plus, RotateCcw } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Flag, NotebookPen, Play, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
@@ -47,6 +47,7 @@ interface TrainingExercise {
   reps?: string;
   rpe?: string;
   rir?: string;
+  restSeconds?: number;
   section?: string;
   previousBestKg?: number;
 }
@@ -66,6 +67,22 @@ interface PersonalBestSummary {
   setNumber: number;
   weightKg: number;
   previousBestKg: number;
+}
+
+interface WorkoutSessionExerciseLog {
+  exerciseId?: string | null;
+  exerciseName: string;
+  prescribedSets?: string | null;
+  prescribedReps?: string | null;
+  prescribedRpe?: string | null;
+  prescribedRir?: string | null;
+  prescribedRestSeconds?: number | null;
+  sets: Array<{
+    setNumber: number;
+    reps?: string;
+    weightKg?: number | null;
+    completed: boolean;
+  }>;
 }
 
 export function ClientWorkoutPage() {
@@ -202,6 +219,7 @@ export function ClientWorkoutPage() {
     return (
       <ActiveWorkoutLogger
         day={activeDay}
+        assignmentId={activeAssignment?.id ?? null}
         assignmentName={activeAssignment?.name ?? "Training plan"}
         exerciseImages={exerciseImages}
         initialExerciseIndex={activeWorkoutExerciseIndex}
@@ -268,6 +286,19 @@ export function ClientWorkoutPage() {
         ) : (
           <EmptyWorkoutMessage message="No training days have been assigned yet." />
         )}
+
+        {activeDay?.exercises.length ? (
+          <section className="sticky bottom-6 z-30">
+            <button
+              type="button"
+              onClick={() => setActiveWorkoutExerciseIndex(0)}
+              className="inline-flex h-16 w-full items-center justify-center gap-3 rounded-[1.5rem] bg-[#3620b8] text-lg font-black text-white shadow-[0_20px_50px_rgba(54,32,184,0.30)] transition active:scale-[0.98]"
+            >
+              <Play aria-hidden="true" className="size-5" />
+              Start workout
+            </button>
+          </section>
+        ) : null}
       </div>
     </ClientMobileShell>
   );
@@ -292,12 +323,14 @@ function ExerciseCard({ exercise, imageUrl, onClick }: { exercise: TrainingExerc
 
 function ActiveWorkoutLogger({
   day,
+  assignmentId,
   assignmentName,
   exerciseImages,
   initialExerciseIndex,
   onBack
 }: {
   day: TrainingDay;
+  assignmentId: string | null;
   assignmentName: string;
   exerciseImages: Record<string, string>;
   initialExerciseIndex: number;
@@ -307,11 +340,14 @@ function ActiveWorkoutLogger({
   const activeExercise = day.exercises[exerciseIndex] ?? day.exercises[0];
   const nextExercise = day.exercises[exerciseIndex + 1] ?? null;
   const [durationSeconds, setDurationSeconds] = useState(0);
+  const [startedAt] = useState(() => new Date().toISOString());
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
   const [setRows, setSetRows] = useState<WorkoutSetRow[]>(() => createSetRows(activeExercise));
   const [setRowsByExerciseIndex, setSetRowsByExerciseIndex] = useState<Record<number, WorkoutSetRow[]>>({});
   const [touchStartXBySetId, setTouchStartXBySetId] = useState<Record<string, number>>({});
   const [finishSummaryOpen, setFinishSummaryOpen] = useState(false);
+  const [submittingWorkout, setSubmittingWorkout] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [notesOpen, setNotesOpen] = useState(false);
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesSaving, setNotesSaving] = useState(false);
@@ -369,7 +405,7 @@ function ActiveWorkoutLogger({
     updateCurrentSetRows((currentRows) =>
       currentRows.map((row) => (row.id === setId ? { ...row, completed: true } : row))
     );
-    setRestSeconds(60);
+    setRestSeconds(getExerciseRestSeconds(activeExercise));
   }
 
   function addSet() {
@@ -396,6 +432,12 @@ function ActiveWorkoutLogger({
   function updateSetWeight(setId: string, weightKg: string) {
     updateCurrentSetRows((currentRows) =>
       currentRows.map((row) => (row.id === setId ? { ...row, weightKg } : row))
+    );
+  }
+
+  function updateSetReps(setId: string, reps: string) {
+    updateCurrentSetRows((currentRows) =>
+      currentRows.map((row) => (row.id === setId ? { ...row, reps } : row))
     );
   }
 
@@ -494,6 +536,46 @@ function ActiveWorkoutLogger({
     }
   }
 
+  async function submitWorkout() {
+    const rowsByExerciseIndex = {
+      ...setRowsByExerciseIndex,
+      [exerciseIndex]: setRows
+    };
+    const exerciseLogs = createWorkoutExerciseLogs(day.exercises, rowsByExerciseIndex);
+
+    setSubmittingWorkout(true);
+    setSubmitError("");
+
+    try {
+      const response = await fetch("/api/v1/client/workout-sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assignmentId,
+          assignmentName,
+          dayId: day.id ?? null,
+          dayName: day.name,
+          startedAt,
+          durationSeconds,
+          exercises: exerciseLogs,
+          personalBests
+        })
+      });
+      const payload = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.error?.message ?? "Workout could not be saved.");
+      }
+
+      setFinishSummaryOpen(false);
+      onBack();
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Workout could not be saved.");
+    } finally {
+      setSubmittingWorkout(false);
+    }
+  }
+
   return (
     <ClientMobileShell title={assignmentName} kicker="Session active" avatarLabel={assignmentName} hideBottomNav>
       <div className="flex flex-col gap-6 pb-28">
@@ -533,9 +615,10 @@ function ActiveWorkoutLogger({
             <div>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#777584]">Rest timer</p>
               <p className="mt-2 text-3xl font-black text-[#3620b8]">{formatTimer(restSeconds)}</p>
+              <p className="mt-1 text-xs font-bold text-[#777584]">Coach set {formatRestSeconds(getExerciseRestSeconds(activeExercise))}</p>
             </div>
             <div className="flex gap-3">
-              <button type="button" onClick={() => setRestSeconds(60)} className="inline-flex size-12 items-center justify-center rounded-full bg-[#e9e8e7] text-[#1b1c1c]" aria-label="Restart rest timer">
+              <button type="button" onClick={() => setRestSeconds(getExerciseRestSeconds(activeExercise))} className="inline-flex size-12 items-center justify-center rounded-full bg-[#e9e8e7] text-[#1b1c1c]" aria-label="Restart rest timer">
                 <RotateCcw aria-hidden="true" className="size-5" />
               </button>
               <button type="button" onClick={() => setRestSeconds(null)} className="inline-flex size-12 items-center justify-center rounded-full bg-[#3620b8] text-white shadow-[0_12px_26px_rgba(54,32,184,0.22)]" aria-label="Dismiss rest timer">
@@ -596,9 +679,16 @@ function ActiveWorkoutLogger({
               <span className="flex size-9 flex-none items-center justify-center rounded-full bg-[#f5f3f3] text-sm font-black">
                 {setRow.setNumber}
               </span>
-              <span className="min-w-0 flex-1 text-sm font-bold text-[#6f6a66]">
-                {setRow.reps ? `${setRow.reps} reps` : "Reps set by coach"}
-              </span>
+              <label className="min-w-0 flex-1">
+                <span className="sr-only">Set {setRow.setNumber} reps</span>
+                <input
+                  value={setRow.reps}
+                  onChange={(event) => updateSetReps(setRow.id, event.target.value)}
+                  aria-label={`Set ${setRow.setNumber} reps`}
+                  placeholder="reps"
+                  className="h-10 w-full rounded-full bg-[#f5f3f3] px-3 text-center text-sm font-black text-[#1b1c1c] outline-none focus:ring-2 focus:ring-[#3620b8]/20"
+                />
+              </label>
               <label className="w-24 flex-none">
                 <span className="sr-only">Set {setRow.setNumber} weight</span>
                 <input
@@ -670,8 +760,10 @@ function ActiveWorkoutLogger({
         {finishSummaryOpen ? (
           <WorkoutSummaryDialog
             personalBests={personalBests}
+            errorMessage={submitError}
+            submitting={submittingWorkout}
             onClose={() => setFinishSummaryOpen(false)}
-            onSubmit={onBack}
+            onSubmit={() => void submitWorkout()}
           />
         ) : null}
 
@@ -694,10 +786,14 @@ function ActiveWorkoutLogger({
 
 function WorkoutSummaryDialog({
   personalBests,
+  errorMessage,
+  submitting,
   onClose,
   onSubmit
 }: {
   personalBests: PersonalBestSummary[];
+  errorMessage: string;
+  submitting: boolean;
   onClose: () => void;
   onSubmit: () => void;
 }) {
@@ -737,12 +833,19 @@ function WorkoutSummaryDialog({
           )}
         </section>
 
+        {errorMessage ? (
+          <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+            {errorMessage}
+          </p>
+        ) : null}
+
         <button
           type="button"
           onClick={onSubmit}
-          className="mt-5 h-12 w-full rounded-full bg-[#3620b8] text-sm font-black text-white shadow-[0_10px_30px_rgba(54,32,184,0.18)]"
+          disabled={submitting}
+          className="mt-5 h-12 w-full rounded-full bg-[#3620b8] text-sm font-black text-white shadow-[0_10px_30px_rgba(54,32,184,0.18)] disabled:opacity-60"
         >
-          Submit workout
+          {submitting ? "Saving workout..." : "Submit workout"}
         </button>
       </div>
     </div>
@@ -911,6 +1014,7 @@ function normalizeExercise(exercise: unknown): TrainingExercise[] {
     reps: getStringOrNumber(record.reps),
     rpe: getStringOrNumber(record.rpe),
     rir: getStringOrNumber(record.rir),
+    restSeconds: getNumber(record.restSeconds),
     section: getString(record.section),
     previousBestKg:
       getNumber(record.previousBestKg) ??
@@ -918,6 +1022,21 @@ function normalizeExercise(exercise: unknown): TrainingExercise[] {
       getNumber(record.bestWeightKg) ??
       getNumber(record.maxWeightKg)
   }];
+}
+
+function getExerciseRestSeconds(exercise: TrainingExercise | undefined) {
+  return exercise?.restSeconds ?? 60;
+}
+
+function formatRestSeconds(totalSeconds: number) {
+  if (totalSeconds < 60) {
+    return `${totalSeconds}s`;
+  }
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
 }
 
 function formatExercisePrescription(exercise: TrainingExercise) {
@@ -994,10 +1113,38 @@ function getPersonalBests(exercises: TrainingExercise[], rowsByExerciseIndex: Re
   });
 }
 
+function createWorkoutExerciseLogs(exercises: TrainingExercise[], rowsByExerciseIndex: Record<number, WorkoutSetRow[]>): WorkoutSessionExerciseLog[] {
+  return exercises.map((exercise, exerciseIndex) => ({
+    exerciseId: exercise.exerciseId ?? null,
+    exerciseName: exercise.exerciseName,
+    prescribedSets: exercise.sets ? String(exercise.sets) : null,
+    prescribedReps: exercise.reps ?? null,
+    prescribedRpe: exercise.rpe ?? null,
+    prescribedRir: exercise.rir ?? null,
+    prescribedRestSeconds: exercise.restSeconds ?? null,
+    sets: (rowsByExerciseIndex[exerciseIndex] ?? createSetRows(exercise)).map((row) => ({
+      setNumber: row.setNumber,
+      reps: row.reps,
+      weightKg: parseOptionalWeight(row.weightKg),
+      completed: row.completed
+    }))
+  }));
+}
+
 function parseWeight(value: string) {
   const weight = Number.parseFloat(value);
 
   return Number.isFinite(weight) && weight > 0 ? weight : null;
+}
+
+function parseOptionalWeight(value: string) {
+  if (!value.trim()) {
+    return null;
+  }
+
+  const weight = Number.parseFloat(value);
+
+  return Number.isFinite(weight) && weight >= 0 ? weight : null;
 }
 
 function formatWeight(value: number) {

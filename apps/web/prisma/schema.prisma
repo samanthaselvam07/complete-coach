@@ -611,6 +611,7 @@ model Organization {
   checkIns                     CheckIn[]
   clientMeasurements           ClientMeasurement[]
   clientActivityLogs           ClientActivityLog[]
+  clientWorkoutSessions        ClientWorkoutSession[]
   clientAccountActivityLogs    ClientAccountActivityLog[]
   clientGoals                  ClientGoal[]
   externalApiKeys              ExternalApiKey[]
@@ -1136,6 +1137,7 @@ model Client {
   roadmapPhases                ClientRoadmapPhase[]
   roadmapItems                 ClientRoadmapItem[]
   activityLogs                 ClientActivityLog[]
+  workoutSessions              ClientWorkoutSession[]
   accountActivityLogs          ClientAccountActivityLog[]
   goals                        ClientGoal[]
 
@@ -1509,6 +1511,29 @@ model ClientActivityLog {
   @@index([organizationId, clientId, logDate])
   @@index([organizationId, domain, logDate])
   @@map("client_activity_logs")
+}
+
+model ClientWorkoutSession {
+  id              String       @id @default(cuid())
+  organizationId  String       @map("organization_id")
+  clientId        String       @map("client_id")
+  assignmentId    String?      @map("assignment_id")
+  assignmentName  String       @map("assignment_name")
+  dayId           String?      @map("day_id")
+  dayName         String       @map("day_name")
+  startedAt       DateTime     @map("started_at") @db.Timestamptz(6)
+  completedAt     DateTime     @map("completed_at") @db.Timestamptz(6)
+  durationSeconds Int          @default(0) @map("duration_seconds")
+  exercisesJson   Json         @map("exercises_json")
+  personalBestsJson Json?      @map("personal_bests_json")
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client          Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, clientId, completedAt])
+  @@index([organizationId, clientId, assignmentName, dayName])
+  @@map("client_workout_sessions")
 }
 
 model ExternalApiKey {
