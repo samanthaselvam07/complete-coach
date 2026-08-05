@@ -79,7 +79,6 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
   const [hydrationTargetMl, setHydrationTargetMl] = useState(2500);
   const [weeklyCheckInDay, setWeeklyCheckInDay] = useState("Unscheduled");
   const [roadmapPhases, setRoadmapPhases] = useState<RoadmapPhase[]>([]);
-  const [dailyCheckInAssigned, setDailyCheckInAssigned] = useState(false);
   const [weeklyCheckInAssigned, setWeeklyCheckInAssigned] = useState(false);
 
   useEffect(() => {
@@ -102,16 +101,14 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
           ?? null;
 
         const hydrationDate = getTodayDateValue(payload.data.client.timezone ?? undefined);
-        const [roadmapResponse, hydrationResponse, dailyCheckInResponse, weeklyCheckInResponse] = await Promise.all([
+        const [roadmapResponse, hydrationResponse, weeklyCheckInResponse] = await Promise.all([
           fetch("/api/v1/client/roadmap"),
           fetch(`/api/v1/client/hydration?date=${hydrationDate}`),
-          fetch("/api/v1/client/daily-check-in?kind=daily"),
           fetch("/api/v1/client/daily-check-in?kind=weekly")
         ]);
-        const [roadmapPayload, hydrationPayload, dailyCheckInPayload, weeklyCheckInPayload] = await Promise.all([
+        const [roadmapPayload, hydrationPayload, weeklyCheckInPayload] = await Promise.all([
           roadmapResponse.json().catch(() => null) as Promise<{ data?: RoadmapPhase[] } | null>,
           hydrationResponse.json().catch(() => null) as Promise<HydrationResponse | null>,
-          dailyCheckInResponse.json().catch(() => null) as Promise<CheckInAssignmentResponse | null>,
           weeklyCheckInResponse.json().catch(() => null) as Promise<CheckInAssignmentResponse | null>
         ]);
 
@@ -128,7 +125,6 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
         setHydrationMl(hydrationResponse.ok && typeof hydrationPayload?.data?.hydrationMl === "number" ? hydrationPayload.data.hydrationMl : 0);
         setWeeklyCheckInDay(payload.data.client.checkInDay ?? "Unscheduled");
         setRoadmapPhases(roadmapResponse.ok && Array.isArray(roadmapPayload?.data) ? roadmapPayload.data : []);
-        setDailyCheckInAssigned(dailyCheckInResponse.ok && Boolean(dailyCheckInPayload?.data?.id));
         setWeeklyCheckInAssigned(weeklyCheckInResponse.ok && Boolean(weeklyCheckInPayload?.data?.id));
         setLoadState("ready");
       } catch (error) {
@@ -170,8 +166,6 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
     [roadmapPhases]
   );
   const calendarMeta = activePhase ? activePhase.name : "Coach calendar";
-  const primaryCheckInHref = dailyCheckInAssigned ? "/check-in/daily" : weeklyCheckInAssigned ? "/check-in/weekly" : "/check-in";
-  const primaryCheckInLabel = dailyCheckInAssigned ? "Log Daily Check In" : weeklyCheckInAssigned ? "Submit Weekly Check In" : "View Check Ins";
 
   return (
     <ClientMobileShell title="Complete Coach" avatarLabel={firstName || "CC"}>
@@ -196,10 +190,10 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
               <TrendingUp aria-hidden="true" className="size-14 text-[#e9e8e7]" />
             </div>
             <Link
-              href={{ pathname: primaryCheckInHref }}
+              href={{ pathname: "/check-in/daily" }}
               className="mt-7 inline-flex h-14 w-full items-center justify-center gap-3 rounded-[1.25rem] bg-gradient-to-br from-[#5f50f0] to-[#3620b8] text-base font-black text-white shadow-[0_20px_45px_rgba(54,32,184,0.24)] transition active:scale-[0.98]"
             >
-              {primaryCheckInLabel}
+              Complete daily check in
               <ArrowRight aria-hidden="true" className="size-5" />
             </Link>
           </section>

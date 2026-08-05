@@ -96,7 +96,7 @@ describe("ClientHomePage", () => {
     render(<ClientHomePage today="2026-07-30" />);
 
     expect(await screen.findByRole("heading", { name: "Hello, Client" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /log daily check in/i })).toHaveAttribute("href", "/check-in/daily");
+    expect(screen.getByRole("link", { name: /complete daily check in/i })).toHaveAttribute("href", "/check-in/daily");
     expect(screen.getByRole("link", { name: /submit weekly check in/i })).toHaveAttribute("href", "/check-in/weekly");
     expect(screen.getByText("Monday • 4 days until check-in")).toBeInTheDocument();
 

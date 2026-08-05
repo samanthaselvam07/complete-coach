@@ -97,7 +97,6 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
   const [selectedRange, setSelectedRange] = useState<ProgressRange>("month");
   const [leftPhotoId, setLeftPhotoId] = useState("");
   const [rightPhotoId, setRightPhotoId] = useState("");
-  const [dailyCheckInAssigned, setDailyCheckInAssigned] = useState(false);
   const [weeklyCheckInAssigned, setWeeklyCheckInAssigned] = useState(false);
 
   useEffect(() => {
@@ -105,16 +104,14 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
 
     async function loadCheckInContext() {
       try {
-        const [response, roadmapResponse, dailyCheckInResponse, weeklyCheckInResponse] = await Promise.all([
+        const [response, roadmapResponse, weeklyCheckInResponse] = await Promise.all([
           fetch("/api/v1/client/me"),
           fetch("/api/v1/client/roadmap"),
-          fetch("/api/v1/client/daily-check-in?kind=daily"),
           fetch("/api/v1/client/daily-check-in?kind=weekly")
         ]);
-        const [payload, roadmapPayload, dailyCheckInPayload, weeklyCheckInPayload] = await Promise.all([
+        const [payload, roadmapPayload, weeklyCheckInPayload] = await Promise.all([
           response.json().catch(() => null) as Promise<ClientMeResponse | null>,
           roadmapResponse.json().catch(() => null) as Promise<{ data?: ClientRoadmapPhase[] } | null>,
-          dailyCheckInResponse.json().catch(() => null) as Promise<CheckInAssignmentResponse | null>,
           weeklyCheckInResponse.json().catch(() => null) as Promise<CheckInAssignmentResponse | null>
         ]);
 
@@ -129,7 +126,6 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
         setClientName(payload.data.client.name);
         setWeeklyCheckInDay(payload.data.client.checkInDay ?? "Unscheduled");
         setRoadmapPhases(roadmapResponse.ok && Array.isArray(roadmapPayload?.data) ? roadmapPayload.data : []);
-        setDailyCheckInAssigned(dailyCheckInResponse.ok && Boolean(dailyCheckInPayload?.data?.id));
         setWeeklyCheckInAssigned(weeklyCheckInResponse.ok && Boolean(weeklyCheckInPayload?.data?.id));
 
         const [checkInsResponse, metricsResponse] = await Promise.all([
@@ -187,8 +183,6 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
   const selectedRightPhotoId = rightPhotoId && progressPhotos.some((photo) => photo.id === rightPhotoId)
     ? rightPhotoId
     : progressPhotos[0]?.id ?? "";
-  const primaryCheckInHref = dailyCheckInAssigned ? "/check-in/daily" : weeklyCheckInAssigned ? "/check-in/weekly" : "/check-in";
-  const primaryCheckInLabel = dailyCheckInAssigned ? "Start daily check-in" : weeklyCheckInAssigned ? "Submit weekly check-in" : "View check-ins";
 
   if (loadState === "loading") {
     return (
@@ -256,11 +250,11 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
             </div>
           </div>
           <Link
-            href={{ pathname: primaryCheckInHref }}
+            href={{ pathname: "/check-in/daily" }}
             className="mt-6 inline-flex h-14 w-full items-center justify-center gap-3 rounded-[1.25rem] bg-gradient-to-br from-[#5f50f0] to-[#3620b8] text-base font-black text-white shadow-[0_20px_45px_rgba(54,32,184,0.24)]"
           >
             <CalendarCheck aria-hidden="true" className="size-5" />
-            {primaryCheckInLabel}
+            Complete daily check in
           </Link>
         </section>
 

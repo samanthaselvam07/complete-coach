@@ -102,7 +102,7 @@ describe("ClientDailyCheckInPage", () => {
     expect(screen.getByText(/Week 5 of 8/u)).toBeInTheDocument();
     expect(screen.getByText("54% complete")).toBeInTheDocument();
     expect(screen.getByText(/4 weeks left/u)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Start daily check-in" })).toHaveAttribute("href", "/check-in/daily");
+    expect(screen.getByRole("link", { name: "Complete daily check in" })).toHaveAttribute("href", "/check-in/daily");
     expect(screen.getByRole("link", { name: "Submit weekly check-in" })).toHaveAttribute("href", "/check-in/weekly");
     expect(screen.getByText("Monday • 4 days until check-in")).toBeInTheDocument();
 
