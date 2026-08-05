@@ -14,6 +14,7 @@ type FormFilterId = "all" | PersistedFormType;
 
 const formFilters: Array<{ id: FormFilterId; label: string }> = [
   { id: "all", label: "All Forms" },
+  { id: "intake", label: "Initial Questionnaires" },
   { id: "check-in", label: "Check-In Forms" },
   { id: "habit-tracker", label: "Daily Habit Tracker" },
   { id: "application", label: "Application Forms" },
@@ -195,7 +196,7 @@ function PresetSelectionDialog({
   onContinue
 }: {
   templateName: string;
-  presets: Array<{ id: string; label: string; fieldType: string; required?: boolean }>;
+  presets: Array<{ id: string; label: string; fieldType: string; required?: boolean; category?: string }>;
   selectedPresetIds: string[];
   onClose: () => void;
   onTogglePreset: (presetId: string) => void;
@@ -203,6 +204,8 @@ function PresetSelectionDialog({
   onClearAll: () => void;
   onContinue: () => void;
 }) {
+  const presetGroups = getPresetGroups(presets);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
       <div
@@ -244,34 +247,41 @@ function PresetSelectionDialog({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
-          <div className="grid gap-3 md:grid-cols-2">
-            {presets.map((preset) => {
-              const checked = selectedPresetIds.includes(preset.id);
+          <div className="space-y-5">
+            {presetGroups.map(([category, categoryPresets]) => (
+              <section key={category} aria-label={category} className="space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">{category}</h3>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {categoryPresets.map((preset) => {
+                    const checked = selectedPresetIds.includes(preset.id);
 
-              return (
-                <label
-                  key={preset.id}
-                  className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors ${
-                    checked
-                      ? "border-indigo-300 bg-indigo-50"
-                      : "border-gray-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/50"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    className="mt-1 size-4 rounded border-gray-300 text-indigo-600"
-                    onChange={() => onTogglePreset(preset.id)}
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-gray-900">{preset.label}</span>
-                    <span className="mt-1 inline-flex rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                      {preset.fieldType.replaceAll("-", " ")}
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
+                    return (
+                      <label
+                        key={preset.id}
+                        className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors ${
+                          checked
+                            ? "border-indigo-300 bg-indigo-50"
+                            : "border-gray-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          className="mt-1 size-4 rounded border-gray-300 text-indigo-600"
+                          onChange={() => onTogglePreset(preset.id)}
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-gray-900">{preset.label}</span>
+                          <span className="mt-1 inline-flex rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                            {preset.fieldType.replaceAll("-", " ")}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         </div>
 
@@ -295,6 +305,17 @@ function PresetSelectionDialog({
       </div>
     </div>
   );
+}
+
+function getPresetGroups<TPreset extends { category?: string }>(presets: TPreset[]) {
+  const groups = new Map<string, TPreset[]>();
+
+  for (const preset of presets) {
+    const category = preset.category ?? "Questions";
+    groups.set(category, [...(groups.get(category) ?? []), preset]);
+  }
+
+  return Array.from(groups.entries());
 }
 
 function RecentPersistedFormRow({

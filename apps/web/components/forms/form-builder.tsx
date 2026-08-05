@@ -2,7 +2,7 @@ import { ArrowLeft, Eye, Grip, Image } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
 
 import { SavedToast } from "@/components/ui/saved-toast";
-import { formElements, getTemplateName, type FormField } from "@/lib/forms/form-config";
+import { formElements, getTemplateDescription, getTemplateName, type FormField } from "@/lib/forms/form-config";
 import { confirmDestructiveAction } from "@/lib/ui/confirm-destructive-action";
 import { cn } from "@/lib/utils";
 import {
@@ -46,7 +46,7 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
   const [fields, setFields] = useState<FormField[]>(presetFields ?? []);
   const [persistedForm, setPersistedForm] = useState<PersistedFormSummary | null>(form);
   const [formTitle, setFormTitle] = useState(form?.name ?? (templateType ? getTemplateName(templateType) : "New form"));
-  const [formDescription, setFormDescription] = useState(form?.description ?? "Please provide your details for coach review.");
+  const [formDescription, setFormDescription] = useState(form?.description ?? getTemplateDescription(templateType));
   const [primaryColor, setPrimaryColor] = useState("#6366f1");
   const [successMessage, setSuccessMessage] = useState(
     "Thanks for applying! Our elite performance team will review your application within 24 hours."
@@ -304,6 +304,7 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
             ...(field.placeholder ? { placeholder: field.placeholder } : {}),
             ...(field.content ? { content: field.content } : {}),
             ...(field.options ? { options: field.options } : {}),
+            ...(field.category ? { category: field.category } : {}),
             exportPolicy: "private"
           }))
         },

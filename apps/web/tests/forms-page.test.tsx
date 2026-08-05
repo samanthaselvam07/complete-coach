@@ -37,6 +37,27 @@ describe("FormsPage", () => {
     expect(screen.getByDisplayValue("Training performance this week")).toBeInTheDocument();
   });
 
+  it("opens the initial questionnaire preset and lets coaches choose included questions", () => {
+    render(createElement(FormsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: /use initial client questionnaire template/i }));
+
+    const dialog = screen.getByRole("dialog", { name: /initial client questionnaire preset checklist/i });
+    expect(within(dialog).getByRole("region", { name: "Personal Details" })).toBeInTheDocument();
+    expect(within(dialog).getByText("What is your primary health or fitness goal?")).toBeInTheDocument();
+    expect(within(dialog).getByText("How many days per week can you realistically train?")).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByText("List any foods you strongly dislike."));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Continue to builder" }));
+
+    const preview = screen.getByRole("region", { name: "Form preview" });
+
+    expect(screen.getByDisplayValue("Initial Client Questionnaire")).toBeInTheDocument();
+    expect(within(preview).getByText("What is your primary health or fitness goal?")).toBeInTheDocument();
+    expect(within(preview).getByText("How many days per week can you realistically train?")).toBeInTheDocument();
+    expect(within(preview).queryByText("List any foods you strongly dislike.")).not.toBeInTheDocument();
+  });
+
   it("opens the terms and conditions builder from the template card", () => {
     render(createElement(FormsPage));
 

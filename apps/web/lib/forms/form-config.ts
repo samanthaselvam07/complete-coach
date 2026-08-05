@@ -6,6 +6,7 @@ import {
   CheckSquare,
   ChevronDown,
   Clock,
+  ClipboardList,
   FileText,
   Hash,
   Image,
@@ -31,6 +32,7 @@ export interface FormField {
   content?: string;
   required: boolean;
   options?: string[];
+  category?: string;
 }
 
 export interface FormElementDefinition {
@@ -48,9 +50,18 @@ export interface FormPresetOption {
   required?: boolean;
   placeholder?: string;
   content?: string;
+  category?: string;
 }
 
 export const formTemplates: FormTemplate[] = [
+  {
+    id: "initial-questionnaire",
+    name: "Initial Client Questionnaire",
+    description: "Post-consult onboarding questions for building the client's first plan.",
+    icon: ClipboardList,
+    color: "bg-violet-50 text-violet-600",
+    tags: ["ONBOARDING", "PLAN SETUP"]
+  },
   {
     id: "check-in",
     name: "Check-in Forms",
@@ -266,6 +277,216 @@ Last updated: [DATE]
 [BUSINESS NAME] | [EMAIL ADDRESS] | [WEBSITE URL]`;
 
 export const formPresetOptionsByTemplate: Record<string, FormPresetOption[]> = {
+  "initial-questionnaire": [
+    {
+      id: "initial-full-name",
+      label: "Full name",
+      fieldType: "short-text",
+      placeholder: "Client full name",
+      category: "Personal Details"
+    },
+    {
+      id: "initial-date-of-birth",
+      label: "Date of birth",
+      fieldType: "date",
+      category: "Personal Details"
+    },
+    {
+      id: "initial-height",
+      label: "Height",
+      fieldType: "number",
+      placeholder: "Height in cm",
+      category: "Personal Details"
+    },
+    {
+      id: "initial-current-weight",
+      label: "Current weight",
+      fieldType: "number",
+      placeholder: "Current weight in kg",
+      category: "Personal Details"
+    },
+    {
+      id: "initial-occupation",
+      label: "Occupation",
+      fieldType: "short-text",
+      placeholder: "Occupation or usual work routine",
+      required: false,
+      category: "Personal Details"
+    },
+    {
+      id: "initial-check-in-day",
+      label: "Preferred check-in day",
+      fieldType: "dropdown",
+      options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      required: false,
+      category: "Personal Details"
+    },
+    {
+      id: "initial-primary-goal",
+      label: "What is your primary health or fitness goal?",
+      fieldType: "long-text",
+      placeholder: "Describe the main outcome you want to work towards.",
+      category: "Goals"
+    },
+    {
+      id: "initial-secondary-goals",
+      label: "Are there any secondary goals you would like to work towards?",
+      fieldType: "long-text",
+      placeholder: "Strength, fitness, confidence, habits, health markers, lifestyle, or anything else.",
+      required: false,
+      category: "Goals"
+    },
+    {
+      id: "initial-goal-date",
+      label: "Is there a specific date or event connected to your goal?",
+      fieldType: "long-text",
+      placeholder: "Competition, holiday, photoshoot, event, medical review, or target date.",
+      required: false,
+      category: "Goals"
+    },
+    {
+      id: "initial-health-limitations",
+      label: "Do you have any injuries, medical conditions, allergies or physical limitations?",
+      fieldType: "long-text",
+      placeholder: "Include anything that may impact exercise or nutrition programming.",
+      category: "Health"
+    },
+    {
+      id: "initial-medications-supplements",
+      label: "Are you currently taking any medications or supplements?",
+      fieldType: "long-text",
+      placeholder: "List medication, supplement name, dose, and frequency where relevant.",
+      required: false,
+      category: "Health"
+    },
+    {
+      id: "initial-recovery-considerations",
+      label: "Is there anything else that may affect your training, nutrition or recovery?",
+      fieldType: "long-text",
+      placeholder: "Stress, digestion, menstrual cycle, shift work, pain, fatigue, or other considerations.",
+      required: false,
+      category: "Health"
+    },
+    {
+      id: "initial-training-days",
+      label: "How many days per week can you realistically train?",
+      fieldType: "number",
+      placeholder: "Number of training days per week",
+      category: "Training"
+    },
+    {
+      id: "initial-training-location",
+      label: "Where will you train?",
+      fieldType: "dropdown",
+      options: ["Commercial gym", "Home gym", "Outdoors", "Mixed locations", "Other"],
+      category: "Training"
+    },
+    {
+      id: "initial-equipment-access",
+      label: "What equipment do you have access to?",
+      fieldType: "long-text",
+      placeholder: "Machines, dumbbells, barbells, bands, cardio equipment, or home equipment.",
+      category: "Training"
+    },
+    {
+      id: "initial-training-experience",
+      label: "What is your current training experience?",
+      fieldType: "long-text",
+      placeholder: "How long you have trained, current routine, confidence level, and recent consistency.",
+      category: "Training"
+    },
+    {
+      id: "initial-exercise-restrictions",
+      label: "Are there any exercises you cannot or do not want to perform?",
+      fieldType: "long-text",
+      placeholder: "Include pain triggers, disliked movements, or movements you are not comfortable with.",
+      required: false,
+      category: "Training"
+    },
+    {
+      id: "initial-dietary-requirements",
+      label: "Do you have any dietary requirements, intolerances or allergies?",
+      fieldType: "long-text",
+      placeholder: "Allergies, intolerances, religious/cultural requirements, vegetarian/vegan, or medical nutrition needs.",
+      category: "Nutrition"
+    },
+    {
+      id: "initial-food-dislikes",
+      label: "List any foods you strongly dislike.",
+      fieldType: "long-text",
+      placeholder: "Foods you do not want included in your plan.",
+      required: false,
+      category: "Nutrition"
+    },
+    {
+      id: "initial-meals-per-day",
+      label: "How many meals per day suit your routine?",
+      fieldType: "number",
+      placeholder: "Number of meals per day",
+      category: "Nutrition"
+    },
+    {
+      id: "initial-nutrition-style",
+      label: "Would you prefer a structured meal plan, flexible targets or a combination?",
+      fieldType: "dropdown",
+      options: ["Structured meal plan", "Flexible targets", "Combination", "Unsure"],
+      category: "Nutrition"
+    },
+    {
+      id: "initial-typical-day-eating",
+      label: "Describe a typical day of eating.",
+      fieldType: "long-text",
+      placeholder: "Meals, snacks, drinks, timing, takeaway, and weekend differences.",
+      category: "Nutrition"
+    },
+    {
+      id: "initial-water-intake",
+      label: "How much water do you drink each day?",
+      fieldType: "number",
+      placeholder: "Litres per day",
+      required: false,
+      category: "Nutrition"
+    },
+    {
+      id: "initial-step-count",
+      label: "What is your average daily step count?",
+      fieldType: "number",
+      placeholder: "Average daily steps",
+      required: false,
+      category: "Lifestyle"
+    },
+    {
+      id: "initial-sleep-hours",
+      label: "How many hours do you sleep each night?",
+      fieldType: "number",
+      placeholder: "Average sleep hours",
+      required: false,
+      category: "Lifestyle"
+    },
+    {
+      id: "initial-lifestyle-commitments",
+      label: "Are there any regular work, family or social commitments the plan needs to accommodate?",
+      fieldType: "long-text",
+      placeholder: "Work schedule, caring responsibilities, travel, social meals, sport, or study commitments.",
+      required: false,
+      category: "Lifestyle"
+    },
+    {
+      id: "initial-starting-photos-measurements",
+      label: "Please upload your starting photos and any relevant measurements.",
+      fieldType: "photo",
+      required: false,
+      category: "Final Information"
+    },
+    {
+      id: "initial-final-considerations",
+      label: "Is there anything else you would like your coach to consider when creating your plan?",
+      fieldType: "long-text",
+      placeholder: "Anything you want your coach to know before they build your initial plan.",
+      required: false,
+      category: "Final Information"
+    }
+  ],
   "check-in": [
     { id: "check-training-performance", label: "Training performance this week", fieldType: "rating-10" },
     { id: "check-nutrition-adherence", label: "Nutrition adherence this week", fieldType: "rating-10" },
@@ -361,7 +582,8 @@ export function buildPresetFields(templateId: string, selectedPresetIds: string[
       placeholder: preset.placeholder,
       content: preset.content,
       required: preset.required ?? true,
-      options: preset.options
+      options: preset.options,
+      category: preset.category
     }));
 }
 
@@ -371,4 +593,12 @@ export function getTemplateName(formId: string | null) {
   }
 
   return formTemplates.find((template) => template.id === formId)?.name ?? "New Client Intake";
+}
+
+export function getTemplateDescription(formId: string | null) {
+  if (formId === "initial-questionnaire") {
+    return "Complete this after your consultation so your coach can build your first training, nutrition and lifestyle plan.";
+  }
+
+  return "Please provide your details for coach review.";
 }
