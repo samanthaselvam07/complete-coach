@@ -60,6 +60,7 @@ interface WorkoutSetRow {
   setNumber: number;
   reps: string;
   weightKg: string;
+  rpe: string;
   completed: boolean;
 }
 
@@ -82,6 +83,7 @@ interface WorkoutSessionExerciseLog {
     setNumber: number;
     reps?: string;
     weightKg?: number | null;
+    rpe?: number | null;
     completed: boolean;
   }>;
 }
@@ -482,8 +484,9 @@ function ActiveWorkoutLogger({
       {
         id: `${activeExercise.id ?? activeExercise.exerciseName}-set-${currentRows.length + 1}-${Date.now()}`,
         setNumber: currentRows.length + 1,
-        reps: activeExercise.reps ?? "",
+        reps: "",
         weightKg: "",
+        rpe: "",
         completed: false
       }
     ]);
@@ -506,6 +509,12 @@ function ActiveWorkoutLogger({
   function updateSetReps(setId: string, reps: string) {
     updateCurrentSetRows((currentRows) =>
       currentRows.map((row) => (row.id === setId ? { ...row, reps } : row))
+    );
+  }
+
+  function updateSetRpe(setId: string, rpe: string) {
+    updateCurrentSetRows((currentRows) =>
+      currentRows.map((row) => (row.id === setId ? { ...row, rpe } : row))
     );
   }
 
@@ -742,7 +751,7 @@ function ActiveWorkoutLogger({
               key={setRow.id}
               role="row"
               aria-label={`Set ${setRow.setNumber}`}
-              className="flex touch-pan-y items-center gap-3 rounded-[1.25rem] bg-white p-3 shadow-[0_12px_32px_rgba(27,28,28,0.05)]"
+              className="grid touch-pan-y grid-cols-[2.25rem_minmax(0,1fr)_6rem_auto] items-center gap-3 rounded-[1.25rem] bg-white p-3 shadow-[0_12px_32px_rgba(27,28,28,0.05)]"
               onPointerDown={(event) => {
                 setTouchStartXBySetId((currentStarts) => ({
                   ...currentStarts,
@@ -756,10 +765,10 @@ function ActiveWorkoutLogger({
                 }
               }}
             >
-              <span className="flex size-9 flex-none items-center justify-center rounded-full bg-[#f5f3f3] text-sm font-black">
+              <span className="flex size-9 items-center justify-center rounded-full bg-[#f5f3f3] text-sm font-black">
                 {setRow.setNumber}
               </span>
-              <label className="min-w-0 flex-1">
+              <label className="min-w-0">
                 <span className="sr-only">Set {setRow.setNumber} reps</span>
                 <input
                   value={setRow.reps}
@@ -769,7 +778,7 @@ function ActiveWorkoutLogger({
                   className="h-10 w-full rounded-full bg-[#f5f3f3] px-3 text-center text-sm font-black text-[#1b1c1c] outline-none focus:ring-2 focus:ring-[#3620b8]/20"
                 />
               </label>
-              <label className="w-24 flex-none">
+              <label className="w-24">
                 <span className="sr-only">Set {setRow.setNumber} weight</span>
                 <input
                   type="number"
@@ -782,6 +791,23 @@ function ActiveWorkoutLogger({
                   className="h-10 w-full rounded-full bg-[#f5f3f3] px-3 text-center text-sm font-black text-[#1b1c1c] outline-none focus:ring-2 focus:ring-[#3620b8]/20"
                 />
               </label>
+              {activeExercise.rpe ? (
+                <label className="col-span-2 col-start-2 min-w-0">
+                  <span className="sr-only">Set {setRow.setNumber} RPE</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="1"
+                    max="10"
+                    step="0.5"
+                    value={setRow.rpe}
+                    onChange={(event) => updateSetRpe(setRow.id, event.target.value)}
+                    aria-label={`Set ${setRow.setNumber} RPE`}
+                    placeholder={`RPE target ${activeExercise.rpe}`}
+                    className="h-10 w-full rounded-full bg-[#f5f3f3] px-3 text-center text-sm font-black text-[#1b1c1c] outline-none focus:ring-2 focus:ring-[#3620b8]/20"
+                  />
+                </label>
+              ) : null}
               <button
                 type="button"
                 onClick={() => completeSet(setRow.id)}
@@ -1143,8 +1169,9 @@ function createSetRows(exercise: TrainingExercise | undefined): WorkoutSetRow[] 
   return Array.from({ length: totalSets }, (_, index) => ({
     id: `${exercise.id ?? exercise.exerciseName}-set-${index + 1}`,
     setNumber: index + 1,
-    reps: exercise.reps ?? "",
+    reps: "",
     weightKg: "",
+    rpe: "",
     completed: false
   }));
 }
@@ -1210,6 +1237,7 @@ function createWorkoutExerciseLogs(exercises: TrainingExercise[], rowsByExercise
       setNumber: row.setNumber,
       reps: row.reps,
       weightKg: parseOptionalWeight(row.weightKg),
+      rpe: parseOptionalRpe(row.rpe),
       completed: row.completed
     }))
   }));
@@ -1237,6 +1265,16 @@ function parseOptionalWeight(value: string) {
   const weight = Number.parseFloat(value);
 
   return Number.isFinite(weight) && weight >= 0 ? weight : null;
+}
+
+function parseOptionalRpe(value: string) {
+  if (!value.trim()) {
+    return null;
+  }
+
+  const rpe = Number.parseFloat(value);
+
+  return Number.isFinite(rpe) && rpe >= 1 && rpe <= 10 ? rpe : null;
 }
 
 function formatWeight(value: number) {

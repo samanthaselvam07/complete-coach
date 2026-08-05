@@ -16,6 +16,7 @@ const workoutSetSchema = z.object({
   setNumber: z.number().int().min(1).max(100),
   reps: z.string().trim().max(80).optional(),
   weightKg: z.number().min(0).max(2000).nullable().optional(),
+  rpe: z.number().min(1).max(10).nullable().optional(),
   completed: z.boolean()
 });
 

@@ -173,6 +173,9 @@ describe("ClientWorkoutPage", () => {
     expect(screen.queryByRole("timer", { name: "Rest timer" })).not.toBeInTheDocument();
     expect(screen.getByText("Exercise 1/3")).toBeInTheDocument();
     expect(screen.getByText("Seated Hamstring Curl")).toBeInTheDocument();
+    expect(screen.getByLabelText("Set 1 reps")).toHaveValue("");
+    expect(screen.getByLabelText("Set 1 RPE")).toHaveValue(null);
+    expect(screen.getByLabelText("Set 1 RPE")).toHaveAttribute("placeholder", "RPE target 9");
 
     fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
 
@@ -192,6 +195,7 @@ describe("ClientWorkoutPage", () => {
     expect(screen.getByText("Exercise 2/3")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Seated Hamstring Curl" })).toBeInTheDocument();
     expect(screen.getByText("Leg Press")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Set 1 RPE")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Up next/i }));
 
@@ -269,7 +273,10 @@ describe("ClientWorkoutPage", () => {
     render(<ClientWorkoutPage />);
 
     fireEvent.click(await screen.findByText("Seated Leg Extension"));
+    expect(screen.getByLabelText("Set 1 reps")).toHaveValue("");
+    fireEvent.change(screen.getByLabelText("Set 1 reps"), { target: { value: "17" } });
     fireEvent.change(screen.getByLabelText("Set 1 weight"), { target: { value: "45" } });
+    fireEvent.change(screen.getByLabelText("Set 1 RPE"), { target: { value: "9.5" } });
     fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
     fireEvent.click(screen.getByRole("button", { name: "Finish session" }));
 
@@ -302,8 +309,9 @@ describe("ClientWorkoutPage", () => {
           sets: [
             {
               setNumber: 1,
-              reps: "15-20",
+              reps: "17",
               weightKg: 45,
+              rpe: 9.5,
               completed: true
             }
           ]
