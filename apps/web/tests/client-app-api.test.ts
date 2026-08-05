@@ -5,10 +5,13 @@ import {
   ClientActivityLogDomain,
   ClientActivityLogStatus,
   ClientStatus,
+  ClientSubscriptionStatus,
   FormAssignmentStatus,
   FormSubmissionStatus,
   FormType,
   MealPlanAssignmentStatus,
+  PackageBillingInterval,
+  PackageStatus,
   SupplementPlanAssignmentStatus,
   TrainingProgramAssignmentStatus
 } from "@/app/generated/prisma/enums";
@@ -17,6 +20,9 @@ import { GET as getDailyCheckIn, POST as postDailyCheckIn } from "@/app/api/v1/c
 import { GET as getClientHydration, POST as postClientHydration } from "@/app/api/v1/client/hydration/route";
 import { GET as getClientLogs, POST as postClientLog } from "@/app/api/v1/client/logs/route";
 import { GET as getClientMe } from "@/app/api/v1/client/me/route";
+import { POST as postClientOnboardingCheckout } from "@/app/api/v1/client/onboarding/checkout/route";
+import { POST as postClientOnboardingQuestionnaire } from "@/app/api/v1/client/onboarding/questionnaire/route";
+import { GET as getClientOnboardingStatus } from "@/app/api/v1/client/onboarding/status/route";
 import { GET as getClientRoadmap } from "@/app/api/v1/client/roadmap/route";
 import { GET as getWorkoutNotes, POST as postWorkoutNote } from "@/app/api/v1/client/workout-notes/route";
 import { POST as postWorkoutSession } from "@/app/api/v1/client/workout-sessions/route";
@@ -25,8 +31,19 @@ const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
   prisma: {
     client: {
+      findFirst: vi.fn(),
       findFirstOrThrow: vi.fn(),
       update: vi.fn()
+    },
+    organization: {
+      findUnique: vi.fn()
+    },
+    coachingPackage: {
+      findFirst: vi.fn()
+    },
+    clientSubscription: {
+      create: vi.fn(),
+      findFirst: vi.fn()
     },
     mealPlanAssignment: {
       findMany: vi.fn()
@@ -101,12 +118,20 @@ describe("client app APIs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.auth.mockResolvedValue(clientSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({
+      id: "client_1",
+      firstName: "Client",
+      lastName: "One",
+      email: "client@example.com",
+      packageId: "package_1"
+    });
     mocks.prisma.client.findFirstOrThrow.mockResolvedValue({
       id: "client_1",
       firstName: "Client",
       lastName: "One",
       email: "client@example.com",
       status: ClientStatus.ACTIVE,
+      packageId: "package_1",
       packageName: "Pro Coaching",
       checkInDay: "Monday",
       timezone: "Australia/Melbourne",
@@ -123,6 +148,10 @@ describe("client app APIs", () => {
         stepTarget: 10000
       }
     });
+    mocks.prisma.organization.findUnique.mockResolvedValue({ id: "org_1", name: "Complete Coach Demo", stripeConnectAccountId: "acct_1" });
+    mocks.prisma.coachingPackage.findFirst.mockResolvedValue(coachingPackageRecord());
+    mocks.prisma.clientSubscription.findFirst.mockResolvedValue(null);
+    mocks.prisma.clientSubscription.create.mockResolvedValue(clientSubscriptionRecord());
     mocks.prisma.trainingProgramAssignment.findMany.mockResolvedValue([
       {
         id: "training_assignment_1",
@@ -658,6 +687,120 @@ describe("client app APIs", () => {
     );
   });
 
+  it("requires connected Stripe payment before returning an assigned onboarding Q&A", async () => {
+    mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(onboardingQuestionnaireAssignmentRecord());
+
+    const response = await getClientOnboardingStatus();
+    const payload = (await response.json()) as {
+      data: {
+        payment: { required: boolean; packageId: string | null; packageName: string | null };
+        questionnaire: unknown;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.payment.required).toBe(true);
+    expect(payload.data.payment.packageId).toBe("package_1");
+    expect(payload.data.payment.packageName).toBe("Pro Coaching");
+    expect(payload.data.questionnaire).toBeNull();
+  });
+
+  it("creates a connected Stripe checkout session for the signed-in client's assigned package", async () => {
+    const originalSecret = process.env.STRIPE_SECRET_KEY;
+    const originalBaseUrl = process.env.STRIPE_API_BASE_URL;
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({ id: "cus_1" }))
+      .mockResolvedValueOnce(Response.json({ id: "cs_1", url: "https://checkout.stripe.test/client" }));
+
+    process.env.STRIPE_SECRET_KEY = "sk_test_client";
+    process.env.STRIPE_API_BASE_URL = "https://stripe.test";
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      const response = await postClientOnboardingCheckout(new Request("https://client.completecoach.fit/api/v1/client/onboarding/checkout", { method: "POST" }));
+      const payload = (await response.json()) as { data: { checkoutUrl: string } };
+
+      expect(response.status).toBe(201);
+      expect(payload.data.checkoutUrl).toBe("https://checkout.stripe.test/client");
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[0][1].headers["Stripe-Account"]).toBe("acct_1");
+      expect(fetchMock.mock.calls[1][1].headers["Stripe-Account"]).toBe("acct_1");
+      expect(String(fetchMock.mock.calls[1][1].body)).toContain("success_url=https%3A%2F%2Fclient.completecoach.fit%2F%3Fpayment%3Dsuccess");
+      expect(mocks.prisma.clientSubscription.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            organizationId: "org_1",
+            clientId: "client_1",
+            packageId: "package_1",
+            stripeCustomerId: "cus_1",
+            stripeCheckoutSessionId: "cs_1",
+            status: ClientSubscriptionStatus.INCOMPLETE
+          })
+        })
+      );
+    } finally {
+      process.env.STRIPE_SECRET_KEY = originalSecret;
+      process.env.STRIPE_API_BASE_URL = originalBaseUrl;
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("submits the signed-in client's onboarding Q&A and stores it on their profile history", async () => {
+    mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(onboardingQuestionnaireAssignmentRecord());
+    mocks.prisma.formSubmission.create.mockResolvedValueOnce({
+      id: "submission_onboarding_1",
+      formId: "form_intake",
+      formVersionId: "form_version_intake",
+      assignmentId: "assignment_intake_1",
+      clientId: "client_1",
+      answersJson: { goal: "Build strength", starting_weight: 74.5 },
+      status: FormSubmissionStatus.SUBMITTED,
+      submittedAt: now,
+      reviewedAt: null,
+      createdAt: now,
+      updatedAt: now,
+      client: { firstName: "Client", lastName: "One" },
+      form: { id: "form_intake", name: "Initial Q&A", type: FormType.INTAKE },
+      formVersion: {
+        id: "form_version_intake",
+        formId: "form_intake",
+        versionNumber: 1,
+        schemaJson: onboardingQuestionnaireDefinition(),
+        uiJson: {},
+        publishedAt: now,
+        createdAt: now
+      }
+    });
+
+    const response = await postClientOnboardingQuestionnaire(
+      new Request("http://test.local/api/v1/client/onboarding/questionnaire", {
+        method: "POST",
+        body: JSON.stringify({ answers: { goal: "Build strength", starting_weight: 74.5 } })
+      })
+    );
+    const payload = (await response.json()) as { data: { id: string; formType: string | null; answers: Record<string, unknown> } };
+
+    expect(response.status).toBe(201);
+    expect(payload.data.id).toBe("submission_onboarding_1");
+    expect(payload.data.formType).toBe("intake");
+    expect(payload.data.answers.goal).toBe("Build strength");
+    expect(mocks.prisma.formAssignment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "assignment_intake_1", organizationId: "org_1" },
+        data: expect.objectContaining({ status: FormAssignmentStatus.SUBMITTED })
+      })
+    );
+    expect(mocks.prisma.clientMeasurement.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          clientId: "client_1",
+          metricKey: "starting_weight",
+          metricValue: 74.5
+        })
+      })
+    );
+  });
+
   it("submits the signed-in client's reusable daily habit form without completing the assignment", async () => {
     mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(dailyAssignmentRecord());
 
@@ -967,6 +1110,108 @@ function weeklyAssignmentRecord() {
         ]
       }
     }
+  };
+}
+
+function onboardingQuestionnaireDefinition() {
+  return {
+    title: "Initial Q&A",
+    description: "Tell your coach what matters most.",
+    fields: [
+      {
+        id: "goal",
+        type: "long-text",
+        label: "Primary goal",
+        required: true,
+        exportPolicy: "private"
+      },
+      {
+        id: "starting_weight",
+        type: "number",
+        label: "Starting weight",
+        required: false,
+        metricKey: "starting_weight",
+        metricUnit: "kg",
+        exportPolicy: "metric"
+      }
+    ]
+  };
+}
+
+function onboardingQuestionnaireAssignmentRecord() {
+  return {
+    id: "assignment_intake_1",
+    organizationId: "org_1",
+    formId: "form_intake",
+    formVersionId: "form_version_intake",
+    clientId: "client_1",
+    status: FormAssignmentStatus.ASSIGNED,
+    dueAt: null,
+    completedAt: null,
+    createdAt: now,
+    updatedAt: now,
+    client: { firstName: "Client", lastName: "One" },
+    form: {
+      id: "form_intake",
+      name: "Initial Q&A",
+      type: FormType.INTAKE
+    },
+    formVersion: {
+      id: "form_version_intake",
+      formId: "form_intake",
+      versionNumber: 1,
+      schemaJson: onboardingQuestionnaireDefinition(),
+      uiJson: {},
+      publishedAt: now,
+      createdAt: now
+    }
+  };
+}
+
+function coachingPackageRecord() {
+  return {
+    id: "package_1",
+    organizationId: "org_1",
+    name: "Pro Coaching",
+    description: null,
+    priceAmount: 30000,
+    currency: "aud",
+    billingInterval: PackageBillingInterval.MONTHLY,
+    customBillingIntervalCount: null,
+    customBillingIntervalUnit: null,
+    termWeeks: null,
+    scheduledPriceAmount: null,
+    scheduledPriceCurrency: null,
+    scheduledPriceStartsAt: null,
+    stripeProductId: "prod_1",
+    stripePriceId: "price_1",
+    status: PackageStatus.ACTIVE,
+    featuresJson: [],
+    color: null,
+    createdByUserId: "user_1",
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null
+  };
+}
+
+function clientSubscriptionRecord() {
+  return {
+    id: "subscription_1",
+    organizationId: "org_1",
+    clientId: "client_1",
+    packageId: "package_1",
+    stripeCustomerId: "cus_1",
+    stripeSubscriptionId: null,
+    stripeCheckoutSessionId: "cs_1",
+    status: ClientSubscriptionStatus.INCOMPLETE,
+    currentPeriodStart: null,
+    currentPeriodEnd: null,
+    cancelAt: null,
+    createdAt: now,
+    updatedAt: now,
+    client: { firstName: "Client", lastName: "One", email: "client@example.com" },
+    coachingPackage: { name: "Pro Coaching", priceAmount: 30000, currency: "aud" }
   };
 }
 

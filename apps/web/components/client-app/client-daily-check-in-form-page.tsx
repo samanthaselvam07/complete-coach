@@ -175,7 +175,7 @@ export function ClientDailyCheckInFormPage({ kind = "daily" }: { kind?: CheckInF
   );
 }
 
-function DailyCheckInFieldControl({
+export function DailyCheckInFieldControl({
   field,
   value,
   onChange
