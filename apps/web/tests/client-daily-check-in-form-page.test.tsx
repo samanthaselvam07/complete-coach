@@ -81,6 +81,10 @@ describe("ClientDailyCheckInFormPage", () => {
       );
     });
     expect(await screen.findByRole("button", { name: "Submitted" })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith("/");
+    });
   });
 
   it("loads and submits the assigned weekly check-in form", async () => {
@@ -136,6 +140,10 @@ describe("ClientDailyCheckInFormPage", () => {
           })
         })
       );
+    });
+
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith("/");
     });
   });
 });

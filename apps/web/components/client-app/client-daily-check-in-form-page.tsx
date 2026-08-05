@@ -106,7 +106,7 @@ export function ClientDailyCheckInFormPage({ kind = "daily" }: { kind?: CheckInF
       }
 
       setSubmitState("submitted");
-      window.setTimeout(() => router.push("/check-in"), 650);
+      window.setTimeout(() => router.push("/"), 650);
     } catch (error) {
       setSubmitState("idle");
       setErrorMessage(error instanceof Error ? error.message : `Your ${formLabel} could not be submitted.`);
