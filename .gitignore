@@ -28,3 +28,7 @@ yarn-error.log*
 .idea/
 .vscode/
 .vercel
+
+# Private client migration exports
+data/imports/Clinical Physiques/
+data/imports/clinical physiques/

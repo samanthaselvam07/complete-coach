@@ -24,6 +24,13 @@
     "exercise:upload-videos": "tsx scripts/upload-exercise-videos.ts",
     "exercise:upload-thumbnails": "tsx scripts/upload-exercise-thumbnails.ts",
     "supplement:import:csv": "tsx scripts/import-supplements-csv.ts",
+    "client:migration:build-clinical-physiques": "tsx scripts/build-clinical-physiques-client-payload.ts",
+    "client:migration:commit": "tsx scripts/commit-client-migration.ts",
+    "client:migration:dry-run": "tsx scripts/dry-run-client-migration.ts",
+    "client:migration:verify": "tsx scripts/verify-client-migration.ts",
+    "auth:verify-account": "tsx scripts/verify-auth-account.ts",
+    "auth:ensure-demo-account": "tsx scripts/ensure-demo-auth-account.ts",
+    "auth:smoke-sign-in": "tsx scripts/smoke-test-local-sign-in.ts",
     "postinstall": "prisma generate",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm coverage && pnpm build && pnpm e2e"
   },

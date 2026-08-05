@@ -1,0 +1,119 @@
+{
+  "sourceSystem": "trial-export",
+  "extractedAt": "2026-08-05T00:00:00.000Z",
+  "client": {
+    "externalClientId": "trial-client-001",
+    "firstName": "Sample",
+    "lastName": "Client",
+    "email": "sample.client@example.com",
+    "phone": "+61 400 000 000",
+    "status": "active",
+    "packageName": "Core Coaching",
+    "checkInDay": "Monday",
+    "timezone": "Australia/Melbourne",
+    "startDate": "2026-01-15",
+    "latestCheckInAt": "2026-08-01T09:00:00.000Z",
+    "compliance": 82
+  },
+  "profile": {
+    "dateOfBirth": "1994-05-14",
+    "sex": "female",
+    "goals": ["Improve strength", "Build consistent nutrition habits"],
+    "injuries": [],
+    "medicalNotes": "Sample only. Replace with extracted notes if required.",
+    "bio": "Trial migrated client profile.",
+    "emergencyContact": {
+      "name": "Example Contact",
+      "phone": "+61 400 000 001"
+    },
+    "waterTargetLitres": 2.5,
+    "stepTarget": 10000,
+    "trainingLogTargetDays": 4
+  },
+  "notes": [
+    {
+      "noteDate": "2026-07-20",
+      "body": "Sample coaching note."
+    }
+  ],
+  "goals": [
+    {
+      "title": "Complete first 12 week phase",
+      "targetDate": "2026-10-01",
+      "notes": "Sample goal linked to roadmap phase.",
+      "roadmapPhaseKey": "phase-1"
+    }
+  ],
+  "roadmapPhases": [
+    {
+      "key": "phase-1",
+      "name": "Foundation Phase",
+      "startDate": "2026-08-01",
+      "endDate": "2026-10-24",
+      "status": "active",
+      "items": [
+        {
+          "title": "Review starting metrics",
+          "type": "milestone",
+          "eventDate": "2026-08-08",
+          "notes": "Sample roadmap item."
+        }
+      ]
+    }
+  ],
+  "calendarEvents": [
+    {
+      "title": "Weekly check-in",
+      "type": "check-in",
+      "startDate": "2026-08-10",
+      "endDate": "2026-08-10",
+      "allDay": true,
+      "recurring": true,
+      "recurrenceCount": 8,
+      "recurrenceDays": ["Monday"],
+      "roadmapPhaseKey": "phase-1",
+      "notes": "Sample recurring check-in."
+    }
+  ],
+  "measurements": [
+    {
+      "sourceType": "initial-questionnaire",
+      "sourceId": "trial-client-001-initial",
+      "measuredAt": "2026-08-01T08:00:00.000Z",
+      "metricKey": "bodyweight",
+      "metricValue": 72.4,
+      "unit": "kg",
+      "metadata": {
+        "source": "sample"
+      }
+    }
+  ],
+  "activityLogs": [
+    {
+      "domain": "training",
+      "logDate": "2026-08-01",
+      "status": "completed",
+      "sourceType": "sample",
+      "sourceId": "trial-training-001",
+      "notes": "Sample training log."
+    }
+  ],
+  "workoutSessions": [
+    {
+      "assignmentName": "Foundation Training",
+      "dayId": "day-1",
+      "dayName": "Lower 1",
+      "startedAt": "2026-08-01T07:00:00.000Z",
+      "completedAt": "2026-08-01T08:00:00.000Z",
+      "durationSeconds": 3600,
+      "exercises": [
+        {
+          "name": "Leg Press",
+          "sets": 3,
+          "reps": "10"
+        }
+      ],
+      "personalBests": []
+    }
+  ]
+}
