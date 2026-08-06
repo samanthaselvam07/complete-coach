@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ClientNotesPage } from "@/components/clients/client-notes-page";
 import {
   createProgressChartSeries,
+  createProgressRangeWindow,
   getMetricYAxisStep,
   normalizeProgressMetricRecord
 } from "@/components/clients/client-profile-dashboard";
@@ -904,22 +905,38 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("Sleep was more stable after the earlier bedtime change.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View all" })).toHaveAttribute("href", "/clients/1/notes");
     expect(screen.getByText("Account Activity Log")).toBeInTheDocument();
-    expect(await screen.findByRole("img", { name: "Progress analytics chart" })).toBeInTheDocument();
+    const progressChart = await screen.findByRole("img", { name: "Progress analytics chart" });
+    expect(progressChart).toBeInTheDocument();
     const bodyweightPoint = document.querySelector('circle[data-metric-key="body_weight"]');
     expect(bodyweightPoint).toHaveAttribute("data-x", "2026-07-01T00:00:00.000Z");
     expect(bodyweightPoint).toHaveAttribute("data-y", "82.6");
-    expect(screen.getByText("X axis: Date")).toBeInTheDocument();
-    expect(screen.getByText("Y axis: Metric value")).toBeInTheDocument();
-    expect(screen.getByText("X")).toBeInTheDocument();
-    expect(screen.getByText("Y")).toBeInTheDocument();
-    expect(screen.getByText("Bodyweight value")).toBeInTheDocument();
+    expect(screen.queryByText("X axis: Date")).not.toBeInTheDocument();
+    expect(screen.queryByText("Y axis: Metric value")).not.toBeInTheDocument();
+    expect(screen.queryByText("X")).not.toBeInTheDocument();
+    expect(screen.queryByText("Y")).not.toBeInTheDocument();
+    expect(screen.queryByText("Bodyweight value")).not.toBeInTheDocument();
     expect(screen.getByText("80kg")).toBeInTheDocument();
     expect(screen.getByText("90kg")).toBeInTheDocument();
     expect(screen.getAllByText("Jul 1").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Jul 22, 2026").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("81.7kg").length).toBeGreaterThan(0);
+    expect(within(progressChart).queryByText("Jul 22, 2026")).not.toBeInTheDocument();
+    expect(within(progressChart).queryByText("81.7kg")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Bodyweight: 82.6kg on Jul 1, 2026")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Metrics (1)" })).toBeInTheDocument();
+    expect(screen.getByText("July 2026")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous month" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next month" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Year" }));
+    expect(screen.getByText("2026")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous year" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next year" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Next year" }));
+    expect(screen.getByText("2027")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Previous year" }));
+    expect(screen.getByText("2026")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Week" }));
+    expect(screen.getByText("Jul 20 - Jul 26, 2026")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous week" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next week" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Metrics (1)" }));
     expect(screen.getByRole("menuitemcheckbox", { name: /Bodyweight/i })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("menuitemcheckbox", { name: /Steps/i })).toBeInTheDocument();
@@ -1506,6 +1523,24 @@ describe("ClientProfilePage", () => {
     expect(getMetricYAxisStep("protein")).toBe(100);
     expect(getMetricYAxisStep("carbs")).toBe(100);
     expect(getMetricYAxisStep("fats")).toBe(100);
+  });
+
+  it("creates calendar-based progress range windows", () => {
+    expect(createProgressRangeWindow("year", new Date("2026-08-05T12:00:00.000Z"), "", "")).toEqual({
+      from: Date.UTC(2026, 0, 1, 0, 0, 0, 0),
+      to: Date.UTC(2026, 11, 31, 23, 59, 59, 999),
+      label: "2026"
+    });
+    expect(createProgressRangeWindow("month", new Date("2026-08-05T12:00:00.000Z"), "", "")).toEqual({
+      from: Date.UTC(2026, 7, 1, 0, 0, 0, 0),
+      to: Date.UTC(2026, 7, 31, 23, 59, 59, 999),
+      label: "August 2026"
+    });
+    expect(createProgressRangeWindow("week", new Date("2026-08-05T12:00:00.000Z"), "", "")).toEqual({
+      from: Date.UTC(2026, 7, 3, 0, 0, 0, 0),
+      to: Date.UTC(2026, 7, 9, 23, 59, 59, 999),
+      label: "Aug 3 - Aug 9, 2026"
+    });
   });
 
   it("temporarily hides the client conversation action from the profile header", async () => {

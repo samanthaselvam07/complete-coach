@@ -70,6 +70,12 @@ interface MetricDefinition {
   unit?: string;
 }
 
+interface ProgressRangeWindow {
+  from: number;
+  to: number;
+  label: string;
+}
+
 const defaultMetricDefinitions: MetricDefinition[] = [
   { key: "body_weight", label: "Bodyweight", color: "#4f46e5", unit: "kg" },
   { key: "waist", label: "Waist", color: "#f97316", unit: "cm" },
@@ -219,6 +225,7 @@ export function ProgressAnalyticsCard({ client }: { client: ClientProfile }) {
   const [metricsOpen, setMetricsOpen] = useState(false);
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [periodAnchor, setPeriodAnchor] = useState(() => startOfUtcDay(new Date()));
 
   useEffect(() => {
     let active = true;
@@ -234,7 +241,14 @@ export function ProgressAnalyticsCard({ client }: { client: ClientProfile }) {
         const payload = (await response.json()) as { data?: ClientMetricRecord[] };
 
         if (active) {
-          setMetrics(Array.isArray(payload.data) ? payload.data : []);
+          const metricRecords = Array.isArray(payload.data) ? payload.data : [];
+          const latestMetricDate = getLatestMetricDate(metricRecords);
+
+          setMetrics(metricRecords);
+
+          if (latestMetricDate) {
+            setPeriodAnchor(latestMetricDate);
+          }
         }
       } catch {
         if (active) {
@@ -252,9 +266,13 @@ export function ProgressAnalyticsCard({ client }: { client: ClientProfile }) {
 
   const normalizedMetrics = useMemo(() => metrics.map(normalizeProgressMetricRecord), [metrics]);
   const metricDefinitions = useMemo(() => createMetricDefinitions(normalizedMetrics), [normalizedMetrics]);
+  const rangeWindow = useMemo(
+    () => createProgressRangeWindow(range, periodAnchor, customFrom, customTo),
+    [customFrom, customTo, periodAnchor, range]
+  );
   const filteredMetrics = useMemo(
-    () => filterMetricsByRange(normalizedMetrics, range, customFrom, customTo),
-    [customFrom, customTo, normalizedMetrics, range]
+    () => filterMetricsByRange(normalizedMetrics, rangeWindow),
+    [normalizedMetrics, rangeWindow]
   );
   const visibleMetrics = filteredMetrics.filter((metric) => selectedMetricKeys.includes(metric.metricKey));
 
@@ -264,6 +282,10 @@ export function ProgressAnalyticsCard({ client }: { client: ClientProfile }) {
         ? currentKeys.filter((currentKey) => currentKey !== metricKey)
         : [...currentKeys, metricKey]
     );
+  };
+
+  const movePeriod = (direction: -1 | 1) => {
+    setPeriodAnchor((currentAnchor) => addProgressRangePeriod(currentAnchor, range, direction));
   };
 
   return (
@@ -289,6 +311,28 @@ export function ProgressAnalyticsCard({ client }: { client: ClientProfile }) {
             </button>
           ))}
           </div>
+
+          {range !== "custom" ? (
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-1">
+              <button
+                type="button"
+                aria-label={`Previous ${range}`}
+                className="inline-flex size-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100"
+                onClick={() => movePeriod(-1)}
+              >
+                <ChevronLeft className="size-4" aria-hidden="true" />
+              </button>
+              <div className="min-w-40 text-center text-sm font-bold text-slate-800">{rangeWindow.label}</div>
+              <button
+                type="button"
+                aria-label={`Next ${range}`}
+                className="inline-flex size-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100"
+                onClick={() => movePeriod(1)}
+              >
+                <ChevronRight className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+          ) : null}
 
           <div className="relative">
             <button
@@ -395,17 +439,7 @@ function ProgressChart({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-        <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">X axis: Date</span>
-        <span className="rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">Y axis: Metric value</span>
-      </div>
       <svg role="img" aria-label="Progress analytics chart" viewBox="0 0 640 270" className="h-72 w-full overflow-visible">
-        <text x={progressChartBounds.left} y="18" fill="#475569" fontSize="12" fontWeight="700">
-          {primarySeries ? `${primarySeries.label} value` : "Y value"}
-        </text>
-        <text x="560" y="264" fill="#475569" fontSize="12" fontWeight="700">
-          Date
-        </text>
         <line x1={progressChartBounds.left} x2={progressChartBounds.left} y1={progressChartBounds.top} y2={progressChartBounds.bottom} stroke="#cbd5e1" strokeWidth="1.5" />
         <line x1={progressChartBounds.left} x2={progressChartBounds.right} y1={progressChartBounds.bottom} y2={progressChartBounds.bottom} stroke="#cbd5e1" strokeWidth="1.5" />
         {primarySeries?.yTicks.map((tick) => (
@@ -443,7 +477,6 @@ function ProgressChart({
             />
             {definition.points.map((point) => {
               const tooltipText = `${definition.label}: ${formatMetricValue(point, definition)} on ${formatMetricDate(point.x)}`;
-              const labelY = Math.max(progressChartBounds.top + 10, point.chartY - 10);
 
               return (
                 <g key={point.id} className="group outline-none" tabIndex={0} aria-label={tooltipText}>
@@ -462,64 +495,12 @@ function ProgressChart({
                   >
                     <title>{tooltipText}</title>
                   </circle>
-                  <text x={point.chartX} y={labelY} fill="#0f172a" fontSize="11" fontWeight="700" textAnchor="middle">
-                    {formatMetricValue(point, definition)}
-                  </text>
-                  <g className="pointer-events-none opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100">
-                    <rect
-                      x={Math.min(Math.max(point.chartX - 76, progressChartBounds.left), progressChartBounds.right - 152)}
-                      y={Math.max(progressChartBounds.top, point.chartY - 54)}
-                      width="152"
-                      height="38"
-                      rx="6"
-                      fill="#0f172a"
-                    />
-                    <text
-                      x={Math.min(Math.max(point.chartX, progressChartBounds.left + 76), progressChartBounds.right - 76)}
-                      y={Math.max(progressChartBounds.top + 15, point.chartY - 36)}
-                      fill="#ffffff"
-                      fontSize="11"
-                      fontWeight="700"
-                      textAnchor="middle"
-                    >
-                      {formatMetricDate(point.x)}
-                    </text>
-                    <text
-                      x={Math.min(Math.max(point.chartX, progressChartBounds.left + 76), progressChartBounds.right - 76)}
-                      y={Math.max(progressChartBounds.top + 31, point.chartY - 20)}
-                      fill="#ffffff"
-                      fontSize="11"
-                      textAnchor="middle"
-                    >
-                      {formatMetricValue(point, definition)}
-                    </text>
-                  </g>
                 </g>
               );
             })}
           </g>
         ))}
       </svg>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        {getLatestChartPoints(series).map((point) => (
-          <div key={`${point.metricKey}-${point.id}`} className="rounded-lg bg-white px-3 py-2 text-xs ring-1 ring-slate-200">
-            <div className="mb-1 flex items-center gap-2 font-bold text-slate-800">
-              <span className="size-2 rounded-full" style={{ backgroundColor: point.color }} aria-hidden="true" />
-              {point.label}
-            </div>
-            <dl className="grid grid-cols-2 gap-2 text-slate-600">
-              <div>
-                <dt className="font-bold text-slate-500">X</dt>
-                <dd>{formatMetricDate(point.x)}</dd>
-              </div>
-              <div>
-                <dt className="font-bold text-slate-500">Y</dt>
-                <dd>{formatMetricValue(point, { key: point.key, label: point.label, color: point.color, unit: point.unit ?? undefined })}</dd>
-              </div>
-            </dl>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -531,6 +512,15 @@ export function normalizeProgressMetricRecord(metric: ClientMetricRecord): Clien
     x: metric.x ?? metric.measuredAt,
     y: typeof metric.y === "number" ? metric.y : metric.metricValue
   };
+}
+
+function getLatestMetricDate(metrics: ClientMetricRecord[]) {
+  const latestMetricTime = metrics
+    .map((metric) => new Date(metric.x ?? metric.measuredAt).getTime())
+    .filter(Number.isFinite)
+    .sort((a, b) => b - a)[0];
+
+  return latestMetricTime ? startOfUtcDay(new Date(latestMetricTime)) : null;
 }
 
 function createMetricDefinitions(metrics: ClientMetricRecord[]) {
@@ -565,15 +555,11 @@ function normalizeProgressMetricKey(metricKey: string) {
   return normalized.replaceAll("-", "_").replaceAll(" ", "_");
 }
 
-function filterMetricsByRange(metrics: ClientMetricRecord[], range: ProgressRange, customFrom: string, customTo: string) {
-  const now = Date.now();
-  const from = getRangeStart(range, now, customFrom);
-  const to = range === "custom" && customTo ? new Date(`${customTo}T23:59:59.999Z`).getTime() : now;
-
+function filterMetricsByRange(metrics: ClientMetricRecord[], rangeWindow: ProgressRangeWindow) {
   return metrics.filter((metric) => {
-    const measuredAt = new Date(metric.measuredAt).getTime();
+    const measuredAt = new Date(metric.x ?? metric.measuredAt).getTime();
 
-    return measuredAt >= from && measuredAt <= to;
+    return measuredAt >= rangeWindow.from && measuredAt <= rangeWindow.to;
   });
 }
 
@@ -581,14 +567,90 @@ function formatRangeLabel(range: ProgressRange) {
   return range.charAt(0).toUpperCase() + range.slice(1);
 }
 
-function getRangeStart(range: ProgressRange, now: number, customFrom: string) {
+export function createProgressRangeWindow(range: ProgressRange, anchor: Date, customFrom: string, customTo: string): ProgressRangeWindow {
   if (range === "custom") {
-    return customFrom ? new Date(`${customFrom}T00:00:00.000Z`).getTime() : 0;
+    const fromDate = customFrom ? new Date(`${customFrom}T00:00:00.000Z`) : new Date(0);
+    const toDate = customTo ? new Date(`${customTo}T23:59:59.999Z`) : endOfUtcDay(new Date());
+
+    return {
+      from: fromDate.getTime(),
+      to: toDate.getTime(),
+      label: customFrom || customTo ? `${customFrom || "Start"} - ${customTo || "Today"}` : "Custom range"
+    };
   }
 
-  const days = range === "week" ? 7 : range === "month" ? 31 : 365;
+  if (range === "year") {
+    const year = anchor.getUTCFullYear();
+    const fromDate = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
+    const toDate = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
 
-  return now - days * 24 * 60 * 60 * 1000;
+    return {
+      from: fromDate.getTime(),
+      to: toDate.getTime(),
+      label: String(year)
+    };
+  }
+
+  if (range === "month") {
+    const year = anchor.getUTCFullYear();
+    const month = anchor.getUTCMonth();
+    const fromDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+    const toDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+
+    return {
+      from: fromDate.getTime(),
+      to: toDate.getTime(),
+      label: new Intl.DateTimeFormat("en", { month: "long", year: "numeric", timeZone: "UTC" }).format(anchor)
+    };
+  }
+
+  const fromDate = startOfUtcWeek(anchor);
+  const toDate = endOfUtcDay(addUtcDays(fromDate, 6));
+
+  return {
+    from: fromDate.getTime(),
+    to: toDate.getTime(),
+    label: `${formatShortMetricDate(fromDate.toISOString())} - ${formatMetricDate(toDate.toISOString())}`
+  };
+}
+
+function addProgressRangePeriod(anchor: Date, range: ProgressRange, direction: -1 | 1) {
+  if (range === "year") {
+    return new Date(Date.UTC(anchor.getUTCFullYear() + direction, anchor.getUTCMonth(), anchor.getUTCDate()));
+  }
+
+  if (range === "month") {
+    return new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + direction, 1));
+  }
+
+  if (range === "week") {
+    return addUtcDays(anchor, 7 * direction);
+  }
+
+  return anchor;
+}
+
+function startOfUtcDay(date: Date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function endOfUtcDay(date: Date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
+}
+
+function addUtcDays(date: Date, days: number) {
+  const nextDate = new Date(date);
+  nextDate.setUTCDate(nextDate.getUTCDate() + days);
+
+  return nextDate;
+}
+
+function startOfUtcWeek(date: Date) {
+  const start = startOfUtcDay(date);
+  const day = start.getUTCDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+
+  return addUtcDays(start, mondayOffset);
 }
 
 export function createProgressChartSeries(metrics: ClientMetricRecord[], definitions: MetricDefinition[]): ProgressChartSeries[] {
@@ -697,24 +759,6 @@ export function getMetricYAxisStep(metricKey: string) {
   return 10;
 }
 
-function getLatestChartPoints(series: ProgressChartSeries[]) {
-  return series
-    .map((definition) => {
-      const latestPoint = definition.points.at(-1);
-
-      return latestPoint
-        ? {
-            ...latestPoint,
-            key: definition.key,
-            color: definition.color,
-            label: definition.label,
-            unit: latestPoint.unit ?? definition.unit ?? null
-          }
-        : null;
-    })
-    .filter((point): point is ProgressChartPoint & MetricDefinition & { unit: string | null } => point !== null);
-}
-
 function toChartPoint(point: ClientMetricRecord, series: ClientMetricRecord[], minTime: number, maxTime: number) {
   const metricKey = point.metricKey;
   const step = getMetricYAxisStep(metricKey);
@@ -773,14 +817,16 @@ function formatMetricDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
-    year: "numeric"
+    year: "numeric",
+    timeZone: "UTC"
   }).format(new Date(value));
 }
 
 function formatShortMetricDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
-    day: "numeric"
+    day: "numeric",
+    timeZone: "UTC"
   }).format(new Date(value));
 }
 
