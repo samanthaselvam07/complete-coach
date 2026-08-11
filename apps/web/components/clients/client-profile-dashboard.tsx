@@ -63,6 +63,12 @@ interface ProgressChartSeries extends MetricDefinition {
   yTicks: ProgressYAxisTick[];
 }
 
+interface HoveredProgressChartPoint extends ProgressChartPoint {
+  color: string;
+  label: string;
+  unit: string | null;
+}
+
 interface MetricDefinition {
   key: string;
   label: string;
@@ -424,10 +430,12 @@ function ProgressChart({
   metrics: ClientMetricRecord[];
   definitions: MetricDefinition[];
 }) {
+  const [hoveredPointId, setHoveredPointId] = useState<string | null>(null);
   const series = createProgressChartSeries(metrics, definitions)
     .filter((definition) => definition.points.length > 0);
   const xTicks = createProgressXAxisTicks(series);
   const primarySeries = series[0];
+  const hoveredPoint = getHoveredChartPoint(series, hoveredPointId);
 
   if (series.length === 0) {
     return (
@@ -477,29 +485,38 @@ function ProgressChart({
             />
             {definition.points.map((point) => {
               const tooltipText = `${definition.label}: ${formatMetricValue(point, definition)} on ${formatMetricDate(point.x)}`;
+              const isHovered = hoveredPointId === point.id;
 
               return (
-                <g key={point.id} className="group outline-none" tabIndex={0} aria-label={tooltipText}>
+                <g
+                  key={point.id}
+                  className="outline-none"
+                  tabIndex={0}
+                  aria-label={tooltipText}
+                  onBlur={() => setHoveredPointId(null)}
+                  onFocus={() => setHoveredPointId(point.id)}
+                  onMouseEnter={() => setHoveredPointId(point.id)}
+                  onMouseLeave={() => setHoveredPointId(null)}
+                >
                   <circle
                     cx={point.chartX}
                     cy={point.chartY}
-                    r="5"
+                    r={isHovered ? "7" : "4"}
                     fill={definition.color}
                     stroke="#ffffff"
-                    strokeWidth="2"
+                    strokeWidth={isHovered ? "3" : "2"}
                     data-metric-key={point.metricKey}
                     data-x={point.x}
                     data-y={point.y}
                     data-chart-x={point.chartX}
                     data-chart-y={point.chartY}
-                  >
-                    <title>{tooltipText}</title>
-                  </circle>
+                  />
                 </g>
               );
             })}
           </g>
         ))}
+        {hoveredPoint ? <ProgressChartTooltip point={hoveredPoint} /> : null}
       </svg>
     </div>
   );
@@ -512,6 +529,41 @@ export function normalizeProgressMetricRecord(metric: ClientMetricRecord): Clien
     x: metric.x ?? metric.measuredAt,
     y: typeof metric.y === "number" ? metric.y : metric.metricValue
   };
+}
+
+function ProgressChartTooltip({ point }: { point: HoveredProgressChartPoint }) {
+  const tooltipWidth = 250;
+  const tooltipHeight = 64;
+  const x = Math.min(Math.max(point.chartX + 12, progressChartBounds.left), progressChartBounds.right - tooltipWidth);
+  const y = Math.max(progressChartBounds.top + 8, point.chartY - tooltipHeight - 14);
+
+  return (
+    <g role="presentation" pointerEvents="none">
+      <line
+        x1={point.chartX}
+        x2={point.chartX}
+        y1={progressChartBounds.top}
+        y2={progressChartBounds.bottom}
+        stroke="#cbd5e1"
+        strokeDasharray="3 3"
+        strokeWidth="1.5"
+      />
+      <circle cx={point.chartX} cy={point.chartY} r="8" fill="#ffffff" stroke={point.color} strokeWidth="3" />
+      <rect x={x} y={y} width={tooltipWidth} height={tooltipHeight} rx="8" fill="#ffffff" stroke="#e2e8f0" />
+      <rect x={x} y={y} width={tooltipWidth} height="28" rx="8" fill="#f1f5f9" />
+      <rect x={x} y={y + 20} width={tooltipWidth} height="8" fill="#f1f5f9" />
+      <text x={x + 12} y={y + 18} fill="#334155" fontSize="12" fontWeight="700">
+        {formatMetricDate(point.x)}
+      </text>
+      <circle cx={x + 16} cy={y + 45} r="5" fill={point.color} opacity="0.18" />
+      <text x={x + 30} y={y + 49} fill="#0f172a" fontSize="12">
+        {point.label}
+      </text>
+      <text x={x + tooltipWidth - 14} y={y + 49} fill="#0f172a" fontSize="12" fontWeight="800" textAnchor="end">
+        {formatMetricValue(point, { key: point.metricKey, label: point.label, color: point.color, unit: point.unit ?? undefined })}
+      </text>
+    </g>
+  );
 }
 
 function getLatestMetricDate(metrics: ClientMetricRecord[]) {
@@ -688,6 +740,27 @@ export function createProgressChartSeries(metrics: ClientMetricRecord[], definit
 
 function toPolylinePoints(points: ProgressChartPoint[]) {
   return points.map((point) => `${point.chartX},${point.chartY}`).join(" ");
+}
+
+function getHoveredChartPoint(series: ProgressChartSeries[], hoveredPointId: string | null): HoveredProgressChartPoint | null {
+  if (!hoveredPointId) {
+    return null;
+  }
+
+  for (const definition of series) {
+    const point = definition.points.find((candidate) => candidate.id === hoveredPointId);
+
+    if (point) {
+      return {
+        ...point,
+        color: definition.color,
+        label: definition.label,
+        unit: point.unit ?? definition.unit ?? null
+      };
+    }
+  }
+
+  return null;
 }
 
 function createProgressXAxisTicks(series: ProgressChartSeries[]) {

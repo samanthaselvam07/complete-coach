@@ -921,6 +921,12 @@ describe("ClientProfilePage", () => {
     expect(within(progressChart).queryByText("Jul 22, 2026")).not.toBeInTheDocument();
     expect(within(progressChart).queryByText("81.7kg")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Bodyweight: 82.6kg on Jul 1, 2026")).toBeInTheDocument();
+    expect(within(progressChart).queryByText("82.6kg")).not.toBeInTheDocument();
+    fireEvent.mouseEnter(bodyweightPoint as Element);
+    expect(within(progressChart).getByText("Jul 1, 2026")).toBeInTheDocument();
+    expect(within(progressChart).getByText("82.6kg")).toBeInTheDocument();
+    fireEvent.mouseLeave(bodyweightPoint as Element);
+    expect(within(progressChart).queryByText("82.6kg")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Metrics (1)" })).toBeInTheDocument();
     expect(screen.getByText("July 2026")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous month" })).toBeInTheDocument();
