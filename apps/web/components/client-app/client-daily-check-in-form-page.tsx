@@ -213,6 +213,8 @@ function FieldInput({
   onChange: (value: unknown) => void;
 }) {
   const baseClass = "min-h-12 w-full rounded-2xl border-0 bg-[#f5f3f3] px-4 text-sm font-bold text-[#1b1c1c] outline-none ring-2 ring-transparent transition focus:ring-[#3620b8]";
+  const [photoUploadState, setPhotoUploadState] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
+  const [photoUploadMessage, setPhotoUploadMessage] = useState("");
 
   if (field.type === "long-text") {
     return (
@@ -312,14 +314,80 @@ function FieldInput({
   }
 
   if (field.type === "photo") {
+    async function uploadPhoto(file: File) {
+      setPhotoUploadState("uploading");
+      setPhotoUploadMessage("Uploading photo...");
+
+      try {
+        const response = await fetch("/api/v1/client/check-in-photo-upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": file.type,
+            "x-filename": encodeURIComponent(file.name)
+          },
+          body: file
+        });
+        const payload = (await response.json().catch(() => null)) as {
+          data?: {
+            objectKey?: string;
+            photoUrl?: string;
+          };
+          error?: {
+            message?: string;
+          };
+        } | null;
+
+        if (!response.ok || !payload?.data?.photoUrl) {
+          throw new Error(payload?.error?.message ?? "Photo could not be uploaded.");
+        }
+
+        onChange({
+          byteSize: file.size,
+          contentType: file.type,
+          fileName: file.name,
+          objectKey: payload.data.objectKey,
+          photoUrl: payload.data.photoUrl
+        });
+        setPhotoUploadState("uploaded");
+        setPhotoUploadMessage(`${file.name} uploaded.`);
+      } catch (error) {
+        onChange("");
+        setPhotoUploadState("error");
+        setPhotoUploadMessage(error instanceof Error ? error.message : "Photo could not be uploaded.");
+      }
+    }
+
     return (
-      <input
-        required={field.required}
-        type="file"
-        accept="image/*"
-        onChange={(event) => onChange(event.target.files?.[0]?.name ?? "")}
-        className="block w-full rounded-2xl bg-[#f5f3f3] px-4 py-3 text-sm font-bold text-[#777584] file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-black file:text-[#3620b8]"
-      />
+      <div className="space-y-3">
+        <input
+          required={field.required && !hasUploadedPhotoValue(value)}
+          type="file"
+          accept="image/*"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+
+            if (file) {
+              void uploadPhoto(file);
+            } else {
+              onChange("");
+              setPhotoUploadState("idle");
+              setPhotoUploadMessage("");
+            }
+          }}
+          className="block w-full rounded-2xl bg-[#f5f3f3] px-4 py-3 text-sm font-bold text-[#777584] file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-black file:text-[#3620b8]"
+        />
+        {photoUploadMessage ? (
+          <p
+            role={photoUploadState === "error" ? "alert" : "status"}
+            className={cn(
+              "rounded-2xl px-4 py-3 text-sm font-black",
+              photoUploadState === "error" ? "bg-red-50 text-red-700" : "bg-[#f5f3f3] text-[#777584]"
+            )}
+          >
+            {photoUploadMessage}
+          </p>
+        ) : null}
+      </div>
     );
   }
 
@@ -332,6 +400,15 @@ function FieldInput({
       onChange={(event) => onChange(event.target.value)}
       className={baseClass}
     />
+  );
+}
+
+function hasUploadedPhotoValue(value: unknown) {
+  return Boolean(
+    value
+      && typeof value === "object"
+      && !Array.isArray(value)
+      && typeof (value as { photoUrl?: unknown }).photoUrl === "string"
   );
 }
 

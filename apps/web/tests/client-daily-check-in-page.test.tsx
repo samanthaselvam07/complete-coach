@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { clearClientMeCache } from "@/components/client-app/client-me-cache";
@@ -11,7 +11,7 @@ describe("ClientDailyCheckInPage", () => {
   });
 
   it("shows the client's current phase progress by week", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+    const fetchMock = vi.fn(async (url: string) => {
       if (url === "/api/v1/client/me") {
         return new Response(
           JSON.stringify({
@@ -71,12 +71,19 @@ describe("ClientDailyCheckInPage", () => {
         return new Response(
           JSON.stringify({
             data: [
-              createCheckIn("checkin_1", "2026-07-29T09:00:00.000Z", "Energy was strong and food was on plan.", "https://cdn.completecoach.fit/front-2026-07-29.jpg"),
+              createCheckIn("checkin_1", "2026-07-29T09:00:00.000Z", "Energy was strong and food was on plan.", "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg"),
               createCheckIn("checkin_2", "2026-07-22T09:00:00.000Z", "Training felt better this week.", "https://cdn.completecoach.fit/front-2026-07-22.jpg"),
               createCheckIn("checkin_3", "2026-07-15T09:00:00.000Z", "Sleep improved.", "https://cdn.completecoach.fit/front-2026-07-15.jpg"),
               createCheckIn("checkin_4", "2026-07-08T09:00:00.000Z", "First week submitted.", "https://cdn.completecoach.fit/front-2026-07-08.jpg")
             ]
           }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url.startsWith("/api/v1/client/check-in-photo-url")) {
+        return new Response(
+          JSON.stringify({ data: { url: "https://r2.example/signed-front-2026-07-29.jpg" } }),
           { status: 200, headers: { "Content-Type": "application/json" } }
         );
       }
@@ -95,7 +102,8 @@ describe("ClientDailyCheckInPage", () => {
       }
 
       return new Response(JSON.stringify({ error: { message: "Not found" } }), { status: 404 });
-    }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<ClientDailyCheckInPage today="2026-07-30" />);
 
@@ -125,6 +133,11 @@ describe("ClientDailyCheckInPage", () => {
     expect(screen.getByRole("img", { name: "Waist circumference chart" })).toBeInTheDocument();
     expect(screen.getByLabelText("Left photo")).toBeInTheDocument();
     expect(screen.getByLabelText("Right photo")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        `/api/v1/client/check-in-photo-url?photoUrl=${encodeURIComponent("r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg")}`
+      );
+    });
   });
 
   it("does not use the active training assignment as the current roadmap phase", async () => {
@@ -184,7 +197,7 @@ function createCheckIn(id: string, submittedAt: string, summary: string, photoUr
     summary,
     coachNotes: null,
     answers: {
-      progressPhotos: [{ url: photoUrl }]
+      progressPhotos: [{ photoUrl }]
     },
     metrics: []
   };

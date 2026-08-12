@@ -66,6 +66,7 @@ interface ProgressPhoto {
   id: string;
   date: string;
   label: string;
+  storageUrl: string;
   url: string;
 }
 
@@ -512,9 +513,51 @@ function PhotoSelector({ label, photos, selectedPhotoId, onChange }: { label: st
 }
 
 function PhotoPreview({ photo }: { photo: ProgressPhoto | null }) {
+  const [displayUrl, setDisplayUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function resolveDisplayUrl() {
+      if (!photo) {
+        setDisplayUrl(null);
+        return;
+      }
+
+      if (isRenderablePhotoUrl(photo.url)) {
+        setDisplayUrl(photo.url);
+        return;
+      }
+
+      if (!isUploadedCheckInPhotoUrl(photo.storageUrl)) {
+        setDisplayUrl(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/v1/client/check-in-photo-url?photoUrl=${encodeURIComponent(photo.storageUrl)}`);
+        const payload = (await response.json().catch(() => null)) as { data?: { url?: string } } | null;
+
+        if (mounted) {
+          setDisplayUrl(response.ok && payload?.data?.url ? payload.data.url : null);
+        }
+      } catch {
+        if (mounted) {
+          setDisplayUrl(null);
+        }
+      }
+    }
+
+    void resolveDisplayUrl();
+
+    return () => {
+      mounted = false;
+    };
+  }, [photo]);
+
   return (
     <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-[#f5f3f3]">
-      {photo ? <img src={photo.url} alt={`${photo.label} progress`} className="h-full w-full object-cover" /> : null}
+      {photo && displayUrl ? <img src={displayUrl} alt={`${photo.label} progress`} className="h-full w-full object-cover" /> : null}
     </div>
   );
 }
@@ -601,6 +644,7 @@ function extractProgressPhotos(checkIns: ClientCheckIn[]) {
       id: `${checkIn.id}:${index}`,
       date: checkIn.submittedAt,
       label: `${formatDate(checkIn.submittedAt)}${photoUrls.length > 1 ? ` #${index + 1}` : ""}`,
+      storageUrl: url,
       url
     }));
   });
@@ -631,7 +675,17 @@ function collectPhotoUrls(value: unknown): string[] {
 }
 
 function isPhotoUrl(value: string) {
+  return isRenderablePhotoUrl(value) || isUploadedCheckInPhotoUrl(value);
+}
+
+function isRenderablePhotoUrl(value: string) {
   return /^https?:\/\//u.test(value) && /\.(?:avif|gif|heic|heif|jpe?g|png|webp)(?:[?#].*)?$/iu.test(value);
+}
+
+function isUploadedCheckInPhotoUrl(value: string) {
+  return value.startsWith("r2://")
+    && value.includes("/check-ins/photos/")
+    && /\.(?:heic|heif|jpe?g|png|webp)$/iu.test(value);
 }
 
 function formatCheckInStatus(status: string) {

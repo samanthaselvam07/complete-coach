@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   CheckInStatus,
@@ -16,6 +16,8 @@ import {
   TrainingProgramAssignmentStatus
 } from "@/app/generated/prisma/enums";
 import { GET as getClientCheckIns } from "@/app/api/v1/client/check-ins/route";
+import { GET as getClientCheckInPhotoUrl } from "@/app/api/v1/client/check-in-photo-url/route";
+import { POST as uploadClientCheckInPhoto } from "@/app/api/v1/client/check-in-photo-upload/route";
 import { GET as getDailyCheckIn, POST as postDailyCheckIn } from "@/app/api/v1/client/daily-check-in/route";
 import { GET as getClientHydration, POST as postClientHydration } from "@/app/api/v1/client/hydration/route";
 import { GET as getClientLogs, POST as postClientLog } from "@/app/api/v1/client/logs/route";
@@ -88,12 +90,22 @@ const mocks = vi.hoisted(() => ({
     auditLog: {
       create: vi.fn()
     },
+    r2: {
+      createR2PresignedGetUrl: vi.fn(),
+      createR2PresignedPutUrl: vi.fn(),
+      getR2Config: vi.fn()
+    },
     $transaction: vi.fn()
   }
 }));
 
 vi.mock("@/auth", () => ({ auth: mocks.auth }));
 vi.mock("@/lib/db/prisma", () => ({ prisma: mocks.prisma }));
+vi.mock("@/lib/storage/r2", () => ({
+  createR2PresignedGetUrl: mocks.prisma.r2.createR2PresignedGetUrl,
+  createR2PresignedPutUrl: mocks.prisma.r2.createR2PresignedPutUrl,
+  getR2Config: mocks.prisma.r2.getR2Config
+}));
 
 const clientSession = {
   user: { id: "user_client", email: "client@example.com" },
@@ -349,6 +361,14 @@ describe("client app APIs", () => {
       author: { name: "Client One", email: "client@example.com" }
     });
     mocks.prisma.auditLog.create.mockResolvedValue({});
+    mocks.prisma.r2.getR2Config.mockReturnValue({
+      accountId: "account_1",
+      accessKeyId: "access_1",
+      secretAccessKey: "secret_1",
+      bucketName: "complete-coach-test"
+    });
+    mocks.prisma.r2.createR2PresignedPutUrl.mockReturnValue("https://r2.example/check-in-photo-upload");
+    mocks.prisma.r2.createR2PresignedGetUrl.mockReturnValue("https://r2.example/signed-check-in-photo.jpg");
     mocks.prisma.formAssignment.findFirst.mockResolvedValue(null);
     mocks.prisma.formAssignment.update.mockResolvedValue({});
     mocks.prisma.formSubmission.create.mockResolvedValue({
@@ -378,6 +398,10 @@ describe("client app APIs", () => {
     mocks.prisma.clientMeasurement.findFirst.mockResolvedValue(null);
     mocks.prisma.clientMeasurement.upsert.mockResolvedValue({ id: "measurement_1" });
     mocks.prisma.$transaction.mockImplementation(async (callback) => callback(mocks.prisma));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("returns the signed-in client's organization-scoped profile and assigned plans", async () => {
@@ -434,6 +458,68 @@ describe("client app APIs", () => {
           clientId: "client_1",
           status: SupplementPlanAssignmentStatus.ACTIVE
         }
+      })
+    );
+  });
+
+  it("uploads a signed-in client's check-in photo into their scoped storage path", async () => {
+    const uploadFetch = vi.fn(async () => new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", uploadFetch);
+
+    const response = await uploadClientCheckInPhoto(
+      new Request("http://test.local/api/v1/client/check-in-photo-upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "image/jpeg",
+          "x-filename": encodeURIComponent("front-progress.jpg")
+        },
+        body: new Blob(["photo-bytes"], { type: "image/jpeg" })
+      })
+    );
+    const payload = (await response.json()) as { data: { objectKey: string; photoUrl: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.objectKey).toMatch(
+      /^organizations\/org_1\/clients\/client_1\/check-ins\/photos\/[0-9a-fA-F-]{36}\.jpg$/
+    );
+    expect(payload.data.photoUrl).toBe(`r2://${payload.data.objectKey}`);
+    expect(uploadFetch).toHaveBeenCalledWith(
+      "https://r2.example/check-in-photo-upload",
+      expect.objectContaining({
+        method: "PUT",
+        headers: { "Content-Type": "image/jpeg" },
+        body: expect.any(Uint8Array)
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          actorUserId: "user_client",
+          action: "client.check_in_photo.uploaded",
+          targetType: "check_in_photo",
+          metadata: expect.objectContaining({
+            clientId: "client_1",
+            contentType: "image/jpeg"
+          })
+        })
+      })
+    );
+  });
+
+  it("creates a signed display URL for the signed-in client's uploaded check-in photo", async () => {
+    const photoUrl = "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg";
+    const response = await getClientCheckInPhotoUrl(
+      new Request(`http://test.local/api/v1/client/check-in-photo-url?photoUrl=${encodeURIComponent(photoUrl)}`)
+    );
+    const payload = (await response.json()) as { data: { url: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.url).toBe("https://r2.example/signed-check-in-photo.jpg");
+    expect(mocks.prisma.r2.createR2PresignedGetUrl).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        objectKey: "organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg"
       })
     );
   });

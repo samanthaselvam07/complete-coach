@@ -146,4 +146,92 @@ describe("ClientDailyCheckInFormPage", () => {
       expect(mocks.push).toHaveBeenCalledWith("/");
     });
   });
+
+  it("uploads photo fields before submitting a check-in", async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === "/api/v1/client/daily-check-in?kind=weekly" && !init) {
+        return new Response(
+          JSON.stringify({
+            data: {
+              id: "assignment_weekly_1",
+              formName: "Weekly Review",
+              dueAt: null,
+              formVersion: {
+                schema: {
+                  title: "Weekly Review",
+                  fields: [{ id: "progress_photo", type: "photo", label: "Progress photo", required: true }]
+                }
+              }
+            }
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url === "/api/v1/client/check-in-photo-upload" && init?.method === "POST") {
+        return new Response(
+          JSON.stringify({
+            data: {
+              objectKey: "organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg",
+              photoUrl: "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg"
+            }
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url === "/api/v1/client/daily-check-in?kind=weekly" && init?.method === "POST") {
+        return new Response(JSON.stringify({ data: { id: "submission_weekly_1" } }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: { message: "Not found" } }), { status: 404 });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ClientDailyCheckInFormPage kind="weekly" />);
+
+    expect(await screen.findByRole("heading", { name: "Weekly Review" })).toBeInTheDocument();
+
+    const photoFile = new File(["photo"], "front-progress.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByLabelText(/progress photo/i), { target: { files: [photoFile] } });
+
+    expect(await screen.findByText("front-progress.jpg uploaded.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/client/check-in-photo-upload",
+      expect.objectContaining({
+        method: "POST",
+        body: photoFile,
+        headers: {
+          "Content-Type": "image/jpeg",
+          "x-filename": encodeURIComponent("front-progress.jpg")
+        }
+      })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Submit weekly check-in" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/client/daily-check-in?kind=weekly",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            answers: {
+              progress_photo: {
+                byteSize: photoFile.size,
+                contentType: "image/jpeg",
+                fileName: "front-progress.jpg",
+                objectKey: "organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg",
+                photoUrl: "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg"
+              }
+            }
+          })
+        })
+      );
+    });
+  });
 });
