@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
 import { saveClientActivityLog } from "./client-activity-log-actions";
+import { getClientMe } from "./client-me-cache";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
@@ -88,6 +89,11 @@ interface WorkoutSessionExerciseLog {
   }>;
 }
 
+interface ExerciseMedia {
+  imageUrl?: string;
+  videoUrl?: string;
+}
+
 export function ClientWorkoutPage() {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
@@ -95,18 +101,17 @@ export function ClientWorkoutPage() {
   const [assignments, setAssignments] = useState<TrainingAssignment[]>([]);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState("");
   const [activeDayIndex, setActiveDayIndex] = useState(0);
-  const [exerciseImages, setExerciseImages] = useState<Record<string, string>>({});
+  const [exerciseMedia, setExerciseMedia] = useState<Record<string, ExerciseMedia>>({});
   const [activeWorkoutExerciseIndex, setActiveWorkoutExerciseIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
-    async function loadClientTraining() {
+    async function loadClientTraining({ force = false }: { force?: boolean } = {}) {
       try {
-        const response = await fetch("/api/v1/client/me");
-        const payload = (await response.json().catch(() => null)) as ClientMeResponse | null;
+        const payload = await getClientMe<ClientMeResponse>({ force });
 
-        if (!response.ok || !payload?.data) {
+        if (!payload?.data) {
           throw new Error(payload?.error?.message ?? "Your workout could not be loaded.");
         }
 
@@ -137,7 +142,7 @@ export function ClientWorkoutPage() {
 
     const refreshClientTraining = () => {
       if (document.visibilityState === "visible") {
-        void loadClientTraining();
+        void loadClientTraining({ force: true });
       }
     };
 
@@ -182,23 +187,22 @@ export function ClientWorkoutPage() {
     let mounted = true;
     const exerciseIds = activeDay.exercises
       .map((exercise) => exercise.exerciseId)
-      .filter((exerciseId): exerciseId is string => Boolean(exerciseId && !exerciseImages[exerciseId]));
+      .filter((exerciseId): exerciseId is string => Boolean(exerciseId && !exerciseMedia[exerciseId]?.imageUrl && !exerciseMedia[exerciseId]?.videoUrl));
 
-    async function loadImages() {
-      const imageEntries = await Promise.all(
+    async function loadExerciseMedia() {
+      const mediaEntries = await Promise.all(
         exerciseIds.map(async (exerciseId) => {
-          try {
-            const response = await fetch(`/api/v1/exercises/${encodeURIComponent(exerciseId)}/media-url?type=image`);
+          const [imageUrl, videoUrl] = await Promise.all([
+            loadExerciseMediaUrl(exerciseId, "image"),
+            loadExerciseMediaUrl(exerciseId, "video")
+          ]);
 
-            if (!response.ok) {
-              return null;
-            }
+          const media: ExerciseMedia = {
+            ...(imageUrl ? { imageUrl } : {}),
+            ...(videoUrl ? { videoUrl } : {})
+          };
 
-            const payload = (await response.json()) as { data?: { url?: string } };
-            return payload.data?.url ? [exerciseId, payload.data.url] as const : null;
-          } catch {
-            return null;
-          }
+          return imageUrl || videoUrl ? [exerciseId, media] as const : null;
         })
       );
 
@@ -206,21 +210,21 @@ export function ClientWorkoutPage() {
         return;
       }
 
-      const nextImages = Object.fromEntries(imageEntries.filter((entry): entry is readonly [string, string] => entry !== null));
+      const nextMedia = Object.fromEntries(mediaEntries.filter((entry): entry is readonly [string, ExerciseMedia] => entry !== null));
 
-      if (Object.keys(nextImages).length > 0) {
-        setExerciseImages((currentImages) => ({ ...currentImages, ...nextImages }));
+      if (Object.keys(nextMedia).length > 0) {
+        setExerciseMedia((currentMedia) => ({ ...currentMedia, ...nextMedia }));
       }
     }
 
     if (exerciseIds.length > 0) {
-      void loadImages();
+      void loadExerciseMedia();
     }
 
     return () => {
       mounted = false;
     };
-  }, [activeDay, exerciseImages]);
+  }, [activeDay, exerciseMedia]);
 
   if (loadState === "loading") {
     return (
@@ -248,7 +252,7 @@ export function ClientWorkoutPage() {
         day={activeDay}
         assignmentId={activeAssignment?.id ?? null}
         assignmentName={activeAssignment?.name ?? "Training plan"}
-        exerciseImages={exerciseImages}
+        exerciseMedia={exerciseMedia}
         initialExerciseIndex={activeWorkoutExerciseIndex}
         onBack={() => setActiveWorkoutExerciseIndex(null)}
       />
@@ -310,8 +314,7 @@ export function ClientWorkoutPage() {
                 <ExerciseCard
                   key={exercise.id ?? `${exercise.exerciseName}-${index}`}
                   exercise={exercise}
-                  imageUrl={exercise.exerciseId ? exerciseImages[exercise.exerciseId] : undefined}
-                  onClick={() => setActiveWorkoutExerciseIndex(index)}
+                  media={exercise.exerciseId ? exerciseMedia[exercise.exerciseId] : undefined}
                 />
               ))
             ) : (
@@ -374,20 +377,33 @@ function TrainingProgramSwitcher({
   );
 }
 
-function ExerciseCard({ exercise, imageUrl, onClick }: { exercise: TrainingExercise; imageUrl?: string; onClick: () => void }) {
+async function loadExerciseMediaUrl(exerciseId: string, mediaType: "image" | "video") {
+  try {
+    const response = await fetch(`/api/v1/exercises/${encodeURIComponent(exerciseId)}/media-url?type=${mediaType}`);
+
+    if (!response.ok) {
+      return undefined;
+    }
+
+    const payload = (await response.json()) as { data?: { url?: string } };
+
+    return payload.data?.url;
+  } catch {
+    return undefined;
+  }
+}
+
+function ExerciseCard({ exercise, media }: { exercise: TrainingExercise; media?: ExerciseMedia }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex min-h-[6.5rem] w-full items-center gap-4 rounded-[1.65rem] bg-white p-4 text-left shadow-[0_18px_45px_rgba(27,28,28,0.06)] transition active:scale-[0.99]"
+    <article
+      className="flex min-h-[6.5rem] w-full items-center gap-4 rounded-[1.65rem] bg-white p-4 text-left shadow-[0_18px_45px_rgba(27,28,28,0.06)]"
     >
-      <ExerciseThumbnail exerciseName={exercise.exerciseName} imageUrl={imageUrl} />
+      <ExerciseThumbnail exerciseName={exercise.exerciseName} media={media} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-base font-black text-[#1b1c1c]">{exercise.exerciseName}</span>
         <span className="mt-1 block truncate text-sm font-bold text-[#777584]">{formatExercisePrescription(exercise)}</span>
       </span>
-      <ChevronRight aria-hidden="true" className="size-5 flex-none text-[#c8c3bf]" />
-    </button>
+    </article>
   );
 }
 
@@ -395,14 +411,14 @@ function ActiveWorkoutLogger({
   day,
   assignmentId,
   assignmentName,
-  exerciseImages,
+  exerciseMedia,
   initialExerciseIndex,
   onBack
 }: {
   day: TrainingDay;
   assignmentId: string | null;
   assignmentName: string;
-  exerciseImages: Record<string, string>;
+  exerciseMedia: Record<string, ExerciseMedia>;
   initialExerciseIndex: number;
   onBack: () => void;
 }) {
@@ -721,10 +737,10 @@ function ActiveWorkoutLogger({
           <div className="relative min-h-56 overflow-hidden bg-[#1b1c1c]">
             <ExerciseHeroImage
               exerciseName={activeExercise.exerciseName}
-              imageUrl={activeExercise.exerciseId ? exerciseImages[activeExercise.exerciseId] : undefined}
+              media={activeExercise.exerciseId ? exerciseMedia[activeExercise.exerciseId] : undefined}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-6">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 p-6">
               <span className="inline-flex rounded-full bg-[#f87600] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white">
                 {activeExercise.section ?? "Target"}
               </span>
@@ -1037,25 +1053,55 @@ function WorkoutNotesDialog({
   );
 }
 
-function ExerciseThumbnail({ exerciseName, imageUrl }: { exerciseName: string; imageUrl?: string }) {
-  if (imageUrl) {
+function ExerciseThumbnail({ exerciseName, media }: { exerciseName: string; media?: ExerciseMedia }) {
+  if (media?.videoUrl) {
     return (
-      <span className="block size-16 flex-none overflow-hidden rounded-xl bg-[#1b1c1c]">
-        <img src={imageUrl} alt="" className="size-full object-cover" />
+      <span className="block h-20 w-24 flex-none overflow-hidden rounded-xl bg-[#1b1c1c]">
+        <video
+          src={media.videoUrl}
+          poster={media.imageUrl}
+          muted
+          playsInline
+          preload="metadata"
+          aria-label={`${exerciseName} exercise video`}
+          className="size-full object-cover"
+        />
+      </span>
+    );
+  }
+
+  if (media?.imageUrl) {
+    return (
+      <span className="block h-20 w-24 flex-none overflow-hidden rounded-xl bg-[#1b1c1c]">
+        <img src={media.imageUrl} alt="" className="size-full object-cover" />
       </span>
     );
   }
 
   return (
-    <span className="flex size-16 flex-none items-center justify-center rounded-xl bg-[#1b1c1c] text-lg font-black text-white">
+    <span className="flex h-20 w-24 flex-none items-center justify-center rounded-xl bg-[#1b1c1c] text-lg font-black text-white">
       {getExerciseInitials(exerciseName)}
     </span>
   );
 }
 
-function ExerciseHeroImage({ exerciseName, imageUrl }: { exerciseName: string; imageUrl?: string }) {
-  if (imageUrl) {
-    return <img src={imageUrl} alt="" className="absolute inset-0 size-full object-cover" />;
+function ExerciseHeroImage({ exerciseName, media }: { exerciseName: string; media?: ExerciseMedia }) {
+  if (media?.videoUrl) {
+    return (
+      <video
+        src={media.videoUrl}
+        poster={media.imageUrl}
+        controls
+        playsInline
+        preload="metadata"
+        aria-label={`${exerciseName} exercise video`}
+        className="absolute inset-0 size-full object-cover"
+      />
+    );
+  }
+
+  if (media?.imageUrl) {
+    return <img src={media.imageUrl} alt="" className="absolute inset-0 size-full object-cover" />;
   }
 
   return (

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
+import { getClientMe } from "./client-me-cache";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
@@ -102,20 +103,19 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
   useEffect(() => {
     let mounted = true;
 
-    async function loadCheckInContext() {
+    async function loadCheckInContext({ force = false }: { force?: boolean } = {}) {
       try {
-        const [response, roadmapResponse, weeklyCheckInResponse] = await Promise.all([
-          fetch("/api/v1/client/me"),
+        const [payload, roadmapResponse, weeklyCheckInResponse] = await Promise.all([
+          getClientMe<ClientMeResponse>({ force }),
           fetch("/api/v1/client/roadmap"),
           fetch("/api/v1/client/daily-check-in?kind=weekly")
         ]);
-        const [payload, roadmapPayload, weeklyCheckInPayload] = await Promise.all([
-          response.json().catch(() => null) as Promise<ClientMeResponse | null>,
+        const [roadmapPayload, weeklyCheckInPayload] = await Promise.all([
           roadmapResponse.json().catch(() => null) as Promise<{ data?: ClientRoadmapPhase[] } | null>,
           weeklyCheckInResponse.json().catch(() => null) as Promise<CheckInAssignmentResponse | null>
         ]);
 
-        if (!response.ok || !payload?.data) {
+        if (!payload?.data) {
           throw new Error(payload?.error?.message ?? "Your check-in could not be loaded.");
         }
 
@@ -158,7 +158,7 @@ export function ClientDailyCheckInPage({ today = new Date().toISOString().slice(
 
     function reloadWhenVisible() {
       if (document.visibilityState === "visible") {
-        void loadCheckInContext();
+        void loadCheckInContext({ force: true });
       }
     }
 

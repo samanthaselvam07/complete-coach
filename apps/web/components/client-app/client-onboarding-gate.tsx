@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
+import { preloadClientMe } from "./client-me-cache";
 import { DailyCheckInFieldControl } from "./client-daily-check-in-form-page";
 
 interface OnboardingGateResponse {
@@ -94,6 +95,12 @@ export function ClientOnboardingGate({ children }: { children: React.ReactNode }
       document.removeEventListener("visibilitychange", refreshGateState);
     };
   }, []);
+
+  useEffect(() => {
+    if (loadState === "ready" && gateState && !gateState.payment.required && !gateState.questionnaire) {
+      preloadClientMe();
+    }
+  }, [gateState, loadState]);
 
   async function startCheckout() {
     try {

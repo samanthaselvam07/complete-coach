@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { clearClientMeCache } from "@/components/client-app/client-me-cache";
 import { ClientOnboardingGate } from "@/components/client-app/client-onboarding-gate";
 
 vi.mock("next/navigation", () => ({
@@ -9,6 +10,7 @@ vi.mock("next/navigation", () => ({
 
 describe("ClientOnboardingGate", () => {
   afterEach(() => {
+    clearClientMeCache();
     vi.unstubAllGlobals();
     vi.clearAllMocks();
   });

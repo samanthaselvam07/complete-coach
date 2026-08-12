@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
 import { saveClientActivityLog } from "./client-activity-log-actions";
+import { getClientMe } from "./client-me-cache";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
@@ -67,12 +68,11 @@ export function ClientSupplementsPage() {
   useEffect(() => {
     let mounted = true;
 
-    async function loadSupplements() {
+    async function loadSupplements({ force = false }: { force?: boolean } = {}) {
       try {
-        const response = await fetch("/api/v1/client/me");
-        const payload = (await response.json().catch(() => null)) as ClientMeResponse | null;
+        const payload = await getClientMe<ClientMeResponse>({ force });
 
-        if (!response.ok || !payload?.data) {
+        if (!payload?.data) {
           throw new Error(payload?.error?.message ?? "Your supplement stack could not be loaded.");
         }
 
@@ -97,7 +97,7 @@ export function ClientSupplementsPage() {
 
     const refreshSupplements = () => {
       if (document.visibilityState === "visible") {
-        void loadSupplements();
+        void loadSupplements({ force: true });
       }
     };
 

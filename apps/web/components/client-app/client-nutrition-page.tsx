@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
 import { saveClientActivityLog } from "./client-activity-log-actions";
+import { getClientMe } from "./client-me-cache";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
@@ -112,12 +113,11 @@ export function ClientNutritionPage() {
   useEffect(() => {
     let mounted = true;
 
-    async function loadClientNutrition() {
+    async function loadClientNutrition({ force = false }: { force?: boolean } = {}) {
       try {
-        const response = await fetch("/api/v1/client/me");
-        const payload = (await response.json().catch(() => null)) as ClientMeResponse | null;
+        const payload = await getClientMe<ClientMeResponse>({ force });
 
-        if (!response.ok || !payload?.data) {
+        if (!payload?.data) {
           throw new Error(payload?.error?.message ?? "Your nutrition plan could not be loaded.");
         }
 
@@ -154,7 +154,7 @@ export function ClientNutritionPage() {
 
     const refreshClientNutrition = () => {
       if (document.visibilityState === "visible") {
-        void loadClientNutrition();
+        void loadClientNutrition({ force: true });
       }
     };
 

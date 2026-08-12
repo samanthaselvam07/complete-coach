@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { clearClientMeCache } from "@/components/client-app/client-me-cache";
 import { ClientNutritionPage } from "@/components/client-app/client-nutrition-page";
 
 describe("ClientNutritionPage", () => {
   afterEach(() => {
+    clearClientMeCache();
     vi.unstubAllGlobals();
   });
 

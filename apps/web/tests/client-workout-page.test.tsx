@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { clearClientMeCache } from "@/components/client-app/client-me-cache";
 import { ClientWorkoutPage } from "@/components/client-app/client-workout-page";
 
 describe("ClientWorkoutPage", () => {
   afterEach(() => {
+    clearClientMeCache();
     vi.unstubAllGlobals();
   });
 
@@ -91,6 +93,13 @@ describe("ClientWorkoutPage", () => {
         });
       }
 
+      if (url === "/api/v1/exercises/exercise_leg_extension/media-url?type=video") {
+        return new Response(JSON.stringify({ data: { url: "https://example.com/leg-extension.mp4" } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
       return new Response(JSON.stringify({ error: { message: "Not found" } }), {
         status: 404,
         headers: { "Content-Type": "application/json" }
@@ -114,7 +123,12 @@ describe("ClientWorkoutPage", () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises/exercise_leg_extension/media-url?type=image");
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/exercises/exercise_leg_extension/media-url?type=video");
     });
+    expect(screen.getByLabelText("Seated Leg Extension exercise video")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Seated Leg Extension"));
+    expect(screen.queryByRole("button", { name: "Finish session" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Upper A" }));
 
@@ -224,7 +238,8 @@ describe("ClientWorkoutPage", () => {
 
     render(<ClientWorkoutPage />);
 
-    fireEvent.click(await screen.findByText("Seated Leg Extension"));
+    expect(await screen.findByText("Seated Leg Extension")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
 
     expect(screen.getByRole("button", { name: "Finish session" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Notes" }));
@@ -272,7 +287,8 @@ describe("ClientWorkoutPage", () => {
 
     render(<ClientWorkoutPage />);
 
-    fireEvent.click(await screen.findByText("Seated Leg Extension"));
+    expect(await screen.findByText("Seated Leg Extension")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
     expect(screen.getByLabelText("Set 1 reps")).toHaveValue("");
     fireEvent.change(screen.getByLabelText("Set 1 reps"), { target: { value: "17" } });
     fireEvent.change(screen.getByLabelText("Set 1 weight"), { target: { value: "45" } });

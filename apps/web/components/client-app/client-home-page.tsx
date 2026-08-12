@@ -5,6 +5,7 @@ import { ArrowRight, CalendarDays, Droplets, Dumbbell, TrendingUp, Utensils } fr
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
+import { getClientMe } from "./client-me-cache";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
@@ -84,12 +85,14 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
   useEffect(() => {
     let mounted = true;
 
-    async function loadClientHome() {
+    async function loadClientHome({ force = false }: { force?: boolean } = {}) {
       try {
-        const response = await fetch("/api/v1/client/me");
-        const payload = (await response.json().catch(() => null)) as ClientMeResponse | null;
+        const mePromise = getClientMe<ClientMeResponse>({ force });
+        const roadmapPromise = fetch("/api/v1/client/roadmap");
+        const weeklyCheckInPromise = fetch("/api/v1/client/daily-check-in?kind=weekly");
+        const payload = await mePromise;
 
-        if (!response.ok || !payload?.data) {
+        if (!payload?.data) {
           throw new Error(payload?.error?.message ?? "Your client dashboard could not be loaded.");
         }
 
@@ -102,9 +105,9 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
 
         const hydrationDate = getTodayDateValue(payload.data.client.timezone ?? undefined);
         const [roadmapResponse, hydrationResponse, weeklyCheckInResponse] = await Promise.all([
-          fetch("/api/v1/client/roadmap"),
+          roadmapPromise,
           fetch(`/api/v1/client/hydration?date=${hydrationDate}`),
-          fetch("/api/v1/client/daily-check-in?kind=weekly")
+          weeklyCheckInPromise
         ]);
         const [roadmapPayload, hydrationPayload, weeklyCheckInPayload] = await Promise.all([
           roadmapResponse.json().catch(() => null) as Promise<{ data?: RoadmapPhase[] } | null>,
@@ -141,7 +144,7 @@ export function ClientHomePage({ today = new Date().toISOString().slice(0, 10) }
 
     const refreshClientHome = () => {
       if (document.visibilityState === "visible") {
-        void loadClientHome();
+        void loadClientHome({ force: true });
       }
     };
 

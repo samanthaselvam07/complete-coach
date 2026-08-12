@@ -4,6 +4,7 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Dumbbell, Flag, Video } from "
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
+import { getClientMe } from "./client-me-cache";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
 interface ClientMeResponse {
@@ -54,18 +55,17 @@ export function ClientCalendarPage({ today = new Date().toISOString().slice(0, 1
   useEffect(() => {
     let mounted = true;
 
-    async function loadCalendar() {
+    async function loadCalendar({ force = false }: { force?: boolean } = {}) {
       try {
-        const [meResponse, roadmapResponse] = await Promise.all([
-          fetch("/api/v1/client/me"),
+        const [mePayload, roadmapResponse] = await Promise.all([
+          getClientMe<ClientMeResponse>({ force }),
           fetch("/api/v1/client/roadmap")
         ]);
-        const [mePayload, roadmapPayload] = await Promise.all([
-          meResponse.json().catch(() => null) as Promise<ClientMeResponse | null>,
+        const [roadmapPayload] = await Promise.all([
           roadmapResponse.json().catch(() => null) as Promise<{ data?: RoadmapPhase[] } | null>
         ]);
 
-        if (!meResponse.ok || !mePayload?.data) {
+        if (!mePayload?.data) {
           throw new Error(mePayload?.error?.message ?? "Your calendar could not be loaded.");
         }
 
