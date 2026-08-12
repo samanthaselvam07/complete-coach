@@ -59,6 +59,7 @@ const mocks = vi.hoisted(() => ({
       findMany: vi.fn()
     },
     checkIn: {
+      create: vi.fn(),
       findMany: vi.fn()
     },
     clientMeasurement: {
@@ -268,6 +269,22 @@ describe("client app APIs", () => {
         }
       }
     ]);
+    mocks.prisma.checkIn.create.mockResolvedValue({
+      id: "check_in_1",
+      organizationId: "org_1",
+      clientId: "client_1",
+      formSubmissionId: "submission_weekly_1",
+      type: "check-in",
+      status: CheckInStatus.PENDING_REVIEW,
+      dueAt: null,
+      submittedAt: now,
+      reviewedAt: null,
+      reviewedByUserId: null,
+      summary: null,
+      coachNotes: null,
+      createdAt: now,
+      updatedAt: now
+    });
     mocks.prisma.clientMeasurement.findMany.mockResolvedValue([
       {
         id: "metric_1",
@@ -911,6 +928,70 @@ describe("client app APIs", () => {
             fieldId: "body_weight",
             label: "Bodyweight"
           }
+        })
+      })
+    );
+  });
+
+  it("submits the signed-in client's weekly check-in and saves it for coach review", async () => {
+    mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(weeklyAssignmentRecord());
+    mocks.prisma.formSubmission.create.mockResolvedValueOnce({
+      id: "submission_weekly_1",
+      formId: "form_weekly",
+      formVersionId: "form_version_weekly",
+      assignmentId: "assignment_weekly_1",
+      clientId: "client_1",
+      answersJson: { weekly_notes: "Good week overall." },
+      status: FormSubmissionStatus.SUBMITTED,
+      submittedAt: now,
+      reviewedAt: null,
+      createdAt: now,
+      updatedAt: now,
+      client: { firstName: "Client", lastName: "One" },
+      form: { id: "form_weekly", name: "Weekly Review", type: FormType.CHECK_IN },
+      formVersion: {
+        id: "form_version_weekly",
+        formId: "form_weekly",
+        versionNumber: 1,
+        schemaJson: weeklyAssignmentRecord().formVersion.schemaJson,
+        uiJson: {},
+        publishedAt: now,
+        createdAt: now
+      }
+    });
+
+    const response = await postDailyCheckIn(
+      new Request("http://test.local/api/v1/client/daily-check-in?kind=weekly", {
+        method: "POST",
+        body: JSON.stringify({ answers: { weekly_notes: "Good week overall." } })
+      })
+    );
+    const payload = (await response.json()) as { data: { id: string; answers: { weekly_notes: string } } };
+
+    expect(response.status).toBe(201);
+    expect(payload.data.id).toBe("submission_weekly_1");
+    expect(payload.data.answers.weekly_notes).toBe("Good week overall.");
+    expect(mocks.prisma.formSubmission.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          formId: "form_weekly",
+          formVersionId: "form_version_weekly",
+          assignmentId: "assignment_weekly_1",
+          clientId: "client_1",
+          answersJson: { weekly_notes: "Good week overall." }
+        })
+      })
+    );
+    expect(mocks.prisma.formAssignment.update).not.toHaveBeenCalled();
+    expect(mocks.prisma.checkIn.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: "org_1",
+          clientId: "client_1",
+          formSubmissionId: "submission_weekly_1",
+          type: "check-in",
+          status: CheckInStatus.PENDING_REVIEW
         })
       })
     );

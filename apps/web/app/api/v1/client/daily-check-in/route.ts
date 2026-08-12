@@ -78,14 +78,6 @@ export async function POST(request: Request) {
       });
 
       if (assignment.form.type === FormType.CHECK_IN) {
-        await tx.formAssignment.update({
-          where: { id: assignment.id, organizationId: actor.organizationId },
-          data: {
-            status: FormAssignmentStatus.SUBMITTED,
-            completedAt: submittedAt
-          }
-        });
-
         await tx.checkIn.create({
           data: {
             organizationId: actor.organizationId,
