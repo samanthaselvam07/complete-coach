@@ -45,21 +45,23 @@ export async function POST(request: Request) {
       return errorResponse("invalid_state", "Cancelled assignments cannot be submitted.", 409);
     }
 
-    const definition = FormDefinitionSchema.parse(assignment.formVersion.schemaJson);
+    const definitionResult = FormDefinitionSchema.safeParse(assignment.formVersion.schemaJson);
     const submittedAt = new Date();
-    let measurements;
+    let measurements: ReturnType<typeof extractMeasurementsFromSubmission> = [];
 
-    try {
-      measurements = extractMeasurementsFromSubmission({
-        answers: input.answers,
-        clientId: actor.clientId,
-        definition,
-        organizationId: actor.organizationId,
-        sourceId: "pending",
-        submittedAt
-      });
-    } catch {
-      return errorResponse("validation_failed", "Metric answers must be valid finite numbers.", 422);
+    if (definitionResult.success) {
+      try {
+        measurements = extractMeasurementsFromSubmission({
+          answers: input.answers,
+          clientId: actor.clientId,
+          definition: definitionResult.data,
+          organizationId: actor.organizationId,
+          sourceId: "pending",
+          submittedAt
+        });
+      } catch {
+        return errorResponse("validation_failed", "Metric answers must be valid finite numbers.", 422);
+      }
     }
 
     const submission = await prisma.$transaction(async (tx) => {

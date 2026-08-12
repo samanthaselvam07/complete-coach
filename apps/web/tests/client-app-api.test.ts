@@ -1182,6 +1182,73 @@ describe("client app APIs", () => {
     );
   });
 
+  it("saves a weekly check-in even when the assigned form schema contains legacy fields", async () => {
+    const legacyAssignment = weeklyAssignmentRecord();
+    legacyAssignment.formVersion.schemaJson = {
+      title: "Weekly Review",
+      fields: [
+        {
+          id: "Progress photos",
+          type: "file-upload",
+          label: "Progress photos",
+          required: true,
+          exportPolicy: "private"
+        },
+        {
+          id: "weekly_notes",
+          type: "long-text",
+          label: "Weekly notes",
+          required: true,
+          exportPolicy: "private"
+        }
+      ]
+    };
+    mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(legacyAssignment);
+    mocks.prisma.formSubmission.create.mockResolvedValueOnce({
+      id: "submission_weekly_legacy",
+      formId: "form_weekly",
+      formVersionId: "form_version_weekly",
+      assignmentId: "assignment_weekly_1",
+      clientId: "client_1",
+      answersJson: { "Progress photos": "uploaded", weekly_notes: "Good week overall." },
+      status: FormSubmissionStatus.SUBMITTED,
+      submittedAt: now,
+      reviewedAt: null,
+      createdAt: now,
+      updatedAt: now,
+      client: { firstName: "Client", lastName: "One" },
+      form: { id: "form_weekly", name: "Weekly Review", type: FormType.CHECK_IN },
+      formVersion: {
+        id: "form_version_weekly",
+        formId: "form_weekly",
+        versionNumber: 1,
+        schemaJson: legacyAssignment.formVersion.schemaJson,
+        uiJson: {},
+        publishedAt: now,
+        createdAt: now
+      }
+    });
+
+    const response = await postDailyCheckIn(
+      new Request("http://test.local/api/v1/client/daily-check-in?kind=weekly", {
+        method: "POST",
+        body: JSON.stringify({ answers: { "Progress photos": "uploaded", weekly_notes: "Good week overall." } })
+      })
+    );
+    const payload = (await response.json()) as { data: { id: string } };
+
+    expect(response.status).toBe(201);
+    expect(payload.data.id).toBe("submission_weekly_legacy");
+    expect(mocks.prisma.formSubmission.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          answersJson: { "Progress photos": "uploaded", weekly_notes: "Good week overall." }
+        })
+      })
+    );
+    expect(mocks.prisma.clientMeasurement.upsert).not.toHaveBeenCalled();
+  });
+
   it("returns the signed-in client's roadmap phases from their coach profile", async () => {
     const response = await getClientRoadmap();
     const payload = (await response.json()) as {
