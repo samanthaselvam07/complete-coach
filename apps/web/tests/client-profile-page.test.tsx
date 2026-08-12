@@ -570,9 +570,9 @@ function mockMarcusProfile(
                 formType: "habit-tracker",
                 submittedAt: "2026-08-03T07:30:00.000Z",
                 answers: {
-                  "preset-habit-body-weight-1": 81.7,
+                  notes: "Good recovery.",
                   "preset-habit-steps-11": 9800,
-                  notes: "Good recovery."
+                  "preset-habit-body-weight-1": 81.7
                 },
                 formVersion: {
                   schema: {
@@ -2364,6 +2364,10 @@ describe("ClientProfilePage", () => {
     expect(screen.getByRole("columnheader", { name: "Average" })).toBeInTheDocument();
     expect(within(dailyHabitsTable).getByText("Body Weight")).toBeInTheDocument();
     expect(screen.queryByText("Preset Habit Body Weight 1")).not.toBeInTheDocument();
+    const dailyHabitRows = within(dailyHabitsTable).getAllByRole("row").map((row) => row.textContent ?? "");
+    expect(dailyHabitRows[1]).toContain("Body Weight");
+    expect(dailyHabitRows[2]).toContain("Steps");
+    expect(dailyHabitRows[3]).toContain("Notes");
     expect(within(dailyHabitsTable).getByText("81.7")).toBeInTheDocument();
     expect(within(dailyHabitsTable).getByText("82.1")).toBeInTheDocument();
     expect(within(dailyHabitsTable).getByText("81.9")).toBeInTheDocument();

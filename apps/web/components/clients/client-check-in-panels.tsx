@@ -297,9 +297,17 @@ function buildDailyAnswerRows(submissions: ApiDailySubmissionRecord[], weekStart
       return;
     }
 
+    const answers = submission.answers;
     const schemaFields = getSubmissionSchemaFields(submission.formVersion?.schema);
     const schemaFieldsById = new Map(schemaFields.map((field) => [field.id, field]));
-    const answerEntries = Object.entries(submission.answers).filter(([, value]) => value !== undefined && value !== null && value !== "");
+    const schemaFieldIds = new Set(schemaFields.map((field) => field.id));
+    const schemaAnswerEntries = schemaFields
+      .filter((field) => hasDisplayableAnswer(answers, field.id))
+      .map((field) => [field.id, answers[field.id]] as const);
+    const fallbackAnswerEntries = Object.entries(answers).filter(
+      ([fieldId, value]) => !schemaFieldIds.has(fieldId) && isDisplayableAnswer(value)
+    );
+    const answerEntries = [...schemaAnswerEntries, ...fallbackAnswerEntries];
 
     answerEntries.forEach(([fieldId, value]) => {
       const field = schemaFieldsById.get(fieldId);
@@ -316,6 +324,14 @@ function buildDailyAnswerRows(submissions: ApiDailySubmissionRecord[], weekStart
   });
 
   return Array.from(rows.values());
+}
+
+function hasDisplayableAnswer(answers: Record<string, unknown>, fieldId: string) {
+  return Object.prototype.hasOwnProperty.call(answers, fieldId) && isDisplayableAnswer(answers[fieldId]);
+}
+
+function isDisplayableAnswer(value: unknown) {
+  return value !== undefined && value !== null && value !== "";
 }
 
 function getSubmissionSchemaFields(schema: unknown): FormFieldDefinition[] {
