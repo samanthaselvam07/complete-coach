@@ -1382,7 +1382,7 @@ model Form {
   name             String
   description      String?          @db.Text
   type             FormType
-  status           FormStatus       @default(DRAFT)
+  status           FormStatus       @default(PUBLISHED)
   shareSlug        String           @default(cuid()) @map("share_slug")
   currentVersionId String?          @unique @map("current_version_id")
   createdByUserId  String?          @map("created_by_user_id")

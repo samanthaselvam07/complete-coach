@@ -1,3 +1,4 @@
+import { FormStatus } from "@/app/generated/prisma/enums";
 import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
@@ -18,6 +19,12 @@ export async function POST(request: Request, context: FormAssignmentRouteContext
         id: formId,
         organizationId: actor.organizationId,
         deletedAt: null
+      },
+      include: {
+        versions: {
+          orderBy: { versionNumber: "desc" },
+          take: 1
+        }
       }
     });
 
@@ -25,10 +32,10 @@ export async function POST(request: Request, context: FormAssignmentRouteContext
       return errorResponse("not_found", "Form not found.", 404);
     }
 
-    const formVersionId = input.formVersionId ?? form.currentVersionId;
+    const formVersionId = input.formVersionId ?? form.currentVersionId ?? form.versions?.[0]?.id;
 
     if (!formVersionId) {
-      return errorResponse("form_not_published", "Form must be published before assignment.", 409);
+      return errorResponse("form_version_required", "Form fields must be saved before assignment.", 409);
     }
 
     const version = await prisma.formVersion.findFirst({
@@ -43,8 +50,23 @@ export async function POST(request: Request, context: FormAssignmentRouteContext
       return errorResponse("not_found", "Form version not found.", 404);
     }
 
-    if (!version.publishedAt) {
-      return errorResponse("form_version_not_published", "Form version must be published before assignment.", 409);
+    if (!version.publishedAt || form.currentVersionId !== version.id || form.status !== FormStatus.PUBLISHED) {
+      await prisma.$transaction(async (tx) => {
+        if (!version.publishedAt) {
+          await tx.formVersion.update({
+            where: { id: version.id, organizationId: actor.organizationId },
+            data: { publishedAt: new Date() }
+          });
+        }
+
+        await tx.form.update({
+          where: { id: formId, organizationId: actor.organizationId },
+          data: {
+            currentVersionId: version.id,
+            status: FormStatus.PUBLISHED
+          }
+        });
+      });
     }
 
     const client = await prisma.client.findFirst({

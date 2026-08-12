@@ -230,7 +230,7 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
     });
   };
 
-  const saveDraft = async () => {
+  const saveForm = async () => {
     setSaving(true);
     setStatusMessage(null);
     setErrorMessage(null);
@@ -238,12 +238,17 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
     try {
       const savedForm = await ensureFormContainer();
       const savedVersion = await createFormVersion(savedForm.id);
+      const publishedForm: PersistedFormSummary = {
+        ...savedForm,
+        status: "published",
+        currentVersionId: savedVersion.id
+      };
 
-      setPersistedForm(savedForm);
-      onPersistedForm(savedForm);
-      setStatusMessage("Draft saved.");
+      setPersistedForm(publishedForm);
+      onPersistedForm(publishedForm);
+      setStatusMessage("Form saved.");
 
-      return { form: savedForm, version: savedVersion };
+      return { form: publishedForm, version: savedVersion };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Form could not be saved.";
       setErrorMessage(message);
@@ -254,9 +259,9 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
   };
 
   const saveAndClose = async () => {
-    const draft = await saveDraft();
+    const savedForm = await saveForm();
 
-    if (draft) {
+    if (savedForm) {
       onBack();
     }
   };
@@ -268,7 +273,7 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
       name: normalizedTitle,
       description: normalizedDescription || undefined,
       type: getApiFormType(templateType),
-      status: persistedForm?.status ?? "draft"
+      status: "published"
     };
 
     const response = await fetch(persistedForm ? `/api/v1/forms/${persistedForm.id}` : "/api/v1/forms", {
@@ -337,7 +342,7 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
           <div>
             <h1 className="text-lg font-bold">Form Builder</h1>
             <div className="flex items-center gap-2 text-xs text-gray-500">
-              <span>Drafts</span>
+              <span>Forms</span>
               <span>/</span>
               <span className="text-indigo-600">{templateName}</span>
             </div>
@@ -477,7 +482,7 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
               type="button"
               disabled={saving}
               className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
-              onClick={saveDraft}
+              onClick={saveForm}
             >
               {saving ? "Saving..." : "Save"}
             </button>

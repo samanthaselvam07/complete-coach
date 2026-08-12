@@ -1,3 +1,4 @@
+import { FormStatus } from "@/app/generated/prisma/enums";
 import { auth } from "@/auth";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
@@ -36,15 +37,28 @@ export async function POST(request: Request, context: FormVersionRouteContext) {
     });
     const versionNumber = (versionAggregate._max.versionNumber ?? 0) + 1;
 
-    const version = await prisma.formVersion.create({
-      data: {
-        organizationId: actor.organizationId,
-        formId,
-        versionNumber,
-        schemaJson: input.schema as InputJsonValue,
-        ...(input.ui ? { uiJson: input.ui as InputJsonValue } : {}),
-        createdByUserId: actor.userId
-      }
+    const version = await prisma.$transaction(async (tx) => {
+      const publishedVersion = await tx.formVersion.create({
+        data: {
+          organizationId: actor.organizationId,
+          formId,
+          versionNumber,
+          schemaJson: input.schema as InputJsonValue,
+          ...(input.ui ? { uiJson: input.ui as InputJsonValue } : {}),
+          publishedAt: new Date(),
+          createdByUserId: actor.userId
+        }
+      });
+
+      await tx.form.update({
+        where: { id: formId, organizationId: actor.organizationId },
+        data: {
+          currentVersionId: publishedVersion.id,
+          status: FormStatus.PUBLISHED
+        }
+      });
+
+      return publishedVersion;
     });
 
     try {

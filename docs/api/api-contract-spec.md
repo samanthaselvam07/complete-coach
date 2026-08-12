@@ -145,8 +145,8 @@ Roster status display treats `new` clients as new for three days from creation; 
 - `GET /api/v1/forms/respond/{share_slug}`: public, unauthenticated endpoint that returns the latest saved form version for a share URL so recipients can fill out the form.
 - `POST /api/v1/forms/respond/{share_slug}`: public, unauthenticated endpoint that accepts `answers` for the shared form. When a name or email can be extracted, the submission creates or updates an organization-scoped CRM lead and records a lead activity.
 - `GET /api/v1/forms/{form_id}`: returns one active-organization form plus immutable versions.
-- `PATCH /api/v1/forms/{form_id}`: updates mutable metadata only. Body: any explicit subset of `name`, `description`, `type`, `status`.
-- `POST /api/v1/forms/{form_id}/versions`: creates the next immutable version. Body: validated `schema`, optional `ui`. Draft schemas may contain an empty `fields` array so coaches can save blank forms started from scratch.
+- `PATCH /api/v1/forms/{form_id}`: updates mutable metadata only. Body: any explicit subset of `name`, `description`, `type`, `status`. Legacy `draft` status payloads are accepted but normalized to `published`.
+- `POST /api/v1/forms/{form_id}/versions`: creates the next immutable published version, sets it as the current version, and keeps the parent form published. Body: validated `schema`, optional `ui`. Blank schemas may contain an empty `fields` array so coaches can save blank forms started from scratch.
 - Form version field `type` values include `short-text`, `long-text`, `content-block`, `number`, `scale`, `multiple-choice`, `radio-buttons`, `dropdown`, `rating-10`, `checkbox`, `date`, `time`, `email`, `phone`, and `photo`.
 - `POST /api/v1/forms/{form_id}/publish`: publishes a version and sets `current_version_id`. Body: `formVersionId`.
 - `POST /api/v1/forms/{form_id}/assignments`: assigns a published version to a scoped client. Body: `clientId`, optional `formVersionId`, optional `dueAt`.

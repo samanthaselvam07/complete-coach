@@ -70,7 +70,7 @@ const formRecord = {
   name: "Weekly Check-In",
   description: "Weekly client review",
   type: FormType.CHECK_IN,
-  status: FormStatus.DRAFT,
+  status: FormStatus.PUBLISHED,
   currentVersionId: null,
   shareSlug: "weekly-check-in-share",
   createdAt: new Date("2026-05-14T00:00:00.000Z"),
@@ -284,7 +284,8 @@ describe("forms API", () => {
         data: expect.objectContaining({
           organizationId: "org_1",
           createdByUserId: "user_1",
-          type: FormType.CHECK_IN
+          type: FormType.CHECK_IN,
+          status: FormStatus.PUBLISHED
         })
       })
     );
@@ -294,6 +295,32 @@ describe("forms API", () => {
           action: "form.created",
           organizationId: "org_1",
           targetId: "form_1"
+        })
+      })
+    );
+  });
+
+  it("normalizes legacy draft create payloads to published forms", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.form.create.mockResolvedValue(formRecord);
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await postForm(
+      new Request("http://test.local/api/v1/forms", {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Legacy Draft Payload",
+          type: "intake",
+          status: "draft"
+        })
+      })
+    );
+
+    expect(response.status).toBe(201);
+    expect(mocks.prisma.form.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: FormStatus.PUBLISHED
         })
       })
     );
@@ -442,6 +469,29 @@ describe("forms API", () => {
     );
   });
 
+  it("normalizes legacy draft update payloads to published forms", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.form.findFirst.mockResolvedValue(formRecord);
+    mocks.prisma.form.update.mockResolvedValue({ ...formRecord, status: FormStatus.PUBLISHED });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await patchForm(
+      new Request("http://test.local/api/v1/forms/form_1", {
+        method: "PATCH",
+        body: JSON.stringify({ status: "draft" })
+      }),
+      { params: Promise.resolve({ formId: "form_1" }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.form.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { status: FormStatus.PUBLISHED },
+        where: { id: "form_1", organizationId: "org_1" }
+      })
+    );
+  });
+
   it("returns not found when updating a form outside the active organization", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.form.findFirst.mockResolvedValue(null);
@@ -547,7 +597,7 @@ describe("forms API", () => {
     );
   });
 
-  it("allows blank draft form versions with no fields", async () => {
+  it("allows blank published form versions with no fields", async () => {
     const blankDefinition = {
       title: "Blank Intake",
       description: "Start from scratch",
@@ -563,8 +613,12 @@ describe("forms API", () => {
       versionNumber: 1,
       schemaJson: blankDefinition,
       uiJson: null,
-      publishedAt: null,
+      publishedAt: new Date("2026-05-14T00:00:00.000Z"),
       createdAt: new Date("2026-05-14T00:00:00.000Z")
+    });
+    mocks.prisma.form.update.mockResolvedValue({
+      ...formRecord,
+      currentVersionId: "version_blank"
     });
     mocks.prisma.auditLog.create.mockResolvedValue({});
 
@@ -581,8 +635,17 @@ describe("forms API", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           organizationId: "org_1",
-          schemaJson: blankDefinition
+          schemaJson: blankDefinition,
+          publishedAt: expect.any(Date)
         })
+      })
+    );
+    expect(mocks.prisma.form.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          currentVersionId: "version_blank",
+          status: FormStatus.PUBLISHED
+        }
       })
     );
   });
@@ -796,7 +859,59 @@ describe("forms API", () => {
     );
   });
 
-  it("does not assign an unpublished form", async () => {
+  it("uses the latest saved version when the current form version pointer is missing", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.form.findFirst.mockResolvedValue({
+      ...formRecord,
+      currentVersionId: null,
+      versions: [{ id: "version_latest" }]
+    });
+    mocks.prisma.formVersion.findFirst.mockResolvedValue({
+      id: "version_latest",
+      formId: "form_1",
+      publishedAt: new Date("2026-05-14T00:00:00.000Z")
+    });
+    mocks.prisma.form.update.mockResolvedValue({ ...formRecord, currentVersionId: "version_latest" });
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.formAssignment.create.mockResolvedValue({
+      id: "assignment_latest",
+      formId: "form_1",
+      formVersionId: "version_latest",
+      clientId: "client_1",
+      status: "assigned",
+      dueAt: null,
+      completedAt: null,
+      createdAt: new Date("2026-05-14T00:00:00.000Z")
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await postFormAssignment(
+      new Request("http://test.local/api/v1/forms/form_1/assignments", {
+        method: "POST",
+        body: JSON.stringify({ clientId: "client_1" })
+      }),
+      { params: Promise.resolve({ formId: "form_1" }) }
+    );
+
+    expect(response.status).toBe(201);
+    expect(mocks.prisma.form.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          currentVersionId: "version_latest",
+          status: FormStatus.PUBLISHED
+        }
+      })
+    );
+    expect(mocks.prisma.formAssignment.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          formVersionId: "version_latest"
+        })
+      })
+    );
+  });
+
+  it("does not assign a form with no saved version", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.form.findFirst.mockResolvedValue({
       ...formRecord,
@@ -854,7 +969,7 @@ describe("forms API", () => {
     expect(mocks.prisma.formAssignment.create).not.toHaveBeenCalled();
   });
 
-  it("does not assign an unpublished form version", async () => {
+  it("publishes an old unpublished form version before assignment", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.form.findFirst.mockResolvedValue({
       ...formRecord,
@@ -866,6 +981,20 @@ describe("forms API", () => {
       formId: "form_1",
       publishedAt: null
     });
+    mocks.prisma.formVersion.update.mockResolvedValue({});
+    mocks.prisma.form.update.mockResolvedValue({ ...formRecord, currentVersionId: "version_1" });
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.formAssignment.create.mockResolvedValue({
+      id: "assignment_recovered",
+      formId: "form_1",
+      formVersionId: "version_1",
+      clientId: "client_1",
+      status: "assigned",
+      dueAt: null,
+      completedAt: null,
+      createdAt: new Date("2026-05-14T00:00:00.000Z")
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
 
     const response = await postFormAssignment(
       new Request("http://test.local/api/v1/forms/form_1/assignments", {
@@ -875,9 +1004,19 @@ describe("forms API", () => {
       { params: Promise.resolve({ formId: "form_1" }) }
     );
 
-    expect(response.status).toBe(409);
-    expect(mocks.prisma.client.findFirst).not.toHaveBeenCalled();
-    expect(mocks.prisma.formAssignment.create).not.toHaveBeenCalled();
+    expect(response.status).toBe(201);
+    expect(mocks.prisma.formVersion.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { publishedAt: expect.any(Date) }
+      })
+    );
+    expect(mocks.prisma.formAssignment.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          formVersionId: "version_1"
+        })
+      })
+    );
   });
 
   it("does not assign forms to clients outside the active organization scope", async () => {

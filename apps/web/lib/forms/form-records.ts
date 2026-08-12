@@ -60,7 +60,7 @@ const formMetadataSchema = z.object({
 });
 
 export const createFormSchema = formMetadataSchema.extend({
-  status: z.enum(formStatusValues).default("draft")
+  status: z.enum(formStatusValues).default("published")
 });
 
 export const updateFormSchema = formMetadataSchema
@@ -132,6 +132,14 @@ export function toPrismaFormStatus(status: ApiFormStatus) {
   return statusToPrisma[status];
 }
 
+export function toWritablePrismaFormStatus(status: ApiFormStatus | undefined) {
+  if (!status || status === "draft") {
+    return FormStatus.PUBLISHED;
+  }
+
+  return toPrismaFormStatus(status);
+}
+
 export function buildFormWhere(organizationId: string, query: FormListQuery) {
   const filters = [
     query.status === "published"
@@ -169,7 +177,7 @@ export function getFormCreateData(organizationId: string, userId: string, input:
     name: input.name,
     description: input.description,
     type: toPrismaFormType(input.type),
-    status: toPrismaFormStatus(input.status)
+    status: toWritablePrismaFormStatus(input.status)
   };
 }
 
@@ -178,7 +186,7 @@ export function getFormUpdateData(input: UpdateFormInput) {
     ...(input.name ? { name: input.name } : {}),
     ...(input.description !== undefined ? { description: input.description } : {}),
     ...(input.type ? { type: toPrismaFormType(input.type) } : {}),
-    ...(input.status ? { status: toPrismaFormStatus(input.status) } : {})
+    ...(input.status ? { status: toWritablePrismaFormStatus(input.status) } : {})
   };
 }
 

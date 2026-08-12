@@ -20,7 +20,7 @@ export interface PersistedFormSummary {
   name: string;
   description: string | null;
   type: PersistedFormType;
-  status: "draft" | "published" | "archived";
+  status: "published" | "archived";
   shareSlug?: string | null;
   shareUrlPath?: string | null;
   currentVersionId: string | null;

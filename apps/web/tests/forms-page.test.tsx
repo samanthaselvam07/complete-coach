@@ -328,7 +328,7 @@ describe("FormsPage", () => {
               name: "Morning Habit Tracker",
               description: null,
               type: "habit-tracker",
-              status: "draft",
+              status: "published",
               currentVersionId: null,
               updatedAt: "2026-05-15T00:00:00.000Z",
               createdAt: "2026-05-15T00:00:00.000Z"
@@ -338,7 +338,7 @@ describe("FormsPage", () => {
               name: "Coaching Application",
               description: null,
               type: "application",
-              status: "draft",
+              status: "published",
               currentVersionId: null,
               updatedAt: "2026-05-16T00:00:00.000Z",
               createdAt: "2026-05-16T00:00:00.000Z"
@@ -348,7 +348,7 @@ describe("FormsPage", () => {
               name: "Website Contact Form",
               description: null,
               type: "contact",
-              status: "draft",
+              status: "published",
               currentVersionId: null,
               updatedAt: "2026-05-17T00:00:00.000Z",
               createdAt: "2026-05-17T00:00:00.000Z"
@@ -465,7 +465,7 @@ describe("FormsPage", () => {
     expect(screen.queryByText("Weekly Performance Log")).not.toBeInTheDocument();
   });
 
-  it("saves a draft form and immutable version through the persistence API", async () => {
+  it("saves a published form and immutable version through the persistence API", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
@@ -477,7 +477,7 @@ describe("FormsPage", () => {
               name: "Custom Intake",
               description: "Custom description",
               type: "intake",
-              status: "draft",
+              status: "published",
               currentVersionId: null,
               createdAt: "2026-05-14T00:00:00.000Z",
               updatedAt: "2026-05-14T00:00:00.000Z"
@@ -510,7 +510,7 @@ describe("FormsPage", () => {
     fireEvent.change(screen.getByLabelText("Form description"), { target: { value: "Custom description" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
+    expect(await screen.findByText("Form saved.")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(screen.getByRole("heading", { level: 1, name: "Form Builder" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 1, name: "Create a New Form" })).not.toBeInTheDocument();
@@ -518,7 +518,14 @@ describe("FormsPage", () => {
       "/api/v1/forms",
       expect.objectContaining({
         method: "POST",
-        body: expect.stringContaining("Custom Intake")
+        body: expect.stringContaining("\"status\":\"published\"")
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/forms",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.not.stringContaining("\"status\":\"draft\"")
       })
     );
     expect(fetchMock).toHaveBeenCalledWith(
@@ -542,7 +549,7 @@ describe("FormsPage", () => {
               name: "Choice Intake",
               description: "Choice description",
               type: "intake",
-              status: "draft",
+              status: "published",
               currentVersionId: null,
               createdAt: "2026-05-14T00:00:00.000Z",
               updatedAt: "2026-05-14T00:00:00.000Z"
@@ -577,7 +584,7 @@ describe("FormsPage", () => {
     fireEvent.change(screen.getByLabelText("Option 1"), { target: { value: "  " } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
+    expect(await screen.findByText("Form saved.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/forms/form_choice_1/versions",
       expect.objectContaining({
@@ -599,7 +606,7 @@ describe("FormsPage", () => {
               name: "Blank Label Intake",
               description: null,
               type: "intake",
-              status: "draft",
+              status: "published",
               currentVersionId: null,
               createdAt: "2026-05-14T00:00:00.000Z",
               updatedAt: "2026-05-14T00:00:00.000Z"
@@ -634,7 +641,7 @@ describe("FormsPage", () => {
     fireEvent.change(screen.getByLabelText("Field label"), { target: { value: "  " } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
+    expect(await screen.findByText("Form saved.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/forms/form_blank_label_1/versions",
       expect.objectContaining({
@@ -662,7 +669,7 @@ describe("FormsPage", () => {
               name: "Application Form",
               description: "Application description",
               type: "application",
-              status: "draft",
+              status: "published",
               shareSlug: "application-form",
               shareUrlPath: "/forms/respond/application-form",
               currentVersionId: null,
@@ -729,7 +736,7 @@ describe("FormsPage", () => {
                 name: "Persisted Weekly Check-In",
                 description: "Persisted description",
                 type: "check-in",
-                status: "draft",
+                status: "published",
                 currentVersionId: null,
                 updatedAt: "not-a-date",
                 createdAt: "2026-05-14T00:00:00.000Z"
@@ -747,7 +754,7 @@ describe("FormsPage", () => {
               name: "Persisted Weekly Check-In",
               description: "Persisted description",
               type: "check-in",
-              status: "draft",
+              status: "published",
               currentVersionId: null,
               updatedAt: "not-a-date",
               createdAt: "2026-05-14T00:00:00.000Z",
@@ -787,7 +794,7 @@ describe("FormsPage", () => {
               name: "Updated Persisted Form",
               description: "Persisted description",
               type: "check-in",
-              status: "draft",
+              status: "published",
               currentVersionId: null,
               updatedAt: "2026-05-14T00:00:00.000Z",
               createdAt: "2026-05-14T00:00:00.000Z"
@@ -824,7 +831,7 @@ describe("FormsPage", () => {
     fireEvent.change(screen.getByLabelText("Field label"), { target: { value: "Updated saved field" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
+    expect(await screen.findByText("Form saved.")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/forms/form_api_1",
@@ -854,7 +861,7 @@ describe("FormsPage", () => {
                 name: "Saved Intake",
                 description: "Saved metadata description",
                 type: "intake",
-                status: "draft",
+                status: "published",
                 currentVersionId: null,
                 updatedAt: "2026-05-14T00:00:00.000Z",
                 createdAt: "2026-05-14T00:00:00.000Z"
@@ -872,7 +879,7 @@ describe("FormsPage", () => {
               name: "Saved Intake",
               description: "Saved metadata description",
               type: "intake",
-              status: "draft",
+              status: "published",
               currentVersionId: null,
               updatedAt: "2026-05-14T00:00:00.000Z",
               createdAt: "2026-05-14T00:00:00.000Z",
@@ -953,7 +960,7 @@ describe("FormsPage", () => {
               name: "Custom Intake",
               description: "Custom description",
               type: "intake",
-              status: "draft",
+              status: "published",
               currentVersionId: null,
               createdAt: "2026-05-14T00:00:00.000Z",
               updatedAt: "2026-05-14T00:00:00.000Z"

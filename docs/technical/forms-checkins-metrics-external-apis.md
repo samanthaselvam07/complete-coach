@@ -3,10 +3,10 @@
 Ticket 013 / M4 turns the fixture-backed forms and check-in UI into a persistent workflow and exposes de-identified analytics data to external analysis systems.
 
 ## Current State
-- `/forms` now loads persisted forms from `/api/v1/forms`, can save drafts, publish forms, and assign published forms to clients. When the persistence API is unavailable, it renders an empty/error state rather than local demo forms.
+- `/forms` now loads persisted forms from `/api/v1/forms`, saves forms as published by default, and assigns published forms to clients. When the persistence API is unavailable, it renders an empty/error state rather than local demo forms.
 - `/clients/check-ins` now loads persisted check-ins from `/api/v1/check-ins`, opens persisted submission details, and supports review/complete actions. When the persistence API is unavailable, it renders an empty/error state rather than local demo check-ins.
 - Prisma has auth, tenancy, clients, client profiles, leads, lead activities, forms, form versions, assignments, submissions, check-ins, measurements, external API keys, export jobs, webhook endpoints, and webhook deliveries.
-- Internal forms APIs now exist for form containers, immutable versions, publishing, and assignments.
+- Internal forms APIs now exist for form containers, immutable versions, publishing, and assignments. Draft form writes are normalized to published so created forms remain active/visible.
 - Existing role capabilities already include `forms:*`, `submissions:*`, `metrics:read`, `api_keys:manage`, and `exports:read`.
 
 ## Ticket 013A Outcome
@@ -43,10 +43,10 @@ Delivered:
 - `/forms` management list now prefers persisted forms from `GET /api/v1/forms?limit=20`.
 - Fixture-backed recent forms remain visible only when the persistence API is unavailable.
 - Form builder now edits title and description instead of hardcoded metadata.
-- Save draft creates or updates the form container, then creates an immutable form version.
-- Publish saves the current draft version, then calls the publish endpoint and updates local persisted state.
+- Saving creates or updates the form container as published, then creates and publishes an immutable form version.
+- The publish endpoint remains for compatibility, but the builder no longer leaves saved forms in draft state.
 - Assignment loads clients from `GET /api/v1/clients?limit=100` and assigns a published current version to the selected client.
-- Component tests cover API-backed forms, fallback behavior, draft save, publish, assignment, and existing local field interactions.
+- Component tests cover API-backed forms, fallback behavior, published saves, assignment, and existing local field interactions.
 
 ## Ticket 013D Outcome
 Completed on May 14, 2026.
@@ -254,8 +254,8 @@ Metric extraction rules:
 ## UI Wiring Plan
 Forms:
 - Load recent forms from `GET /api/v1/forms`.
-- Save builder drafts through `POST /api/v1/forms` and `POST /api/v1/forms/{form_id}/versions`.
-- Publish drafts through `POST /api/v1/forms/{form_id}/publish`.
+- Save builder forms as published through `POST /api/v1/forms` and `POST /api/v1/forms/{form_id}/versions`.
+- Keep `POST /api/v1/forms/{form_id}/publish` for compatibility and explicit republishing.
 - Assign published versions through `POST /api/v1/forms/{form_id}/assignments`.
 - Preview environments must apply the API schema and seed Neon data; runtime forms/check-in pages do not use local fixture fallback.
 
