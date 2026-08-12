@@ -15,7 +15,8 @@ describe("forms domain helpers", () => {
         {
           OR: [
             { status: FormStatus.PUBLISHED },
-            { currentVersion: { is: { publishedAt: { not: null } } } }
+            { currentVersion: { is: { publishedAt: { not: null } } } },
+            { versions: { some: { publishedAt: { not: null } } } }
           ]
         }
       ]

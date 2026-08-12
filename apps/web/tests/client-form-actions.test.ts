@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   assignSelectedClientForms,
   fetchAssignedClientFormIds,
+  fetchClientFormsByType,
   fetchClientFormOptionsFromUrls,
-  fetchPublishedClientFormsByType
 } from "@/components/clients/client-form-actions";
 import { createClientMutationBody, emptyClientForm } from "@/components/clients/client-form-dialog";
 
@@ -56,8 +56,8 @@ describe("client form actions", () => {
 
     await expect(
       fetchClientFormOptionsFromUrls([
-        "/api/v1/forms?type=intake&status=published&limit=100",
-        "/api/v1/forms?type=application&status=published&limit=100"
+        "/api/v1/forms?type=intake&limit=100",
+        "/api/v1/forms?type=application&limit=100"
       ])
     ).resolves.toEqual([
       { value: "form_intake", label: "Initial Q/A", currency: undefined },
@@ -87,11 +87,11 @@ describe("client form actions", () => {
     });
   });
 
-  it("loads published edit form options with explicit per-type lookups", async () => {
+  it("loads saved edit form options with explicit per-type lookups", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
       const url = String(input);
 
-      if (url === "/api/v1/forms?type=intake&status=published&limit=100") {
+      if (url === "/api/v1/forms?type=intake&limit=100") {
         return Promise.resolve(
           new Response(JSON.stringify({ data: [{ id: "form_initial_qa", name: "Initial Q&A Form", type: "intake" }] }), {
             status: 200
@@ -99,7 +99,7 @@ describe("client form actions", () => {
         );
       }
 
-      if (url === "/api/v1/forms?type=application&status=published&limit=100") {
+      if (url === "/api/v1/forms?type=application&limit=100") {
         return Promise.resolve(
           new Response(JSON.stringify({ data: [{ id: "form_application", name: "Application Form", type: "application" }] }), {
             status: 200
@@ -107,15 +107,15 @@ describe("client form actions", () => {
         );
       }
 
-      if (url === "/api/v1/forms?type=contact&status=published&limit=100") {
+      if (url === "/api/v1/forms?type=contact&limit=100") {
         return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
       }
 
-      if (url === "/api/v1/forms?type=terms-and-conditions&status=published&limit=100") {
+      if (url === "/api/v1/forms?type=terms-and-conditions&limit=100") {
         return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
       }
 
-      if (url === "/api/v1/forms?type=habit-tracker&status=published&limit=100") {
+      if (url === "/api/v1/forms?type=habit-tracker&limit=100") {
         return Promise.resolve(
           new Response(JSON.stringify({ data: [{ id: "form_daily", name: "Daily Check In", type: "habit-tracker" }] }), {
             status: 200
@@ -123,7 +123,7 @@ describe("client form actions", () => {
         );
       }
 
-      if (url === "/api/v1/forms?type=check-in&status=published&limit=100") {
+      if (url === "/api/v1/forms?type=check-in&limit=100") {
         return Promise.resolve(
           new Response(JSON.stringify({ data: [{ id: "form_weekly", name: "Weekly Check In", type: "check-in" }] }), {
             status: 200
@@ -134,7 +134,7 @@ describe("client form actions", () => {
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     });
 
-    await expect(fetchPublishedClientFormsByType()).resolves.toEqual({
+    await expect(fetchClientFormsByType()).resolves.toEqual({
       initialQuestionnaireOptions: [
         { value: "form_initial_qa", label: "Initial Q&A Form", currency: undefined },
         { value: "form_application", label: "Application Form", currency: undefined }

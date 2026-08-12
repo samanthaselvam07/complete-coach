@@ -26,8 +26,8 @@ import {
   fetchAssignedClientFormIds,
   fetchAssignedClientPlanIds,
   fetchCoachAssignmentOptions,
+  fetchClientFormsByType,
   fetchClientFormOptions,
-  fetchPublishedClientFormsByType,
   getProfileCheckInDays,
   scheduleAssignedPackagePaymentChange,
   toDateInputValue,
@@ -114,7 +114,7 @@ export function ClientsPage() {
         coaches
       ] = await Promise.all([
         fetchClientFormOptions("/api/v1/packages?status=active&limit=100"),
-        fetchPublishedClientFormsByType(),
+        fetchClientFormsByType(),
         fetchClientFormOptions("/api/v1/training-program-templates?limit=100"),
         fetchClientFormOptions("/api/v1/meal-plan-templates?limit=100"),
         fetchClientFormOptions("/api/v1/supplement-plan-templates?limit=100"),

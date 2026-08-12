@@ -300,15 +300,15 @@ describe("ClientsPage", () => {
         return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "package_premium", name: "Premium Package", currency: "aud" }] }), { status: 200 }));
       }
 
-      if (url === "/api/v1/forms?type=intake&status=published&limit=100") {
+      if (url === "/api/v1/forms?type=intake&limit=100") {
         return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "form_intake", name: "Initial Intake" }] }), { status: 200 }));
       }
 
-      if (url === "/api/v1/forms?type=habit-tracker&status=published&limit=100") {
+      if (url === "/api/v1/forms?type=habit-tracker&limit=100") {
         return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "form_habits", name: "Daily Habits" }] }), { status: 200 }));
       }
 
-      if (url === "/api/v1/forms?type=check-in&status=published&limit=100") {
+      if (url === "/api/v1/forms?type=check-in&limit=100") {
         return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "form_checkin", name: "Weekly Check-in" }] }), { status: 200 }));
       }
 
@@ -452,7 +452,14 @@ describe("ClientsPage", () => {
       "/api/v1/clients/client_api_1/profile",
       expect.objectContaining({
         method: "PATCH",
-        body: JSON.stringify({ dateOfBirth: "1992-06-14" })
+        body: expect.stringContaining("\"dateOfBirth\":\"1992-06-14\"")
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/clients/client_api_1/profile",
+      expect.objectContaining({
+        method: "PATCH",
+        body: expect.stringContaining("\"checkInDays\":[\"Wednesday\",\"Thursday\"]")
       })
     );
     expect(fetchMock).toHaveBeenCalledWith(

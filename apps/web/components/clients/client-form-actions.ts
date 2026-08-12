@@ -66,20 +66,20 @@ export async function fetchClientFormOptions(url: string): Promise<ClientFormOpt
   }
 }
 
-export async function fetchPublishedClientFormsByType() {
+export async function fetchClientFormsByType() {
   const [
     initialQuestionnaireOptions,
     dailyHabitFormOptions,
     checkInFormOptions
   ] = await Promise.all([
     fetchClientFormOptionsFromUrls([
-      "/api/v1/forms?type=intake&status=published&limit=100",
-      "/api/v1/forms?type=application&status=published&limit=100",
-      "/api/v1/forms?type=contact&status=published&limit=100",
-      "/api/v1/forms?type=terms-and-conditions&status=published&limit=100"
+      "/api/v1/forms?type=intake&limit=100",
+      "/api/v1/forms?type=application&limit=100",
+      "/api/v1/forms?type=contact&limit=100",
+      "/api/v1/forms?type=terms-and-conditions&limit=100"
     ]),
-    fetchClientFormOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
-    fetchClientFormOptions("/api/v1/forms?type=check-in&status=published&limit=100")
+    fetchClientFormOptions("/api/v1/forms?type=habit-tracker&limit=100"),
+    fetchClientFormOptions("/api/v1/forms?type=check-in&limit=100")
   ]);
 
   return {
@@ -88,6 +88,8 @@ export async function fetchPublishedClientFormsByType() {
     checkInFormOptions
   };
 }
+
+export const fetchPublishedClientFormsByType = fetchClientFormsByType;
 
 export async function fetchCoachAssignmentOptions(): Promise<ClientFormOption[]> {
   try {

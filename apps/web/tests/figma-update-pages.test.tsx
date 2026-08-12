@@ -554,19 +554,19 @@ function mockNewClientIntakeLookups(clientCreateResponse = new Response(JSON.str
       );
     }
 
-    if (url === "/api/v1/forms?type=intake&status=published&limit=100") {
+    if (url === "/api/v1/forms?type=intake&limit=100") {
       return Promise.resolve(
         new Response(JSON.stringify({ data: [{ id: "form_intake", name: "Transformation Intake" }] }), { status: 200 })
       );
     }
 
-    if (url === "/api/v1/forms?type=habit-tracker&status=published&limit=100") {
+    if (url === "/api/v1/forms?type=habit-tracker&limit=100") {
       return Promise.resolve(
         new Response(JSON.stringify({ data: [{ id: "form_habits", name: "Daily Basics" }] }), { status: 200 })
       );
     }
 
-    if (url === "/api/v1/forms?type=check-in&status=published&limit=100") {
+    if (url === "/api/v1/forms?type=check-in&limit=100") {
       return Promise.resolve(
         new Response(JSON.stringify({ data: [{ id: "form_checkin", name: "Weekly Review" }] }), { status: 200 })
       );

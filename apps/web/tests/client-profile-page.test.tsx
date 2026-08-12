@@ -705,27 +705,27 @@ function mockMarcusProfile(
       );
     }
 
-    if (url === "/api/v1/forms?type=intake&status=published&limit=100") {
+    if (url === "/api/v1/forms?type=intake&limit=100") {
       return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "form_initial_qa", name: "Initial Q&A Form" }] }), { status: 200 }));
     }
 
-    if (url === "/api/v1/forms?type=application&status=published&limit=100") {
+    if (url === "/api/v1/forms?type=application&limit=100") {
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     }
 
-    if (url === "/api/v1/forms?type=contact&status=published&limit=100") {
+    if (url === "/api/v1/forms?type=contact&limit=100") {
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     }
 
-    if (url === "/api/v1/forms?type=terms-and-conditions&status=published&limit=100") {
+    if (url === "/api/v1/forms?type=terms-and-conditions&limit=100") {
       return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
     }
 
-    if (url === "/api/v1/forms?type=habit-tracker&status=published&limit=100") {
+    if (url === "/api/v1/forms?type=habit-tracker&limit=100") {
       return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "form_daily_habits", name: "Daily Habit Form" }] }), { status: 200 }));
     }
 
-    if (url === "/api/v1/forms?type=check-in&status=published&limit=100") {
+    if (url === "/api/v1/forms?type=check-in&limit=100") {
       return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "form_check_in", name: "Weekly Check-In Form" }] }), { status: 200 }));
     }
 
@@ -1689,10 +1689,10 @@ describe("ClientProfilePage", () => {
     expect(await screen.findByRole("option", { name: "Initial Q&A Form" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Daily Habit Form" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Weekly Check-In Form" })).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=intake&status=published&limit=100");
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=application&status=published&limit=100");
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=habit-tracker&status=published&limit=100");
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=check-in&status=published&limit=100");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=intake&limit=100");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=application&limit=100");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=habit-tracker&limit=100");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/forms?type=check-in&limit=100");
     expect(screen.getByRole("button", { name: "Save client" })).toBeInTheDocument();
   });
 

@@ -51,13 +51,13 @@ export function NewClientIntakePage({ initialForm }: { initialForm?: IntakeIniti
       const [packages, intakeForms, habitForms, checkInForms] = await Promise.all([
         fetchLookupOptions("/api/v1/packages?status=active&limit=100"),
         fetchClientFormOptionsFromUrls([
-          "/api/v1/forms?type=intake&status=published&limit=100",
-          "/api/v1/forms?type=application&status=published&limit=100",
-          "/api/v1/forms?type=contact&status=published&limit=100",
-          "/api/v1/forms?type=terms-and-conditions&status=published&limit=100"
+          "/api/v1/forms?type=intake&limit=100",
+          "/api/v1/forms?type=application&limit=100",
+          "/api/v1/forms?type=contact&limit=100",
+          "/api/v1/forms?type=terms-and-conditions&limit=100"
         ]),
-        fetchLookupOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
-        fetchLookupOptions("/api/v1/forms?type=check-in&status=published&limit=100")
+        fetchLookupOptions("/api/v1/forms?type=habit-tracker&limit=100"),
+        fetchLookupOptions("/api/v1/forms?type=check-in&limit=100")
       ]);
 
       if (!active) {
