@@ -570,6 +570,34 @@ describe("client app APIs", () => {
     );
   });
 
+  it("accepts extensionless check-in photo filenames when the browser provides an allowed image type", async () => {
+    const uploadFetch = vi.fn(async () => new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", uploadFetch);
+
+    const response = await uploadClientCheckInPhoto(
+      new Request("http://test.local/api/v1/client/check-in-photo-upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "image/jpeg",
+          "x-filename": encodeURIComponent("check-in-photo")
+        },
+        body: new Blob(["photo-bytes"], { type: "image/jpeg" })
+      })
+    );
+    const payload = (await response.json()) as { data: { objectKey: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.objectKey).toMatch(
+      /^organizations\/org_1\/clients\/client_1\/check-ins\/photos\/[0-9a-fA-F-]{36}\.jpg$/
+    );
+    expect(uploadFetch).toHaveBeenCalledWith(
+      "https://r2.example/check-in-photo-upload",
+      expect.objectContaining({
+        headers: { "Content-Type": "image/jpeg" }
+      })
+    );
+  });
+
   it("creates a signed display URL for the signed-in client's uploaded check-in photo", async () => {
     const photoUrl = "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg";
     const response = await getClientCheckInPhotoUrl(

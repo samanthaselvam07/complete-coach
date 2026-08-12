@@ -12,6 +12,7 @@ interface DailyCheckInAssignmentResponse {
   data?: DailyCheckInAssignment | null;
   error?: {
     message?: string;
+    details?: unknown;
   };
 }
 
@@ -116,7 +117,7 @@ export function ClientDailyCheckInFormPage({ kind = "daily" }: { kind?: CheckInF
       const payload = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
 
       if (!response.ok) {
-        throw new Error(payload?.error?.message ?? `Your ${formLabel} could not be submitted.`);
+        throw new Error(formatApiErrorMessage(payload?.error, `Your ${formLabel} could not be submitted.`));
       }
 
       setSubmitState("submitted");
@@ -367,11 +368,12 @@ function FieldInput({
           };
           error?: {
             message?: string;
+            details?: unknown;
           };
         } | null;
 
         if (!response.ok || !payload?.data?.photoUrl) {
-          throw new Error(payload?.error?.message ?? "Photo could not be uploaded.");
+          throw new Error(formatApiErrorMessage(payload?.error, "Photo could not be uploaded."));
         }
 
         onChange({
@@ -450,7 +452,7 @@ function hasUploadedPhotoValue(value: unknown) {
 function getPhotoFileContentType(file: File) {
   const extension = file.name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
 
-  if (extension === "jpg" || extension === "jpeg") {
+  if (extension === "jpg" || extension === "jpeg" || extension === "jfif") {
     return "image/jpeg";
   }
 
@@ -481,6 +483,36 @@ function getPhotoFileContentType(file: File) {
   }
 
   return file.type || "application/octet-stream";
+}
+
+function formatApiErrorMessage(error: { message?: string; details?: unknown } | undefined, fallback: string) {
+  const fieldMessages = getFlattenedFieldMessages(error?.details);
+
+  if (fieldMessages.length > 0) {
+    return `${error?.message ?? fallback} ${fieldMessages.join(" ")}`;
+  }
+
+  return error?.message ?? fallback;
+}
+
+function getFlattenedFieldMessages(details: unknown) {
+  if (!details || typeof details !== "object" || Array.isArray(details)) {
+    return [];
+  }
+
+  const fieldErrors = (details as { fieldErrors?: unknown }).fieldErrors;
+
+  if (!fieldErrors || typeof fieldErrors !== "object" || Array.isArray(fieldErrors)) {
+    return [];
+  }
+
+  return Object.entries(fieldErrors)
+    .flatMap(([fieldName, messages]) =>
+      Array.isArray(messages)
+        ? messages.filter((message): message is string => typeof message === "string").map((message) => `${fieldName}: ${message}`)
+        : []
+    )
+    .slice(0, 3);
 }
 
 function DailyFormStatus({ message, tone = "default" }: { message: string; tone?: "default" | "error" }) {

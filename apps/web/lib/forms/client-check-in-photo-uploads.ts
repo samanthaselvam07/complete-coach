@@ -18,7 +18,7 @@ export const checkInPhotoObjectUrlPrefix = "r2://";
 
 export const checkInPhotoUploadSchema = z
   .object({
-    filename: z.string().trim().min(1).max(180),
+    filename: z.string().trim().min(1).max(255),
     contentType: z.string().trim().min(1).max(120),
     byteSize: z.number().int().min(1),
     checksumSha256: z.string().regex(/^[a-f0-9]{64}$/i).optional()
@@ -43,7 +43,7 @@ export const checkInPhotoUploadSchema = z
       });
     }
 
-    if (!extension || extension !== expectedExtension) {
+    if (extension && extension !== expectedExtension) {
       context.addIssue({
         code: "custom",
         path: ["filename"],
@@ -107,7 +107,7 @@ export function validateCheckInPhotoObjectKey(organizationId: string, clientId: 
 function getExtension(filename: string) {
   const extension = filename.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
 
-  if (extension === "jpeg") {
+  if (extension === "jpeg" || extension === "jfif") {
     return "jpg";
   }
 
