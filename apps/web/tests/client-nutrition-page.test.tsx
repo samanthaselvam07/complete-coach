@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { clearClientMeCache } from "@/components/client-app/client-me-cache";
+import { buildClientLogNotes } from "@/components/client-app/client-daily-log-state";
 import { ClientNutritionPage } from "@/components/client-app/client-nutrition-page";
 
 describe("ClientNutritionPage", () => {
@@ -231,5 +232,129 @@ describe("ClientNutritionPage", () => {
     expect(screen.getByRole("button", { name: "Rest Day" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open Salmon Salad" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Breakfast Bowl details" })).not.toBeInTheDocument();
+  });
+
+  it("restores meals logged earlier in the same day from the client activity log", async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === "/api/v1/client/me") {
+        return new Response(
+          JSON.stringify({
+            data: {
+              client: { id: "client_1", name: "Client One", timezone: "Australia/Melbourne" },
+              profile: { waterTargetLitres: 3 },
+              mealPlanAssignments: [
+                {
+                  id: "meal_assignment_1",
+                  name: "Performance Nutrition",
+                  status: "active",
+                  targetCalories: 2100,
+                  proteinGrams: 150,
+                  carbsGrams: 220,
+                  fatGrams: 65,
+                  snapshot: {
+                    targetCalories: 2100,
+                    proteinGrams: 150,
+                    carbsGrams: 220,
+                    fatGrams: 65,
+                    fibreGrams: 30,
+                    template: {
+                      days: [
+                        {
+                          name: "Training Day",
+                          meals: [
+                            {
+                              meal: "Breakfast Bowl",
+                              foods: [
+                                {
+                                  foodName: "Greek yoghurt",
+                                  servingSize: "250g",
+                                  calories: 220,
+                                  proteinGrams: 28,
+                                  carbsGrams: 18,
+                                  fatGrams: 4,
+                                  fiberGrams: 1
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url.startsWith("/api/v1/client/hydration?date=")) {
+        return new Response(JSON.stringify({ data: { date: "2026-08-12", hydrationMl: 0 } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      if (url.startsWith("/api/v1/client/logs?dateFrom=") && !init) {
+        return new Response(
+          JSON.stringify({
+            data: {
+              logs: [
+                {
+                  id: "log_nutrition_today",
+                  domain: "nutrition",
+                  logDate: "2026-08-12",
+                  status: "completed",
+                  notes: buildClientLogNotes("1 meal logged for Training Day.", {
+                    nutrition: {
+                      loggedMealKeysByDay: {
+                        "meal_assignment_1:Training Day": ["Training Day:Breakfast Bowl:0"]
+                      }
+                    }
+                  }),
+                  createdAt: "2026-08-12T00:00:00.000Z",
+                  updatedAt: "2026-08-12T00:00:00.000Z"
+                }
+              ]
+            }
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url === "/api/v1/client/logs" && init?.method === "POST") {
+        return new Response(JSON.stringify({ data: { log: { id: "log_nutrition_today" } } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: { message: "Not found" } }), { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ClientNutritionPage />);
+
+    expect(await screen.findByRole("heading", { name: "Performance Nutrition" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove Breakfast Bowl" })).toHaveTextContent("Logged");
+    expect(screen.getByText("220 / 2100 kcal")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Breakfast Bowl" }));
+
+    expect(screen.getByRole("button", { name: "Log Breakfast Bowl" })).toBeInTheDocument();
+    expect(screen.getByText("0 / 2100 kcal")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/client/logs",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+    const logPostCall = fetchMock.mock.calls.find(
+      ([url, init]) => url === "/api/v1/client/logs" && init?.method === "POST"
+    );
+    const logPostBody = JSON.parse(String(logPostCall?.[1]?.body)) as { notes: string; status: string };
+    expect(logPostBody.status).toBe("missed");
+    expect(logPostBody.notes).toContain('"loggedMealKeysByDay":{"meal_assignment_1:Training Day":[]}');
   });
 });

@@ -94,6 +94,13 @@ interface ExerciseMedia {
   videoUrl?: string;
 }
 
+interface WorkoutSessionSummary {
+  exercises?: WorkoutSessionExerciseLog[];
+}
+
+type PreviousSetWeightsByExercise = Record<string, Record<number, number>>;
+type PreviousBestWeightsByExercise = Record<string, number>;
+
 export function ClientWorkoutPage() {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
@@ -441,6 +448,16 @@ function ActiveWorkoutLogger({
   const [noteBody, setNoteBody] = useState("");
   const [notesError, setNotesError] = useState("");
   const savedRowsForExercise = setRowsByExerciseIndex[exerciseIndex];
+  const [previousWorkoutSessions, setPreviousWorkoutSessions] = useState<WorkoutSessionSummary[]>([]);
+  const [previousWorkoutSessionsLoaded, setPreviousWorkoutSessionsLoaded] = useState(false);
+  const previousSetWeightsByExercise = useMemo(
+    () => buildPreviousSetWeightsByExercise(previousWorkoutSessions),
+    [previousWorkoutSessions]
+  );
+  const previousBestWeightsByExercise = useMemo(
+    () => buildPreviousBestWeightsByExercise(previousWorkoutSessions, day.exercises),
+    [day.exercises, previousWorkoutSessions]
+  );
 
   useEffect(() => {
     queueMicrotask(() => setDurationSeconds(0));
@@ -460,6 +477,44 @@ function ActiveWorkoutLogger({
       setRestSeconds(null);
     });
   }, [activeExercise, exerciseIndex, savedRowsForExercise]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadPreviousWorkoutSessions() {
+      setPreviousWorkoutSessionsLoaded(false);
+
+      try {
+        const params = new URLSearchParams({
+          assignmentName,
+          dayName: day.name,
+          limit: "20"
+        });
+        const response = await fetch(`/api/v1/client/workout-sessions?${params.toString()}`);
+        const payload = (await response.json().catch(() => null)) as { data?: WorkoutSessionSummary[] } | null;
+
+        if (!mounted) {
+          return;
+        }
+
+        setPreviousWorkoutSessions(response.ok && Array.isArray(payload?.data) ? payload.data : []);
+      } catch {
+        if (mounted) {
+          setPreviousWorkoutSessions([]);
+        }
+      } finally {
+        if (mounted) {
+          setPreviousWorkoutSessionsLoaded(true);
+        }
+      }
+    }
+
+    void loadPreviousWorkoutSessions();
+
+    return () => {
+      mounted = false;
+    };
+  }, [assignmentName, day.name]);
 
   useEffect(() => {
     if (restSeconds === null || restSeconds <= 0) {
@@ -593,7 +648,7 @@ function ActiveWorkoutLogger({
   const personalBests = getPersonalBests(day.exercises, {
     ...setRowsByExerciseIndex,
     [exerciseIndex]: setRows
-  });
+  }, previousBestWeightsByExercise);
   const completedSetCount = getCompletedSetCount(day.exercises, {
     ...setRowsByExerciseIndex,
     [exerciseIndex]: setRows
@@ -763,79 +818,25 @@ function ActiveWorkoutLogger({
           </div>
 
           {setRows.map((setRow) => (
-            <div
+            <SetLoggerRow
               key={setRow.id}
-              role="row"
-              aria-label={`Set ${setRow.setNumber}`}
-              className="grid touch-pan-y grid-cols-[2.25rem_minmax(0,1fr)_6rem_auto] items-center gap-3 rounded-[1.25rem] bg-white p-3 shadow-[0_12px_32px_rgba(27,28,28,0.05)]"
-              onPointerDown={(event) => {
+              setRow={setRow}
+              activeExercise={activeExercise}
+              previousWeightKg={getPreviousSetWeight(activeExercise, setRow.setNumber, previousSetWeightsByExercise)}
+              previousWorkoutSessionsLoaded={previousWorkoutSessionsLoaded}
+              touchStartXBySetId={touchStartXBySetId}
+              onCompleteSet={completeSet}
+              onDeleteSet={deleteSet}
+              onPointerStart={(setId, clientX) => {
                 setTouchStartXBySetId((currentStarts) => ({
                   ...currentStarts,
-                  [setRow.id]: event.clientX
+                  [setId]: clientX
                 }));
               }}
-              onPointerUp={(event) => {
-                const startX = touchStartXBySetId[setRow.id];
-                if (typeof startX === "number" && startX - event.clientX > 48) {
-                  deleteSet(setRow.id);
-                }
-              }}
-            >
-              <span className="flex size-9 items-center justify-center rounded-full bg-[#f5f3f3] text-sm font-black">
-                {setRow.setNumber}
-              </span>
-              <label className="min-w-0">
-                <span className="sr-only">Set {setRow.setNumber} reps</span>
-                <input
-                  value={setRow.reps}
-                  onChange={(event) => updateSetReps(setRow.id, event.target.value)}
-                  aria-label={`Set ${setRow.setNumber} reps`}
-                  placeholder="reps"
-                  className="h-10 w-full rounded-full bg-[#f5f3f3] px-3 text-center text-sm font-black text-[#1b1c1c] outline-none focus:ring-2 focus:ring-[#3620b8]/20"
-                />
-              </label>
-              <label className="w-24">
-                <span className="sr-only">Set {setRow.setNumber} weight</span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  value={setRow.weightKg}
-                  onChange={(event) => updateSetWeight(setRow.id, event.target.value)}
-                  aria-label={`Set ${setRow.setNumber} weight`}
-                  placeholder="kg"
-                  className="h-10 w-full rounded-full bg-[#f5f3f3] px-3 text-center text-sm font-black text-[#1b1c1c] outline-none focus:ring-2 focus:ring-[#3620b8]/20"
-                />
-              </label>
-              {activeExercise.rpe ? (
-                <label className="col-span-2 col-start-2 min-w-0">
-                  <span className="sr-only">Set {setRow.setNumber} RPE</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min="1"
-                    max="10"
-                    step="0.5"
-                    value={setRow.rpe}
-                    onChange={(event) => updateSetRpe(setRow.id, event.target.value)}
-                    aria-label={`Set ${setRow.setNumber} RPE`}
-                    placeholder={`RPE target ${activeExercise.rpe}`}
-                    className="h-10 w-full rounded-full bg-[#f5f3f3] px-3 text-center text-sm font-black text-[#1b1c1c] outline-none focus:ring-2 focus:ring-[#3620b8]/20"
-                  />
-                </label>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => completeSet(setRow.id)}
-                className={cn(
-                  "inline-flex size-10 flex-none items-center justify-center rounded-full transition",
-                  setRow.completed ? "bg-emerald-500 text-white" : "bg-[#f5f3f3] text-[#6f6a66]"
-                )}
-                aria-label={`Complete set ${setRow.setNumber}`}
-              >
-                <Check aria-hidden="true" className="size-5" />
-              </button>
-            </div>
+              onUpdateReps={updateSetReps}
+              onUpdateRpe={updateSetRpe}
+              onUpdateWeight={updateSetWeight}
+            />
           ))}
           </div>
         </section>
@@ -903,6 +904,104 @@ function ActiveWorkoutLogger({
         ) : null}
       </div>
     </ClientMobileShell>
+  );
+}
+
+function SetLoggerRow({
+  setRow,
+  activeExercise,
+  previousWeightKg,
+  previousWorkoutSessionsLoaded,
+  touchStartXBySetId,
+  onCompleteSet,
+  onDeleteSet,
+  onPointerStart,
+  onUpdateReps,
+  onUpdateRpe,
+  onUpdateWeight
+}: {
+  setRow: WorkoutSetRow;
+  activeExercise: TrainingExercise;
+  previousWeightKg: number | null;
+  previousWorkoutSessionsLoaded: boolean;
+  touchStartXBySetId: Record<string, number>;
+  onCompleteSet: (setId: string) => void;
+  onDeleteSet: (setId: string) => void;
+  onPointerStart: (setId: string, clientX: number) => void;
+  onUpdateReps: (setId: string, reps: string) => void;
+  onUpdateRpe: (setId: string, rpe: string) => void;
+  onUpdateWeight: (setId: string, weightKg: string) => void;
+}) {
+  return (
+    <div
+      role="row"
+      aria-label={`Set ${setRow.setNumber}`}
+      className="grid touch-pan-y grid-cols-[2.25rem_minmax(0,1fr)_6rem_auto] items-center gap-3 rounded-[1.25rem] bg-white p-3 shadow-[0_12px_32px_rgba(27,28,28,0.05)]"
+      onPointerDown={(event) => {
+        onPointerStart(setRow.id, event.clientX);
+      }}
+      onPointerUp={(event) => {
+        const startX = touchStartXBySetId[setRow.id];
+        if (typeof startX === "number" && startX - event.clientX > 48) {
+          onDeleteSet(setRow.id);
+        }
+      }}
+    >
+      <span className="flex size-9 items-center justify-center rounded-full bg-[#f5f3f3] text-sm font-black">
+        {setRow.setNumber}
+      </span>
+      <label className="min-w-0">
+        <span className="sr-only">Set {setRow.setNumber} reps</span>
+        <input
+          value={setRow.reps}
+          onChange={(event) => onUpdateReps(setRow.id, event.target.value)}
+          aria-label={`Set ${setRow.setNumber} reps`}
+          placeholder="reps"
+          className="h-10 w-full rounded-full bg-[#f5f3f3] px-3 text-center text-sm font-black text-[#1b1c1c] outline-none focus:ring-2 focus:ring-[#3620b8]/20"
+        />
+      </label>
+      <label className="w-24">
+        <span className="sr-only">Set {setRow.setNumber} weight</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          min="0"
+          value={setRow.weightKg}
+          onChange={(event) => onUpdateWeight(setRow.id, event.target.value)}
+          aria-label={`Set ${setRow.setNumber} weight`}
+          placeholder={previousWeightKg !== null ? `${formatWeight(previousWeightKg)}` : previousWorkoutSessionsLoaded ? "kg" : "last"}
+          className="h-10 w-full rounded-full bg-[#f5f3f3] px-3 text-center text-sm font-black text-[#1b1c1c] outline-none placeholder:text-[#b8b3ae] focus:ring-2 focus:ring-[#3620b8]/20"
+        />
+      </label>
+      {activeExercise.rpe ? (
+        <label className="col-span-2 col-start-2 min-w-0">
+          <span className="sr-only">Set {setRow.setNumber} RPE</span>
+          <input
+            type="number"
+            inputMode="decimal"
+            min="1"
+            max="10"
+            step="0.5"
+            value={setRow.rpe}
+            onChange={(event) => onUpdateRpe(setRow.id, event.target.value)}
+            aria-label={`Set ${setRow.setNumber} RPE`}
+            placeholder={`RPE target ${activeExercise.rpe}`}
+            className="h-10 w-full rounded-full bg-[#f5f3f3] px-3 text-center text-sm font-black text-[#1b1c1c] outline-none focus:ring-2 focus:ring-[#3620b8]/20"
+          />
+        </label>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => onCompleteSet(setRow.id)}
+        className={cn(
+          "inline-flex size-10 flex-none items-center justify-center rounded-full transition",
+          setRow.completed ? "bg-emerald-500 text-white" : "bg-[#f5f3f3] text-[#6f6a66]"
+        )}
+        aria-label={`Complete set ${setRow.setNumber}`}
+      >
+        <Check aria-hidden="true" className="size-5" />
+      </button>
+    </div>
   );
 }
 
@@ -1222,9 +1321,105 @@ function createSetRows(exercise: TrainingExercise | undefined): WorkoutSetRow[] 
   }));
 }
 
-function getPersonalBests(exercises: TrainingExercise[], rowsByExerciseIndex: Record<number, WorkoutSetRow[]>): PersonalBestSummary[] {
+function getPreviousSetWeight(
+  exercise: TrainingExercise,
+  setNumber: number,
+  previousSetWeightsByExercise: PreviousSetWeightsByExercise
+) {
+  const previousSetWeights = previousSetWeightsByExercise[getExerciseHistoryKey(exercise)];
+
+  return previousSetWeights?.[setNumber] ?? null;
+}
+
+function buildPreviousSetWeightsByExercise(sessions: WorkoutSessionSummary[]): PreviousSetWeightsByExercise {
+  const latestSession = sessions[0];
+
+  if (!latestSession || !Array.isArray(latestSession.exercises)) {
+    return {};
+  }
+
+  return latestSession.exercises.reduce<PreviousSetWeightsByExercise>((weightsByExercise, exerciseLog) => {
+    const exerciseKey = getExerciseLogHistoryKey(exerciseLog);
+
+    if (!exerciseKey || !Array.isArray(exerciseLog.sets)) {
+      return weightsByExercise;
+    }
+
+    const setWeights = exerciseLog.sets.reduce<Record<number, number>>((weightsBySet, setLog) => {
+      if (!setLog.completed || typeof setLog.weightKg !== "number" || !Number.isFinite(setLog.weightKg)) {
+        return weightsBySet;
+      }
+
+      return {
+        ...weightsBySet,
+        [setLog.setNumber]: setLog.weightKg
+      };
+    }, {});
+
+    return Object.keys(setWeights).length > 0
+      ? { ...weightsByExercise, [exerciseKey]: setWeights }
+      : weightsByExercise;
+  }, {});
+}
+
+function buildPreviousBestWeightsByExercise(
+  sessions: WorkoutSessionSummary[],
+  exercises: TrainingExercise[]
+): PreviousBestWeightsByExercise {
+  const bestWeights = exercises.reduce<PreviousBestWeightsByExercise>((weightsByExercise, exercise) => {
+    return typeof exercise.previousBestKg === "number"
+      ? { ...weightsByExercise, [getExerciseHistoryKey(exercise)]: exercise.previousBestKg }
+      : weightsByExercise;
+  }, {});
+
+  for (const session of sessions) {
+    if (!Array.isArray(session.exercises)) {
+      continue;
+    }
+
+    for (const exerciseLog of session.exercises) {
+      const exerciseKey = getExerciseLogHistoryKey(exerciseLog);
+
+      if (!exerciseKey || !Array.isArray(exerciseLog.sets)) {
+        continue;
+      }
+
+      for (const setLog of exerciseLog.sets) {
+        if (!setLog.completed || typeof setLog.weightKg !== "number" || !Number.isFinite(setLog.weightKg)) {
+          continue;
+        }
+
+        const currentBest = bestWeights[exerciseKey] ?? 0;
+
+        if (setLog.weightKg > currentBest) {
+          bestWeights[exerciseKey] = setLog.weightKg;
+        }
+      }
+    }
+  }
+
+  return bestWeights;
+}
+
+function getExerciseHistoryKey(exercise: TrainingExercise) {
+  return exercise.exerciseId ? `id:${exercise.exerciseId}` : `name:${normalizeExerciseName(exercise.exerciseName)}`;
+}
+
+function getExerciseLogHistoryKey(exerciseLog: WorkoutSessionExerciseLog) {
+  return exerciseLog.exerciseId ? `id:${exerciseLog.exerciseId}` : `name:${normalizeExerciseName(exerciseLog.exerciseName)}`;
+}
+
+function normalizeExerciseName(exerciseName: string) {
+  return exerciseName.trim().toLowerCase();
+}
+
+function getPersonalBests(
+  exercises: TrainingExercise[],
+  rowsByExerciseIndex: Record<number, WorkoutSetRow[]>,
+  previousBestWeightsByExercise: PreviousBestWeightsByExercise = {}
+): PersonalBestSummary[] {
   return exercises.flatMap((exercise, exerciseIndex) => {
-    const previousBestKg = exercise.previousBestKg;
+    const previousBestKg = previousBestWeightsByExercise[getExerciseHistoryKey(exercise)] ?? exercise.previousBestKg;
 
     if (typeof previousBestKg !== "number") {
       return [];

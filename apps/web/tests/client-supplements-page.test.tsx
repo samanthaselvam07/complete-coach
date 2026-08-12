@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { clearClientMeCache } from "@/components/client-app/client-me-cache";
+import { buildClientLogNotes } from "@/components/client-app/client-daily-log-state";
 import { ClientSupplementsPage } from "@/components/client-app/client-supplements-page";
 
 describe("ClientSupplementsPage", () => {
@@ -148,5 +149,112 @@ describe("ClientSupplementsPage", () => {
     expect(await screen.findByText("No supplement protocol has been assigned yet.")).toBeInTheDocument();
     expect(screen.queryByText("Paused Sleep Support • Client One")).not.toBeInTheDocument();
     expect(screen.queryByText("Magnesium Glycinate")).not.toBeInTheDocument();
+  });
+
+  it("restores supplements completed earlier in the same day from the client activity log", async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === "/api/v1/client/me") {
+        return new Response(
+          JSON.stringify({
+            data: {
+              client: { id: "client_1", name: "Client One", timezone: "Australia/Melbourne" },
+              supplementPlanAssignments: [
+                {
+                  id: "supplement_assignment_1",
+                  name: "Sleep Support",
+                  status: "active",
+                  startsOn: "2026-07-01",
+                  endsOn: null,
+                  snapshot: {
+                    template: {
+                      phases: [
+                        {
+                          name: "Morning",
+                          supplements: [
+                            {
+                              supplementName: "Foundation Multi",
+                              dosage: "2 capsules",
+                              timing: "With food"
+                            }
+                          ]
+                        },
+                        {
+                          name: "Evening",
+                          supplements: [
+                            {
+                              supplementName: "Magnesium Glycinate",
+                              dosage: "300mg",
+                              timing: "Before bed"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url.startsWith("/api/v1/client/logs?dateFrom=") && !init) {
+        return new Response(
+          JSON.stringify({
+            data: {
+              logs: [
+                {
+                  id: "log_supplements_today",
+                  domain: "supplementation",
+                  logDate: "2026-08-12",
+                  status: "completed",
+                  notes: buildClientLogNotes("1 supplement completed today.", {
+                    supplementation: {
+                      completedKeys: ["Morning:Foundation Multi:0"]
+                    }
+                  }),
+                  createdAt: "2026-08-12T00:00:00.000Z",
+                  updatedAt: "2026-08-12T00:00:00.000Z"
+                }
+              ]
+            }
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url === "/api/v1/client/logs" && init?.method === "POST") {
+        return new Response(JSON.stringify({ data: { log: { id: "log_supplements_today" } } }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: { message: "Not found" } }), { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ClientSupplementsPage />);
+
+    expect(await screen.findByRole("heading", { name: "Supplement Stack" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Supplement adherence" })).toHaveTextContent("50%");
+    expect(screen.getByText("1 of 2 supplements completed today.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark incomplete Foundation Multi" }));
+
+    expect(screen.getByRole("region", { name: "Supplement adherence" })).toHaveTextContent("0%");
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/client/logs",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+    const logPostCall = fetchMock.mock.calls.find(
+      ([url, init]) => url === "/api/v1/client/logs" && init?.method === "POST"
+    );
+    const logPostBody = JSON.parse(String(logPostCall?.[1]?.body)) as { notes: string; status: string };
+    expect(logPostBody.status).toBe("missed");
+    expect(logPostBody.notes).toContain('"completedKeys":[]');
   });
 });

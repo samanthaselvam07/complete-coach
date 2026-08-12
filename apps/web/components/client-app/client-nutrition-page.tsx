@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
 import { saveClientActivityLog } from "./client-activity-log-actions";
+import { buildClientLogNotes, getLogStateForDomain, type ClientActivityLogsResponse } from "./client-daily-log-state";
 import { getClientMe } from "./client-me-cache";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
@@ -123,8 +124,14 @@ export function ClientNutritionPage() {
 
         const nextHydrationDate = getTodayDateValue(payload.data.client.timezone ?? undefined);
         const targetLitres = payload.data.profile?.waterTargetLitres;
-        const hydrationResponse = await fetch(`/api/v1/client/hydration?date=${nextHydrationDate}`);
-        const hydrationPayload = (await hydrationResponse.json().catch(() => null)) as HydrationResponse | null;
+        const [hydrationResponse, logsResponse] = await Promise.all([
+          fetch(`/api/v1/client/hydration?date=${nextHydrationDate}`),
+          fetch(`/api/v1/client/logs?dateFrom=${nextHydrationDate}&dateTo=${nextHydrationDate}`)
+        ]);
+        const [hydrationPayload, logsPayload] = await Promise.all([
+          hydrationResponse.json().catch(() => null) as Promise<HydrationResponse | null>,
+          logsResponse.json().catch(() => null) as Promise<ClientActivityLogsResponse | null>
+        ]);
 
         if (!mounted) {
           return;
@@ -134,10 +141,14 @@ export function ClientNutritionPage() {
         setHydrationDate(nextHydrationDate);
         setHydrationTargetMl(targetLitres ? Math.round(targetLitres * 1000) : 2500);
         setHydrationMl(hydrationResponse.ok && typeof hydrationPayload?.data?.hydrationMl === "number" ? hydrationPayload.data.hydrationMl : 0);
+        const nutritionLogState = logsResponse.ok && Array.isArray(logsPayload?.data?.logs)
+          ? getLogStateForDomain(logsPayload.data.logs, "nutrition")
+          : null;
         const nextPlans = payload.data.mealPlanAssignments.map(normalizeMealPlanAssignment);
         const defaultPlanId = nextPlans.find((plan) => plan.status === "active")?.id ?? nextPlans[0]?.id ?? "";
 
         setPlans(nextPlans);
+        setLoggedMealKeysByDay(nutritionLogState?.nutrition?.loggedMealKeysByDay ?? {});
         setSelectedPlanId((currentPlanId) => nextPlans.some((plan) => plan.id === currentPlanId) ? currentPlanId : defaultPlanId);
         setLoadState("ready");
       } catch (error) {
@@ -203,20 +214,28 @@ export function ClientNutritionPage() {
       const nextKeys = currentKeys.includes(mealKey)
         ? currentKeys.filter((key) => key !== mealKey)
         : [...currentKeys, mealKey];
-      const nextStatus = nextKeys.length > 0 ? "completed" : "missed";
+      const nextLoggedMealKeysByDay = {
+        ...current,
+        [activeDayKey]: nextKeys
+      };
+      const loggedMealCount = Object.values(nextLoggedMealKeysByDay).reduce((total, keys) => total + keys.length, 0);
+      const nextStatus = loggedMealCount > 0 ? "completed" : "missed";
+      const summary = nextKeys.length > 0
+        ? `${nextKeys.length} meal${nextKeys.length === 1 ? "" : "s"} logged for ${activeDay?.name ?? "today"}.`
+        : `No meals logged for ${activeDay?.name ?? "today"}.`;
 
       void saveClientActivityLog({
         domain: "nutrition",
         status: nextStatus,
-        notes: nextKeys.length > 0
-          ? `${nextKeys.length} meal${nextKeys.length === 1 ? "" : "s"} logged for ${activeDay?.name ?? "today"}.`
-          : `No meals logged for ${activeDay?.name ?? "today"}.`
+        logDate: hydrationDate,
+        notes: buildClientLogNotes(summary, {
+          nutrition: {
+            loggedMealKeysByDay: nextLoggedMealKeysByDay
+          }
+        })
       }).catch(() => undefined);
 
-      return {
-        ...current,
-        [activeDayKey]: nextKeys
-      };
+      return nextLoggedMealKeysByDay;
     });
   }
 

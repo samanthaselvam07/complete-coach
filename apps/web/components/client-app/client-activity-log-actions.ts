@@ -3,10 +3,12 @@ export type ClientActivityLogStatus = "completed" | "missed";
 
 export async function saveClientActivityLog({
   domain,
+  logDate,
   notes,
   status
 }: {
   domain: ClientActivityLogDomain;
+  logDate?: string;
   notes?: string;
   status: ClientActivityLogStatus;
 }) {
@@ -15,7 +17,7 @@ export async function saveClientActivityLog({
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       domain,
-      logDate: getTodayDateValue(),
+      logDate: logDate ?? getTodayDateValue(),
       status,
       notes
     })

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/components/ui/utils";
 import { saveClientActivityLog } from "./client-activity-log-actions";
+import { buildClientLogNotes, getLogStateForDomain, type ClientActivityLogsResponse } from "./client-daily-log-state";
 import { getClientMe } from "./client-me-cache";
 import { ClientMobileShell, ClientSectionHeading } from "./client-mobile-shell";
 
@@ -13,6 +14,7 @@ interface ClientMeResponse {
     client: {
       id: string;
       name: string;
+      timezone?: string | null;
     };
     supplementPlanAssignments: SupplementPlanAssignment[];
   };
@@ -63,6 +65,7 @@ export function ClientSupplementsPage() {
   const [clientName, setClientName] = useState("");
   const [protocols, setProtocols] = useState<SupplementProtocol[]>([]);
   const [completedKeys, setCompletedKeys] = useState<string[]>([]);
+  const [logDate, setLogDate] = useState(getTodayDateValue());
   const [selectedSupplement, setSelectedSupplement] = useState<SupplementWithContext | null>(null);
 
   useEffect(() => {
@@ -76,12 +79,21 @@ export function ClientSupplementsPage() {
           throw new Error(payload?.error?.message ?? "Your supplement stack could not be loaded.");
         }
 
+        const nextLogDate = getTodayDateValue(payload.data.client.timezone ?? undefined);
+        const logsResponse = await fetch(`/api/v1/client/logs?dateFrom=${nextLogDate}&dateTo=${nextLogDate}`);
+        const logsPayload = (await logsResponse.json().catch(() => null)) as ClientActivityLogsResponse | null;
+
         if (!mounted) {
           return;
         }
 
+        const supplementationLogState = logsResponse.ok && Array.isArray(logsPayload?.data?.logs)
+          ? getLogStateForDomain(logsPayload.data.logs, "supplementation")
+          : null;
         setClientName(payload.data.client.name);
         setProtocols(payload.data.supplementPlanAssignments.map(normalizeSupplementProtocol).filter(hasSupplements));
+        setCompletedKeys(supplementationLogState?.supplementation?.completedKeys ?? []);
+        setLogDate(nextLogDate);
         setLoadState("ready");
       } catch (error) {
         if (!mounted) {
@@ -131,13 +143,19 @@ export function ClientSupplementsPage() {
         ? currentKeys.filter((currentKey) => currentKey !== key)
         : [...currentKeys, key];
       const nextStatus = nextKeys.length > 0 ? "completed" : "missed";
+      const summary = nextKeys.length > 0
+        ? `${nextKeys.length} supplement${nextKeys.length === 1 ? "" : "s"} completed today.`
+        : "No supplements completed today.";
 
       void saveClientActivityLog({
         domain: "supplementation",
         status: nextStatus,
-        notes: nextKeys.length > 0
-          ? `${nextKeys.length} supplement${nextKeys.length === 1 ? "" : "s"} completed today.`
-          : "No supplements completed today."
+        logDate,
+        notes: buildClientLogNotes(summary, {
+          supplementation: {
+            completedKeys: nextKeys
+          }
+        })
       }).catch(() => undefined);
 
       return nextKeys;
@@ -459,6 +477,20 @@ function ClientSupplementsStatus({ message, tone = "default" }: { message: strin
       {message}
     </div>
   );
+}
+
+function getTodayDateValue(timezone = "UTC") {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value ?? "1970";
+  const month = parts.find((part) => part.type === "month")?.value ?? "01";
+  const day = parts.find((part) => part.type === "day")?.value ?? "01";
+
+  return `${year}-${month}-${day}`;
 }
 
 function normalizeSupplementProtocol(assignment: SupplementPlanAssignment): SupplementProtocol {

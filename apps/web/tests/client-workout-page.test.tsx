@@ -354,9 +354,87 @@ describe("ClientWorkoutPage", () => {
       );
     });
   });
+
+  it("shows previous session weights as placeholders and detects personal bests from workout history", async () => {
+    const fetchMock = stubWorkoutFetch(
+      [
+        {
+          name: "Lower A",
+          exercises: [
+            {
+              id: "exercise_row_1",
+              exerciseId: "exercise_leg_extension",
+              exerciseName: "Seated Leg Extension",
+              sets: 2,
+              reps: "15-20",
+              rpe: 9
+            }
+          ]
+        }
+      ],
+      [
+        {
+          id: "session_previous",
+          assignmentId: "assignment_1",
+          assignmentName: "Strength Block",
+          dayName: "Lower A",
+          exercises: [
+            {
+              exerciseId: "exercise_leg_extension",
+              exerciseName: "Seated Leg Extension",
+              sets: [
+                { setNumber: 1, reps: "15", weightKg: 42, rpe: 9, completed: true },
+                { setNumber: 2, reps: "13", weightKg: 45, rpe: 9.5, completed: true }
+              ]
+            }
+          ],
+          personalBests: []
+        }
+      ]
+    );
+
+    render(<ClientWorkoutPage />);
+
+    expect(await screen.findByText("Seated Leg Extension")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/client/workout-sessions?assignmentName=Strength+Block&dayName=Lower+A&limit=20");
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText("Set 1 weight")).toHaveAttribute("placeholder", "42kg");
+      expect(screen.getByLabelText("Set 2 weight")).toHaveAttribute("placeholder", "45kg");
+    });
+
+    fireEvent.change(screen.getByLabelText("Set 1 reps"), { target: { value: "16" } });
+    fireEvent.change(screen.getByLabelText("Set 1 weight"), { target: { value: "46" } });
+    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finish session" }));
+
+    const summaryDialog = await screen.findByRole("dialog", { name: "Workout Summary" });
+
+    expect(within(summaryDialog).getByText("Seated Leg Extension")).toBeInTheDocument();
+    expect(within(summaryDialog).getByText("46kg")).toBeInTheDocument();
+    expect(within(summaryDialog).getByText(/Previous 45kg/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Submit workout" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/client/workout-sessions",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("\"previousBestKg\":45")
+        })
+      );
+    });
+  });
 });
 
-function stubWorkoutFetch(days: Array<{ name: string; exercises: Array<Record<string, unknown>> }>) {
+function stubWorkoutFetch(
+  days: Array<{ name: string; exercises: Array<Record<string, unknown>> }>,
+  workoutSessions: Array<Record<string, unknown>> = []
+) {
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     if (url === "/api/v1/client/me") {
       return new Response(
@@ -411,6 +489,13 @@ function stubWorkoutFetch(days: Array<{ name: string; exercises: Array<Record<st
         }),
         { status: 201, headers: { "Content-Type": "application/json" } }
       );
+    }
+
+    if (url === "/api/v1/client/workout-sessions?assignmentName=Strength+Block&dayName=Lower+A&limit=20" && !init) {
+      return new Response(JSON.stringify({ data: workoutSessions }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
     if (url === "/api/v1/client/workout-sessions" && init?.method === "POST") {
