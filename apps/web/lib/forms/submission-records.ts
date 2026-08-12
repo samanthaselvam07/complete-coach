@@ -234,7 +234,20 @@ export function serializeSubmission(record: SubmissionRecord) {
     submittedAt: toIsoString(record.submittedAt),
     reviewedAt: record.reviewedAt ? toIsoString(record.reviewedAt) : null,
     createdAt: toIsoString(record.createdAt),
-    updatedAt: toIsoString(record.updatedAt)
+    updatedAt: toIsoString(record.updatedAt),
+    ...(record.formVersion
+      ? {
+          formVersion: {
+            id: record.formVersion.id,
+            formId: record.formVersion.formId,
+            versionNumber: record.formVersion.versionNumber,
+            schema: record.formVersion.schemaJson,
+            ui: record.formVersion.uiJson,
+            publishedAt: record.formVersion.publishedAt ? toIsoString(record.formVersion.publishedAt) : null,
+            createdAt: toIsoString(record.formVersion.createdAt)
+          }
+        }
+      : {})
   };
 }
 

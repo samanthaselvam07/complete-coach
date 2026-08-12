@@ -54,7 +54,7 @@ Completed on May 14, 2026.
 Delivered:
 - `GET /api/v1/form-assignments` and `GET /api/v1/form-assignments/{assignment_id}` with organization scoping and immutable assigned version payloads.
 - `POST /api/v1/form-assignments/{assignment_id}/submit` with answer validation, exact-version `answers_json` persistence, check-in creation for check-in forms, idempotent metric upserts, and audit logging without raw answer or note payloads.
-- `GET /api/v1/form-submissions` and `GET /api/v1/form-submissions/{submission_id}` for persisted submission reads.
+- `GET /api/v1/form-submissions` and `GET /api/v1/form-submissions/{submission_id}` for persisted submission reads, including immutable form version schemas for answer label rendering.
 - `GET /api/v1/check-ins`, `GET /api/v1/check-ins/{check_in_id}`, review, complete, and extracted-metrics routes with semantic state transition errors.
 - `GET /api/v1/clients/{client_id}/metrics` with client, metric key, date range, and limit filters.
 - `GET` and `POST /api/v1/client/daily-check-in` expose the signed-in client's assigned daily habit/check-in form to the client app. Habit tracker assignments are reusable daily forms; check-in assignments retain one-off completion semantics.

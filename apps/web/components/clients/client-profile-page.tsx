@@ -51,6 +51,7 @@ import {
 import { CompleteCoachLoadingScreen } from "@/components/ui/complete-coach-loading-screen";
 import type { ClientProfile, ClientSummary } from "@/lib/clients/client-models";
 import type { ClientNoteSummary } from "@/lib/clients/client-notes";
+import { FormDefinitionSchema, type FormFieldDefinition } from "@/lib/forms/schema";
 import { cn } from "@/lib/utils";
 
 type ProfileTab =
@@ -99,6 +100,9 @@ interface ApiFormSubmission {
   formType: string | null;
   answers: unknown;
   submittedAt: string;
+  formVersion?: {
+    schema?: unknown;
+  } | null;
 }
 
 interface ApiRoadmapPhase {
@@ -1001,15 +1005,51 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function formatSubmissionAnswers(answers: unknown) {
+function formatSubmissionAnswers(answers: unknown, schema?: unknown) {
   if (!isRecord(answers)) {
     return [];
   }
 
-  return Object.entries(answers).map(([key, value]) => ({
-    label: formatAnswerLabel(key),
-    value: formatAnswerValue(value)
-  }));
+  const schemaFields = getSubmissionSchemaFields(schema);
+  const answerKeys = new Set(Object.keys(answers));
+  const schemaRows = schemaFields
+    .filter((field) => answerKeys.has(field.id))
+    .map((field) => ({
+      label: getDisplayAnswerLabel(field.label),
+      value: formatAnswerValue(answers[field.id])
+    }));
+  const schemaFieldIds = new Set(schemaFields.map((field) => field.id));
+  const fallbackRows = Object.entries(answers)
+    .filter(([key]) => !schemaFieldIds.has(key))
+    .map(([key, value]) => ({
+      label: formatAnswerLabel(key),
+      value: formatAnswerValue(value)
+    }));
+
+  return [...schemaRows, ...fallbackRows];
+}
+
+function getSubmissionSchemaFields(schema: unknown): FormFieldDefinition[] {
+  const definition = FormDefinitionSchema.safeParse(schema);
+
+  if (!definition.success) {
+    return [];
+  }
+
+  return definition.data.fields.filter((field) => field.type !== "content-block");
+}
+
+function normalizePresetInitialLabel(label: string) {
+  return label
+    .replace(/^preset\s+initial\s+/iu, "")
+    .replace(/\s+\d+$/u, "")
+    .trim();
+}
+
+function getDisplayAnswerLabel(label: string) {
+  const normalizedLabel = normalizePresetInitialLabel(label);
+
+  return normalizedLabel ? formatAnswerLabel(normalizedLabel) : formatAnswerLabel(label);
 }
 
 function formatAnswerLabel(key: string) {
@@ -1713,7 +1753,7 @@ function DashboardPanel({ client, recentNotes }: { client: ClientProfile; recent
 
 function InitialQuestionnairePanel({ client }: { client: ClientProfileView }) {
   const submission = client.initialQuestionnaireSubmission;
-  const answers = submission ? formatSubmissionAnswers(submission.answers) : [];
+  const answers = submission ? formatSubmissionAnswers(submission.answers, submission.formVersion?.schema) : [];
 
   return (
     <div>

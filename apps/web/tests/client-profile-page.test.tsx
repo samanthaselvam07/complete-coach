@@ -499,9 +499,45 @@ function mockMarcusProfile(
                 formType: "intake",
                 submittedAt: "2026-01-15T00:00:00.000Z",
                 answers: {
+                  "preset-initial-height-3": "180",
                   "starting-weight": "84.2",
                   goal: "Build muscle while improving conditioning",
                   "training-history": "Three years consistent lifting"
+                },
+                formVersion: {
+                  schema: {
+                    title: "Initial Q&A",
+                    fields: [
+                      {
+                        id: "preset-initial-height-3",
+                        type: "number",
+                        label: "Preset Initial Height 3",
+                        required: false,
+                        exportPolicy: "private"
+                      },
+                      {
+                        id: "starting-weight",
+                        type: "number",
+                        label: "Starting Weight",
+                        required: false,
+                        exportPolicy: "private"
+                      },
+                      {
+                        id: "goal",
+                        type: "long-text",
+                        label: "Primary Goal",
+                        required: false,
+                        exportPolicy: "private"
+                      },
+                      {
+                        id: "training-history",
+                        type: "long-text",
+                        label: "Training Experience",
+                        required: false,
+                        exportPolicy: "private"
+                      }
+                    ]
+                  }
                 }
               },
               {
@@ -1379,7 +1415,10 @@ describe("ClientProfilePage", () => {
     const initialQuestionnairePanel = screen.getByRole("tabpanel", { name: "Initial Q&A" });
 
     expect(initialQuestionnairePanel).toHaveTextContent("Initial Q&A - submitted Jan 15, 2026");
+    expect(within(initialQuestionnairePanel).getByText("Height")).toBeInTheDocument();
+    expect(initialQuestionnairePanel).not.toHaveTextContent("Preset Initial Height 3");
     expect(within(initialQuestionnairePanel).getByText("Starting Weight")).toBeInTheDocument();
+    expect(within(initialQuestionnairePanel).getByText("Primary Goal")).toBeInTheDocument();
     expect(within(initialQuestionnairePanel).getByText("Build muscle while improving conditioning")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Photos" }));

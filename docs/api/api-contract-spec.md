@@ -153,8 +153,8 @@ Roster status display treats `new` clients as new for three days from creation; 
 - `GET /api/v1/form-assignments`: returns active-organization form assignments including `formId`, `formName`, and `formType` for client editor reloads. Query: `clientId`, `status`, `limit`.
 - `GET /api/v1/form-assignments/{assignment_id}`: returns one active-organization assignment with the immutable assigned form version.
 - `POST /api/v1/form-assignments/{assignment_id}/submit`: submits answers for the assigned immutable version, creates a submission, creates a check-in where appropriate, extracts configured metrics, and creates or updates a CRM lead when the submitted form type is `application`. Body: `answers`.
-- `GET /api/v1/form-submissions`: returns active-organization form submissions. Query: `clientId`, `formId`, `status`, `limit`.
-- `GET /api/v1/form-submissions/{submission_id}`: returns one active-organization submission with persisted answers and form metadata.
+- `GET /api/v1/form-submissions`: returns active-organization form submissions with persisted answers and immutable `formVersion.schema` for answer label rendering. Query: `clientId`, `formId`, `status`, `limit`.
+- `GET /api/v1/form-submissions/{submission_id}`: returns one active-organization submission with persisted answers, form metadata, and immutable `formVersion.schema`.
 
 ### Check-Ins
 - `GET /api/v1/check-ins`: returns active-organization check-ins. Query: `clientId`, `status`, `limit`.

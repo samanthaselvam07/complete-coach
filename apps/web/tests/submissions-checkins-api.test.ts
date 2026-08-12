@@ -663,12 +663,15 @@ describe("submissions, check-ins, and metrics APIs", () => {
     const response = await getSubmissions(
       new Request("http://test.local/api/v1/form-submissions?status=submitted&clientId=client_1")
     );
-    const payload = (await response.json()) as { data: Array<{ id: string; formName: string; status: string }> };
+    const payload = (await response.json()) as {
+      data: Array<{ id: string; formName: string; status: string; formVersion?: { schema?: { title?: string } } }>;
+    };
 
     expect(response.status).toBe(200);
     expect(payload.data[0]).toEqual(
       expect.objectContaining({ id: "submission_1", formName: "Weekly Check-In", status: "submitted" })
     );
+    expect(payload.data[0]?.formVersion?.schema?.title).toBe("Weekly Check-In");
     expect(mocks.prisma.formSubmission.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
@@ -736,11 +739,12 @@ describe("submissions, check-ins, and metrics APIs", () => {
     const response = await getSubmission(new Request("http://test.local/api/v1/form-submissions/submission_1"), {
       params: Promise.resolve({ submissionId: "submission_1" })
     });
-    const payload = (await response.json()) as { data: { answers: unknown; clientName: string } };
+    const payload = (await response.json()) as { data: { answers: unknown; clientName: string; formVersion?: { schema?: { title?: string } } } };
 
     expect(response.status).toBe(200);
     expect(payload.data.answers).toEqual(submissionRecord.answersJson);
     expect(payload.data.clientName).toBe("Api Client");
+    expect(payload.data.formVersion?.schema?.title).toBe("Weekly Check-In");
   });
 
   it("lists check-ins and serializes client/timing data for the review queue", async () => {
