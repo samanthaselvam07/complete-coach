@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { FormDefinitionSchema, type FormFieldDefinition } from "@/lib/forms/schema";
+
 interface ApiCheckInRecord {
   id: string;
   name: string;
@@ -18,6 +20,15 @@ interface ApiDailySubmissionRecord {
   answers: unknown;
   formName: string;
   submittedAt: string;
+  formVersion?: {
+    schema?: unknown;
+  } | null;
+}
+
+interface DailyAnswerRow {
+  fieldId: string;
+  label: string;
+  valuesByDay: Map<number, unknown>;
 }
 
 export function DailyCheckInsPanel({ clientId }: { clientId: string }) {
@@ -78,29 +89,64 @@ export function DailyCheckInsPanel({ clientId }: { clientId: string }) {
           No persisted daily check-ins were found for this client.
         </p>
       ) : (
-        <div className="grid gap-4">
-          {submissions.map((submission) => (
-            <article key={submission.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-base font-black text-slate-950">{submission.formName}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{formatCheckInDate(submission.submittedAt)}</p>
-                </div>
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Submitted</span>
-              </div>
-              <dl className="grid gap-3 sm:grid-cols-2">
-                {formatDailyAnswers(submission.answers).map((answer) => (
-                  <div key={answer.key} className="rounded-xl bg-slate-50 px-3 py-2">
-                    <dt className="text-xs font-bold uppercase tracking-wide text-slate-500">{answer.label}</dt>
-                    <dd className="mt-1 text-sm font-semibold text-slate-800">{answer.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </article>
-          ))}
-        </div>
+        <DailyHabitsWeekTable submissions={submissions} />
       )}
     </div>
+  );
+}
+
+function DailyHabitsWeekTable({ submissions }: { submissions: ApiDailySubmissionRecord[] }) {
+  const latestSubmission = submissions.reduce<ApiDailySubmissionRecord | null>((latest, submission) => {
+    if (!latest) {
+      return submission;
+    }
+
+    return new Date(submission.submittedAt).getTime() > new Date(latest.submittedAt).getTime() ? submission : latest;
+  }, null);
+  const weekStart = getWeekStart(latestSubmission?.submittedAt ?? new Date().toISOString());
+  const weekEnd = addDays(weekStart, 6);
+  const rows = buildDailyAnswerRows(submissions, weekStart);
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 px-6 py-5">
+        <h3 className="text-lg font-black text-slate-950">{formatWeekRange(weekStart, weekEnd)}</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1080px] table-fixed text-left" aria-label="Daily habits weekly summary">
+          <thead>
+            <tr className="border-b border-slate-100 text-xs font-black uppercase text-slate-900">
+              <th scope="col" className="w-[32%] px-6 py-4">
+                Habits
+              </th>
+              {weekDayLabels.map((label) => (
+                <th key={label} scope="col" className="px-4 py-4 text-center">
+                  {label}
+                </th>
+              ))}
+              <th scope="col" className="px-4 py-4 text-center">
+                Average
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {rows.map((row) => (
+              <tr key={row.fieldId}>
+                <th scope="row" className="px-6 py-5 text-sm font-semibold leading-6 text-slate-700">
+                  {row.label}
+                </th>
+                {weekDayLabels.map((label, dayIndex) => (
+                  <td key={`${row.fieldId}-${label}`} className="px-4 py-5 text-center text-sm font-semibold text-slate-900">
+                    {formatDailyCellValue(row.valuesByDay.get(dayIndex))}
+                  </td>
+                ))}
+                <td className="px-4 py-5 text-center text-sm font-semibold text-slate-600">{formatAverage(row)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
@@ -207,26 +253,155 @@ function formatCheckInDate(value: string) {
     : new Intl.DateTimeFormat("en", { month: "long", day: "numeric", year: "numeric" }).format(date);
 }
 
-function formatDailyAnswers(answers: unknown) {
-  if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
-    return [{ key: "empty", label: "Submission", value: "No answers were recorded." }];
+const weekDayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
+
+function buildDailyAnswerRows(submissions: ApiDailySubmissionRecord[], weekStart: Date): DailyAnswerRow[] {
+  const rows = new Map<string, DailyAnswerRow>();
+
+  submissions.forEach((submission) => {
+    const dayIndex = getWeekDayIndex(submission.submittedAt, weekStart);
+
+    if (dayIndex === null || !isRecord(submission.answers)) {
+      return;
+    }
+
+    const schemaFields = getSubmissionSchemaFields(submission.formVersion?.schema);
+    const schemaFieldsById = new Map(schemaFields.map((field) => [field.id, field]));
+    const answerEntries = Object.entries(submission.answers).filter(([, value]) => value !== undefined && value !== null && value !== "");
+
+    answerEntries.forEach(([fieldId, value]) => {
+      const field = schemaFieldsById.get(fieldId);
+      const existingRow = rows.get(fieldId);
+      const row = existingRow ?? {
+        fieldId,
+        label: field ? getDisplayAnswerLabel(field.label) : getDisplayAnswerLabel(formatAnswerLabel(fieldId)),
+        valuesByDay: new Map<number, unknown>()
+      };
+
+      row.valuesByDay.set(dayIndex, value);
+      rows.set(fieldId, row);
+    });
+  });
+
+  return Array.from(rows.values());
+}
+
+function getSubmissionSchemaFields(schema: unknown): FormFieldDefinition[] {
+  const definition = FormDefinitionSchema.safeParse(schema);
+
+  if (!definition.success) {
+    return [];
   }
 
-  const entries = Object.entries(answers)
-    .filter(([, value]) => value !== undefined && value !== null && value !== "")
-    .map(([key, value]) => ({
-      key,
-      label: formatAnswerLabel(key),
-      value: formatAnswerValue(value)
-    }));
+  return definition.data.fields.filter((field) => field.type !== "content-block");
+}
 
-  return entries.length > 0 ? entries : [{ key: "empty", label: "Submission", value: "No answers were recorded." }];
+function getWeekStart(value: string) {
+  const date = new Date(value);
+  const baseDate = Number.isNaN(date.getTime()) ? new Date() : date;
+  const start = new Date(baseDate);
+  const day = start.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() + mondayOffset);
+
+  return start;
+}
+
+function getWeekDayIndex(value: string, weekStart: Date) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((dayStart.getTime() - weekStart.getTime()) / 86_400_000);
+
+  return diffDays >= 0 && diffDays <= 6 ? diffDays : null;
+}
+
+function addDays(date: Date, days: number) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+
+  return nextDate;
+}
+
+function formatWeekRange(start: Date, end: Date) {
+  const sameMonth = start.getMonth() === end.getMonth();
+  const monthFormatter = new Intl.DateTimeFormat("en", { month: "short" });
+  const yearFormatter = new Intl.DateTimeFormat("en", { year: "numeric" });
+  const startDay = start.getDate().toString().padStart(2, "0");
+  const endDay = end.getDate().toString().padStart(2, "0");
+
+  if (sameMonth) {
+    return `${startDay} - ${endDay} ${monthFormatter.format(end)}, ${yearFormatter.format(end)}`;
+  }
+
+  return `${startDay} ${monthFormatter.format(start)} - ${endDay} ${monthFormatter.format(end)}, ${yearFormatter.format(end)}`;
+}
+
+function formatDailyCellValue(value: unknown) {
+  if (value === undefined || value === null || value === "") {
+    return "-";
+  }
+
+  return formatAnswerValue(value);
+}
+
+function formatAverage(row: DailyAnswerRow) {
+  const values = Array.from(row.valuesByDay.values());
+  const numericValues = values.map(toFiniteNumber).filter((value): value is number => value !== null);
+
+  if (numericValues.length === 0 || numericValues.length !== values.length) {
+    return "-";
+  }
+
+  const average = numericValues.reduce((sum, value) => sum + value, 0) / numericValues.length;
+
+  return Number.isInteger(average) ? String(average) : average.toFixed(2).replace(/\.?0+$/u, "");
+}
+
+function toFiniteNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function normalizePresetHabitLabel(label: string) {
+  return label
+    .replace(/^preset\s+habit\s+/iu, "")
+    .replace(/\s+\d+$/u, "")
+    .trim();
+}
+
+function getDisplayAnswerLabel(label: string) {
+  const normalizedLabel = normalizePresetHabitLabel(label);
+
+  return normalizedLabel ? formatAnswerLabel(normalizedLabel) : formatAnswerLabel(label);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function formatAnswerLabel(key: string) {
   return key
     .replaceAll("_", " ")
     .replaceAll("-", " ")
+    .replace(/\s+/g, " ")
+    .trim()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 

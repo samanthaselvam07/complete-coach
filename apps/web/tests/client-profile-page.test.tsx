@@ -568,11 +568,70 @@ function mockMarcusProfile(
                 id: "submission_daily_1",
                 formName: "Daily Basics",
                 formType: "habit-tracker",
-                submittedAt: "2026-07-30T07:30:00.000Z",
+                submittedAt: "2026-08-03T07:30:00.000Z",
                 answers: {
-                  body_weight: 81.7,
-                  steps: 9800,
+                  "preset-habit-body-weight-1": 81.7,
+                  "preset-habit-steps-11": 9800,
                   notes: "Good recovery."
+                },
+                formVersion: {
+                  schema: {
+                    title: "Daily Basics",
+                    fields: [
+                      {
+                        id: "preset-habit-body-weight-1",
+                        type: "number",
+                        label: "Preset Habit Body Weight 1",
+                        required: false,
+                        exportPolicy: "private"
+                      },
+                      {
+                        id: "preset-habit-steps-11",
+                        type: "number",
+                        label: "Preset Habit Steps 11",
+                        required: false,
+                        exportPolicy: "private"
+                      },
+                      {
+                        id: "notes",
+                        type: "long-text",
+                        label: "Notes",
+                        required: false,
+                        exportPolicy: "private"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                id: "submission_daily_2",
+                formName: "Daily Basics",
+                formType: "habit-tracker",
+                submittedAt: "2026-08-04T07:30:00.000Z",
+                answers: {
+                  "preset-habit-body-weight-1": 82.1,
+                  "preset-habit-steps-11": 10200
+                },
+                formVersion: {
+                  schema: {
+                    title: "Daily Basics",
+                    fields: [
+                      {
+                        id: "preset-habit-body-weight-1",
+                        type: "number",
+                        label: "Preset Habit Body Weight 1",
+                        required: false,
+                        exportPolicy: "private"
+                      },
+                      {
+                        id: "preset-habit-steps-11",
+                        type: "number",
+                        label: "Preset Habit Steps 11",
+                        required: false,
+                        exportPolicy: "private"
+                      }
+                    ]
+                  }
                 }
               }
             ]
@@ -2267,12 +2326,21 @@ describe("ClientProfilePage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Daily Check-Ins" }));
 
     expect(screen.getByRole("heading", { name: "Daily Check-Ins" })).toBeInTheDocument();
-    expect(await screen.findByText("Daily Basics")).toBeInTheDocument();
-    expect(screen.getByText("Body Weight")).toBeInTheDocument();
-    expect(screen.getAllByText("81.7").length).toBeGreaterThan(0);
-    expect(screen.getByText("Steps")).toBeInTheDocument();
-    expect(screen.getByText("9800")).toBeInTheDocument();
-    expect(screen.getByText("Good recovery.")).toBeInTheDocument();
+    const dailyHabitsTable = await screen.findByRole("table", { name: "Daily habits weekly summary" });
+    expect(dailyHabitsTable).toBeInTheDocument();
+    expect(screen.getByText("03 - 09 Aug, 2026")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Monday" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Average" })).toBeInTheDocument();
+    expect(within(dailyHabitsTable).getByText("Body Weight")).toBeInTheDocument();
+    expect(screen.queryByText("Preset Habit Body Weight 1")).not.toBeInTheDocument();
+    expect(within(dailyHabitsTable).getByText("81.7")).toBeInTheDocument();
+    expect(within(dailyHabitsTable).getByText("82.1")).toBeInTheDocument();
+    expect(within(dailyHabitsTable).getByText("81.9")).toBeInTheDocument();
+    expect(within(dailyHabitsTable).getByText("Steps")).toBeInTheDocument();
+    expect(within(dailyHabitsTable).getByText("9800")).toBeInTheDocument();
+    expect(within(dailyHabitsTable).getByText("10200")).toBeInTheDocument();
+    expect(within(dailyHabitsTable).getByText("10000")).toBeInTheDocument();
+    expect(within(dailyHabitsTable).getByText("Good recovery.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Check-Ins" }));
 
