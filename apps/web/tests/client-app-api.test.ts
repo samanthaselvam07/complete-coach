@@ -507,6 +507,45 @@ describe("client app APIs", () => {
     );
   });
 
+  it("infers the check-in photo content type for camera roll uploads", async () => {
+    const uploadFetch = vi.fn(async () => new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", uploadFetch);
+
+    const response = await uploadClientCheckInPhoto(
+      new Request("http://test.local/api/v1/client/check-in-photo-upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "x-filename": encodeURIComponent("front-progress.HEIC")
+        },
+        body: new Blob(["photo-bytes"], { type: "application/octet-stream" })
+      })
+    );
+    const payload = (await response.json()) as { data: { objectKey: string; photoUrl: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.objectKey).toMatch(
+      /^organizations\/org_1\/clients\/client_1\/check-ins\/photos\/[0-9a-fA-F-]{36}\.heic$/
+    );
+    expect(uploadFetch).toHaveBeenCalledWith(
+      "https://r2.example/check-in-photo-upload",
+      expect.objectContaining({
+        method: "PUT",
+        headers: { "Content-Type": "image/heic" },
+        body: expect.any(Uint8Array)
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          metadata: expect.objectContaining({
+            contentType: "image/heic"
+          })
+        })
+      })
+    );
+  });
+
   it("creates a signed display URL for the signed-in client's uploaded check-in photo", async () => {
     const photoUrl = "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg";
     const response = await getClientCheckInPhotoUrl(

@@ -9,6 +9,10 @@ const allowedCheckInPhotoContentTypes = {
   "image/heic": "heic",
   "image/heif": "heif"
 } as const;
+const checkInPhotoContentTypeAliases: Record<string, keyof typeof allowedCheckInPhotoContentTypes> = {
+  "image/jpg": "image/jpeg",
+  "image/pjpeg": "image/jpeg"
+};
 
 export const checkInPhotoObjectUrlPrefix = "r2://";
 
@@ -56,6 +60,16 @@ export function buildCheckInPhotoObjectKey(organizationId: string, clientId: str
   return `organizations/${organizationId}/clients/${clientId}/check-ins/photos/${randomUUID()}.${extension}`;
 }
 
+export function resolveCheckInPhotoContentType(filename: string, contentType: string | null | undefined) {
+  const normalizedContentType = normalizeCheckInPhotoContentType(contentType);
+
+  if (normalizedContentType && normalizedContentType !== "application/octet-stream") {
+    return normalizedContentType;
+  }
+
+  return inferCheckInPhotoContentTypeFromFilename(filename) ?? normalizedContentType;
+}
+
 export function getCheckInPhotoMaxBytes() {
   return checkInPhotoMaxBytes;
 }
@@ -93,6 +107,38 @@ function getExtension(filename: string) {
   }
 
   return extension;
+}
+
+function normalizeCheckInPhotoContentType(contentType: string | null | undefined): string {
+  const normalized = contentType?.split(";")[0]?.trim().toLowerCase() ?? "";
+
+  return checkInPhotoContentTypeAliases[normalized] ?? normalized;
+}
+
+function inferCheckInPhotoContentTypeFromFilename(filename: string) {
+  const extension = getExtension(filename);
+
+  if (extension === "jpg") {
+    return "image/jpeg";
+  }
+
+  if (extension === "png") {
+    return "image/png";
+  }
+
+  if (extension === "webp") {
+    return "image/webp";
+  }
+
+  if (extension === "heic") {
+    return "image/heic";
+  }
+
+  if (extension === "heif") {
+    return "image/heif";
+  }
+
+  return null;
 }
 
 function escapeRegExp(value: string) {

@@ -196,7 +196,7 @@ describe("ClientDailyCheckInFormPage", () => {
 
     expect(await screen.findByRole("heading", { name: "Weekly Review" })).toBeInTheDocument();
 
-    const photoFile = new File(["photo"], "front-progress.jpg", { type: "image/jpeg" });
+    const photoFile = new File(["photo"], "front-progress.jpg");
     fireEvent.change(screen.getByLabelText(/progress photo/i), { target: { files: [photoFile] } });
 
     expect(await screen.findByText("front-progress.jpg uploaded.")).toBeInTheDocument();
@@ -232,6 +232,95 @@ describe("ClientDailyCheckInFormPage", () => {
           })
         })
       );
+    });
+  });
+
+  it("prevents submitting a weekly check-in while a required photo is still uploading", async () => {
+    let finishUpload: ((response: Response) => void) | undefined;
+    const uploadPromise = new Promise<Response>((resolve) => {
+      finishUpload = resolve;
+    });
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === "/api/v1/client/daily-check-in?kind=weekly" && !init) {
+        return new Response(
+          JSON.stringify({
+            data: {
+              id: "assignment_weekly_1",
+              formName: "Weekly Review",
+              dueAt: null,
+              formVersion: {
+                schema: {
+                  title: "Weekly Review",
+                  fields: [{ id: "progress_photo", type: "photo", label: "Progress photo", required: true }]
+                }
+              }
+            }
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      if (url === "/api/v1/client/check-in-photo-upload" && init?.method === "POST") {
+        return uploadPromise;
+      }
+
+      if (url === "/api/v1/client/daily-check-in?kind=weekly" && init?.method === "POST") {
+        return new Response(JSON.stringify({ data: { id: "submission_weekly_1" } }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return new Response(JSON.stringify({ error: { message: "Not found" } }), { status: 404 });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ClientDailyCheckInFormPage kind="weekly" />);
+
+    expect(await screen.findByRole("heading", { name: "Weekly Review" })).toBeInTheDocument();
+
+    const photoFile = new File(["photo"], "front-progress.heic", { type: "application/octet-stream" });
+    fireEvent.change(screen.getByLabelText(/progress photo/i), { target: { files: [photoFile] } });
+
+    expect(await screen.findByRole("button", { name: "Uploading photos" })).toBeDisabled();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/v1/client/daily-check-in?kind=weekly",
+      expect.objectContaining({ method: "POST" })
+    );
+
+    finishUpload?.(
+      new Response(
+        JSON.stringify({
+          data: {
+            objectKey: "organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.heic",
+            photoUrl: "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.heic"
+          }
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+
+    expect(await screen.findByText("front-progress.heic uploaded.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Submit weekly check-in" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/client/daily-check-in?kind=weekly",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+
+    const submitCall = fetchMock.mock.calls.find(
+      ([url, init]) => url === "/api/v1/client/daily-check-in?kind=weekly" && init?.method === "POST"
+    );
+    expect(JSON.parse(submitCall?.[1]?.body as string)).toEqual({
+      answers: {
+        progress_photo: expect.objectContaining({
+          contentType: "image/heic",
+          photoUrl: "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.heic"
+        })
+      }
     });
   });
 });

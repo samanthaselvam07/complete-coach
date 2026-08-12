@@ -49,6 +49,7 @@ export function ClientDailyCheckInFormPage({ kind = "daily" }: { kind?: CheckInF
   const [errorMessage, setErrorMessage] = useState("");
   const [assignment, setAssignment] = useState<DailyCheckInAssignment | null>(null);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [pendingPhotoUploads, setPendingPhotoUploads] = useState(0);
   const fields = useMemo(() => assignment?.formVersion?.schema?.fields ?? [], [assignment]);
   const formLabel = kind === "weekly" ? "weekly check-in" : "daily check-in";
   const apiUrl = `/api/v1/client/daily-check-in?kind=${kind}`;
@@ -91,6 +92,19 @@ export function ClientDailyCheckInFormPage({ kind = "daily" }: { kind?: CheckInF
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage("");
+
+    if (pendingPhotoUploads > 0) {
+      setErrorMessage("Wait for photos to finish uploading before submitting.");
+      return;
+    }
+
+    const missingPhotoField = fields.find((field) => field.type === "photo" && field.required && !hasUploadedPhotoValue(answers[field.id]));
+
+    if (missingPhotoField) {
+      setErrorMessage(`Upload ${missingPhotoField.label} before submitting.`);
+      return;
+    }
+
     setSubmitState("submitting");
 
     try {
@@ -150,6 +164,8 @@ export function ClientDailyCheckInFormPage({ kind = "daily" }: { kind?: CheckInF
                   field={field}
                   value={answers[field.id]}
                   onChange={(value) => updateAnswer(field.id, value)}
+                  onPhotoUploadStart={() => setPendingPhotoUploads((current) => current + 1)}
+                  onPhotoUploadEnd={() => setPendingPhotoUploads((current) => Math.max(0, current - 1))}
                 />
               ))}
 
@@ -161,11 +177,11 @@ export function ClientDailyCheckInFormPage({ kind = "daily" }: { kind?: CheckInF
 
               <button
                 type="submit"
-                disabled={submitState !== "idle"}
+                disabled={submitState !== "idle" || pendingPhotoUploads > 0}
                 className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-[1.25rem] bg-[#3620b8] text-base font-black text-white shadow-[0_20px_45px_rgba(54,32,184,0.24)] transition active:scale-[0.98] disabled:opacity-70"
               >
                 {submitState === "submitted" ? <CheckCircle2 aria-hidden="true" className="size-5" /> : <Send aria-hidden="true" className="size-5" />}
-                {submitState === "submitted" ? "Submitted" : submitState === "submitting" ? "Submitting" : `Submit ${formLabel}`}
+                {submitState === "submitted" ? "Submitted" : submitState === "submitting" ? "Submitting" : pendingPhotoUploads > 0 ? "Uploading photos" : `Submit ${formLabel}`}
               </button>
             </form>
           </>
@@ -178,11 +194,15 @@ export function ClientDailyCheckInFormPage({ kind = "daily" }: { kind?: CheckInF
 export function DailyCheckInFieldControl({
   field,
   value,
-  onChange
+  onChange,
+  onPhotoUploadStart,
+  onPhotoUploadEnd
 }: {
   field: DailyCheckInField;
   value: unknown;
   onChange: (value: unknown) => void;
+  onPhotoUploadStart?: () => void;
+  onPhotoUploadEnd?: () => void;
 }) {
   if (field.type === "content-block") {
     return (
@@ -198,7 +218,13 @@ export function DailyCheckInFieldControl({
         <span className="text-sm font-black text-[#1b1c1c]">{field.label}</span>
         {field.required ? <span className="text-xs font-black uppercase tracking-wide text-[#f87600]">Required</span> : null}
       </span>
-      <FieldInput field={field} value={value} onChange={onChange} />
+      <FieldInput
+        field={field}
+        value={value}
+        onChange={onChange}
+        onPhotoUploadStart={onPhotoUploadStart}
+        onPhotoUploadEnd={onPhotoUploadEnd}
+      />
     </label>
   );
 }
@@ -206,11 +232,15 @@ export function DailyCheckInFieldControl({
 function FieldInput({
   field,
   value,
-  onChange
+  onChange,
+  onPhotoUploadStart,
+  onPhotoUploadEnd
 }: {
   field: DailyCheckInField;
   value: unknown;
   onChange: (value: unknown) => void;
+  onPhotoUploadStart?: () => void;
+  onPhotoUploadEnd?: () => void;
 }) {
   const baseClass = "min-h-12 w-full rounded-2xl border-0 bg-[#f5f3f3] px-4 text-sm font-bold text-[#1b1c1c] outline-none ring-2 ring-transparent transition focus:ring-[#3620b8]";
   const [photoUploadState, setPhotoUploadState] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
@@ -315,14 +345,17 @@ function FieldInput({
 
   if (field.type === "photo") {
     async function uploadPhoto(file: File) {
+      const contentType = getPhotoFileContentType(file);
+
       setPhotoUploadState("uploading");
       setPhotoUploadMessage("Uploading photo...");
+      onPhotoUploadStart?.();
 
       try {
         const response = await fetch("/api/v1/client/check-in-photo-upload", {
           method: "POST",
           headers: {
-            "Content-Type": file.type,
+            "Content-Type": contentType,
             "x-filename": encodeURIComponent(file.name)
           },
           body: file
@@ -343,7 +376,7 @@ function FieldInput({
 
         onChange({
           byteSize: file.size,
-          contentType: file.type,
+          contentType,
           fileName: file.name,
           objectKey: payload.data.objectKey,
           photoUrl: payload.data.photoUrl
@@ -354,6 +387,8 @@ function FieldInput({
         onChange("");
         setPhotoUploadState("error");
         setPhotoUploadMessage(error instanceof Error ? error.message : "Photo could not be uploaded.");
+      } finally {
+        onPhotoUploadEnd?.();
       }
     }
 
@@ -410,6 +445,42 @@ function hasUploadedPhotoValue(value: unknown) {
       && !Array.isArray(value)
       && typeof (value as { photoUrl?: unknown }).photoUrl === "string"
   );
+}
+
+function getPhotoFileContentType(file: File) {
+  const normalizedContentType = file.type.split(";")[0]?.trim().toLowerCase();
+
+  if (normalizedContentType === "image/jpg" || normalizedContentType === "image/pjpeg") {
+    return "image/jpeg";
+  }
+
+  if (normalizedContentType && normalizedContentType !== "application/octet-stream") {
+    return normalizedContentType;
+  }
+
+  const extension = file.name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
+
+  if (extension === "jpg" || extension === "jpeg") {
+    return "image/jpeg";
+  }
+
+  if (extension === "png") {
+    return "image/png";
+  }
+
+  if (extension === "webp") {
+    return "image/webp";
+  }
+
+  if (extension === "heic") {
+    return "image/heic";
+  }
+
+  if (extension === "heif") {
+    return "image/heif";
+  }
+
+  return file.type || "application/octet-stream";
 }
 
 function DailyFormStatus({ message, tone = "default" }: { message: string; tone?: "default" | "error" }) {

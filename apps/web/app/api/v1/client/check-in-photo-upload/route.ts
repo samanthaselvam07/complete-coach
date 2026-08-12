@@ -6,6 +6,7 @@ import {
   buildCheckInPhotoObjectKey,
   createCheckInPhotoObjectUrl,
   getCheckInPhotoMaxBytes,
+  resolveCheckInPhotoContentType,
   checkInPhotoUploadSchema
 } from "@/lib/forms/client-check-in-photo-uploads";
 import { createR2PresignedPutUrl, getR2Config } from "@/lib/storage/r2";
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
   try {
     const actor = requireActiveClientActor(await auth());
     const filename = getCheckInPhotoFilename(request.headers.get("x-filename"));
-    const contentType = request.headers.get("content-type") ?? "";
+    const contentType = resolveCheckInPhotoContentType(filename, request.headers.get("content-type"));
     const fileBytes = new Uint8Array(await request.arrayBuffer());
 
     if (fileBytes.byteLength === 0) {
