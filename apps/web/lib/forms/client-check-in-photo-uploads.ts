@@ -61,13 +61,18 @@ export function buildCheckInPhotoObjectKey(organizationId: string, clientId: str
 }
 
 export function resolveCheckInPhotoContentType(filename: string, contentType: string | null | undefined) {
+  const inferredContentType = inferCheckInPhotoContentTypeFromFilename(filename);
   const normalizedContentType = normalizeCheckInPhotoContentType(contentType);
+
+  if (inferredContentType) {
+    return inferredContentType;
+  }
 
   if (normalizedContentType && normalizedContentType !== "application/octet-stream") {
     return normalizedContentType;
   }
 
-  return inferCheckInPhotoContentTypeFromFilename(filename) ?? normalizedContentType;
+  return normalizedContentType;
 }
 
 export function getCheckInPhotoMaxBytes() {

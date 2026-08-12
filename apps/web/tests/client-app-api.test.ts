@@ -546,6 +546,30 @@ describe("client app APIs", () => {
     );
   });
 
+  it("prefers the allowed check-in photo filename extension when browser content type metadata conflicts", async () => {
+    const uploadFetch = vi.fn(async () => new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", uploadFetch);
+
+    const response = await uploadClientCheckInPhoto(
+      new Request("http://test.local/api/v1/client/check-in-photo-upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "image/jpeg",
+          "x-filename": encodeURIComponent("front-progress.heic")
+        },
+        body: new Blob(["photo-bytes"], { type: "image/jpeg" })
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(uploadFetch).toHaveBeenCalledWith(
+      "https://r2.example/check-in-photo-upload",
+      expect.objectContaining({
+        headers: { "Content-Type": "image/heic" }
+      })
+    );
+  });
+
   it("creates a signed display URL for the signed-in client's uploaded check-in photo", async () => {
     const photoUrl = "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg";
     const response = await getClientCheckInPhotoUrl(
@@ -1059,6 +1083,13 @@ describe("client app APIs", () => {
   });
 
   it("submits the signed-in client's weekly check-in and saves it for coach review", async () => {
+    const photoAnswer = {
+      byteSize: 11,
+      contentType: "image/heic",
+      fileName: "front-progress.heic",
+      objectKey: "organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.heic",
+      photoUrl: "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.heic"
+    };
     mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(weeklyAssignmentRecord());
     mocks.prisma.formSubmission.create.mockResolvedValueOnce({
       id: "submission_weekly_1",
@@ -1066,7 +1097,7 @@ describe("client app APIs", () => {
       formVersionId: "form_version_weekly",
       assignmentId: "assignment_weekly_1",
       clientId: "client_1",
-      answersJson: { weekly_notes: "Good week overall." },
+      answersJson: { weekly_notes: "Good week overall.", progress_photo: photoAnswer },
       status: FormSubmissionStatus.SUBMITTED,
       submittedAt: now,
       reviewedAt: null,
@@ -1088,14 +1119,15 @@ describe("client app APIs", () => {
     const response = await postDailyCheckIn(
       new Request("http://test.local/api/v1/client/daily-check-in?kind=weekly", {
         method: "POST",
-        body: JSON.stringify({ answers: { weekly_notes: "Good week overall." } })
+        body: JSON.stringify({ answers: { weekly_notes: "Good week overall.", progress_photo: photoAnswer } })
       })
     );
-    const payload = (await response.json()) as { data: { id: string; answers: { weekly_notes: string } } };
+    const payload = (await response.json()) as { data: { id: string; answers: { weekly_notes: string; progress_photo: typeof photoAnswer } } };
 
     expect(response.status).toBe(201);
     expect(payload.data.id).toBe("submission_weekly_1");
     expect(payload.data.answers.weekly_notes).toBe("Good week overall.");
+    expect(payload.data.answers.progress_photo.photoUrl).toBe(photoAnswer.photoUrl);
     expect(mocks.prisma.formSubmission.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -1104,7 +1136,7 @@ describe("client app APIs", () => {
           formVersionId: "form_version_weekly",
           assignmentId: "assignment_weekly_1",
           clientId: "client_1",
-          answersJson: { weekly_notes: "Good week overall." }
+          answersJson: { weekly_notes: "Good week overall.", progress_photo: photoAnswer }
         })
       })
     );

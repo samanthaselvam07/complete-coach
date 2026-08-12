@@ -280,7 +280,7 @@ describe("ClientDailyCheckInFormPage", () => {
 
     expect(await screen.findByRole("heading", { name: "Weekly Review" })).toBeInTheDocument();
 
-    const photoFile = new File(["photo"], "front-progress.heic", { type: "application/octet-stream" });
+    const photoFile = new File(["photo"], "front-progress.heic", { type: "image/jpeg" });
     fireEvent.change(screen.getByLabelText(/progress photo/i), { target: { files: [photoFile] } });
 
     expect(await screen.findByRole("button", { name: "Uploading photos" })).toBeDisabled();

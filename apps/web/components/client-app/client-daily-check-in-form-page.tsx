@@ -448,16 +448,6 @@ function hasUploadedPhotoValue(value: unknown) {
 }
 
 function getPhotoFileContentType(file: File) {
-  const normalizedContentType = file.type.split(";")[0]?.trim().toLowerCase();
-
-  if (normalizedContentType === "image/jpg" || normalizedContentType === "image/pjpeg") {
-    return "image/jpeg";
-  }
-
-  if (normalizedContentType && normalizedContentType !== "application/octet-stream") {
-    return normalizedContentType;
-  }
-
   const extension = file.name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
 
   if (extension === "jpg" || extension === "jpeg") {
@@ -478,6 +468,16 @@ function getPhotoFileContentType(file: File) {
 
   if (extension === "heif") {
     return "image/heif";
+  }
+
+  const normalizedContentType = file.type.split(";")[0]?.trim().toLowerCase();
+
+  if (normalizedContentType === "image/jpg" || normalizedContentType === "image/pjpeg") {
+    return "image/jpeg";
+  }
+
+  if (normalizedContentType && normalizedContentType !== "application/octet-stream") {
+    return normalizedContentType;
   }
 
   return file.type || "application/octet-stream";
