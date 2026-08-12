@@ -500,6 +500,66 @@ function mockMarcusProfile(
                   }
                 ],
                 personalBests: []
+              },
+              {
+                id: "session_3",
+                assignmentName: "Strength Foundation",
+                dayName: "Day 1",
+                startedAt: "2026-08-12T08:00:00.000Z",
+                completedAt: "2026-08-12T08:48:00.000Z",
+                durationSeconds: 2880,
+                exercises: [
+                  {
+                    exerciseName: "Back Squat",
+                    sets: [{ setNumber: 1, reps: "6", weightKg: 112.5, completed: true }]
+                  }
+                ],
+                personalBests: []
+              },
+              {
+                id: "session_4",
+                assignmentName: "Strength Foundation",
+                dayName: "Day 1",
+                startedAt: "2026-08-19T08:00:00.000Z",
+                completedAt: "2026-08-19T08:52:00.000Z",
+                durationSeconds: 3120,
+                exercises: [
+                  {
+                    exerciseName: "Back Squat",
+                    sets: [{ setNumber: 1, reps: "5", weightKg: 115, completed: true }]
+                  }
+                ],
+                personalBests: []
+              },
+              {
+                id: "session_5",
+                assignmentName: "Strength Foundation",
+                dayName: "Day 1",
+                startedAt: "2026-08-26T08:00:00.000Z",
+                completedAt: "2026-08-26T08:46:00.000Z",
+                durationSeconds: 2760,
+                exercises: [
+                  {
+                    exerciseName: "Back Squat",
+                    sets: [{ setNumber: 1, reps: "5", weightKg: 117.5, completed: true }]
+                  }
+                ],
+                personalBests: []
+              },
+              {
+                id: "session_6",
+                assignmentName: "Strength Foundation",
+                dayName: "Day 1",
+                startedAt: "2026-09-02T08:00:00.000Z",
+                completedAt: "2026-09-02T08:55:00.000Z",
+                durationSeconds: 3300,
+                exercises: [
+                  {
+                    exerciseName: "Back Squat",
+                    sets: [{ setNumber: 1, reps: "4", weightKg: 120, completed: true }]
+                  }
+                ],
+                personalBests: []
               }
             ]
           }),
@@ -1256,13 +1316,17 @@ describe("ClientProfilePage", () => {
     expect(await screen.findByRole("heading", { name: "Workout Notes" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Completed Workouts" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Completed workout training day" })).toHaveValue("Day 1");
+    expect(screen.getByRole("button", { name: "Scroll completed workouts left" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Scroll completed workouts right" })).toBeInTheDocument();
     const comparisonTable = screen.getByRole("table", { name: "Day 1 workout comparison" });
     expect(within(comparisonTable).getByText("Jul 29, 2026")).toBeInTheDocument();
     expect(within(comparisonTable).getByText("Aug 5, 2026")).toBeInTheDocument();
     expect(screen.getByText("45m")).toBeInTheDocument();
     expect(screen.getByText("50m")).toBeInTheDocument();
     expect(screen.getByText("Best 105kg x 6 reps")).toBeInTheDocument();
-    expect(screen.getByText("Set 2: 110kg x 5 reps")).toBeInTheDocument();
+    expect(screen.queryByText("Set 2: 110kg x 5 reps")).not.toBeInTheDocument();
+    expect(screen.getByText("110kg x 5 reps")).toBeInTheDocument();
+    expect(screen.getByText("Total volume: 1195kg")).toBeInTheDocument();
     expect(screen.getAllByText("Back Squat").length).toBeGreaterThan(1);
     expect(screen.getAllByText("Romanian Deadlift").length).toBeGreaterThan(1);
     expect(screen.getByText("Felt strong today, but left knee felt tight on the final set.")).toBeInTheDocument();

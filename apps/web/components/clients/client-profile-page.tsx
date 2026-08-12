@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Check, ChevronLeft, ChevronRight, Droplets, Footprints, LineChart, NotebookPen, Pencil, RefreshCw, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CheckInDetailPage } from "@/components/check-ins/check-in-detail-page";
 import { CheckInHistoryPanel, DailyCheckInsPanel } from "@/components/clients/client-check-in-panels";
@@ -2360,8 +2360,16 @@ function CompletedWorkoutSessionsPanel({
   dayOptions: string[];
   onDayChange: (dayName: string) => void;
 }) {
+  const comparisonScrollRef = useRef<HTMLDivElement | null>(null);
   const orderedSessions = [...sessions].sort((a, b) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime());
   const comparisonRows = buildWorkoutComparisonRows(orderedSessions);
+  const showScrollControls = orderedSessions.length > 5;
+  const scrollComparisonTable = (direction: "left" | "right") => {
+    comparisonScrollRef.current?.scrollBy({
+      left: direction === "left" ? -520 : 520,
+      behavior: "smooth"
+    });
+  };
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label={`${assignmentName} ${dayName} completed workout sessions`}>
@@ -2397,61 +2405,85 @@ function CompletedWorkoutSessionsPanel({
           <p className="text-sm text-slate-500">No completed workouts logged for this day yet.</p>
         ) : null}
         {!loading && orderedSessions.length > 0 ? (
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="min-w-full border-collapse text-left text-sm" aria-label={`${dayName} workout comparison`}>
-              <thead>
-                <tr className="bg-slate-50">
-                  <th className="sticky left-0 z-10 min-w-56 border-b border-r border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black uppercase text-slate-500">
-                    Exercise
-                  </th>
-                  {orderedSessions.map((session) => (
-                    <th key={session.id} className="min-w-48 border-b border-slate-200 px-4 py-3 align-top">
-                      <span className="block text-sm font-black text-slate-950">{formatTrainingDate(session.completedAt)}</span>
-                      <span className="mt-1 block text-xs font-bold text-slate-500">{formatWorkoutDuration(session.durationSeconds)}</span>
-                      {session.personalBests.length > 0 ? (
-                        <span className="mt-2 inline-flex rounded-md bg-indigo-50 px-2 py-1 text-xs font-black text-indigo-600">
-                          {session.personalBests.length} PBs
-                        </span>
-                      ) : null}
+          <div className="space-y-3">
+            {showScrollControls ? (
+              <div className="flex justify-end gap-2" aria-label="Completed workout comparison scroll controls">
+                <button
+                  type="button"
+                  aria-label="Scroll completed workouts left"
+                  onClick={() => scrollComparisonTable("left")}
+                  className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+                >
+                  <ChevronLeft className="size-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Scroll completed workouts right"
+                  onClick={() => scrollComparisonTable("right")}
+                  className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+                >
+                  <ChevronRight className="size-4" aria-hidden="true" />
+                </button>
+              </div>
+            ) : null}
+            <div ref={comparisonScrollRef} className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="min-w-full border-collapse text-left text-sm" aria-label={`${dayName} workout comparison`}>
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="sticky left-0 z-10 min-w-56 border-b border-r border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black uppercase text-slate-500">
+                      Exercise
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {comparisonRows.map((row, rowIndex) => (
-                  <tr key={row.exerciseName} className={rowIndex % 2 === 0 ? "bg-white" : "bg-slate-50/70"}>
-                    <th className="sticky left-0 z-10 border-r border-slate-200 bg-inherit px-4 py-3 text-sm font-black text-slate-950">
-                      {row.exerciseName}
-                    </th>
-                    {orderedSessions.map((session) => {
-                      const exercise = row.exercisesBySessionId.get(session.id);
-                      const bestSet = exercise ? getBestLoggedSet(exercise.sets) : null;
-
-                      return (
-                        <td key={`${row.exerciseName}-${session.id}`} className="border-t border-slate-100 px-4 py-3 align-top text-slate-700">
-                          {exercise ? (
-                            <div className="space-y-2">
-                              <div className="space-y-1">
-                                {exercise.sets.map((set) => (
-                                  <p key={`${session.id}-${row.exerciseName}-${set.setNumber}`} className="text-xs font-bold text-slate-700">
-                                    Set {set.setNumber}: {formatLoggedSet(set)}
-                                  </p>
-                                ))}
-                              </div>
-                              {bestSet ? (
-                                <p className="text-xs font-black text-slate-500">Best {formatLoggedSet(bestSet)}</p>
-                              ) : null}
-                            </div>
-                          ) : (
-                            <span className="text-xs font-bold text-slate-400">Not logged</span>
-                          )}
-                        </td>
-                      );
-                    })}
+                    {orderedSessions.map((session) => (
+                      <th key={session.id} className="min-w-48 border-b border-slate-200 px-4 py-3 align-top">
+                        <span className="block text-sm font-black text-slate-950">{formatTrainingDate(session.completedAt)}</span>
+                        <span className="mt-1 block text-xs font-bold text-slate-500">{formatWorkoutDuration(session.durationSeconds)}</span>
+                        {session.personalBests.length > 0 ? (
+                          <span className="mt-2 inline-flex rounded-md bg-indigo-50 px-2 py-1 text-xs font-black text-indigo-600">
+                            {session.personalBests.length} PBs
+                          </span>
+                        ) : null}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {comparisonRows.map((row, rowIndex) => (
+                    <tr key={row.exerciseName} className={rowIndex % 2 === 0 ? "bg-white" : "bg-slate-50/70"}>
+                      <th className="sticky left-0 z-10 border-r border-slate-200 bg-inherit px-4 py-3 text-sm font-black text-slate-950">
+                        {row.exerciseName}
+                      </th>
+                      {orderedSessions.map((session) => {
+                        const exercise = row.exercisesBySessionId.get(session.id);
+                        const bestSet = exercise ? getBestLoggedSet(exercise.sets) : null;
+                        const totalVolume = exercise ? calculateLoggedExerciseVolume(exercise.sets) : null;
+
+                        return (
+                          <td key={`${row.exerciseName}-${session.id}`} className="border-t border-slate-100 px-4 py-3 align-top text-slate-700">
+                            {exercise ? (
+                              <div className="space-y-2">
+                                <div className="space-y-1">
+                                  {exercise.sets.map((set) => (
+                                    <p key={`${session.id}-${row.exerciseName}-${set.setNumber}`} className="text-xs font-bold text-slate-700">
+                                      {formatLoggedSet(set)}
+                                    </p>
+                                  ))}
+                                </div>
+                                <p className="text-xs font-black text-slate-950">Total volume: {formatLoggedVolume(totalVolume)}</p>
+                                {bestSet ? (
+                                  <p className="text-xs font-black text-slate-500">Best {formatLoggedSet(bestSet)}</p>
+                                ) : null}
+                              </div>
+                            ) : (
+                              <span className="text-xs font-bold text-slate-400">Not logged</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : null}
       </div>
@@ -2483,6 +2515,38 @@ function formatLoggedSet(set: ClientWorkoutSession["exercises"][number]["sets"][
   const reps = set.reps?.trim() ? `${set.reps} reps` : "no reps";
 
   return `${weight} x ${reps}`;
+}
+
+function calculateLoggedExerciseVolume(sets: ClientWorkoutSession["exercises"][number]["sets"]) {
+  const volume = sets.reduce((total, set) => {
+    if (typeof set.weightKg !== "number") {
+      return total;
+    }
+
+    const reps = parseLoggedReps(set.reps);
+
+    return reps === null ? total : total + set.weightKg * reps;
+  }, 0);
+
+  return volume > 0 ? volume : null;
+}
+
+function parseLoggedReps(value?: string) {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  const parsed = Number(value.trim());
+
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatLoggedVolume(value: number | null) {
+  if (value === null) {
+    return "-";
+  }
+
+  return `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1)}kg`;
 }
 
 function buildWorkoutComparisonRows(sessions: ClientWorkoutSession[]) {
