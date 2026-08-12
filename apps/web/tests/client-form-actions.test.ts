@@ -6,11 +6,25 @@ import {
   fetchClientFormOptionsFromUrls,
   fetchPublishedClientFormsByType
 } from "@/components/clients/client-form-actions";
-import { emptyClientForm } from "@/components/clients/client-form-dialog";
+import { createClientMutationBody, emptyClientForm } from "@/components/clients/client-form-dialog";
 
 describe("client form actions", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("omits coach assignment from normal edit payloads unless explicitly allowed", () => {
+    const form = {
+      ...emptyClientForm,
+      firstName: "Marcus",
+      lastName: "Rodriguez",
+      primaryCoachUserId: "coach_1"
+    };
+
+    expect(createClientMutationBody(form, "active", true, true)).not.toHaveProperty("primaryCoachUserId");
+    expect(createClientMutationBody(form, "active", true, true, true)).toMatchObject({
+      primaryCoachUserId: "coach_1"
+    });
   });
 
   it("merges unique published form options from several lookup URLs", async () => {

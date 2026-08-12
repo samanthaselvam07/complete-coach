@@ -587,6 +587,69 @@ describe("FormsPage", () => {
     );
   });
 
+  it("normalizes blank field labels before saving form fields", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "form_blank_label_1",
+              name: "Blank Label Intake",
+              description: null,
+              type: "intake",
+              status: "draft",
+              currentVersionId: null,
+              createdAt: "2026-05-14T00:00:00.000Z",
+              updatedAt: "2026-05-14T00:00:00.000Z"
+            }
+          }),
+          { status: 201 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "version_blank_label_1",
+              formId: "form_blank_label_1",
+              versionNumber: 1,
+              schema: { title: "Blank Label Intake", fields: [] },
+              ui: { primaryColor: "#6366f1" },
+              publishedAt: null,
+              createdAt: "2026-05-14T00:00:00.000Z"
+            }
+          }),
+          { status: 201 }
+        )
+      );
+
+    render(createElement(FormsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: /start from scratch/i }));
+    fireEvent.change(screen.getByLabelText("Form title"), { target: { value: "Blank Label Intake" } });
+    fireEvent.change(screen.getByLabelText("Form description"), { target: { value: "  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Add Short Text field" }));
+    fireEvent.change(screen.getByLabelText("Field label"), { target: { value: "  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/forms/form_blank_label_1/versions",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("\"label\":\"Question 1\"")
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/forms/form_blank_label_1/versions",
+      expect.objectContaining({
+        body: expect.not.stringContaining("\"description\"")
+      })
+    );
+  });
+
   it("saves a form and returns to the form library when save and close is used", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")

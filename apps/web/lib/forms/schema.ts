@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+const optionalTrimmedString = (maxLength: number) =>
+  z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().min(1).max(maxLength).optional()
+  );
+
 export const FormFieldTypeSchema = z.enum([
   "short-text",
   "long-text",
@@ -24,14 +30,14 @@ export const FormFieldDefinitionSchema = z
   .object({
     id: z.string().min(1).max(80).regex(/^[a-zA-Z0-9_-]+$/),
     type: FormFieldTypeSchema,
-    label: z.string().min(1).max(160),
+    label: z.string().trim().min(1).max(160),
     required: z.boolean().default(false),
-    placeholder: z.string().max(240).optional(),
-    content: z.string().max(20000).optional(),
-    options: z.array(z.string().min(1).max(160)).max(50).optional(),
-    metricKey: z.string().min(1).max(80).regex(/^[a-z][a-z0-9_]*$/).optional(),
-    metricUnit: z.string().min(1).max(32).optional(),
-    category: z.string().min(1).max(120).optional(),
+    placeholder: optionalTrimmedString(240),
+    content: optionalTrimmedString(20000),
+    options: z.array(z.string().trim().min(1).max(160)).max(50).optional(),
+    metricKey: optionalTrimmedString(80).pipe(z.string().regex(/^[a-z][a-z0-9_]*$/).optional()),
+    metricUnit: optionalTrimmedString(32),
+    category: optionalTrimmedString(120),
     exportPolicy: FormFieldExportPolicySchema.default("private")
   })
   .superRefine((field, context) => {
@@ -53,8 +59,8 @@ export const FormFieldDefinitionSchema = z
   });
 
 export const FormDefinitionSchema = z.object({
-  title: z.string().min(1).max(160),
-  description: z.string().max(2000).optional(),
+  title: z.string().trim().min(1).max(160),
+  description: optionalTrimmedString(2000),
   fields: z.array(FormFieldDefinitionSchema).max(100)
 });
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Check, ChevronLeft, Droplets, Footprints, LineChart, NotebookPen, Pencil, RefreshCw, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -360,6 +361,7 @@ export function ClientProfilePage({
   highlightedCheckInId,
   initialTab = "Dashboard"
 }: ClientProfilePageProps) {
+  const { data: session } = useSession();
   const [client, setClient] = useState<ClientProfileView | null>(null);
   const [recentNotes, setRecentNotes] = useState<ClientNoteSummary[]>([]);
   const [loadingClient, setLoadingClient] = useState(true);
@@ -377,6 +379,7 @@ export function ClientProfilePage({
   const [trainingPlanOptions, setTrainingPlanOptions] = useState<ClientFormOption[]>([]);
   const [nutritionPlanOptions, setNutritionPlanOptions] = useState<ClientFormOption[]>([]);
   const [supplementationPlanOptions, setSupplementationPlanOptions] = useState<ClientFormOption[]>([]);
+  const canManageCoachAssignment = session?.activeOrganization?.role === "owner" || session?.activeOrganization?.role === "admin";
   const updateClientComplianceScore = useCallback((compliance: number) => {
     setClient((currentClient) => (currentClient ? { ...currentClient, compliance } : currentClient));
   }, []);
@@ -443,7 +446,7 @@ export function ClientProfilePage({
       const response = await fetch(`/api/v1/clients/${editingClient.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(createClientMutationBody(clientForm, editingClient.status, true, true))
+        body: JSON.stringify(createClientMutationBody(clientForm, editingClient.status, true, true, canManageCoachAssignment))
       });
 
       if (!response.ok) {
@@ -517,7 +520,7 @@ export function ClientProfilePage({
       fetchClientFormOptions("/api/v1/training-program-templates?limit=100"),
       fetchClientFormOptions("/api/v1/meal-plan-templates?limit=100"),
       fetchClientFormOptions("/api/v1/supplement-plan-templates?limit=100"),
-      fetchCoachAssignmentOptions()
+      canManageCoachAssignment ? fetchCoachAssignmentOptions() : Promise.resolve([])
     ]);
 
     setPackageOptions(packages);

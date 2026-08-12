@@ -262,9 +262,11 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
   };
 
   const ensureFormContainer = async () => {
+    const normalizedTitle = formTitle.trim() || "Untitled form";
+    const normalizedDescription = formDescription.trim();
     const body = {
-      name: formTitle,
-      description: formDescription,
+      name: normalizedTitle,
+      description: normalizedDescription || undefined,
       type: getApiFormType(templateType),
       status: persistedForm?.status ?? "draft"
     };
@@ -289,28 +291,16 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
   };
 
   const createFormVersion = async (formId: string) => {
+    const normalizedTitle = formTitle.trim() || "Untitled form";
+    const normalizedDescription = formDescription.trim();
     const response = await fetch(`/api/v1/forms/${formId}/versions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         schema: {
-          title: formTitle,
-          description: formDescription,
-          fields: fields.map((field) => {
-            const options = getPersistableOptions(field);
-
-            return {
-              id: field.id,
-              type: field.type,
-              label: field.label,
-              required: field.required,
-              ...(field.placeholder ? { placeholder: field.placeholder } : {}),
-              ...(field.content ? { content: field.content } : {}),
-              ...(options.length > 0 ? { options } : {}),
-              ...(field.category ? { category: field.category } : {}),
-              exportPolicy: "private"
-            };
-          })
+          title: normalizedTitle,
+          ...(normalizedDescription ? { description: normalizedDescription } : {}),
+          fields: fields.map(createPersistableField)
         },
         ui: {
           primaryColor,
@@ -517,8 +507,78 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
   );
 }
 
-function getPersistableOptions(field: FormField) {
-  if (!fieldSupportsOptions(field.type)) {
+const supportedFieldTypes = new Set([
+  "short-text",
+  "long-text",
+  "content-block",
+  "number",
+  "scale",
+  "multiple-choice",
+  "radio-buttons",
+  "dropdown",
+  "rating-10",
+  "checkbox",
+  "date",
+  "time",
+  "email",
+  "phone",
+  "photo"
+]);
+
+const choiceFieldTypes = new Set(["multiple-choice", "radio-buttons", "dropdown", "checkbox"]);
+
+function createPersistableField(field: FormField, index: number) {
+  const fieldType = getPersistableFieldType(field.type);
+  const options = getPersistableOptions(field, fieldType);
+  const placeholder = field.placeholder?.trim();
+  const content = field.content?.trim();
+  const category = field.category?.trim();
+
+  return {
+    id: getPersistableFieldId(field.id, index),
+    type: fieldType,
+    label: field.label.trim() || `Question ${index + 1}`,
+    required: field.required,
+    ...(placeholder ? { placeholder } : {}),
+    ...(content ? { content } : {}),
+    ...(options.length > 0 ? { options } : {}),
+    ...(category ? { category } : {}),
+    exportPolicy: "private"
+  };
+}
+
+function getPersistableFieldType(fieldType: string) {
+  if (supportedFieldTypes.has(fieldType)) {
+    return fieldType;
+  }
+
+  if (fieldType === "textarea") {
+    return "long-text";
+  }
+
+  if (fieldType === "select") {
+    return "dropdown";
+  }
+
+  if (fieldType === "file" || fieldType === "file-upload") {
+    return "photo";
+  }
+
+  return "short-text";
+}
+
+function getPersistableFieldId(fieldId: string, index: number) {
+  const normalizedId = fieldId
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
+  return normalizedId || `field-${index + 1}`;
+}
+
+function getPersistableOptions(field: FormField, fieldType = field.type) {
+  if (!choiceFieldTypes.has(fieldType)) {
     return [];
   }
 

@@ -538,7 +538,10 @@ describe("forms API", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           organizationId: "org_1",
-          schemaJson: longDescriptionDefinition
+          schemaJson: {
+            ...longDescriptionDefinition,
+            description: longDescription.trim()
+          }
         })
       })
     );

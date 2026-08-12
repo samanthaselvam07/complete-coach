@@ -17,11 +17,16 @@ import {
 const navigationMocks = vi.hoisted(() => ({
   push: vi.fn()
 }));
+const useSessionMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: navigationMocks.push
   })
+}));
+
+vi.mock("next-auth/react", () => ({
+  useSession: () => useSessionMock()
 }));
 
 const marcusClient = {
@@ -889,6 +894,14 @@ async function searchAndSelectPlan(label: string, query: string, optionName: str
 
 describe("ClientProfilePage", () => {
   beforeEach(() => {
+    useSessionMock.mockReturnValue({
+      data: {
+        activeOrganization: {
+          role: "owner"
+        }
+      },
+      status: "authenticated"
+    });
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-07-30T10:00:00.000Z"));
   });
@@ -897,6 +910,7 @@ describe("ClientProfilePage", () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     navigationMocks.push.mockReset();
+    useSessionMock.mockReset();
   });
 
   it("renders a client profile by id", async () => {

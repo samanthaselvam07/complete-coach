@@ -99,7 +99,13 @@ export function clientSummaryToForm(client: ClientSummary): ClientFormState {
   };
 }
 
-export function createClientMutationBody(form: ClientFormState, status = "new", includeOnboarding = false, preserveEmptyValues = false) {
+export function createClientMutationBody(
+  form: ClientFormState,
+  status = "new",
+  includeOnboarding = false,
+  preserveEmptyValues = false,
+  includeCoachAssignment = false
+) {
   const body = {
     firstName: form.firstName,
     lastName: form.lastName,
@@ -108,7 +114,7 @@ export function createClientMutationBody(form: ClientFormState, status = "new", 
     packageId: getMutationValue(form.packageId, preserveEmptyValues),
     packageName: getMutationValue(form.packageName, preserveEmptyValues),
     checkInDay: getMutationValue(form.checkInDay, preserveEmptyValues),
-    primaryCoachUserId: getMutationValue(form.primaryCoachUserId, preserveEmptyValues),
+    ...(includeCoachAssignment ? { primaryCoachUserId: getMutationValue(form.primaryCoachUserId, preserveEmptyValues) } : {}),
     status,
     startDate: getMutationValue(form.planStartDate, preserveEmptyValues) ?? new Date().toISOString().slice(0, 10)
   };

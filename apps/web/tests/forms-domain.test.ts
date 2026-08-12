@@ -68,6 +68,36 @@ describe("forms domain helpers", () => {
     expect(parsed.fields[0]?.category).toBe("Goals");
   });
 
+  it("treats empty optional field metadata as absent", () => {
+    const parsed = FormDefinitionSchema.parse({
+      title: "  Daily habits  ",
+      description: "   ",
+      fields: [
+        {
+          id: "steps",
+          type: "number",
+          label: "  Steps  ",
+          required: false,
+          placeholder: "",
+          metricKey: "",
+          metricUnit: "",
+          category: "",
+          exportPolicy: "private"
+        }
+      ]
+    });
+
+    expect(parsed.title).toBe("Daily habits");
+    expect(parsed.description).toBeUndefined();
+    expect(parsed.fields[0]).toEqual({
+      id: "steps",
+      type: "number",
+      label: "Steps",
+      required: false,
+      exportPolicy: "private"
+    });
+  });
+
   it("extracts deterministic typed measurements from metric fields", () => {
     const definition = FormDefinitionSchema.parse({
       title: "Weekly Check-In",
