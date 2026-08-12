@@ -133,19 +133,31 @@ export function toPrismaFormStatus(status: ApiFormStatus) {
 }
 
 export function buildFormWhere(organizationId: string, query: FormListQuery) {
-  return {
-    organizationId,
-    deletedAt: null,
-    ...(query.status ? { status: toPrismaFormStatus(query.status) } : {}),
-    ...(query.type ? { type: toPrismaFormType(query.type) } : {}),
-    ...(query.search
+  const filters = [
+    query.status === "published"
+      ? {
+          OR: [
+            { status: FormStatus.PUBLISHED },
+            { currentVersion: { is: { publishedAt: { not: null } } } }
+          ]
+        }
+      : null,
+    query.status && query.status !== "published" ? { status: toPrismaFormStatus(query.status) } : null,
+    query.search
       ? {
           OR: [
             { name: { contains: query.search, mode: "insensitive" as const } },
             { description: { contains: query.search, mode: "insensitive" as const } }
           ]
         }
-      : {})
+      : null
+  ].filter((filter): filter is NonNullable<typeof filter> => Boolean(filter));
+
+  return {
+    organizationId,
+    deletedAt: null,
+    ...(query.type ? { type: toPrismaFormType(query.type) } : {}),
+    ...(filters.length > 0 ? { AND: filters } : {})
   };
 }
 

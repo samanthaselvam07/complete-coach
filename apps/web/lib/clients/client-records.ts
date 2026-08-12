@@ -67,6 +67,7 @@ interface ClientRecord {
   status: ClientStatus;
   packageId?: string | null;
   packageName: string | null;
+  requiresOnlinePayment?: boolean | null;
   phone?: string | null;
   checkInDay: string | null;
   timezone?: string | null;
@@ -128,6 +129,7 @@ export function serializeClient(record: ClientRecord): ClientSummary {
     phone: record.phone ?? null,
     packageId: record.packageId,
     packageName: record.packageName || "Unassigned",
+    requiresOnlinePayment: Boolean(record.requiresOnlinePayment),
     compliance: record.compliance,
     checkInDay: record.checkInDay || "Unscheduled",
     latestCheckIn: formatDisplayDate(record.latestCheckInAt),
@@ -165,6 +167,7 @@ export function getClientCreateData(organizationId: string, input: CreateClientI
     status: toPrismaClientStatus(input.status),
     packageId: input.packageId,
     packageName: input.packageName,
+    requiresOnlinePayment: input.onboarding?.needsPayment === true && input.onboarding.paymentMode === "payment-link",
     checkInDay: input.checkInDay,
     primaryCoachUserId: input.primaryCoachUserId,
     timezone: input.timezone,

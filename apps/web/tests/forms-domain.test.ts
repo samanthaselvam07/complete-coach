@@ -1,9 +1,27 @@
 import { describe, expect, it } from "vitest";
 
+import { FormStatus, FormType } from "@/app/generated/prisma/enums";
 import { extractMeasurementsFromSubmission } from "@/lib/forms/metric-extraction";
+import { buildFormWhere } from "@/lib/forms/form-records";
 import { FormDefinitionSchema } from "@/lib/forms/schema";
 
 describe("forms domain helpers", () => {
+  it("treats forms with a published current version as published for assignment lookups", () => {
+    expect(buildFormWhere("org_1", { type: "habit-tracker", status: "published", limit: 100 })).toEqual({
+      organizationId: "org_1",
+      deletedAt: null,
+      type: FormType.HABIT_TRACKER,
+      AND: [
+        {
+          OR: [
+            { status: FormStatus.PUBLISHED },
+            { currentVersion: { is: { publishedAt: { not: null } } } }
+          ]
+        }
+      ]
+    });
+  });
+
   it("validates form definitions with metric metadata", () => {
     const parsed = FormDefinitionSchema.parse({
       title: "Weekly Check-In",

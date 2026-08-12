@@ -27,7 +27,8 @@ import {
   fetchAssignedClientPlanIds,
   fetchCoachAssignmentOptions,
   fetchClientFormOptions,
-  fetchClientFormOptionsFromUrls,
+  fetchPublishedClientFormsByType,
+  getProfileCheckInDays,
   scheduleAssignedPackagePaymentChange,
   toDateInputValue,
   updateClientProfile
@@ -106,23 +107,14 @@ export function ClientsPage() {
     async function loadClientFormOptions() {
       const [
         packages,
-        intakeForms,
-        habitForms,
-        checkInForms,
+        publishedFormGroups,
         trainingPlans,
         nutritionPlans,
         supplementationPlans,
         coaches
       ] = await Promise.all([
         fetchClientFormOptions("/api/v1/packages?status=active&limit=100"),
-        fetchClientFormOptionsFromUrls([
-          "/api/v1/forms?type=intake&status=published&limit=100",
-          "/api/v1/forms?type=application&status=published&limit=100",
-          "/api/v1/forms?type=contact&status=published&limit=100",
-          "/api/v1/forms?type=terms-and-conditions&status=published&limit=100"
-        ]),
-        fetchClientFormOptions("/api/v1/forms?type=habit-tracker&status=published&limit=100"),
-        fetchClientFormOptions("/api/v1/forms?type=check-in&status=published&limit=100"),
+        fetchPublishedClientFormsByType(),
         fetchClientFormOptions("/api/v1/training-program-templates?limit=100"),
         fetchClientFormOptions("/api/v1/meal-plan-templates?limit=100"),
         fetchClientFormOptions("/api/v1/supplement-plan-templates?limit=100"),
@@ -135,9 +127,9 @@ export function ClientsPage() {
 
       setPackageOptions(packages);
       setCoachOptions(coaches);
-      setInitialQuestionnaireOptions(intakeForms);
-      setDailyHabitFormOptions(habitForms);
-      setCheckInFormOptions(checkInForms);
+      setInitialQuestionnaireOptions(publishedFormGroups.initialQuestionnaireOptions);
+      setDailyHabitFormOptions(publishedFormGroups.dailyHabitFormOptions);
+      setCheckInFormOptions(publishedFormGroups.checkInFormOptions);
       setTrainingPlanOptions(trainingPlans);
       setNutritionPlanOptions(nutritionPlans);
       setSupplementationPlanOptions(supplementationPlans);
@@ -243,11 +235,19 @@ export function ClientsPage() {
 
       if (response.ok) {
         const payload = (await response.json()) as { data?: ClientProfileResponse | null };
-        const dateOfBirth = toDateInputValue(payload.data?.dateOfBirth);
+        const profile = payload.data;
+        const dateOfBirth = toDateInputValue(profile?.dateOfBirth);
+        const profileCheckInDays = getProfileCheckInDays(profile);
 
-        if (dateOfBirth) {
-          setClientForm((currentForm) => ({ ...currentForm, dateOfBirth }));
-        }
+        setClientForm((currentForm) => ({
+          ...currentForm,
+          dateOfBirth: dateOfBirth || currentForm.dateOfBirth,
+          weightMeasurement: profile?.weightMeasurement ?? currentForm.weightMeasurement,
+          checkInFrequency: profile?.checkInFrequency ?? currentForm.checkInFrequency,
+          checkInDays: profileCheckInDays.length > 0 ? profileCheckInDays : currentForm.checkInDays,
+          checkInDay: profileCheckInDays[0] ?? currentForm.checkInDay,
+          defaultExerciseMetricUnit: profile?.defaultExerciseMetricUnit ?? currentForm.defaultExerciseMetricUnit
+        }));
       }
     } catch {
       // Profile details are optional for roster editing.

@@ -123,7 +123,8 @@ describe("client app APIs", () => {
       firstName: "Client",
       lastName: "One",
       email: "client@example.com",
-      packageId: "package_1"
+      packageId: "package_1",
+      requiresOnlinePayment: true
     });
     mocks.prisma.client.findFirstOrThrow.mockResolvedValue({
       id: "client_1",
@@ -133,6 +134,7 @@ describe("client app APIs", () => {
       status: ClientStatus.ACTIVE,
       packageId: "package_1",
       packageName: "Pro Coaching",
+      requiresOnlinePayment: true,
       checkInDay: "Monday",
       timezone: "Australia/Melbourne",
       startDate: new Date("2026-07-01T00:00:00.000Z"),
@@ -688,6 +690,9 @@ describe("client app APIs", () => {
   });
 
   it("requires connected Stripe payment before returning an assigned onboarding Q&A", async () => {
+    mocks.prisma.clientSubscription.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(clientSubscriptionRecord());
     mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(onboardingQuestionnaireAssignmentRecord());
 
     const response = await getClientOnboardingStatus();
@@ -705,6 +710,32 @@ describe("client app APIs", () => {
     expect(payload.data.questionnaire).toBeNull();
   });
 
+  it("does not show the payment paywall when a package is assigned without an online payment subscription", async () => {
+    mocks.prisma.client.findFirstOrThrow.mockResolvedValueOnce({
+      id: "client_1",
+      packageId: "package_1",
+      packageName: "Pro Coaching",
+      requiresOnlinePayment: false
+    });
+    mocks.prisma.clientSubscription.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+    mocks.prisma.formAssignment.findFirst.mockResolvedValueOnce(onboardingQuestionnaireAssignmentRecord());
+
+    const response = await getClientOnboardingStatus();
+    const payload = (await response.json()) as {
+      data: {
+        payment: { required: boolean; packageId: string | null; packageName: string | null };
+        questionnaire: unknown;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.payment.required).toBe(false);
+    expect(payload.data.payment.packageId).toBe("package_1");
+    expect(payload.data.questionnaire).not.toBeNull();
+  });
+
   it("creates a connected Stripe checkout session for the signed-in client's assigned package", async () => {
     const originalSecret = process.env.STRIPE_SECRET_KEY;
     const originalBaseUrl = process.env.STRIPE_API_BASE_URL;
@@ -715,6 +746,15 @@ describe("client app APIs", () => {
     process.env.STRIPE_SECRET_KEY = "sk_test_client";
     process.env.STRIPE_API_BASE_URL = "https://stripe.test";
     vi.stubGlobal("fetch", fetchMock);
+    mocks.prisma.client.findFirst.mockResolvedValueOnce({
+      id: "client_1",
+      firstName: "Client",
+      lastName: "One",
+      email: "client@example.com",
+      packageId: "package_1",
+      requiresOnlinePayment: true
+    });
+    mocks.prisma.clientSubscription.findFirst.mockResolvedValueOnce(null);
 
     try {
       const response = await postClientOnboardingCheckout(new Request("https://client.completecoach.fit/api/v1/client/onboarding/checkout", { method: "POST" }));
@@ -743,6 +783,21 @@ describe("client app APIs", () => {
       process.env.STRIPE_API_BASE_URL = originalBaseUrl;
       vi.unstubAllGlobals();
     }
+  });
+
+  it("does not create checkout when the assigned package is not an online payment requirement", async () => {
+    mocks.prisma.client.findFirst.mockResolvedValueOnce({
+      packageId: "package_1",
+      requiresOnlinePayment: false
+    });
+
+    const response = await postClientOnboardingCheckout(new Request("https://client.completecoach.fit/api/v1/client/onboarding/checkout", { method: "POST" }));
+    const payload = (await response.json()) as { error: { code: string; message: string } };
+
+    expect(response.status).toBe(404);
+    expect(payload.error.code).toBe("client_payment_not_required");
+    expect(payload.error.message).toBe("No online payment is assigned to this client.");
+    expect(mocks.prisma.clientSubscription.create).not.toHaveBeenCalled();
   });
 
   it("submits the signed-in client's onboarding Q&A and stores it on their profile history", async () => {

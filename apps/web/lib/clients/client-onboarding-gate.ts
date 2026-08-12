@@ -28,7 +28,8 @@ export async function getClientOnboardingGateState(input: { organizationId: stri
     select: {
       id: true,
       packageId: true,
-      packageName: true
+      packageName: true,
+      requiresOnlinePayment: true
     }
   });
   const [activeSubscription, latestSubscription, questionnaireAssignment] = await Promise.all([
@@ -60,7 +61,11 @@ export async function getClientOnboardingGateState(input: { organizationId: stri
     }),
     getAssignedClientQuestionnaire(input.organizationId, input.clientId)
   ]);
-  const paymentRequired = Boolean(client.packageId && !activeSubscription);
+  const paymentRequired = Boolean(
+    client.requiresOnlinePayment &&
+      client.packageId &&
+      !activeSubscription
+  );
 
   return {
     payment: {

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
@@ -15,6 +16,10 @@ const profileSchema = z.object({
   waterTargetLitres: z.number().min(0).max(20).nullable().optional(),
   stepTarget: z.number().int().min(0).max(100000).nullable().optional(),
   trainingLogTargetDays: z.number().int().min(0).max(7).nullable().optional(),
+  weightMeasurement: z.string().trim().max(80).nullable().optional(),
+  checkInFrequency: z.string().trim().max(40).nullable().optional(),
+  checkInDays: z.array(z.string().trim().max(20)).max(7).nullable().optional(),
+  defaultExerciseMetricUnit: z.string().trim().max(40).nullable().optional(),
   emergencyContact: z
     .object({
       name: z.string().trim().max(160),
@@ -77,6 +82,7 @@ export async function PATCH(request: Request, context: ClientProfileRouteContext
       return errorResponse("not_found", "Client not found.", 404);
     }
 
+    const checkInDays = input.checkInDays === null ? Prisma.DbNull : input.checkInDays;
     const profile = await prisma.clientProfile.upsert({
       where: { clientId },
       update: {
@@ -89,6 +95,10 @@ export async function PATCH(request: Request, context: ClientProfileRouteContext
         waterTargetLitres: input.waterTargetLitres,
         stepTarget: input.stepTarget,
         trainingLogTargetDays: input.trainingLogTargetDays,
+        weightMeasurement: input.weightMeasurement,
+        checkInFrequency: input.checkInFrequency,
+        checkInDays,
+        defaultExerciseMetricUnit: input.defaultExerciseMetricUnit,
         emergencyContact: input.emergencyContact
       },
       create: {
@@ -103,6 +113,10 @@ export async function PATCH(request: Request, context: ClientProfileRouteContext
         waterTargetLitres: input.waterTargetLitres,
         stepTarget: input.stepTarget,
         trainingLogTargetDays: input.trainingLogTargetDays,
+        weightMeasurement: input.weightMeasurement,
+        checkInFrequency: input.checkInFrequency,
+        checkInDays,
+        defaultExerciseMetricUnit: input.defaultExerciseMetricUnit,
         emergencyContact: input.emergencyContact
       }
     });

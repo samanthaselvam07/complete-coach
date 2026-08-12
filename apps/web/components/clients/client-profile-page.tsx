@@ -17,6 +17,7 @@ import {
   fetchCoachAssignmentOptions,
   fetchClientFormOptions,
   fetchPublishedClientFormsByType,
+  getProfileCheckInDays,
   scheduleAssignedPackagePaymentChange,
   toDateInputValue,
   updateClientProfile
@@ -495,11 +496,19 @@ export function ClientProfilePage({
 
       if (response.ok) {
         const payload = (await response.json()) as { data?: ClientProfileResponse | null };
-        const dateOfBirth = toDateInputValue(payload.data?.dateOfBirth);
+        const profile = payload.data;
+        const dateOfBirth = toDateInputValue(profile?.dateOfBirth);
+        const profileCheckInDays = getProfileCheckInDays(profile);
 
-        if (dateOfBirth) {
-          setClientForm((currentForm) => ({ ...currentForm, dateOfBirth }));
-        }
+        setClientForm((currentForm) => ({
+          ...currentForm,
+          dateOfBirth: dateOfBirth || currentForm.dateOfBirth,
+          weightMeasurement: profile?.weightMeasurement ?? currentForm.weightMeasurement,
+          checkInFrequency: profile?.checkInFrequency ?? currentForm.checkInFrequency,
+          checkInDays: profileCheckInDays.length > 0 ? profileCheckInDays : currentForm.checkInDays,
+          checkInDay: profileCheckInDays[0] ?? currentForm.checkInDay,
+          defaultExerciseMetricUnit: profile?.defaultExerciseMetricUnit ?? currentForm.defaultExerciseMetricUnit
+        }));
       }
     } catch {
       // Profile details are optional for profile editing.

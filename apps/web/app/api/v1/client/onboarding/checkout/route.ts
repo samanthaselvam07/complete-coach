@@ -16,12 +16,17 @@ export async function POST(request: Request) {
         deletedAt: null
       },
       select: {
-        packageId: true
+        packageId: true,
+        requiresOnlinePayment: true
       }
     });
 
     if (!client?.packageId) {
       return errorResponse("client_package_required", "No package payment is assigned to this client.", 404);
+    }
+
+    if (!client.requiresOnlinePayment) {
+      return errorResponse("client_payment_not_required", "No online payment is assigned to this client.", 404);
     }
 
     const origin = new URL(request.url).origin;

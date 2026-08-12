@@ -7,6 +7,7 @@ export interface ClientSummary {
   phone?: string | null;
   packageId?: string | null;
   packageName: string;
+  requiresOnlinePayment?: boolean;
   compliance: number;
   checkInDay: string;
   latestCheckIn: string;

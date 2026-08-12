@@ -267,7 +267,8 @@ describe("client and CRM API tenancy", () => {
         data: expect.objectContaining({
           organizationId: "org_1",
           email: "emma@example.com",
-          packageId: "package_1"
+          packageId: "package_1",
+          requiresOnlinePayment: true
         })
       })
     );
@@ -1473,6 +1474,59 @@ describe("client and CRM API tenancy", () => {
     );
   });
 
+  it("persists the client online payment requirement when editing", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({
+      id: "client_1",
+      organizationId: "org_1",
+      email: "client@example.com",
+      packageId: "package_premium"
+    });
+    mocks.prisma.client.update.mockResolvedValue({
+      id: "client_1",
+      firstName: "Updated",
+      lastName: "Client",
+      email: "client@example.com",
+      status: ClientStatus.ACTIVE,
+      packageId: "package_premium",
+      packageName: "Premium Package",
+      requiresOnlinePayment: true,
+      checkInDay: "Friday",
+      startDate: null,
+      latestCheckInAt: null,
+      compliance: 0
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await patchClient(
+      new Request("http://test.local/api/v1/clients/client_1", {
+        method: "PATCH",
+        body: JSON.stringify({
+          firstName: "Updated",
+          lastName: "Client",
+          packageId: "package_premium",
+          packageName: "Premium Package",
+          onboarding: {
+            needsPayment: true,
+            paymentMode: "payment-link"
+          }
+        })
+      }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: { requiresOnlinePayment?: boolean } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.requiresOnlinePayment).toBe(true);
+    expect(mocks.prisma.client.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          requiresOnlinePayment: true
+        })
+      })
+    );
+  });
+
   it("updates a client's assigned coach after validating active organization membership", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
@@ -1796,6 +1850,52 @@ describe("client and CRM API tenancy", () => {
         clientId: "client_1",
         waterTargetLitres: 3.5,
         stepTarget: 12000
+      })
+    });
+  });
+
+  it("updates persisted client check-in settings from the edit dialog", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.clientProfile.upsert.mockResolvedValue({
+      id: "profile_1",
+      clientId: "client_1",
+      weightMeasurement: "kg",
+      checkInFrequency: "Weekly",
+      checkInDays: ["Monday", "Thursday"],
+      defaultExerciseMetricUnit: "kg"
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await patchClientProfile(
+      new Request("http://test.local/api/v1/clients/client_1/profile", {
+        method: "PATCH",
+        body: JSON.stringify({
+          weightMeasurement: "kg",
+          checkInFrequency: "Weekly",
+          checkInDays: ["Monday", "Thursday"],
+          defaultExerciseMetricUnit: "kg"
+        })
+      }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.prisma.clientProfile.upsert).toHaveBeenCalledWith({
+      where: { clientId: "client_1" },
+      update: expect.objectContaining({
+        weightMeasurement: "kg",
+        checkInFrequency: "Weekly",
+        checkInDays: ["Monday", "Thursday"],
+        defaultExerciseMetricUnit: "kg"
+      }),
+      create: expect.objectContaining({
+        organizationId: "org_1",
+        clientId: "client_1",
+        weightMeasurement: "kg",
+        checkInFrequency: "Weekly",
+        checkInDays: ["Monday", "Thursday"],
+        defaultExerciseMetricUnit: "kg"
       })
     });
   });

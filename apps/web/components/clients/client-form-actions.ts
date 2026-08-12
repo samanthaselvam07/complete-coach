@@ -6,6 +6,10 @@ const todayDate = () => new Date().toISOString().slice(0, 10);
 
 export interface ClientProfileResponse {
   dateOfBirth?: string | null;
+  weightMeasurement?: string | null;
+  checkInFrequency?: string | null;
+  checkInDays?: unknown;
+  defaultExerciseMetricUnit?: string | null;
 }
 
 export interface AssignedClientPlanIds {
@@ -176,14 +180,18 @@ export async function assignSelectedClientForms(clientId: string, form: ClientFo
 }
 
 export async function updateClientProfile(clientId: string, form: ClientFormState) {
-  if (!form.dateOfBirth) {
-    return;
-  }
+  const payload = {
+    dateOfBirth: form.dateOfBirth || undefined,
+    weightMeasurement: form.weightMeasurement || null,
+    checkInFrequency: form.checkInFrequency || null,
+    checkInDays: form.checkInDays.length > 0 ? form.checkInDays : null,
+    defaultExerciseMetricUnit: form.defaultExerciseMetricUnit || null
+  };
 
   const response = await fetch(`/api/v1/clients/${clientId}/profile`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dateOfBirth: form.dateOfBirth })
+    body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
@@ -304,6 +312,14 @@ function withoutExistingIds(selectedIds: string[], existingIds: string[]) {
 
 function findAssignedFormByTypes(assignments: ClientFormAssignmentResponse[], formTypes: string[]) {
   return assignments.find((assignment) => assignment.formId && assignment.formType && formTypes.includes(assignment.formType))?.formId ?? "";
+}
+
+export function getProfileCheckInDays(profile: ClientProfileResponse | null | undefined): string[] {
+  if (!Array.isArray(profile?.checkInDays)) {
+    return [];
+  }
+
+  return profile.checkInDays.filter((day): day is string => typeof day === "string" && day.trim().length > 0);
 }
 
 function toClientFormOptions(records: ClientFormOptionResponse[]): ClientFormOption[] {

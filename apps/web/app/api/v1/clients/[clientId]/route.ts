@@ -60,6 +60,18 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
       return errorResponse("not_found", "Client not found.", 404);
     }
 
+    const requiresOnlinePayment = input.onboarding?.needsPayment === true && input.onboarding.paymentMode === "payment-link";
+    const packageId = Object.prototype.hasOwnProperty.call(input, "packageId") ? input.packageId : existingClient.packageId;
+    const email = Object.prototype.hasOwnProperty.call(input, "email") ? input.email : existingClient.email;
+
+    if (requiresOnlinePayment && !email) {
+      return errorResponse("client_email_required", "Client email is required to send an online payment setup link.", 422);
+    }
+
+    if (requiresOnlinePayment && !packageId) {
+      return errorResponse("client_package_required", "Select a package before sending an online payment setup link.", 422);
+    }
+
     if (Object.prototype.hasOwnProperty.call(input, "primaryCoachUserId") && input.primaryCoachUserId) {
       const primaryCoachError = await validatePrimaryCoachAssignment(actor, input.primaryCoachUserId);
 
@@ -82,6 +94,7 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
         ...(input.status ? { status: toPrismaClientStatus(input.status) } : {}),
         ...getPatchField(input, "packageId", input.packageId),
         ...getPatchField(input, "packageName", input.packageName),
+        ...(input.onboarding ? { requiresOnlinePayment } : {}),
         ...getPatchField(input, "checkInDay", input.checkInDay),
         ...getPatchField(input, "primaryCoachUserId", input.primaryCoachUserId),
         ...getPatchField(input, "timezone", input.timezone),
