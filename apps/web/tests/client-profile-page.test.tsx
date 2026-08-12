@@ -472,6 +472,34 @@ function mockMarcusProfile(
                 personalBests: [
                   { exerciseName: "Back Squat", setNumber: 2, weightKg: 105, previousBestKg: 100 }
                 ]
+              },
+              {
+                id: "session_2",
+                assignmentName: "Strength Foundation",
+                dayName: "Day 1",
+                startedAt: "2026-08-05T08:00:00.000Z",
+                completedAt: "2026-08-05T08:50:00.000Z",
+                durationSeconds: 3000,
+                exercises: [
+                  {
+                    exerciseName: "Back Squat",
+                    prescribedSets: "4",
+                    prescribedReps: "6",
+                    prescribedRestSeconds: 180,
+                    sets: [
+                      { setNumber: 1, reps: "6", weightKg: 107.5, completed: true },
+                      { setNumber: 2, reps: "5", weightKg: 110, completed: true }
+                    ]
+                  },
+                  {
+                    exerciseName: "Romanian Deadlift",
+                    prescribedSets: "3",
+                    prescribedReps: "8",
+                    prescribedRestSeconds: 120,
+                    sets: [{ setNumber: 1, reps: "8", weightKg: 80, completed: true }]
+                  }
+                ],
+                personalBests: []
               }
             ]
           }),
@@ -1227,9 +1255,16 @@ describe("ClientProfilePage", () => {
     expect(screen.getByText("Back Squat")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Workout Notes" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Completed Workouts" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Completed workout training day" })).toHaveValue("Day 1");
+    const comparisonTable = screen.getByRole("table", { name: "Day 1 workout comparison" });
+    expect(within(comparisonTable).getByText("Jul 29, 2026")).toBeInTheDocument();
+    expect(within(comparisonTable).getByText("Aug 5, 2026")).toBeInTheDocument();
     expect(screen.getByText("45m")).toBeInTheDocument();
+    expect(screen.getByText("50m")).toBeInTheDocument();
     expect(screen.getByText("Best 105kg x 6 reps")).toBeInTheDocument();
+    expect(screen.getByText("Set 2: 110kg x 5 reps")).toBeInTheDocument();
     expect(screen.getAllByText("Back Squat").length).toBeGreaterThan(1);
+    expect(screen.getAllByText("Romanian Deadlift").length).toBeGreaterThan(1);
     expect(screen.getByText("Felt strong today, but left knee felt tight on the final set.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Switch training program" }));
     fireEvent.click(screen.getByRole("menuitemradio", { name: /Conditioning Reset/i }));
