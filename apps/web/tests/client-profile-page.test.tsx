@@ -676,15 +676,15 @@ function mockMarcusProfile(
       return Promise.resolve(new Response(JSON.stringify({ data: marcusProgressMetrics }), { status: 200 }));
     }
 
-    if (url === "/api/v1/clients/1/logs?days=7") {
+    if (url === "/api/v1/clients/1/logs?dateFrom=2026-07-27&dateTo=2026-08-02" && init?.method !== "POST") {
       return Promise.resolve(
         new Response(
           JSON.stringify({
             data: {
               logs: [],
               summary: {
-                dateFrom: "2026-07-24",
-                dateTo: "2026-07-30",
+                dateFrom: "2026-07-27",
+                dateTo: "2026-08-02",
                 days: 7,
                 completedLogs: 0,
                 possibleLogs: 21,
@@ -702,7 +702,48 @@ function mockMarcusProfile(
       );
     }
 
-    if (url === "/api/v1/clients/1/logs" && init?.method === "POST") {
+    if (url === "/api/v1/clients/1/logs?dateFrom=2026-07-20&dateTo=2026-07-26" && init?.method !== "POST") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              logs: [
+                {
+                  id: "previous_training_log",
+                  domain: "training",
+                  logDate: "2026-07-20",
+                  status: "completed",
+                  notes: null
+                },
+                {
+                  id: "previous_nutrition_log",
+                  domain: "nutrition",
+                  logDate: "2026-07-20",
+                  status: "completed",
+                  notes: null
+                }
+              ],
+              summary: {
+                dateFrom: "2026-07-20",
+                dateTo: "2026-07-26",
+                days: 7,
+                completedLogs: 2,
+                possibleLogs: 21,
+                complianceScore: 10,
+                byDomain: [
+                  { domain: "training", completedLogs: 1, possibleLogs: 7, complianceScore: 14 },
+                  { domain: "nutrition", completedLogs: 1, possibleLogs: 7, complianceScore: 14 },
+                  { domain: "supplementation", completedLogs: 0, possibleLogs: 7, complianceScore: 0 }
+                ]
+              }
+            }
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
+    if (url.startsWith("/api/v1/clients/1/logs?") && init?.method === "POST") {
       const body = JSON.parse(String(init.body)) as { domain: string; logDate: string; status: string; notes?: string };
 
       return Promise.resolve(
@@ -717,8 +758,8 @@ function mockMarcusProfile(
                 notes: body.notes ?? null
               },
               summary: {
-                dateFrom: "2026-07-24",
-                dateTo: "2026-07-30",
+                dateFrom: "2026-07-27",
+                dateTo: "2026-08-02",
                 days: 7,
                 completedLogs: 1,
                 possibleLogs: 21,
@@ -1528,18 +1569,29 @@ describe("ClientProfilePage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Logs" }));
 
     expect(await screen.findByRole("tabpanel", { name: "Logs" })).toBeInTheDocument();
+    expect(screen.getByText("27 Jul - 02 Aug, 2026")).toBeInTheDocument();
     expect(await screen.findByText("0/21 logs completed")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Mark Training completed on 2026-07-24" }));
+    fireEvent.click(screen.getByRole("button", { name: "Previous compliance week" }));
+
+    expect(await screen.findByText("20 - 26 Jul, 2026")).toBeInTheDocument();
+    expect(await screen.findByText("2/21 logs completed")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next compliance week" }));
+
+    expect(await screen.findByText("27 Jul - 02 Aug, 2026")).toBeInTheDocument();
+    expect(await screen.findByText("0/21 logs completed")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark Training completed on 2026-07-27" }));
 
     expect(await screen.findByText("1/21 logs completed")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/clients/1/logs",
+      "/api/v1/clients/1/logs?dateFrom=2026-07-27&dateTo=2026-08-02",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
           domain: "training",
-          logDate: "2026-07-24",
+          logDate: "2026-07-27",
           status: "completed",
           notes: undefined
         })

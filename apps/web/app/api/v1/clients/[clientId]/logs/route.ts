@@ -72,6 +72,7 @@ export async function POST(request: Request, context: ClientActivityLogsRouteCon
   try {
     const actor = requireActiveActor(await auth(), "clients:write");
     const { clientId } = await context.params;
+    const query = clientActivityLogsQuerySchema.parse(Object.fromEntries(new URL(request.url).searchParams));
     const input = upsertClientActivityLogSchema.parse(await request.json());
     const client = await prisma.client.findFirst({
       where: {
@@ -120,7 +121,7 @@ export async function POST(request: Request, context: ClientActivityLogsRouteCon
       }
     });
 
-    const { dateFrom, dateTo } = getClientActivityLogDateRange({ days: 7 });
+    const { dateFrom, dateTo } = getClientActivityLogDateRange(query);
     const logs = await prisma.clientActivityLog.findMany({
       where: {
         organizationId: actor.organizationId,

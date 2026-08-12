@@ -765,7 +765,7 @@ describe("client and CRM API tenancy", () => {
       Array.from({ length: 21 }, (_, index) => ({
         id: `log_${index}`,
         domain: [ClientActivityLogDomain.TRAINING, ClientActivityLogDomain.NUTRITION, ClientActivityLogDomain.SUPPLEMENTATION][index % 3],
-        logDate: new Date(`2026-07-${String(24 + Math.floor(index / 3)).padStart(2, "0")}T00:00:00.000Z`),
+        logDate: new Date(Date.UTC(2026, 6, 27 + Math.floor(index / 3))),
         status: ClientActivityLogStatus.COMPLETED,
         notes: null,
         createdAt: new Date("2026-07-30T01:00:00.000Z"),
@@ -776,7 +776,7 @@ describe("client and CRM API tenancy", () => {
     mocks.prisma.auditLog.create.mockResolvedValue({});
 
     const response = await postClientActivityLog(
-      new Request("http://test.local/api/v1/clients/client_1/logs", {
+      new Request("http://test.local/api/v1/clients/client_1/logs?dateFrom=2026-07-27&dateTo=2026-08-02", {
         method: "POST",
         body: JSON.stringify({
           domain: "training",
@@ -810,6 +810,16 @@ describe("client and CRM API tenancy", () => {
         update: expect.objectContaining({
           status: ClientActivityLogStatus.COMPLETED,
           notes: "Completed session."
+        })
+      })
+    );
+    expect(mocks.prisma.clientActivityLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          logDate: {
+            gte: new Date("2026-07-27T00:00:00.000Z"),
+            lte: new Date("2026-08-02T00:00:00.000Z")
+          }
         })
       })
     );

@@ -22,7 +22,7 @@ Ticket 012B extends the persistence foundation into the working UI:
 - Client profile Logs stores training, nutrition, and supplementation completion records in `client_activity_logs`.
 - Logs are unique per organization, client, domain, and date, and support `completed` or `missed` status plus optional notes.
 - The default compliance score uses the latest seven-day window across all three domains: 21 completed logs out of 21 possible logs equals 100%.
-- Saving a client log recalculates the latest seven-day compliance score and updates the client roster/profile compliance field.
+- Saving a client log recalculates the requested compliance window, defaulting to the latest seven-day window, and updates the client roster/profile compliance field.
 - Client profile Goals & Countdowns stores goal countdowns in `client_goals`, including target date, notes, and optional roadmap phase linkage.
 - Client account activity history is stored in `client_account_activity_logs` for training, nutrition, supplement, and billing lifecycle changes.
 - Coach-set water and step targets remain in `client_profiles` and are included in external client payloads for the client app/API consumer.

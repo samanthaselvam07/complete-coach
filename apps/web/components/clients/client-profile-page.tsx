@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ChevronLeft, Droplets, Footprints, LineChart, NotebookPen, Pencil, RefreshCw, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Droplets, Footprints, LineChart, NotebookPen, Pencil, RefreshCw, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { CheckInDetailPage } from "@/components/check-ins/check-in-detail-page";
 import { CheckInHistoryPanel, DailyCheckInsPanel } from "@/components/clients/client-check-in-panels";
@@ -1864,6 +1864,9 @@ function LogsPanel({
   const [savingTrainingTarget, setSavingTrainingTarget] = useState(false);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const weekStart = useMemo(() => getWeekStartFromOffset(weekOffset), [weekOffset]);
+  const weekEnd = useMemo(() => addCalendarDays(weekStart, 6), [weekStart]);
 
   const refreshLogs = useCallback(
     async (isActive: () => boolean = () => true) => {
@@ -1871,7 +1874,11 @@ function LogsPanel({
       setError(null);
 
       try {
-        const response = await fetch(`/api/v1/clients/${client.id}/logs?days=7`);
+        const params = new URLSearchParams({
+          dateFrom: toDateOnlyString(weekStart),
+          dateTo: toDateOnlyString(weekEnd)
+        });
+        const response = await fetch(`/api/v1/clients/${client.id}/logs?${params.toString()}`);
 
         if (!response.ok) {
           throw new Error("Logs could not be loaded.");
@@ -1895,7 +1902,7 @@ function LogsPanel({
         }
       }
     },
-    [client.id, onComplianceScoreChange]
+    [client.id, onComplianceScoreChange, weekEnd, weekStart]
   );
 
   useEffect(() => {
@@ -1908,7 +1915,13 @@ function LogsPanel({
     };
   }, [refreshLogs]);
 
-  const dates = summary ? getDateRangeLabels(summary.dateFrom, summary.dateTo) : getDateRangeLabelsFromToday(7);
+  const dates = summary ? getDateRangeLabels(summary.dateFrom, summary.dateTo) : getDateRangeLabels(toDateOnlyString(weekStart), toDateOnlyString(weekEnd));
+  const selectedWeekLogParams = new URLSearchParams({
+    dateFrom: toDateOnlyString(weekStart),
+    dateTo: toDateOnlyString(weekEnd)
+  });
+  const goToPreviousWeek = () => setWeekOffset((currentOffset) => currentOffset - 1);
+  const goToNextWeek = () => setWeekOffset((currentOffset) => currentOffset + 1);
 
   const saveLog = async (domain: ClientLogDomain, logDate: string, status: ClientLogStatus) => {
     const key = getLogKey(domain, logDate);
@@ -1916,7 +1929,7 @@ function LogsPanel({
     setError(null);
 
     try {
-      const response = await fetch(`/api/v1/clients/${client.id}/logs`, {
+      const response = await fetch(`/api/v1/clients/${client.id}/logs?${selectedWeekLogParams.toString()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1971,9 +1984,33 @@ function LogsPanel({
   return (
     <div className="space-y-6">
       {error ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p> : null}
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div>
+          <p className="text-xs font-black uppercase text-slate-500">Compliance week</p>
+          <h2 className="mt-1 text-lg font-black text-slate-950">{formatWeekRangeLabel(weekStart, weekEnd)}</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Previous compliance week"
+            className="inline-flex size-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 transition hover:bg-indigo-100"
+            onClick={goToPreviousWeek}
+          >
+            <ChevronLeft className="size-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next compliance week"
+            className="inline-flex size-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 transition hover:bg-indigo-100"
+            onClick={goToNextWeek}
+          >
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+      </section>
       <div className="grid gap-4 md:grid-cols-5">
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-          <p className="text-xs font-black uppercase text-slate-500">7-day compliance</p>
+          <p className="text-xs font-black uppercase text-slate-500">Weekly compliance</p>
           <p className="mt-3 text-3xl font-black text-slate-950">{summary?.complianceScore ?? client.compliance}%</p>
           <p className="mt-1 text-sm font-semibold text-slate-600">
             {summary ? `${summary.completedLogs}/${summary.possibleLogs} logs completed` : "Loading logs"}
@@ -3170,12 +3207,48 @@ function getLogKey(domain: ClientLogDomain, logDate: string) {
   return `${domain}:${logDate}`;
 }
 
-function getDateRangeLabelsFromToday(days: number) {
-  const dateTo = new Date(`${todayDate()}T00:00:00.000Z`);
-  const dateFrom = new Date(dateTo);
-  dateFrom.setUTCDate(dateFrom.getUTCDate() - (days - 1));
+function getWeekStartFromOffset(weekOffset: number) {
+  return addCalendarDays(getCurrentWeekStart(), weekOffset * 7);
+}
 
-  return getDateRangeLabels(dateFrom.toISOString().slice(0, 10), dateTo.toISOString().slice(0, 10));
+function getCurrentWeekStart() {
+  const today = new Date();
+  const weekStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+  const day = weekStart.getUTCDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+
+  weekStart.setUTCDate(weekStart.getUTCDate() + mondayOffset);
+
+  return weekStart;
+}
+
+function addCalendarDays(date: Date, days: number) {
+  const nextDate = new Date(date);
+  nextDate.setUTCDate(nextDate.getUTCDate() + days);
+
+  return nextDate;
+}
+
+function toDateOnlyString(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function formatWeekRangeLabel(dateFrom: Date, dateTo: Date) {
+  const start = toDateOnlyString(dateFrom);
+  const end = toDateOnlyString(dateTo);
+  const startDate = new Date(`${start}T00:00:00.000Z`);
+  const endDate = new Date(`${end}T00:00:00.000Z`);
+  const sameMonth = startDate.getUTCMonth() === endDate.getUTCMonth();
+  const startDay = String(startDate.getUTCDate()).padStart(2, "0");
+  const endDay = String(endDate.getUTCDate()).padStart(2, "0");
+  const monthFormatter = new Intl.DateTimeFormat("en", { month: "short", timeZone: "UTC" });
+  const yearFormatter = new Intl.DateTimeFormat("en", { year: "numeric", timeZone: "UTC" });
+
+  if (sameMonth) {
+    return `${startDay} - ${endDay} ${monthFormatter.format(endDate)}, ${yearFormatter.format(endDate)}`;
+  }
+
+  return `${startDay} ${monthFormatter.format(startDate)} - ${endDay} ${monthFormatter.format(endDate)}, ${yearFormatter.format(endDate)}`;
 }
 
 function getDateRangeLabels(dateFrom: string, dateTo: string) {
