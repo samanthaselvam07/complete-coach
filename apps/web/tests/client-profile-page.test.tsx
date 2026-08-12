@@ -35,6 +35,7 @@ const marcusClient = {
   checkInDay: "Monday",
   latestCheckIn: "Apr 18, 2026",
   status: "active",
+  primaryCoachUserId: "coach_1",
   startDate: "Jan 15, 2026",
   timezone: "Australia/Melbourne",
   initials: "MR",
@@ -517,6 +518,29 @@ function mockMarcusProfile(
       );
     }
 
+    if (url === "/api/v1/form-submissions?clientId=1&formType=habit-tracker&status=submitted&limit=100") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "submission_daily_1",
+                formName: "Daily Basics",
+                formType: "habit-tracker",
+                submittedAt: "2026-07-30T07:30:00.000Z",
+                answers: {
+                  body_weight: 81.7,
+                  steps: 9800,
+                  notes: "Good recovery."
+                }
+              }
+            ]
+          }),
+          { status: 200 }
+        )
+      );
+    }
+
     if (url === "/api/v1/clients/1/metrics?limit=200") {
       return Promise.resolve(new Response(JSON.stringify({ data: marcusProgressMetrics }), { status: 200 }));
     }
@@ -657,6 +681,22 @@ function mockMarcusProfile(
     if (url === "/api/v1/packages?status=active&limit=100") {
       return Promise.resolve(
         new Response(JSON.stringify({ data: [{ id: "package_elite", name: "Elite Performance", currency: "aud" }] }), { status: 200 })
+      );
+    }
+
+    if (url === "/api/v1/team-members") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              members: [
+                { userId: "coach_1", name: "Sam Coach", email: "sam@example.com", role: "coach", status: "active" },
+                { userId: "coach_2", name: "Alex Admin", email: "alex@example.com", role: "admin", status: "active" }
+              ]
+            }
+          }),
+          { status: 200 }
+        )
       );
     }
 
@@ -1629,6 +1669,8 @@ describe("ClientProfilePage", () => {
     expect(screen.getByLabelText("Email")).toHaveValue("marcus@example.com");
     expect(screen.getByLabelText("Phone")).toHaveValue("+61 400 000 111");
     expect(screen.getByLabelText("Payment plan/package")).toHaveValue("package_elite");
+    expect(screen.getByLabelText("Assigned coach")).toHaveValue("coach_1");
+    expect(screen.getByRole("option", { name: "Alex Admin" })).toBeInTheDocument();
     expect(screen.getByLabelText("Date of birth")).toHaveValue("1994-05-14");
     expect(await screen.findByRole("option", { name: "Initial Q&A Form" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Daily Habit Form" })).toBeInTheDocument();
@@ -2172,7 +2214,12 @@ describe("ClientProfilePage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Daily Check-Ins" }));
 
     expect(screen.getByRole("heading", { name: "Daily Check-Ins" })).toBeInTheDocument();
-    expect(screen.getByText("No persisted daily check-in grid has been configured for this client yet.")).toBeInTheDocument();
+    expect(await screen.findByText("Daily Basics")).toBeInTheDocument();
+    expect(screen.getByText("Body Weight")).toBeInTheDocument();
+    expect(screen.getAllByText("81.7").length).toBeGreaterThan(0);
+    expect(screen.getByText("Steps")).toBeInTheDocument();
+    expect(screen.getByText("9800")).toBeInTheDocument();
+    expect(screen.getByText("Good recovery.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Check-Ins" }));
 

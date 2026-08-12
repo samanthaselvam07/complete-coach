@@ -296,17 +296,21 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
         schema: {
           title: formTitle,
           description: formDescription,
-          fields: fields.map((field) => ({
-            id: field.id,
-            type: field.type,
-            label: field.label,
-            required: field.required,
-            ...(field.placeholder ? { placeholder: field.placeholder } : {}),
-            ...(field.content ? { content: field.content } : {}),
-            ...(field.options ? { options: field.options } : {}),
-            ...(field.category ? { category: field.category } : {}),
-            exportPolicy: "private"
-          }))
+          fields: fields.map((field) => {
+            const options = getPersistableOptions(field);
+
+            return {
+              id: field.id,
+              type: field.type,
+              label: field.label,
+              required: field.required,
+              ...(field.placeholder ? { placeholder: field.placeholder } : {}),
+              ...(field.content ? { content: field.content } : {}),
+              ...(options.length > 0 ? { options } : {}),
+              ...(field.category ? { category: field.category } : {}),
+              exportPolicy: "private"
+            };
+          })
         },
         ui: {
           primaryColor,
@@ -511,6 +515,14 @@ export function FormBuilder({ form, templateType, presetFields, onBack, onPersis
       ) : null}
     </div>
   );
+}
+
+function getPersistableOptions(field: FormField) {
+  if (!fieldSupportsOptions(field.type)) {
+    return [];
+  }
+
+  return (field.options ?? []).map((option) => option.trim()).filter(Boolean);
 }
 
 async function getApiErrorMessage(response: Response) {

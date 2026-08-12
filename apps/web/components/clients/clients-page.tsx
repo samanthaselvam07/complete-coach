@@ -25,6 +25,7 @@ import {
   type ClientProfileResponse,
   fetchAssignedClientFormIds,
   fetchAssignedClientPlanIds,
+  fetchCoachAssignmentOptions,
   fetchClientFormOptions,
   fetchClientFormOptionsFromUrls,
   scheduleAssignedPackagePaymentChange,
@@ -56,12 +57,14 @@ export function ClientsPage() {
   const [savingClient, setSavingClient] = useState(false);
   const [loadingClients, setLoadingClients] = useState(true);
   const [packageOptions, setPackageOptions] = useState<ClientFormOption[]>([]);
+  const [coachOptions, setCoachOptions] = useState<ClientFormOption[]>([]);
   const [initialQuestionnaireOptions, setInitialQuestionnaireOptions] = useState<ClientFormOption[]>([]);
   const [dailyHabitFormOptions, setDailyHabitFormOptions] = useState<ClientFormOption[]>([]);
   const [checkInFormOptions, setCheckInFormOptions] = useState<ClientFormOption[]>([]);
   const [trainingPlanOptions, setTrainingPlanOptions] = useState<ClientFormOption[]>([]);
   const [nutritionPlanOptions, setNutritionPlanOptions] = useState<ClientFormOption[]>([]);
   const [supplementationPlanOptions, setSupplementationPlanOptions] = useState<ClientFormOption[]>([]);
+  const canViewAssignedCoach = session?.activeOrganization?.role === "owner" || session?.activeOrganization?.role === "admin";
 
   useEffect(() => {
     let active = true;
@@ -108,7 +111,8 @@ export function ClientsPage() {
         checkInForms,
         trainingPlans,
         nutritionPlans,
-        supplementationPlans
+        supplementationPlans,
+        coaches
       ] = await Promise.all([
         fetchClientFormOptions("/api/v1/packages?status=active&limit=100"),
         fetchClientFormOptionsFromUrls([
@@ -121,7 +125,8 @@ export function ClientsPage() {
         fetchClientFormOptions("/api/v1/forms?type=check-in&status=published&limit=100"),
         fetchClientFormOptions("/api/v1/training-program-templates?limit=100"),
         fetchClientFormOptions("/api/v1/meal-plan-templates?limit=100"),
-        fetchClientFormOptions("/api/v1/supplement-plan-templates?limit=100")
+        fetchClientFormOptions("/api/v1/supplement-plan-templates?limit=100"),
+        canViewAssignedCoach ? fetchCoachAssignmentOptions() : Promise.resolve([])
       ]);
 
       if (!active) {
@@ -129,6 +134,7 @@ export function ClientsPage() {
       }
 
       setPackageOptions(packages);
+      setCoachOptions(coaches);
       setInitialQuestionnaireOptions(intakeForms);
       setDailyHabitFormOptions(habitForms);
       setCheckInFormOptions(checkInForms);
@@ -142,7 +148,7 @@ export function ClientsPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [canViewAssignedCoach]);
 
   const filteredClients = [...clients.filter((client) => {
       const matchesSearch = client.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -155,8 +161,6 @@ export function ClientsPage() {
   const activeClients = clients.filter((client) => client.status === "active").length;
   const newClientsThisWeek = clients.filter((client) => client.status === "new").length;
   const checkInsDue = clients.filter((client) => client.checkInDay && client.status === "active").length;
-  const canViewAssignedCoach = session?.activeOrganization?.role === "owner" || session?.activeOrganization?.role === "admin";
-
   const toggleCheckInDay = (day: string) => {
     setSelectedCheckInDays((currentDays) =>
       currentDays.includes(day) ? currentDays.filter((currentDay) => currentDay !== day) : [...currentDays, day]
@@ -539,6 +543,7 @@ export function ClientsPage() {
           error={clientFormError}
           saving={savingClient}
           packageOptions={packageOptions}
+          coachOptions={canViewAssignedCoach ? coachOptions : []}
           initialQuestionnaireOptions={initialQuestionnaireOptions}
           dailyHabitFormOptions={dailyHabitFormOptions}
           checkInFormOptions={checkInFormOptions}

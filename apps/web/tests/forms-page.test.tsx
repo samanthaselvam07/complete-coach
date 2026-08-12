@@ -530,6 +530,63 @@ describe("FormsPage", () => {
     );
   });
 
+  it("omits blank option rows when saving new choice fields", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [] }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "form_choice_1",
+              name: "Choice Intake",
+              description: "Choice description",
+              type: "intake",
+              status: "draft",
+              currentVersionId: null,
+              createdAt: "2026-05-14T00:00:00.000Z",
+              updatedAt: "2026-05-14T00:00:00.000Z"
+            }
+          }),
+          { status: 201 }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "version_choice_1",
+              formId: "form_choice_1",
+              versionNumber: 1,
+              schema: { title: "Choice Intake", description: "Choice description", fields: [] },
+              ui: { primaryColor: "#6366f1" },
+              publishedAt: null,
+              createdAt: "2026-05-14T00:00:00.000Z"
+            }
+          }),
+          { status: 201 }
+        )
+      );
+
+    render(createElement(FormsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: /start from scratch/i }));
+    fireEvent.change(screen.getByLabelText("Form title"), { target: { value: "Choice Intake" } });
+    fireEvent.change(screen.getByLabelText("Form description"), { target: { value: "Choice description" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add Multiple Choice field" }));
+    fireEvent.change(screen.getByLabelText("Option 1"), { target: { value: "  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Draft saved.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/forms/form_choice_1/versions",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.not.stringContaining("\"options\"")
+      })
+    );
+  });
+
   it("saves a form and returns to the form library when save and close is used", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")

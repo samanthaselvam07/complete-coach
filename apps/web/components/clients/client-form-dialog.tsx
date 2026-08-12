@@ -16,6 +16,7 @@ export interface ClientFormState {
   checkInDay: string;
   needsPayment: boolean;
   paymentMode: "offline" | "payment-link";
+  primaryCoachUserId: string;
   planStartDate: string;
   weightMeasurement: string;
   initialQuestionnaire: string;
@@ -49,6 +50,7 @@ export const emptyClientForm: ClientFormState = {
   checkInDay: "",
   needsPayment: false,
   paymentMode: "offline",
+  primaryCoachUserId: "",
   planStartDate: new Date().toISOString().slice(0, 10),
   weightMeasurement: "",
   initialQuestionnaire: "",
@@ -79,6 +81,7 @@ export function clientSummaryToForm(client: ClientSummary): ClientFormState {
     checkInDay: client.checkInDay === "Unscheduled" ? "" : client.checkInDay,
     needsPayment: false,
     paymentMode: "offline",
+    primaryCoachUserId: client.primaryCoachUserId ?? "",
     planStartDate: new Date().toISOString().slice(0, 10),
     weightMeasurement: "",
     initialQuestionnaire: "",
@@ -105,6 +108,7 @@ export function createClientMutationBody(form: ClientFormState, status = "new", 
     packageId: getMutationValue(form.packageId, preserveEmptyValues),
     packageName: getMutationValue(form.packageName, preserveEmptyValues),
     checkInDay: getMutationValue(form.checkInDay, preserveEmptyValues),
+    primaryCoachUserId: getMutationValue(form.primaryCoachUserId, preserveEmptyValues),
     status,
     startDate: getMutationValue(form.planStartDate, preserveEmptyValues) ?? new Date().toISOString().slice(0, 10)
   };
@@ -154,6 +158,7 @@ export function ClientFormDialog({
   error,
   saving,
   packageOptions = [],
+  coachOptions = [],
   initialQuestionnaireOptions = [],
   dailyHabitFormOptions = [],
   checkInFormOptions = [],
@@ -169,6 +174,7 @@ export function ClientFormDialog({
   error: string | null;
   saving: boolean;
   packageOptions?: ClientFormOption[];
+  coachOptions?: ClientFormOption[];
   initialQuestionnaireOptions?: ClientFormOption[];
   dailyHabitFormOptions?: ClientFormOption[];
   checkInFormOptions?: ClientFormOption[];
@@ -220,6 +226,14 @@ export function ClientFormDialog({
               onChange("scheduledPaymentCurrency", selectedPackage?.currency ?? "usd");
             }}
           />
+          {coachOptions.length > 0 ? (
+            <ClientSelectField
+              label="Assigned coach"
+              value={form.primaryCoachUserId}
+              options={coachOptions}
+              onChange={(value) => onChange("primaryCoachUserId", value)}
+            />
+          ) : null}
           <ClientBooleanField
             label="Does this client need to pay?"
             value={form.needsPayment}

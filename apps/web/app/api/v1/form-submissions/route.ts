@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/prisma";
 import {
   serializeSubmission,
   submissionListQuerySchema,
+  toPrismaFormType,
   toPrismaSubmissionStatus
 } from "@/lib/forms/submission-records";
 
@@ -17,6 +18,7 @@ export async function GET(request: Request) {
         organizationId: actor.organizationId,
         ...(query.clientId ? { clientId: query.clientId } : {}),
         ...(query.formId ? { formId: query.formId } : {}),
+        ...(query.formType ? { form: { type: toPrismaFormType(query.formType), deletedAt: null } } : {}),
         ...(query.status ? { status: toPrismaSubmissionStatus(query.status) } : {})
       },
       include: {

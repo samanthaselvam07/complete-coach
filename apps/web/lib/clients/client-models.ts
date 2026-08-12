@@ -12,6 +12,7 @@ export interface ClientSummary {
   latestCheckIn: string;
   status: ClientStatus;
   assignedCoachName?: string | null;
+  primaryCoachUserId?: string | null;
   startDate: string;
   timezone?: string | null;
   initials: string;

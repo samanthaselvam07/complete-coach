@@ -284,6 +284,7 @@ describe("ClientsPage", () => {
                   latestCheckIn: "May 1, 2026",
                   status: "active",
                   assignedCoachName: "Sam Coach",
+                  primaryCoachUserId: "coach_1",
                   startDate: "Apr 1, 2026",
                   initials: "AC",
                   avatarColor: "bg-slate-900"
@@ -323,6 +324,22 @@ describe("ClientsPage", () => {
         return Promise.resolve(new Response(JSON.stringify({ data: [{ id: "supplement_template_1", name: "Sleep Support" }] }), { status: 200 }));
       }
 
+      if (url === "/api/v1/team-members") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                members: [
+                  { userId: "coach_1", name: "Sam Coach", email: "sam@example.com", role: "coach", status: "active" },
+                  { userId: "coach_2", name: "Alex Admin", email: "alex@example.com", role: "admin", status: "active" }
+                ]
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
       if (url === "/api/v1/clients/client_api_1/profile" && init?.method === "PATCH") {
         return Promise.resolve(new Response(JSON.stringify({ data: { dateOfBirth: "1992-06-14" } }), { status: 200 }));
       }
@@ -343,7 +360,8 @@ describe("ClientsPage", () => {
                 checkInDay: "Thursday",
                 latestCheckIn: "May 1, 2026",
                 status: "active",
-                assignedCoachName: "Sam Coach",
+                assignedCoachName: "Alex Admin",
+                primaryCoachUserId: "coach_2",
                 startDate: "Apr 1, 2026",
                 initials: "UC",
                 avatarColor: "bg-slate-900"
@@ -406,6 +424,8 @@ describe("ClientsPage", () => {
     expect(await screen.findByLabelText("Date of birth")).toHaveValue("1990-01-01");
     fireEvent.change(screen.getByLabelText("Date of birth"), { target: { value: "1992-06-14" } });
     fireEvent.change(screen.getByLabelText("Payment plan/package"), { target: { value: "package_premium" } });
+    expect(screen.getByLabelText("Assigned coach")).toHaveValue("coach_1");
+    fireEvent.change(screen.getByLabelText("Assigned coach"), { target: { value: "coach_2" } });
     expect(screen.getByRole("button", { name: "No, set up offline payment" })).toHaveClass("bg-orange-500");
     fireEvent.click(screen.getByRole("button", { name: "Thursday" }));
     fireEvent.change(screen.getByLabelText("Initial Q/A"), { target: { value: "form_intake" } });
@@ -421,6 +441,13 @@ describe("ClientsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save client" }));
 
     expect(await screen.findByRole("link", { name: /view Updated Client profile/i })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/clients/client_api_1",
+      expect.objectContaining({
+        method: "PATCH",
+        body: expect.stringContaining("\"primaryCoachUserId\":\"coach_2\"")
+      })
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/clients/client_api_1/profile",
       expect.objectContaining({

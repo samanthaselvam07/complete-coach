@@ -700,6 +700,36 @@ describe("submissions, check-ins, and metrics APIs", () => {
     );
   });
 
+  it("filters form submissions by habit tracker type for daily check-ins", async () => {
+    mocks.prisma.formSubmission.findMany.mockResolvedValue([
+      {
+        ...submissionRecord,
+        form: { id: "form_daily", name: "Daily Basics", type: FormType.HABIT_TRACKER }
+      }
+    ]);
+
+    const response = await getSubmissions(
+      new Request("http://test.local/api/v1/form-submissions?clientId=client_1&formType=habit-tracker&status=submitted")
+    );
+    const payload = (await response.json()) as { data: Array<{ formType: string | null }> };
+
+    expect(response.status).toBe(200);
+    expect(payload.data[0]?.formType).toBe("habit-tracker");
+    expect(mocks.prisma.formSubmission.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: "org_1",
+          clientId: "client_1",
+          status: FormSubmissionStatus.SUBMITTED,
+          form: {
+            type: FormType.HABIT_TRACKER,
+            deletedAt: null
+          }
+        })
+      })
+    );
+  });
+
   it("returns a persisted form submission detail", async () => {
     mocks.prisma.formSubmission.findFirst.mockResolvedValue(submissionRecord);
 

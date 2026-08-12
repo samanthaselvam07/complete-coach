@@ -1,3 +1,4 @@
+import { MembershipRole, MembershipStatus } from "@/app/generated/prisma/enums";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
 import { requireActiveActor } from "@/lib/auth/session-guards";
@@ -70,10 +71,21 @@ export async function POST(request: Request) {
       return errorResponse("client_package_required", "Select a package before sending an online payment setup link.", 422);
     }
 
+    if (input.primaryCoachUserId) {
+      const primaryCoachError = await validatePrimaryCoachAssignment(actor, input.primaryCoachUserId);
+
+      if (primaryCoachError) {
+        return primaryCoachError;
+      }
+    }
+
     await assertPlatformClientCapacity(actor.organizationId);
     const client = await prisma.$transaction(async (tx) => {
       const createdClient = await tx.client.create({
-        data: getClientCreateData(actor.organizationId, input)
+        data: getClientCreateData(actor.organizationId, {
+          ...input,
+          primaryCoachUserId: input.primaryCoachUserId ?? actor.userId
+        })
       });
 
       await tx.auditLog.create({
@@ -241,6 +253,32 @@ async function createAndSendClientOnboarding(input: {
     checkoutUrl: checkoutUrl ?? null,
     subscriptionId: subscriptionId ?? null
   };
+}
+
+async function validatePrimaryCoachAssignment(actor: { organizationId: string; role: string }, primaryCoachUserId: string) {
+  if (!canManageCoachAssignment(actor.role)) {
+    return errorResponse("forbidden", "Only owners and admins can assign a client coach.", 403);
+  }
+
+  const membership = await prisma.organizationMembership.findFirst({
+    where: {
+      organizationId: actor.organizationId,
+      userId: primaryCoachUserId,
+      status: MembershipStatus.ACTIVE,
+      role: { in: [MembershipRole.OWNER, MembershipRole.ADMIN, MembershipRole.COACH] }
+    },
+    select: { id: true }
+  });
+
+  if (!membership) {
+    return errorResponse("invalid_primary_coach", "Select an active coach from this organization.", 422);
+  }
+
+  return null;
+}
+
+function canManageCoachAssignment(role: string) {
+  return role === "owner" || role === "admin";
 }
 
 function isUniqueClientEmailError(error: unknown) {

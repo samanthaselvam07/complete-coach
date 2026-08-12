@@ -828,10 +828,34 @@ describe("client app APIs", () => {
     expect(mocks.prisma.formAssignment.update).not.toHaveBeenCalled();
     expect(mocks.prisma.clientMeasurement.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
+        where: {
+          organizationId_sourceType_sourceId_metricKey: {
+            organizationId: "org_1",
+            sourceType: "form_submission",
+            sourceId: "submission_daily_1",
+            metricKey: "body_weight"
+          }
+        },
         create: expect.objectContaining({
+          organizationId: "org_1",
           clientId: "client_1",
+          sourceType: "form_submission",
+          sourceId: "submission_daily_1",
           metricKey: "body_weight",
-          metricValue: 74.5
+          metricValue: 74.5,
+          unit: "kg",
+          metadata: {
+            fieldId: "body_weight",
+            label: "Bodyweight"
+          }
+        }),
+        update: expect.objectContaining({
+          metricValue: 74.5,
+          unit: "kg",
+          metadata: {
+            fieldId: "body_weight",
+            label: "Bodyweight"
+          }
         })
       })
     );

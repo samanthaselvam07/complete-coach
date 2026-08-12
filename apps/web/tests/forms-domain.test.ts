@@ -50,6 +50,24 @@ describe("forms domain helpers", () => {
     expect(result.success).toBe(false);
   });
 
+  it("keeps builder field categories in saved form definitions", () => {
+    const parsed = FormDefinitionSchema.parse({
+      title: "Initial Questionnaire",
+      fields: [
+        {
+          id: "primary-goal",
+          type: "long-text",
+          label: "Primary goal",
+          required: true,
+          category: "Goals",
+          exportPolicy: "private"
+        }
+      ]
+    });
+
+    expect(parsed.fields[0]?.category).toBe("Goals");
+  });
+
   it("extracts deterministic typed measurements from metric fields", () => {
     const definition = FormDefinitionSchema.parse({
       title: "Weekly Check-In",

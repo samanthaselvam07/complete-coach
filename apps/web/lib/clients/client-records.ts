@@ -37,6 +37,7 @@ export const createClientSchema = z.object({
   packageId: z.string().trim().max(120).optional(),
   packageName: z.string().trim().max(120).optional(),
   checkInDay: z.string().trim().max(20).optional(),
+  primaryCoachUserId: z.string().trim().max(120).nullable().optional(),
   timezone: z.string().trim().max(80).default("UTC"),
   startDate: z.string().date().optional(),
   onboarding: z
@@ -74,9 +75,11 @@ interface ClientRecord {
   createdAt?: Date | string;
   compliance: number;
   primaryCoach?: {
+    id?: string | null;
     name: string | null;
     email: string | null;
   } | null;
+  primaryCoachUserId?: string | null;
 }
 
 export function toPrismaClientStatus(status: ApiClientStatus) {
@@ -130,6 +133,7 @@ export function serializeClient(record: ClientRecord): ClientSummary {
     latestCheckIn: formatDisplayDate(record.latestCheckInAt),
     status: getDisplayClientStatus(record),
     assignedCoachName: record.primaryCoach?.name || record.primaryCoach?.email || null,
+    primaryCoachUserId: record.primaryCoachUserId ?? record.primaryCoach?.id ?? null,
     startDate: formatDisplayDate(record.startDate),
     timezone: record.timezone || "UTC",
     initials: getInitials(record.firstName, record.lastName),
@@ -162,6 +166,7 @@ export function getClientCreateData(organizationId: string, input: CreateClientI
     packageId: input.packageId,
     packageName: input.packageName,
     checkInDay: input.checkInDay,
+    primaryCoachUserId: input.primaryCoachUserId,
     timezone: input.timezone,
     startDate: input.startDate ? new Date(`${input.startDate}T00:00:00.000Z`) : undefined
   };

@@ -3,12 +3,14 @@ import { z } from "zod";
 import {
   CheckInStatus,
   FormAssignmentStatus,
-  FormSubmissionStatus
+  FormSubmissionStatus,
+  FormType
 } from "@/app/generated/prisma/enums";
 
 export const assignmentStatusValues = ["assigned", "submitted", "reviewed", "completed", "cancelled"] as const;
 export const submissionStatusValues = ["submitted", "reviewed", "completed"] as const;
 export const checkInStatusValues = ["pending-review", "reviewed", "completed"] as const;
+export const formTypeValues = ["intake", "application", "contact", "habit-tracker", "check-in"] as const;
 
 export const assignmentListQuerySchema = z.object({
   clientId: z.string().min(1).optional(),
@@ -23,6 +25,7 @@ export const submitAssignmentSchema = z.object({
 export const submissionListQuerySchema = z.object({
   clientId: z.string().min(1).optional(),
   formId: z.string().min(1).optional(),
+  formType: z.enum(formTypeValues).optional(),
   status: z.enum(submissionStatusValues).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50)
 });
@@ -72,6 +75,14 @@ const checkInStatusToPrisma: Record<(typeof checkInStatusValues)[number], CheckI
   "pending-review": CheckInStatus.PENDING_REVIEW,
   reviewed: CheckInStatus.REVIEWED,
   completed: CheckInStatus.COMPLETED
+};
+
+const formTypeToPrisma: Record<(typeof formTypeValues)[number], FormType> = {
+  intake: FormType.INTAKE,
+  application: FormType.APPLICATION,
+  contact: FormType.CONTACT,
+  "habit-tracker": FormType.HABIT_TRACKER,
+  "check-in": FormType.CHECK_IN
 };
 
 const checkInStatusFromPrisma: Record<CheckInStatus, (typeof checkInStatusValues)[number]> = {
@@ -165,6 +176,10 @@ export function toPrismaSubmissionStatus(status: (typeof submissionStatusValues)
 
 export function toPrismaCheckInStatus(status: (typeof checkInStatusValues)[number]) {
   return checkInStatusToPrisma[status];
+}
+
+export function toPrismaFormType(type: (typeof formTypeValues)[number]) {
+  return formTypeToPrisma[type];
 }
 
 export function serializeAssignment(record: AssignmentRecord) {

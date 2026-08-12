@@ -31,6 +31,7 @@ export const FormFieldDefinitionSchema = z
     options: z.array(z.string().min(1).max(160)).max(50).optional(),
     metricKey: z.string().min(1).max(80).regex(/^[a-z][a-z0-9_]*$/).optional(),
     metricUnit: z.string().min(1).max(32).optional(),
+    category: z.string().min(1).max(120).optional(),
     exportPolicy: FormFieldExportPolicySchema.default("private")
   })
   .superRefine((field, context) => {

@@ -52,6 +52,9 @@ const mocks = vi.hoisted(() => ({
     organization: {
       findUnique: vi.fn()
     },
+    organizationMembership: {
+      findFirst: vi.fn()
+    },
     verificationToken: {
       deleteMany: vi.fn(),
       create: vi.fn()
@@ -159,6 +162,7 @@ describe("client and CRM API tenancy", () => {
     mocks.prisma.client.findFirst.mockReset();
     mocks.prisma.client.update.mockReset();
     mocks.prisma.organization.findUnique.mockReset();
+    mocks.prisma.organizationMembership.findFirst.mockReset();
     mocks.prisma.verificationToken.deleteMany.mockReset();
     mocks.prisma.verificationToken.create.mockReset();
     mocks.prisma.lead.findMany.mockReset();
@@ -1464,6 +1468,53 @@ describe("client and CRM API tenancy", () => {
           packageName: "Premium Package",
           status: ClientStatus.ACTIVE,
           startDate: new Date("2026-05-14T00:00:00.000Z")
+        })
+      })
+    );
+  });
+
+  it("updates a client's assigned coach after validating active organization membership", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.client.findFirst.mockResolvedValue({ id: "client_1", organizationId: "org_1" });
+    mocks.prisma.organizationMembership.findFirst.mockResolvedValue({ id: "membership_coach_2" });
+    mocks.prisma.client.update.mockResolvedValue({
+      id: "client_1",
+      firstName: "Updated",
+      lastName: "Client",
+      email: "updated@example.com",
+      status: ClientStatus.ACTIVE,
+      packageId: null,
+      packageName: null,
+      primaryCoachUserId: "coach_2",
+      checkInDay: null,
+      startDate: null,
+      latestCheckInAt: null,
+      compliance: 0
+    });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await patchClient(
+      new Request("http://test.local/api/v1/clients/client_1", {
+        method: "PATCH",
+        body: JSON.stringify({ primaryCoachUserId: "coach_2" })
+      }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: { primaryCoachUserId: string | null } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.primaryCoachUserId).toBe("coach_2");
+    expect(mocks.prisma.organizationMembership.findFirst).toHaveBeenCalledWith({
+      where: expect.objectContaining({
+        organizationId: "org_1",
+        userId: "coach_2"
+      }),
+      select: { id: true }
+    });
+    expect(mocks.prisma.client.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          primaryCoachUserId: "coach_2"
         })
       })
     );

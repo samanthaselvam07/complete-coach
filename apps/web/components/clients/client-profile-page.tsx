@@ -13,6 +13,7 @@ import {
   type ClientProfileResponse,
   fetchAssignedClientFormIds,
   fetchAssignedClientPlanIds,
+  fetchCoachAssignmentOptions,
   fetchClientFormOptions,
   fetchPublishedClientFormsByType,
   scheduleAssignedPackagePaymentChange,
@@ -369,6 +370,7 @@ export function ClientProfilePage({
   const [clientFormError, setClientFormError] = useState<string | null>(null);
   const [savingClient, setSavingClient] = useState(false);
   const [packageOptions, setPackageOptions] = useState<ClientFormOption[]>([]);
+  const [coachOptions, setCoachOptions] = useState<ClientFormOption[]>([]);
   const [initialQuestionnaireOptions, setInitialQuestionnaireOptions] = useState<ClientFormOption[]>([]);
   const [dailyHabitFormOptions, setDailyHabitFormOptions] = useState<ClientFormOption[]>([]);
   const [checkInFormOptions, setCheckInFormOptions] = useState<ClientFormOption[]>([]);
@@ -507,16 +509,19 @@ export function ClientProfilePage({
       publishedFormGroups,
       trainingPlans,
       nutritionPlans,
-      supplementationPlans
+      supplementationPlans,
+      coaches
     ] = await Promise.all([
       fetchClientFormOptions("/api/v1/packages?status=active&limit=100"),
       fetchPublishedClientFormsByType(),
       fetchClientFormOptions("/api/v1/training-program-templates?limit=100"),
       fetchClientFormOptions("/api/v1/meal-plan-templates?limit=100"),
-      fetchClientFormOptions("/api/v1/supplement-plan-templates?limit=100")
+      fetchClientFormOptions("/api/v1/supplement-plan-templates?limit=100"),
+      fetchCoachAssignmentOptions()
     ]);
 
     setPackageOptions(packages);
+    setCoachOptions(coaches);
     setInitialQuestionnaireOptions(publishedFormGroups.initialQuestionnaireOptions);
     setDailyHabitFormOptions(publishedFormGroups.dailyHabitFormOptions);
     setCheckInFormOptions(publishedFormGroups.checkInFormOptions);
@@ -603,6 +608,7 @@ export function ClientProfilePage({
           error={clientFormError}
           saving={savingClient}
           packageOptions={packageOptions}
+          coachOptions={coachOptions}
           initialQuestionnaireOptions={initialQuestionnaireOptions}
           dailyHabitFormOptions={dailyHabitFormOptions}
           checkInFormOptions={checkInFormOptions}
@@ -1674,7 +1680,7 @@ function ClientProfileTabPanel({
           : "rounded-xl border border-gray-200 bg-white p-6"
       )}
     >
-      {activeTab === "Daily Check-Ins" ? <DailyCheckInsPanel /> : null}
+      {activeTab === "Daily Check-Ins" ? <DailyCheckInsPanel clientId={client.id} /> : null}
       {activeTab === "Initial Q&A" ? <InitialQuestionnairePanel client={client} /> : null}
       {activeTab === "Photos" ? <PhotosPanel client={client} /> : null}
       {activeTab === "Training" ? <TrainingPanel client={client} /> : null}

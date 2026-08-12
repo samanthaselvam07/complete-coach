@@ -38,6 +38,14 @@ interface ClientFormOptionResponse {
   currency?: string | null;
 }
 
+interface TeamMemberOptionResponse {
+  userId: string;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  status?: string | null;
+}
+
 export async function fetchClientFormOptions(url: string): Promise<ClientFormOption[]> {
   try {
     const response = await fetch(url);
@@ -75,6 +83,29 @@ export async function fetchPublishedClientFormsByType() {
     dailyHabitFormOptions,
     checkInFormOptions
   };
+}
+
+export async function fetchCoachAssignmentOptions(): Promise<ClientFormOption[]> {
+  try {
+    const response = await fetch("/api/v1/team-members");
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = (await response.json()) as { data?: { members?: TeamMemberOptionResponse[] } };
+    const assignableRoles = new Set(["owner", "admin", "coach"]);
+
+    return (payload.data?.members ?? [])
+      .filter((member) => member.status === "active")
+      .filter((member) => assignableRoles.has(member.role ?? ""))
+      .map((member) => ({
+        value: member.userId,
+        label: member.name || member.email || "Unnamed coach"
+      }));
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchClientFormOptionsFromUrls(urls: string[]): Promise<ClientFormOption[]> {

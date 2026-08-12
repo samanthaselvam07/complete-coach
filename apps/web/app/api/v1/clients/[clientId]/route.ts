@@ -1,4 +1,4 @@
-import { ClientStatus } from "@/app/generated/prisma/enums";
+import { ClientStatus, MembershipRole, MembershipStatus } from "@/app/generated/prisma/enums";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db/prisma";
 import { requireActiveActor } from "@/lib/auth/session-guards";
@@ -16,6 +16,7 @@ const patchClientSchema = createClientSchema.partial().extend({
   packageId: z.string().trim().max(120).nullable().optional(),
   packageName: z.string().trim().max(120).nullable().optional(),
   checkInDay: z.string().trim().max(20).nullable().optional(),
+  primaryCoachUserId: z.string().trim().max(120).nullable().optional(),
   timezone: z.string().trim().max(80).nullable().optional(),
   startDate: z.string().date().nullable().optional()
 });
@@ -59,6 +60,18 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
       return errorResponse("not_found", "Client not found.", 404);
     }
 
+    if (Object.prototype.hasOwnProperty.call(input, "primaryCoachUserId") && input.primaryCoachUserId) {
+      const primaryCoachError = await validatePrimaryCoachAssignment(actor, input.primaryCoachUserId);
+
+      if (primaryCoachError) {
+        return primaryCoachError;
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(input, "primaryCoachUserId") && input.primaryCoachUserId === null && !canManageCoachAssignment(actor.role)) {
+      return errorResponse("forbidden", "Only owners and admins can assign a client coach.", 403);
+    }
+
     const client = await prisma.client.update({
       where: { id: clientId, organizationId: actor.organizationId },
       data: {
@@ -70,6 +83,7 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
         ...getPatchField(input, "packageId", input.packageId),
         ...getPatchField(input, "packageName", input.packageName),
         ...getPatchField(input, "checkInDay", input.checkInDay),
+        ...getPatchField(input, "primaryCoachUserId", input.primaryCoachUserId),
         ...getPatchField(input, "timezone", input.timezone),
         ...getPatchField(input, "startDate", input.startDate ? new Date(`${input.startDate}T00:00:00.000Z`) : input.startDate)
       }
@@ -89,6 +103,32 @@ export async function PATCH(request: Request, context: ClientRouteContext) {
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+async function validatePrimaryCoachAssignment(actor: { organizationId: string; role: string }, primaryCoachUserId: string) {
+  if (!canManageCoachAssignment(actor.role)) {
+    return errorResponse("forbidden", "Only owners and admins can assign a client coach.", 403);
+  }
+
+  const membership = await prisma.organizationMembership.findFirst({
+    where: {
+      organizationId: actor.organizationId,
+      userId: primaryCoachUserId,
+      status: MembershipStatus.ACTIVE,
+      role: { in: [MembershipRole.OWNER, MembershipRole.ADMIN, MembershipRole.COACH] }
+    },
+    select: { id: true }
+  });
+
+  if (!membership) {
+    return errorResponse("invalid_primary_coach", "Select an active coach from this organization.", 422);
+  }
+
+  return null;
+}
+
+function canManageCoachAssignment(role: string) {
+  return role === "owner" || role === "admin";
 }
 
 function getPatchField<TInput extends object, TKey extends keyof TInput, TValue>(input: TInput, key: TKey, value: TValue) {
