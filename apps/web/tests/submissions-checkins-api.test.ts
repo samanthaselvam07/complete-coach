@@ -18,6 +18,7 @@ import { GET as getSubmissions } from "@/app/api/v1/form-submissions/route";
 import { GET as getSubmission } from "@/app/api/v1/form-submissions/[submissionId]/route";
 import { GET as getCheckIns } from "@/app/api/v1/check-ins/route";
 import { GET as getCheckIn } from "@/app/api/v1/check-ins/[checkInId]/route";
+import { GET as getCheckInPhotoUrl } from "@/app/api/v1/check-ins/[checkInId]/photo-url/route";
 import { POST as reviewCheckIn } from "@/app/api/v1/check-ins/[checkInId]/review/route";
 import { POST as completeCheckIn } from "@/app/api/v1/check-ins/[checkInId]/complete/route";
 import { GET as getCheckInMetrics } from "@/app/api/v1/check-ins/[checkInId]/extracted-metrics/route";
@@ -69,6 +70,10 @@ const mocks = vi.hoisted(() => ({
     clientActivityLog: {
       findMany: vi.fn(),
       upsert: vi.fn()
+    },
+    r2: {
+      createR2PresignedGetUrl: vi.fn(),
+      getR2Config: vi.fn()
     }
   }
 }));
@@ -79,6 +84,11 @@ vi.mock("@/auth", () => ({
 
 vi.mock("@/lib/db/prisma", () => ({
   prisma: mocks.prisma
+}));
+
+vi.mock("@/lib/storage/r2", () => ({
+  createR2PresignedGetUrl: mocks.prisma.r2.createR2PresignedGetUrl,
+  getR2Config: mocks.prisma.r2.getR2Config
 }));
 
 const ownerSession = {
@@ -241,6 +251,8 @@ describe("submissions, check-ins, and metrics APIs", () => {
     mocks.prisma.clientMeasurement.upsert.mockReset();
     mocks.prisma.clientActivityLog.findMany.mockReset();
     mocks.prisma.clientActivityLog.upsert.mockReset();
+    mocks.prisma.r2.createR2PresignedGetUrl.mockReset();
+    mocks.prisma.r2.getR2Config.mockReset();
   });
 
   it("lists tenant-scoped form assignments", async () => {
@@ -802,6 +814,59 @@ describe("submissions, check-ins, and metrics APIs", () => {
     expect(response.status).toBe(200);
     expect(payload.data.answers).toEqual(submissionRecord.answersJson);
     expect(payload.data.metrics[0].metricKey).toBe("body_weight");
+  });
+
+  it("creates a coach-scoped signed URL for uploaded check-in photos", async () => {
+    const photoUrl = "r2://organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg";
+    mocks.prisma.checkIn.findFirst.mockResolvedValue({ id: "checkin_1", clientId: "client_1" });
+    mocks.prisma.r2.getR2Config.mockReturnValue({
+      endpoint: "https://r2.example",
+      accessKeyId: "access",
+      secretAccessKey: "secret",
+      bucketName: "complete-coach"
+    });
+    mocks.prisma.r2.createR2PresignedGetUrl.mockReturnValue("https://r2.example/signed-check-in-photo.jpg");
+
+    const response = await getCheckInPhotoUrl(
+      new Request(`http://test.local/api/v1/check-ins/checkin_1/photo-url?photoUrl=${encodeURIComponent(photoUrl)}`),
+      { params: Promise.resolve({ checkInId: "checkin_1" }) }
+    );
+    const payload = (await response.json()) as { data: { url: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.url).toBe("https://r2.example/signed-check-in-photo.jpg");
+    expect(mocks.prisma.checkIn.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "checkin_1",
+        organizationId: "org_1"
+      },
+      select: {
+        id: true,
+        clientId: true
+      }
+    });
+    expect(mocks.prisma.r2.createR2PresignedGetUrl).toHaveBeenCalledWith(
+      expect.objectContaining({ bucketName: "complete-coach" }),
+      {
+        objectKey: "organizations/org_1/clients/client_1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg",
+        expiresInSeconds: 300
+      }
+    );
+  });
+
+  it("rejects uploaded check-in photos that do not belong to the check-in client", async () => {
+    const photoUrl = "r2://organizations/org_1/clients/other_client/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg";
+    mocks.prisma.checkIn.findFirst.mockResolvedValue({ id: "checkin_1", clientId: "client_1" });
+
+    const response = await getCheckInPhotoUrl(
+      new Request(`http://test.local/api/v1/check-ins/checkin_1/photo-url?photoUrl=${encodeURIComponent(photoUrl)}`),
+      { params: Promise.resolve({ checkInId: "checkin_1" }) }
+    );
+    const payload = (await response.json()) as { error: { code: string } };
+
+    expect(response.status).toBe(422);
+    expect(payload.error.code).toBe("invalid_check_in_photo");
+    expect(mocks.prisma.r2.createR2PresignedGetUrl).not.toHaveBeenCalled();
   });
 
   it("does not read check-in detail or metrics outside the active organization", async () => {

@@ -39,7 +39,7 @@ interface CheckInDetailView {
   assigned: string;
   status: string;
   questions: Array<{ id: string; label: string; answer: string }>;
-  photos: Array<{ label: string; url: string }>;
+  photos: Array<{ label: string; url: string; storageUrl: string }>;
 }
 
 export function CheckInDetailPage({
@@ -304,9 +304,7 @@ function CheckInColumn({
         {checkIn.photos.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2">
             {checkIn.photos.map((photo, index) => (
-              <a key={`${photo.url}-${index}`} href={photo.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border border-slate-200">
-                <img src={photo.url} alt={`${photo.label} ${index + 1}`} className="aspect-[4/5] w-full object-cover" />
-              </a>
+              <CheckInPhotoCard key={`${photo.storageUrl}-${index}`} checkInId={checkIn.id} photo={photo} index={index} />
             ))}
           </div>
         ) : (
@@ -314,6 +312,62 @@ function CheckInColumn({
         )}
       </section>
     </section>
+  );
+}
+
+function CheckInPhotoCard({
+  checkInId,
+  photo,
+  index
+}: {
+  checkInId: string;
+  photo: CheckInDetailView["photos"][number];
+  index: number;
+}) {
+  const [resolvedUrl, setResolvedUrl] = useState(isUploadedCheckInPhotoUrl(photo.url) ? "" : photo.url);
+
+  useEffect(() => {
+    let active = true;
+
+    async function resolveUploadedPhoto() {
+      if (!isUploadedCheckInPhotoUrl(photo.url)) {
+        setResolvedUrl(photo.url);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/v1/check-ins/${checkInId}/photo-url?photoUrl=${encodeURIComponent(photo.url)}`);
+        const payload = (await response.json()) as { data?: { url?: string } };
+
+        if (active) {
+          setResolvedUrl(response.ok && payload.data?.url ? payload.data.url : "");
+        }
+      } catch {
+        if (active) {
+          setResolvedUrl("");
+        }
+      }
+    }
+
+    void resolveUploadedPhoto();
+
+    return () => {
+      active = false;
+    };
+  }, [checkInId, photo.url]);
+
+  if (!resolvedUrl) {
+    return (
+      <div className="flex aspect-[4/5] items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-sm font-semibold text-slate-500">
+        Preparing photo...
+      </div>
+    );
+  }
+
+  return (
+    <a href={resolvedUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border border-slate-200">
+      <img src={resolvedUrl} alt={`${photo.label} ${index + 1}`} className="aspect-[4/5] w-full object-cover" />
+    </a>
   );
 }
 
@@ -345,7 +399,7 @@ function mapApiCheckInToDetail(checkIn: ApiCheckInRecord): CheckInDetailView {
       }
 
       const label = fields.find((field) => field.id === id)?.label ?? humanizeFieldId(id);
-      return getPhotoUrls(answer).map((url) => ({ label, url }));
+      return getPhotoUrls(answer).map((url) => ({ label, url, storageUrl: url }));
     })
   };
 }
@@ -378,7 +432,7 @@ function formatAnswer(value: unknown): string {
 
 function getPhotoUrls(value: unknown): string[] {
   if (typeof value === "string") {
-    return value ? [value] : [];
+    return isPhotoUrl(value) ? [value] : [];
   }
 
   if (Array.isArray(value)) {
@@ -386,15 +440,36 @@ function getPhotoUrls(value: unknown): string[] {
   }
 
   if (isRecord(value)) {
-    const possibleUrl = value.url ?? value.src ?? value.href;
-    return typeof possibleUrl === "string" ? [possibleUrl] : [];
+    const directUrl = [value.url, value.src, value.href, value.photoUrl, value.fileUrl, value.previewUrl]
+      .find((candidate): candidate is string => typeof candidate === "string" && isPhotoUrl(candidate));
+
+    return [
+      ...(directUrl ? [directUrl] : []),
+      ...Object.entries(value)
+        .filter(([key]) => !["url", "src", "href", "photoUrl", "fileUrl", "previewUrl"].includes(key))
+        .flatMap(([, nestedValue]) => getPhotoUrls(nestedValue))
+    ];
   }
 
   return [];
 }
 
 function looksLikePhotoAnswer(value: unknown) {
-  return getPhotoUrls(value).some((url) => /\.(avif|gif|jpe?g|png|webp)(\?|$)/i.test(url));
+  return getPhotoUrls(value).some((url) => isPhotoUrl(url));
+}
+
+function isPhotoUrl(value: string) {
+  return isRenderablePhotoUrl(value) || isUploadedCheckInPhotoUrl(value);
+}
+
+function isRenderablePhotoUrl(value: string) {
+  return /^https?:\/\//u.test(value) && /\.(?:avif|gif|heic|heif|jpe?g|png|webp)(?:[?#].*)?$/iu.test(value);
+}
+
+function isUploadedCheckInPhotoUrl(value: string) {
+  return value.startsWith("r2://")
+    && value.includes("/check-ins/photos/")
+    && /\.(?:heic|heif|jpe?g|png|webp)$/iu.test(value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

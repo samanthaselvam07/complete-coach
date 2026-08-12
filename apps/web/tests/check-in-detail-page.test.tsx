@@ -95,6 +95,44 @@ describe("CheckInDetailPage", () => {
     expect(screen.queryByRole("link", { name: "Compare With Previous Checkin" })).not.toBeInTheDocument();
   });
 
+  it("resolves uploaded weekly check-in photos for coach review", async () => {
+    const uploadedPhotoUrl = "r2://organizations/org_1/clients/1/check-ins/photos/11111111-1111-4111-8111-111111111111.jpg";
+    const uploadedPhotoCheckIn = {
+      ...apiCheckIns[0],
+      answers: {
+        ...apiCheckIns[0].answers,
+        photos: { photoUrl: uploadedPhotoUrl }
+      }
+    };
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/check-ins?clientId=1&limit=100") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: [uploadedPhotoCheckIn]
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === "/api/v1/check-ins/week-24/photo-url?photoUrl=r2%3A%2F%2Forganizations%2Forg_1%2Fclients%2F1%2Fcheck-ins%2Fphotos%2F11111111-1111-4111-8111-111111111111.jpg") {
+        return Promise.resolve(new Response(JSON.stringify({ data: { url: "https://r2.test/signed-progress-photo.jpg" } }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: uploadedPhotoCheckIn }), { status: 200 }));
+    });
+
+    render(createElement(CheckInDetailPage, { clientId: "1", checkInId: "week-24" }));
+
+    expect(await screen.findByRole("img", { name: "Progress photos 1" })).toHaveAttribute("src", "https://r2.test/signed-progress-photo.jpg");
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/v1/check-ins/week-24/photo-url?photoUrl=${encodeURIComponent(uploadedPhotoUrl)}`
+    );
+  });
+
   it("marks a submitted check-in complete", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input, init) => {
       const url = String(input);
