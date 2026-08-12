@@ -2444,7 +2444,10 @@ describe("ClientProfilePage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Check-Ins" }));
 
     expect(screen.getByRole("heading", { name: "Check-In History" })).toBeInTheDocument();
-    expect(await screen.findByText("Hit new squat PR at 120kg.")).toBeInTheDocument();
+    expect((await screen.findAllByRole("link", { name: "View Full Check-In" })).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Hit new squat PR at 120kg.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Summary")).not.toBeInTheDocument();
+    expect(screen.queryByText("Coach Notes")).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Open Marcus Rodriguez check-in" })[0]).toHaveAttribute(
       "href",
       "/clients/1/check-ins/week-24"

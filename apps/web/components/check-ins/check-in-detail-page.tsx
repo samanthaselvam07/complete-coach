@@ -283,14 +283,14 @@ function CheckInColumn({
         <p className="mt-1 text-sm text-slate-600">Assigned: {checkIn.assigned}</p>
       </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="mb-4 text-sm font-bold text-slate-700">Submitted answers</h2>
+      <section className="bg-white">
+        <h2 className="mb-3 text-sm font-bold text-slate-700">Submitted answers</h2>
         {checkIn.questions.length > 0 ? (
-          <dl className="space-y-4">
+          <dl className="divide-y divide-slate-100 border-y border-slate-100">
             {checkIn.questions.map((question) => (
-              <div key={question.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+              <div key={question.id} className="grid gap-2 py-3 md:grid-cols-[minmax(180px,0.34fr)_1fr]">
                 <dt className="text-sm font-bold text-slate-950">{question.label}</dt>
-                <dd className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">{question.answer}</dd>
+                <dd className="whitespace-pre-line text-sm leading-6 text-slate-700">{question.answer}</dd>
               </div>
             ))}
           </dl>

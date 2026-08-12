@@ -246,18 +246,7 @@ export function CheckInHistoryPanel({ clientId }: { clientId: string }) {
               </Link>
             </div>
 
-            <div className="grid gap-5 border-y border-slate-100 py-4 md:grid-cols-2">
-              <div>
-                <p className="mb-2 text-sm font-bold text-green-600">Summary</p>
-                <p className="text-sm text-slate-700">{entry.summary ?? "No persisted summary was recorded."}</p>
-              </div>
-              <div>
-                <p className="mb-2 text-sm font-bold text-indigo-600">Coach Notes</p>
-                <p className="text-sm text-slate-700">{entry.coachNotes ?? "No persisted coach notes were recorded."}</p>
-              </div>
-            </div>
-
-            <Link href={`/clients/${clientId}/check-ins/${entry.id}`} className="mt-4 inline-block text-sm font-bold text-indigo-600">
+            <Link href={`/clients/${clientId}/check-ins/${entry.id}`} className="inline-block text-sm font-bold text-indigo-600">
               View Full Check-In
             </Link>
           </article>

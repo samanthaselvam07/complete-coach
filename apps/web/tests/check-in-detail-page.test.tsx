@@ -81,6 +81,8 @@ describe("CheckInDetailPage", () => {
     expect(screen.getByText("Energy")).toBeInTheDocument();
     expect(screen.getByText("8")).toBeInTheDocument();
     expect(screen.getByText("Meal prep was stronger this week.")).toBeInTheDocument();
+    expect(screen.getByText("Body weight").closest("div")).not.toHaveClass("rounded-lg");
+    expect(screen.getByText("Body weight").closest("dl")).toHaveClass("divide-y");
     expect(screen.getByRole("heading", { name: "Submitted photos" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Progress photos 1" })).toHaveAttribute("src", "https://cdn.test/front.jpg");
     expect(screen.getByRole("img", { name: "Progress photos 2" })).toHaveAttribute("src", "https://cdn.test/side.jpg");
