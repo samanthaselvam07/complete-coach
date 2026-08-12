@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { FormDefinitionSchema, type FormFieldDefinition } from "@/lib/forms/schema";
 
@@ -96,53 +97,74 @@ export function DailyCheckInsPanel({ clientId }: { clientId: string }) {
 }
 
 function DailyHabitsWeekTable({ submissions }: { submissions: ApiDailySubmissionRecord[] }) {
-  const latestSubmission = submissions.reduce<ApiDailySubmissionRecord | null>((latest, submission) => {
-    if (!latest) {
-      return submission;
-    }
-
-    return new Date(submission.submittedAt).getTime() > new Date(latest.submittedAt).getTime() ? submission : latest;
-  }, null);
-  const weekStart = getWeekStart(latestSubmission?.submittedAt ?? new Date().toISOString());
+  const latestWeekStart = useMemo(() => getWeekStart(getLatestSubmissionDate(submissions) ?? new Date().toISOString()), [submissions]);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const weekStart = addDays(latestWeekStart, weekOffset * 7);
   const weekEnd = addDays(weekStart, 6);
   const rows = buildDailyAnswerRows(submissions, weekStart);
+  const goToPreviousWeek = () => setWeekOffset((currentOffset) => currentOffset - 1);
+  const goToNextWeek = () => setWeekOffset((currentOffset) => currentOffset + 1);
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-6 py-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
         <h3 className="text-lg font-black text-slate-950">{formatWeekRange(weekStart, weekEnd)}</h3>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Previous week"
+            className="inline-flex size-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 transition hover:bg-indigo-100"
+            onClick={goToPreviousWeek}
+          >
+            <ChevronLeft className="size-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next week"
+            className="inline-flex size-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 transition hover:bg-indigo-100"
+            onClick={goToNextWeek}
+          >
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </button>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1080px] table-fixed text-left" aria-label="Daily habits weekly summary">
           <thead>
             <tr className="border-b border-slate-100 text-xs font-black uppercase text-slate-900">
-              <th scope="col" className="w-[32%] px-6 py-4">
+              <th scope="col" className="w-[32%] px-5 py-3">
                 Habits
               </th>
               {weekDayLabels.map((label) => (
-                <th key={label} scope="col" className="px-4 py-4 text-center">
+                <th key={label} scope="col" className="px-3 py-3 text-center">
                   {label}
                 </th>
               ))}
-              <th scope="col" className="px-4 py-4 text-center">
+              <th scope="col" className="px-3 py-3 text-center">
                 Average
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {rows.map((row) => (
-              <tr key={row.fieldId}>
-                <th scope="row" className="px-6 py-5 text-sm font-semibold leading-6 text-slate-700">
+            {rows.length > 0 ? rows.map((row, rowIndex) => (
+              <tr key={row.fieldId} className={rowIndex % 2 === 0 ? "bg-white" : "bg-slate-50/80"}>
+                <th scope="row" className="px-5 py-3 text-sm font-semibold leading-5 text-slate-700">
                   {row.label}
                 </th>
                 {weekDayLabels.map((label, dayIndex) => (
-                  <td key={`${row.fieldId}-${label}`} className="px-4 py-5 text-center text-sm font-semibold text-slate-900">
+                  <td key={`${row.fieldId}-${label}`} className="px-3 py-3 text-center text-sm font-semibold text-slate-900">
                     {formatDailyCellValue(row.valuesByDay.get(dayIndex))}
                   </td>
                 ))}
-                <td className="px-4 py-5 text-center text-sm font-semibold text-slate-600">{formatAverage(row)}</td>
+                <td className="px-3 py-3 text-center text-sm font-semibold text-slate-600">{formatAverage(row)}</td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td className="px-5 py-4 text-sm font-semibold text-slate-500" colSpan={weekDayLabels.length + 2}>
+                  No daily check-ins were submitted for this week.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -254,6 +276,16 @@ function formatCheckInDate(value: string) {
 }
 
 const weekDayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
+
+function getLatestSubmissionDate(submissions: ApiDailySubmissionRecord[]) {
+  return submissions.reduce<string | null>((latestDate, submission) => {
+    if (!latestDate) {
+      return submission.submittedAt;
+    }
+
+    return new Date(submission.submittedAt).getTime() > new Date(latestDate).getTime() ? submission.submittedAt : latestDate;
+  }, null);
+}
 
 function buildDailyAnswerRows(submissions: ApiDailySubmissionRecord[], weekStart: Date): DailyAnswerRow[] {
   const rows = new Map<string, DailyAnswerRow>();

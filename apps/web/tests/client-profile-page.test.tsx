@@ -604,6 +604,37 @@ function mockMarcusProfile(
                 }
               },
               {
+                id: "submission_daily_previous_week",
+                formName: "Daily Basics",
+                formType: "habit-tracker",
+                submittedAt: "2026-07-30T07:30:00.000Z",
+                answers: {
+                  "preset-habit-body-weight-1": 80.5,
+                  "preset-habit-steps-11": 8800
+                },
+                formVersion: {
+                  schema: {
+                    title: "Daily Basics",
+                    fields: [
+                      {
+                        id: "preset-habit-body-weight-1",
+                        type: "number",
+                        label: "Preset Habit Body Weight 1",
+                        required: false,
+                        exportPolicy: "private"
+                      },
+                      {
+                        id: "preset-habit-steps-11",
+                        type: "number",
+                        label: "Preset Habit Steps 11",
+                        required: false,
+                        exportPolicy: "private"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
                 id: "submission_daily_2",
                 formName: "Daily Basics",
                 formType: "habit-tracker",
@@ -2341,6 +2372,18 @@ describe("ClientProfilePage", () => {
     expect(within(dailyHabitsTable).getByText("10200")).toBeInTheDocument();
     expect(within(dailyHabitsTable).getByText("10000")).toBeInTheDocument();
     expect(within(dailyHabitsTable).getByText("Good recovery.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Previous week" }));
+
+    expect(screen.getByText("27 Jul - 02 Aug, 2026")).toBeInTheDocument();
+    expect(within(dailyHabitsTable).getAllByText("80.5").length).toBeGreaterThan(0);
+    expect(within(dailyHabitsTable).getAllByText("8800").length).toBeGreaterThan(0);
+    expect(within(dailyHabitsTable).queryByText("81.9")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next week" }));
+
+    expect(screen.getByText("03 - 09 Aug, 2026")).toBeInTheDocument();
+    expect(within(dailyHabitsTable).getByText("81.9")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Check-Ins" }));
 
