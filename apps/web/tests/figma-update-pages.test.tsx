@@ -484,6 +484,22 @@ describe("Figma update pages", () => {
   });
 
   it("saves account settings through the org-scoped profile endpoint", async () => {
+    fetchMock.mockImplementation((url, init) => {
+      if (url === "/api/v1/coach-profile/photo-upload" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                photoUrl: "r2://organizations/org_1/users/user_1/account/photos/11111111-1111-4111-8111-111111111111.png"
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
     render(<SettingsPage />);
 
     fireEvent.change(screen.getByLabelText("Full Name"), { target: { value: "Samantha Coach" } });
@@ -497,6 +513,13 @@ describe("Figma update pages", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save account profile" }));
 
     await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/coach-profile/photo-upload",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.any(File)
+        })
+      );
       expect(fetchMock).toHaveBeenCalledWith("/api/v1/coach-profile", expect.objectContaining({ method: "PATCH" }));
     });
 
@@ -508,10 +531,42 @@ describe("Figma update pages", () => {
       professionalTitle: "Owner Coach",
       email: "marcus.coach@kineticcurator.com",
       phone: "+1 (055) 234-8890",
-      photoFileName: "samantha-profile.png"
+      photoFileName: "r2://organizations/org_1/users/user_1/account/photos/11111111-1111-4111-8111-111111111111.png"
     });
     expect(screen.getByLabelText("New password")).toHaveValue("strong-password");
     expect(screen.getByRole("status")).toHaveTextContent("Account profile saved.");
+  });
+
+  it("loads persisted account profile photos into the thumbnail", async () => {
+    const storedPhotoUrl = "r2://organizations/org_1/users/user_1/account/photos/11111111-1111-4111-8111-111111111111.png";
+    fetchMock.mockImplementation((url) => {
+      if (url === "/api/v1/coach-profile") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                name: "Samantha Coach",
+                professionalTitle: "Owner Coach",
+                email: "sam@example.com",
+                phone: "+61 400",
+                photoFileName: storedPhotoUrl
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      if (url === `/api/v1/coach-profile/photo-url?photoUrl=${encodeURIComponent(storedPhotoUrl)}`) {
+        return Promise.resolve(new Response(JSON.stringify({ data: { url: "https://r2.example/signed-account-photo.png" } }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+
+    render(<SettingsPage />);
+
+    expect(await screen.findByRole("img", { name: "Profile photo preview" })).toHaveAttribute("src", "https://r2.example/signed-account-photo.png");
   });
 
   it("changes the account password from the security card", async () => {

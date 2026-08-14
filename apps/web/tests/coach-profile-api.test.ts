@@ -1,10 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GET, PATCH } from "@/app/api/v1/coach-profile/route";
+import { POST as uploadAccountPhoto } from "@/app/api/v1/coach-profile/photo-upload/route";
+import { GET as getAccountPhotoUrl } from "@/app/api/v1/coach-profile/photo-url/route";
+import {
+  createAccountPhotoObjectUrl,
+  validateAccountPhotoObjectKey
+} from "@/lib/coach/account-photo-uploads";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
   hash: vi.fn(),
+  fetch: vi.fn(),
+  r2: {
+    createR2PresignedGetUrl: vi.fn(),
+    createR2PresignedPutUrl: vi.fn(),
+    getR2Config: vi.fn()
+  },
   prisma: {
     $queryRaw: vi.fn(),
     auditLog: { create: vi.fn() },
@@ -25,6 +37,12 @@ vi.mock("bcryptjs", () => ({
 
 vi.mock("@/lib/db/prisma", () => ({
   prisma: mocks.prisma
+}));
+
+vi.mock("@/lib/storage/r2", () => ({
+  createR2PresignedGetUrl: mocks.r2.createR2PresignedGetUrl,
+  createR2PresignedPutUrl: mocks.r2.createR2PresignedPutUrl,
+  getR2Config: mocks.r2.getR2Config
 }));
 
 const ownerSession = {
@@ -76,6 +94,11 @@ describe("coach profile API", () => {
     vi.clearAllMocks();
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.hash.mockResolvedValue("hashed-password");
+    global.fetch = mocks.fetch;
+    mocks.fetch.mockReset();
+    mocks.r2.createR2PresignedGetUrl.mockReset();
+    mocks.r2.createR2PresignedPutUrl.mockReset();
+    mocks.r2.getR2Config.mockReset();
     mocks.prisma.auditLog.create.mockResolvedValue({});
     mocks.prisma.user.findUnique.mockResolvedValue(userRecord);
     mocks.prisma.user.update.mockResolvedValue(userRecord);
@@ -183,5 +206,88 @@ describe("coach profile API", () => {
     expect(payload.error.code).toBe("email_already_exists");
     expect(mocks.prisma.auditLog.create).not.toHaveBeenCalled();
     expect(mocks.prisma.$queryRaw).not.toHaveBeenCalled();
+  });
+
+  it("uploads account photos into the active organization and user storage path", async () => {
+    mocks.r2.getR2Config.mockReturnValue({
+      endpoint: "https://r2.example",
+      accessKeyId: "access",
+      secretAccessKey: "secret",
+      bucketName: "complete-coach"
+    });
+    mocks.r2.createR2PresignedPutUrl.mockReturnValue("https://r2.example/account-photo-upload");
+    mocks.fetch.mockResolvedValue(new Response(null, { status: 200 }));
+
+    const response = await uploadAccountPhoto(
+      new Request("http://test.local/api/v1/coach-profile/photo-upload", {
+        method: "POST",
+        headers: {
+          "content-type": "image/png",
+          "x-filename": encodeURIComponent("profile.png")
+        },
+        body: new Blob(["photo-bytes"], { type: "image/png" })
+      })
+    );
+    const payload = (await response.json()) as { data: { objectKey: string; photoUrl: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.objectKey).toMatch(/^organizations\/org_1\/users\/user_1\/account\/photos\/[0-9a-fA-F-]{36}\.png$/u);
+    expect(payload.data.photoUrl).toBe(createAccountPhotoObjectUrl(payload.data.objectKey));
+    expect(mocks.r2.createR2PresignedPutUrl).toHaveBeenCalledWith(
+      expect.objectContaining({ bucketName: "complete-coach" }),
+      expect.objectContaining({
+        objectKey: payload.data.objectKey,
+        contentType: "image/png",
+        expiresInSeconds: 300
+      })
+    );
+    expect(mocks.fetch).toHaveBeenCalledWith(
+      "https://r2.example/account-photo-upload",
+      expect.objectContaining({
+        method: "PUT",
+        headers: { "Content-Type": "image/png" }
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "coach.account_photo_uploaded",
+        targetType: "account_photo",
+        targetId: payload.data.objectKey
+      })
+    });
+  });
+
+  it("creates signed display URLs only for the active user's account photos", async () => {
+    const objectKey = "organizations/org_1/users/user_1/account/photos/11111111-1111-4111-8111-111111111111.png";
+    const photoUrl = createAccountPhotoObjectUrl(objectKey);
+    mocks.r2.getR2Config.mockReturnValue({
+      endpoint: "https://r2.example",
+      accessKeyId: "access",
+      secretAccessKey: "secret",
+      bucketName: "complete-coach"
+    });
+    mocks.r2.createR2PresignedGetUrl.mockReturnValue("https://r2.example/signed-account-photo.png");
+
+    const response = await getAccountPhotoUrl(
+      new Request(`http://test.local/api/v1/coach-profile/photo-url?photoUrl=${encodeURIComponent(photoUrl)}`)
+    );
+    const payload = (await response.json()) as { data: { url: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.url).toBe("https://r2.example/signed-account-photo.png");
+    expect(mocks.r2.createR2PresignedGetUrl).toHaveBeenCalledWith(
+      expect.objectContaining({ bucketName: "complete-coach" }),
+      {
+        objectKey,
+        expiresInSeconds: 300
+      }
+    );
+    expect(() =>
+      validateAccountPhotoObjectKey(
+        "org_1",
+        "user_1",
+        "organizations/org_1/users/other_user/account/photos/11111111-1111-4111-8111-111111111111.png"
+      )
+    ).toThrow("Invalid account photo object key");
   });
 });

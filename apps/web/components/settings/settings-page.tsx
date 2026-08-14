@@ -15,6 +15,7 @@ export function SettingsPage() {
   const [phone, setPhone] = useState(defaultPhone);
   const [photoFileName, setPhotoFileName] = useState("");
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [saveStatus, setSaveStatus] = useState("Account changes are ready to save.");
@@ -41,6 +42,9 @@ export function SettingsPage() {
         setEmail(payload.data.email || defaultEmail);
         setPhone(payload.data.phone || defaultPhone);
         setPhotoFileName(payload.data.photoFileName || "");
+        if (payload.data.photoFileName) {
+          await resolvePersistedPhotoPreview(payload.data.photoFileName);
+        }
         setSaveStatus("Account profile loaded.");
       } catch {
         setSaveStatus("Account profile could not be loaded. You can still edit and try saving.");
@@ -52,16 +56,33 @@ export function SettingsPage() {
 
   useEffect(() => {
     return () => {
-      if (photoPreviewUrl) {
+      if (photoPreviewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(photoPreviewUrl);
       }
     };
   }, [photoPreviewUrl]);
 
+  async function resolvePersistedPhotoPreview(photoUrl: string) {
+    if (!isUploadedAccountPhotoUrl(photoUrl)) {
+      setPhotoPreviewUrl(isRenderablePhotoUrl(photoUrl) ? photoUrl : "");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/v1/coach-profile/photo-url?photoUrl=${encodeURIComponent(photoUrl)}`);
+      const payload = (await response.json()) as { data?: { url?: string } };
+
+      setPhotoPreviewUrl(response.ok && payload.data?.url ? payload.data.url : "");
+    } catch {
+      setPhotoPreviewUrl("");
+    }
+  }
+
   function handlePhotoUpload(file: File | undefined) {
+    setSelectedPhotoFile(file ?? null);
     setPhotoFileName(file?.name ?? "");
     setPhotoPreviewUrl((currentPreviewUrl) => {
-      if (currentPreviewUrl) {
+      if (currentPreviewUrl && currentPreviewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(currentPreviewUrl);
       }
 
@@ -74,6 +95,7 @@ export function SettingsPage() {
     setSaveStatus("Saving account profile...");
 
     try {
+      const savedPhotoUrl = selectedPhotoFile ? await uploadAccountPhoto(selectedPhotoFile) : photoFileName;
       const response = await fetch("/api/v1/coach-profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -82,7 +104,7 @@ export function SettingsPage() {
           professionalTitle,
           email,
           phone,
-          photoFileName
+          photoFileName: savedPhotoUrl
         })
       });
 
@@ -90,6 +112,11 @@ export function SettingsPage() {
         throw new Error(await getApiErrorMessage(response, "Account profile could not be saved."));
       }
 
+      setPhotoFileName(savedPhotoUrl);
+      setSelectedPhotoFile(null);
+      if (isUploadedAccountPhotoUrl(savedPhotoUrl)) {
+        await resolvePersistedPhotoPreview(savedPhotoUrl);
+      }
       setSaveStatus("Account profile saved.");
     } catch (error) {
       setSaveStatus(error instanceof Error ? error.message : "Account profile could not be saved. Please try again.");
@@ -236,6 +263,34 @@ interface AccountProfilePayload {
   email: string;
   phone: string;
   photoFileName: string;
+}
+
+async function uploadAccountPhoto(file: File) {
+  const response = await fetch("/api/v1/coach-profile/photo-upload", {
+    method: "POST",
+    headers: {
+      "Content-Type": file.type || "application/octet-stream",
+      "X-Filename": encodeURIComponent(file.name)
+    },
+    body: file
+  });
+  const payload = (await response.json().catch(() => null)) as { data?: { photoUrl?: string }; error?: { message?: string } } | null;
+
+  if (!response.ok || !payload?.data?.photoUrl) {
+    throw new Error(payload?.error?.message ?? "Account photo could not be uploaded.");
+  }
+
+  return payload.data.photoUrl;
+}
+
+function isUploadedAccountPhotoUrl(value: string) {
+  return value.startsWith("r2://")
+    && value.includes("/account/photos/")
+    && /\.(?:heic|heif|jpe?g|png|webp)$/iu.test(value);
+}
+
+function isRenderablePhotoUrl(value: string) {
+  return /^https?:\/\//u.test(value) && /\.(?:avif|gif|heic|heif|jpe?g|png|webp)(?:[?#].*)?$/iu.test(value);
 }
 
 function isAccountProfilePayload(value: unknown): value is AccountProfilePayload {

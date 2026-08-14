@@ -22,7 +22,7 @@ const coachProfileSchema = z.object({
   email: z.string().trim().email().max(240).optional(),
   professionalTitle: z.string().trim().max(160).optional(),
   phone: z.string().trim().max(60).optional(),
-  photoFileName: z.string().trim().max(240).optional(),
+  photoFileName: z.string().trim().max(2048).optional(),
   bio: z.string().trim().max(5000).optional(),
   philosophy: z.string().trim().max(3000).optional(),
   specialities: z.array(z.string().trim().min(1).max(80)).max(24).optional(),
