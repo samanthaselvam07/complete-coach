@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, Check, ChevronDown, Eye, Filter, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";
+import { Archive, Check, ChevronDown, Eye, Filter, Mail, MoreHorizontal, PauseCircle, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import type { Route } from "next";
@@ -57,6 +58,13 @@ export function ClientsPage() {
   const [clientFormError, setClientFormError] = useState<string | null>(null);
   const [savingClient, setSavingClient] = useState(false);
   const [loadingClients, setLoadingClients] = useState(true);
+  const [openActionClientId, setOpenActionClientId] = useState<string | null>(null);
+  const [pauseClient, setPauseClient] = useState<ClientSummary | null>(null);
+  const [pauseStartDate, setPauseStartDate] = useState(getTodayDateInputValue);
+  const [pauseResumeDate, setPauseResumeDate] = useState("");
+  const [pauseSaving, setPauseSaving] = useState(false);
+  const [pauseError, setPauseError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [packageOptions, setPackageOptions] = useState<ClientFormOption[]>([]);
   const [coachOptions, setCoachOptions] = useState<ClientFormOption[]>([]);
   const [initialQuestionnaireOptions, setInitialQuestionnaireOptions] = useState<ClientFormOption[]>([]);
@@ -308,6 +316,74 @@ export function ClientsPage() {
     }
   };
 
+  const openPauseMembership = (client: ClientSummary) => {
+    setPauseClient(client);
+    setPauseStartDate(getTodayDateInputValue());
+    setPauseResumeDate("");
+    setPauseError(null);
+    setOpenActionClientId(null);
+  };
+
+  const pauseMembership = async () => {
+    if (!pauseClient) {
+      return;
+    }
+
+    setPauseSaving(true);
+    setPauseError(null);
+
+    try {
+      const response = await fetch(`/api/v1/clients/${pauseClient.id}/membership-pause`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pauseStartDate,
+          pauseResumeDate
+        })
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { data?: { clientStatus?: ClientStatus }; error?: { message?: string } }
+        | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.error?.message ?? "Membership could not be paused.");
+      }
+
+      if (payload?.data?.clientStatus) {
+        setClients((currentClients) =>
+          currentClients.map((client) =>
+            client.id === pauseClient.id ? { ...client, status: payload.data?.clientStatus ?? client.status } : client
+          )
+        );
+      }
+
+      setActionMessage(`Membership pause scheduled for ${pauseClient.name}.`);
+      setPauseClient(null);
+    } catch (error) {
+      setPauseError(error instanceof Error ? error.message : "Membership could not be paused.");
+    } finally {
+      setPauseSaving(false);
+    }
+  };
+
+  const resendRegistrationEmail = async (client: ClientSummary) => {
+    setOpenActionClientId(null);
+    setActionMessage(null);
+
+    try {
+      const response = await fetch(`/api/v1/clients/${client.id}/registration-email`, { method: "POST" });
+      const payload = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.error?.message ?? "Registration email could not be sent.");
+      }
+
+      setActionMessage(`Registration email sent to ${client.name}.`);
+    } catch (error) {
+      setClientFormError(error instanceof Error ? error.message : "Registration email could not be sent.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8">
       {loadingClients ? (
@@ -488,38 +564,36 @@ export function ClientsPage() {
               <div className="col-span-2 hidden text-sm text-gray-700 lg:block xl:col-span-1">{client.checkInDay}</div>
               <div className="col-span-1 hidden truncate text-sm text-gray-700 xl:block">{client.latestCheckIn}</div>
 
-              <div className="col-span-3 flex items-center gap-2 md:col-span-2 xl:col-span-1">
-                <Link
-                  href={`/clients/${client.id}` as Route}
-                  aria-label={`View ${client.name} profile`}
-                  className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                >
-                  <Eye className="size-4 text-gray-600" aria-hidden="true" />
-                </Link>
+              <div className="relative col-span-3 flex items-center gap-2 md:col-span-2 xl:col-span-1">
                 <button
                   type="button"
-                  aria-label={`Edit ${client.name}`}
+                  aria-haspopup="menu"
+                  aria-expanded={openActionClientId === client.id}
+                  aria-label={`Open actions for ${client.name}`}
                   className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                  onClick={() => openEditClient(client)}
+                  onClick={() => setOpenActionClientId((currentClientId) => (currentClientId === client.id ? null : client.id))}
                 >
-                  <Pencil className="size-4 text-gray-600" aria-hidden="true" />
+                  <MoreHorizontal className="size-5 text-gray-600" aria-hidden="true" />
                 </button>
-                <button
-                  type="button"
-                  aria-label={`Archive ${client.name}`}
-                  className="rounded-lg p-2 transition-colors hover:bg-gray-100"
-                  onClick={() => void archiveClient(client)}
-                >
-                  <Archive className="size-4 text-gray-600" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Delete ${client.name}`}
-                  className="rounded-lg p-2 transition-colors hover:bg-red-50"
-                  onClick={() => void deleteClient(client)}
-                >
-                  <Trash2 className="size-4 text-red-600" aria-hidden="true" />
-                </button>
+                {openActionClientId === client.id ? (
+                  <ClientActionsMenu
+                    client={client}
+                    onEdit={() => {
+                      setOpenActionClientId(null);
+                      openEditClient(client);
+                    }}
+                    onArchive={() => {
+                      setOpenActionClientId(null);
+                      void archiveClient(client);
+                    }}
+                    onDelete={() => {
+                      setOpenActionClientId(null);
+                      void deleteClient(client);
+                    }}
+                    onPause={() => openPauseMembership(client)}
+                    onResendRegistration={() => void resendRegistrationEmail(client)}
+                  />
+                ) : null}
               </div>
 
               <div className="col-span-2 flex md:col-span-2 xl:col-span-1">
@@ -534,6 +608,12 @@ export function ClientsPage() {
         <div className="mt-6 rounded-xl border border-gray-200 bg-white py-12 text-center">
           <p className="text-gray-500">No clients found matching your filters.</p>
         </div>
+      ) : null}
+
+      {actionMessage ? (
+        <p role="status" className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+          {actionMessage}
+        </p>
       ) : null}
 
       {clientFormOpen ? (
@@ -555,6 +635,177 @@ export function ClientsPage() {
           onSubmit={() => void saveClient()}
         />
       ) : null}
+
+      {pauseClient ? (
+        <PauseMembershipDialog
+          client={pauseClient}
+          pauseStartDate={pauseStartDate}
+          pauseResumeDate={pauseResumeDate}
+          error={pauseError}
+          saving={pauseSaving}
+          onStartDateChange={setPauseStartDate}
+          onResumeDateChange={setPauseResumeDate}
+          onClose={() => setPauseClient(null)}
+          onSubmit={() => void pauseMembership()}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ClientActionsMenu({
+  client,
+  onEdit,
+  onArchive,
+  onDelete,
+  onPause,
+  onResendRegistration
+}: {
+  client: ClientSummary;
+  onEdit: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
+  onPause: () => void;
+  onResendRegistration: () => void;
+}) {
+  return (
+    <div
+      role="menu"
+      aria-label={`${client.name} actions`}
+      className="absolute right-16 z-30 mt-2 w-64 rounded-lg border border-gray-200 bg-white p-2 shadow-xl"
+    >
+      <ActionMenuLink href={`/clients/${client.id}` as Route} label="View profile" icon={Eye} />
+      <ActionMenuButton label="Edit profile" icon={Pencil} onClick={onEdit} />
+      <ActionMenuButton label="Pause membership" icon={PauseCircle} onClick={onPause} />
+      <ActionMenuButton label="Resend registration email" icon={Mail} onClick={onResendRegistration} />
+      <ActionMenuButton label="Archive client" icon={Archive} onClick={onArchive} />
+      <ActionMenuButton label="Delete client" icon={Trash2} tone="danger" onClick={onDelete} />
+    </div>
+  );
+}
+
+function ActionMenuLink({ href, label, icon: Icon }: { href: Route; label: string; icon: LucideIcon }) {
+  return (
+    <Link
+      role="menuitem"
+      href={href}
+      className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+    >
+      <Icon className="size-4 text-gray-500" aria-hidden="true" />
+      {label}
+    </Link>
+  );
+}
+
+function ActionMenuButton({
+  label,
+  icon: Icon,
+  tone = "default",
+  onClick
+}: {
+  label: string;
+  icon: LucideIcon;
+  tone?: "default" | "danger";
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      className={cn(
+        "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-gray-50",
+        tone === "danger" ? "text-red-700" : "text-gray-700"
+      )}
+      onClick={onClick}
+    >
+      <Icon className={cn("size-4", tone === "danger" ? "text-red-600" : "text-gray-500")} aria-hidden="true" />
+      {label}
+    </button>
+  );
+}
+
+function PauseMembershipDialog({
+  client,
+  pauseStartDate,
+  pauseResumeDate,
+  error,
+  saving,
+  onStartDateChange,
+  onResumeDateChange,
+  onClose,
+  onSubmit
+}: {
+  client: ClientSummary;
+  pauseStartDate: string;
+  pauseResumeDate: string;
+  error: string | null;
+  saving: boolean;
+  onStartDateChange: (value: string) => void;
+  onResumeDateChange: (value: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 px-4">
+      <section className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl" aria-label={`Pause membership for ${client.name}`}>
+        <h2 className="text-xl font-bold text-gray-950">Pause membership</h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Select when billing should pause and when the client should regain access.
+        </p>
+
+        <div className="mt-5 space-y-4">
+          <div>
+            <label htmlFor="pause-start-date" className="text-sm font-semibold text-gray-700">
+              Pause from
+            </label>
+            <input
+              id="pause-start-date"
+              type="date"
+              value={pauseStartDate}
+              min={getTodayDateInputValue()}
+              className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={(event) => onStartDateChange(event.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="pause-resume-date" className="text-sm font-semibold text-gray-700">
+              Resume on
+            </label>
+            <input
+              id="pause-resume-date"
+              type="date"
+              value={pauseResumeDate}
+              min={pauseStartDate || getTodayDateInputValue()}
+              className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              onChange={(event) => onResumeDateChange(event.target.value)}
+            />
+          </div>
+        </div>
+
+        {error ? (
+          <p role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
+            {error}
+          </p>
+        ) : null}
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={saving || !pauseStartDate || !pauseResumeDate}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            onClick={onSubmit}
+          >
+            {saving ? "Saving..." : "Pause membership"}
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -607,4 +858,8 @@ function FilterCheckbox({ label, checked, onClick }: { label: string; checked: b
       {checked ? <Check className="size-4 text-indigo-600" aria-hidden="true" /> : null}
     </button>
   );
+}
+
+function getTodayDateInputValue() {
+  return new Date().toISOString().slice(0, 10);
 }

@@ -119,11 +119,10 @@ describe("ClientsPage", () => {
       "href",
       "/clients/1"
     );
-    expect(screen.getByRole("link", { name: /view Marcus Rodriguez profile/i })).toHaveAttribute(
-      "href",
-      "/clients/1"
-    );
-    expect(screen.getByRole("link", { name: /view Emma Thompson profile/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /open actions for Marcus Rodriguez/i }));
+    expect(screen.getByRole("menuitem", { name: /view profile/i })).toHaveAttribute("href", "/clients/1");
+    expect(screen.getByRole("menuitem", { name: /pause membership/i })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /resend registration email/i })).toBeInTheDocument();
   });
 
   it("renders the Figma client roster controls and table surface", () => {
@@ -170,50 +169,128 @@ describe("ClientsPage", () => {
     mockClientsApi();
     render(createElement(ClientsPage));
 
-    await screen.findByRole("link", { name: /view Marcus Rodriguez profile/i });
+    await screen.findByRole("link", { name: "Marcus Rodriguez" });
 
     expect(screen.queryByText("Coach")).not.toBeInTheDocument();
     expect(screen.queryByText("Sam Coach")).not.toBeInTheDocument();
     expect(screen.getAllByLabelText("Client status Active")).toHaveLength(2);
   });
 
+  it("resends registration emails from the compact actions menu", async () => {
+    const fetchMock = vi.fn((input) => {
+      const url = String(input);
+
+      if (url === "/api/v1/clients") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [apiClients[0]] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/clients/1/registration-email") {
+        return Promise.resolve(new Response(JSON.stringify({ data: { emailSent: true } }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+    vi.spyOn(globalThis, "fetch").mockImplementation(fetchMock);
+
+    render(createElement(ClientsPage));
+
+    await screen.findByRole("link", { name: "Marcus Rodriguez" });
+    fireEvent.click(screen.getByRole("button", { name: /open actions for Marcus Rodriguez/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /resend registration email/i }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/v1/clients/1/registration-email", { method: "POST" });
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent("Registration email sent to Marcus Rodriguez.");
+  });
+
+  it("opens a pause membership calendar and marks the client deactivated after save", async () => {
+    const fetchMock = vi.fn((input, init) => {
+      const url = String(input);
+
+      if (url === "/api/v1/clients") {
+        return Promise.resolve(new Response(JSON.stringify({ data: [apiClients[0]] }), { status: 200 }));
+      }
+
+      if (url === "/api/v1/clients/1/membership-pause" && init?.method === "POST") {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                clientStatus: "deactivated",
+                subscription: { status: "paused" }
+              }
+            }),
+            { status: 200 }
+          )
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    });
+    vi.spyOn(globalThis, "fetch").mockImplementation(fetchMock);
+
+    render(createElement(ClientsPage));
+
+    await screen.findByRole("link", { name: "Marcus Rodriguez" });
+    fireEvent.click(screen.getByRole("button", { name: /open actions for Marcus Rodriguez/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /pause membership/i }));
+    fireEvent.change(screen.getByLabelText(/pause from/i), { target: { value: "2026-08-14" } });
+    fireEvent.change(screen.getByLabelText(/resume on/i), { target: { value: "2026-09-01" } });
+    fireEvent.click(screen.getByRole("button", { name: /pause membership/i }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/v1/clients/1/membership-pause",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            pauseStartDate: "2026-08-14",
+            pauseResumeDate: "2026-09-01"
+          })
+        })
+      );
+    });
+    expect(await screen.findByLabelText("Client status Deactivated")).toBeInTheDocument();
+  });
+
   it("searches clients by name", async () => {
     mockClientsApi();
     render(createElement(ClientsPage));
 
-    await screen.findByRole("link", { name: /view Emma Thompson profile/i });
+    await screen.findByRole("link", { name: "Emma Thompson" });
 
     fireEvent.change(screen.getByRole("searchbox", { name: /search clients/i }), {
       target: { value: "Emma" }
     });
 
-    expect(screen.getByRole("link", { name: /view Emma Thompson profile/i })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /view Marcus Rodriguez profile/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Emma Thompson" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Marcus Rodriguez" })).not.toBeInTheDocument();
   });
 
   it("filters by status and check-in day", async () => {
     mockClientsApi();
     render(createElement(ClientsPage));
 
-    await screen.findByRole("link", { name: /view Sarah Martinez profile/i });
+    await screen.findByRole("link", { name: "Sarah Martinez" });
 
     fireEvent.click(screen.getByRole("button", { name: "New" }));
 
-    expect(screen.getByRole("link", { name: /view Sarah Martinez profile/i })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /view Emma Thompson profile/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sarah Martinez" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Emma Thompson" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /open client filters/i }));
     fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Monday" }));
 
-    expect(screen.getByRole("link", { name: /view Ashley Davis profile/i })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /view Sarah Martinez profile/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ashley Davis" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Sarah Martinez" })).not.toBeInTheDocument();
   });
 
   it("sorts the visible roster A to Z", async () => {
     mockClientsApi();
     render(createElement(ClientsPage));
 
-    await screen.findByRole("link", { name: /view Marcus Rodriguez profile/i });
+    await screen.findByRole("link", { name: "Marcus Rodriguez" });
 
     fireEvent.click(screen.getByRole("button", { name: /open client filters/i }));
     fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Sort A-Z" }));
@@ -251,7 +328,7 @@ describe("ClientsPage", () => {
     render(createElement(ClientsPage));
 
     await waitFor(() => {
-      expect(screen.getByRole("link", { name: /view API Client profile/i })).toHaveAttribute(
+      expect(screen.getByRole("link", { name: "API Client" })).toHaveAttribute(
         "href",
         "/clients/client_api_1"
       );
@@ -416,9 +493,10 @@ describe("ClientsPage", () => {
 
     render(createElement(ClientsPage));
 
-    expect(await screen.findByRole("link", { name: /view API Client profile/i })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "API Client" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /edit API Client/i }));
+    fireEvent.click(screen.getByRole("button", { name: /open actions for API Client/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /edit profile/i }));
     fireEvent.change(screen.getByLabelText("First name"), { target: { value: "Updated" } });
     fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Client" } });
     expect(await screen.findByLabelText("Date of birth")).toHaveValue("1990-01-01");
@@ -440,7 +518,7 @@ describe("ClientsPage", () => {
     searchAndSelectPlan("Supplementation plans", "Sleep", "Sleep Support");
     fireEvent.click(screen.getByRole("button", { name: "Save client" }));
 
-    expect(await screen.findByRole("link", { name: /view Updated Client profile/i })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Updated Client" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/v1/clients/client_api_1",
       expect.objectContaining({
@@ -495,19 +573,21 @@ describe("ClientsPage", () => {
       })
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /archive Updated Client/i }));
+    fireEvent.click(screen.getByRole("button", { name: /open actions for Updated Client/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /archive client/i }));
     fireEvent.click(screen.getByRole("button", { name: "Archived" }));
 
-    expect(await screen.findByRole("link", { name: /view Updated Client profile/i })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Updated Client" })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenLastCalledWith(
       "/api/v1/clients/client_api_1/archive",
       expect.objectContaining({ method: "POST" })
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /delete Updated Client/i }));
+    fireEvent.click(screen.getByRole("button", { name: /open actions for Updated Client/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /delete client/i }));
 
     await waitFor(() => {
-      expect(screen.queryByRole("link", { name: /view Updated Client profile/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Updated Client" })).not.toBeInTheDocument();
     });
     expect(fetchMock).toHaveBeenLastCalledWith(
       "/api/v1/clients/client_api_1",
@@ -600,8 +680,9 @@ describe("ClientsPage", () => {
 
     render(createElement(ClientsPage));
 
-    expect(await screen.findByRole("link", { name: /view API Client profile/i })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /edit API Client/i }));
+    expect(await screen.findByRole("link", { name: "API Client" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /open actions for API Client/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /edit profile/i }));
 
     expect(await screen.findByRole("button", { name: /Strength Foundation/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Hypertrophy Fuel/i })).toBeInTheDocument();

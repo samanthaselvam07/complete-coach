@@ -50,6 +50,16 @@ export const createClientSubscriptionSchema = z.object({
   cancelUrl: z.string().url().optional()
 });
 
+export const pauseClientMembershipSchema = z
+  .object({
+    pauseStartDate: z.string().date(),
+    pauseResumeDate: z.string().date()
+  })
+  .refine((input) => input.pauseResumeDate > input.pauseStartDate, {
+    path: ["pauseResumeDate"],
+    message: "Resume date must be after the pause date."
+  });
+
 export type ClientSubscriptionListQuery = z.infer<typeof clientSubscriptionListQuerySchema>;
 
 interface ClientSubscriptionRecord {
@@ -64,6 +74,8 @@ interface ClientSubscriptionRecord {
   currentPeriodStart: Date | string | null;
   currentPeriodEnd: Date | string | null;
   cancelAt: Date | string | null;
+  pauseStartAt?: Date | string | null;
+  pauseResumeAt?: Date | string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
   client?: {
@@ -99,6 +111,8 @@ export function serializeClientSubscription(record: ClientSubscriptionRecord) {
     currentPeriodStart: toNullableIsoString(record.currentPeriodStart),
     currentPeriodEnd: toNullableIsoString(record.currentPeriodEnd),
     cancelAt: toNullableIsoString(record.cancelAt),
+    pauseStartAt: toNullableIsoString(record.pauseStartAt ?? null),
+    pauseResumeAt: toNullableIsoString(record.pauseResumeAt ?? null),
     client: record.client
       ? {
           name: `${record.client.firstName} ${record.client.lastName}`,

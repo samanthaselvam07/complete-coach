@@ -9,6 +9,7 @@ Ticket 017 / M8 connects coaching packages, Stripe Connect, Stripe Billing subsc
 - Stripe Connect account-link API can create or reuse an active organization's connected account and return a server-generated onboarding URL.
 - Package Stripe sync can create trusted Stripe product and price ids for active-organization packages after local Stripe Connect setup exists.
 - Client subscription APIs can list local subscription mirrors and create Stripe Checkout subscription sessions for synced recurring packages.
+- Coach-facing client roster actions can schedule client membership pauses, storing `pause_start_at` and `pause_resume_at` on the subscription mirror. Immediate pauses also pause Stripe collection on the connected account and deactivate the client account until resumed.
 - Stripe webhook processing verifies signatures, persists payment events idempotently, updates subscription mirrors, and refreshes Stripe Connect status from trusted Stripe events.
 - Packages UI loads active organization packages from `GET /api/v1/packages`, supports create/edit/archive actions, automatically attempts trusted Stripe sync after saves, and renders empty/error states when the package API is unavailable.
 - Packages UI supports editable pricing, currency, package term weeks, row-based feature lists, recurring billing cadences, scheduled price metadata, a connected Stripe account dashboard link for synced packages, and periodized churn and Customer LTV summaries.
@@ -132,6 +133,7 @@ Delivered:
 ## Data Model
 - `packages`: organization-scoped package catalog records with price amount, currency, billing interval/custom cadence metadata, term weeks, optional scheduled price metadata, local status, optional legacy UI metadata, row-based features, and trusted Stripe product/price ids.
 - `client_subscriptions`: organization/client/package subscription mirrors with Stripe customer/subscription ids and Stripe-derived status/period fields.
+- `client_subscriptions.pause_start_at` and `client_subscriptions.pause_resume_at`: optional coach-scheduled pause window for client membership access and Stripe collection pauses.
 - `payment_events`: organization-scoped Stripe webhook/event records keyed by Stripe event id for idempotent processing.
 - `organizations.platform_*`: organization-scoped Complete Coach platform subscription mirror with Stripe customer/subscription ids, plan, status, period dates, and cancel date.
 
@@ -146,6 +148,7 @@ Rules:
 - Opening the full Stripe Dashboard requires `payments:manage` and existing local Stripe Connect setup. The app returns Stripe's Dashboard URL for Standard connected accounts and does not generate Express login links.
 - Package Stripe sync requires `payments:manage`, server-side `STRIPE_SECRET_KEY`, and local Stripe Connect account setup.
 - Client subscription creation requires `payments:manage`, server-side `STRIPE_SECRET_KEY`, local Stripe Connect setup, and a synced recurring package.
+- Client membership pause requires `payments:manage`; immediate Stripe pauses require server-side `STRIPE_SECRET_KEY`, local Stripe Connect setup, and a local Stripe subscription id.
 - Stripe webhook events are the authoritative source for subscription/payment state.
 - Payment event payloads must redact secrets, card details, billing details, and payment method details before persistence.
 - Audit logs must not expose secrets, card details, or raw payment credentials.
@@ -165,6 +168,8 @@ Rules:
 - `POST /api/v1/stripe/customer-portal`
 - `GET /api/v1/client-subscriptions`
 - `POST /api/v1/client-subscriptions`
+- `POST /api/v1/clients/{client_id}/membership-pause`
+- `POST /api/v1/clients/{client_id}/registration-email`
 - `POST /api/webhooks/stripe`
 
 ## Remaining M8 Work

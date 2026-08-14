@@ -263,6 +263,25 @@ export async function createStripeCheckoutSession(
   );
 }
 
+export async function pauseStripeSubscriptionCollection(
+  config: StripeConfig,
+  input: {
+    connectedAccountId: string;
+    subscriptionId: string;
+    resumeAt: Date;
+  }
+) {
+  return postStripeForm<{ id: string }>(
+    config,
+    `/v1/subscriptions/${encodeURIComponent(input.subscriptionId)}`,
+    {
+      "pause_collection[behavior]": "void",
+      "pause_collection[resumes_at]": String(Math.floor(input.resumeAt.getTime() / 1000))
+    },
+    { accountId: input.connectedAccountId }
+  );
+}
+
 export function deriveConnectStatus(account: StripeAccount) {
   if (account.charges_enabled && account.payouts_enabled) {
     return "active";

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import type { Route } from "next";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -84,7 +85,7 @@ function DashboardShellContent({ children }: DashboardShellProps) {
     }
 
     if (status === "authenticated" && needsFounderOnboarding && !layoutlessAuthenticatedPath) {
-      router.replace("/onboarding");
+      router.replace("/onboarding" as Route);
     }
   }, [layoutlessAuthenticatedPath, needsFounderOnboarding, publicPath, router, status]);
 

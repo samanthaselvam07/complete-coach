@@ -111,6 +111,8 @@ Default:
 - `PATCH /api/v1/clients/{client_id}`
 - `POST /api/v1/clients/{client_id}/archive`
 - `DELETE /api/v1/clients/{client_id}`: removes the client from roster views by setting `deletedAt`, archives the client status, deletes the attached `client_profiles` row, and writes an audit event. Requires `clients:write`.
+- `POST /api/v1/clients/{client_id}/registration-email`: resends a seven-day one-time client setup email for an organization-scoped client with an email address. Existing setup tokens for the client are invalidated before the new SHA-256 token hash is stored. If the client requires online payment and has no active/trialing subscription, the email includes a fresh connected-account Stripe Checkout link before account setup. Requires `clients:write`.
+- `POST /api/v1/clients/{client_id}/membership-pause`: schedules a client membership pause window. Body: `pauseStartDate` and `pauseResumeDate` as `YYYY-MM-DD`, with resume after start. When the pause starts immediately, the route pauses Stripe subscription collection for the connected-account subscription, stores the pause window on `client_subscriptions`, marks the subscription `paused`, deactivates the client account, and writes an audit event. Requires `payments:manage`.
 - `GET /api/v1/clients/{client_id}/profile`
 - `PATCH /api/v1/clients/{client_id}/profile`
 - `GET /api/v1/clients/{client_id}/logs`: returns organization-scoped completed/missed logs for training, nutrition, and supplementation. Query: `days` (1-90, default 7) or `dateFrom` and `dateTo`. Response includes `logs` and `summary`.

@@ -2,20 +2,33 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   ClientSubscriptionStatus,
+  ClientStatus,
   PackageBillingInterval,
   PackageStatus
 } from "@/app/generated/prisma/enums";
 import { GET as listClientSubscriptions, POST as createClientSubscription } from "@/app/api/v1/client-subscriptions/route";
+import { POST as pauseClientMembership } from "@/app/api/v1/clients/[clientId]/membership-pause/route";
+import { POST as resendClientRegistrationEmail } from "@/app/api/v1/clients/[clientId]/registration-email/route";
+import { hashClientOnboardingToken } from "@/lib/clients/client-onboarding";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
   prisma: {
+    $transaction: vi.fn(),
     auditLog: { create: vi.fn() },
-    client: { findFirst: vi.fn() },
+    verificationToken: {
+      create: vi.fn(),
+      deleteMany: vi.fn()
+    },
+    client: {
+      findFirst: vi.fn(),
+      update: vi.fn()
+    },
     clientSubscription: {
       create: vi.fn(),
       findMany: vi.fn(),
-      findFirst: vi.fn()
+      findFirst: vi.fn(),
+      update: vi.fn()
     },
     coachingPackage: { findFirst: vi.fn() },
     organization: { findUnique: vi.fn() }
@@ -28,6 +41,10 @@ vi.mock("@/auth", () => ({
 
 vi.mock("@/lib/db/prisma", () => ({
   prisma: mocks.prisma
+}));
+
+vi.mock("@/lib/email/resend", () => ({
+  sendTransactionalEmail: vi.fn(async () => ({ status: "sent" }))
 }));
 
 const ownerSession = {
@@ -94,13 +111,19 @@ describe("client subscription APIs", () => {
     delete process.env.STRIPE_SECRET_KEY;
     delete process.env.STRIPE_API_BASE_URL;
     vi.unstubAllGlobals();
+    mocks.prisma.$transaction.mockReset();
+    mocks.prisma.$transaction.mockImplementation(async (callback) => callback(mocks.prisma));
     mocks.auth.mockReset();
     mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.verificationToken.create.mockReset();
+    mocks.prisma.verificationToken.deleteMany.mockReset();
     mocks.prisma.auditLog.create.mockReset();
     mocks.prisma.client.findFirst.mockReset();
+    mocks.prisma.client.update.mockReset();
     mocks.prisma.clientSubscription.create.mockReset();
     mocks.prisma.clientSubscription.findMany.mockReset();
     mocks.prisma.clientSubscription.findFirst.mockReset();
+    mocks.prisma.clientSubscription.update.mockReset();
     mocks.prisma.coachingPackage.findFirst.mockReset();
     mocks.prisma.organization.findUnique.mockReset();
   });
@@ -393,5 +416,98 @@ describe("client subscription APIs", () => {
 
     expect(response.status).toBe(502);
     expect(mocks.prisma.clientSubscription.create).not.toHaveBeenCalled();
+  });
+
+  it("resends a secure registration email with a fresh onboarding token", async () => {
+    mocks.prisma.client.findFirst.mockResolvedValue({
+      ...clientRecord,
+      organizationId: "org_1",
+      packageId: "package_1",
+      packageName: "Gold Standard",
+      requiresOnlinePayment: false
+    });
+    mocks.prisma.organization.findUnique.mockResolvedValue({ id: "org_1", name: "Complete Coach Demo" });
+    mocks.prisma.verificationToken.deleteMany.mockResolvedValue({ count: 1 });
+    mocks.prisma.verificationToken.create.mockResolvedValue({});
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await resendClientRegistrationEmail(
+      new Request("https://coach.completecoach.fit/api/v1/clients/client_1/registration-email", { method: "POST" }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: { emailSent: boolean; expiresAt: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.emailSent).toBe(true);
+    expect(payload.data.expiresAt).toBeTruthy();
+    expect(mocks.prisma.verificationToken.deleteMany).toHaveBeenCalledWith({
+      where: { identifier: "client-onboarding:client_1" }
+    });
+    expect(mocks.prisma.verificationToken.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        identifier: "client-onboarding:client_1",
+        token: expect.any(String)
+      })
+    });
+    expect(mocks.prisma.verificationToken.create.mock.calls[0][0].data.token).not.toBe(hashClientOnboardingToken("client-token"));
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "client.registration_email_resent",
+        targetId: "client_1"
+      })
+    });
+  });
+
+  it("pauses a paid client membership in Stripe and deactivates access for the pause window", async () => {
+    process.env.STRIPE_SECRET_KEY = "test_secret_key";
+    process.env.STRIPE_API_BASE_URL = "https://stripe.test";
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ id: "sub_1" }));
+    vi.stubGlobal("fetch", fetchMock);
+    mocks.prisma.client.findFirst.mockResolvedValue({ ...clientRecord, organizationId: "org_1", status: ClientStatus.ACTIVE });
+    mocks.prisma.organization.findUnique.mockResolvedValue({ id: "org_1", stripeConnectAccountId: "acct_1" });
+    mocks.prisma.clientSubscription.findFirst.mockResolvedValue({
+      ...subscriptionRecord,
+      status: ClientSubscriptionStatus.ACTIVE,
+      stripeSubscriptionId: "sub_1"
+    });
+    mocks.prisma.clientSubscription.update.mockResolvedValue({
+      ...subscriptionRecord,
+      status: ClientSubscriptionStatus.PAUSED,
+      stripeSubscriptionId: "sub_1",
+      pauseStartAt: new Date("2026-08-14T00:00:00.000Z"),
+      pauseResumeAt: new Date("2026-09-01T00:00:00.000Z")
+    });
+    mocks.prisma.client.update.mockResolvedValue({ ...clientRecord, status: ClientStatus.DEACTIVATED });
+    mocks.prisma.auditLog.create.mockResolvedValue({});
+
+    const response = await pauseClientMembership(
+      new Request("https://coach.completecoach.fit/api/v1/clients/client_1/membership-pause", {
+        method: "POST",
+        body: JSON.stringify({
+          pauseStartDate: "2026-08-14",
+          pauseResumeDate: "2026-09-01"
+        })
+      }),
+      { params: Promise.resolve({ clientId: "client_1" }) }
+    );
+    const payload = (await response.json()) as { data: { subscription: { status: string; pauseResumeAt: string | null }; clientStatus: string } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.subscription.status).toBe("paused");
+    expect(payload.data.subscription.pauseResumeAt).toBe("2026-09-01T00:00:00.000Z");
+    expect(payload.data.clientStatus).toBe("deactivated");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://stripe.test/v1/subscriptions/sub_1",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ "Stripe-Account": "acct_1" })
+      })
+    );
+    expect(String(fetchMock.mock.calls[0][1].body)).toContain("pause_collection%5Bbehavior%5D=void");
+    expect(String(fetchMock.mock.calls[0][1].body)).toContain("pause_collection%5Bresumes_at%5D=1788220800");
+    expect(mocks.prisma.client.update).toHaveBeenCalledWith({
+      where: { id: "client_1", organizationId: "org_1" },
+      data: { status: ClientStatus.DEACTIVATED }
+    });
   });
 });

@@ -2164,6 +2164,8 @@ model ClientSubscription {
   currentPeriodStart      DateTime?                @map("current_period_start") @db.Timestamptz(6)
   currentPeriodEnd        DateTime?                @map("current_period_end") @db.Timestamptz(6)
   cancelAt                DateTime?                @map("cancel_at") @db.Timestamptz(6)
+  pauseStartAt            DateTime?                @map("pause_start_at") @db.Timestamptz(6)
+  pauseResumeAt           DateTime?                @map("pause_resume_at") @db.Timestamptz(6)
   createdAt               DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization            Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -2175,6 +2177,7 @@ model ClientSubscription {
   @@index([organizationId, clientId, status])
   @@index([organizationId, packageId, status])
   @@index([organizationId, stripeCustomerId])
+  @@index([organizationId, status, pauseStartAt, pauseResumeAt])
   @@map("client_subscriptions")
 }
 
