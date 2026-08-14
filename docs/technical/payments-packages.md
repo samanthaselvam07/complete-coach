@@ -104,10 +104,10 @@ Delivered:
 ## Platform Billing Foundation
 Delivered:
 - Complete Coach platform subscriptions are stored on `organizations` separately from Stripe Connect fields.
-- Design Partners maps to Stripe product `prod_UsKvRz38e79sjQ`, monthly price `price_1TsaFuI51UQp7jCTfRTLC7UH`, payment link `https://buy.stripe.com/6oU4gzgYk1X71ZagMJ0ZW04`, 10 coach seats, and 200 clients.
-- Core maps to Stripe product `prod_UsL4rRweWAB2XU`, monthly price `price_1Tvoc2I51UQp7jCTLDt3lc9w`, payment link `https://buy.stripe.com/cNi00jgYkbxHeLW2VT0ZW02`, 1 coach seat, and 40 clients.
-- Pro maps to Stripe product `prod_UsL4hUCHyBkvkK`, monthly price `price_1TsaOPI51UQp7jCTB9TvXUIK`, payment link `https://buy.stripe.com/cNi7sLdM8fNX0V6gMJ0ZW00`, 3 coach seats, and 60 clients.
-- Scale maps to Stripe product `prod_UvfzpLEEOi5N4H`, monthly price `price_1TvoddI51UQp7jCTIwk4C6rI`, payment link `https://buy.stripe.com/aFafZh6jG6dnbzK9kh0ZW03`, 10 coach seats, and 200 clients.
+- Design Partners maps to Stripe product `prod_UsKvRz38e79sjQ`, monthly price `price_1TsaFuI51UQp7jCTfRTLC7UH`, payment link `https://buy.stripe.com/6oU4gzgYk1X71ZagMJ0ZW04`, 3 coach seats, and 80 clients.
+- Core maps to Stripe product `prod_UsL4rRweWAB2XU`, monthly price `price_1Tvoc2I51UQp7jCTLDt3lc9w`, payment link `https://buy.stripe.com/cNi00jgYkbxHeLW2VT0ZW02`, 1 coach seat, and 20 clients.
+- Pro maps to Stripe product `prod_UsL4hUCHyBkvkK`, monthly price `price_1TsaOPI51UQp7jCTB9TvXUIK`, payment link `https://buy.stripe.com/cNi7sLdM8fNX0V6gMJ0ZW00`, 3 coach seats, and 80 clients.
+- Scale maps to Stripe product `prod_UvfzpLEEOi5N4H`, monthly price `price_1TvoddI51UQp7jCTIwk4C6rI`, payment link `https://buy.stripe.com/aFafZh6jG6dnbzK9kh0ZW03`, 5 coach seats, and unlimited clients.
 - `GET /api/v1/platform-billing/status` returns plan, subscription status, renewal date, and current coach/client usage.
 - Platform billing access rules allow `active` and `trialing`; `past_due`, `unpaid`, `canceled`, and incomplete/inactive states block platform access.
 - `POST /api/v1/platform-billing/checkout` creates Stripe Checkout subscription sessions on the Complete Coach Stripe account and never uses a connected account header.
@@ -117,7 +117,7 @@ Delivered:
 - Org Settings Subscription & Billing reads `GET /api/v1/platform-billing/status` for the active organization id, current plan, subscription status, active coach-seat usage, and total client usage; plan start buttons open the configured hosted Stripe Payment Links with `client_reference_id` set to the active organization id, and status refreshes on focus/visibility changes, every 10 seconds while mounted, after local team usage changes, and through a manual refresh action.
 - Platform usage counts active owner/admin/coach/assistant memberships as coach seats and all non-deleted clients in the active organization as client usage.
 - Platform Payment Link webhook handling uses `checkout.session.completed.client_reference_id` to attach the Stripe customer/subscription ids to the active organization; successful Checkout sessions with `payment_status` of `paid` or `no_payment_required` activate platform access immediately, then subscription updates with any configured platform price id keep the organization plan/status in sync even when Payment Link metadata is absent.
-- Client creation is blocked when the organization reaches its plan client limit.
+- Client creation is blocked when the organization reaches its numeric plan client limit. Scale has no client limit.
 - Team invitations are blocked when active team members plus non-expired pending invitations reach the plan seat limit.
 - Active owner/admin/coach/assistant memberships count as team seats, so changing an existing member's role only changes permissions and does not change seat usage.
 

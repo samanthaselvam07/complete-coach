@@ -53,6 +53,10 @@ export async function assertPlatformClientCapacity(organizationId: string) {
     }
   });
 
+  if (plan.clientLimit === null) {
+    return;
+  }
+
   if (clientCount >= plan.clientLimit) {
     throw new PlatformLimitError(
       "platform_client_limit_reached",

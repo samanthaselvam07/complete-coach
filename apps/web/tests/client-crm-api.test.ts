@@ -426,7 +426,7 @@ describe("client and CRM API tenancy", () => {
   it("blocks client creation when the organization has reached its platform client limit", async () => {
     mocks.auth.mockResolvedValue(ownerSession);
     mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "core" });
-    mocks.prisma.client.count.mockResolvedValue(40);
+    mocks.prisma.client.count.mockResolvedValue(20);
 
     const response = await postClient(
       new Request("http://test.local/api/v1/clients", {
@@ -450,6 +450,39 @@ describe("client and CRM API tenancy", () => {
       }
     });
     expect(mocks.prisma.client.create).not.toHaveBeenCalled();
+  });
+
+  it("allows client creation on the Scale plan because client capacity is unlimited", async () => {
+    mocks.auth.mockResolvedValue(ownerSession);
+    mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "scale" });
+    mocks.prisma.client.count.mockResolvedValue(500);
+    mocks.prisma.client.create.mockResolvedValue({
+      id: "client_scale_unlimited",
+      firstName: "Scale",
+      lastName: "Client",
+      email: "scale-client@example.com",
+      status: ClientStatus.NEW,
+      packageName: null,
+      checkInDay: null,
+      startDate: null,
+      latestCheckInAt: null,
+      compliance: 0
+    });
+
+    const response = await postClient(
+      new Request("http://test.local/api/v1/clients", {
+        method: "POST",
+        body: JSON.stringify({
+          firstName: "Scale",
+          lastName: "Client",
+          email: "scale-client@example.com",
+          status: "new"
+        })
+      })
+    );
+
+    expect(response.status).toBe(201);
+    expect(mocks.prisma.client.create).toHaveBeenCalled();
   });
 
   it("allows client creation while platform billing is in setup warning state", async () => {

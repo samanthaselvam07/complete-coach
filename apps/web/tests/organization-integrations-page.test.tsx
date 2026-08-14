@@ -76,7 +76,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
             JSON.stringify({
               data: {
                 organizationId: "org_1",
-                plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 40 },
+                plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 20 },
                 status: "active",
                 access: {
                   state: "active",
@@ -116,7 +116,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
             JSON.stringify({
               data: {
                 organizationId: "org_1",
-                plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 40 },
+                plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 20 },
                 status: "not_started",
                 access: {
                   state: "blocked",
@@ -191,7 +191,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
     const billingResponses = [
       {
         organizationId: "org_1",
-        plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 40 },
+        plan: { id: "core", name: "Core", coachSeatLimit: 1, clientLimit: 20 },
         status: "active",
         access: {
           state: "active",
@@ -204,7 +204,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
       },
       {
         organizationId: "org_1",
-        plan: { id: "pro", name: "Pro", coachSeatLimit: 3, clientLimit: 60 },
+        plan: { id: "pro", name: "Pro", coachSeatLimit: 3, clientLimit: 80 },
         status: "past_due",
         access: {
           state: "blocked",
@@ -217,7 +217,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
       },
       {
         organizationId: "org_1",
-        plan: { id: "scale", name: "Scale", coachSeatLimit: 10, clientLimit: 200 },
+        plan: { id: "scale", name: "Scale", coachSeatLimit: 5, clientLimit: null },
         status: "active",
         access: {
           state: "active",
@@ -244,22 +244,22 @@ describe("OrganizationSettingsPage integrations panel", () => {
     expect(await screen.findByText("Core")).toBeInTheDocument();
     expect(screen.getByText("Active")).toBeInTheDocument();
     expect(screen.getByText("1/1")).toBeInTheDocument();
-    expect(screen.getByText("24/40")).toBeInTheDocument();
+    expect(screen.getByText("24/20")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Refresh billing status" }));
 
     expect(await screen.findByText("Pro")).toBeInTheDocument();
     expect(screen.getByText("Past due")).toBeInTheDocument();
     expect(screen.getByText("2/3")).toBeInTheDocument();
-    expect(screen.getByText("42/60")).toBeInTheDocument();
+    expect(screen.getByText("42/80")).toBeInTheDocument();
     expect(screen.getByText("Platform access is paused because the subscription payment is overdue.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/platform-billing/status");
 
     window.dispatchEvent(new Event("complete-coach:platform-billing-usage-changed"));
 
     expect(await screen.findByText("Scale")).toBeInTheDocument();
-    expect(screen.getByText("4/10")).toBeInTheDocument();
-    expect(screen.getByText("55/200")).toBeInTheDocument();
+    expect(screen.getByText("4/5")).toBeInTheDocument();
+    expect(screen.getByText("55/Unlimited")).toBeInTheDocument();
   });
 
   it("shows connected social channels and OAuth links", async () => {

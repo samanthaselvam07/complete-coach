@@ -7,7 +7,7 @@ export interface PlatformPlan {
   stripePriceId: string;
   stripePaymentLinkUrl: string;
   coachSeatLimit: number;
-  clientLimit: number;
+  clientLimit: number | null;
 }
 
 export const PLATFORM_PLANS: Record<PlatformPlanId, PlatformPlan> = {
@@ -17,8 +17,8 @@ export const PLATFORM_PLANS: Record<PlatformPlanId, PlatformPlan> = {
     stripeProductId: "prod_UsKvRz38e79sjQ",
     stripePriceId: "price_1TsaFuI51UQp7jCTfRTLC7UH",
     stripePaymentLinkUrl: "https://buy.stripe.com/6oU4gzgYk1X71ZagMJ0ZW04",
-    coachSeatLimit: 10,
-    clientLimit: 200
+    coachSeatLimit: 3,
+    clientLimit: 80
   },
   core: {
     id: "core",
@@ -27,7 +27,7 @@ export const PLATFORM_PLANS: Record<PlatformPlanId, PlatformPlan> = {
     stripePriceId: "price_1Tvoc2I51UQp7jCTLDt3lc9w",
     stripePaymentLinkUrl: "https://buy.stripe.com/cNi00jgYkbxHeLW2VT0ZW02",
     coachSeatLimit: 1,
-    clientLimit: 40
+    clientLimit: 20
   },
   pro: {
     id: "pro",
@@ -36,7 +36,7 @@ export const PLATFORM_PLANS: Record<PlatformPlanId, PlatformPlan> = {
     stripePriceId: "price_1TsaOPI51UQp7jCTB9TvXUIK",
     stripePaymentLinkUrl: "https://buy.stripe.com/cNi7sLdM8fNX0V6gMJ0ZW00",
     coachSeatLimit: 3,
-    clientLimit: 60
+    clientLimit: 80
   },
   scale: {
     id: "scale",
@@ -44,8 +44,8 @@ export const PLATFORM_PLANS: Record<PlatformPlanId, PlatformPlan> = {
     stripeProductId: "prod_UvfzpLEEOi5N4H",
     stripePriceId: "price_1TvoddI51UQp7jCTIwk4C6rI",
     stripePaymentLinkUrl: "https://buy.stripe.com/aFafZh6jG6dnbzK9kh0ZW03",
-    coachSeatLimit: 10,
-    clientLimit: 200
+    coachSeatLimit: 5,
+    clientLimit: null
   }
 };
 

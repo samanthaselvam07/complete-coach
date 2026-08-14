@@ -212,7 +212,7 @@ describe("Figma update pages", () => {
         JSON.stringify({
           error: {
             code: "platform_client_limit_reached",
-            message: "This organization has reached the Core plan limit of 40 clients."
+            message: "This organization has reached the Core plan limit of 20 clients."
           }
         }),
         { status: 409 }
@@ -225,7 +225,7 @@ describe("Figma update pages", () => {
     fireEvent.change(screen.getByLabelText("Last name"), { target: { value: "Reed" } });
     fireEvent.click(screen.getByRole("button", { name: "Create client" }));
 
-    expect(await screen.findByText("This organization has reached the Core plan limit of 40 clients.")).toBeInTheDocument();
+    expect(await screen.findByText("This organization has reached the Core plan limit of 20 clients.")).toBeInTheDocument();
   });
 
   it("creates a package from the dedicated package builder page", async () => {

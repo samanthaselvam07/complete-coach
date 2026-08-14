@@ -69,8 +69,8 @@ describe("platform billing plan config", () => {
         stripeProductId: "prod_UsKvRz38e79sjQ",
         stripePriceId: "price_1TsaFuI51UQp7jCTfRTLC7UH",
         stripePaymentLinkUrl: "https://buy.stripe.com/6oU4gzgYk1X71ZagMJ0ZW04",
-        coachSeatLimit: 10,
-        clientLimit: 200
+        coachSeatLimit: 3,
+        clientLimit: 80
       }),
       core: expect.objectContaining({
         id: "core",
@@ -79,7 +79,7 @@ describe("platform billing plan config", () => {
         stripePriceId: "price_1Tvoc2I51UQp7jCTLDt3lc9w",
         stripePaymentLinkUrl: "https://buy.stripe.com/cNi00jgYkbxHeLW2VT0ZW02",
         coachSeatLimit: 1,
-        clientLimit: 40
+        clientLimit: 20
       }),
       pro: expect.objectContaining({
         id: "pro",
@@ -88,7 +88,7 @@ describe("platform billing plan config", () => {
         stripePriceId: "price_1TsaOPI51UQp7jCTB9TvXUIK",
         stripePaymentLinkUrl: "https://buy.stripe.com/cNi7sLdM8fNX0V6gMJ0ZW00",
         coachSeatLimit: 3,
-        clientLimit: 60
+        clientLimit: 80
       }),
       scale: expect.objectContaining({
         id: "scale",
@@ -96,11 +96,11 @@ describe("platform billing plan config", () => {
         stripeProductId: "prod_UvfzpLEEOi5N4H",
         stripePriceId: "price_1TvoddI51UQp7jCTIwk4C6rI",
         stripePaymentLinkUrl: "https://buy.stripe.com/aFafZh6jG6dnbzK9kh0ZW03",
-        coachSeatLimit: 10,
-        clientLimit: 200
+        coachSeatLimit: 5,
+        clientLimit: null
       })
     });
-    expect(getPlatformPlanById("core")?.clientLimit).toBe(40);
+    expect(getPlatformPlanById("core")?.clientLimit).toBe(20);
     expect(getPlatformPlanByPriceId("price_1TsaFuI51UQp7jCTfRTLC7UH")?.id).toBe("design_partner");
     expect(getPlatformPlanByPriceId("price_1TsaOPI51UQp7jCTB9TvXUIK")?.id).toBe("pro");
     expect(getPlatformPlanByPriceId("price_1TvoddI51UQp7jCTIwk4C6rI")?.id).toBe("scale");
@@ -189,7 +189,7 @@ describe("platform billing APIs", () => {
     const payload = (await response.json()) as {
       data: {
         organizationId: string;
-        plan: { id: string; coachSeatLimit: number; clientLimit: number };
+        plan: { id: string; coachSeatLimit: number; clientLimit: number | null };
         status: string;
         access: { state: string; canUsePlatform: boolean; reason: string };
         usage: { coachSeats: number; clients: number };
@@ -206,7 +206,7 @@ describe("platform billing APIs", () => {
           canUsePlatform: true,
           reason: "subscription_active"
         }),
-        plan: expect.objectContaining({ id: "core", coachSeatLimit: 1, clientLimit: 40 }),
+        plan: expect.objectContaining({ id: "core", coachSeatLimit: 1, clientLimit: 20 }),
         usage: { coachSeats: 1, clients: 24 }
       })
     );

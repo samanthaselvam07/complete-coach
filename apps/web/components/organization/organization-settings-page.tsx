@@ -88,7 +88,7 @@ interface PlatformBillingStatus {
     id: PlatformPlanId;
     name: string;
     coachSeatLimit: number;
-    clientLimit: number;
+    clientLimit: number | null;
   };
   status: string;
   access: {
@@ -334,7 +334,7 @@ function SubscriptionBillingPanel() {
           />
           <BillingMetric
             label="Clients"
-            value={`${billing?.usage?.clients ?? 0}/${plan?.clientLimit ?? 0}`}
+            value={formatUsageLimit(billing?.usage?.clients ?? 0, plan?.clientLimit)}
             detail={`Next renewal: ${renewal}`}
           />
         </div>
@@ -439,6 +439,10 @@ function formatPlatformBillingStatus(status: string) {
   };
 
   return labels[status] ?? status;
+}
+
+function formatUsageLimit(usage: number, limit: number | null | undefined) {
+  return limit === null ? `${usage}/Unlimited` : `${usage}/${limit ?? 0}`;
 }
 
 function getPlatformAccessTone(state: PlatformBillingStatus["access"]["state"] | undefined) {
