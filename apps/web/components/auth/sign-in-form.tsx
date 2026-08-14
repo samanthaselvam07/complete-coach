@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 export function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   return (
@@ -17,6 +19,8 @@ export function SignInForm() {
       className="space-y-5"
       onSubmit={async (event) => {
         event.preventDefault();
+        setError(null);
+        setSubmitting(true);
         const result = await signIn("credentials", {
           email,
           password,
@@ -25,7 +29,11 @@ export function SignInForm() {
 
         if (!result?.error) {
           router.replace("/");
+          return;
         }
+
+        setError("We could not sign you in. Check your email and password, then try again.");
+        setSubmitting(false);
       }}
     >
       <div className="space-y-2">
@@ -62,8 +70,14 @@ export function SignInForm() {
         />
       </div>
 
-      <Button type="submit" className="h-11 w-full rounded-xl bg-indigo-700 text-white hover:bg-indigo-800">
-        Sign in
+      {error ? (
+        <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+          {error}
+        </p>
+      ) : null}
+
+      <Button type="submit" disabled={submitting} className="h-11 w-full rounded-xl bg-indigo-700 text-white hover:bg-indigo-800">
+        {submitting ? "Signing in" : "Sign in"}
       </Button>
     </form>
   );

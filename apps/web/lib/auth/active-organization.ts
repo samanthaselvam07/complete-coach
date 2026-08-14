@@ -17,8 +17,7 @@ export function findActiveOrganizationMembershipForUser(userId: string) {
       organization: {
         select: {
           slug: true,
-          name: true,
-          platformSubscriptionStatus: true
+          name: true
         }
       }
     },
@@ -43,8 +42,7 @@ export function findActiveOrganizationClientForUser(userId: string) {
       organization: {
         select: {
           slug: true,
-          name: true,
-          platformSubscriptionStatus: true
+          name: true
         }
       }
     },

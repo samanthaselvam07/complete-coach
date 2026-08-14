@@ -101,6 +101,23 @@ describe("auth UI", () => {
     expect(navigationMocks.replace).toHaveBeenCalledWith("/");
   });
 
+  it("shows a visible error when credential sign-in fails", async () => {
+    signInMock.mockResolvedValue({ error: "CredentialsSignin" });
+
+    render(createElement(SignInForm));
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "coach@example.com" }
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), {
+      target: { value: "wrong-password" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/could not sign you in/i);
+    expect(navigationMocks.replace).not.toHaveBeenCalled();
+  });
+
   it("keeps plain auth pages linked between sign in and sign up", () => {
     render(createElement(SignInPage));
 

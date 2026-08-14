@@ -40,8 +40,7 @@ describe("active organization membership lookup", () => {
         organization: {
           select: {
             slug: true,
-            name: true,
-            platformSubscriptionStatus: true
+            name: true
           }
         }
       },
