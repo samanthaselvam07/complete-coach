@@ -60,7 +60,8 @@ const profileRow = {
       credentialId: "CSCS-1",
       fileName: "certificate.pdf"
     }
-  ]
+  ],
+  client_capacity_limit: 52
 };
 
 function patchRequest(body: unknown) {
@@ -95,7 +96,8 @@ describe("coach profile API", () => {
       bio: "Evidence-led coaching bio.",
       philosophy: "Measure what matters.",
       specialities: ["Strength", "Nutrition"],
-      credentials: profileRow.credentials_json
+      credentials: profileRow.credentials_json,
+      clientCapacityLimit: 52
     });
     expect(mocks.prisma.$queryRaw).toHaveBeenCalledTimes(1);
   });
@@ -110,6 +112,7 @@ describe("coach profile API", () => {
         photoFileName: "new-photo.jpg",
         bio: "Updated bio",
         philosophy: "Updated philosophy",
+        clientCapacityLimit: 64,
         specialities: ["Hypertrophy"],
         credentials: [
           {
@@ -148,6 +151,7 @@ describe("coach profile API", () => {
         metadata: { updatedPassword: true }
       })
     });
+    expect(JSON.stringify(mocks.prisma.$queryRaw.mock.calls[1]?.[0])).toContain("64");
   });
 
   it("preserves existing coach profile fields when the account settings page saves only account fields", async () => {
@@ -166,6 +170,7 @@ describe("coach profile API", () => {
     expect(upsertSql).toContain("Measure what matters.");
     expect(upsertSql).toContain("Strength");
     expect(upsertSql).toContain("certificate.pdf");
+    expect(upsertSql).toContain("52");
   });
 
   it("rejects duplicate email updates without saving profile details", async () => {

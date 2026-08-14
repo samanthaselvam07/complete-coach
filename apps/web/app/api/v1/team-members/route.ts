@@ -1,4 +1,5 @@
 import { ClientStatus, MembershipRole, TeamInvitationStatus } from "@/app/generated/prisma/enums";
+import { Prisma } from "@/app/generated/prisma/client";
 import { auth } from "@/auth";
 import { dataResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
@@ -8,7 +9,7 @@ import { serializeTeamInvitation, serializeTeamMember } from "@/lib/team/team-re
 export async function GET() {
   try {
     const actor = requireActiveActor(await auth(), "team:read");
-    const [members, invitations, clientCounts] = await Promise.all([
+    const [members, invitations, clientCounts, capacityProfiles] = await Promise.all([
       prisma.organizationMembership.findMany({
         where: { organizationId: actor.organizationId },
         include: { user: true },
@@ -30,16 +31,22 @@ export async function GET() {
           primaryCoachUserId: { not: null }
         },
         _count: { _all: true }
-      })
+      }),
+      getCoachCapacityProfiles(actor.organizationId)
     ]);
     const clientCountByUserId = new Map(
       clientCounts.map((clientCount) => [clientCount.primaryCoachUserId, clientCount._count._all])
+    );
+    const capacityLimitByUserId = new Map(
+      capacityProfiles
+        .filter((profile) => typeof profile.client_capacity_limit === "number")
+        .map((profile) => [profile.user_id, profile.client_capacity_limit as number])
     );
 
     return dataResponse({
       members: members.map((member) => {
         const activeClientCount = clientCountByUserId.get(member.userId) ?? 0;
-        const capacityLimit = getCapacityLimit(member.role);
+        const capacityLimit = capacityLimitByUserId.get(member.userId) ?? getCapacityLimit(member.role);
 
         return {
           ...serializeTeamMember(member),
@@ -53,6 +60,14 @@ export async function GET() {
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+function getCoachCapacityProfiles(organizationId: string) {
+  return prisma.$queryRaw<Array<{ user_id: string; client_capacity_limit: number | null }>>(Prisma.sql`
+    SELECT "user_id", "client_capacity_limit"
+    FROM "coach_profiles"
+    WHERE "organization_id" = ${organizationId}
+  `);
 }
 
 function getCapacityLimit(role: MembershipRole) {

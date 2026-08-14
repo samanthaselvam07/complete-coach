@@ -27,6 +27,7 @@ const coachProfileSchema = z.object({
   philosophy: z.string().trim().max(3000).optional(),
   specialities: z.array(z.string().trim().min(1).max(80)).max(24).optional(),
   credentials: z.array(credentialSchema).max(24).optional(),
+  clientCapacityLimit: z.number().int().min(0).max(500).optional(),
   password: z.string().min(8).max(128).optional()
 });
 
@@ -38,6 +39,7 @@ interface CoachProfileRow {
   philosophy: string | null;
   specialities_json: unknown;
   credentials_json: unknown;
+  client_capacity_limit: number | null;
 }
 
 export async function GET() {
@@ -97,7 +99,8 @@ export async function PATCH(request: Request) {
       bio: input.bio ?? existingProfile?.bio ?? undefined,
       philosophy: input.philosophy ?? existingProfile?.philosophy ?? undefined,
       specialities: input.specialities ?? parseStringArray(existingProfile?.specialities_json),
-      credentials: input.credentials ?? parseCredentials(existingProfile?.credentials_json)
+      credentials: input.credentials ?? parseCredentials(existingProfile?.credentials_json),
+      clientCapacityLimit: input.clientCapacityLimit ?? existingProfile?.client_capacity_limit ?? undefined
     });
 
     const user = await prisma.user.findUnique({
@@ -133,7 +136,8 @@ async function getCoachProfile(organizationId: string, userId: string) {
       "bio",
       "philosophy",
       "specialities_json",
-      "credentials_json"
+      "credentials_json",
+      "client_capacity_limit"
     FROM "coach_profiles"
     WHERE "organization_id" = ${organizationId} AND "user_id" = ${userId}
     LIMIT 1
@@ -153,6 +157,7 @@ async function upsertCoachProfile(input: {
   philosophy?: string;
   specialities?: string[];
   credentials?: z.infer<typeof credentialSchema>[];
+  clientCapacityLimit?: number;
 }) {
   const specialitiesJson = JSON.stringify(input.specialities ?? []);
   const credentialsJson = JSON.stringify(input.credentials ?? []);
@@ -169,6 +174,7 @@ async function upsertCoachProfile(input: {
         "philosophy",
         "specialities_json",
         "credentials_json",
+        "client_capacity_limit",
         "updated_at"
       )
     VALUES
@@ -183,6 +189,7 @@ async function upsertCoachProfile(input: {
         ${input.philosophy ?? null},
         CAST(${specialitiesJson} AS JSONB),
         CAST(${credentialsJson} AS JSONB),
+        ${input.clientCapacityLimit ?? null},
         now()
       )
     ON CONFLICT ("organization_id", "user_id") DO UPDATE SET
@@ -193,6 +200,7 @@ async function upsertCoachProfile(input: {
       "philosophy" = EXCLUDED."philosophy",
       "specialities_json" = EXCLUDED."specialities_json",
       "credentials_json" = EXCLUDED."credentials_json",
+      "client_capacity_limit" = EXCLUDED."client_capacity_limit",
       "updated_at" = now()
     RETURNING
       "professional_title",
@@ -201,7 +209,8 @@ async function upsertCoachProfile(input: {
       "bio",
       "philosophy",
       "specialities_json",
-      "credentials_json"
+      "credentials_json",
+      "client_capacity_limit"
   `);
 
   return rows[0] ?? null;
@@ -220,7 +229,8 @@ function serializeCoachProfile(
     bio: profile?.bio ?? "",
     philosophy: profile?.philosophy ?? "",
     specialities: parseStringArray(profile?.specialities_json),
-    credentials: parseCredentials(profile?.credentials_json)
+    credentials: parseCredentials(profile?.credentials_json),
+    clientCapacityLimit: profile?.client_capacity_limit ?? 40
   };
 }
 

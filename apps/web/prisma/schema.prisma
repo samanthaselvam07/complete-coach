@@ -702,6 +702,7 @@ model CoachProfile {
   philosophy        String?      @db.Text
   specialitiesJson  Json?        @map("specialities_json")
   credentialsJson   Json?        @map("credentials_json")
+  clientCapacityLimit Int?       @map("client_capacity_limit")
   createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

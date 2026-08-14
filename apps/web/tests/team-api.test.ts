@@ -34,6 +34,7 @@ const mocks = vi.hoisted(() => ({
     client: {
       groupBy: vi.fn()
     },
+    $queryRaw: vi.fn(),
     $transaction: vi.fn()
   }
 }));
@@ -94,6 +95,8 @@ describe("team management APIs", () => {
     mocks.prisma.organization.findUnique.mockReset();
     mocks.prisma.teamInvitation.count.mockReset();
     mocks.prisma.client.groupBy.mockReset();
+    mocks.prisma.$queryRaw.mockReset();
+    mocks.prisma.$queryRaw.mockResolvedValue([]);
   });
 
   it("lists organization-scoped members with active client capacity and pending invitations", async () => {
@@ -109,6 +112,10 @@ describe("team management APIs", () => {
       { primaryCoachUserId: "user_admin", _count: { _all: 40 } },
       { primaryCoachUserId: "user_2", _count: { _all: 18 } },
       { primaryCoachUserId: "user_assistant", _count: { _all: 3 } }
+    ]);
+    mocks.prisma.$queryRaw.mockResolvedValue([
+      { user_id: "user_owner", client_capacity_limit: 60 },
+      { user_id: "user_2", client_capacity_limit: 25 }
     ]);
 
     const response = await listTeamMembers();
@@ -130,12 +137,12 @@ describe("team management APIs", () => {
       expect.objectContaining({
         userId: "user_owner",
         activeClientCount: 44,
-        capacityLimit: 40,
-        capacityPercent: 100
+        capacityLimit: 60,
+        capacityPercent: 73
       })
     );
     expect(payload.data.members[1]).toEqual(expect.objectContaining({ userId: "user_admin", capacityLimit: 40, capacityPercent: 100 }));
-    expect(payload.data.members[2]).toEqual(expect.objectContaining({ userId: "user_2", capacityLimit: 40, capacityPercent: 45 }));
+    expect(payload.data.members[2]).toEqual(expect.objectContaining({ userId: "user_2", capacityLimit: 25, capacityPercent: 72 }));
     expect(payload.data.members[3]).toEqual(expect.objectContaining({ userId: "user_assistant", capacityLimit: 0, capacityPercent: 0 }));
     expect(mocks.prisma.organizationMembership.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { organizationId: "org_1" } })

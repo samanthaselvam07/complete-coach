@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, Pencil, Phone, Plus, Trash2, Upload } from "lucide-react";
+import { Mail, Pencil, Phone, Plus, Trash2, Upload, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Credential {
@@ -36,12 +36,14 @@ const defaultBio =
   "With over 12 years of experience in high-performance sports and specialised metabolic conditioning, Marcus has carved a unique space in the coaching world. He brings world-class methodologies to ambitious professionals who want strong, measurable progress.";
 const defaultPhilosophy = "We do not chase fatigue, we create performance. If it is not measurable, it is not manageable.";
 const defaultSpecialities = ["Metabolic Analytics", "Strength Development", "Behavioral Coaching"];
+const defaultClientCapacityLimit = 40;
 
 export function CoachProfilePage() {
   const [email, setEmail] = useState(defaultEmail);
   const [phone, setPhone] = useState(defaultPhone);
   const [bio, setBio] = useState(defaultBio);
   const [philosophy, setPhilosophy] = useState(defaultPhilosophy);
+  const [clientCapacityLimit, setClientCapacityLimit] = useState(String(defaultClientCapacityLimit));
   const [specialityInput, setSpecialityInput] = useState("");
   const [specialities, setSpecialities] = useState(defaultSpecialities);
   const [credentials, setCredentials] = useState<Credential[]>(initialCredentials);
@@ -68,6 +70,7 @@ export function CoachProfilePage() {
         setPhone(payload.data.phone || defaultPhone);
         setBio(payload.data.bio || defaultBio);
         setPhilosophy(payload.data.philosophy || defaultPhilosophy);
+        setClientCapacityLimit(String(payload.data.clientCapacityLimit ?? defaultClientCapacityLimit));
         setSpecialities(payload.data.specialities.length > 0 ? payload.data.specialities : defaultSpecialities);
         setCredentials(payload.data.credentials.length > 0 ? payload.data.credentials : initialCredentials);
         setEditingCredentialIds(new Set());
@@ -143,6 +146,7 @@ export function CoachProfilePage() {
           phone,
           bio,
           philosophy,
+          clientCapacityLimit: normalizeClientCapacityLimit(clientCapacityLimit),
           specialities,
           credentials
         })
@@ -199,6 +203,30 @@ export function CoachProfilePage() {
                   onChange={(event) => setPhone(event.target.value)}
                 />
               </span>
+            </label>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-start gap-3">
+              <span className="inline-flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                <Users className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="text-xl font-black">Client Capacity</h2>
+                <p className="mt-1 text-sm text-slate-500">This updates the dashboard capacity module for this coach.</p>
+              </div>
+            </div>
+            <label className="block text-sm font-bold text-slate-700">
+              Maximum active clients
+              <input
+                type="number"
+                min={0}
+                max={500}
+                step={1}
+                value={clientCapacityLimit}
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-950 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                onChange={(event) => setClientCapacityLimit(event.target.value)}
+              />
             </label>
           </section>
 
@@ -389,6 +417,7 @@ interface CoachProfilePayload {
   phone: string;
   bio: string;
   philosophy: string;
+  clientCapacityLimit: number;
   specialities: string[];
   credentials: Credential[];
 }
@@ -402,6 +431,16 @@ function isCoachProfilePayload(value: unknown): value is CoachProfilePayload {
     "credentials" in value &&
     Array.isArray((value as { credentials?: unknown }).credentials)
   );
+}
+
+function normalizeClientCapacityLimit(value: string) {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return defaultClientCapacityLimit;
+  }
+
+  return Math.min(Math.max(Math.round(parsed), 0), 500);
 }
 
 async function getApiErrorMessage(response: Response, fallbackMessage: string) {

@@ -361,6 +361,8 @@ describe("Figma update pages", () => {
     expect((screen.getByLabelText("Professional Bio") as HTMLTextAreaElement).value).toContain("12 years");
     expect((screen.getByLabelText("Coaching Philosophy") as HTMLTextAreaElement).value).toContain("measurable");
     expect(screen.getByPlaceholderText("Add a speciality")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Client Capacity" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Maximum active clients")).toHaveValue(40);
     expect(screen.getByRole("button", { name: "Add credential" })).toBeInTheDocument();
     expect(screen.getByText("CSCS")).toBeInTheDocument();
     expect(screen.getByText("NSCA")).toBeInTheDocument();
@@ -401,6 +403,7 @@ describe("Figma update pages", () => {
 
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "profile@example.com" } });
     fireEvent.change(screen.getByLabelText("Professional Bio"), { target: { value: "Updated bio for the coach profile." } });
+    fireEvent.change(screen.getByLabelText("Maximum active clients"), { target: { value: "55" } });
     fireEvent.click(screen.getByRole("button", { name: "Save coach profile" }));
 
     await waitFor(() => {
@@ -416,6 +419,7 @@ describe("Figma update pages", () => {
         phone: "+1 (555) 012-9988",
         bio: "Updated bio for the coach profile.",
         philosophy: expect.stringContaining("measurable"),
+        clientCapacityLimit: 55,
         specialities: expect.arrayContaining(["Metabolic Analytics"]),
         credentials: expect.arrayContaining([expect.objectContaining({ title: "CSCS" })])
       })
