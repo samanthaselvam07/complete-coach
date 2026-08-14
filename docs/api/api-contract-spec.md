@@ -81,6 +81,10 @@ Default:
 - `POST /api/v1/organizations/current/email-domains`: creates a Resend sender domain for the active organisation and returns DNS records. Body: `domain`, `fromLocalPart`, `senderName`. Requires `team:manage`.
 - `POST /api/v1/organizations/current/email-domains/{sender_domain_id}/verify`: asks Resend to verify DNS records and refreshes stored record/status data. Requires `team:manage`.
 
+### Founder Onboarding
+- `GET /api/v1/onboarding/founder`: returns the active organization's first-login founder onboarding state and the current user's first name. Requires `team:manage`.
+- `POST /api/v1/onboarding/founder`: completes the first-login founder onboarding wizard for the active organization. Body: `focus` (`General fitness`, `Fat loss`, `Muscle building`, `Sports performance`, `Health and lifestyle`, `Other`), `rosterSize` (`1 to 5`, `6 to 15`, `16 to 30`, `31 to 50`, `50 plus`), `platform` (`Trainerize`, `Everfit`, `TrueCoach`, `Kahunas`, `1Fit`, `Google Sheets or spreadsheet`, `My own system`, `Other`, `Just getting started (no existing clients)`), and required `otherPlatform` when `platform` is `Other`. Persists completion on the organization, writes `founder_onboarding.completed`, and sends the personalized Sammi completion email once. Requires `team:manage`.
+
 ### Team
 - `GET /api/v1/team-members`: returns organization-scoped memberships with `activeClientCount`, `capacityLimit`, `capacityPercent`, and pending invitations. Requires `team:read`.
 - `POST /api/v1/team-members/invitations`: creates a seven-day invitation for `admin`, `coach`, or `assistant`, stores only a SHA-256 token hash, queues a Resend email, and audits the action. Requires `team:manage`. Production responses do not return the raw token.

@@ -593,6 +593,12 @@ model Organization {
   platformCurrentPeriodStart    DateTime?                     @map("platform_current_period_start") @db.Timestamptz(6)
   platformCurrentPeriodEnd      DateTime?                     @map("platform_current_period_end") @db.Timestamptz(6)
   platformCancelAt             DateTime?                     @map("platform_cancel_at") @db.Timestamptz(6)
+  founderOnboardingRequired    Boolean                       @default(false) @map("founder_onboarding_required")
+  founderOnboardingCompletedAt DateTime?                     @map("founder_onboarding_completed_at") @db.Timestamptz(6)
+  founderOnboardingFocus       String?                       @map("founder_onboarding_focus")
+  founderOnboardingRosterSize  String?                       @map("founder_onboarding_roster_size")
+  founderOnboardingPlatform    String?                       @map("founder_onboarding_platform")
+  founderOnboardingOtherPlatform String?                     @map("founder_onboarding_other_platform")
   createdAt                    DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                    DateTime                      @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt                    DateTime?                     @map("deleted_at") @db.Timestamptz(6)
@@ -664,6 +670,7 @@ model Organization {
   @@index([platformSubscriptionStatus])
   @@unique([platformStripeCustomerId])
   @@unique([platformStripeSubscriptionId])
+  @@index([founderOnboardingRequired, founderOnboardingCompletedAt])
   @@map("organizations")
 }
 

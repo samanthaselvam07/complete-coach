@@ -17,9 +17,14 @@ interface DashboardShellProps {
 
 const PUBLIC_PATHS = new Set(["/sign-in", "/sign-up"]);
 const PUBLIC_PATH_PREFIXES = ["/forms/respond/"];
+const LAYOUTLESS_AUTHENTICATED_PATHS = new Set(["/onboarding"]);
 
 function isPublicPath(pathname: string | null) {
   return Boolean(pathname && (PUBLIC_PATHS.has(pathname) || PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))));
+}
+
+function isLayoutlessAuthenticatedPath(pathname: string | null) {
+  return Boolean(pathname && LAYOUTLESS_AUTHENTICATED_PATHS.has(pathname));
 }
 
 export function DashboardShell({ children }: DashboardShellProps) {
@@ -62,6 +67,12 @@ function DashboardShellContent({ children }: DashboardShellProps) {
   const { data: session, status } = useSession();
   const publicPath = isPublicPath(pathname);
   const clientSession = session?.activeOrganization?.role === "client";
+  const layoutlessAuthenticatedPath = isLayoutlessAuthenticatedPath(pathname);
+  const needsFounderOnboarding = Boolean(
+    session?.activeOrganization?.role !== "client" &&
+      session?.activeOrganization?.founderOnboardingRequired &&
+      !session.activeOrganization.founderOnboardingCompleted
+  );
 
   useEffect(() => {
     if (status === "unauthenticated" && !publicPath) {
@@ -71,7 +82,11 @@ function DashboardShellContent({ children }: DashboardShellProps) {
     if (status === "authenticated" && publicPath) {
       router.replace("/");
     }
-  }, [clientSession, pathname, publicPath, router, status]);
+
+    if (status === "authenticated" && needsFounderOnboarding && !layoutlessAuthenticatedPath) {
+      router.replace("/onboarding");
+    }
+  }, [layoutlessAuthenticatedPath, needsFounderOnboarding, publicPath, router, status]);
 
   if (publicPath && status !== "authenticated") {
     return <>{children}</>;
@@ -81,7 +96,11 @@ function DashboardShellContent({ children }: DashboardShellProps) {
     return <PublicLoadingScreen />;
   }
 
-  if (clientSession) {
+  if (needsFounderOnboarding && !layoutlessAuthenticatedPath) {
+    return <PublicLoadingScreen />;
+  }
+
+  if (layoutlessAuthenticatedPath || clientSession) {
     return <>{children}</>;
   }
 

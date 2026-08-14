@@ -9,6 +9,7 @@ interface SendTransactionalEmailInput {
   notificationId?: string;
   toEmail: string;
   subject: string;
+  fromEmail?: string;
   html?: string;
   text?: string;
   metadata?: Prisma.InputJsonValue;
@@ -33,7 +34,7 @@ export async function sendTransactionalEmail(input: SendTransactionalEmailInput)
   });
 
   const apiKey = process.env.RESEND_API_KEY;
-  const fromEmail = await getTransactionalFromAddress(input.organizationId);
+  const fromEmail = input.fromEmail ?? (await getTransactionalFromAddress(input.organizationId));
 
   if (!apiKey || !fromEmail) {
     const failedDelivery = await prisma.emailDelivery.update({

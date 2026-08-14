@@ -23,6 +23,12 @@ Fields:
 - `timezone`
 - `stripe_connect_account_id`
 - `stripe_connect_status`
+- `founder_onboarding_required`
+- `founder_onboarding_completed_at`
+- `founder_onboarding_focus`
+- `founder_onboarding_roster_size`
+- `founder_onboarding_platform`
+- `founder_onboarding_other_platform`
 - `created_at`
 - `updated_at`
 - `deleted_at`
@@ -30,6 +36,7 @@ Fields:
 Indexes:
 - Unique `slug`.
 - `status`.
+- `founder_onboarding_required,founder_onboarding_completed_at`.
 
 ### `users`
 Purpose: authenticated platform user mirrored from NextAuth identity.

@@ -308,7 +308,14 @@ describe("dashboard shell auth boundary", () => {
     useSessionMock.mockReturnValue({
       data: {
         user: { id: "user_1", name: "Demo Coach", email: "coach@example.com" },
-        activeOrganization: { name: "Complete Coach Demo", role: "owner" }
+        activeOrganization: {
+          id: "org_1",
+          slug: "complete-coach-demo",
+          name: "Complete Coach Demo",
+          role: "owner",
+          founderOnboardingRequired: true,
+          founderOnboardingCompleted: true
+        }
       },
       status: "authenticated"
     });
@@ -326,11 +333,66 @@ describe("dashboard shell auth boundary", () => {
     expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
   });
 
+  it("redirects authenticated coaches to onboarding when the active organization still needs it", () => {
+    useSessionMock.mockReturnValue({
+      data: {
+        user: { id: "user_1", name: "Demo Coach", email: "coach@example.com" },
+        activeOrganization: {
+          id: "org_1",
+          slug: "complete-coach-demo",
+          name: "Complete Coach Demo",
+          role: "owner",
+          founderOnboardingRequired: true,
+          founderOnboardingCompleted: false
+        }
+      },
+      status: "authenticated"
+    });
+
+    render(createElement(DashboardShell, null, createElement("h1", null, "Dashboard")));
+
+    expect(navigationMocks.replace).toHaveBeenCalledWith("/onboarding");
+    expect(screen.getByRole("status", { name: /opening complete coach workspace/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Dashboard" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: /primary navigation/i })).not.toBeInTheDocument();
+  });
+
+  it("renders onboarding without the app navigation for authenticated first-login coaches", () => {
+    navigationMocks.pathname = "/onboarding";
+    useSessionMock.mockReturnValue({
+      data: {
+        user: { id: "user_1", name: "Demo Coach", email: "coach@example.com" },
+        activeOrganization: {
+          id: "org_1",
+          slug: "complete-coach-demo",
+          name: "Complete Coach Demo",
+          role: "owner",
+          founderOnboardingRequired: true,
+          founderOnboardingCompleted: false
+        }
+      },
+      status: "authenticated"
+    });
+
+    render(createElement(DashboardShell, null, createElement("h1", null, "Founder onboarding")));
+
+    expect(screen.getByRole("heading", { name: "Founder onboarding" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: /primary navigation/i })).not.toBeInTheDocument();
+    expect(navigationMocks.replace).not.toHaveBeenCalled();
+  });
+
   it("keeps the left navigation fixed while main page content scrolls", () => {
     useSessionMock.mockReturnValue({
       data: {
         user: { id: "user_1", name: "Demo Coach", email: "coach@example.com" },
-        activeOrganization: { name: "Complete Coach Demo", role: "owner" }
+        activeOrganization: {
+          id: "org_1",
+          slug: "complete-coach-demo",
+          name: "Complete Coach Demo",
+          role: "owner",
+          founderOnboardingRequired: true,
+          founderOnboardingCompleted: true
+        }
       },
       status: "authenticated"
     });

@@ -10,6 +10,8 @@ interface ActiveOrganizationMembership {
     slug: string;
     name: string;
     platformSubscriptionStatus?: string | null;
+    founderOnboardingRequired?: boolean;
+    founderOnboardingCompletedAt?: Date | null;
   };
 }
 
@@ -24,7 +26,9 @@ export function createActiveOrganizationSession(membership: ActiveOrganizationMe
     slug: membership.organization.slug,
     name: membership.organization.name,
     role: membership.role.toString().toLowerCase() as MembershipRole,
-    platformAccess: evaluatePlatformBillingAccess(membership.organization.platformSubscriptionStatus)
+    platformAccess: evaluatePlatformBillingAccess(membership.organization.platformSubscriptionStatus),
+    founderOnboardingRequired: Boolean(membership.organization.founderOnboardingRequired),
+    founderOnboardingCompleted: Boolean(membership.organization.founderOnboardingCompletedAt)
   };
 }
 
@@ -46,6 +50,8 @@ function createClientOrganizationSession(client: ActiveOrganizationClient): Acti
     slug: client.organization.slug,
     name: client.organization.name,
     role: "client",
-    platformAccess: evaluatePlatformBillingAccess(client.organization.platformSubscriptionStatus)
+    platformAccess: evaluatePlatformBillingAccess(client.organization.platformSubscriptionStatus),
+    founderOnboardingRequired: false,
+    founderOnboardingCompleted: true
   };
 }

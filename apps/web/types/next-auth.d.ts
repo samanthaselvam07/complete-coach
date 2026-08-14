@@ -8,6 +8,8 @@ export interface ActiveOrganizationSession {
   name: string;
   role: MembershipRole;
   platformAccess?: PlatformBillingAccess;
+  founderOnboardingRequired: boolean;
+  founderOnboardingCompleted: boolean;
 }
 
 export interface ActiveClientSession {

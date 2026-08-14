@@ -30,7 +30,9 @@ export const localDevelopmentSession = {
       canUsePlatform: true,
       reason: "subscription_active",
       message: "Platform access is active."
-    }
+    },
+    founderOnboardingRequired: false,
+    founderOnboardingCompleted: true
   },
   expires: "2099-01-01T00:00:00.000Z"
 } satisfies Session;

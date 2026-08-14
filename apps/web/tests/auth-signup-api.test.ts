@@ -143,7 +143,8 @@ describe("POST /api/auth/sign-up", () => {
       data: {
         name: "MCP Coaching",
         slug: "mcp-coaching",
-        timezone: "Australia/Melbourne"
+        timezone: "Australia/Melbourne",
+        founderOnboardingRequired: true
       },
       select: {
         id: true,

@@ -73,7 +73,8 @@ export async function registerCoachAccount(input: CoachRegistrationInput) {
       data: {
         name: parsed.organizationName,
         slug,
-        timezone: parsed.timezone
+        timezone: parsed.timezone,
+        founderOnboardingRequired: true
       },
       select: {
         id: true,

@@ -13,7 +13,9 @@ const activeOrganization = {
   id: "org_1",
   slug: "complete-coach-demo",
   name: "Complete Coach Demo",
-  role: "owner"
+  role: "owner",
+  founderOnboardingRequired: false,
+  founderOnboardingCompleted: true
 } as const;
 
 const authenticatedSession: AppSession = {

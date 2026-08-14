@@ -26,6 +26,8 @@ function isActiveOrganization(value: unknown): value is NonNullable<Session["act
     typeof organization.id === "string" &&
     typeof organization.slug === "string" &&
     typeof organization.name === "string" &&
+    typeof organization.founderOnboardingRequired === "boolean" &&
+    typeof organization.founderOnboardingCompleted === "boolean" &&
     ["owner", "admin", "coach", "assistant", "client"].includes(String(organization.role))
   );
 }
