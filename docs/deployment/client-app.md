@@ -49,6 +49,24 @@ Keep production secrets in Vercel only. At minimum, configure:
 
 Add feature-specific secrets only when the client app uses those live integrations.
 
+## Client Account Profile
+
+The initials avatar in the client app header links to:
+
+```text
+/profile
+```
+
+The profile page reads and updates account details through:
+
+```text
+GET /api/v1/client/profile
+PATCH /api/v1/client/profile
+DELETE /api/v1/client/profile
+```
+
+Clients can update their profile photo, email, phone, and password, open the Complete Coach privacy policy, log out, or delete their account after typing `DELETE`. Account deletion deactivates portal access and revokes login sessions while preserving coaching records for the organization.
+
 ## Client Workout Surface
 
 The client workout tab is served from:

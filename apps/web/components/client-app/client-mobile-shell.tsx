@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { Bell, ClipboardCheck, Dumbbell, Home, Pill, Utensils } from "lucide-react";
 
@@ -36,9 +37,13 @@ export function ClientMobileShell({
       <header className="fixed inset-x-0 top-0 z-40 bg-white/72 shadow-[0_10px_30px_rgba(27,28,28,0.04)] backdrop-blur-2xl">
         <div className="mx-auto flex h-20 w-full max-w-xl items-center justify-between px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex size-11 flex-none items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#3620b8] to-[#f87600] text-xs font-black text-white shadow-[0_14px_34px_rgba(54,32,184,0.22)]">
+            <Link
+              href={"/profile" as Route}
+              aria-label="Open profile"
+              className="flex size-11 flex-none items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#3620b8] to-[#f87600] text-xs font-black text-white shadow-[0_14px_34px_rgba(54,32,184,0.22)] transition active:scale-95"
+            >
               {avatarLabel.slice(0, 2).toUpperCase()}
-            </div>
+            </Link>
             <div className="min-w-0">
               {kicker ? (
                 <p className="truncate text-[10px] font-black uppercase tracking-[0.22em] text-[#f87600]">

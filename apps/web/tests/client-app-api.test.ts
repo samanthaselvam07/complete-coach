@@ -25,13 +25,25 @@ import { GET as getClientMe } from "@/app/api/v1/client/me/route";
 import { POST as postClientOnboardingCheckout } from "@/app/api/v1/client/onboarding/checkout/route";
 import { POST as postClientOnboardingQuestionnaire } from "@/app/api/v1/client/onboarding/questionnaire/route";
 import { GET as getClientOnboardingStatus } from "@/app/api/v1/client/onboarding/status/route";
+import { DELETE as deleteClientProfile, GET as getClientProfile, PATCH as patchClientProfile } from "@/app/api/v1/client/profile/route";
 import { GET as getClientRoadmap } from "@/app/api/v1/client/roadmap/route";
 import { GET as getWorkoutNotes, POST as postWorkoutNote } from "@/app/api/v1/client/workout-notes/route";
 import { POST as postWorkoutSession } from "@/app/api/v1/client/workout-sessions/route";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
+  hash: vi.fn(async () => "hashed-client-password"),
   prisma: {
+    user: {
+      findUnique: vi.fn(),
+      update: vi.fn()
+    },
+    account: {
+      deleteMany: vi.fn()
+    },
+    session: {
+      deleteMany: vi.fn()
+    },
     client: {
       findFirst: vi.fn(),
       findFirstOrThrow: vi.fn(),
@@ -101,6 +113,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/auth", () => ({ auth: mocks.auth }));
 vi.mock("@/lib/db/prisma", () => ({ prisma: mocks.prisma }));
+vi.mock("bcryptjs", () => ({ hash: mocks.hash }));
 vi.mock("@/lib/storage/r2", () => ({
   createR2PresignedGetUrl: mocks.prisma.r2.createR2PresignedGetUrl,
   createR2PresignedPutUrl: mocks.prisma.r2.createR2PresignedPutUrl,
@@ -131,6 +144,20 @@ describe("client app APIs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.auth.mockResolvedValue(clientSession);
+    mocks.prisma.user.findUnique.mockResolvedValue({
+      id: "user_client",
+      name: "Client One",
+      email: "client@example.com",
+      image: null
+    });
+    mocks.prisma.user.update.mockResolvedValue({
+      id: "user_client",
+      name: "Client Updated",
+      email: "updated@example.com",
+      image: "data:image/png;base64,cHJvZmlsZQ=="
+    });
+    mocks.prisma.account.deleteMany.mockResolvedValue({ count: 0 });
+    mocks.prisma.session.deleteMany.mockResolvedValue({ count: 1 });
     mocks.prisma.client.findFirst.mockResolvedValue({
       id: "client_1",
       firstName: "Client",
@@ -143,6 +170,7 @@ describe("client app APIs", () => {
       id: "client_1",
       firstName: "Client",
       lastName: "One",
+      phone: "0400000000",
       email: "client@example.com",
       status: ClientStatus.ACTIVE,
       packageId: "package_1",
@@ -167,6 +195,15 @@ describe("client app APIs", () => {
     mocks.prisma.coachingPackage.findFirst.mockResolvedValue(coachingPackageRecord());
     mocks.prisma.clientSubscription.findFirst.mockResolvedValue(null);
     mocks.prisma.clientSubscription.create.mockResolvedValue(clientSubscriptionRecord());
+    mocks.prisma.client.update.mockResolvedValue({
+      id: "client_1",
+      firstName: "Client",
+      lastName: "Updated",
+      phone: "0499999999",
+      email: "updated@example.com",
+      timezone: "Australia/Melbourne",
+      status: ClientStatus.ACTIVE
+    });
     mocks.prisma.trainingProgramAssignment.findMany.mockResolvedValue([
       {
         id: "training_assignment_1",
@@ -458,6 +495,178 @@ describe("client app APIs", () => {
           clientId: "client_1",
           status: SupplementPlanAssignmentStatus.ACTIVE
         }
+      })
+    );
+  });
+
+  it("returns the signed-in client's editable account profile", async () => {
+    const response = await getClientProfile();
+    const payload = (await response.json()) as {
+      data: {
+        user: { id: string; name: string; email: string; photoUrl: string | null };
+        client: { id: string; firstName: string; lastName: string; email: string; phone: string };
+        privacyPolicyUrl: string;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.user).toMatchObject({
+      id: "user_client",
+      name: "Client One",
+      email: "client@example.com",
+      photoUrl: null
+    });
+    expect(payload.data.client).toMatchObject({
+      id: "client_1",
+      firstName: "Client",
+      lastName: "One",
+      email: "client@example.com",
+      phone: "0400000000"
+    });
+    expect(payload.data.privacyPolicyUrl).toBe("/privacy-policy");
+    expect(mocks.prisma.client.findFirstOrThrow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "client_1",
+          organizationId: "org_1",
+          clientUserId: "user_client",
+          deletedAt: null
+        }
+      })
+    );
+  });
+
+  it("updates the signed-in client's details, profile photo, and password", async () => {
+    mocks.prisma.client.update.mockResolvedValueOnce({
+      id: "client_1",
+      firstName: "Client",
+      lastName: "Updated",
+      phone: "0499999999",
+      email: "updated@example.com",
+      timezone: "Australia/Melbourne",
+      status: ClientStatus.ACTIVE
+    });
+
+    const photoDataUrl = "data:image/png;base64,cHJvZmlsZQ==";
+    const response = await patchClientProfile(
+      new Request("http://test.local/api/v1/client/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: "Client",
+          lastName: "Updated",
+          email: "updated@example.com",
+          phone: "0499999999",
+          password: "new-password",
+          photoDataUrl
+        })
+      })
+    );
+    const payload = (await response.json()) as {
+      data: {
+        user: { email: string; photoUrl: string };
+        client: { lastName: string; phone: string };
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.user.email).toBe("updated@example.com");
+    expect(payload.data.user.photoUrl).toBe(photoDataUrl);
+    expect(payload.data.client.lastName).toBe("Updated");
+    expect(mocks.hash).toHaveBeenCalledWith("new-password", 12);
+    expect(mocks.prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "user_client" },
+        data: expect.objectContaining({
+          name: "Client Updated",
+          email: "updated@example.com",
+          image: photoDataUrl,
+          passwordHash: "hashed-client-password",
+          authProvider: "credentials"
+        })
+      })
+    );
+    expect(mocks.prisma.client.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "client_1", organizationId: "org_1" },
+        data: {
+          firstName: "Client",
+          lastName: "Updated",
+          email: "updated@example.com",
+          phone: "0499999999"
+        }
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "client.profile_updated",
+          targetType: "client",
+          targetId: "client_1",
+          metadata: { updatedPassword: true, updatedPhoto: true }
+        })
+      })
+    );
+  });
+
+  it("requires secondary typed confirmation before deleting the client account", async () => {
+    const response = await deleteClientProfile(
+      new Request("http://test.local/api/v1/client/profile", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: "WRONG" })
+      })
+    );
+
+    expect(response.status).toBe(422);
+    expect(mocks.prisma.client.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: ClientStatus.DEACTIVATED })
+      })
+    );
+  });
+
+  it("deactivates the client account and revokes login sessions after delete confirmation", async () => {
+    const response = await deleteClientProfile(
+      new Request("http://test.local/api/v1/client/profile", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: "DELETE" })
+      })
+    );
+    const payload = (await response.json()) as { data: { deleted: boolean } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.deleted).toBe(true);
+    expect(mocks.prisma.client.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "client_1", organizationId: "org_1" },
+        data: expect.objectContaining({
+          status: ClientStatus.DEACTIVATED,
+          clientUserId: null
+        })
+      })
+    );
+    expect(mocks.prisma.session.deleteMany).toHaveBeenCalledWith({ where: { userId: "user_client" } });
+    expect(mocks.prisma.account.deleteMany).toHaveBeenCalledWith({ where: { userId: "user_client" } });
+    expect(mocks.prisma.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "user_client" },
+        data: expect.objectContaining({
+          email: null,
+          passwordHash: null,
+          authProvider: "deleted",
+          image: null
+        })
+      })
+    );
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "client.account_deleted",
+          targetType: "client",
+          targetId: "client_1"
+        })
       })
     );
   });
