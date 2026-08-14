@@ -82,6 +82,14 @@ const profileRow = {
   client_capacity_limit: 52
 };
 
+const missingCapacityColumnError = {
+  code: "P2010",
+  meta: {
+    code: "42703",
+    message: 'column "client_capacity_limit" does not exist'
+  }
+};
+
 function patchRequest(body: unknown) {
   return new Request("http://test.local/api/v1/coach-profile", {
     method: "PATCH",
@@ -123,6 +131,27 @@ describe("coach profile API", () => {
       clientCapacityLimit: 52
     });
     expect(mocks.prisma.$queryRaw).toHaveBeenCalledTimes(1);
+  });
+
+  it("loads the profile with the default capacity while the capacity migration is still pending", async () => {
+    mocks.prisma.$queryRaw.mockRejectedValueOnce(missingCapacityColumnError).mockResolvedValueOnce([
+      {
+        professional_title: "Head Performance Coach",
+        phone: "+61 400 123 456",
+        photo_file_name: "marcus.jpg",
+        bio: "Evidence-led coaching bio.",
+        philosophy: "Measure what matters.",
+        specialities_json: ["Strength", "Nutrition"],
+        credentials_json: profileRow.credentials_json
+      }
+    ]);
+
+    const response = await GET();
+    const payload = (await response.json()) as { data: { clientCapacityLimit: number } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.clientCapacityLimit).toBe(40);
+    expect(mocks.prisma.$queryRaw).toHaveBeenCalledTimes(2);
   });
 
   it("saves account and coach profile fields without returning the password", async () => {
@@ -175,6 +204,46 @@ describe("coach profile API", () => {
       })
     });
     expect(JSON.stringify(mocks.prisma.$queryRaw.mock.calls[1]?.[0])).toContain("64");
+  });
+
+  it("saves profile fields while the capacity migration is still pending", async () => {
+    mocks.prisma.$queryRaw
+      .mockResolvedValueOnce([profileRow])
+      .mockRejectedValueOnce(missingCapacityColumnError)
+      .mockResolvedValueOnce([
+        {
+          professional_title: "Founder Coach",
+          phone: "+61 411 222 333",
+          photo_file_name: "new-photo.jpg",
+          bio: "Updated bio",
+          philosophy: "Updated philosophy",
+          specialities_json: ["Hypertrophy"],
+          credentials_json: [],
+          client_capacity_limit: null
+        }
+      ]);
+
+    const response = await PATCH(
+      patchRequest({
+        name: "Marcus Chen",
+        email: "marcus@example.com",
+        professionalTitle: "Founder Coach",
+        phone: "+61 411 222 333",
+        photoFileName: "new-photo.jpg",
+        bio: "Updated bio",
+        philosophy: "Updated philosophy",
+        clientCapacityLimit: 64,
+        specialities: ["Hypertrophy"],
+        credentials: []
+      })
+    );
+    const payload = (await response.json()) as { data: { professionalTitle: string; clientCapacityLimit: number } };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.professionalTitle).toBe("Founder Coach");
+    expect(payload.data.clientCapacityLimit).toBe(40);
+    expect(mocks.prisma.$queryRaw).toHaveBeenCalledTimes(3);
+    expect(mocks.prisma.auditLog.create).toHaveBeenCalled();
   });
 
   it("preserves existing coach profile fields when the account settings page saves only account fields", async () => {

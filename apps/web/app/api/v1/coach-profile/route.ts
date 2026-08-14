@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
+import { isMissingDatabaseColumn } from "@/lib/db/schema-compat";
 
 const credentialSchema = z.object({
   id: z.string().trim().max(120),
@@ -128,7 +129,38 @@ export async function PATCH(request: Request) {
 }
 
 async function getCoachProfile(organizationId: string, userId: string) {
-  const rows = await prisma.$queryRaw<CoachProfileRow[]>(Prisma.sql`
+  const rows = await queryCoachProfileWithCapacity(organizationId, userId);
+
+  return rows[0] ?? null;
+}
+
+async function queryCoachProfileWithCapacity(organizationId: string, userId: string) {
+  try {
+    return await prisma.$queryRaw<CoachProfileRow[]>(Prisma.sql`
+      SELECT
+        "professional_title",
+        "phone",
+        "photo_file_name",
+        "bio",
+        "philosophy",
+        "specialities_json",
+        "credentials_json",
+        "client_capacity_limit"
+      FROM "coach_profiles"
+      WHERE "organization_id" = ${organizationId} AND "user_id" = ${userId}
+      LIMIT 1
+    `);
+  } catch (error) {
+    if (!isMissingDatabaseColumn(error, "client_capacity_limit")) {
+      throw error;
+    }
+
+    return queryCoachProfileWithoutCapacity(organizationId, userId);
+  }
+}
+
+async function queryCoachProfileWithoutCapacity(organizationId: string, userId: string) {
+  const rows = await prisma.$queryRaw<Array<Omit<CoachProfileRow, "client_capacity_limit">>>(Prisma.sql`
     SELECT
       "professional_title",
       "phone",
@@ -136,14 +168,13 @@ async function getCoachProfile(organizationId: string, userId: string) {
       "bio",
       "philosophy",
       "specialities_json",
-      "credentials_json",
-      "client_capacity_limit"
+      "credentials_json"
     FROM "coach_profiles"
     WHERE "organization_id" = ${organizationId} AND "user_id" = ${userId}
     LIMIT 1
   `);
 
-  return rows[0] ?? null;
+  return rows.map((row) => ({ ...row, client_capacity_limit: null }));
 }
 
 async function upsertCoachProfile(input: {
@@ -161,7 +192,83 @@ async function upsertCoachProfile(input: {
 }) {
   const specialitiesJson = JSON.stringify(input.specialities ?? []);
   const credentialsJson = JSON.stringify(input.credentials ?? []);
-  const rows = await prisma.$queryRaw<CoachProfileRow[]>(Prisma.sql`
+  const rows = await queryUpsertCoachProfileWithCapacity(input, specialitiesJson, credentialsJson);
+
+  return rows[0] ?? null;
+}
+
+async function queryUpsertCoachProfileWithCapacity(
+  input: Parameters<typeof upsertCoachProfile>[0],
+  specialitiesJson: string,
+  credentialsJson: string
+) {
+  try {
+    return await prisma.$queryRaw<CoachProfileRow[]>(Prisma.sql`
+      INSERT INTO "coach_profiles"
+        (
+          "id",
+          "organization_id",
+          "user_id",
+          "professional_title",
+          "phone",
+          "photo_file_name",
+          "bio",
+          "philosophy",
+          "specialities_json",
+          "credentials_json",
+          "client_capacity_limit",
+          "updated_at"
+        )
+      VALUES
+        (
+          ${input.id},
+          ${input.organizationId},
+          ${input.userId},
+          ${input.professionalTitle ?? null},
+          ${input.phone ?? null},
+          ${input.photoFileName ?? null},
+          ${input.bio ?? null},
+          ${input.philosophy ?? null},
+          CAST(${specialitiesJson} AS JSONB),
+          CAST(${credentialsJson} AS JSONB),
+          ${input.clientCapacityLimit ?? null},
+          now()
+        )
+      ON CONFLICT ("organization_id", "user_id") DO UPDATE SET
+        "professional_title" = EXCLUDED."professional_title",
+        "phone" = EXCLUDED."phone",
+        "photo_file_name" = EXCLUDED."photo_file_name",
+        "bio" = EXCLUDED."bio",
+        "philosophy" = EXCLUDED."philosophy",
+        "specialities_json" = EXCLUDED."specialities_json",
+        "credentials_json" = EXCLUDED."credentials_json",
+        "client_capacity_limit" = EXCLUDED."client_capacity_limit",
+        "updated_at" = now()
+      RETURNING
+        "professional_title",
+        "phone",
+        "photo_file_name",
+        "bio",
+        "philosophy",
+        "specialities_json",
+        "credentials_json",
+        "client_capacity_limit"
+    `);
+  } catch (error) {
+    if (!isMissingDatabaseColumn(error, "client_capacity_limit")) {
+      throw error;
+    }
+
+    return queryUpsertCoachProfileWithoutCapacity(input, specialitiesJson, credentialsJson);
+  }
+}
+
+async function queryUpsertCoachProfileWithoutCapacity(
+  input: Parameters<typeof upsertCoachProfile>[0],
+  specialitiesJson: string,
+  credentialsJson: string
+) {
+  const rows = await prisma.$queryRaw<Array<Omit<CoachProfileRow, "client_capacity_limit">>>(Prisma.sql`
     INSERT INTO "coach_profiles"
       (
         "id",
@@ -174,7 +281,6 @@ async function upsertCoachProfile(input: {
         "philosophy",
         "specialities_json",
         "credentials_json",
-        "client_capacity_limit",
         "updated_at"
       )
     VALUES
@@ -189,7 +295,6 @@ async function upsertCoachProfile(input: {
         ${input.philosophy ?? null},
         CAST(${specialitiesJson} AS JSONB),
         CAST(${credentialsJson} AS JSONB),
-        ${input.clientCapacityLimit ?? null},
         now()
       )
     ON CONFLICT ("organization_id", "user_id") DO UPDATE SET
@@ -200,7 +305,6 @@ async function upsertCoachProfile(input: {
       "philosophy" = EXCLUDED."philosophy",
       "specialities_json" = EXCLUDED."specialities_json",
       "credentials_json" = EXCLUDED."credentials_json",
-      "client_capacity_limit" = EXCLUDED."client_capacity_limit",
       "updated_at" = now()
     RETURNING
       "professional_title",
@@ -209,11 +313,10 @@ async function upsertCoachProfile(input: {
       "bio",
       "philosophy",
       "specialities_json",
-      "credentials_json",
-      "client_capacity_limit"
+      "credentials_json"
   `);
 
-  return rows[0] ?? null;
+  return rows.map((row) => ({ ...row, client_capacity_limit: null }));
 }
 
 function serializeCoachProfile(

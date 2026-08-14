@@ -164,6 +164,40 @@ describe("team management APIs", () => {
     );
   });
 
+  it("lists team members with role-based capacity defaults while the capacity migration is still pending", async () => {
+    mocks.prisma.organizationMembership.findMany.mockResolvedValue([
+      { ...membershipRecord, id: "membership_owner", userId: "user_owner", role: MembershipRole.OWNER, user: { ...membershipRecord.user, id: "user_owner", email: "owner@example.com" } },
+      membershipRecord
+    ]);
+    mocks.prisma.teamInvitation.findMany.mockResolvedValue([]);
+    mocks.prisma.client.groupBy.mockResolvedValue([
+      { primaryCoachUserId: "user_owner", _count: { _all: 12 } },
+      { primaryCoachUserId: "user_2", _count: { _all: 8 } }
+    ]);
+    mocks.prisma.$queryRaw.mockRejectedValue({
+      code: "P2010",
+      meta: {
+        code: "42703",
+        message: 'column "client_capacity_limit" does not exist'
+      }
+    });
+
+    const response = await listTeamMembers();
+    const payload = (await response.json()) as {
+      data: {
+        members: Array<{
+          userId: string;
+          capacityLimit: number;
+          capacityPercent: number;
+        }>;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.data.members[0]).toEqual(expect.objectContaining({ userId: "user_owner", capacityLimit: 40, capacityPercent: 30 }));
+    expect(payload.data.members[1]).toEqual(expect.objectContaining({ userId: "user_2", capacityLimit: 40, capacityPercent: 20 }));
+  });
+
   it("creates a secure pending invitation and audit event", async () => {
     mocks.prisma.teamInvitation.findFirst.mockResolvedValue(null);
     mocks.prisma.organization.findUnique.mockResolvedValue({ platformPlan: "scale" });

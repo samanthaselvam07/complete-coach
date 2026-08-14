@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { dataResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
+import { isMissingDatabaseColumn } from "@/lib/db/schema-compat";
 import { serializeTeamInvitation, serializeTeamMember } from "@/lib/team/team-records";
 
 export async function GET() {
@@ -62,12 +63,20 @@ export async function GET() {
   }
 }
 
-function getCoachCapacityProfiles(organizationId: string) {
-  return prisma.$queryRaw<Array<{ user_id: string; client_capacity_limit: number | null }>>(Prisma.sql`
-    SELECT "user_id", "client_capacity_limit"
-    FROM "coach_profiles"
-    WHERE "organization_id" = ${organizationId}
-  `);
+async function getCoachCapacityProfiles(organizationId: string) {
+  try {
+    return await prisma.$queryRaw<Array<{ user_id: string; client_capacity_limit: number | null }>>(Prisma.sql`
+      SELECT "user_id", "client_capacity_limit"
+      FROM "coach_profiles"
+      WHERE "organization_id" = ${organizationId}
+    `);
+  } catch (error) {
+    if (isMissingDatabaseColumn(error, "client_capacity_limit")) {
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 function getCapacityLimit(role: MembershipRole) {
