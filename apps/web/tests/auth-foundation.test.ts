@@ -158,6 +158,8 @@ describe("active organization session mapping", () => {
       slug: "complete-coach-demo",
       name: "Complete Coach Demo",
       role: "owner",
+      founderOnboardingRequired: false,
+      founderOnboardingCompleted: false,
       platformAccess: {
         state: "active",
         canUsePlatform: true,
@@ -177,9 +179,9 @@ describe("active organization session mapping", () => {
         }
       }).platformAccess
     ).toMatchObject({
-      state: "blocked",
-      canUsePlatform: false,
-      reason: "subscription_inactive"
+      state: "warning",
+      canUsePlatform: true,
+      reason: "subscription_required"
     });
   });
 });

@@ -34,8 +34,16 @@ describe("active organization membership lookup", () => {
           deletedAt: null
         }
       },
-      include: {
-        organization: true
+      select: {
+        organizationId: true,
+        role: true,
+        organization: {
+          select: {
+            slug: true,
+            name: true,
+            platformSubscriptionStatus: true
+          }
+        }
       },
       orderBy: {
         createdAt: "asc"
