@@ -19,6 +19,7 @@ interface DashboardShellProps {
 const PUBLIC_PATHS = new Set(["/sign-in", "/sign-up"]);
 const PUBLIC_PATH_PREFIXES = ["/forms/respond/"];
 const LAYOUTLESS_AUTHENTICATED_PATHS = new Set(["/onboarding"]);
+const STANDALONE_PATH_PREFIXES = ["/admin"];
 
 function isPublicPath(pathname: string | null) {
   return Boolean(pathname && (PUBLIC_PATHS.has(pathname) || PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))));
@@ -26,6 +27,10 @@ function isPublicPath(pathname: string | null) {
 
 function isLayoutlessAuthenticatedPath(pathname: string | null) {
   return Boolean(pathname && LAYOUTLESS_AUTHENTICATED_PATHS.has(pathname));
+}
+
+function isStandalonePath(pathname: string | null) {
+  return Boolean(pathname && STANDALONE_PATH_PREFIXES.some((path) => pathname === path || pathname.startsWith(`${path}/`)));
 }
 
 export function DashboardShell({ children }: DashboardShellProps) {
@@ -69,6 +74,7 @@ function DashboardShellContent({ children }: DashboardShellProps) {
   const publicPath = isPublicPath(pathname);
   const clientSession = session?.activeOrganization?.role === "client";
   const layoutlessAuthenticatedPath = isLayoutlessAuthenticatedPath(pathname);
+  const standalonePath = isStandalonePath(pathname);
   const needsFounderOnboarding = Boolean(
     session?.activeOrganization?.role !== "client" &&
       session?.activeOrganization?.founderOnboardingRequired &&
@@ -77,7 +83,7 @@ function DashboardShellContent({ children }: DashboardShellProps) {
 
   useEffect(() => {
     if (status === "unauthenticated" && !publicPath) {
-      router.replace("/sign-in");
+      router.replace(standalonePath ? `/sign-in?callbackUrl=${encodeURIComponent(pathname ?? "/admin")}` : "/sign-in");
     }
 
     if (status === "authenticated" && publicPath) {
@@ -87,7 +93,7 @@ function DashboardShellContent({ children }: DashboardShellProps) {
     if (status === "authenticated" && needsFounderOnboarding && !layoutlessAuthenticatedPath) {
       router.replace("/onboarding" as Route);
     }
-  }, [layoutlessAuthenticatedPath, needsFounderOnboarding, publicPath, router, status]);
+  }, [layoutlessAuthenticatedPath, needsFounderOnboarding, pathname, publicPath, router, standalonePath, status]);
 
   if (publicPath && status !== "authenticated") {
     return <>{children}</>;
@@ -101,7 +107,7 @@ function DashboardShellContent({ children }: DashboardShellProps) {
     return <PublicLoadingScreen />;
   }
 
-  if (layoutlessAuthenticatedPath || clientSession) {
+  if (layoutlessAuthenticatedPath || clientSession || standalonePath) {
     return <>{children}</>;
   }
 

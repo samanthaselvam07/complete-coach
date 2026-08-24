@@ -8,10 +8,14 @@ interface SendTransactionalEmailInput {
   organizationId: string;
   notificationId?: string;
   toEmail: string;
-  subject: string;
   fromEmail?: string;
+  subject?: string;
   html?: string;
   text?: string;
+  template?: {
+    id: string;
+    variables?: Record<string, string | number>;
+  };
   metadata?: Prisma.InputJsonValue;
 }
 
@@ -27,7 +31,7 @@ export async function sendTransactionalEmail(input: SendTransactionalEmailInput)
       organizationId: input.organizationId,
       notificationId: input.notificationId,
       toEmail: input.toEmail,
-      subject: input.subject,
+      subject: input.subject ?? input.template?.id ?? "Transactional email",
       status: EmailDeliveryStatus.QUEUED,
       metadata: input.metadata
     }
@@ -59,9 +63,8 @@ export async function sendTransactionalEmail(input: SendTransactionalEmailInput)
       body: JSON.stringify({
         from: fromEmail,
         to: input.toEmail,
-        subject: input.subject,
-        html: input.html,
-        text: input.text,
+        ...(input.subject ? { subject: input.subject } : {}),
+        ...(input.template ? { template: input.template } : { html: input.html, text: input.text }),
         tags: [
           { name: "organization_id", value: input.organizationId },
           { name: "email_delivery_id", value: queuedDelivery.id }

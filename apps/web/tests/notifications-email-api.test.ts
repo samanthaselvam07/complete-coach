@@ -293,6 +293,59 @@ describe("notification APIs and Resend email workflows", () => {
     );
   });
 
+  it("sends published Resend templates without inline html or text content", async () => {
+    process.env.RESEND_API_KEY = "test_resend_key";
+    process.env.RESEND_FROM_EMAIL = "Complete Coach <noreply@example.com>";
+    mocks.prisma.emailDelivery.create.mockResolvedValue(emailDeliveryRecord);
+    mocks.prisma.emailDelivery.update.mockResolvedValue({
+      ...emailDeliveryRecord,
+      providerEmailId: "resend_email_1",
+      status: EmailDeliveryStatus.SENT,
+      eventType: "email.sent"
+    });
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ id: "resend_email_1" }), { status: 200 })
+    );
+
+    const delivery = await sendTransactionalEmail({
+      organizationId: "org_1",
+      toEmail: "owner@example.com",
+      fromEmail: "Complete Coach <info@completecoach.fit>",
+      template: {
+        id: "complete-coach-design-partner-welcome",
+        variables: {
+          OWNER_NAME: "New Owner",
+          ORGANIZATION_NAME: "New Coaching",
+          SIGN_IN_URL: "https://app.completecoach.fit/sign-in"
+        }
+      },
+      metadata: { template: "complete-coach-design-partner-welcome" }
+    });
+    const requestBody = JSON.parse(String(fetchMock.mock.calls[0][1]?.body)) as Record<string, unknown>;
+
+    expect(delivery.status).toBe("sent");
+    expect(requestBody).toMatchObject({
+      from: "Complete Coach <info@completecoach.fit>",
+      template: {
+        id: "complete-coach-design-partner-welcome",
+        variables: {
+          OWNER_NAME: "New Owner",
+          ORGANIZATION_NAME: "New Coaching",
+          SIGN_IN_URL: "https://app.completecoach.fit/sign-in"
+        }
+      }
+    });
+    expect(requestBody).not.toHaveProperty("html");
+    expect(requestBody).not.toHaveProperty("text");
+    expect(mocks.prisma.emailDelivery.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          subject: "complete-coach-design-partner-welcome"
+        })
+      })
+    );
+  });
+
   it("records failed status without leaking email body when Resend rejects an email", async () => {
     process.env.RESEND_API_KEY = "test_resend_key";
     process.env.RESEND_FROM_EMAIL = "Complete Coach <noreply@example.com>";

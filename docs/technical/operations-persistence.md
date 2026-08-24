@@ -60,7 +60,7 @@ Delivered:
 - `POST /api/v1/notifications/{notification_id}/read` marks one scoped notification as read.
 - `POST /api/v1/notifications/read` marks all current-user unread notifications as read.
 - App shell notifications load persisted records from `GET /api/v1/notifications?limit=20` and render an empty count/list if the API is unavailable.
-- `sendTransactionalEmail` creates queued delivery records, calls Resend through environment-provided credentials, records sent provider ids, and records failed status on configuration/provider errors.
+- `sendTransactionalEmail` creates queued delivery records, calls Resend through environment-provided credentials, supports inline content or published Resend templates, records sent provider ids, and records failed status on configuration/provider errors.
 - `POST /api/webhooks/resend` accepts raw-body Resend events, verifies Svix signatures when `RESEND_WEBHOOK_SECRET` is configured, and persists delivery/bounce/complaint/failure status transitions.
 - Seed data now includes a demo conversation, message, dashboard task, notification, and email delivery record.
 - Tests cover notification list/read APIs, notification dropdown API behavior, Resend send success/failure, webhook event persistence, and webhook signature verification.

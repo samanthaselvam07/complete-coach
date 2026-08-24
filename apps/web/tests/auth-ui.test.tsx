@@ -81,7 +81,7 @@ describe("auth UI", () => {
   it("submits credentials through Auth.js without exposing passwords in the URL", async () => {
     signInMock.mockResolvedValue({});
 
-    render(createElement(SignInForm));
+    render(createElement(SignInForm, { callbackUrl: "/admin" }));
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "coach@example.com" }
@@ -98,7 +98,7 @@ describe("auth UI", () => {
         redirect: false
       });
     });
-    expect(navigationMocks.replace).toHaveBeenCalledWith("/");
+    expect(navigationMocks.replace).toHaveBeenCalledWith("/admin");
   });
 
   it("shows a visible error when credential sign-in fails", async () => {
@@ -118,8 +118,8 @@ describe("auth UI", () => {
     expect(navigationMocks.replace).not.toHaveBeenCalled();
   });
 
-  it("keeps plain auth pages linked between sign in and sign up", () => {
-    render(createElement(SignInPage));
+  it("keeps plain auth pages linked between sign in and sign up", async () => {
+    render(await SignInPage({ searchParams: Promise.resolve({}) }));
 
     expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");

@@ -360,6 +360,16 @@ Calendar connection scopes:
 
 Owner/admin-only by default.
 
+### Platform Admin
+Platform admin APIs are internal-only and require an authenticated user whose email is listed in `PLATFORM_ADMIN_EMAILS`.
+
+- `GET /api/v1/admin/overview`: returns platform-wide organization, usage, and subscription summary data for the admin console.
+- `POST /api/v1/admin/organizations`: creates an organization, an invited owner membership, an audit log, and sends the published Resend template `complete-coach-design-partner-welcome` to the owner when email is configured. Body: `name`, `slug`, `ownerName`, `ownerEmail`, optional IANA `timezone`.
+- `GET /api/v1/admin/organizations/{organization_id}`: returns full platform-admin organization detail including team members, recent clients, packages, Complete Coach platform billing, Stripe connection presence, and recent audit activity.
+- `GET /api/v1/admin/organizations/{organization_id}/platform-subscription`: lists Complete Coach platform packages for the admin dropdown, including plan id, name, Stripe product/price ids, coach-seat limit, and client limit.
+- `POST /api/v1/admin/organizations/{organization_id}/platform-subscription`: assigns an organization's Complete Coach package from the admin dropdown after verifying an active or trialing Stripe subscription exists for that organization and selected package. Body: `planId`. Response returns the serialized platform billing plan, status, Stripe subscription id, and billing period dates.
+- `DELETE /api/v1/admin/organizations/{organization_id}`: archives an organization by setting status to `archived` and `deleted_at`, then writes an audit log. This is a soft-delete, not a physical destructive delete.
+
 ### Request Protection And Traceability
 - API responses include `X-Request-Id`; a valid inbound id is preserved and otherwise a UUID is generated.
 - Auth mutations: 10 requests per minute per hashed IP/path identity.

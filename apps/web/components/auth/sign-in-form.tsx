@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function SignInForm() {
+export function SignInForm({ callbackUrl = "/" }: { callbackUrl?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function SignInForm() {
         });
 
         if (!result?.error) {
-          router.replace("/");
+          router.replace(callbackUrl);
           return;
         }
 
