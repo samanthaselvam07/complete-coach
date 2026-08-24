@@ -54,6 +54,7 @@ describe("client persistence mappers", () => {
         checkInDay: "Monday",
         startDate: new Date("2026-01-15T00:00:00.000Z"),
         latestCheckInAt: new Date("2026-04-14T00:00:00.000Z"),
+        checkIns: [{ submittedAt: new Date("2026-04-20T10:30:00.000Z") }],
         compliance: 96
       })
     ).toMatchObject({
@@ -61,6 +62,7 @@ describe("client persistence mappers", () => {
       name: "Marcus Rodriguez",
       packageName: "Elite Performance",
       checkInDay: "Monday",
+      latestCheckIn: "Apr 20, 2026",
       status: "active",
       initials: "MR"
     });

@@ -80,6 +80,9 @@ Default:
 - `GET /api/v1/organizations/current/email-domains`: list organisation sender domains and provider DNS records. Requires `team:manage`.
 - `POST /api/v1/organizations/current/email-domains`: creates a Resend sender domain for the active organisation and returns DNS records. Body: `domain`, `fromLocalPart`, `senderName`. Requires `team:manage`.
 - `POST /api/v1/organizations/current/email-domains/{sender_domain_id}/verify`: asks Resend to verify DNS records and refreshes stored record/status data. Requires `team:manage`.
+- `GET /api/v1/organizations/current/automations`: returns the active organisation email automation settings merged with Complete Coach defaults. Requires `team:manage`.
+- `PUT /api/v1/organizations/current/automations`: upserts the active organisation email automation settings. Body: `automations[]` with trigger `id`, `enabled`, `subject`, `template`, `delay`, and `interval`. Requires `team:manage`.
+- `GET|POST /api/v1/organizations/current/automations/jobs/process`: generates scheduled automation jobs and processes due queued jobs. Vercel Cron calls this with `Authorization: Bearer $AUTOMATION_JOBS_SECRET` or `$CRON_SECRET` to process all organisations. Authenticated `team:manage` users process only their active organisation. Optional POST body: `limit`, `enqueueScheduled`.
 
 ### Founder Onboarding
 - `GET /api/v1/onboarding/founder`: returns the active organization's first-login founder onboarding state and the current user's first name. Requires `team:manage`.

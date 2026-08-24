@@ -767,6 +767,50 @@ Fields:
 - `created_at`
 - `updated_at`
 
+### `organization_automations`
+Fields:
+- `id`
+- `organization_id`
+- `trigger`
+- `email_enabled`
+- `subject`
+- `body`
+- `delay_amount`
+- `delay_interval`
+- `created_by_user_id`
+- `created_at`
+- `updated_at`
+
+Notes:
+- Unique `(organization_id, trigger)`.
+- Stores organization-specific email automation overrides for subject/body, send delay, and whether a trigger should send.
+- Client-facing automation sends use this table first and fall back to Complete Coach defaults when no override exists.
+
+### `automation_jobs`
+Fields:
+- `id`
+- `organization_id`
+- `client_id`
+- `trigger`
+- `status`
+- `scheduled_for`
+- `idempotency_key`
+- `source`
+- `source_id`
+- `metadata`
+- `attempts`
+- `email_delivery_id`
+- `locked_at`
+- `processed_at`
+- `last_error`
+- `created_at`
+- `updated_at`
+
+Notes:
+- Unique `(organization_id, idempotency_key)` prevents duplicate sends for the same client action or daily scheduled trigger.
+- Status values are `queued`, `processing`, `sent`, `skipped`, and `failed`.
+- The background processor sends due queued jobs, retries failed email deliveries up to the configured attempt limit, and stores the resulting email delivery id.
+
 ### `organization_sender_domains`
 Fields:
 - `id`

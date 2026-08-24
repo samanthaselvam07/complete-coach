@@ -338,7 +338,7 @@ describe("OrganizationSettingsPage integrations panel", () => {
     expect(fetchMock.mock.calls.some(([input]) => String(input).startsWith("/api/v1/calendar/connections"))).toBe(false);
   });
 
-  it("edits email and push automation triggers from organisation settings", () => {
+  it("edits email automation triggers from organisation settings", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ data: [] }), { status: 200 }));
 
     render(<OrganizationSettingsPage />);
@@ -355,8 +355,8 @@ describe("OrganizationSettingsPage integrations panel", () => {
 
     expect(screen.getByRole("heading", { level: 3, name: "New client created" })).toBeInTheDocument();
     expect(screen.getByDisplayValue("NEW CLIENT CREATED")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "email" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: "push" })).toBeInTheDocument();
+    expect(screen.getByText("Email notification")).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "push" })).not.toBeInTheDocument();
     expect(screen.getByDisplayValue("Welcome to Complete Coach!")).toBeInTheDocument();
     expect(screen.getByText("[FIRST_NAME]")).toBeInTheDocument();
     expect(screen.getByText("[LAST_NAME]")).toBeInTheDocument();
@@ -365,10 +365,6 @@ describe("OrganizationSettingsPage integrations panel", () => {
     );
     expect(screen.getByLabelText("When do you want to send this message?")).toHaveValue(1);
     expect(screen.getByLabelText("Interval")).toHaveValue("Minutes");
-
-    fireEvent.click(screen.getByRole("tab", { name: "push" }));
-
-    expect(screen.getByLabelText("Push automation message")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save Automation" })).toBeInTheDocument();
   });
 

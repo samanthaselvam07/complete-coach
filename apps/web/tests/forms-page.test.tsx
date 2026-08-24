@@ -98,6 +98,27 @@ describe("FormsPage", () => {
     expect(screen.queryByDisplayValue("Phone number")).not.toBeInTheDocument();
   });
 
+  it("opens the initial questionnaire preset and lets coaches choose included questions", () => {
+    render(createElement(FormsPage));
+
+    fireEvent.click(screen.getByRole("button", { name: /use initial client questionnaire template/i }));
+
+    const preview = screen.getByRole("region", { name: "Form preview" });
+
+    expect(screen.getByDisplayValue("Initial Client Questionnaire")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Initial questionnaire questions" })).toBeInTheDocument();
+    expect(within(preview).getByText("What is your primary health or fitness goal?")).toBeInTheDocument();
+    expect(within(preview).getByText("How many days per week can you realistically train?")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("List any foods you strongly dislike."));
+
+    expect(within(preview).queryByText("List any foods you strongly dislike.")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("List any foods you strongly dislike."));
+
+    expect(within(preview).getByText("List any foods you strongly dislike.")).toBeInTheDocument();
+  });
+
   it("adds, removes, and reorders form fields locally", () => {
     render(createElement(FormsPage));
 

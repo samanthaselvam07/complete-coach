@@ -23,6 +23,7 @@ import { prisma } from "@/lib/db/prisma";
 import { extractMeasurementsFromSubmission } from "@/lib/forms/metric-extraction";
 import { FormDefinitionSchema, type FormDefinition, type FormFieldDefinition } from "@/lib/forms/schema";
 import { serializeSubmission, submitAssignmentSchema } from "@/lib/forms/submission-records";
+import { enqueueClientAutomationJob } from "@/lib/organizations/automation-records";
 
 interface SubmitAssignmentRouteContext {
   params: Promise<{ assignmentId: string }>;
@@ -125,6 +126,11 @@ export async function POST(request: Request, context: SubmitAssignmentRouteConte
             dueAt: assignment.dueAt,
             submittedAt
           }
+        });
+
+        await tx.client.update({
+          where: { id: assignment.clientId, organizationId: actor.organizationId },
+          data: { latestCheckInAt: submittedAt }
         });
       }
 
@@ -264,6 +270,27 @@ export async function POST(request: Request, context: SubmitAssignmentRouteConte
 
       return createdSubmission;
     });
+    const automationTrigger =
+      assignment.form.type === FormType.CHECK_IN
+        ? "client-completes-check-in"
+        : assignment.form.type === FormType.INTAKE
+          ? "initial-qa-completed"
+          : null;
+
+    if (automationTrigger) {
+      await enqueueClientAutomationJob({
+        organizationId: actor.organizationId,
+        trigger: automationTrigger,
+        clientId: assignment.clientId,
+        source: "form_assignment_submission",
+        sourceId: submission.id,
+        metadata: {
+          assignmentId: assignment.id,
+          formId: assignment.formId,
+          submissionId: submission.id
+        }
+      });
+    }
 
     return dataResponse(serializeSubmission(submission), {
       status: 201,

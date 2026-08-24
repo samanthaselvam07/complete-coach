@@ -11,6 +11,9 @@ test-results/
 *.tsbuildinfo
 apps/web/app/generated/prisma/
 
+# Local agent/design tool downloads
+vendor/design-agent-tools/
+
 # Environment and secrets
 .env
 .env.*

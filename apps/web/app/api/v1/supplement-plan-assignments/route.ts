@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { dataResponse, errorResponse, handleApiError } from "@/lib/api/responses";
 import { requireActiveActor } from "@/lib/auth/session-guards";
 import { prisma } from "@/lib/db/prisma";
+import { enqueueClientAutomationJob } from "@/lib/organizations/automation-records";
 import {
   buildSupplementAssignmentSnapshot,
   createSupplementAssignmentSchema,
@@ -92,6 +93,18 @@ export async function POST(request: Request) {
           clientId: client.id,
           templateId: template.id
         }
+      }
+    });
+
+    await enqueueClientAutomationJob({
+      organizationId: actor.organizationId,
+      trigger: "supplement-plan-added",
+      clientId: client.id,
+      source: "supplement_plan_assignment",
+      sourceId: assignment.id,
+      metadata: {
+        assignmentId: assignment.id,
+        templateId: template.id
       }
     });
 
