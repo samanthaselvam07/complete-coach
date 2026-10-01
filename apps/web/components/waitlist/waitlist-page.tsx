@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import Image from "next/image";
-import { ArrowRight, Brain, CheckCircle2, Clock3, Dumbbell, Gauge, LineChart, LockKeyhole, MessageSquareText, Sparkles, UsersRound } from "lucide-react";
+import { ArrowRight, Brain, CheckCircle2, Clock3, Dumbbell, Gauge, LineChart, LockKeyhole, LogIn, MessageSquareText, Sparkles, UsersRound } from "lucide-react";
 
 type SubmissionState = "idle" | "submitting" | "success" | "error";
 
@@ -225,8 +225,15 @@ export function WaitlistPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(80,54,232,0.55),transparent_28rem),radial-gradient(circle_at_88%_28%,rgba(255,107,22,0.32),transparent_24rem)]" aria-hidden="true" />
         <div className="relative mx-auto grid min-h-[92svh] w-full max-w-7xl content-center gap-12 py-10 lg:grid-cols-[0.95fr_0.8fr] lg:items-center">
           <div>
-            <div className="mb-12">
+            <div className="mb-12 flex flex-wrap items-center justify-between gap-5">
               <BrandLockup />
+              <a
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/16 bg-white/10 px-5 text-sm font-black text-white shadow-[0_18px_50px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:bg-white/16 focus:outline-none focus:ring-4 focus:ring-white/18"
+                href="https://app.completecoach.fit"
+              >
+                <LogIn aria-hidden="true" className="size-4" />
+                Log in
+              </a>
             </div>
             <p className="mb-5 inline-flex rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-black text-[#ffc36a]">Early access waitlist</p>
             <h1 className="max-w-4xl text-[clamp(3.35rem,12vw,7.8rem)] font-black leading-[0.86] tracking-[-0.04em]">

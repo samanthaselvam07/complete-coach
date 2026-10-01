@@ -18,6 +18,7 @@ describe("WaitlistPage", () => {
     expect(screen.getByText("Most coaching software is a database. Complete Coach is a business tool.")).toBeInTheDocument();
     expect(screen.getByText("An operating system for your coaching business.")).toBeInTheDocument();
     expect(screen.getByText("Built by a coach, for coaches.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /log in/i })).toHaveAttribute("href", "https://app.completecoach.fit");
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 
